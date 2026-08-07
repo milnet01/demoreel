@@ -41,6 +41,32 @@ One command. Give it an app and get back a video file.
 5. Record the display with `ffmpeg` for the duration.
 6. Kill the app, stop the display, leave one video file behind.
 
+## Any Claude Code session must be able to drive it
+
+This is not a finbreak tool. It is a machine-wide one, and **any Claude Code
+session, working in any project, must be able to record with it** — that is the
+whole reason it lives in its own directory rather than inside the app that
+first needed it.
+
+Three consequences, and they are requirements rather than nice-to-haves:
+
+- **Callable from anywhere.** An absolute path that works regardless of the
+  caller's working directory, and no assumption that the current project is
+  finbreak. Nothing about a target app is hardcoded; the caller passes the
+  command to run.
+- **Safe to run concurrently.** Two sessions may record at the same moment, and
+  neither should know about the other. So the display number is *found*, never
+  fixed — a hardcoded `:99` is a collision waiting to happen, where the second
+  run either fails or, worse, quietly records the first run's app. Every
+  per-run artifact (display, temp files) is unique to that run.
+- **Non-interactive.** No prompts, no dialogs, no "pick a window" step. A
+  session invokes it, waits, and gets a file. Anything that needs a human to
+  click is a design error here — that is precisely what made the existing tools
+  unusable for this.
+
+Clean up after every run, including on failure: a leaked `Xvfb` holds its
+display number and slowly poisons the pool for later sessions.
+
 ## What it is NOT
 
 **This is a small tool and it stays a small tool.** The temptation with
@@ -74,6 +100,20 @@ Checked by running them, not assumed:
   hangs or silently fails under Wayland applies to the user's real session, not
   to a virtual X display, where every client is an X client.
 
+## Two things that catch you out
+
+**A single-instance app will not start here.** If a copy is already running on
+the real desktop, the launch on the virtual display finds it, hands over, and
+exits **0** — so demoreel sees a successful process that never showed a window.
+finbreak does exactly this (FIBR-0204). Close the running copy first. The error
+message says so rather than leaving it looking like a demoreel bug.
+
+**No window manager runs on the virtual display.** None is needed to record one
+app, and adding one is a dependency for no gain. `windowactivate` is therefore
+skipped — harmless, since the only window already has focus. An app whose
+dialogs need positioning or stacking may misbehave; if that ever comes up the
+answer is a minimal WM, not more code here.
+
 ## The known obstacle, unsolved
 
 **A Flatpak app does not inherit an arbitrary `DISPLAY`.** Launching
@@ -100,3 +140,7 @@ to demonstrate before taking it.
 ## Status
 
 Outline only. Nothing is built yet.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
