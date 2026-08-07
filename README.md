@@ -63,6 +63,21 @@ parks in the middle of the picture. `-n` names a run so concurrent recordings
 can be told apart; the display number is picked by `Xvfb` itself, so two runs
 never collide.
 
+**A Flatpak target needs two extra flags**, and it is not obvious why:
+
+```sh
+demoreel record -o demo.mp4 -d 20 -- \
+  flatpak run --socket=x11 --filesystem=/tmp/.X11-unix io.github.milnet01.finbreak
+```
+
+Without them the app starts with an **empty** `DISPLAY` inside the sandbox and
+Qt aborts with `qt.qpa.xcb: could not connect to display`. A manifest's
+`--socket=fallback-x11` binds the *session's* X socket, not one named later, so
+the virtual display never reaches the sandbox; `--socket=x11` on the command
+line overrides that, and `--filesystem=/tmp/.X11-unix` lets the socket itself be
+seen. This is the case the whole tool was built for — Flathub wants to see the
+Flatpak running, not a source checkout.
+
 ## Any Claude Code session must be able to drive it
 
 This is not a finbreak tool. It is a machine-wide one, and **any Claude Code
@@ -136,37 +151,14 @@ skipped — harmless, since the only window already has focus. An app whose
 dialogs need positioning or stacking may misbehave; if that ever comes up the
 answer is a minimal WM, not more code here.
 
-## The known obstacle, unsolved
-
-**A Flatpak app does not inherit an arbitrary `DISPLAY`.** Launching
-`io.github.milnet01.finbreak` with `DISPLAY=:99` set in the outer environment
-and `WAYLAND_DISPLAY` unset gives an **empty** `DISPLAY` inside the sandbox, and
-Qt aborts with `qt.qpa.xcb: could not connect to display`. The host has the
-socket (`/tmp/.X11-unix/X99` exists); the sandbox is not given it, because
-`--socket=fallback-x11` binds the session's X socket, not one chosen later.
-
-Untried leads, in order of promise:
-
-1. `flatpak run --socket=x11 …` — an explicit runtime override rather than the
-   manifest's `fallback-x11`.
-2. `--filesystem=/tmp/.X11-unix` alongside it, if the socket still is not
-   visible.
-3. Run the app **unsandboxed** for recording (`python -m finbreak` from a
-   source checkout). Simplest, and enough whenever the video only needs to show
-   the app — but it does not prove the *Flatpak* runs, which is exactly what
-   Flathub is asking to see.
-
-Lead 3 is a real trade-off, not a shortcut: check what the video is being asked
-to demonstrate before taking it.
-
 ## Status
 
 Working. One file, `demoreel`, Python 3 and the standard library only.
 
 Verified by recording: a plain app, scripted typing, ending a run early with
 `stop`, two concurrent recordings landing on different displays, and every
-failure path leaving no stray `Xvfb` behind. The Flatpak obstacle below is
-still open.
+failure path leaving no stray `Xvfb` behind. Flatpak targets work too, with the
+two flags shown above.
 
 ## License
 

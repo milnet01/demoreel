@@ -77,13 +77,17 @@ something behaves unexpectedly:
   already has focus. An app whose dialogs need stacking or positioning may
   misbehave; the answer would be a minimal WM, not more code here.
 
-## Known unsolved obstacle: Flatpak apps
+## Flatpak targets need two extra flags
 
-A Flatpak does not inherit an arbitrary `DISPLAY`. Launching with `DISPLAY=:99`
-in the outer environment gives an **empty** `DISPLAY` inside the sandbox and Qt
-aborts (`qt.qpa.xcb: could not connect to display`), because `--socket=fallback-x11`
-binds the session's X socket, not one chosen later. Untried leads, in order:
-`flatpak run --socket=x11 …`, then adding `--filesystem=/tmp/.X11-unix`, then
-running the app unsandboxed from a source checkout. The last one is a real
-trade-off, not a shortcut — it no longer proves the *Flatpak* works, which is
-usually the point of the video.
+A Flatpak does not inherit an arbitrary `DISPLAY`: a manifest's
+`--socket=fallback-x11` binds the *session's* X socket, not one named later, so
+the app starts with an empty `DISPLAY` and Qt aborts with
+`qt.qpa.xcb: could not connect to display`. The caller passes the override:
+
+    demoreel record -o demo.mp4 -- \
+      flatpak run --socket=x11 --filesystem=/tmp/.X11-unix <app-id>
+
+Verified working. This belongs to the caller's command, not to demoreel —
+nothing about Flatpak is hardcoded here, and adding a `--flatpak` convenience
+flag would be the first step into the per-app profile registry the README rules
+out.
