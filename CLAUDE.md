@@ -87,6 +87,10 @@ something behaves unexpectedly:
   unresolvable name → window appears.
 - An empty 1280x800 Xvfb is 99.994% one grey level; a 200x100 window drops that
   to 98%. That gap is what the blank-recording check is calibrated against.
+- `-a` actions reach the app on the `--gpu` path as well as under Xvfb —
+  measured with a click and a keystroke against `gtk4-demo` on the compositor,
+  both landing. No auth or DISPLAY difference for xdotool beyond the run's env,
+  which it already gets.
 
 ## Traps
 
@@ -99,6 +103,19 @@ something behaves unexpectedly:
   instead: that variable also carries the D-Bus and PipeWire socket paths.
   Do not reach for `QT_QPA_PLATFORM=xcb` — same objection as the Flatpak note
   below, it is Qt-only.
+- **stdout carries the finished path and nothing else.** The app's own output
+  goes to our stderr, or to `--app-log`, never to stdout — a caller writing
+  `out=$(demoreel record ...)` collects whatever the app printed otherwise.
+  This was broken from the start and fixed on 2026-08-07; `subprocess.Popen`
+  inherits the parent's stdout unless told not to, so the way to reintroduce
+  the bug is to drop the `stdout=` argument, not to add anything.
+- **`--settle` and the blank check are the same test**, `display_is_blank`, in
+  two roles: a gate before recording and an assertion after it. That is
+  deliberate — one definition of "nothing is on this display" — and it means
+  the 0.999 threshold is load-bearing in two places. It also sets `--settle`'s
+  honest limit: it waits for any pixel variation, not for the app to be ready,
+  so a startup screen with a cursor on it counts as drawn (a real `xterm`
+  measures 0.977). Do not tune the threshold for one of the two roles alone.
 - **A blank recording is an error, deliberately.** After the duration, one
   frame is sampled and the run fails if more than 99.9% of it is a single
   colour. The check exists because the failure it catches is silent: a valid

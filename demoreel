@@ -104,7 +104,7 @@ def start_xvfb(width, height):
     return proc, f":{number}"
 
 
-def start_gpu_display(width, height, command, name, logfile):
+def start_gpu_display(width, height, command, name, logfile, appout):
     """Start the app on a GPU-capable private display; return (proc, display, auth).
 
     Xvfb is a software X server with no DRI, so an OpenGL or Vulkan app cannot
@@ -135,7 +135,7 @@ def start_gpu_display(width, height, command, name, logfile):
         ["xwfb-run", "-c", "cage", "-f", str(auth), "-e", str(logfile),
          "-s", "\\-geometry", "-s", f"{width}x{height}",
          "--", "sh", "-c", inner, "demoreel", *command],
-        start_new_session=True)
+        stdout=appout, stderr=subprocess.STDOUT, start_new_session=True)
 
     display = ""
     deadline = time.monotonic() + DISPLAY_READY_TIMEOUT
@@ -261,6 +261,23 @@ def display_is_blank(env, display, width, height):
     return max(frame.count(v) for v in set(frame)) / len(frame) > 0.999
 
 
+def wait_until_drawn(env, display, width, height, timeout):
+    """Hold the recorder until the app has actually drawn something.
+
+    A GPU app can spend seconds on a black screen while it builds acceleration
+    structures, and recording that means the caller trims the head off
+    afterwards — which is the post-production this tool deliberately does not
+    do. Same uniform-frame test as the end-of-run check, used here as a gate
+    rather than as an assertion.
+    """
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if not display_is_blank(env, display, width, height):
+            return True
+        time.sleep(0.25)
+    return False
+
+
 def stop_ffmpeg(proc):
     """Ask ffmpeg to finish so the file gets its index written; a killed
     recorder leaves an mp4 that most players refuse to open."""
@@ -323,6 +340,10 @@ def cmd_record(a):
     output = Path(a.output).expanduser().resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
 
+    applog = Path(a.app_log).expanduser().resolve() if a.app_log else None
+    if applog:
+        applog.parent.mkdir(parents=True, exist_ok=True)
+
     statefile = state_dir() / f"{a.name}.json"
     if statefile.exists():
         try:
@@ -339,6 +360,13 @@ def cmd_record(a):
 
     logpath = state_dir() / f"{a.name}.ffmpeg.log"
     displaylog = state_dir() / f"{a.name}.display.log"
+    # The app's own output goes to our stderr, or to --app-log, but never to
+    # our stdout: this command prints the finished path and nothing else, and a
+    # caller writing `out=$(demoreel record ...)` must not collect the app's
+    # chatter along with it. Worth keeping somewhere when the app says whether
+    # what it drew was the real thing — a wrong-but-not-blank recording passes
+    # every check this tool can make.
+    appout = open(applog, "wb") if applog else sys.stderr
     xvfb = app = ffmpeg = log = auth = None
     blank = False
     try:
@@ -346,13 +374,14 @@ def cmd_record(a):
             # This backend starts the app for us, so there is nothing to launch
             # here; see start_gpu_display for why the two cannot be separated.
             app, display, auth = start_gpu_display(width, height, command,
-                                                   a.name, displaylog)
+                                                   a.name, displaylog, appout)
             env = dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth))
         else:
             xvfb, display = start_xvfb(width, height)
             env = dict(os.environ, DISPLAY=display, WAYLAND_DISPLAY=NO_WAYLAND)
             try:
-                app = subprocess.Popen(command, env=env, start_new_session=True)
+                app = subprocess.Popen(command, env=env, start_new_session=True,
+                                       stdout=appout, stderr=subprocess.STDOUT)
             except (FileNotFoundError, PermissionError) as exc:
                 die(f"could not run {command[0]!r}: {exc.strerror}.")
 
@@ -365,6 +394,9 @@ def cmd_record(a):
             xdotool(env, "windowmove", window, 0, 0)
             xdotool(env, "windowsize", window, width, height)
             time.sleep(0.5)
+
+        if a.settle and not wait_until_drawn(env, display, width, height, a.settle):
+            note(f"nothing was drawn within {a.settle}s; recording anyway.")
 
         ffmpeg, log = start_ffmpeg(env, display, width, height, a.framerate,
                                    output, logpath, a.cursor)
@@ -403,6 +435,8 @@ def cmd_record(a):
             stop_ffmpeg(ffmpeg)
         if log is not None:
             log.close()
+        if appout is not sys.stderr:
+            appout.close()
         end_process(app, group=True)
         end_process(xvfb)
         if auth is not None:
@@ -475,6 +509,15 @@ def main():
                      help="scripted step, repeatable and run in order: "
                           "'wait 2', 'move X Y', 'click [X Y]', 'type some text', "
                           "'key Return'")
+    rec.add_argument("--app-log", metavar="PATH",
+                     help="keep the app's own output in PATH; otherwise it goes "
+                          "to this terminal's stderr. Useful when the app prints "
+                          "whether it drew the real thing, which no recording "
+                          "check here can tell")
+    rec.add_argument("--settle", type=float, default=0, metavar="SECONDS",
+                     help="wait up to SECONDS for the app to draw its first "
+                          "frame before recording starts, instead of filming "
+                          "its startup black screen (default: 0, don't wait)")
     rec.add_argument("--gpu", action="store_true",
                      help="for an app that needs the graphics card (OpenGL, "
                           "Vulkan): record it on a headless compositor instead "

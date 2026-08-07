@@ -60,12 +60,36 @@ demoreel record -o demo.mp4 -d 0 -n mydemo -- myapp &
 demoreel stop mydemo
 ```
 
-It prints the path of the finished video and nothing else. `-s` sets the frame
-size (default `1600x1000`, even numbers only), `-r` the framerate, `--cursor`
-draws the mouse pointer — off by default, since with no scripted clicks it just
-parks in the middle of the picture. `-n` names a run so concurrent recordings
-can be told apart; the display number is picked by `Xvfb` itself, so two runs
-never collide.
+It prints the path of the finished video and nothing else — so `out=$(demoreel
+record …)` gives you a path and not a path with the app's chatter stirred in.
+The app's own output goes to stderr, or to a file with `--app-log`. `-s` sets
+the frame size (default `1600x1000`, even numbers only), `-r` the framerate,
+`--cursor` draws the mouse pointer — off by default, since with no scripted
+clicks it just parks in the middle of the picture. `-n` names a run so
+concurrent recordings can be told apart; the display number is picked by `Xvfb`
+itself, so two runs never collide.
+
+**`--app-log <path>` keeps what the app printed.** Worth using when the app
+says something about whether it drew the *right* thing. demoreel can tell that
+something was recorded; it cannot tell that an app quietly fell back to its
+low-detail assets, and that recording is not blank, does not error and passes
+every check here. If the app prints a line proving it loaded the real thing,
+keep the log and grep it. (The ffmpeg and compositor logs are already kept
+automatically whenever a run fails, and deleted when it succeeds.)
+
+**`--settle <seconds>` waits for the app to draw before recording starts.** A
+GPU app can open on a black screen for several seconds while it builds its
+acceleration structures, and without this every caller records long and trims
+the head off afterwards — which is post-production, the thing this tool leaves
+to somebody else. `--settle 20` waits up to twenty seconds for the display to
+stop being one flat colour, then starts. If nothing is ever drawn it says so
+and records anyway, leaving the end-of-run blank check to fail the run.
+
+It uses the same uniform-frame test as that check, which sets its limit
+honestly: it waits for *any* pixel variation, not for the app to be ready. An
+app that paints a cursor or a border over its black startup screen counts as
+drawn — a real `xterm` measures 97.7% uniform, well under the 99.9% bar. It is
+built for a startup screen that is genuinely blank.
 
 **An app that needs the graphics card needs `--gpu`:**
 
@@ -208,6 +232,12 @@ Checked by running them, not assumed:
 - The `--gpu` display size comes from Xwayland's `-geometry`, not from the
   compositor. Without it, both `cage` and `weston` hand back Xwayland's rootful
   default of 640x480 and `-s` would be silently ignored.
+- **Scripted `-a` actions work on the `--gpu` path**, not only under `Xvfb`.
+  Measured: `-a 'click 130 453' -a 'key Down'` against `gtk4-demo` on the
+  compositor selected the clicked row and then moved the selection down, both
+  visible in the frames. Clicks and keystrokes both arrive; no extra flag, no
+  different `DISPLAY`. Worth stating because the failure would have looked like
+  a boring app rather than a broken feature.
 
 ## Things that catch you out
 
@@ -246,7 +276,12 @@ three flags shown above.
 `--gpu` verified the same way, by looking at the frames: `vkcube` recorded as a
 hardware-rendered spinning cube, an ordinary app sized to fill the frame,
 a `--gpu` run and an `Xvfb` run side by side on different displays, and no
-`cage` or `Xwayland` left running afterwards.
+`cage` or `Xwayland` left running afterwards. It has since been used on a real
+target — a hardware ray-traced renderer, recorded headlessly at 1280x800.
+
+`--settle` verified against a window that is uniformly black for five seconds
+and then draws: without it the recording is three seconds of black and the
+blank check fails the run; with it the picture is there in the first frame.
 
 ## License
 
