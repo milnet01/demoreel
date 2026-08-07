@@ -6,7 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Working. The whole tool is one executable file, `demoreel` — Python 3, standard
 library only, no build step, no dependency manifest, no test suite. Runtime
-dependencies are `Xvfb`, `ffmpeg` and `xdotool`, checked at startup.
+dependencies are `Xvfb`, `ffmpeg` and `xdotool`, plus `xwfb-run` and `cage` for
+`--gpu`, all checked at startup against the backend actually in use.
 
 There is no spec and none is wanted; `README.md` is the design contract. The
 sections below are the parts a session is most likely to break by accident.
@@ -14,7 +15,9 @@ sections below are the parts a session is most likely to break by accident.
 Verify a change by recording something: `./demoreel record -o /tmp/t.mp4 -d 5
 -s 640x480 -- xclock`, then `ffprobe` the result and extract a frame to confirm
 the app is actually in the picture. A valid file proves nothing on its own — a
-black video passes every check except looking at it.
+black video passes every check except looking at it. Touching the `--gpu` path
+means recording on that path too: `--gpu -- vkcube` is the cheap case, and the
+frame should show a shaded cube rather than a flat colour.
 
 ## What this tool is
 
@@ -39,7 +42,10 @@ Any change that breaks one of these is wrong, even if it makes the tool simpler:
 - **Concurrency-safe.** Two sessions may record simultaneously. `Xvfb
   -displayfd` picks the display number and reports it back, so there is no gap
   between "looks free" and "is ours" for a second run to lose. Never replace
-  this with a scan for a free number, and never hardcode `:99`.
+  this with a scan for a free number, and never hardcode `:99`. The `--gpu`
+  backend keeps the same property by a different route: Xwayland picks the
+  number inside `xwfb-run`, and demoreel reads it back out. Do not "simplify"
+  that to `xwfb-run -n <number>`.
 - **Non-interactive.** No prompts, no portal dialogs, no "pick a window" step.
   Needing a human click is what made Kooha and OBS unusable here.
 - **Cleanup on every exit path, including failure.** A leaked `Xvfb` holds its
@@ -49,9 +55,20 @@ Any change that breaks one of these is wrong, even if it makes the tool simpler:
 
 A few hundred lines, finished. Permanently out of scope: audio, webcam,
 overlays, captions, cursor highlighting, editing/trimming, a GUI, a daemon, a
-config file format, plugins, per-app profiles, a Wayland backend, and recording
-the real screen. Anything needing more than "record this app doing these few
-things" wants OBS instead.
+config file format, plugins, per-app profiles, and recording the real screen.
+Anything needing more than "record this app doing these few things" wants OBS
+instead.
+
+**Audio was put to the user on 2026-08-07 and stays out**, with the consequence
+stated in the README rather than left implied: the file demoreel produces is
+silent, and a trailer with sound needs a second step elsewhere. The design that
+would have fitted — a per-run null sink, a second `ffmpeg`, one mux — is
+recorded there too, so it does not have to be re-derived to be re-declined.
+
+**There are two display backends and there is not a third.** `--gpu` was added
+the same day, after the "no Wayland compositor backend" line was tested against
+a Vulkan app and lost: `Xvfb` has no DRI, so a GPU app records black on it, and
+no flag changes that. `Xvfb` remains the default.
 
 ## Verified environment facts
 
@@ -132,17 +149,40 @@ The flags belong to the caller's command, not to demoreel. A `--flatpak`
 convenience flag would be the first step into the per-app profile registry the
 README rules out.
 
+## The `--gpu` backend
+
+`xwfb-run -c cage` puts a real Xwayland server on a headless `cage` compositor,
+which reaches the GPU where `Xvfb` cannot. Both packages are now installed.
+Three details are load-bearing and none is obvious:
+
+- **`-geometry` is what sets the size**, passed as `-s '\-geometry' -s WxH`.
+  The dash must be escaped and the value must be a separate `-s`, because
+  `xwfb-run` forwards each `-s` as one argument — `-s '-geometry 1280x800'`
+  reaches Xwayland as a single unknown option and it refuses to start. Without
+  it you get Xwayland's rootful default of 640x480 and `-s` looks broken.
+- **The app still has to be pushed to X11 inside the compositor.** `cage`
+  speaks Wayland, so an app left to choose renders natively on it — and a
+  native Wayland surface is not in the X root window, so `x11grab` records
+  nothing. `vkcube` picks `wayland` there unless told otherwise.
+- **Xwayland demands an auth cookie**, which `Xvfb` does not. So `ffmpeg` and
+  the blank-frame sample take the run's `env` rather than inheriting the
+  session's — otherwise they fail with `Cannot open display`, or silently
+  sample an empty frame.
+
+`weston` is also installed, from testing this. Its headless backend falls back
+to software rendering here (`Failed to initialize glamor`,
+`amdgpu_query_info(ACCEL_WORKING) failed`), so it is not an alternative to
+`cage` — it can be removed if it is not wanted for anything else.
+
 ## Wayland-only apps: the limit of this design
 
 An app that cannot speak X11 at all will not run on `Xvfb`, and
-`--nosocket=wayland` breaks it rather than redirecting it. This is a real limit
-of the approach, not a bug to fix in the code.
+`--nosocket=wayland` breaks it rather than redirecting it. `--gpu` does not
+help either — that backend pushes the app to X11 for the reason above. This is
+a real limit of the approach, not a bug to fix in the code.
 
-If one ever turns up, the escape hatch is the `xwayland-run` package — packaged
-for Tumbleweed (0.0.6, Main OSS repo), **not installed**. It provides `xwfb-run`,
-a drop-in `xvfb-run` replacement backed by Xwayland, and `wlheadless-run`, which
-runs a client against a headless weston/kwin/mutter/cage.
-
-**Do not adopt either now.** The current pipeline works and no such app has come
-up. This note exists so a future session meeting one reaches for the known
-option instead of concluding the whole virtual-display design was a mistake.
+If one turns up, the option is `wlheadless-run`, which runs a client against a
+headless compositor *without* Xwayland in the way — but recording it then needs
+a compositor-side capture path, not `x11grab`, which is a different tool from
+this one. This note exists so a future session meeting such an app reaches for
+the known option instead of concluding the whole design was a mistake.

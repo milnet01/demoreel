@@ -33,7 +33,9 @@ because the user's session is not there.
 
 One command. Give it an app and get back a video file.
 
-1. Start an X virtual framebuffer (`Xvfb`) at a chosen size.
+1. Start an X virtual framebuffer (`Xvfb`) at a chosen size — or, with
+   `--gpu`, a real X server on a headless compositor that can reach the
+   graphics card.
 2. Launch the target app on that display.
 3. Wait for its window, and size it to fill the frame.
 4. Optionally run a short list of scripted actions (click, type, wait) so the
@@ -64,6 +66,26 @@ draws the mouse pointer — off by default, since with no scripted clicks it jus
 parks in the middle of the picture. `-n` names a run so concurrent recordings
 can be told apart; the display number is picked by `Xvfb` itself, so two runs
 never collide.
+
+**An app that needs the graphics card needs `--gpu`:**
+
+```sh
+demoreel record -o demo.mp4 -d 20 -s 1280x800 --gpu -- vkcube
+```
+
+`Xvfb` is a software X server with no DRI, so an OpenGL or Vulkan app cannot
+render on it at all — the recording comes out black, which is why demoreel now
+refuses to hand one back. `--gpu` swaps the display for a real Xwayland server
+running on a headless `cage` compositor, which does reach the card. Everything
+else is the same: same window sizing, same scripted actions, same one file out.
+
+It is a *second* backend, not a replacement. `Xvfb` stays the default because
+it is lighter and needs no compositor, and most apps do not touch the GPU. The
+privacy property is unchanged either way — `cage` is a kiosk compositor showing
+one client, started fresh for the run, with nothing of the user's session on it.
+
+Needs `xwfb-run` (the `xwayland-run` package) and `cage` installed; demoreel
+says so plainly if they are missing.
 
 **A Flatpak target needs three extra flags**, and it is not obvious why:
 
@@ -138,10 +160,20 @@ not this.
 Specifically out of scope, permanently:
 
 - No audio, no webcam, no overlays, no captions, no cursor highlighting.
+
+  **The file demoreel hands back is silent, and it will stay that way.** Worth
+  saying outright, because `-d 20` looks like it produces something you could
+  put on a website and it does not: a trailer with sound needs a second step
+  somewhere else to add it. That is the accepted cost of the tool staying this
+  size. Capturing the app's own audio would mean a private sound sink per run,
+  a second recorder and a mux at the end — a coherent design, and still a no.
+
 - No editing, trimming, or post-production.
 - No GUI, no daemon, no config file format — arguments on the command line.
 - No plugin system, no per-app profile registry.
-- No Wayland compositor backend while X and `Xvfb` do the job.
+- No third display backend. `Xvfb` covers ordinary apps and `--gpu` covers the
+  ones that need the card; a compositor was added because `Xvfb` demonstrably
+  could not do the job for Vulkan, not because backends are interesting.
 - No recording of the user's real screen. That is the entire thing it exists to
   avoid, and adding it back would make every other decision here pointless.
 
@@ -167,8 +199,17 @@ Checked by running them, not assumed:
   `Xvfb`, 99.994% of the frame is one grey level; a window only 200x100 brings
   that to 98%. Refusing above 99.9% separates the two without a threshold that
   needs tuning.
+- `xwfb-run` (the `xwayland-run` package) and `cage` are installed, and the
+  combination reaches the real GPU: `glxinfo` inside it reports
+  `AMD Radeon RX 6600 (radeonsi)` rather than `llvmpipe`, and `vkcube` selects
+  the discrete card through the `xcb` surface. `weston`'s headless backend was
+  tried and falls back to software here (`Failed to initialize glamor`), so
+  `cage` is not an arbitrary pick between the two.
+- The `--gpu` display size comes from Xwayland's `-geometry`, not from the
+  compositor. Without it, both `cage` and `weston` hand back Xwayland's rootful
+  default of 640x480 and `-s` would be silently ignored.
 
-## Three things that catch you out
+## Things that catch you out
 
 **A single-instance app will not start here.** If a copy is already running on
 the real desktop, the launch on the virtual display finds it, hands over, and
@@ -183,9 +224,15 @@ dialogs need positioning or stacking may misbehave; if that ever comes up the
 answer is a minimal WM, not more code here.
 
 **A Wayland-only app cannot run on `Xvfb` at all.** For those, `--nosocket=wayland`
-breaks the app rather than redirecting it, and no flag here helps — the escape
-hatch is the `xwayland-run` package, which is not a change worth making until
-such an app actually turns up. See CLAUDE.md.
+breaks the app rather than redirecting it. `--gpu` does not rescue it either:
+that backend also pushes the app to X11, because a client rendering natively on
+the compositor is not in the X root window and `x11grab` cannot see it. An app
+with no X11 support at all is the honest limit of this design.
+
+**Not every window can be found and sized.** `xdotool` locates the window by
+name, and a few apps set none — `vkcube` is one. demoreel says so and records
+anyway, so you get the app at its own size on the frame rather than filling it.
+Nothing is lost but the sizing.
 
 ## Status
 
@@ -194,7 +241,12 @@ Working. One file, `demoreel`, Python 3 and the standard library only.
 Verified by recording: a plain app, scripted typing, ending a run early with
 `stop`, two concurrent recordings landing on different displays, and every
 failure path leaving no stray `Xvfb` behind. Flatpak targets work too, with the
-two flags shown above.
+three flags shown above.
+
+`--gpu` verified the same way, by looking at the frames: `vkcube` recorded as a
+hardware-rendered spinning cube, an ordinary app sized to fill the frame,
+a `--gpu` run and an `Xvfb` run side by side on different displays, and no
+`cage` or `Xwayland` left running afterwards.
 
 ## License
 

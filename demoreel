@@ -20,7 +20,16 @@ import time
 from pathlib import Path
 
 SIZE_RE = re.compile(r"^(\d+)x(\d+)$")
-XVFB_READY_TIMEOUT = 15.0
+DISPLAY_READY_TIMEOUT = 15.0
+
+# Both backends need this. Unset, wl_display_connect() falls back to the
+# hardcoded $XDG_RUNTIME_DIR/wayland-0, which exists on a Wayland session — so
+# the app connects to the user's REAL compositor, renders there, and the
+# private display records black while every signal says success. A name that
+# cannot resolve fails the connection instead, and the toolkit falls back to
+# X11. It is the non-Flatpak twin of --nosocket=wayland, and unlike
+# QT_QPA_PLATFORM=xcb it does not need to know the app's toolkit.
+NO_WAYLAND = "demoreel-no-wayland"
 
 _stop = False
 
@@ -74,7 +83,7 @@ def start_xvfb(width, height):
     os.close(write_fd)
 
     buf = b""
-    deadline = time.monotonic() + XVFB_READY_TIMEOUT
+    deadline = time.monotonic() + DISPLAY_READY_TIMEOUT
     while b"\n" not in buf:
         remaining = deadline - time.monotonic()
         if remaining <= 0:
@@ -93,6 +102,59 @@ def start_xvfb(width, height):
         stderr = (proc.stderr.read() or b"").decode(errors="replace").strip()
         die("Xvfb did not start." + (f"\n  {stderr}" if stderr else ""))
     return proc, f":{number}"
+
+
+def start_gpu_display(width, height, command, name, logfile):
+    """Start the app on a GPU-capable private display; return (proc, display, auth).
+
+    Xvfb is a software X server with no DRI, so an OpenGL or Vulkan app cannot
+    render on it at all — it is not slow there, it is absent. `xwfb-run` gives
+    us a real Xwayland server on a headless `cage` compositor, which does reach
+    the GPU. Same privacy property: cage shows one client and nothing else, and
+    it is a separate compositor from the user's session.
+
+    It launches the app itself rather than handing back a display, so unlike
+    the Xvfb path the app and the display start as one step. The display number
+    still comes from the server (Xwayland's own -displayfd, inside xwfb-run)
+    rather than from a scan, which is what keeps concurrent runs safe.
+    """
+    auth = state_dir() / f"{name}.Xauthority"
+    auth.touch(mode=0o600)
+    reported = state_dir() / f"{name}.display"
+    reported.unlink(missing_ok=True)
+
+    # cage speaks Wayland, so the app needs the same shove towards X11 as on
+    # the Xvfb path or it renders where x11grab cannot see it. Then hand the
+    # display Xwayland picked back to us, and become the app.
+    inner = (f"WAYLAND_DISPLAY={NO_WAYLAND}; export WAYLAND_DISPLAY; "
+             f'printf "%s\\n" "$DISPLAY" > {shlex.quote(str(reported))}; exec "$@"')
+    proc = subprocess.Popen(
+        # -geometry sets the size, and needs its dash escaped and its value in
+        # a second -s: xwfb-run passes each -s through as one argument, so
+        # "-geometry 1280x800" would reach Xwayland as a single unknown option.
+        ["xwfb-run", "-c", "cage", "-f", str(auth), "-e", str(logfile),
+         "-s", "\\-geometry", "-s", f"{width}x{height}",
+         "--", "sh", "-c", inner, "demoreel", *command],
+        start_new_session=True)
+
+    display = ""
+    deadline = time.monotonic() + DISPLAY_READY_TIMEOUT
+    while time.monotonic() < deadline and proc.poll() is None:
+        text = reported.read_text(errors="replace") if reported.exists() else ""
+        if "\n" in text:
+            display = text.strip()
+            break
+        time.sleep(0.25)
+    reported.unlink(missing_ok=True)
+
+    if not display:
+        end_process(proc, group=True)
+        auth.unlink(missing_ok=True)
+        log = Path(logfile)
+        tail = "\n  ".join(log.read_text(errors="replace").splitlines()[-3:]
+                           if log.exists() else [])
+        die("the GPU display did not start." + (f"\n  {tail}" if tail.strip() else ""))
+    return proc, display, auth
 
 
 def xdotool(env, *args, check=False):
@@ -156,7 +218,9 @@ def run_action(spec, env):
         die(f"unknown action {verb!r}. Use: wait, move, click, type, key.")
 
 
-def start_ffmpeg(display, width, height, framerate, output, logfile, cursor):
+def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor):
+    """Record the display. env matters: the GPU backend's Xwayland wants an
+    auth cookie, and ffmpeg is as much a client of that display as xdotool."""
     cmd = [
         "ffmpeg", "-hide_banner", "-loglevel", "warning",
         "-f", "x11grab", "-framerate", str(framerate),
@@ -167,7 +231,8 @@ def start_ffmpeg(display, width, height, framerate, output, logfile, cursor):
         "-y", str(output),
     ]
     log = open(logfile, "wb")
-    proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=log, stderr=log)
+    proc = subprocess.Popen(cmd, env=env, stdin=subprocess.PIPE,
+                            stdout=log, stderr=log)
     time.sleep(0.5)
     if proc.poll() is not None:
         log.close()
@@ -176,7 +241,7 @@ def start_ffmpeg(display, width, height, framerate, output, logfile, cursor):
     return proc, log
 
 
-def display_is_blank(display, width, height):
+def display_is_blank(env, display, width, height):
     """True if the display is one flat colour, i.e. nothing was ever drawn on it.
 
     Silently recording nothing is the worst failure this tool has: valid file,
@@ -190,7 +255,7 @@ def display_is_blank(display, width, height):
          "-f", "x11grab", "-video_size", f"{width}x{height}",
          "-i", f"{display}.0", "-frames:v", "1",
          "-pix_fmt", "gray", "-f", "rawvideo", "-"],
-        capture_output=True).stdout
+        env=env, capture_output=True).stdout
     if not frame:
         return False  # the sample failed; that is not evidence of a blank display
     return max(frame.count(v) for v in set(frame)) / len(frame) > 0.999
@@ -237,7 +302,8 @@ def end_process(proc, group=False):
 
 
 def cmd_record(a):
-    missing = [t for t in ("Xvfb", "ffmpeg", "xdotool") if shutil.which(t) is None]
+    required = ["ffmpeg", "xdotool"] + (["xwfb-run", "cage"] if a.gpu else ["Xvfb"])
+    missing = [t for t in required if shutil.which(t) is None]
     if missing:
         die(f"missing required program(s): {', '.join(missing)}")
 
@@ -272,25 +338,23 @@ def cmd_record(a):
         signal.signal(sig, _request_stop)
 
     logpath = state_dir() / f"{a.name}.ffmpeg.log"
-    xvfb = app = ffmpeg = log = None
+    displaylog = state_dir() / f"{a.name}.display.log"
+    xvfb = app = ffmpeg = log = auth = None
     blank = False
     try:
-        xvfb, display = start_xvfb(width, height)
-        env = dict(os.environ, DISPLAY=display)
-        # Point WAYLAND_DISPLAY at a socket that cannot exist, rather than
-        # unsetting it. Unset, wl_display_connect() falls back to the hardcoded
-        # $XDG_RUNTIME_DIR/wayland-0, which is present on a Wayland session — so
-        # the app connects to the user's real compositor, renders there, and the
-        # virtual display records black. A name that cannot resolve fails the
-        # Wayland connection and the toolkit falls back to X11. This is the
-        # non-Flatpak twin of --nosocket=wayland, and it is toolkit-agnostic;
-        # blanking XDG_RUNTIME_DIR instead would take D-Bus and audio with it.
-        env["WAYLAND_DISPLAY"] = "demoreel-no-wayland"
-
-        try:
-            app = subprocess.Popen(command, env=env, start_new_session=True)
-        except (FileNotFoundError, PermissionError) as exc:
-            die(f"could not run {command[0]!r}: {exc.strerror}.")
+        if a.gpu:
+            # This backend starts the app for us, so there is nothing to launch
+            # here; see start_gpu_display for why the two cannot be separated.
+            app, display, auth = start_gpu_display(width, height, command,
+                                                   a.name, displaylog)
+            env = dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth))
+        else:
+            xvfb, display = start_xvfb(width, height)
+            env = dict(os.environ, DISPLAY=display, WAYLAND_DISPLAY=NO_WAYLAND)
+            try:
+                app = subprocess.Popen(command, env=env, start_new_session=True)
+            except (FileNotFoundError, PermissionError) as exc:
+                die(f"could not run {command[0]!r}: {exc.strerror}.")
 
         window = wait_for_window(env, app, a.startup_timeout)
         if window is None:
@@ -302,8 +366,8 @@ def cmd_record(a):
             xdotool(env, "windowsize", window, width, height)
             time.sleep(0.5)
 
-        ffmpeg, log = start_ffmpeg(display, width, height, a.framerate, output,
-                                   logpath, a.cursor)
+        ffmpeg, log = start_ffmpeg(env, display, width, height, a.framerate,
+                                   output, logpath, a.cursor)
         statefile.write_text(json.dumps({
             "name": a.name, "pid": os.getpid(), "display": display,
             "output": str(output),
@@ -331,7 +395,7 @@ def cmd_record(a):
         # Only meaningful while the app is still up: one that closed itself
         # mid-run leaves an empty display behind, and that video is fine.
         if app.poll() is None:
-            blank = display_is_blank(display, width, height)
+            blank = display_is_blank(env, display, width, height)
     finally:
         # Order matters: finish the video before the app and display go away,
         # or the last frames catch a half-dead app.
@@ -341,6 +405,8 @@ def cmd_record(a):
             log.close()
         end_process(app, group=True)
         end_process(xvfb)
+        if auth is not None:
+            auth.unlink(missing_ok=True)
         statefile.unlink(missing_ok=True)
 
     if not output.exists() or output.stat().st_size == 0:
@@ -348,11 +414,12 @@ def cmd_record(a):
     if blank:
         die(f"the virtual display stayed blank, so {output} is a flat colour.\n"
             "  The app ran but drew nothing here. Two causes account for most of it:\n"
-            "  - It needs the GPU. Xvfb is a software X server with no DRI, so an\n"
-            "    OpenGL or Vulkan app cannot render on it at all.\n"
+            "  - It needs the GPU, and Xvfb has none. An OpenGL or Vulkan app\n"
+            "    cannot render on it at all: record it with --gpu instead.\n"
             "  - It rendered somewhere else. A Flatpak needs --nosocket=wayland on\n"
             "    its command line; see README.md.")
-    logpath.unlink(missing_ok=True)  # only worth keeping when something failed
+    for stale in (logpath, displaylog):
+        stale.unlink(missing_ok=True)  # only worth keeping when something failed
     print(output)
 
 
@@ -408,6 +475,10 @@ def main():
                      help="scripted step, repeatable and run in order: "
                           "'wait 2', 'move X Y', 'click [X Y]', 'type some text', "
                           "'key Return'")
+    rec.add_argument("--gpu", action="store_true",
+                     help="for an app that needs the graphics card (OpenGL, "
+                          "Vulkan): record it on a headless compositor instead "
+                          "of Xvfb, which has no GPU. Needs xwfb-run and cage")
     rec.add_argument("--cursor", action="store_true",
                      help="show the mouse pointer; off by default, since with no "
                           "actions it just sits in the middle of the picture")
