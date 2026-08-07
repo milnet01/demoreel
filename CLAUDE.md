@@ -53,11 +53,18 @@ Any change that breaks one of these is wrong, even if it makes the tool simpler:
 
 ## Scope ceiling
 
-A few hundred lines, finished. Permanently out of scope: audio, webcam,
-overlays, captions, cursor highlighting, editing/trimming, a GUI, a daemon, a
-config file format, plugins, per-app profiles, and recording the real screen.
-Anything needing more than "record this app doing these few things" wants OBS
-instead.
+The ceiling is what the tool *does*, not how long it is. Permanently out of
+scope: audio, webcam, overlays, captions, cursor highlighting, editing/trimming,
+a GUI, a daemon, a config file format, plugins, per-app profiles, and recording
+the real screen. Anything needing more than "record this app doing these few
+things" wants OBS instead.
+
+**Do not report or reason about the line count.** Stated by the user on
+2026-08-07: the number of lines is irrelevant as long as the tool does what it
+is supposed to do. The earlier "a few hundred lines, finished" wording invited
+every session to flag the file's size as if it were a finding; it is not one.
+Judge a change by whether it earns its place against the list above, and say
+nothing about length.
 
 **Audio was put to the user on 2026-08-07 and stays out**, with the consequence
 stated in the README rather than left implied: the file demoreel produces is

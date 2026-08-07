@@ -201,8 +201,9 @@ Specifically out of scope, permanently:
 - No recording of the user's real screen. That is the entire thing it exists to
   avoid, and adding it back would make every other decision here pointless.
 
-A reasonable finished size is a few hundred lines. If it is heading past that,
-something has been added that should not have been.
+The test is the list above, not the file's length. A change earns its place if
+it makes "record this app doing these few things" work on a target where it
+did not; how many lines that takes is not the measure.
 
 ## Constraints already verified on this machine
 
