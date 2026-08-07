@@ -72,6 +72,15 @@ something behaves unexpectedly:
   **0** — a successful process that never shows a window. finbreak behaves this
   way (FIBR-0204). The error message must name this, or it reads as a demoreel
   bug.
+- **The window to record is the biggest one, and that is deliberate.** An app
+  with a modal startup dialog has two windows; picking by search order gets the
+  dialog about as often as not, and it then gets stretched to fill the frame
+  while the real window sits untouched behind it. finbreak's unlock dialog hit
+  exactly this. Do not restore `ids[-1]` — xdotool's output is not ordered by
+  id, so it was never even picking the newest window. Do not add a
+  `--window-name` filter either: that is per-app configuration wearing a
+  different hat, and size separates the two windows without knowing anything
+  about the app.
 - **No window manager runs on the virtual display**, and none should be added —
   one app needs no WM. So `xdotool windowactivate` is skipped; the only window
   already has focus. An app whose dialogs need stacking or positioning may

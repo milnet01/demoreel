@@ -100,13 +100,29 @@ def xdotool(env, *args, check=False):
                           capture_output=True, text=True, check=check)
 
 
+def window_area(env, wid):
+    out = xdotool(env, "getwindowgeometry", "--shell", wid).stdout
+    dims = dict(line.split("=", 1) for line in out.split() if "=" in line)
+    try:
+        return int(dims["WIDTH"]) * int(dims["HEIGHT"])
+    except (KeyError, ValueError):
+        return 0  # window vanished between the search and the query
+
+
 def wait_for_window(env, app, timeout):
-    """Return the id of the app's window, or None if it never showed one."""
+    """Return the id of the app's main window, or None if it never showed one.
+
+    Biggest window wins. An app that opens a modal dialog at startup has two,
+    and picking by search order gets the dialog about as often as not — which
+    then gets stretched to fill the frame while the real window is left alone
+    behind it. Size is the one signal that separates them without knowing
+    anything about the app.
+    """
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         ids = xdotool(env, "search", "--onlyvisible", "--name", ".").stdout.split()
         if ids:
-            return ids[-1]
+            return max(ids, key=lambda wid: window_area(env, wid))
         if app.poll() is not None:
             if app.returncode == 0:
                 die("the app exited immediately (status 0) without opening a window.\n"
