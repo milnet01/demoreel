@@ -64,9 +64,28 @@ something behaves unexpectedly:
 - `xdotool` is reliable *inside* Xvfb. The common warning that it fails under
   Wayland applies to the user's real session, not to a virtual X display where
   every client is an X client.
+- `/run/user/1000/wayland-0` exists on this session, and that is what makes
+  clearing `WAYLAND_DISPLAY` useless — see the trap below. Measured with GTK4:
+  inherited → no window on Xvfb; unset → no window on Xvfb; set to an
+  unresolvable name → window appears.
+- An empty 1280x800 Xvfb is 99.994% one grey level; a 200x100 window drops that
+  to 98%. That gap is what the blank-recording check is calibrated against.
 
-## Two traps
+## Traps
 
+- **`WAYLAND_DISPLAY` is set to a name that cannot resolve, not unset — and
+  that is the whole fix, not a stylistic choice.** `wl_display_connect(NULL)`
+  falls back to the hardcoded `$XDG_RUNTIME_DIR/wayland-0` when the variable is
+  absent, so `env.pop()` sends the app straight to the user's real compositor;
+  `Xvfb` then records black, `ffmpeg` exits 0 and every signal says success.
+  Do not "tidy" it back to a `pop()`. Do not neutralise `XDG_RUNTIME_DIR`
+  instead: that variable also carries the D-Bus and PipeWire socket paths.
+  Do not reach for `QT_QPA_PLATFORM=xcb` — same objection as the Flatpak note
+  below, it is Qt-only.
+- **A blank recording is an error, deliberately.** After the duration, one
+  frame is sampled and the run fails if more than 99.9% of it is a single
+  colour. The check exists because the failure it catches is silent: a valid
+  file, exit 0, and nothing in the picture. Do not downgrade it to a warning.
 - **A single-instance app will not start on the virtual display.** If a copy is
   already running on the real desktop, the new launch hands over to it and exits
   **0** — a successful process that never shows a window. finbreak behaves this

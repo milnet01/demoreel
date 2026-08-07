@@ -39,7 +39,9 @@ One command. Give it an app and get back a video file.
 4. Optionally run a short list of scripted actions (click, type, wait) so the
    video shows the app being *used*, not just sitting there.
 5. Record the display with `ffmpeg` for the duration.
-6. Kill the app, stop the display, leave one video file behind.
+6. Refuse to hand back a blank recording — if nothing was ever drawn on the
+   display, that is an error, not a video file.
+7. Kill the app, stop the display, leave one video file behind.
 
 ## Using it
 
@@ -88,6 +90,15 @@ planned*. Removing the escape route beats asking the toolkit not to take it.
 
 This is the case the whole tool was built for — Flathub wants to see the Flatpak
 running, not a source checkout.
+
+**A non-Flatpak target needs the same escape, and demoreel does it for you.** On
+a Wayland session every toolkit prefers Wayland, and simply clearing
+`WAYLAND_DISPLAY` does not stop it: the client then falls back to the hardcoded
+`$XDG_RUNTIME_DIR/wayland-0`, which is exactly the user's real compositor. So
+demoreel sets `WAYLAND_DISPLAY` to a socket name that cannot exist. The Wayland
+connection fails, the toolkit falls back to X11, and the app lands on the
+virtual display. Nothing to pass on the command line — it applies to every
+target that is not sandboxed away from the environment.
 
 ## Any Claude Code session must be able to drive it
 
@@ -147,6 +158,15 @@ Checked by running them, not assumed:
 - X11 automation is reliable *inside* Xvfb. The usual warning that `xdotool`
   hangs or silently fails under Wayland applies to the user's real session, not
   to a virtual X display, where every client is an X client.
+- Unsetting `WAYLAND_DISPLAY` does **not** keep a client off the real
+  compositor. Measured with GTK4 on this Wayland session: with the variable
+  inherited, no window on `Xvfb`; with it unset, still no window on `Xvfb`;
+  with it set to a name that cannot resolve, the window appears. `Xvfb` records
+  black in the first two cases and the run otherwise looks entirely successful.
+- A blank frame is measurable, and the margin is wide. On an empty 1280x800
+  `Xvfb`, 99.994% of the frame is one grey level; a window only 200x100 brings
+  that to 98%. Refusing above 99.9% separates the two without a threshold that
+  needs tuning.
 
 ## Three things that catch you out
 

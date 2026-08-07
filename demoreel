@@ -176,6 +176,26 @@ def start_ffmpeg(display, width, height, framerate, output, logfile, cursor):
     return proc, log
 
 
+def display_is_blank(display, width, height):
+    """True if the display is one flat colour, i.e. nothing was ever drawn on it.
+
+    Silently recording nothing is the worst failure this tool has: valid file,
+    exit 0, black picture, every signal saying success. So grab one frame and
+    measure how much of it is a single grey level. Measured here: an empty Xvfb
+    is 0.99994, and a window as small as 200x100 on a 1280x800 display already
+    drops it to 0.98 — so the threshold has room on both sides.
+    """
+    frame = subprocess.run(
+        ["ffmpeg", "-hide_banner", "-loglevel", "quiet",
+         "-f", "x11grab", "-video_size", f"{width}x{height}",
+         "-i", f"{display}.0", "-frames:v", "1",
+         "-pix_fmt", "gray", "-f", "rawvideo", "-"],
+        capture_output=True).stdout
+    if not frame:
+        return False  # the sample failed; that is not evidence of a blank display
+    return max(frame.count(v) for v in set(frame)) / len(frame) > 0.999
+
+
 def stop_ffmpeg(proc):
     """Ask ffmpeg to finish so the file gets its index written; a killed
     recorder leaves an mp4 that most players refuse to open."""
@@ -253,10 +273,19 @@ def cmd_record(a):
 
     logpath = state_dir() / f"{a.name}.ffmpeg.log"
     xvfb = app = ffmpeg = log = None
+    blank = False
     try:
         xvfb, display = start_xvfb(width, height)
         env = dict(os.environ, DISPLAY=display)
-        env.pop("WAYLAND_DISPLAY", None)
+        # Point WAYLAND_DISPLAY at a socket that cannot exist, rather than
+        # unsetting it. Unset, wl_display_connect() falls back to the hardcoded
+        # $XDG_RUNTIME_DIR/wayland-0, which is present on a Wayland session — so
+        # the app connects to the user's real compositor, renders there, and the
+        # virtual display records black. A name that cannot resolve fails the
+        # Wayland connection and the toolkit falls back to X11. This is the
+        # non-Flatpak twin of --nosocket=wayland, and it is toolkit-agnostic;
+        # blanking XDG_RUNTIME_DIR instead would take D-Bus and audio with it.
+        env["WAYLAND_DISPLAY"] = "demoreel-no-wayland"
 
         try:
             app = subprocess.Popen(command, env=env, start_new_session=True)
@@ -298,6 +327,11 @@ def cmd_record(a):
                 note("the app closed; ending the recording.")
                 break
             time.sleep(0.2)
+
+        # Only meaningful while the app is still up: one that closed itself
+        # mid-run leaves an empty display behind, and that video is fine.
+        if app.poll() is None:
+            blank = display_is_blank(display, width, height)
     finally:
         # Order matters: finish the video before the app and display go away,
         # or the last frames catch a half-dead app.
@@ -311,6 +345,13 @@ def cmd_record(a):
 
     if not output.exists() or output.stat().st_size == 0:
         die(f"no video was written to {output}. See {logpath}")
+    if blank:
+        die(f"the virtual display stayed blank, so {output} is a flat colour.\n"
+            "  The app ran but drew nothing here. Two causes account for most of it:\n"
+            "  - It needs the GPU. Xvfb is a software X server with no DRI, so an\n"
+            "    OpenGL or Vulkan app cannot render on it at all.\n"
+            "  - It rendered somewhere else. A Flatpak needs --nosocket=wayland on\n"
+            "    its command line; see README.md.")
     logpath.unlink(missing_ok=True)  # only worth keeping when something failed
     print(output)
 
