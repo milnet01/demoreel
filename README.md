@@ -63,11 +63,12 @@ parks in the middle of the picture. `-n` names a run so concurrent recordings
 can be told apart; the display number is picked by `Xvfb` itself, so two runs
 never collide.
 
-**A Flatpak target needs two extra flags**, and it is not obvious why:
+**A Flatpak target needs three extra flags**, and it is not obvious why:
 
 ```sh
 demoreel record -o demo.mp4 -d 20 -- \
-  flatpak run --socket=x11 --filesystem=/tmp/.X11-unix io.github.milnet01.finbreak
+  flatpak run --socket=x11 --nosocket=wayland --filesystem=/tmp/.X11-unix \
+  io.github.milnet01.finbreak
 ```
 
 Without them the app starts with an **empty** `DISPLAY` inside the sandbox and
@@ -75,8 +76,18 @@ Qt aborts with `qt.qpa.xcb: could not connect to display`. A manifest's
 `--socket=fallback-x11` binds the *session's* X socket, not one named later, so
 the virtual display never reaches the sandbox; `--socket=x11` on the command
 line overrides that, and `--filesystem=/tmp/.X11-unix` lets the socket itself be
-seen. This is the case the whole tool was built for — Flathub wants to see the
-Flatpak running, not a source checkout.
+seen. `--nosocket=wayland` is what makes the fallback fire: an app whose
+manifest also lists `wayland` prefers it and never looks at X11 at all.
+
+Prefer `--nosocket=wayland` to the more commonly cited `QT_QPA_PLATFORM=xcb`.
+That variable is Qt-only — a GTK app ignores it, so relying on it would mean
+knowing each target's toolkit, which is exactly the per-app knowledge this tool
+refuses to carry. It is also unreliable across Flatpak versions: OBS issue
+#11847 reports it working on 30.2.3 and failing on 31.0.1, closed as *not
+planned*. Removing the escape route beats asking the toolkit not to take it.
+
+This is the case the whole tool was built for — Flathub wants to see the Flatpak
+running, not a source checkout.
 
 ## Any Claude Code session must be able to drive it
 
@@ -137,7 +148,7 @@ Checked by running them, not assumed:
   hangs or silently fails under Wayland applies to the user's real session, not
   to a virtual X display, where every client is an X client.
 
-## Two things that catch you out
+## Three things that catch you out
 
 **A single-instance app will not start here.** If a copy is already running on
 the real desktop, the launch on the virtual display finds it, hands over, and
@@ -150,6 +161,11 @@ app, and adding one is a dependency for no gain. `windowactivate` is therefore
 skipped — harmless, since the only window already has focus. An app whose
 dialogs need positioning or stacking may misbehave; if that ever comes up the
 answer is a minimal WM, not more code here.
+
+**A Wayland-only app cannot run on `Xvfb` at all.** For those, `--nosocket=wayland`
+breaks the app rather than redirecting it, and no flag here helps — the escape
+hatch is the `xwayland-run` package, which is not a change worth making until
+such an app actually turns up. See CLAUDE.md.
 
 ## Status
 

@@ -85,9 +85,36 @@ the app starts with an empty `DISPLAY` and Qt aborts with
 `qt.qpa.xcb: could not connect to display`. The caller passes the override:
 
     demoreel record -o demo.mp4 -- \
-      flatpak run --socket=x11 --filesystem=/tmp/.X11-unix <app-id>
+      flatpak run --socket=x11 --nosocket=wayland --filesystem=/tmp/.X11-unix <app-id>
 
-Verified working. This belongs to the caller's command, not to demoreel —
-nothing about Flatpak is hardcoded here, and adding a `--flatpak` convenience
-flag would be the first step into the per-app profile registry the README rules
-out.
+Verified working. `--nosocket=wayland` is load-bearing, not belt-and-braces:
+finbreak's manifest is `sockets=fallback-x11;wayland`, and *fallback*-x11 means
+X11 is bound only when Wayland is absent. With the Wayland socket present the
+app never looks at X11, so the virtual display goes unused.
+
+**Do not swap it for `QT_QPA_PLATFORM=xcb`**, which is the fix most search
+results suggest. Two reasons, and the first is the one that matters here: it is
+Qt-only, so a GTK target ignores it and the tool would need to know each app's
+toolkit — per-app knowledge this tool exists not to carry. It is also unstable
+across Flatpak releases (OBS issue #11847: works on 30.2.3, fails on 31.0.1,
+closed *not planned*). Denying the socket removes the escape route; the env var
+merely asks the toolkit not to take it.
+
+The flags belong to the caller's command, not to demoreel. A `--flatpak`
+convenience flag would be the first step into the per-app profile registry the
+README rules out.
+
+## Wayland-only apps: the limit of this design
+
+An app that cannot speak X11 at all will not run on `Xvfb`, and
+`--nosocket=wayland` breaks it rather than redirecting it. This is a real limit
+of the approach, not a bug to fix in the code.
+
+If one ever turns up, the escape hatch is the `xwayland-run` package — packaged
+for Tumbleweed (0.0.6, Main OSS repo), **not installed**. It provides `xwfb-run`,
+a drop-in `xvfb-run` replacement backed by Xwayland, and `wlheadless-run`, which
+runs a client against a headless weston/kwin/mutter/cage.
+
+**Do not adopt either now.** The current pipeline works and no such app has come
+up. This note exists so a future session meeting one reaches for the known
+option instead of concluding the whole virtual-display design was a mistake.
