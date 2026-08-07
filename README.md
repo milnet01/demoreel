@@ -41,6 +41,28 @@ One command. Give it an app and get back a video file.
 5. Record the display with `ffmpeg` for the duration.
 6. Kill the app, stop the display, leave one video file behind.
 
+## Using it
+
+```sh
+# record an app for 20 seconds
+/mnt/Games/Scripts/Linux/demoreel/demoreel record -o demo.mp4 -d 20 -- kate
+
+# show it being used: scripted steps run in order while recording
+demoreel record -o demo.mp4 -d 20 --cursor \
+  -a 'wait 2' -a 'click 400 300' -a 'type hello' -a 'key Return' -- myapp
+
+# record until told to stop, from another session
+demoreel record -o demo.mp4 -d 0 -n mydemo -- myapp &
+demoreel stop mydemo
+```
+
+It prints the path of the finished video and nothing else. `-s` sets the frame
+size (default `1600x1000`, even numbers only), `-r` the framerate, `--cursor`
+draws the mouse pointer — off by default, since with no scripted clicks it just
+parks in the middle of the picture. `-n` names a run so concurrent recordings
+can be told apart; the display number is picked by `Xvfb` itself, so two runs
+never collide.
+
 ## Any Claude Code session must be able to drive it
 
 This is not a finbreak tool. It is a machine-wide one, and **any Claude Code
@@ -139,7 +161,12 @@ to demonstrate before taking it.
 
 ## Status
 
-Outline only. Nothing is built yet.
+Working. One file, `demoreel`, Python 3 and the standard library only.
+
+Verified by recording: a plain app, scripted typing, ending a run early with
+`stop`, two concurrent recordings landing on different displays, and every
+failure path leaving no stray `Xvfb` behind. The Flatpak obstacle below is
+still open.
 
 ## License
 

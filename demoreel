@@ -1,0 +1,373 @@
+#!/usr/bin/env python3
+"""demoreel — record a GUI app on a private virtual X display.
+
+Only the app is in frame. The display it runs on has no desktop, no
+notifications and no magnifier, so nothing of the user's real session can
+end up in the video. README.md explains why that is the whole point.
+"""
+
+import argparse
+import json
+import os
+import re
+import select
+import shlex
+import shutil
+import signal
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+SIZE_RE = re.compile(r"^(\d+)x(\d+)$")
+XVFB_READY_TIMEOUT = 15.0
+
+_stop = False
+
+
+def _request_stop(signum, frame):
+    """SIGUSR1 (from `demoreel stop`), SIGINT or SIGTERM: finish the video now."""
+    global _stop
+    _stop = True
+
+
+def die(msg):
+    sys.exit(f"demoreel: {msg}")
+
+
+def note(msg):
+    print(f"demoreel: {msg}", file=sys.stderr)
+
+
+def state_dir():
+    base = Path(os.environ.get("XDG_RUNTIME_DIR") or "/tmp")
+    d = base / f"demoreel-{os.getuid()}"
+    d.mkdir(parents=True, exist_ok=True)
+    d.chmod(0o700)
+    return d
+
+
+def alive(pid):
+    try:
+        os.kill(pid, 0)
+    except (ProcessLookupError, PermissionError):
+        return False
+    return True
+
+
+def start_xvfb(width, height):
+    """Start Xvfb on a display number it picks itself.
+
+    -displayfd is why two sessions can record at once: the server finds a free
+    number and reports it back, so there is no window between "looks free" and
+    "is ours" for a second run to lose.
+    """
+    read_fd, write_fd = os.pipe()
+    os.set_inheritable(write_fd, True)
+    proc = subprocess.Popen(
+        ["Xvfb", "-displayfd", str(write_fd), "-screen", "0",
+         f"{width}x{height}x24", "-nolisten", "tcp"],
+        pass_fds=(write_fd,),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+    )
+    os.close(write_fd)
+
+    buf = b""
+    deadline = time.monotonic() + XVFB_READY_TIMEOUT
+    while b"\n" not in buf:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
+        if not select.select([read_fd], [], [], remaining)[0]:
+            continue
+        chunk = os.read(read_fd, 64)
+        if not chunk:
+            break
+        buf += chunk
+    os.close(read_fd)
+
+    number = buf.decode(errors="replace").strip()
+    if not number.isdigit():
+        proc.kill()
+        stderr = (proc.stderr.read() or b"").decode(errors="replace").strip()
+        die("Xvfb did not start." + (f"\n  {stderr}" if stderr else ""))
+    return proc, f":{number}"
+
+
+def xdotool(env, *args, check=False):
+    return subprocess.run(["xdotool", *[str(a) for a in args]], env=env,
+                          capture_output=True, text=True, check=check)
+
+
+def wait_for_window(env, app, timeout):
+    """Return the id of the app's window, or None if it never showed one."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        ids = xdotool(env, "search", "--onlyvisible", "--name", ".").stdout.split()
+        if ids:
+            return ids[-1]
+        if app.poll() is not None:
+            if app.returncode == 0:
+                die("the app exited immediately (status 0) without opening a window.\n"
+                    "  A single-instance app does exactly this: it finds a copy already\n"
+                    "  running on your real desktop, hands the request over to it and exits\n"
+                    "  successfully. Close that copy, then run demoreel again.")
+            die(f"the app exited with status {app.returncode} before opening a window.")
+        time.sleep(0.25)
+    return None
+
+
+def run_action(spec, env):
+    """One scripted step: wait / click / move / type / key."""
+    parts = shlex.split(spec)
+    if not parts:
+        return
+    verb, args = parts[0], parts[1:]
+    if verb == "wait":
+        time.sleep(float(args[0]))
+    elif verb == "move":
+        xdotool(env, "mousemove", "--sync", args[0], args[1])
+    elif verb == "click":
+        if len(args) >= 2:
+            xdotool(env, "mousemove", "--sync", args[0], args[1])
+        xdotool(env, "click", "1")
+    elif verb == "type":
+        xdotool(env, "type", "--delay", "60", " ".join(args))
+    elif verb == "key":
+        xdotool(env, "key", *args)
+    else:
+        die(f"unknown action {verb!r}. Use: wait, move, click, type, key.")
+
+
+def start_ffmpeg(display, width, height, framerate, output, logfile, cursor):
+    cmd = [
+        "ffmpeg", "-hide_banner", "-loglevel", "warning",
+        "-f", "x11grab", "-framerate", str(framerate),
+        "-draw_mouse", "1" if cursor else "0",
+        "-video_size", f"{width}x{height}", "-i", f"{display}.0",
+        "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+        "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+        "-y", str(output),
+    ]
+    log = open(logfile, "wb")
+    proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=log, stderr=log)
+    time.sleep(0.5)
+    if proc.poll() is not None:
+        log.close()
+        tail = Path(logfile).read_text(errors="replace").strip()
+        die("ffmpeg could not start recording." + (f"\n  {tail}" if tail else ""))
+    return proc, log
+
+
+def stop_ffmpeg(proc):
+    """Ask ffmpeg to finish so the file gets its index written; a killed
+    recorder leaves an mp4 that most players refuse to open."""
+    if proc.poll() is not None:
+        return
+    try:
+        proc.stdin.write(b"q")
+        proc.stdin.flush()
+        proc.stdin.close()
+    except OSError:
+        proc.terminate()
+    try:
+        proc.wait(timeout=15)
+    except subprocess.TimeoutExpired:
+        proc.terminate()
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+
+
+def end_process(proc, group=False):
+    if proc is None or proc.poll() is not None:
+        return
+    try:
+        if group:
+            os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+        else:
+            proc.terminate()
+        proc.wait(timeout=5)
+    except (subprocess.TimeoutExpired, ProcessLookupError, PermissionError):
+        try:
+            if group:
+                os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+            else:
+                proc.kill()
+        except (ProcessLookupError, PermissionError):
+            pass
+
+
+def cmd_record(a):
+    missing = [t for t in ("Xvfb", "ffmpeg", "xdotool") if shutil.which(t) is None]
+    if missing:
+        die(f"missing required program(s): {', '.join(missing)}")
+
+    command = list(a.command)
+    if command and command[0] == "--":
+        command.pop(0)
+    if not command:
+        die("give the app to run after `--`, e.g. demoreel record -o out.mp4 -- xclock")
+
+    match = SIZE_RE.match(a.size)
+    if not match:
+        die(f"--size must look like 1600x1000, not {a.size!r}")
+    width, height = int(match[1]), int(match[2])
+    if width % 2 or height % 2:
+        die("--size needs even numbers; H.264 cannot encode an odd width or height.")
+
+    output = Path(a.output).expanduser().resolve()
+    output.parent.mkdir(parents=True, exist_ok=True)
+
+    statefile = state_dir() / f"{a.name}.json"
+    if statefile.exists():
+        try:
+            running = json.loads(statefile.read_text())["pid"]
+        except (ValueError, KeyError):
+            running = None
+        if running and alive(running):
+            die(f"a recording named {a.name!r} is already running (pid {running}).\n"
+                f"  Use --name to tell this run apart from it.")
+        statefile.unlink()
+
+    for sig in (signal.SIGUSR1, signal.SIGINT, signal.SIGTERM):
+        signal.signal(sig, _request_stop)
+
+    logpath = state_dir() / f"{a.name}.ffmpeg.log"
+    xvfb = app = ffmpeg = log = None
+    try:
+        xvfb, display = start_xvfb(width, height)
+        env = dict(os.environ, DISPLAY=display)
+        env.pop("WAYLAND_DISPLAY", None)
+
+        try:
+            app = subprocess.Popen(command, env=env, start_new_session=True)
+        except (FileNotFoundError, PermissionError) as exc:
+            die(f"could not run {command[0]!r}: {exc.strerror}.")
+
+        window = wait_for_window(env, app, a.startup_timeout)
+        if window is None:
+            note(f"no window appeared within {a.startup_timeout}s; recording anyway.")
+        else:
+            # No window manager runs here, so no windowactivate: the only
+            # window already has focus.
+            xdotool(env, "windowmove", window, 0, 0)
+            xdotool(env, "windowsize", window, width, height)
+            time.sleep(0.5)
+
+        ffmpeg, log = start_ffmpeg(display, width, height, a.framerate, output,
+                                   logpath, a.cursor)
+        statefile.write_text(json.dumps({
+            "name": a.name, "pid": os.getpid(), "display": display,
+            "output": str(output),
+        }))
+        note(f"recording {display} to {output} "
+             f"({'until stopped' if a.duration == 0 else f'{a.duration}s'})")
+
+        for action in a.action:
+            if _stop:
+                break
+            run_action(action, env)
+
+        deadline = time.monotonic() + a.duration if a.duration else None
+        while not _stop:
+            if deadline and time.monotonic() >= deadline:
+                break
+            if ffmpeg.poll() is not None:
+                note(f"ffmpeg stopped early; see {logpath}")
+                break
+            if app.poll() is not None:
+                note("the app closed; ending the recording.")
+                break
+            time.sleep(0.2)
+    finally:
+        # Order matters: finish the video before the app and display go away,
+        # or the last frames catch a half-dead app.
+        if ffmpeg is not None:
+            stop_ffmpeg(ffmpeg)
+        if log is not None:
+            log.close()
+        end_process(app, group=True)
+        end_process(xvfb)
+        statefile.unlink(missing_ok=True)
+
+    if not output.exists() or output.stat().st_size == 0:
+        die(f"no video was written to {output}. See {logpath}")
+    logpath.unlink(missing_ok=True)  # only worth keeping when something failed
+    print(output)
+
+
+def cmd_stop(a):
+    files = sorted(state_dir().glob("*.json"))
+    live = []
+    for f in files:
+        try:
+            entry = json.loads(f.read_text())
+        except ValueError:
+            continue
+        if alive(entry["pid"]):
+            live.append(entry)
+        else:
+            f.unlink(missing_ok=True)
+
+    if a.name:
+        live = [e for e in live if e["name"] == a.name]
+        if not live:
+            die(f"no recording named {a.name!r} is running.")
+    elif not live:
+        die("no recording is running.")
+    elif len(live) > 1:
+        names = ", ".join(sorted(e["name"] for e in live))
+        die(f"{len(live)} recordings are running: {names}.\n"
+            f"  Name the one to stop, e.g. demoreel stop {sorted(e['name'] for e in live)[0]}")
+
+    for entry in live:
+        os.kill(entry["pid"], signal.SIGUSR1)
+        print(entry["output"])
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog="demoreel",
+        description="Record a GUI app on a private virtual display, so nothing "
+                    "of your real desktop is in frame.")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    rec = sub.add_parser("record", help="record an app and write a video file")
+    rec.add_argument("-o", "--output", required=True, help="video file to write")
+    rec.add_argument("-d", "--duration", type=float, default=30,
+                     help="seconds to record; 0 means until `demoreel stop` "
+                          "(default: 30)")
+    rec.add_argument("-s", "--size", default="1600x1000",
+                     help="virtual display size, even numbers (default: 1600x1000)")
+    rec.add_argument("-r", "--framerate", type=int, default=30,
+                     help="frames per second (default: 30)")
+    rec.add_argument("-n", "--name", default="default",
+                     help="name for this run, so `demoreel stop` can find it "
+                          "(default: default)")
+    rec.add_argument("-a", "--action", action="append", default=[], metavar="ACTION",
+                     help="scripted step, repeatable and run in order: "
+                          "'wait 2', 'move X Y', 'click [X Y]', 'type some text', "
+                          "'key Return'")
+    rec.add_argument("--cursor", action="store_true",
+                     help="show the mouse pointer; off by default, since with no "
+                          "actions it just sits in the middle of the picture")
+    rec.add_argument("--startup-timeout", type=float, default=20, metavar="SECONDS",
+                     help="how long to wait for the app's window (default: 20)")
+    rec.add_argument("command", nargs=argparse.REMAINDER,
+                     help="-- followed by the command that starts the app")
+    rec.set_defaults(func=cmd_record)
+
+    stop = sub.add_parser("stop", help="end a running recording early")
+    stop.add_argument("name", nargs="?", help="which run to stop (default: the "
+                                              "only one running)")
+    stop.set_defaults(func=cmd_stop)
+
+    args = parser.parse_args()
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()

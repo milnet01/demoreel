@@ -4,13 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## State
 
-Outline only. `README.md` is the entire repository — there is no code, no build,
-no tests, no dependency manifest. The first implementation pass decides the
-language and layout; nothing is committed to yet.
+Working. The whole tool is one executable file, `demoreel` — Python 3, standard
+library only, no build step, no dependency manifest, no test suite. Runtime
+dependencies are `Xvfb`, `ffmpeg` and `xdotool`, checked at startup.
 
-Read `README.md` before writing anything. It is a design contract written
-deliberately before the code, and the sections below are the parts of it that a
-session is most likely to violate by accident.
+There is no spec and none is wanted; `README.md` is the design contract. The
+sections below are the parts a session is most likely to break by accident.
+
+Verify a change by recording something: `./demoreel record -o /tmp/t.mp4 -d 5
+-s 640x480 -- xclock`, then `ffprobe` the result and extract a frame to confirm
+the app is actually in the picture. A valid file proves nothing on its own — a
+black video passes every check except looking at it.
 
 ## What this tool is
 
@@ -32,9 +36,10 @@ Any change that breaks one of these is wrong, even if it makes the tool simpler:
 - **Callable from any Claude Code session, in any project.** Absolute paths;
   no dependence on the caller's working directory; nothing about any specific
   app hardcoded — the caller passes the command to run.
-- **Concurrency-safe.** Two sessions may record simultaneously. The display
-  number is *searched for at runtime*, never a fixed `:99` — a collision either
-  fails or silently records the other session's app. Same for temp files.
+- **Concurrency-safe.** Two sessions may record simultaneously. `Xvfb
+  -displayfd` picks the display number and reports it back, so there is no gap
+  between "looks free" and "is ours" for a second run to lose. Never replace
+  this with a scan for a free number, and never hardcode `:99`.
 - **Non-interactive.** No prompts, no portal dialogs, no "pick a window" step.
   Needing a human click is what made Kooha and OBS unusable here.
 - **Cleanup on every exit path, including failure.** A leaked `Xvfb` holds its
