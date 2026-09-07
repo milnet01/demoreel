@@ -311,10 +311,9 @@ It runs automatically before a push. A documentation-only push skips it.
 
 `demoreel --version` reports the version.
 [docs/standards/versioning-overrides.md](docs/standards/versioning-overrides.md)
-names the surfaces that count as breaking, and what reaching 1.0 requires.
-
-While the leading zero is there, a breaking change bumps the MINOR and
-everything else — a new capability included — bumps the PATCH.
+names the surfaces that count as breaking, what reaching 1.0 requires, and how
+the numbers move while the leading zero is there — which is not what most
+people assume. That file is the only statement of it; this one would drift.
 
 ## Roadmap
 

@@ -109,3 +109,20 @@
   **Layman:** There is nowhere yet to record what changed between versions.
   Kind: release.
   Source: in-session-2026-09-07.
+
+- 📋 [DEMO-0010] **Keep the two pinned versions in step with their latest releases.**
+  CI pins ruff and the checkout action. Both are pinned AT their latest
+  release rather than held below one, so no hold-ledger entry is owed
+  under the dependency standard -- a pin at latest is not a hold.
+
+  They still go stale on their own. The ruff pin must move with the
+  version installed on the dev machine, or a local run and CI stop
+  linting with the same tool, which is the one thing the shared gate
+  exists to prevent.
+
+  If either ever has to stay below its latest release, that becomes a
+  hold and needs a ledger row naming what broke, at which version, and
+  what would release it.
+  **Layman:** Two version numbers are written down in CI and will go stale unless someone bumps them.
+  Kind: chore.
+  Source: user-request-2026-09-07.
