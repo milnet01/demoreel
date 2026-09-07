@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install the programs demoreel needs
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            ffmpeg xvfb xdotool x11-apps
+
+      - name: Install ruff
+        # Pinned so CI lints with the same ruff a local ./ci.sh run uses.
+        # Keep this in step with the version installed on the dev machine.
+        run: pipx install ruff==0.16.6
+
+      - name: Run the gate
+        # Every check lives in ci.sh. Nothing is added here, or the local run
+        # and this one would stop being the same thing.
+        run: ./ci.sh

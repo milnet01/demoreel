@@ -19,6 +19,8 @@ import sys
 import time
 from pathlib import Path
 
+__version__ = "0.1.0"
+
 SIZE_RE = re.compile(r"^(\d+)x(\d+)$")
 DISPLAY_READY_TIMEOUT = 15.0
 
@@ -36,7 +38,7 @@ _stop = False
 
 def _request_stop(signum, frame):
     """SIGUSR1 (from `demoreel stop`), SIGINT or SIGTERM: finish the video now."""
-    global _stop
+    global _stop  # noqa: PLW0603 - a signal handler sets a flag; that is the idiom
     _stop = True
 
 
@@ -230,7 +232,9 @@ def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor
         "-pix_fmt", "yuv420p", "-movflags", "+faststart",
         "-y", str(output),
     ]
-    log = open(logfile, "wb")
+    # Deliberate: the handle is owned by the ffmpeg process and closed in
+    # record()'s finally block, so it must outlive this statement.
+    log = open(logfile, "wb")  # noqa: SIM115
     proc = subprocess.Popen(cmd, env=env, stdin=subprocess.PIPE,
                             stdout=log, stderr=log)
     time.sleep(0.5)
@@ -250,7 +254,7 @@ def display_is_blank(env, display, width, height):
     is 0.99994, and a window as small as 200x100 on a 1280x800 display already
     drops it to 0.98 — so the threshold has room on both sides.
     """
-    frame = subprocess.run(
+    frame = subprocess.run(  # noqa: PLW1510 - a failed grab is handled below
         ["ffmpeg", "-hide_banner", "-loglevel", "quiet",
          "-f", "x11grab", "-video_size", f"{width}x{height}",
          "-i", f"{display}.0", "-frames:v", "1",
@@ -328,7 +332,7 @@ def cmd_record(a):
     if command and command[0] == "--":
         command.pop(0)
     if not command:
-        die("give the app to run after `--`, e.g. demoreel record -o out.mp4 -- xclock")
+        die("give the app to run after `--`, e.g. demoreel record -- xclock")
 
     match = SIZE_RE.match(a.size)
     if not match:
@@ -337,7 +341,11 @@ def cmd_record(a):
     if width % 2 or height % 2:
         die("--size needs even numbers; H.264 cannot encode an odd width or height.")
 
-    output = Path(a.output).expanduser().resolve()
+    if a.output:
+        output = Path(a.output).expanduser().resolve()
+    else:
+        stem = re.sub(r"[^A-Za-z0-9._-]", "_", Path(command[0]).name) or "demo"
+        output = Path.cwd() / f"{stem}-{time.strftime('%Y%m%d-%H%M%S')}.mp4"
     output.parent.mkdir(parents=True, exist_ok=True)
 
     applog = Path(a.app_log).expanduser().resolve() if a.app_log else None
@@ -366,7 +374,8 @@ def cmd_record(a):
     # chatter along with it. Worth keeping somewhere when the app says whether
     # what it drew was the real thing — a wrong-but-not-blank recording passes
     # every check this tool can make.
-    appout = open(applog, "wb") if applog else sys.stderr
+    # Deliberate: as above - closed in the finally block, not here.
+    appout = open(applog, "wb") if applog else sys.stderr  # noqa: SIM115
     xvfb = app = ffmpeg = log = auth = None
     blank = False
     try:
@@ -479,7 +488,7 @@ def cmd_stop(a):
     elif len(live) > 1:
         names = ", ".join(sorted(e["name"] for e in live))
         die(f"{len(live)} recordings are running: {names}.\n"
-            f"  Name the one to stop, e.g. demoreel stop {sorted(e['name'] for e in live)[0]}")
+            f"  Name the one to stop, e.g. demoreel stop {min(e['name'] for e in live)}")
 
     for entry in live:
         os.kill(entry["pid"], signal.SIGUSR1)
@@ -491,10 +500,14 @@ def main():
         prog="demoreel",
         description="Record a GUI app on a private virtual display, so nothing "
                     "of your real desktop is in frame.")
+    parser.add_argument("--version", action="version",
+                        version=f"demoreel {__version__}")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     rec = sub.add_parser("record", help="record an app and write a video file")
-    rec.add_argument("-o", "--output", required=True, help="video file to write")
+    rec.add_argument("-o", "--output",
+                     help="video file to write (default: "
+                          "./<app>-<timestamp>.mp4)")
     rec.add_argument("-d", "--duration", type=float, default=30,
                      help="seconds to record; 0 means until `demoreel stop` "
                           "(default: 30)")

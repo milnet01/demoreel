@@ -5,19 +5,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## State
 
 Working. The whole tool is one executable file, `demoreel` — Python 3, standard
-library only, no build step, no dependency manifest, no test suite. Runtime
-dependencies are `Xvfb`, `ffmpeg` and `xdotool`, plus `xwfb-run` and `cage` for
-`--gpu`, all checked at startup against the backend actually in use.
+library only, no build step, no dependency manifest. Runtime dependencies are
+`Xvfb`, `ffmpeg` and `xdotool`, plus `xwfb-run` and `cage` for `--gpu`, all
+checked at startup against the backend actually in use.
+
+`ROADMAP.md` is generated from the roadmap store. Do not hand-edit it — use the
+roadmap verbs, or the next write reverts your edit.
 
 There is no spec and none is wanted; `README.md` is the design contract. The
 sections below are the parts a session is most likely to break by accident.
 
-Verify a change by recording something: `./demoreel record -o /tmp/t.mp4 -d 5
--s 640x480 -- xclock`, then `ffprobe` the result and extract a frame to confirm
-the app is actually in the picture. A valid file proves nothing on its own — a
-black video passes every check except looking at it. Touching the `--gpu` path
-means recording on that path too: `--gpu -- vkcube` is the cheap case, and the
-frame should show a shaded cube rather than a flat colour.
+Verify a change by running `./ci.sh` — the linter, a parse, and a smoke
+recording that samples a frame and fails if the app never reached the picture.
+It is the same script CI runs, and it runs before a push. Add a check there,
+never to the workflow.
+
+The gate covers the `Xvfb` backend only. Touching the `--gpu` path means
+recording on it by hand: `--gpu -- vkcube` is the cheap case, and the frame
+should show a shaded cube rather than a flat colour. A valid file proves
+nothing on its own — a black video passes every check except looking at it.
 
 ## What this tool is
 

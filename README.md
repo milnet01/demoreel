@@ -47,9 +47,16 @@ One command. Give it an app and get back a video file.
 
 ## Using it
 
+`demoreel` is on `PATH`, so it is one word from any directory. Its home is
+`/mnt/Games/Scripts/Linux/demoreel/`; use that absolute path if `PATH` is not
+inherited.
+
 ```sh
-# record an app for 20 seconds
-/mnt/Games/Scripts/Linux/demoreel/demoreel record -o demo.mp4 -d 20 -- kate
+# simplest form: 30 seconds, writes ./kate-<timestamp>.mp4
+demoreel record -- kate
+
+# name the file and set the duration
+demoreel record -o demo.mp4 -d 20 -- kate
 
 # show it being used: scripted steps run in order while recording
 demoreel record -o demo.mp4 -d 20 --cursor \
@@ -60,8 +67,10 @@ demoreel record -o demo.mp4 -d 0 -n mydemo -- myapp &
 demoreel stop mydemo
 ```
 
-It prints the path of the finished video and nothing else — so `out=$(demoreel
-record …)` gives you a path and not a path with the app's chatter stirred in.
+`-o` is optional: without it the file lands in the current directory as
+`<app>-<timestamp>.mp4`. It prints the path of the finished video and nothing
+else — so `out=$(demoreel record …)` gives you a path and not a path with the
+app's chatter stirred in.
 The app's own output goes to stderr, or to a file with `--app-log`. `-s` sets
 the frame size (default `1600x1000`, even numbers only), `-r` the framerate,
 `--cursor` draws the mouse pointer — off by default, since with no scripted
@@ -155,10 +164,14 @@ first needed it.
 
 Three consequences, and they are requirements rather than nice-to-haves:
 
-- **Callable from anywhere.** An absolute path that works regardless of the
-  caller's working directory, and no assumption that the current project is
-  finbreak. Nothing about a target app is hardcoded; the caller passes the
-  command to run.
+- **Callable from anywhere.** A `PATH` symlink and an absolute path that both
+  work regardless of the caller's working directory, and no assumption that the
+  current project is finbreak. Nothing about a target app is hardcoded; the
+  caller passes the command to run.
+- **Discoverable without being told.** A session that has never heard of this
+  tool still has to find it. The `record-demo` skill carries that job: it is a
+  machine-wide skill, so its description loads at the start of every session and
+  a request to record an app routes here on its own.
 - **Safe to run concurrently.** Two sessions may record at the same moment, and
   neither should know about the other. So the display number is *found*, never
   fixed — a hardcoded `:99` is a collision waiting to happen, where the second
@@ -283,6 +296,30 @@ target — a hardware ray-traced renderer, recorded headlessly at 1280x800.
 `--settle` verified against a window that is uniformly black for five seconds
 and then draws: without it the recording is three seconds of black and the
 blank check fails the run; with it the picture is there in the first frame.
+
+## Checks
+
+`./ci.sh` is the whole gate: the linter against the ruleset pinned in
+`ruff.toml`, a parse, and a smoke recording that samples a frame and fails if
+the app never reached the picture. `.github/workflows/ci.yml` installs the
+programs and runs that same script, so a local run and a GitHub run cannot
+drift apart. Add a check to `ci.sh`, never to the workflow.
+
+It runs automatically before a push. A documentation-only push skips it.
+
+## Versioning
+
+`demoreel --version` reports the version.
+[docs/standards/versioning-overrides.md](docs/standards/versioning-overrides.md)
+names the surfaces that count as breaking, and what reaching 1.0 requires.
+
+While the leading zero is there, a breaking change bumps the MINOR and
+everything else — a new capability included — bumps the PATCH.
+
+## Roadmap
+
+`ROADMAP.md` is generated from the roadmap store and should not be hand-edited.
+Query it with the roadmap verbs; a hand edit is reverted by the next write.
 
 ## License
 

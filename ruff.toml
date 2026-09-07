@@ -1,0 +1,12 @@
+# Pinned in the repository so `ruff check` means the same thing here and on CI.
+# Without it the ruleset is whatever the installed ruff defaults to, which moves
+# between releases and lets a local run and CI disagree.
+#
+# PLE/PLW are Pylint's error and warning rules. PLR (refactor) is deliberately
+# absent: it objects to argument counts and branch counts in code that works,
+# and acting on it would mean edits that trace to nothing this tool needs.
+target-version = "py311"
+line-length = 100
+
+[lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "PLE", "PLW", "FURB", "RUF"]
