@@ -126,3 +126,24 @@
   **Layman:** Two version numbers are written down in CI and will go stale unless someone bumps them.
   Kind: chore.
   Source: user-request-2026-09-07.
+
+- 📋 [DEMO-0011] **Two concurrent runs sharing a name clobber each other's state file.**
+  Measured, not inferred. Two `-d 0` recordings started together with no
+  `-n` both write the state file for the name `default`, so the second
+  overwrites the first. Stopping then removes the file and the first run is
+  orphaned: it keeps recording, keeps its display, and `demoreel stop`
+  answers "no recording is running" while it is still going. It had to be
+  signalled by pid to shut down.
+
+  This breaks the concurrency-safety requirement the README states -- the
+  display number is picked safely, but the state file that makes a run
+  addressable is not.
+
+  The display number is already unique per run, so keying the state file by
+  that, or by pid, would remove the collision without a new concept. Note
+  that `cmd_stop` filters by name and then loops, so its loop can only ever
+  print one line today; a fix here changes that, which is a stdout-contract
+  change and therefore breaking.
+  **Layman:** Start two recordings at once without naming them and one becomes impossible to stop.
+  Kind: fix.
+  Source: in-session-2026-09-07.
