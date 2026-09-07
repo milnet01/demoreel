@@ -224,6 +224,25 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: security.
   Source: in-session-2026-09-07.
 
+- 📋 [DEMO-0020] **The privacy promise is argued rather than demonstrated.**
+  Found by a cold reader answering "how would we know it works" from the
+  documents alone. Every other dimension of the stated purpose has a
+  recorded measurement behind it -- the GPU path has a shaded cube, the
+  blank check has grey-level figures, the scripted actions have a click
+  that landed. Privacy has an argument: nothing of the user's session is on
+  the display, so nothing of it can be in frame.
+
+  The argument is sound and the property is the reason the tool exists,
+  which is exactly why it should not be the one claim resting on reasoning.
+
+  What would count, in the reader's own framing: a recording made with the
+  magnifier active and private windows open on the real desktop, with the
+  frames confirmed clean. Once done it belongs in README's verified list
+  beside the others.
+  **Layman:** The one thing this tool exists to guarantee has never been checked in an actual recording.
+  Kind: test.
+  Source: adopt-project-2026-09-07.
+
 ## 0.2.0 — Stricter guards and honest durations
 
 Each of these changes what an existing caller receives, which is what a
