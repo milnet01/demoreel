@@ -279,6 +279,25 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: test.
   Source: cold-read-2026-09-07.
 
+- 📋 [DEMO-0023] **CLAUDE.md changed direction and owes an independent cold read.**
+  Two edits on 2026-09-07 changed what a conforming session does: ROADMAP.md
+  is generated and must not be hand-edited, and a change is verified by
+  running ./ci.sh rather than by recording something by hand. Both change
+  behaviour, so the global rule 14 gate applies.
+
+  It was recorded in the commit body and deliberately not run, because the
+  session had already spent three loops and nine lanes gating
+  docs/standards/versioning-overrides.md. Filing it so the decision is
+  visible somewhere a session will actually look.
+
+  Run it as: review-contract CLAUDE.md --genre standard. Note that the
+  CLAUDE.md class keeps its loop log OUTSIDE the document, in a dated
+  record under docs/, rather than appending a table to a file every session
+  loads.
+  **Layman:** One document was edited in a way that changes what future sessions do, and nobody independent has checked it.
+  Kind: doc.
+  Source: in-session-2026-09-07.
+
 ## 0.2.0 — Stricter guards and honest durations
 
 Each of these changes what an existing caller receives, which is what a
