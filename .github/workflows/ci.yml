@@ -24,9 +24,10 @@ jobs:
             ffmpeg xvfb xdotool x11-apps
 
       - name: Install ruff
-        # Pinned so CI lints with the same ruff a local ./ci.sh run uses.
-        # Keep this in step with the version installed on the dev machine.
-        run: pipx install ruff==0.16.6
+        # The version is ci.sh's, read from ci.sh. A number written here as well
+        # would be a second copy to keep in step by hand, and the full gate fails
+        # locally if the installed ruff is not the one it names.
+        run: pipx install "ruff==$(./ci.sh --ruff-version)"
 
       - name: Decide which mode to run
         # The same decision the local pre-push hook makes, against the same

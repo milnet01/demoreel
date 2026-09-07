@@ -17,8 +17,19 @@ cd "$(dirname "$0")"
 # no second copy to drift: `./ci.sh --docs-glob` is what each of them reads.
 DOCS_GLOB='docs/*|*.md|LICENSE|.github/FUNDING.yml'
 
+# The linter version, owned here and installed from here by the workflow. A
+# version pinned only in the workflow is a second copy: this script would accept
+# whatever ruff happened to be on PATH, so the same commit could lint clean in
+# one place and red in the other. That is the drift this file exists to prevent.
+RUFF_VERSION='0.16.6'
+
 if [ "${1:-}" = "--docs-glob" ]; then
     printf '%s\n' "$DOCS_GLOB"
+    exit 0
+fi
+
+if [ "${1:-}" = "--ruff-version" ]; then
+    printf '%s\n' "$RUFF_VERSION"
     exit 0
 fi
 
@@ -27,37 +38,10 @@ DOCS_ONLY=false
 
 step() { printf '\n=== %s ===\n' "$1"; }
 
-if $DOCS_ONLY; then
-    step "documented flags exist"
-    # README.md is this project's design contract, so a flag it documents and
-    # the tool does not have is a defect in the contract.
-    help=$(./demoreel record --help; ./demoreel --help)
-    undocumented=0
-    for flag in $(grep -oE '`--[a-z-]+`' README.md | tr -d '`' | sort -u); do
-        case "$flag" in --socket|--nosocket|--filesystem|--version) continue ;; esac
-        if ! printf '%s' "$help" | grep -qF -- "$flag"; then
-            echo "README documents $flag, which demoreel does not accept" >&2
-            undocumented=$((undocumented + 1))
-        fi
-    done
-    [ "$undocumented" -eq 0 ] || exit 1
-    echo "every flag README documents is one demoreel accepts"
-
-    step "roadmap and standards are readable"
-    for f in README.md CLAUDE.md ROADMAP.md docs/standards/versioning-overrides.md; do
-        [ -s "$f" ] || { echo "missing or empty: $f" >&2; exit 1; }
-        python3 -c "import sys; open(sys.argv[1], encoding='utf-8').read()" "$f"
-    done
-    echo "all present and valid UTF-8"
-
-    printf '\n=== documentation checks passed ===\n'
-    exit 0
-fi
-
 step "gate wiring"
-# The local hook reads this from git config. If that copy has drifted from the
-# definition above, a documentation-only push is classified differently here
-# and on GitHub -- which is the one thing this script exists to prevent.
+# Runs in BOTH modes, and before the --docs exit on purpose: this is the check
+# that catches the local glob having drifted, and the glob is what decides which
+# mode we are in. Behind that exit it could never fire in the mode it guards.
 configured=$(git config --get ants.gate.docsGlob 2>/dev/null || true)
 if [ -n "$configured" ] && [ "$configured" != "$DOCS_GLOB" ]; then
     echo "ants.gate.docsGlob is '$configured' but ci.sh says '$DOCS_GLOB'" >&2
@@ -65,6 +49,37 @@ if [ -n "$configured" ] && [ "$configured" != "$DOCS_GLOB" ]; then
     exit 1
 fi
 echo "docs glob: $DOCS_GLOB"
+
+step "documented flags exist"
+# Also runs in both modes. README.md is this project's design contract, so a
+# flag it documents and the tool does not accept is a defect in the contract --
+# and a commit that breaks it necessarily touches code, which is exactly the
+# push a documentation-only check would never see.
+help=$(./demoreel record --help; ./demoreel --help)
+undocumented=0
+for flag in $(grep -oE '`-{1,2}[a-z-]+`' README.md | tr -d '`' | sort -u); do
+    # Flags belonging to other programs the caller invokes THROUGH demoreel:
+    # flatpak's sockets, and the -geometry demoreel forwards to Xwayland.
+    case "$flag" in --socket|--nosocket|--filesystem|-geometry) continue ;; esac
+    if ! printf '%s' "$help" | grep -qF -- "$flag"; then
+        echo "README documents $flag, which demoreel does not accept" >&2
+        undocumented=$((undocumented + 1))
+    fi
+done
+[ "$undocumented" -eq 0 ] || exit 1
+echo "every flag README documents is one demoreel accepts"
+
+step "documents are readable"
+for f in README.md CLAUDE.md ROADMAP.md docs/standards/versioning-overrides.md; do
+    [ -s "$f" ] || { echo "missing or empty: $f" >&2; exit 1; }
+    python3 -c "import sys; open(sys.argv[1], encoding='utf-8').read()" "$f"
+done
+echo "all present and valid UTF-8"
+
+if $DOCS_ONLY; then
+    printf '\n=== documentation checks passed ===\n'
+    exit 0
+fi
 
 step "required programs"
 missing=()
@@ -76,7 +91,14 @@ if [ ${#missing[@]} -gt 0 ]; then
     echo "xclock comes from x11-apps; the rest are named in README.md." >&2
     exit 1
 fi
-ruff --version
+actual=$(ruff --version | awk '{print $2}')
+if [ "$actual" != "$RUFF_VERSION" ]; then
+    echo "ruff $actual is installed but this gate is pinned to $RUFF_VERSION" >&2
+    echo "a different linter version is drift: install $RUFF_VERSION, or change" >&2
+    echo "RUFF_VERSION in ci.sh and the two will move together." >&2
+    exit 1
+fi
+echo "ruff $actual (pinned)"
 
 step "lint"
 ruff check .

@@ -15,10 +15,12 @@ roadmap verbs, or the next write reverts your edit.
 There is no spec and none is wanted; `README.md` is the design contract. The
 sections below are the parts a session is most likely to break by accident.
 
-Verify a change by running `./ci.sh` — the linter, a parse, and a smoke
-recording that samples a frame and fails if the app never reached the picture.
-It is the same script CI runs, and it runs before a push. Add a check there,
-never to the workflow.
+Verify a change by running `./ci.sh`. Among its steps: the linter, a parse, a
+check that every flag `README.md` documents is one the tool accepts, and a
+smoke recording that samples a frame and fails if the app never reached the
+picture. It is the same script CI runs, and it runs before a push. Add a check
+there, never to the workflow. `./ci.sh --docs` is the documentation-only
+subset, which a documentation-only push selects.
 
 The gate covers the `Xvfb` backend only. Touching the `--gpu` path means
 recording on it by hand: `--gpu -- vkcube` is the cheap case, and the frame
@@ -125,7 +127,9 @@ something behaves unexpectedly:
 - **`--settle` and the blank check are the same test**, `display_is_blank`, in
   two roles: a gate before recording and an assertion after it. That is
   deliberate — one definition of "nothing is on this display" — and it means
-  the 0.999 threshold is load-bearing in two places. It also sets `--settle`'s
+  the 0.999 threshold is load-bearing in two places. `ci.sh` holds a third
+  copy, as a literal its smoke check asserts against; move it with the other
+  two or the gate stops testing what the tool does. It also sets `--settle`'s
   honest limit: it waits for any pixel variation, not for the app to be ready,
   so a startup screen with a cursor on it counts as drawn (a real `xterm`
   measures 0.977). Do not tune the threshold for one of the two roles alone.
