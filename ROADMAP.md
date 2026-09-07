@@ -279,7 +279,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: test.
   Source: cold-read-2026-09-07.
 
-- 📋 [DEMO-0023] **CLAUDE.md changed direction and owes an independent cold read.**
+- ✅ [DEMO-0023] **CLAUDE.md changed direction and owes an independent cold read.**
   Two edits on 2026-09-07 changed what a conforming session does: ROADMAP.md
   is generated and must not be hand-edited, and a change is verified by
   running ./ci.sh rather than by recording something by hand. Both change
@@ -294,6 +294,38 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   CLAUDE.md class keeps its loop log OUTSIDE the document, in a dated
   record under docs/, rather than appending a table to a file every session
   loads.
+  Resolved (2026-09-07): review-contract, genre standard, three loops of
+  three cold lanes. Nine verified findings, all nine fixed.
+
+  Loop 1 found five: the pipeline listed the scripted actions before
+  ffmpeg when the code records first; the Flatpak section was headed
+  "two extra flags" while its own example passes three; the blank-check
+  trap stated the frame sample unconditionally when it is skipped once
+  the app has exited; "no dependence on the caller's working directory"
+  is a non-negotiable the tool breaches by design; and "ci.sh holds a
+  third copy" of the threshold, when there are two literals.
+
+  Loop 2 found three, one of them loop 1's own over-claim. Loop 3 found
+  one, and it was loop 2's.
+
+  Cap reached at three, and VIOLENT -- the final loop's only finding
+  landed on text this run wrote. Under the skill's own rule, review of
+  the document as it stands ends here and is not to be re-run. Eight of
+  the nine findings were pre-existing rather than in the change that
+  armed the gate, so the run was mostly an audit.
+
+  The loop log is at docs/reviews/claude-md-loop-log.md, kept outside
+  the document because it loads into every session.
+
+  Limitation recorded there and worth repeating: the lanes are not
+  cold and cannot be. Claude Code injects this project's CLAUDE.md as
+  project instructions, so every lane held the document before it read
+  its brief. All six lanes across loops 2 and 3 disclosed this
+  unprompted.
+
+  Two code findings were filed rather than fixed, since this is a
+  documentation gate: DEMO-0024 (the tool and its gate disagree at the
+  exact threshold value) and an annotation on DEMO-0011.
   **Layman:** One document was edited in a way that changes what future sessions do, and nobody independent has checked it.
   Kind: doc.
   Source: in-session-2026-09-07.
