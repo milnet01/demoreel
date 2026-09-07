@@ -305,7 +305,12 @@ the app never reached the picture. `.github/workflows/ci.yml` installs the
 programs and runs that same script, so a local run and a GitHub run cannot
 drift apart. Add a check to `ci.sh`, never to the workflow.
 
-It runs automatically before a push. A documentation-only push skips it.
+It runs automatically before a push. A documentation-only push runs
+`./ci.sh --docs` instead — the flag check and the readability check, not
+nothing. Both the pre-push hook and the workflow classify a push against
+`./ci.sh --docs-glob`, which is the only definition of what counts as
+documentation here; the full gate fails if the local git config has drifted
+from it.
 
 ## Versioning
 
