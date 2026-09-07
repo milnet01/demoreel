@@ -75,9 +75,10 @@ The app's own output goes to stderr, or to a file with `--app-log`. `-s` sets
 the frame size (default `1600x1000`, even numbers only), `-r` the framerate,
 `--cursor` draws the mouse pointer — off by default, since with no scripted
 clicks it just parks in the middle of the picture. `-n` names a run, and
-simultaneous runs need different names: the state files are keyed off it, so
-two unnamed runs share one and only the later can be reached by `stop`.
-Display numbers never collide — `Xvfb` picks those itself.
+simultaneous runs need different names: the state files are keyed off it. Start
+a second unnamed run while the first is recording and it refuses; start both at
+once and only the later can be reached by `stop`. Display numbers never
+collide — `Xvfb` picks those itself.
 
 **`--app-log <path>` keeps what the app printed.** Worth using when the app
 says something about whether it drew the *right* thing. demoreel can tell that

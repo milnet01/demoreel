@@ -62,10 +62,13 @@ Any change that breaks one of these is wrong, even if it makes the tool simpler:
   number inside `xwfb-run`, and demoreel reads it back out. Do not "simplify"
   that to `xwfb-run -n <number>`. The display number is only half of it: every
   file a run writes under the state directory is keyed off `--name`, which
-  defaults to `default`. Measured: two unnamed runs record correctly on
-  separate displays but share one state file, so the second overwrites the
-  first and `demoreel stop` can no longer reach it (DEMO-0011). Never collapse
-  those per-name paths to a fixed filename.
+  defaults to `default`. The state file is written only after recording
+  starts, and that gap decides what two unnamed runs do. Measured both ways:
+  started seconds apart, the second refuses and says to use `--name`; started
+  together, both pass the check before either writes, both record, and the
+  later overwrites the earlier's state file — leaving it unreachable by
+  `demoreel stop` (DEMO-0011). Never collapse those per-name paths to a fixed
+  filename.
 - **Non-interactive.** No prompts, no portal dialogs, no "pick a window" step.
   Needing a human click is what made Kooha and OBS unusable here.
 - **Cleanup on every exit path, including failure.** A leaked `Xvfb` holds its

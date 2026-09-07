@@ -351,6 +351,22 @@ MINOR is spent on while the leading zero is there.
   that `cmd_stop` filters by name and then loops, so its loop can only ever
   print one line today; a fix here changes that, which is a stdout-contract
   change and therefore breaking.
+  Progress (2026-09-07): re-measured during the CLAUDE.md gate, and the
+  defect is narrower than this bullet reads. There IS a guard: a second
+  unnamed run started while the first is recording exits 1 with "a
+  recording named 'default' is already running (pid N). Use --name to
+  tell this run apart from it." Verified by running it.
+
+  The clobber survives only in the check-then-write race. `cmd_record`
+  tests `statefile.exists()` near the start and calls
+  `statefile.write_text(...)` only after `start_ffmpeg`, so two runs
+  launched together both pass the check before either writes. Verified
+  by running that too: both recorded on `:1` and `:2`, and
+  `default.json` held the second run's pid and output.
+
+  So the fix is the ordering, not a new guard -- adding one duplicates
+  what is already there. Do not delete the existing `die()`; it covers
+  every non-race case.
   **Layman:** Start two recordings at once without naming them and one becomes impossible to stop
   Kind: fix.
   Source: in-session-2026-09-07.
