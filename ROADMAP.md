@@ -298,6 +298,25 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: doc.
   Source: in-session-2026-09-07.
 
+- 📋 [DEMO-0024] **The tool and its gate disagree about a frame measuring exactly the threshold.**
+  `display_is_blank` returns `... > 0.999`, so a frame measuring exactly
+  0.999 is NOT blank and the run succeeds. `ci.sh`'s smoke check exits
+  non-zero `if dominant >= 0.999`, so the same frame fails the gate.
+
+  Demonstrated rather than inferred: `0.999 > 0.999` is False and
+  `0.999 >= 0.999` is True.
+
+  CLAUDE.md calls these the same test and tells a session to move every
+  copy of the threshold together. They are not quite the same test, and
+  the difference sits at the one value the whole check turns on.
+
+  Narrow in practice -- a real frame rarely lands on the boundary
+  exactly -- which is why it has gone unnoticed and why it is a PATCH
+  rather than urgent. Pick one comparator and use it in both places.
+  **Layman:** One exact value makes the tool say the app is there and the gate say it never arrived
+  Kind: fix.
+  Source: review-contract-2026-09-07 loop 2.
+
 ## 0.2.0 — Stricter guards and honest durations
 
 Each of these changes what an existing caller receives, which is what a

@@ -74,9 +74,10 @@ app's chatter stirred in.
 The app's own output goes to stderr, or to a file with `--app-log`. `-s` sets
 the frame size (default `1600x1000`, even numbers only), `-r` the framerate,
 `--cursor` draws the mouse pointer — off by default, since with no scripted
-clicks it just parks in the middle of the picture. `-n` names a run so
-concurrent recordings can be told apart; the display number is picked by `Xvfb`
-itself, so two runs never collide.
+clicks it just parks in the middle of the picture. `-n` names a run, and
+simultaneous runs need different names: the state files are keyed off it, so
+two unnamed runs share one and only the later can be reached by `stop`.
+Display numbers never collide — `Xvfb` picks those itself.
 
 **`--app-log <path>` keeps what the app printed.** Worth using when the app
 says something about whether it drew the *right* thing. demoreel can tell that
@@ -176,7 +177,8 @@ Three consequences, and they are requirements rather than nice-to-haves:
   neither should know about the other. So the display number is *found*, never
   fixed — a hardcoded `:99` is a collision waiting to happen, where the second
   run either fails or, worse, quietly records the first run's app. Every
-  per-run artifact (display, temp files) is unique to that run.
+  per-run artifact (display, temp files) is keyed off the run's name, so
+  simultaneous runs need different `-n` values.
 - **Non-interactive.** No prompts, no dialogs, no "pick a window" step. A
   session invokes it, waits, and gets a file. Anything that needs a human to
   click is a design error here — that is precisely what made the existing tools

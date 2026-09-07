@@ -9,6 +9,7 @@ Each row is one `review-contract` loop. Rows are appended, never edited.
 | # | Date | Genre | Lanes | Q1 | Q2 | Q3 | Verified | Fixed | Outcome |
 |---|------|-------|-------|----|----|----|----------|-------|---------|
 | 1 | 2026-09-07 | standard (pinned) | 3 | 4 | 1 | 0 | 5 | 5 | Wrong pipeline order, Flatpak flag count, unconditional blank-check claim, the cwd non-negotiable the tool breaches by design, and a threshold copy that does not exist. All fixed. Three open questions, one of which became finding 4; the other two resolved clean. |
+| 2 | 2026-09-07 | standard (pinned) | 3 | 2 | 0 | 1 | 3 | 3 | Loop 1's own threshold fix over-claimed: "the only other copy" is false, and two lanes said so. The concurrency non-negotiable rested entirely on display-number allocation and never mentioned that every state file is keyed off `--name`. Verifying that turned up a third: `--name` defaults to `default`, and two unnamed runs share one state file. One lane returned no findings. One of three findings landed on text loop 1 wrote. Four open questions, none became a finding. |
 
 ## Standing limitation on every row above
 

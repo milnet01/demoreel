@@ -60,7 +60,12 @@ Any change that breaks one of these is wrong, even if it makes the tool simpler:
   this with a scan for a free number, and never hardcode `:99`. The `--gpu`
   backend keeps the same property by a different route: Xwayland picks the
   number inside `xwfb-run`, and demoreel reads it back out. Do not "simplify"
-  that to `xwfb-run -n <number>`.
+  that to `xwfb-run -n <number>`. The display number is only half of it: every
+  file a run writes under the state directory is keyed off `--name`, which
+  defaults to `default`. Measured: two unnamed runs record correctly on
+  separate displays but share one state file, so the second overwrites the
+  first and `demoreel stop` can no longer reach it (DEMO-0011). Never collapse
+  those per-name paths to a fixed filename.
 - **Non-interactive.** No prompts, no portal dialogs, no "pick a window" step.
   Needing a human click is what made Kooha and OBS unusable here.
 - **Cleanup on every exit path, including failure.** A leaked `Xvfb` holds its
@@ -134,13 +139,14 @@ something behaves unexpectedly:
 - **`--settle` and the blank check are the same test**, `display_is_blank`, in
   two roles: a gate before recording and an assertion after it. That is
   deliberate — one definition of "nothing is on this display" — and it means
-  the 0.999 threshold is load-bearing in two places and written once. `ci.sh`
-  holds the only other copy, as a literal its smoke check asserts against; move
-  the two together or the gate stops testing what the tool does. It also sets
-  `--settle`'s honest limit: it waits for any pixel variation, not for the app
-  to be ready, so a startup screen with a cursor on it counts as drawn (a real
-  `xterm` measures 0.977). Do not tune the threshold for one of the two roles
-  alone.
+  the 0.999 threshold is written once, in `display_is_blank`, and serves both
+  roles. Everywhere else is a copy: the literal `ci.sh` asserts against, and the
+  prose in `README.md` and in the blank-recording trap below. Move every copy
+  with the definition, or the gate stops testing what the tool does. It also
+  sets `--settle`'s honest limit: it waits for any pixel variation, not for the
+  app to be ready, so a startup screen with a cursor on it counts as drawn (a
+  real `xterm` measures 0.977). Do not tune the threshold for one of the two
+  roles alone.
 - **A blank recording is an error, deliberately.** After the duration, one
   frame is sampled and the run fails if more than 99.9% of it is a single
   colour. The sample is skipped when the app has already exited: it left an
