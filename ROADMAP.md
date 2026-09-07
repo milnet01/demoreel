@@ -153,9 +153,9 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: test.
   Source: in-session-2026-09-07.
 
-- 📋 [DEMO-0016] **Warn when a Flatpak target is missing the two flags it needs.**
-  A Flatpak target needs `--socket=x11` and `--nosocket=wayland` on its
-  own command line. Without them the app renders on the real compositor,
+- 📋 [DEMO-0016] **Warn when a Flatpak target is missing the flags it needs.**
+  A Flatpak target needs `--socket=x11`, `--nosocket=wayland` and
+  `--filesystem=/tmp/.X11-unix` on its own command line. Without them the app renders on the real compositor,
   the virtual display stays empty, and the run fails the blank check with
   a message that lists the cause among two possibilities.
 
@@ -371,7 +371,7 @@ covers both display backends and the Flatpak invocation.
   Source: in-session-2026-09-07.
 
 - 📋 [DEMO-0007] **Cover a Flatpak target in the CI gate.**
-  The README documents two flags a Flatpak target needs, and nothing
+  The README documents three flags a Flatpak target needs, and nothing
   checks that the recipe still works. Needs a published application to
   point at.
 

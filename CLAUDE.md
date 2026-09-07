@@ -27,13 +27,17 @@ recording on it by hand: `--gpu -- vkcube` is the cheap case, and the frame
 should show a shaded cube rather than a flat colour. A valid file proves
 nothing on its own — a black video passes every check except looking at it.
 
+This file's review history is kept outside it, in
+`docs/reviews/claude-md-loop-log.md`.
+
 ## What this tool is
 
 One command that records a video of a GUI app running on a **private virtual X
 display** (`Xvfb`), so the user's real desktop never appears in frame. Pipeline:
 start `Xvfb` → launch the caller's app on it → wait for the window and size it
-to the frame → optionally replay scripted `xdotool` actions → record with
-`ffmpeg` → tear everything down.
+to the frame → record with `ffmpeg` → optionally replay scripted `xdotool`
+actions → tear everything down. The actions run while `ffmpeg` is attached, or
+they are not in the video.
 
 The virtual display is not an implementation detail, it is the reason the tool
 exists. Recording the real screen catches private windows and catches KWin's
@@ -45,8 +49,11 @@ screen readable.
 Any change that breaks one of these is wrong, even if it makes the tool simpler:
 
 - **Callable from any Claude Code session, in any project.** Absolute paths;
-  no dependence on the caller's working directory; nothing about any specific
-  app hardcoded — the caller passes the command to run.
+  nothing the tool needs is found relative to the caller's working directory;
+  nothing about any specific app hardcoded — the caller passes the command to
+  run. Paths the caller passes are the deliberate exception: a relative `-o` or
+  `--app-log` resolves against their directory, and an `-o`-less run writes its
+  file there.
 - **Concurrency-safe.** Two sessions may record simultaneously. `Xvfb
   -displayfd` picks the display number and reports it back, so there is no gap
   between "looks free" and "is ours" for a second run to lose. Never replace
@@ -127,16 +134,19 @@ something behaves unexpectedly:
 - **`--settle` and the blank check are the same test**, `display_is_blank`, in
   two roles: a gate before recording and an assertion after it. That is
   deliberate — one definition of "nothing is on this display" — and it means
-  the 0.999 threshold is load-bearing in two places. `ci.sh` holds a third
-  copy, as a literal its smoke check asserts against; move it with the other
-  two or the gate stops testing what the tool does. It also sets `--settle`'s
-  honest limit: it waits for any pixel variation, not for the app to be ready,
-  so a startup screen with a cursor on it counts as drawn (a real `xterm`
-  measures 0.977). Do not tune the threshold for one of the two roles alone.
+  the 0.999 threshold is load-bearing in two places and written once. `ci.sh`
+  holds the only other copy, as a literal its smoke check asserts against; move
+  the two together or the gate stops testing what the tool does. It also sets
+  `--settle`'s honest limit: it waits for any pixel variation, not for the app
+  to be ready, so a startup screen with a cursor on it counts as drawn (a real
+  `xterm` measures 0.977). Do not tune the threshold for one of the two roles
+  alone.
 - **A blank recording is an error, deliberately.** After the duration, one
   frame is sampled and the run fails if more than 99.9% of it is a single
-  colour. The check exists because the failure it catches is silent: a valid
-  file, exit 0, and nothing in the picture. Do not downgrade it to a warning.
+  colour. The sample is skipped when the app has already exited: it left an
+  empty display behind, and that video is fine. The check exists because the
+  failure it catches is silent: a valid file, exit 0, and nothing in the
+  picture. Do not downgrade it to a warning.
 - **A single-instance app will not start on the virtual display.** If a copy is
   already running on the real desktop, the new launch hands over to it and exits
   **0** — a successful process that never shows a window. finbreak behaves this
@@ -156,7 +166,7 @@ something behaves unexpectedly:
   already has focus. An app whose dialogs need stacking or positioning may
   misbehave; the answer would be a minimal WM, not more code here.
 
-## Flatpak targets need two extra flags
+## Flatpak targets need three extra flags
 
 A Flatpak does not inherit an arbitrary `DISPLAY`: a manifest's
 `--socket=fallback-x11` binds the *session's* X socket, not one named later, so
@@ -166,7 +176,8 @@ the app starts with an empty `DISPLAY` and Qt aborts with
     demoreel record -o demo.mp4 -- \
       flatpak run --socket=x11 --nosocket=wayland --filesystem=/tmp/.X11-unix <app-id>
 
-Verified working. `--nosocket=wayland` is load-bearing, not belt-and-braces:
+Verified working. `--filesystem=/tmp/.X11-unix` is what lets the sandbox see
+the socket itself. `--nosocket=wayland` is load-bearing, not belt-and-braces:
 finbreak's manifest is `sockets=fallback-x11;wayland`, and *fallback*-x11 means
 X11 is bound only when Wayland is absent. With the Wayland socket present the
 app never looks at X11, so the virtual display goes unused.
