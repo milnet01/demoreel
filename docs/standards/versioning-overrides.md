@@ -49,7 +49,7 @@ makes them the exception to the line above:
 ## Reaching 1.0
 
 **MAJOR stays 0 until the CI gate exercises both display backends and the
-Flatpak invocation.** Those two, checkable by anyone reading `ci.sh`.
+Flatpak invocation.** All three are checkable by anyone reading `ci.sh`.
 
 Today the gate records on the `Xvfb` backend only. `--gpu` needs a runner with a
 usable graphics card, and the Flatpak path needs a published application to

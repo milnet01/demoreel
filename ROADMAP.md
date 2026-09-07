@@ -243,6 +243,42 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: test.
   Source: adopt-project-2026-09-07.
 
+- 📋 [DEMO-0021] **Three places implement the documentation-only decision; only its value has one home.**
+  `ci.sh --docs-glob` is the single definition of the pattern, and both the
+  workflow and the machine-wide pre-push hook read it. But each then does
+  its own matching: the workflow splits and pattern-matches in its own
+  bash, and the hook does the same again in its own.
+
+  So the value has one home and the semantics have three. Two of them
+  agreeing today is not the same as them being one thing, and the drift
+  would show up as a push classified differently in the two places -- the
+  exact failure the shared script exists to prevent.
+
+  Moving the classification into `ci.sh` behind a flag, so both callers ask
+  it rather than reimplementing it, would close it. The hook is
+  machine-wide and not this project's to change, so this may only be
+  reachable for the workflow half.
+  **Layman:** The rule for what counts as a docs push is written once but acted on in three separate places.
+  Kind: refactor.
+  Source: cold-read-2026-09-07.
+
+- 📋 [DEMO-0022] **The gate never induces a blank recording, so the guard against one is untested.**
+  The smoke step proves a good recording succeeds. Nothing proves a bad one
+  fails.
+
+  That matters more than an ordinary coverage gap because the behaviour is
+  a protected surface the versioning overrides name, and CLAUDE.md says
+  outright not to downgrade it to a warning. Someone could do exactly that
+  and the gate would stay green.
+
+  It is cheap to induce: an app that maps a window and then exits while its
+  parent stays alive leaves the display blank with the run still live,
+  which is the branch that fails. That shape was already used by hand this
+  session to confirm the behaviour, so the gate can use the same one.
+  **Layman:** The check that refuses an empty video has itself never been checked.
+  Kind: test.
+  Source: cold-read-2026-09-07.
+
 ## 0.2.0 — Stricter guards and honest durations
 
 Each of these changes what an existing caller receives, which is what a
