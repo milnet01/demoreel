@@ -580,7 +580,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: fix.
   Source: review-contract-2026-09-07 loop 2.
 
-- 📋 [DEMO-0025] **Action text still sits in demoreel's own command line for the whole run.**
+- 💭 [DEMO-0025] **Action text still sits in demoreel's own command line for the whole run.**
   Found while closing DEMO-0018, by measuring the fix rather than assuming
   it. That item said `xdotool type --file -` leaves "nothing exposed".
   Half true: the text is out of xdotool's argv, and it is still in
@@ -601,6 +601,18 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
 
   Not urgent, and worth stating plainly rather than leaving SECURITY.md
   claiming more than the code does.
+  Decided (2026-09-08) by the user, with the options put: accept it, and
+  record why.
+
+  The caller wrote the secret into a command line themselves and could
+  have passed it another way, so the exposure is theirs to avoid rather
+  than the tool's to remove. Closing it would mean a second way to feed
+  action text in -- a file, or stdin -- which is the input format the
+  scope ceiling rules out, exactly as this item predicted.
+
+  SECURITY.md now says this is a decided limit rather than pending work.
+  Before, it read "Tracked as DEMO-0025", which promised a fix that is not
+  coming.
   **Layman:** Text a script types is no longer visible via the typing tool, but is still visible in demoreel's own command line.
   Kind: security.
   Source: in-session-2026-09-08.
@@ -789,7 +801,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: test.
   Source: recommendation-2026-09-08.
 
-- 📋 [DEMO-0030] **The gate still does not exercise --settle or --cursor.**
+- 💭 [DEMO-0030] **The gate still does not exercise --settle or --cursor.**
   Named when DEMO-0015 closed, and filed here so it is not lost with it.
   Both flags are documented in README.md, and ci.sh mentions neither.
 
@@ -831,6 +843,23 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   threshold -- because it paints a cursor. So covering `--settle` means
   owning a purpose-built X client, which is the trade this item asked to
   weigh. Left for the user to decide rather than decided quietly.
+  Decided (2026-09-08) by the user, with the options put: `--cursor` is
+  covered by the gate, and `--settle` stays hand-verified.
+
+  The fixture this item predicted is real and was checked rather than
+  assumed: it must be uniformly one colour for a known interval and then
+  draw, and nothing installed does that -- this project has already
+  measured a real xterm at 0.977, below the blank threshold, because it
+  paints a cursor. So covering `--settle` means owning a purpose-built X
+  client for the life of the project.
+
+  Weighed as the item asked. The behaviour is already hand-verified and
+  written up in README.md, so what is missing is protection against future
+  regression, not evidence that it works. Not worth a permanent fixture
+  today.
+
+  Closing as considered rather than shipped: half of what this item asked
+  for is done, and saying otherwise would be a false record.
   **Layman:** Two documented options have no automatic check behind them.
   Kind: test.
   Source: recommendation-2026-09-08.
@@ -1216,7 +1245,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: perf.
   Source: optimisation-pass-2026-09-08.
 
-- 📋 [DEMO-0042] **The gate records nine times, one after another, before every push.**
+- 💭 [DEMO-0042] **The gate records nine times, one after another, before every push.**
   `ci.sh` now performs nine `demoreel record` invocations. Seven ask for a
   duration -- 12, 5, 4, 3, 3 seconds and two of zero -- and each pays the
   fixed setup on top. The recording steps dominate the gate's wall time,
@@ -1273,6 +1302,19 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   assertions still hold, is the cheaper and safer place to look.
 
   Left open for the user's call rather than closed on that recommendation.
+  Decided (2026-09-08) by the user, on the measurement above: leave the
+  gate sequential.
+
+  The item's own objection is what decided it. Several steps are
+  timing-sensitive, the stop step already had to be rewritten around a
+  race, and a check that fails at random is worse than a slow one for
+  something that runs before every push. The payoff was at most ten to
+  fifteen seconds of a fifty-four second run.
+
+  The measurement stays useful whatever happens next: three-quarters of
+  the gate is recording, the fixed setup is about 1.4s per run, and the
+  single largest step is the twelve-second scripted-actions run. That last
+  is the cheaper lever if the gate's cost ever does become a problem.
   **Layman:** The pre-push check runs nine separate recordings in a row, and waits for each.
   Kind: perf.
   Source: optimisation-pass-2026-09-08.

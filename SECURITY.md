@@ -53,8 +53,13 @@ not in `xdotool`'s command line. It is still in **demoreel's own**, because the
 caller wrote it there, and a command line is readable by other local users
 through the process list for as long as the process runs — the whole recording,
 not just the typing. Measured both ways. So scripting a demo that types a
-password or a token is still the case to avoid on a shared machine. Tracked as
-DEMO-0025.
+password or a token is the case to avoid on a shared machine.
+
+This is a decided limit, not pending work. Closing it would mean a second way
+to feed action text in — a file, or stdin — which is the input format the scope
+ceiling rules out, and the exposure is the caller's to avoid: they chose to put
+the secret on a command line and can pass it another way. DEMO-0025 records the
+reasoning.
 
 **The video and the logs demoreel writes.** Whatever the app draws is in the
 video, and `--app-log` keeps whatever the app printed. Both are ordinary files
