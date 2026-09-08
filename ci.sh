@@ -155,7 +155,51 @@ step "smoke: record an app and prove it reached the frame"
 # The check that matters. A valid video file proves nothing on its own -- a
 # black recording passes every other test, so sample a frame and measure it.
 tmp=$(mktemp -d)
-trap 'rm -rf "$tmp"' EXIT
+
+# One teardown for the whole gate, not one per step.
+#
+# A -d 0 recording never ends by itself, so a step that fails between starting
+# one and stopping it leaves the recorder alive. The next run then refuses that
+# name, and the failure it reports is the leftover rather than the defect --
+# measured during development, at a cost of two cycles to recognise. Per-step
+# cleanup does not cover it: the branch most likely to fire is the assertion
+# that gives up on finding the run, and that is before the step's own stop.
+#
+# Each step that launches a recorder appends its pid here. demoreel handles
+# SIGTERM by finishing the video and running its own cleanup, so a leftover
+# ends the same way `demoreel stop` would end it -- including the window before
+# the run has written its state file, where stopping it by name cannot work.
+gate_pids=""
+cleanup() {
+    for pid in $gate_pids; do
+        kill "$pid" 2>/dev/null || true
+    done
+    # Give each one a bounded chance to run its own teardown, which is what
+    # takes its Xvfb down with it.
+    for pid in $gate_pids; do
+        for _ in $(seq 1 50); do
+            kill -0 "$pid" 2>/dev/null || break
+            sleep 0.1
+        done
+        kill -KILL "$pid" 2>/dev/null || true
+    done
+    # Then sweep. A recorder signalled before it installed its handlers dies
+    # without tearing anything down, and a leaked Xvfb holds its display number
+    # and poisons the pool for later runs.
+    #
+    # Match on the auth file, which carries the run's name, and only for the
+    # gate's own `gate*` runs. Two sessions may record at once, so killing
+    # every Xvfb this user owns would end someone else's recording. Never
+    # widen this to the process name.
+    for xv in $(pgrep -u "$(id -u)" -x Xvfb 2>/dev/null); do
+        if tr '\0' ' ' < "/proc/$xv/cmdline" 2>/dev/null \
+           | grep -q "demoreel-$(id -u)/gate"; then
+            kill "$xv" 2>/dev/null || true
+        fi
+    done
+    rm -rf "$tmp"
+}
+trap cleanup EXIT
 
 out=$(./demoreel record -o "$tmp/smoke.mp4" -d 5 -s 640x480 -- xclock)
 [ -s "$out" ] || { echo "no video written" >&2; exit 1; }
@@ -235,6 +279,7 @@ step "stop ends a run started with -d 0"
 ./demoreel record -o "$tmp/stopped.mp4" -d 0 -n gatestop -s 640x480 \
     --app-log "$tmp/app.log" -- xclock >/dev/null 2>&1 &
 recorder=$!
+gate_pids="$gate_pids $recorder"
 # Retry rather than waiting on the video file. A run becomes addressable when it
 # writes its state file, and that happens after ffmpeg starts -- so the .mp4
 # exists a moment before stop can find the run by name.
@@ -290,6 +335,7 @@ step "the virtual display refuses a client with no cookie"
 ./demoreel record -o "$tmp/cookie.mp4" -d 0 -n gatecookie -s 640x480 \
     -- xclock >/dev/null 2>"$tmp/cookie.err" &
 cookie_rec=$!
+gate_pids="$gate_pids $cookie_rec"
 disp=""
 for _ in $(seq 1 100); do
     # sed, not grep: this script runs under pipefail, and grep exits 1 when it
