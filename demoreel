@@ -415,11 +415,29 @@ def wait_until_drawn(env, display, width, height, timeout):
     do. Same uniform-frame test as the end-of-run check, used here as a gate
     rather than as an assertion.
     """
+    # Back the poll off as the wait lengthens. Each sample spawns an ffmpeg and
+    # moves a whole frame across a process boundary -- about 112ms of CPU on a
+    # 1600x1000 display -- so a fixed quarter-second poll burns most of a core.
+    # --settle exists for apps that spend seconds building GPU acceleration
+    # structures, which means the sampler was competing for the machine with
+    # the very work it was waiting for.
+    #
+    # Starting tighter than the old fixed interval and widening to a ceiling
+    # answers a fast-drawing app sooner and a slow one far more cheaply. The
+    # ceiling is what it costs: up to that long between the app drawing and the
+    # recorder noticing. That is the right trade here, because the alternative
+    # is taking CPU from the app to find out a second earlier.
+    #
+    # A smaller frame is NOT the lever, and was measured: decimating to a
+    # hundredth of the data gives an all but identical answer and saves about
+    # 10%, because the cost is the process spawn and the capture, not the data.
+    interval, ceiling = 0.1, 1.0
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         if not display_is_blank(env, display, width, height):
             return True
-        time.sleep(0.25)
+        time.sleep(min(interval, max(0.0, deadline - time.monotonic())))
+        interval = min(interval * 1.5, ceiling)
     return False
 
 
