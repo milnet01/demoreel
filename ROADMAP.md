@@ -867,7 +867,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: chore.
   Source: recommendation-2026-09-08.
 
-- 📋 [DEMO-0032] **Decide what the first release's notes actually say before tagging.**
+- ✅ [DEMO-0032] **Decide what the first release's notes actually say before tagging.**
   CHANGELOG.md carries one entry describing what demoreel is, written on
   the grounds that nothing has been tagged, so everything belongs to the
   first release.
@@ -886,6 +886,28 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
 
   Going forward the cheaper habit is to add each item's entry as it lands,
   using the changelog verb, rather than at release time.
+  Decided (2026-09-08) by the user, with the options put: keep the "what
+  this is" entry as the lead, and add named lines for the notable items.
+
+  Six added. Five under Security -- the private display's auth cookie
+  (DEMO-0017), scripted text leaving the process list (DEMO-0018), the
+  run-state directory ownership check (DEMO-0019), stop no longer
+  signalling a process it did not start (DEMO-0036), and the workflow's
+  token and shell hardening (DEMO-0037, DEMO-0038). One under Fixed, the
+  error message that named a cause it could not know (DEMO-0026). One
+  under Added, the pre-push gate now shipping with the repository
+  (DEMO-0027).
+
+  Not a reconstruction from the commit range, which releases.md warns
+  against: every line cites the roadmap item it came from, and the ids
+  were read off the roadmap rather than recalled.
+
+  Reordered so the headline entry leads its section -- the changelog verb
+  inserts at the top of a category, which had put a contributor-facing
+  line above the one describing the tool.
+
+  The habit this item asked for starts here: an entry goes in as its item
+  lands, through the changelog verb, rather than at release time.
   **Layman:** The changelog describes what the tool is, and says nothing about the fixes made since.
   Kind: release.
   Source: recommendation-2026-09-08.
