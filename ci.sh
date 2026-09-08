@@ -281,6 +281,43 @@ got=$(cat "$tmp/typed.txt" 2>/dev/null || true)
 }
 echo "wait, type and key all reached the app"
 
+step "--cursor draws the pointer, and the default leaves it out"
+# Two recordings of the same static app, one with --cursor and one without.
+# Measured while writing this: two runs WITHOUT it are byte-identical in the
+# sampled frame, and adding it changes about 150 bytes of 120000 -- the pointer,
+# sitting in the middle of the picture where README says it sits.
+#
+# xterm running `sleep`, not xclock: a clock has a moving second hand, and a
+# test that compares two frames cannot tell a moving hand from a drawn pointer.
+#
+# The upper bound earns its place. "The frames differ" alone would pass if the
+# two recordings differed for any unrelated reason; a pointer is a small local
+# change, so a large difference means something else moved and the test has
+# stopped measuring what it claims to.
+./demoreel record -o "$tmp/nocursor.mp4" -d 3 -s 400x300 \
+    -- xterm -e sleep 10 >/dev/null
+./demoreel record -o "$tmp/cursor.mp4" -d 3 -s 400x300 --cursor \
+    -- xterm -e sleep 10 >/dev/null
+for f in nocursor cursor; do
+    ffmpeg -v error -i "$tmp/$f.mp4" -vf 'select=eq(n\,30)' -vframes 1 \
+        -f rawvideo -pix_fmt gray "$tmp/$f.raw" -y
+done
+python3 - "$tmp/nocursor.raw" "$tmp/cursor.raw" <<'CURSORPY'
+import pathlib, sys
+off = pathlib.Path(sys.argv[1]).read_bytes()
+on = pathlib.Path(sys.argv[2]).read_bytes()
+if not off or len(off) != len(on):
+    sys.exit(f"could not compare the frames ({len(off)} and {len(on)} bytes)")
+differing = sum(1 for a, b in zip(off, on) if a != b)
+share = differing / len(off)
+print(f"--cursor changed {differing} of {len(off)} bytes ({share * 100:.3f}%)")
+if differing == 0:
+    sys.exit("--cursor changed nothing -- the pointer was not drawn")
+if share > 0.01:
+    sys.exit("the frames differ too much to attribute to a pointer")
+print("--cursor draws the pointer, and the default leaves it out")
+CURSORPY
+
 step "stop ends a run started with -d 0"
 # record -d 0 runs until told to stop, and stop is the only way to end it. It
 # is documented, and nothing proved either half worked.

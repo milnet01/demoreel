@@ -1,0 +1,20 @@
+# Watches the pinned GitHub Actions and opens a pull request when one moves.
+#
+# The workflow pins actions/checkout by commit SHA with a version comment.
+# A SHA does not age visibly: only a reader comparing it against upstream would
+# ever notice, so keeping it current depended on somebody going to look.
+#
+# This does NOT cover the other pinned version. RUFF_VERSION in ci.sh has to
+# move with the ruff actually installed on the machine that runs the gate, which
+# no bot can know -- the gate fails if the two disagree, which is the mechanism
+# there. DEMO-0010 still owns that half.
+#
+# Costs no Actions minutes: Dependabot runs on GitHub's own infrastructure.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore"
