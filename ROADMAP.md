@@ -274,7 +274,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: security.
   Source: in-session-2026-09-07.
 
-- 📋 [DEMO-0019] **The run-state directory falls back to a predictable path under /tmp.**
+- ✅ [DEMO-0019] **The run-state directory falls back to a predictable path under /tmp.**
   `state_dir()` uses XDG_RUNTIME_DIR when set and otherwise
   `/tmp/demoreel-<uid>`, creating it with `exist_ok=True` and then setting
   mode 0700.
@@ -287,6 +287,28 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   fallback path rather than the usual one -- which is also why it would go
   unnoticed. Refusing a directory that is not already owned by the caller
   would close it.
+  Resolved (2026-09-08): state_dir() now lstats the path before using it -- lstat
+  rather than stat, because a symlink planted at that name is followed by stat and
+  by chmod alike -- and stops unless the result is a directory the caller owns. A
+  pre-existing plain file at the name used to raise an uncaught FileExistsError
+  and now says what is wrong.
+
+  Exercised in four situations: a normal run with XDG_RUNTIME_DIR set still works;
+  the /tmp fallback with a planted symlink is refused; a plain file at the name is
+  refused readably; the clean /tmp fallback works and leaves a 0700 directory we
+  own. The ownership branch cannot be reached without root, so it was checked as a
+  predicate against directories that really are root-owned rather than claimed.
+
+  The gate covers it, inside its own scratch directory with XDG_RUNTIME_DIR
+  pointed there -- planting the real name under /tmp would collide with any other
+  recording on the machine. Proved able to fail: with the guard removed the step
+  reddens.
+
+  One correction to this bullet's reasoning. Unguarded, demoreel did not silently
+  adopt a planted path: the chmod that follows fails and the run crashes with a
+  traceback. The exposure worth closing is a symlink to a directory the caller
+  DOES own, where the chmod succeeds and the state writes land wherever the
+  attacker pointed.
   **Layman:** Without one environment variable set, run state lands somewhere another user could have prepared first.
   Kind: security.
   Source: in-session-2026-09-07.
