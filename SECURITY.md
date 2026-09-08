@@ -17,12 +17,13 @@ caller could run the same command directly — but it does mean demoreel is not 
 containment mechanism, and should not be used as one.
 
 **The virtual X display.** The whole point of the tool is that what the app
-draws is private to the run. Under the default `Xvfb` backend the display is
-started with `-nolisten tcp` and **no auth cookie**, so it is closed to the
-network but not to other processes on the same machine. The `--gpu` backend
-does better: it writes an `Xauthority` file at mode 0600 and hands it to every
-client through `XAUTHORITY`. The two backends therefore do not offer the same
-protection, and the weaker one is the default. Tracked as DEMO-0017.
+draws is private to the run. Both backends now put the display behind an
+`MIT-MAGIC-COOKIE-1` cookie in an `Xauthority` file at mode 0600, handed to
+every client through `XAUTHORITY`, and both start with `-nolisten tcp`. A local
+process without the cookie is refused, which was measured before and after: it
+used to read the geometry and grab a frame of whatever was on screen. Socket
+permissions would not have fixed it — `Xvfb` also listens on an abstract socket,
+which has none. The gate covers this.
 
 **The run-state directory.** `state_dir()` uses `XDG_RUNTIME_DIR` when it is
 set, and `/tmp/demoreel-<uid>` when it is not. The fallback name is predictable,

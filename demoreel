@@ -10,6 +10,7 @@ import argparse
 import json
 import os
 import re
+import secrets
 import select
 import shlex
 import shutil
@@ -80,18 +81,32 @@ def alive(pid):
     return True
 
 
-def start_xvfb(width, height):
-    """Start Xvfb on a display number it picks itself.
+def start_xvfb(width, height, name):
+    """Start Xvfb on a display number it picks itself, behind an auth cookie.
 
     -displayfd is why two sessions can record at once: the server finds a free
     number and reports it back, so there is no window between "looks free" and
     "is ours" for a second run to lose.
+
+    The cookie is why another local process cannot watch the recording. Measured
+    on this machine: without one, a client with no credential at all reads the
+    geometry and grabs a frame of whatever is on the display. Socket permissions
+    are no answer — Xvfb also listens on an abstract socket, which has none.
+
+    The number has to come first and the cookie is keyed to it, so the order is:
+    start with an empty auth file, learn the number, write the cookie for it,
+    and SIGHUP the server to re-read. Until that reset the display is open, and
+    nothing has been drawn on it yet — the app is launched afterwards.
     """
+    auth = state_dir() / f"{name}.Xvfb.Xauthority"
+    auth.unlink(missing_ok=True)
+    auth.touch(mode=0o600)
+
     read_fd, write_fd = os.pipe()
     os.set_inheritable(write_fd, True)
     proc = subprocess.Popen(
         ["Xvfb", "-displayfd", str(write_fd), "-screen", "0",
-         f"{width}x{height}x24", "-nolisten", "tcp"],
+         f"{width}x{height}x24", "-nolisten", "tcp", "-auth", str(auth)],
         pass_fds=(write_fd,),
         stdout=subprocess.DEVNULL,
         stderr=subprocess.PIPE,
@@ -115,9 +130,34 @@ def start_xvfb(width, height):
     number = buf.decode(errors="replace").strip()
     if not number.isdigit():
         proc.kill()
+        auth.unlink(missing_ok=True)
         stderr = (proc.stderr.read() or b"").decode(errors="replace").strip()
         die("Xvfb did not start." + (f"\n  {stderr}" if stderr else ""))
-    return proc, f":{number}"
+
+    display = f":{number}"
+    cookie = secrets.token_hex(16)
+    added = subprocess.run(["xauth", "-f", str(auth), "add",
+                            display, "MIT-MAGIC-COOKIE-1", cookie],
+                           capture_output=True, text=True)
+    if added.returncode != 0:
+        proc.kill()
+        auth.unlink(missing_ok=True)
+        die("could not write the display's auth cookie."
+            + (f"\n  {added.stderr.strip()}" if added.stderr.strip() else ""))
+    proc.send_signal(signal.SIGHUP)  # the server re-reads its auth file on reset
+
+    # Do not report success until the cookie is actually in force: a client
+    # connecting before the reset lands would work by having no protection.
+    deadline = time.monotonic() + DISPLAY_READY_TIMEOUT
+    env = dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth))
+    while time.monotonic() < deadline:
+        if xdotool(env, "getdisplaygeometry").returncode == 0:
+            return proc, display, auth
+        time.sleep(0.1)
+    proc.kill()
+    auth.unlink(missing_ok=True)
+    die("the display did not come back after its auth cookie was installed.")
+    return None  # unreachable; die() exits
 
 
 def start_gpu_display(width, height, command, name, logfile, appout):
@@ -373,7 +413,8 @@ def warn_if_flatpak_underflagged(command):
 
 
 def cmd_record(a):
-    required = ["ffmpeg", "xdotool"] + (["xwfb-run", "cage"] if a.gpu else ["Xvfb"])
+    required = (["ffmpeg", "xdotool"]
+                + (["xwfb-run", "cage"] if a.gpu else ["Xvfb", "xauth"]))
     missing = [t for t in required if shutil.which(t) is None]
     if missing:
         die(f"missing required program(s): {', '.join(missing)}")
@@ -437,8 +478,9 @@ def cmd_record(a):
                                                    a.name, displaylog, appout)
             env = dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth))
         else:
-            xvfb, display = start_xvfb(width, height)
-            env = dict(os.environ, DISPLAY=display, WAYLAND_DISPLAY=NO_WAYLAND)
+            xvfb, display, auth = start_xvfb(width, height, a.name)
+            env = dict(os.environ, DISPLAY=display, WAYLAND_DISPLAY=NO_WAYLAND,
+                       XAUTHORITY=str(auth))
             try:
                 app = subprocess.Popen(command, env=env, start_new_session=True,
                                        stdout=appout, stderr=subprocess.STDOUT)

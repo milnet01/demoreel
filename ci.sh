@@ -235,6 +235,43 @@ wait "$recorder" || { echo "the stopped run exited non-zero" >&2; exit 1; }
 [ -f "$tmp/app.log" ] || { echo "--app-log wrote no file" >&2; exit 1; }
 echo "stop ended the run, and --app-log wrote its file"
 
+step "the virtual display refuses a client with no cookie"
+# The display is private or the tool has no point. Measured before this guard
+# existed: a client with no credential at all read the geometry and grabbed a
+# frame of whatever was on screen. Socket permissions cannot fix it, because
+# Xvfb also listens on an abstract socket, which has none.
+./demoreel record -o "$tmp/cookie.mp4" -d 0 -n gatecookie -s 640x480 \
+    -- xclock >/dev/null 2>"$tmp/cookie.err" &
+cookie_rec=$!
+disp=""
+for _ in $(seq 1 100); do
+    # sed, not grep: this script runs under pipefail, and grep exits 1 when it
+    # matches nothing, which kills the run silently while we are still waiting
+    # for the line to appear. sed exits 0 either way.
+    disp=$(sed -n 's/.*recording \(:[0-9][0-9]*\).*/\1/p' "$tmp/cookie.err" | head -1)
+    [ -n "$disp" ] && break
+    sleep 0.2
+done
+if [ -z "$disp" ]; then
+    # Stop the run before failing, or it outlives the gate holding a display,
+    # and the next run refuses the name it is still using.
+    ./demoreel stop gatecookie >/dev/null 2>&1 || kill "$cookie_rec" 2>/dev/null || true
+    echo "the run never reported its display:" >&2
+    cat "$tmp/cookie.err" >&2
+    exit 1
+fi
+set +e
+XAUTHORITY=/dev/null DISPLAY="$disp" xdotool getdisplaygeometry >/dev/null 2>&1
+uncredentialed=$?
+set -e
+./demoreel stop gatecookie >/dev/null
+wait "$cookie_rec" || true
+[ "$uncredentialed" -ne 0 ] || {
+    echo "a client with no cookie read $disp -- the display is not private" >&2
+    exit 1
+}
+echo "a client with no cookie cannot reach the display"
+
 step "a Flatpak target missing its flags is warned about"
 # Without the flags a Flatpak renders on the real compositor and the run fails
 # the blank check with a message naming two possible causes. Saying which one it

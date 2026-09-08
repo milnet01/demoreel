@@ -231,7 +231,8 @@ did not; how many lines that takes is not the measure.
 
 Checked by running them, not assumed:
 
-- `Xvfb`, `xdotool`, `wmctrl` and `ffmpeg` are installed. `xvfb-run` is not.
+- `Xvfb`, `xauth`, `xdotool`, `wmctrl` and `ffmpeg` are installed. `xvfb-run`
+  is not.
 - `Xvfb :99 -screen 0 1600x1000x24` starts, and `xdotool getdisplaygeometry`
   against it returns `1600 1000`. The virtual display works.
 - X11 automation is reliable *inside* Xvfb. The usual warning that `xdotool`
@@ -255,6 +256,13 @@ Checked by running them, not assumed:
 - The `--gpu` display size comes from Xwayland's `-geometry`, not from the
   compositor. Without it, both `cage` and `weston` hand back Xwayland's rootful
   default of 640x480 and `-s` would be silently ignored.
+- **The private display is private to this run, and that is enforced rather
+  than assumed.** Both backends put an `MIT-MAGIC-COOKIE-1` cookie on the
+  display. Measured before the cookie existed: a local client with no
+  credential read the geometry and grabbed a frame of what was on screen.
+  Measured after: the same client is refused, and one holding the run's cookie
+  still works. File permissions on the socket are not an alternative — `Xvfb`
+  listens on an abstract socket too, which has none.
 - **The privacy promise is measured, not just argued.** Every other claim here
   has a measurement behind it; this one rested on the reasoning that nothing of
   the user's session is on the display, so nothing of it can be in frame. Tested

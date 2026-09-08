@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Working. The whole tool is one executable file, `demoreel` — Python 3, standard
 library only, no build step, no dependency manifest. Runtime dependencies are
-`Xvfb`, `ffmpeg` and `xdotool`, plus `xwfb-run` and `cage` for `--gpu`, all
-checked at startup against the backend actually in use.
+`Xvfb`, `xauth`, `ffmpeg` and `xdotool`, plus `xwfb-run` and `cage` for
+`--gpu`, all checked at startup against the backend actually in use.
 
 `ROADMAP.md` is generated from the roadmap store. Do not hand-edit it — use the
 roadmap verbs, or the next write reverts your edit.
@@ -218,10 +218,15 @@ Three details are load-bearing and none is obvious:
   speaks Wayland, so an app left to choose renders natively on it — and a
   native Wayland surface is not in the X root window, so `x11grab` records
   nothing. `vkcube` picks `wayland` there unless told otherwise.
-- **Xwayland demands an auth cookie**, which `Xvfb` does not. So `ffmpeg` and
-  the blank-frame sample take the run's `env` rather than inheriting the
-  session's — otherwise they fail with `Cannot open display`, or silently
-  sample an empty frame.
+- **Both displays are behind an auth cookie, so `ffmpeg` and the blank-frame
+  sample take the run's `env` rather than inheriting the session's** —
+  otherwise they fail with `Cannot open display`, or silently sample an empty
+  frame. Xwayland always demanded one. `Xvfb` had none until 2026-09-08, and a
+  client with no credential could read the display; socket permissions are no
+  substitute, because it also listens on an abstract socket. Its cookie is
+  installed after `-displayfd` reports the number, since the cookie is keyed to
+  it: start with an empty auth file, write the cookie, `SIGHUP` the server to
+  re-read. Do not "simplify" that ordering away.
 
 `weston` is also installed, from testing this. Its headless backend falls back
 to software rendering here (`Failed to initialize glamor`,
