@@ -111,7 +111,7 @@ fi
 
 step "required programs"
 missing=()
-for prog in ruff python3 ffmpeg Xvfb xdotool xclock xterm; do
+for prog in ruff python3 ffmpeg Xvfb xauth xdotool xclock xterm; do
     command -v "$prog" >/dev/null || missing+=("$prog")
 done
 if [ ${#missing[@]} -gt 0 ]; then

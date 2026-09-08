@@ -82,11 +82,11 @@ cannot peek at what is being recorded.
 3. Wait for the app's window, then resize it to fill the frame.
 4. Optionally run your scripted steps — click, type, wait — while recording.
 5. Record for the duration you asked for.
-6. Check the result is not blank. If the app is still running and nothing was
-   ever drawn, that is an error, not a video — the run stops and prints no
-   path, leaving the part-written file on disk. The check is skipped if the app
-   closed itself first: it left an empty screen behind, and that recording is
-   fine.
+6. Look at the private screen one last time. If the app is still running and
+   the screen is a single flat colour, that is an error, not a video — the run
+   stops and prints no path, leaving the part-written file on disk. The check
+   is skipped if the app closed itself first: it left an empty screen behind,
+   and that recording is fine.
 7. Close the app, remove the private screen, leave one video file behind.
 
 Step 6 matters more than it sounds. A recording of nothing is still a perfectly
@@ -98,7 +98,7 @@ you would only find out by watching it.
 | Option | What it does |
 |---|---|
 | `-o` | Where to write the video. Without it, the file lands in the current folder, named after the app and the time. |
-| `-d` | How many seconds to record. `-d 0` means "keep going until I say stop". |
+| `-d` | How many seconds to record, counted from when the scripted steps finish — so a run with `-a` steps lasts longer than this. `-d 0` means "keep going until I say stop". |
 | `-s` | The size of the picture, like `1280x800`. Both numbers must be even. |
 | `-r` | Frames per second. |
 | `-n` | A name for this run, so `demoreel stop` knows which one you mean. |
@@ -108,7 +108,6 @@ you would only find out by watching it.
 | `--settle` | Wait for the app to draw something before starting to record. |
 | `--gpu` | For apps that need the graphics card. |
 | `--startup-timeout` | How long to wait for the app's window to appear. |
-| `--version` | Print the version. |
 
 ### Scripted steps
 
@@ -146,8 +145,9 @@ quietly fell back to low-detail graphics — that recording is not blank, does n
 error, and passes every check here. If your app prints a line proving it loaded
 the real thing, keep the log and check it.
 
-The technical logs are kept automatically whenever a run fails, and deleted when
-it succeeds.
+Your `--app-log` file is yours: demoreel never removes it. Its own internal
+logs, from the recorder and the display, are separate — kept when a run fails so
+there is something to read, and removed when it succeeds.
 
 ### `--settle`: skipping a black startup screen
 
@@ -157,8 +157,9 @@ to trim it off afterwards — which is editing, and editing is deliberately not
 this tool's job.
 
 `--settle 20` waits up to twenty seconds for the screen to stop being one flat
-colour, then starts recording. If nothing is ever drawn it says so and records
-anyway, leaving the blank check to fail the run.
+colour, then starts recording. If nothing is drawn in that time it says so and
+records anyway, leaving the end-of-run check to fail it — subject to the same
+exception as step 6, so an app that closes itself still succeeds.
 
 It is the same test as the blank check at the end of a run, used as a gate
 rather than as a verdict. That is deliberate: one definition of "nothing is on
@@ -409,17 +410,20 @@ documentation-only decision from it rather than restating them. Add a check to
 `ci.sh`, never to the workflow.
 
 It runs automatically before a push. A documentation-only push runs
-`./ci.sh --docs` instead — the flag check and the readability check, not
-nothing. `./ci.sh --docs-glob` is the only definition of what counts as
-documentation here, and the full gate fails if the local git config has drifted
-from it. The workflow does not match against that glob itself: it pipes the
+`./ci.sh --docs` instead — the gate-wiring check, the flag check and the
+readability check, not nothing. `./ci.sh --docs-glob` is the only definition of
+what counts as documentation here, and the gate fails in *both* modes if the
+local git config has drifted from it. That check runs before the documentation
+mode exits, deliberately: the glob is what selects the mode, so a check sitting
+behind that exit could never fire in the mode it guards. The workflow does not match against that glob itself: it pipes the
 changed paths into `./ci.sh --docs-mode` and runs whatever comes back, so the
 decision has one home as well as its value. The pre-push hook is machine-wide,
 so it still does its own matching against the glob.
 
 ## Versioning
 
-`demoreel --version` reports the version.
+`demoreel --version` reports the version. It goes before the subcommand, not
+after it — it is a flag on demoreel itself rather than on `record`.
 [docs/standards/versioning-overrides.md](docs/standards/versioning-overrides.md)
 names the surfaces that count as breaking, what reaching 1.0 requires, and how
 the numbers move while the leading zero is there — which is not what most
