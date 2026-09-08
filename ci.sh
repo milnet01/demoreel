@@ -109,12 +109,13 @@ fi
 
 step "required programs"
 missing=()
-for prog in ruff python3 ffmpeg Xvfb xdotool xclock; do
+for prog in ruff python3 ffmpeg Xvfb xdotool xclock xterm; do
     command -v "$prog" >/dev/null || missing+=("$prog")
 done
 if [ ${#missing[@]} -gt 0 ]; then
     echo "missing: ${missing[*]}" >&2
-    echo "xclock comes from x11-apps; the rest are named in README.md." >&2
+    echo "xclock comes from x11-apps and xterm from its own package; the" >&2
+    echo "gate uses both as targets. The rest are named in README.md." >&2
     exit 1
 fi
 actual=$(ruff --version | awk '{print $2}')
@@ -189,6 +190,50 @@ grep -q 'stayed blank' "$tmp/blank.err" || {
 # Protected by the versioning overrides: the video already written stays.
 [ -s "$tmp/blank.mp4" ] || { echo "the partial video was not left on disk" >&2; exit 1; }
 echo "a blank recording exits non-zero, prints no path, and leaves its file"
+
+step "scripted actions reach the app"
+# The sharpest gap the gate had: a scripted click or keystroke that quietly
+# stops landing still produces a valid-looking video of an app sitting there
+# doing nothing. That is the same silent failure the blank check exists to
+# catch, one level up, and no video inspection finds it.
+#
+# xterm runs a shell that reads one line and writes it to a file, so the app
+# itself reports what arrived. wait, type and key are all exercised; move and
+# click are not, because neither xclock nor xterm reports a click anywhere this
+# script can read.
+typed="hello from the gate"
+./demoreel record -o "$tmp/actions.mp4" -d 12 -s 640x480 \
+    -a 'wait 2' -a "type $typed" -a 'key Return' \
+    -- xterm -e sh -c "read line; printf '%s' \"\$line\" > $tmp/typed.txt" >/dev/null
+got=$(cat "$tmp/typed.txt" 2>/dev/null || true)
+[ "$got" = "$typed" ] || {
+    echo "the app received '$got', not '$typed' -- scripted actions did not land" >&2
+    exit 1
+}
+echo "wait, type and key all reached the app"
+
+step "stop ends a run started with -d 0"
+# record -d 0 runs until told to stop, and stop is the only way to end it. It
+# is documented, and nothing proved either half worked.
+./demoreel record -o "$tmp/stopped.mp4" -d 0 -n gatestop -s 640x480 \
+    --app-log "$tmp/app.log" -- xclock >/dev/null 2>&1 &
+recorder=$!
+# Retry rather than waiting on the video file. A run becomes addressable when it
+# writes its state file, and that happens after ffmpeg starts -- so the .mp4
+# exists a moment before stop can find the run by name.
+stopped=""
+for _ in $(seq 1 100); do
+    if stopped=$(./demoreel stop gatestop 2>/dev/null); then break; fi
+    sleep 0.2
+done
+[ -n "$stopped" ] || { echo "stop never found the running recording" >&2; exit 1; }
+[ "$stopped" = "$tmp/stopped.mp4" ] || {
+    echo "stop printed '$stopped', not the output path" >&2; exit 1; }
+wait "$recorder" || { echo "the stopped run exited non-zero" >&2; exit 1; }
+[ -s "$tmp/stopped.mp4" ] || { echo "stop left no video" >&2; exit 1; }
+# --app-log rode along: same run, and it is documented too.
+[ -f "$tmp/app.log" ] || { echo "--app-log wrote no file" >&2; exit 1; }
+echo "stop ended the run, and --app-log wrote its file"
 
 step "default output name"
 # -o is optional; without it the file is named from the app and a timestamp.
