@@ -34,7 +34,18 @@ demoreel record -o demo.mp4 -d 20 --cursor \
 
 # record until you say stop, rather than for a set time
 demoreel record -o demo.mp4 -d 0 -n mydemo -- myapp &
+
+# ...then, once it has started recording, in the same or another terminal:
 demoreel stop mydemo
+```
+
+`stop` can only find a run once that run is actually recording, which is after
+the app's window has appeared. Run the two lines back to back with no gap and
+the second one says there is no such recording, while the first carries on. If
+you are scripting it rather than typing it, retry until it takes:
+
+```sh
+until demoreel stop mydemo; do sleep 0.2; done
 ```
 
 Everything after `--` is the command that starts your app, exactly as you would
@@ -71,9 +82,10 @@ that exists only for this recording — with no desktop on it, no notifications
 and no magnifier — starts your app there, and films that. Nothing of your real
 session can be in the picture, because your real session is not on that screen.
 
-Nobody else can look at that screen either. It is locked with a one-off password
-(an "auth cookie") that only this run holds, so another program on the machine
-cannot peek at what is being recorded.
+Other people on the machine cannot look at that screen either. It is locked with
+a one-off password (an "auth cookie") that this run holds in a file only you can
+read, so a program running as somebody else is refused. It is not a wall against
+your own programs: anything running as you can read that file.
 
 ### What happens, step by step
 
@@ -98,7 +110,7 @@ you would only find out by watching it.
 | Option | What it does |
 |---|---|
 | `-o` | Where to write the video. Without it, the file lands in the current folder, named after the app and the time. |
-| `-d` | How many seconds to record, counted from when the scripted steps finish — so a run with `-a` steps lasts longer than this. `-d 0` means "keep going until I say stop". |
+| `-d` | How many seconds to record, counted from when the scripted steps finish — so a run with `-a` steps lasts longer than this. `-d 0` means "keep going until I say stop, or until the app closes itself, whichever comes first". |
 | `-s` | The size of the picture, like `1280x800`. Both numbers must be even. |
 | `-r` | Frames per second. |
 | `-n` | A name for this run, so `demoreel stop` knows which one you mean. |
@@ -247,6 +259,10 @@ Four requirements follow, and they are requirements rather than preferences:
   same moment and neither should know about the other. So the private screen is
   *found*, never fixed — a hardcoded one is a collision waiting to happen, where
   the second run either fails or, worse, quietly records the first run's app.
+  The screen has to report its own number back (that is what `Xvfb -displayfd`
+  does, and Xwayland's own inside `xwfb-run`). Scanning for a free number is not
+  a substitute: between finding one free and claiming it, another run can take
+  it.
   Everything a run writes is keyed to its name, so simultaneous runs need
   different `-n` values.
 - **Never asks you anything.** No prompts, no dialogs, no "pick a window" step.
@@ -409,16 +425,24 @@ programs and runs that same script, and takes the linter version and the
 documentation-only decision from it rather than restating them. Add a check to
 `ci.sh`, never to the workflow.
 
+**It covers the ordinary backend only.** No step runs `--gpu`, and the Flatpak
+step uses a stand-in rather than a real Flatpak. So a green gate says nothing
+about either path: a change to one has to be checked by recording on it by
+hand, and by *looking* at the result — a black video passes every automatic
+check there is.
+
 It runs automatically before a push. A documentation-only push runs
 `./ci.sh --docs` instead — the gate-wiring check, the flag check and the
 readability check, not nothing. `./ci.sh --docs-glob` is the only definition of
 what counts as documentation here, and the gate fails in *both* modes if the
 local git config has drifted from it. That check runs before the documentation
 mode exits, deliberately: the glob is what selects the mode, so a check sitting
-behind that exit could never fire in the mode it guards. The workflow does not match against that glob itself: it pipes the
-changed paths into `./ci.sh --docs-mode` and runs whatever comes back, so the
-decision has one home as well as its value. The pre-push hook is machine-wide,
-so it still does its own matching against the glob.
+behind that exit could never fire in the mode it guards.
+
+The workflow does not match against that glob itself: it pipes the changed paths
+into `./ci.sh --docs-mode` and runs whatever comes back, so the decision has one
+home as well as its value. The pre-push hook is machine-wide, so it still does
+its own matching against the glob.
 
 ## Versioning
 
