@@ -119,6 +119,13 @@ something behaves unexpectedly:
   unresolvable name → window appears.
 - An empty 1280x800 Xvfb is 99.994% one grey level; a 200x100 window drops that
   to 98%. That gap is what the blank-recording check is calibrated against.
+- **demoreel's process name is `python3`, not `demoreel`.** It is a script run
+  through its shebang, so the kernel takes the name from the interpreter.
+  `pgrep -x demoreel` therefore matches nothing and always reports success,
+  whatever is running. Checking for a leaked run means the Xvfb it started, its
+  state file, or the pid the caller already holds. This cost most of DEMO-0029:
+  every "no recorder left behind" reading came from that check and was true by
+  construction, while a real leak went on being reported as clean.
 - `-a` actions reach the app on the `--gpu` path as well as under Xvfb —
   measured with a click and a keystroke against `gtk4-demo` on the compositor,
   both landing. No auth or DISPLAY difference for xdotool beyond the run's env,

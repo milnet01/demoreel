@@ -1035,6 +1035,24 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   and the signal -- but that window is microseconds against however long a
   stale file has been lying around. Said so in the code rather than
   implying the hole is fully closed.
+  Release level (2026-09-08), decided by the user and recorded here
+  because nothing else on disk carries it.
+
+  This fix changes `stop`'s exit status in an observable case: against a
+  state file whose process is not ours it used to exit 0 and print a path,
+  and now exits 1 saying no recording is running. versioning-overrides.md
+  protects "the exit status generally" and says its list is not
+  exhaustive, so under the 0.x ladder a break would have earned 0.2.0
+  rather than 0.1.1.
+
+  Judged NOT a break, and shipped in 0.1.1. The old exit 0 was the defect
+  rather than a promise: in that situation no recording IS running, so the
+  tool now answers what it documents, and the old answer came bundled with
+  terminating an unrelated process. Nothing could sensibly have depended
+  on it.
+
+  Written down because the next release will meet this question again and
+  the reasoning is not derivable from the diff.
   **Layman:** If a recording is killed abruptly, a later stop can kill an unrelated program instead.
   Kind: security.
   Source: check-code-2026-09-08.
