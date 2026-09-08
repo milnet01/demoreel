@@ -21,7 +21,7 @@ import sys
 import time
 from pathlib import Path
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 SIZE_RE = re.compile(r"^(\d+)x(\d+)$")
 DISPLAY_READY_TIMEOUT = 15.0

@@ -12,6 +12,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-08
+
 ### Added
 
 - **demoreel records a GUI app on a private virtual display.** One command
