@@ -252,6 +252,36 @@ wait "$recorder" || { echo "the stopped run exited non-zero" >&2; exit 1; }
 [ -f "$tmp/app.log" ] || { echo "--app-log wrote no file" >&2; exit 1; }
 echo "stop ended the run, and --app-log wrote its file"
 
+step "stop refuses a state file whose process is not ours"
+# A run killed with SIGKILL never reaches the cleanup in its `finally` block,
+# so its state file outlives it -- and Linux recycles pids. Before the run's
+# start time was recorded alongside the pid, stop asked only whether SOME
+# process held that number and sent it SIGUSR1, whose default action is to
+# terminate. Demonstrated at the time against a plain `sleep`, which died
+# reporting "User defined signal 1", while stop printed a path and exited 0.
+statedir="${XDG_RUNTIME_DIR:-/tmp}/demoreel-$(id -u)"
+mkdir -p "$statedir" && chmod 700 "$statedir"
+sleep 60 &
+victim=$!
+# A start time of 1 belongs to no real process: the field counts clock ticks
+# since boot, so anything running now is far past it. That is the recycled-pid
+# case -- right pid, wrong incarnation.
+printf '{"name":"gatestale","pid":%d,"starttime":"1","display":":9","output":"%s"}\n' \
+    "$victim" "$tmp/never.mp4" > "$statedir/gatestale.json"
+if ./demoreel stop gatestale >/dev/null 2>&1; then
+    kill "$victim" 2>/dev/null || true
+    echo "stop acted on a state file whose recorded start time does not match" >&2
+    exit 1
+fi
+if ! kill -0 "$victim" 2>/dev/null; then
+    echo "stop signalled a process it never started" >&2
+    exit 1
+fi
+kill "$victim" 2>/dev/null || true
+wait "$victim" 2>/dev/null || true
+rm -f "$statedir/gatestale.json"
+echo "stop left the unrelated process alone"
+
 step "the virtual display refuses a client with no cookie"
 # The display is private or the tool has no point. Measured before this guard
 # existed: a client with no credential at all read the geometry and grabbed a

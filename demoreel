@@ -81,6 +81,47 @@ def alive(pid):
     return True
 
 
+def proc_starttime(pid):
+    """The process's start time, field 22 of /proc/<pid>/stat.
+
+    Unique per pid incarnation, which is what tells a recycled pid apart from
+    the process we started. Field 2 is the command name in parentheses and may
+    itself contain spaces and parentheses, so the fields are split after the
+    LAST ')' rather than on the whole line.
+    """
+    try:
+        line = Path(f"/proc/{pid}/stat").read_text()
+    except OSError:
+        return None
+    try:
+        return line[line.rindex(")") + 1:].split()[19]
+    except (ValueError, IndexError):
+        return None
+
+
+def is_our_run(entry):
+    """True when the process a state file names is still the run that wrote it.
+
+    alive() alone asks only whether SOME process holds that pid. A run killed
+    with SIGKILL, or lost to a power cut, never reaches the cleanup in its
+    `finally` block, so its state file outlives it -- and Linux recycles pids.
+    Acting on alive() alone sends SIGUSR1 to whatever inherited the number, and
+    the default action for SIGUSR1 is to terminate.
+
+    Comparing the start time recorded when the file was written closes that.
+    A race remains in principle -- the process could exit between this check
+    and the signal -- but that window is microseconds, against however long a
+    stale file has been lying around.
+    """
+    pid = entry.get("pid")
+    if not isinstance(pid, int) or not alive(pid):
+        return False
+    # A file written without a start time cannot be checked, and an entry that
+    # cannot be checked is the one this exists to refuse.
+    recorded = entry.get("starttime")
+    return recorded is not None and proc_starttime(pid) == recorded
+
+
 def start_xvfb(width, height, name):
     """Start Xvfb on a display number it picks itself, behind an auth cookie.
 
@@ -447,11 +488,12 @@ def cmd_record(a):
     statefile = state_dir() / f"{a.name}.json"
     if statefile.exists():
         try:
-            running = json.loads(statefile.read_text())["pid"]
-        except (ValueError, KeyError):
-            running = None
-        if running and alive(running):
-            die(f"a recording named {a.name!r} is already running (pid {running}).\n"
+            entry = json.loads(statefile.read_text())
+        except ValueError:
+            entry = None
+        if isinstance(entry, dict) and is_our_run(entry):
+            die(f"a recording named {a.name!r} is already running "
+                f"(pid {entry['pid']}).\n"
                 f"  Use --name to tell this run apart from it.")
         statefile.unlink()
 
@@ -503,8 +545,9 @@ def cmd_record(a):
         ffmpeg, log = start_ffmpeg(env, display, width, height, a.framerate,
                                    output, logpath, a.cursor)
         statefile.write_text(json.dumps({
-            "name": a.name, "pid": os.getpid(), "display": display,
-            "output": str(output),
+            "name": a.name, "pid": os.getpid(),
+            "starttime": proc_starttime(os.getpid()),
+            "display": display, "output": str(output),
         }))
         note(f"recording {display} to {output} "
              f"({'until stopped' if a.duration == 0 else f'{a.duration}s'})")
@@ -567,7 +610,9 @@ def cmd_stop(a):
             entry = json.loads(f.read_text())
         except ValueError:
             continue
-        if alive(entry["pid"]):
+        if not isinstance(entry, dict):
+            continue
+        if is_our_run(entry):
             live.append(entry)
         else:
             f.unlink(missing_ok=True)
