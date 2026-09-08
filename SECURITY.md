@@ -31,10 +31,13 @@ another user can create that path first and have demoreel adopt it. A desktop
 session sets `XDG_RUNTIME_DIR`, so this is the unusual path rather than the
 common one — which is also why it would go unnoticed. Tracked as DEMO-0019.
 
-**Text given to `-a type`.** It reaches `xdotool` as a command-line argument,
-and command lines are readable by other local users through the process list for
-as long as the process runs. Scripting a demo that types a password or a token
-is the case to avoid. Tracked as DEMO-0018.
+**Text given to `-a type`.** demoreel hands it to `xdotool` on stdin, so it is
+not in `xdotool`'s command line. It is still in **demoreel's own**, because the
+caller wrote it there, and a command line is readable by other local users
+through the process list for as long as the process runs — the whole recording,
+not just the typing. Measured both ways. So scripting a demo that types a
+password or a token is still the case to avoid on a shared machine. Tracked as
+DEMO-0025.
 
 **The video and the logs demoreel writes.** Whatever the app draws is in the
 video, and `--app-log` keeps whatever the app printed. Both are ordinary files

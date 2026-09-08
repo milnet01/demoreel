@@ -159,9 +159,12 @@ def start_gpu_display(width, height, command, name, logfile, appout):
     return proc, display, auth
 
 
-def xdotool(env, *args, check=False):
+def xdotool(env, *args, check=False, stdin_text=None):
+    """stdin_text feeds `type --file -`, which is how text stays out of the
+    process list; every other call leaves stdin alone."""
     return subprocess.run(["xdotool", *[str(a) for a in args]], env=env,
-                          capture_output=True, text=True, check=check)
+                          input=stdin_text, capture_output=True, text=True,
+                          check=check)
 
 
 def window_area(env, wid):
@@ -213,7 +216,12 @@ def run_action(spec, env):
             xdotool(env, "mousemove", "--sync", args[0], args[1])
         xdotool(env, "click", "1")
     elif verb == "type":
-        xdotool(env, "type", "--delay", "60", " ".join(args))
+        # --file - takes the text on stdin. As an argument it sits in the
+        # process list, readable by any other local user, for as long as the
+        # typing lasts — and at 60ms a keystroke that is seconds. A demo that
+        # types into a login form is the obvious thing to script.
+        xdotool(env, "type", "--delay", "60", "--file", "-",
+                stdin_text=" ".join(args))
     elif verb == "key":
         xdotool(env, "key", *args)
     else:
