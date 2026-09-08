@@ -127,10 +127,11 @@ if not raw:
     sys.exit("could not decode the sampled frame")
 dominant = collections.Counter(raw).most_common(1)[0][1] / len(raw)
 print(f"dominant grey level: {dominant:.4f}")
-# demoreel calls a display blank above 0.999. An empty Xvfb measures ~0.9999;
-# a window on it drops well below. Anything at or above the threshold here means
-# the app never reached the picture.
-if dominant >= 0.999:
+# demoreel calls a display blank above 0.999, and this is a copy of that test:
+# the comparator must match display_is_blank's, or a frame measuring exactly the
+# threshold passes the tool and fails the gate. An empty Xvfb measures ~0.9999;
+# a window on it drops well below.
+if dominant > 0.999:
     sys.exit("the frame is a flat colour -- the app never reached the recording")
 print("the app is in the frame")
 PY
