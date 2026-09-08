@@ -605,7 +605,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: security.
   Source: in-session-2026-09-08.
 
-- 📋 [DEMO-0026] **Any app that exits 0 without a window is told it is a single-instance app.**
+- ✅ [DEMO-0026] **Any app that exits 0 without a window is told it is a single-instance app.**
   Surfaced by a cold lane during the README gate, as a code-side note
   rather than a document finding.
 
@@ -626,11 +626,21 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
 
   Not urgent and not a correctness defect -- the run fails either way, and
   it fails for a real reason.
+  Resolved (2026-09-08). The message now states what happened, offers the
+  hand-over as the LIKELY cause, and names the other case -- a command
+  that finished without needing a window.
+
+  Demonstrated while working on this, which is what the item predicted:
+  `demoreel record -- true` was told to close a copy of itself.
+
+  Stderr text is explicitly not a protected surface
+  (versioning-overrides.md § What is not a breaking surface), so this is
+  not a breaking change.
   **Layman:** One error message explains a failure with a cause that may not be the real one.
   Kind: enhancement.
   Source: review-contract-2026-09-08 loop 3.
 
-- 📋 [DEMO-0027] **A fresh clone of this repository has no gate at all.**
+- ✅ [DEMO-0027] **A fresh clone of this repository has no gate at all.**
   The pre-push gate reaches this project through two settings that live
   outside it. `core.hooksPath` is `/home/ants/.claude/githooks`, an
   absolute path on this machine, and `ants.gate.command` is `./ci.sh` in
@@ -649,11 +659,34 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   A repository-local `.githooks/pre-push` that execs `./ci.sh`, plus one
   line in the README telling a contributor to run `git config
   core.hooksPath .githooks`, would make the gate travel with the code.
+  Resolved (2026-09-08). `.githooks/pre-push` now travels with the code,
+  and README.md gives the one command that turns it on.
+
+  Kept thin: ci.sh already owns the glob and the matching, so the hook
+  only finds the push range and hands the changed paths to `./ci.sh
+  --docs-mode` -- the same division the GitHub workflow uses, so the mode
+  decision still has one home. It gates the pushed commits in a detached
+  worktree rather than the working tree, because those are the same only
+  when the tree is clean.
+
+  Verified all three paths by feeding it a push range directly rather than
+  assuming: a code push ran the full gate and exited 0, a
+  documentation-only push selected `./ci.sh --docs` and exited 0, and a
+  commit with a deliberately broken gate step was refused with "gate
+  FAILED ... push aborted" and exit 1. shellcheck clean.
+
+  Corrected the README while there. It claimed the gate "runs
+  automatically before a push" -- true only on the machine that had
+  configured it -- and described the hook as machine-wide doing its own
+  glob matching, which is not true of the hook this repository now ships.
+
+  Not enabled in this checkout: core.hooksPath here still points at the
+  machine-wide hook, which is the user's setup to change.
   **Layman:** The check that runs before a push is set up on this machine, not in the project, so nobody else gets it.
   Kind: chore.
   Source: recommendation-2026-09-08.
 
-- 📋 [DEMO-0028] **The blank threshold still has two homes; the project already solved this twice.**
+- ✅ [DEMO-0028] **The blank threshold still has two homes; the project already solved this twice.**
   DEMO-0024 fixed the comparators disagreeing. The duplication that
   allowed it is still there: `display_is_blank` holds the threshold and
   its comparator, and ci.sh's smoke assertion holds its own copy of both.
@@ -688,6 +721,24 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   So whichever direction this item takes, it should move the tool's expression
   rather than the gate's, and say why in a comment -- otherwise the next reader
   sees an obviously worse-looking loop and tidies it into the Counter form.
+  Resolved (2026-09-08). The threshold and its comparator are now
+  `BLANK_THRESHOLD` and `frame_is_flat` in demoreel, and ci.sh imports
+  them rather than restating them -- the same answer this project reached
+  for `ci.sh --ruff-version` and `--docs-glob`, pointing the other way.
+  Importing runs nothing: demoreel's module level is imports and
+  constants, and main() is behind an `__name__` guard.
+
+  Kept the tool's expression rather than the gate's, as this item's
+  measurement said to, and recorded why beside it -- otherwise the next
+  reader tidies it into Counter.most_common and makes the polling case
+  worse.
+
+  No new flag. `demoreel --blank-threshold` was the suggestion here, but
+  the command line is a protected surface and a permanent public flag is
+  too much to pay for a test convenience. Loading the module by path costs
+  nothing and adds no surface.
+
+  CLAUDE.md's trap was updated: ci.sh is no longer one of the copies.
   **Layman:** One number is written down in two files, and keeping them in step is nobody's job.
   Kind: refactor.
   Source: recommendation-2026-09-08.
