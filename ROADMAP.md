@@ -660,6 +660,23 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   command-line surface, which the versioning overrides make a protected
   surface -- so it is worth deciding whether a hidden argument or a
   smaller mechanism is better before adding it.
+  Measured (2026-09-08): unifying the two copies means choosing a cost profile
+  too, and neither copy is uniformly better.
+
+  The tool counts with `max(frame.count(v) for v in set(frame))`, which is one
+  pass per distinct byte value. The gate's copy uses `Counter(...).most_common(1)`,
+  a single pass. On a 1600x1000 frame they agree exactly on the value, and their
+  cost inverts with the picture: on an empty display, one distinct value, the
+  tool's form is about five times FASTER; on a busy screen with 256 distinct
+  values it is about twice as slow.
+
+  That favours keeping the tool's form as the shared one. The case it wins is a
+  blank display, which is exactly what `wait_until_drawn` polls against, and the
+  case it loses is sampled once at the end of a run.
+
+  So whichever direction this item takes, it should move the tool's expression
+  rather than the gate's, and say why in a comment -- otherwise the next reader
+  sees an obviously worse-looking loop and tidies it into the Counter form.
   **Layman:** One number is written down in two files, and keeping them in step is nobody's job.
   Kind: refactor.
   Source: recommendation-2026-09-08.
@@ -902,6 +919,66 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: chore.
   Source: check-code-2026-09-08.
 
+- 📋 [DEMO-0041] **While --settle waits for an app to draw, it competes with it for the machine.**
+  `wait_until_drawn` polls `display_is_blank` every 0.25 s, and each call
+  spawns a fresh ffmpeg to grab one frame off the display.
+
+  Measured in CPU time rather than wall clock, because the machine was
+  building something else at the time and a wall-clock figure from a
+  contended machine is not a slow number, it is no number at all. One
+  sample costs about 112 ms of CPU on a 1600x1000 display and moves 1.6 MB
+  across a process boundary. Polling every 250 ms, that is most of a core
+  for as long as the wait lasts.
+
+  It bites only when `--settle` is used, and that is the sharp end of it:
+  `--settle` exists for apps that spend seconds building GPU acceleration
+  structures, so the sampler is burning CPU on the same machine, at the
+  same moment, as the work it is waiting for. A default run samples once
+  at the end and pays this no attention.
+
+  One obvious idea was measured and does NOT work. Decimating the frame
+  before counting -- `scale=128:80:flags=neighbor`, a hundredth of the
+  data -- gives an all but identical answer (0.98056 against 0.98057 on a
+  small window, same verdict on an empty display) and saves only about
+  10%, because the cost is the process spawn and the capture, not the
+  data. So a smaller frame is not the lever.
+
+  What is left to investigate: back the poll off as the wait lengthens, or
+  keep one sampler alive instead of spawning per poll. The second is
+  faster and larger -- it means holding an ffmpeg open or talking X
+  directly, and the project is standard-library-only by design.
+  **Layman:** The check that waits for the app to appear is itself expensive, and runs four times a second.
+  Kind: perf.
+  Source: optimisation-pass-2026-09-08.
+
+- 📋 [DEMO-0042] **The gate records nine times, one after another, before every push.**
+  `ci.sh` now performs nine `demoreel record` invocations. Seven ask for a
+  duration -- 12, 5, 4, 3, 3 seconds and two of zero -- and each pays the
+  fixed setup on top. The recording steps dominate the gate's wall time,
+  and the gate runs before every push as well as on CI.
+
+  The steps are independent by construction. Each run gets its own display
+  number from the server rather than choosing one, and the two that need
+  naming already use distinct `-n` values, so nothing about them requires
+  running in sequence.
+
+  Against that, two real objections. Parallel recordings contend for CPU
+  on the runner, and several of these steps are timing-sensitive -- the
+  stop step already had to be rewritten around a race, and the cookie step
+  left an orphan when it failed. Making them concurrent could trade a
+  minute of wall time for a flaky gate, which is a bad trade for a check
+  that gates every push.
+
+  So this is an investigation, not a plan. Measure the gate's wall time on
+  a quiet machine first -- nothing here has, because the machine was busy
+  during this pass -- and if the recordings are as dominant as their
+  durations suggest, try the two cheapest steps concurrently before
+  reaching for the rest. DEMO-0029's teardown trap should land first;
+  parallel steps make an orphan harder to attribute, not easier.
+  **Layman:** The pre-push check runs nine separate recordings in a row, and waits for each.
+  Kind: perf.
+  Source: optimisation-pass-2026-09-08.
+
 ## 0.2.0 — Stricter guards and honest durations
 
 Each of these changes what an existing caller receives, which is what a
@@ -971,6 +1048,24 @@ MINOR is spent on while the leading zero is there.
   together gets lengths it did not choose. Note that making `-d` mean what
   it says changes what an existing flag means, which the versioning
   overrides make a breaking change.
+  Measured (2026-09-08) during an optimisation pass, so whoever implements this
+  has the anatomy rather than the symptom.
+
+  The fixed second is two half-second sleeps and nothing else: one in
+  `start_ffmpeg` after the recorder is launched, one in `cmd_record` after the
+  window is moved and sized. A third, 0.1 s, was added later in `start_xvfb`
+  while waiting for the auth cookie to take effect -- that one already polls a
+  real condition rather than sleeping blind, and is the shape the other two
+  want.
+
+  On top of those, the wait loops poll on a 0.25 s granularity, so a window that
+  appears just after a poll costs up to another quarter second, and the duration
+  loop polls at 0.2 s, which is part of the overshoot half of this item.
+
+  One thing NOT worth pursuing, measured rather than assumed: `wait_for_window`
+  spawning an xdotool per poll costs about 2.1 ms of CPU each. It is negligible
+  against the sleeps, so waiting on the condition is the whole of the win here
+  and the process spawns are not worth removing.
   **Layman:** Ask for a 3 second clip and you get just over 4 seconds, after a second of waiting
   Kind: perf.
   Source: in-session-2026-09-07.
