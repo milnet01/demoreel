@@ -16,6 +16,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          # Without this the job's token is written into .git/config and stays
+          # readable for the rest of the job -- by every later step, and by the
+          # linter, the recorder and the target apps that ./ci.sh starts. None
+          # of that needs the token. This job only reads, so nothing here has
+          # to authenticate.
+          persist-credentials: false
 
       - name: Install the programs demoreel needs
         run: |
@@ -35,11 +41,19 @@ jobs:
         # changed paths. A range we cannot resolve falls back to the full gate,
         # never to the docs one.
         id: mode
+        # Every value arrives through env, so the shell sees data. Expanded as
+        # ${{ }} it would be substituted into the script before the shell runs,
+        # which makes it code -- see the note on the gate step below.
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          case "${{ github.event_name }}" in
-            pull_request) base='${{ github.event.pull_request.base.sha }}'; head='${{ github.sha }}' ;;
-            push)         base='${{ github.event.before }}';               head='${{ github.sha }}' ;;
+          case "$EVENT_NAME" in
+            pull_request) base="$PR_BASE_SHA";     head="$HEAD_SHA" ;;
+            push)         base="$PUSH_BEFORE_SHA"; head="$HEAD_SHA" ;;
             *)            base=''; head='' ;;
           esac
 
@@ -57,4 +71,17 @@ jobs:
       - name: Run the gate
         # Every check lives in ci.sh. Nothing is added here, or the local run
         # and this one would stop being the same thing.
-        run: ./ci.sh ${{ steps.mode.outputs.mode }}
+        #
+        # MODE arrives through env rather than as ${{ }}. GitHub substitutes a
+        # ${{ }} expression into the script before the shell sees it, so the
+        # value would be code rather than an argument. Nothing can inject
+        # through it today, because the value comes from `ci.sh --docs-mode`
+        # and that prints `--docs` or nothing -- but that guarantee is a fact
+        # about a script which will keep changing, checked by nobody. This
+        # removes the question instead of answering it.
+        #
+        # Quoted, and empty when the full gate is wanted: ci.sh reads its
+        # argument as "${1:-}", so an empty one is simply not "--docs".
+        env:
+          MODE: ${{ steps.mode.outputs.mode }}
+        run: ./ci.sh "$MODE"
