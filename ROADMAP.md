@@ -594,6 +594,31 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: security.
   Source: in-session-2026-09-08.
 
+- 📋 [DEMO-0026] **Any app that exits 0 without a window is told it is a single-instance app.**
+  Surfaced by a cold lane during the README gate, as a code-side note
+  rather than a document finding.
+
+  `wait_for_window` dies when the app exits with status 0 before showing a
+  window, and the message names the single-instance hand-over as the
+  cause: "Close that copy, then run demoreel again."
+
+  The first sentence is a fact and is always true. The rest is a
+  diagnosis, and it is a guess -- a command that legitimately does its
+  work and exits, or an app that failed for some unrelated reason and
+  still returned 0, gets told to close a copy that is not running.
+
+  Small, and the hand-over case is the common one on this machine
+  (FIBR-0204), which is why the message was written that way. Worth
+  softening rather than rewriting: state what happened, offer the
+  single-instance explanation as the likely cause rather than the
+  established one.
+
+  Not urgent and not a correctness defect -- the run fails either way, and
+  it fails for a real reason.
+  **Layman:** One error message explains a failure with a cause that may not be the real one.
+  Kind: enhancement.
+  Source: review-contract-2026-09-08 loop 3.
+
 ## 0.2.0 — Stricter guards and honest durations
 
 Each of these changes what an existing caller receives, which is what a
