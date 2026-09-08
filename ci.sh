@@ -33,6 +33,31 @@ if [ "${1:-}" = "--ruff-version" ]; then
     exit 0
 fi
 
+if [ "${1:-}" = "--docs-mode" ]; then
+    # The decision itself, not just the glob it turns on. Callers pipe the
+    # changed paths in and run ./ci.sh with whatever comes out, so nobody
+    # reimplements the matching. Empty input prints nothing: a change set we
+    # cannot see gets the full gate.
+    IFS='|' read -r -a globs <<<"$DOCS_GLOB"
+    seen=false
+    while IFS= read -r path; do
+        [ -z "$path" ] && continue
+        seen=true
+        matched=false
+        for g in "${globs[@]}"; do
+            # shellcheck disable=SC2053  # $g is a glob here, deliberately
+            [[ $path == $g ]] && { matched=true; break; }
+        done
+        if ! $matched; then
+            exit 0
+        fi
+    done
+    if $seen; then
+        printf '%s\n' '--docs'
+    fi
+    exit 0
+fi
+
 DOCS_ONLY=false
 [ "${1:-}" = "--docs" ] && DOCS_ONLY=true
 

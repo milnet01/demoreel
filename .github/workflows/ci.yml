@@ -30,9 +30,10 @@ jobs:
         run: pipx install "ruff==$(./ci.sh --ruff-version)"
 
       - name: Decide which mode to run
-        # The same decision the local pre-push hook makes, against the same
-        # glob -- ci.sh --docs-glob is the single definition both read. A range
-        # we cannot resolve falls back to the full gate, never to the docs one.
+        # ci.sh makes the decision, not this file. It owns the glob AND the
+        # matching, so this step only has to find the range and hand over the
+        # changed paths. A range we cannot resolve falls back to the full gate,
+        # never to the docs one.
         id: mode
         run: |
           set -euo pipefail
@@ -45,21 +46,7 @@ jobs:
           mode=""
           if [ -n "$base" ] && [ "$base" != "0000000000000000000000000000000000000000" ] \
              && git cat-file -e "$base^{commit}" 2>/dev/null; then
-            changed=$(git diff --name-only "$base" "$head")
-            if [ -n "$changed" ]; then
-              docs_only=true
-              IFS='|' read -r -a globs <<<"$(./ci.sh --docs-glob)"
-              while IFS= read -r path; do
-                [ -z "$path" ] && continue
-                matched=false
-                for g in "${globs[@]}"; do
-                  # shellcheck disable=SC2053
-                  [[ $path == $g ]] && { matched=true; break; }
-                done
-                $matched || { docs_only=false; break; }
-              done <<<"$changed"
-              $docs_only && mode="--docs"
-            fi
+            mode=$(git diff --name-only "$base" "$head" | ./ci.sh --docs-mode)
           else
             echo "no resolvable range; running the full gate"
           fi

@@ -308,15 +308,17 @@ that every flag this README documents is one the tool accepts; a smoke recording
 that samples a frame and fails if the app never reached the picture; and its
 counterpart, a run made to draw nothing, which must be refused rather than
 returned. `.github/workflows/ci.yml` installs the programs and runs that same
-script, and takes both the linter version and the documentation glob from it
+script, and takes the linter version and the documentation-only decision from it
 rather than restating them. Add a check to `ci.sh`, never to the workflow.
 
 It runs automatically before a push. A documentation-only push runs
 `./ci.sh --docs` instead — the flag check and the readability check, not
-nothing. Both the pre-push hook and the workflow classify a push against
-`./ci.sh --docs-glob`, which is the only definition of what counts as
-documentation here; the full gate fails if the local git config has drifted
-from it.
+nothing. `./ci.sh --docs-glob` is the only definition of what counts as
+documentation here, and the full gate fails if the local git config has drifted
+from it. The workflow does not match against that glob itself: it pipes the
+changed paths into `./ci.sh --docs-mode` and runs whatever comes back, so the
+decision has one home as well as its value. The pre-push hook is machine-wide,
+so it still does its own matching against the glob.
 
 ## Versioning
 
