@@ -207,19 +207,27 @@ echo "wrote $out"
 
 ffmpeg -v error -i "$out" -vf 'select=eq(n\,60)' -vframes 1 "$tmp/frame.png" -y
 python3 - "$tmp/frame.png" <<'PY'
-import collections, subprocess, sys
+import importlib.machinery, importlib.util, subprocess, sys
+
+# Ask the tool rather than restating its test. The threshold and its comparator
+# both live in demoreel, so there is nothing here to keep in step -- the same
+# answer this project reached for `ci.sh --ruff-version` and `--docs-glob`,
+# pointing the other way. demoreel has no .py extension, so it is loaded by
+# path; everything at its module level is imports and constants, and main() is
+# behind an __name__ guard, so importing it runs nothing.
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+demoreel = importlib.util.module_from_spec(
+    importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(demoreel)
+
 raw = subprocess.run(
     ["ffmpeg", "-v", "error", "-i", sys.argv[1], "-f", "rawvideo", "-pix_fmt", "gray", "-"],
     capture_output=True, check=True).stdout
 if not raw:
     sys.exit("could not decode the sampled frame")
-dominant = collections.Counter(raw).most_common(1)[0][1] / len(raw)
-print(f"dominant grey level: {dominant:.4f}")
-# demoreel calls a display blank above 0.999, and this is a copy of that test:
-# the comparator must match display_is_blank's, or a frame measuring exactly the
-# threshold passes the tool and fails the gate. An empty Xvfb measures ~0.9999;
-# a window on it drops well below.
-if dominant > 0.999:
+print(f"dominant grey level: {demoreel.dominant_fraction(raw):.4f}"
+      f" (blank above {demoreel.BLANK_THRESHOLD})")
+if demoreel.frame_is_flat(raw):
     sys.exit("the frame is a flat colour -- the app never reached the recording")
 print("the app is in the frame")
 PY

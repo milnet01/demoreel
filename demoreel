@@ -26,6 +26,14 @@ __version__ = "0.1.0"
 SIZE_RE = re.compile(r"^(\d+)x(\d+)$")
 DISPLAY_READY_TIMEOUT = 15.0
 
+# The one definition of "nothing is on this display". Measured: an empty Xvfb
+# is 0.99994, and a window as small as 200x100 on a 1280x800 display already
+# drops to 0.98, so there is room on both sides. ci.sh imports this rather than
+# restating it -- a threshold with two homes is one a person has to remember to
+# move, and this project has already answered that question the same way twice
+# (`ci.sh --ruff-version`, `ci.sh --docs-glob`).
+BLANK_THRESHOLD = 0.999
+
 # Both backends need this. Unset, wl_display_connect() falls back to the
 # hardcoded $XDG_RUNTIME_DIR/wayland-0, which exists on a Wayland session — so
 # the app connects to the user's REAL compositor, renders there, and the
@@ -287,10 +295,17 @@ def wait_for_window(env, app, timeout):
             return max(ids, key=lambda wid: window_area(env, wid))
         if app.poll() is not None:
             if app.returncode == 0:
+                # The first line is what happened; the rest is a guess, and is
+                # written as one. The hand-over is the common case here, but a
+                # command that legitimately does its work and exits looks
+                # identical from the outside, and so does one that failed for
+                # its own reasons and still returned 0.
                 die("the app exited immediately (status 0) without opening a window.\n"
-                    "  A single-instance app does exactly this: it finds a copy already\n"
+                    "  The likely cause is a single-instance app: it finds a copy already\n"
                     "  running on your real desktop, hands the request over to it and exits\n"
-                    "  successfully. Close that copy, then run demoreel again.")
+                    "  successfully. If a copy is running, close it and try again.\n"
+                    "  If not, the command may simply have finished without needing a\n"
+                    "  window — in which case there is nothing to record.")
             die(f"the app exited with status {app.returncode} before opening a window.")
         time.sleep(0.25)
     return None
@@ -365,7 +380,30 @@ def display_is_blank(env, display, width, height):
         env=env, capture_output=True).stdout
     if not frame:
         return False  # the sample failed; that is not evidence of a blank display
-    return max(frame.count(v) for v in set(frame)) / len(frame) > 0.999
+    return frame_is_flat(frame)
+
+
+def dominant_fraction(frame):
+    """The share of a raw grey frame taken by its commonest byte value.
+
+    One pass per distinct byte value, which looks worse than Counter's single
+    pass and is not. Measured on a 1600x1000 frame: on a blank display, one
+    distinct value, this form is about five times faster; on a busy screen with
+    every value present it is about twice as slow. The case it wins is what
+    wait_until_drawn polls against, and the case it loses is sampled once at the
+    end of a run. Do not tidy it into Counter.most_common.
+    """
+    return max(frame.count(v) for v in set(frame)) / len(frame)
+
+
+def frame_is_flat(frame):
+    """True if the frame is one flat colour by BLANK_THRESHOLD's measure.
+
+    The threshold AND its comparator live here together, because splitting them
+    is what let a copy drift: a frame measuring exactly the threshold would pass
+    one side and fail the other.
+    """
+    return dominant_fraction(frame) > BLANK_THRESHOLD
 
 
 def wait_until_drawn(env, display, width, height, timeout):

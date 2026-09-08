@@ -144,10 +144,11 @@ something behaves unexpectedly:
 - **`--settle` and the blank check are the same test**, `display_is_blank`, in
   two roles: a gate before recording and an assertion after it. That is
   deliberate — one definition of "nothing is on this display" — and it means
-  the 0.999 threshold is written once, in `display_is_blank`, and serves both
-  roles. Everywhere else is a copy: the literal `ci.sh` asserts against, and the
-  prose in `README.md` and in the blank-recording trap below. Move every copy
-  with the definition, or the gate stops testing what the tool does. It also
+  the threshold and its comparator are written once, as `BLANK_THRESHOLD` and
+  `frame_is_flat`, and serve both roles. `ci.sh` imports them rather than
+  restating them, so it is no longer a copy to keep in step. The remaining
+  copies are prose: `README.md` and the blank-recording trap below. Move them
+  with the definition, or the docs stop describing what the tool does. It also
   sets `--settle`'s honest limit: it waits for any pixel variation, not for the
   app to be ready, so a startup screen with a cursor on it counts as drawn (a
   real `xterm` measures 0.977). Do not tune the threshold for one of the two
