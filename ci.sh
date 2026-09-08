@@ -12,9 +12,11 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-# The one definition of what counts as documentation here. The pre-push hook
-# and the GitHub workflow both classify a push against THIS value, so there is
-# no second copy to drift: `./ci.sh --docs-glob` is what each of them reads.
+# The one definition of what counts as documentation here. The machine-wide
+# pre-push hook reads it with `./ci.sh --docs-glob` and does its own matching.
+# The GitHub workflow does not: it pipes the changed paths into
+# `./ci.sh --docs-mode` below, so the decision has one home as well as its
+# value.
 DOCS_GLOB='docs/*|*.md|LICENSE|.github/FUNDING.yml'
 
 # The linter version, owned here and installed from here by the workflow. A

@@ -28,7 +28,9 @@ should show a shaded cube rather than a flat colour. A valid file proves
 nothing on its own — a black video passes every check except looking at it.
 
 This file's review history is kept outside it, in
-`docs/reviews/claude-md-loop-log.md`.
+`docs/reviews/claude-md-loop-log.md`. `README.md` is gated too, as the design
+contract it is, and its history is in `docs/reviews/readme-loop-log.md` for the
+same reason: a review table is not what a README's readers came for.
 
 ## What this tool is
 

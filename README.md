@@ -82,8 +82,11 @@ cannot peek at what is being recorded.
 3. Wait for the app's window, then resize it to fill the frame.
 4. Optionally run your scripted steps — click, type, wait — while recording.
 5. Record for the duration you asked for.
-6. Check the result is not blank. If nothing was ever drawn, that is an error,
-   not a video.
+6. Check the result is not blank. If the app is still running and nothing was
+   ever drawn, that is an error, not a video — the run stops and prints no
+   path, leaving the part-written file on disk. The check is skipped if the app
+   closed itself first: it left an empty screen behind, and that recording is
+   fine.
 7. Close the app, remove the private screen, leave one video file behind.
 
 Step 6 matters more than it sounds. A recording of nothing is still a perfectly
@@ -126,8 +129,13 @@ command runs.
 
 That is fine, as long as you give them different names with `-n`. They pick
 separate private screens on their own; you never have to think about that part.
-If you start a second unnamed recording while the first is still going, it
-refuses rather than confusing the two.
+
+Names are the part you do have to think about. Start a second unnamed recording
+once the first is under way and it refuses, naming the run already going. Start
+two at the same instant and both can get through that check before either
+registers — they both record, and only the later one can be reached by
+`demoreel stop`. So give concurrent runs different `-n` names rather than
+relying on the refusal.
 
 ### `--app-log`: keeping what the app said
 
@@ -165,7 +173,8 @@ bar, so it is built for a startup screen that is genuinely blank.
 
 Some apps — 3D, games, anything using OpenGL or Vulkan — cannot draw at all on
 the ordinary private screen, because it has no graphics card behind it. You get
-a black recording, which demoreel refuses to hand back.
+a black recording, which demoreel refuses to hand back as long as the app is
+still running when the recording ends.
 
 For those, add `--gpu`:
 
@@ -295,10 +304,15 @@ manager, not more code here.
 kinds of private screen rely on it. This is the honest limit of the design, not
 a bug to fix.
 
-**Not every window can be found and resized.** demoreel locates the window by
-its name, and a few apps set none — `vkcube` is one. It says so and records
-anyway, so you get the app at its own size rather than filling the frame.
-Nothing is lost but the sizing.
+**demoreel picks the biggest window on the private screen**, out of the ones
+that have a name. Size is what separates a real window from a startup dialog
+without knowing anything about the app — pick by search order instead and you
+get the dialog about half the time, stretched to fill the frame while the real
+window sits behind it.
+
+**An app that names no window at all is not found** — `vkcube` is one. demoreel
+says so after waiting, and records anyway, so you get the app at its own size
+rather than filling the frame. Nothing is lost but the sizing.
 
 ## Constraints already verified on this machine
 
