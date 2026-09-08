@@ -146,6 +146,24 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Encoding parameters are explicitly not a breaking surface, so this can
   change in a PATCH. Measure a long recording first -- the cost should be
   established rather than assumed.
+  Measured (2026-09-08), as the bullet asked, before deciding anything.
+
+  The cost is real but small and tracks file SIZE rather than duration. On a
+  20-second recording of an xterm (1.4 MB out) the difference was inside the
+  noise: 2.89s without, 2.87s with. On a six-minute high-bitrate encode of the
+  same content (47.8 MB out) it was 48.07s without and 51.58s with -- about 3.5
+  seconds, roughly 7%.
+
+  Method: a lossless ffv1 capture of a scrolling xterm on Xvfb, re-encoded with
+  and without the flag. Both files were byte-identical in size, so the flag costs
+  time and not space.
+
+  Recommendation: keep it. 7% of encode time on a large file is a fair price for
+  progressive playback, and the tool's own reason for existing is a Flathub
+  submission, where the video is likely to be served over HTTP rather than opened
+  locally. The bullet assumed the opposite; the assumption is what the
+  measurement corrects. Not closing the item -- whether to drop or condition the
+  flag is a call for the user, and the numbers are now here to make it on.
   **Layman:** Every recording is written twice; the second pass buys something we may not need
   Kind: perf.
   Source: in-session-2026-09-07.
@@ -162,6 +180,32 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   the text is.
 
   Encoding parameters are not a breaking surface, so this is a PATCH.
+  Measured (2026-09-08). The premise does not hold up, and the recommendation is
+  to leave the encoder alone.
+
+  Method: a lossless ffv1 capture of a scrolling xterm on Xvfb -- text, sharp
+  edges, mostly static, which is the content the bullet is about -- encoded four
+  ways at preset veryfast, and compared on size and on SSIM against the lossless
+  master.
+
+    current (crf 23)      1,395,493 bytes   SSIM 0.988
+    tune stillimage       1,296,149 bytes   SSIM 0.985
+    tune animation        1,594,559 bytes   SSIM 0.992
+    tune zerolatency      2,448,669 bytes   SSIM 0.994
+
+  So stillimage is about 7% smaller and marginally WORSE by SSIM, not better --
+  the bullet expected "a smaller file at the same or better legibility". Looked at
+  the frames rather than trusting the metric, cropping a text region from the
+  current and stillimage encodes: both equally legible, no visible difference.
+
+  The argument against changing it is what the measurement added. This tool
+  records static interfaces AND spinning 3D, and one default serves both. On the
+  --gpu cube recording the same tunings land within a few percent of each other,
+  so there is no tuning that is right for both kinds of content and no flag to
+  select one -- adding one would be a knob the scope ceiling does not want.
+
+  Recommendation: no change. 7% on a demo clip does not earn a default that is
+  wrong for half the tool's targets.
   **Layman:** The video settings are tuned for film; a mostly-still app window compresses far better
   Kind: perf.
   Source: in-session-2026-09-07.
