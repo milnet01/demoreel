@@ -205,7 +205,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: test.
   Source: in-session-2026-09-07.
 
-- 📋 [DEMO-0016] **Warn when a Flatpak target is missing the flags it needs.**
+- ✅ [DEMO-0016] **Warn when a Flatpak target is missing the flags it needs.**
   A Flatpak target needs `--socket=x11`, `--nosocket=wayland` and
   `--filesystem=/tmp/.X11-unix` on its own command line. Without them the app renders on the real compositor,
   the virtual display stays empty, and the run fails the blank check with
@@ -218,11 +218,28 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   This is a guard on a documented footgun, not per-app knowledge: it reads
   the caller's own command line and hardcodes nothing about any
   application.
+  Resolved (2026-09-08): demoreel reads the caller's command line and, on a
+  `flatpak run` missing any of the three flags, names which before the recording
+  starts.
+
+  A warning rather than a refusal, deliberately: a manifest with no wayland socket
+  does not need --nosocket=wayland, and deciding that would mean knowing the app --
+  which is the per-app knowledge the scope ceiling rules out. Matched by prefix, so
+  --filesystem=/tmp/.X11-unix:ro counts as present.
+
+  Exercised in four cases: no flags names all three; only --nosocket=wayland
+  missing names that one; a complete command including the :ro form is silent; a
+  non-Flatpak target is silent.
+
+  The gate covers both directions, using a stub named flatpak -- what is under test
+  is the reading of the command line, and the stub keeps the step working on a
+  runner with no Flatpak installed. Proved able to fail: disabling the warning
+  reddens it.
   **Layman:** Recording a Flatpak the wrong way gives a black video and no clue why
   Kind: enhancement.
   Source: in-session-2026-09-07.
 
-- 📋 [DEMO-0017] **The Xvfb display has no auth cookie, while the --gpu display does.**
+- ✅ [DEMO-0017] **The Xvfb display has no auth cookie, while the --gpu display does.**
   `start_gpu_display` creates an Xauthority file at mode 0600 and hands
   it to every client through XAUTHORITY. The default path starts Xvfb with
   `-nolisten tcp` and no `-auth`, and its env carries no XAUTHORITY at all.
@@ -240,6 +257,27 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   a process running as another user can actually do with the socket on
   this system, so the fix answers a demonstrated reach rather than an
   assumed one.
+  Resolved (2026-09-08): both backends now put the display behind an
+  MIT-MAGIC-COOKIE-1 cookie in a 0600 Xauthority file, handed to every client
+  through XAUTHORITY.
+
+  Measured first, as the bullet asked. Before: a client with XAUTHORITY=/dev/null
+  read the geometry and grabbed a frame showing the window. Socket permissions are
+  not the answer -- ss shows Xvfb listening on an abstract socket as well as the
+  filesystem one, and the abstract namespace has no permissions at all. After: the
+  uncredentialed client is refused for both, and one holding the run's cookie
+  still works.
+
+  The ordering is deliberate. The cookie is keyed to the display number and
+  -displayfd is what reports it, and dropping -displayfd would cost the
+  concurrency property the README calls non-negotiable. So: start with an empty
+  auth file, learn the number, write the cookie, SIGHUP the server to re-read, and
+  report success only once a client holding the cookie connects. Between start and
+  reset the display is open and nothing has been drawn on it.
+
+  xauth joins the Xvfb backend's required-programs check and the workflow's apt
+  list. The gate probes the live run's own reported display; removing -auth
+  reddens it.
   **Layman:** While a recording runs, other programs on the machine can watch that private display.
   Kind: security.
   Source: in-session-2026-09-07.
