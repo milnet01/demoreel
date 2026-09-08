@@ -805,11 +805,37 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   The README already records a hand-verification of `--settle` against
   exactly such a window, so the behaviour is not unverified; it is
   unguarded against regression.
+  Progress (2026-09-08). `--cursor` is covered; `--settle` is not, and
+  this item stays open for it.
+
+  The `--cursor` step records the same static app twice, once with the
+  flag and once without, and compares a sampled frame. The control was
+  measured before the assertion was written: two runs WITHOUT the flag are
+  byte-identical in that frame -- zero differing bytes -- and adding it
+  changes 153 of 120000. Without that control the test would prove
+  nothing.
+
+  xterm running `sleep`, not xclock: a clock's second hand moves, and a
+  frame comparison cannot tell a moving hand from a drawn pointer.
+
+  Bounded at both ends. A bare "the frames differ" would pass if the two
+  recordings differed for any unrelated reason, so the step also refuses a
+  difference too large to be a pointer. Proved not hollow: with
+  `-draw_mouse` forced to 0, the step reports "--cursor changed nothing"
+  and exits 1.
+
+  `--settle` still needs the fixture this item predicted. Checked whether
+  an existing target could serve and none can: the fixture must be
+  uniformly one colour for a known interval and then draw, and this
+  project has already measured a real xterm at 0.977 -- below the blank
+  threshold -- because it paints a cursor. So covering `--settle` means
+  owning a purpose-built X client, which is the trade this item asked to
+  weigh. Left for the user to decide rather than decided quietly.
   **Layman:** Two documented options have no automatic check behind them.
   Kind: test.
   Source: recommendation-2026-09-08.
 
-- 📋 [DEMO-0031] **Nothing mechanical keeps the pinned action in step with its latest release.**
+- ✅ [DEMO-0031] **Nothing mechanical keeps the pinned action in step with its latest release.**
   DEMO-0010 is a standing chore: two versions are pinned and both go stale
   on their own. Checked on 2026-09-08 and both were current, which is the
   problem -- the check happened because a session went looking.
@@ -827,6 +853,16 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
 
   It does not replace DEMO-0010: the ruff pin still has to move with the
   version installed here, which no bot can know.
+  Resolved (2026-09-08). `.github/dependabot.yml` watches `github-actions`
+  weekly, so the checkout pin opens a pull request when it moves instead
+  of aging in silence. No Actions minutes: Dependabot runs on GitHub's own
+  infrastructure.
+
+  Said in the file itself that this does NOT cover the ruff pin, so the
+  next reader does not assume both halves of DEMO-0010 are now mechanical.
+  RUFF_VERSION has to move with the ruff installed on the machine running
+  the gate, which no bot can know, and the gate already fails when the two
+  disagree.
   **Layman:** Keeping one pinned version fresh depends on somebody remembering to look.
   Kind: chore.
   Source: recommendation-2026-09-08.
