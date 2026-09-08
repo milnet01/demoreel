@@ -304,11 +304,12 @@ blank check fails the run; with it the picture is there in the first frame.
 
 `./ci.sh` is the whole gate. Among its steps: the linter, at the version and
 against the ruleset `ci.sh` and `ruff.toml` pin between them; a parse; a check
-that every flag this README documents is one the tool accepts; and a smoke
-recording that samples a frame and fails if the app never reached the picture.
-`.github/workflows/ci.yml` installs the programs and runs that same script, and
-takes both the linter version and the documentation glob from it rather than
-restating them. Add a check to `ci.sh`, never to the workflow.
+that every flag this README documents is one the tool accepts; a smoke recording
+that samples a frame and fails if the app never reached the picture; and its
+counterpart, a run made to draw nothing, which must be refused rather than
+returned. `.github/workflows/ci.yml` installs the programs and runs that same
+script, and takes both the linter version and the documentation glob from it
+rather than restating them. Add a check to `ci.sh`, never to the workflow.
 
 It runs automatically before a push. A documentation-only push runs
 `./ci.sh --docs` instead — the flag check and the readability check, not

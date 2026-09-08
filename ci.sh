@@ -136,6 +136,34 @@ if dominant > 0.999:
 print("the app is in the frame")
 PY
 
+step "smoke: a blank recording is refused"
+# The counterpart to the step above. That one proves a good recording succeeds;
+# nothing proved a bad one fails. The behaviour is protected by
+# docs/standards/versioning-overrides.md, and CLAUDE.md says not to downgrade it
+# to a warning -- someone could, and the gate would have stayed green.
+#
+# The app maps a window and then kills it while the shell that owns it stays
+# alive. That leaves the display blank with the run still going, which is the
+# branch that fails; a run whose app exits first skips the check by design.
+set +e
+# shellcheck disable=SC2016  # $! and $p belong to the inner sh, not to us
+blank_out=$(./demoreel record -o "$tmp/blank.mp4" -d 4 -s 640x480 \
+    -- sh -c 'xclock & p=$!; sleep 1; kill $p; sleep 10' 2>"$tmp/blank.err")
+blank_status=$?
+set -e
+[ "$blank_status" -ne 0 ] || { echo "a blank recording exited 0" >&2; exit 1; }
+# The reason matters: a run that failed for some other cause is not this check
+# passing. Any exit is non-zero, but only one of them is the guard firing.
+grep -q 'stayed blank' "$tmp/blank.err" || {
+    echo "the run failed, but not on the blank-display guard:" >&2
+    cat "$tmp/blank.err" >&2
+    exit 1
+}
+[ -z "$blank_out" ] || { echo "a failed run printed '$blank_out' on stdout" >&2; exit 1; }
+# Protected by the versioning overrides: the video already written stays.
+[ -s "$tmp/blank.mp4" ] || { echo "the partial video was not left on disk" >&2; exit 1; }
+echo "a blank recording exits non-zero, prints no path, and leaves its file"
+
 step "default output name"
 # -o is optional; without it the file is named from the app and a timestamp.
 ( cd "$tmp" && "$OLDPWD/demoreel" record -d 3 -s 640x480 -- xclock >/dev/null )
