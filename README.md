@@ -145,6 +145,12 @@ refuses to carry. It is also unreliable across Flatpak versions: OBS issue
 #11847 reports it working on 30.2.3 and failing on 31.0.1, closed as *not
 planned*. Removing the escape route beats asking the toolkit not to take it.
 
+demoreel says so if you leave one out. It reads your command line, and a
+`flatpak run` missing any of the three draws a warning naming which — before the
+recording starts, rather than a blank video and a message listing two possible
+causes. It is a warning and not a refusal: a manifest with no wayland socket
+does not need `--nosocket=wayland`, and knowing that would mean knowing the app.
+
 This is the case the whole tool was built for — Flathub wants to see the Flatpak
 running, not a source checkout.
 

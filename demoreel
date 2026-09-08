@@ -344,6 +344,34 @@ def end_process(proc, group=False):
             pass
 
 
+FLATPAK_FLAGS = ("--socket=x11", "--nosocket=wayland", "--filesystem=/tmp/.X11-unix")
+
+
+def warn_if_flatpak_underflagged(command):
+    """Say up front when a Flatpak target is missing the flags it needs.
+
+    Without them the app renders on the user's real compositor, the virtual
+    display stays empty, and the run fails the blank check with a message
+    listing two possible causes. We can tell which one it is before spending
+    the recording on it.
+
+    A warning, not an error: a manifest with no wayland socket does not need
+    --nosocket=wayland, and refusing would break an invocation that works. This
+    reads the caller's own command line and knows nothing about any
+    application, which is what keeps it out of per-app profile territory.
+    """
+    if Path(command[0]).name != "flatpak" or "run" not in command:
+        return
+    missing = [f for f in FLATPAK_FLAGS
+               if not any(arg.startswith(f) for arg in command)]
+    if missing:
+        note(f"this is a Flatpak target and the command is missing: "
+             f"{', '.join(missing)}")
+        note("  A missing one can send it to your real compositor instead, "
+             "leaving this")
+        note("  recording empty. README.md says what each flag is for.")
+
+
 def cmd_record(a):
     required = ["ffmpeg", "xdotool"] + (["xwfb-run", "cage"] if a.gpu else ["Xvfb"])
     missing = [t for t in required if shutil.which(t) is None]
@@ -355,6 +383,7 @@ def cmd_record(a):
         command.pop(0)
     if not command:
         die("give the app to run after `--`, e.g. demoreel record -- xclock")
+    warn_if_flatpak_underflagged(command)
 
     match = SIZE_RE.match(a.size)
     if not match:

@@ -235,6 +235,34 @@ wait "$recorder" || { echo "the stopped run exited non-zero" >&2; exit 1; }
 [ -f "$tmp/app.log" ] || { echo "--app-log wrote no file" >&2; exit 1; }
 echo "stop ended the run, and --app-log wrote its file"
 
+step "a Flatpak target missing its flags is warned about"
+# Without the flags a Flatpak renders on the real compositor and the run fails
+# the blank check with a message naming two possible causes. Saying which one it
+# is costs nothing and saves the recording.
+#
+# A stub named flatpak stands in for the real one: what is under test is the
+# reading of the caller's command line, not flatpak itself, and the stub keeps
+# the step working on a runner with no Flatpak installed.
+mkdir -p "$tmp/bin"
+printf '#!/bin/sh\nexec xclock\n' > "$tmp/bin/flatpak"
+chmod +x "$tmp/bin/flatpak"
+PATH="$tmp/bin:$PATH" ./demoreel record -o "$tmp/fp.mp4" -d 3 -s 640x480 \
+    -- flatpak run org.example.App >/dev/null 2>"$tmp/fp.err"
+grep -q -- '--nosocket=wayland' "$tmp/fp.err" || {
+    echo "an under-flagged Flatpak target drew no warning:" >&2
+    cat "$tmp/fp.err" >&2
+    exit 1
+}
+# And a fully-flagged one must stay quiet, or the warning is noise.
+PATH="$tmp/bin:$PATH" ./demoreel record -o "$tmp/fp-ok.mp4" -d 3 -s 640x480 \
+    -- flatpak run --socket=x11 --nosocket=wayland --filesystem=/tmp/.X11-unix \
+    org.example.App >/dev/null 2>"$tmp/fp-ok.err"
+! grep -q 'is missing' "$tmp/fp-ok.err" || {
+    echo "a correctly-flagged Flatpak target was warned about anyway" >&2
+    exit 1
+}
+echo "the missing flags are named, and a complete command is left alone"
+
 step "the state directory must be one we own"
 # The run-state directory's name is predictable, so on a shared machine another
 # user can create it first and demoreel would adopt it. The check is exercised
