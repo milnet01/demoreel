@@ -619,6 +619,137 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: enhancement.
   Source: review-contract-2026-09-08 loop 3.
 
+- 📋 [DEMO-0027] **A fresh clone of this repository has no gate at all.**
+  The pre-push gate reaches this project through two settings that live
+  outside it. `core.hooksPath` is `/home/ants/.claude/githooks`, an
+  absolute path on this machine, and `ants.gate.command` is `./ci.sh` in
+  this repository's LOCAL git config. Neither is cloned, and there is no
+  `.githooks/` directory here and no `.git/hooks/pre-push`.
+
+  So the gate exists for exactly one checkout on one machine. The
+  repository is public: anyone who clones it gets ci.sh and no hook that
+  runs it, and nothing tells them a gate was ever expected.
+
+  The standard the machine works to treats a project with a pipeline, a
+  gate script and no reachable pre-push hook as being in breach. This
+  project is only not in breach because of configuration a contributor
+  cannot see.
+
+  A repository-local `.githooks/pre-push` that execs `./ci.sh`, plus one
+  line in the README telling a contributor to run `git config
+  core.hooksPath .githooks`, would make the gate travel with the code.
+  **Layman:** The check that runs before a push is set up on this machine, not in the project, so nobody else gets it.
+  Kind: chore.
+  Source: recommendation-2026-09-08.
+
+- 📋 [DEMO-0028] **The blank threshold still has two homes; the project already solved this twice.**
+  DEMO-0024 fixed the comparators disagreeing. The duplication that
+  allowed it is still there: `display_is_blank` holds the threshold and
+  its comparator, and ci.sh's smoke assertion holds its own copy of both.
+  CLAUDE.md says to move every copy together, which is a rule a person has
+  to remember.
+
+  This project has already answered this question twice, the same way
+  both times. `ci.sh --ruff-version` and `ci.sh --docs-glob` exist so that
+  the workflow reads a value rather than restating it, and the comment on
+  each says why. The threshold is the same shape of problem pointing the
+  other way: the tool owns the value, so the gate should ask the tool.
+
+  A read-only `demoreel --blank-threshold` that prints the number, with
+  ci.sh reading it, would leave one home. That adds a flag to the
+  command-line surface, which the versioning overrides make a protected
+  surface -- so it is worth deciding whether a hidden argument or a
+  smaller mechanism is better before adding it.
+  **Layman:** One number is written down in two files, and keeping them in step is nobody's job.
+  Kind: refactor.
+  Source: recommendation-2026-09-08.
+
+- 📋 [DEMO-0029] **A failing gate step can leave a recorder running and block the next run.**
+  Two gate steps start a `-d 0` recording in the background. If an
+  assertion between the launch and the stop fails, the step exits and the
+  recorder is left running -- `-d 0` means it never ends by itself.
+
+  Measured during this session rather than imagined. A failing step left a
+  run named `gatecookie` alive; the next gate run then refused that name,
+  and the failure it reported was the leftover rather than the defect. It
+  cost two cycles to recognise.
+
+  The cookie step now stops its recorder before failing. The stop step
+  does not: its `stop never found the running recording` path exits with
+  the recorder still up, and that is the branch most likely to fire.
+
+  One trap at the top of the gate that stops every run it may have
+  started, alongside the existing temp-directory trap, would make this
+  structural rather than per-step.
+  **Layman:** When a check fails, it can leave a recording going that then gets in the way of the next attempt.
+  Kind: test.
+  Source: recommendation-2026-09-08.
+
+- 📋 [DEMO-0030] **The gate still does not exercise --settle or --cursor.**
+  Named when DEMO-0015 closed, and filed here so it is not lost with it.
+  Both flags are documented in README.md, and ci.sh mentions neither.
+
+  `--cursor` is the cheap one: record with it and without it and assert
+  the frames differ, which needs no new target app.
+
+  `--settle` is harder and that is why it was left. It needs an app that
+  is uniformly one colour for a known interval and then draws, which
+  neither xclock nor xterm is. A tiny X client written for the purpose
+  would do it, but that is a test fixture the project would then own --
+  weigh that against the value before building one.
+
+  The README already records a hand-verification of `--settle` against
+  exactly such a window, so the behaviour is not unverified; it is
+  unguarded against regression.
+  **Layman:** Two documented options have no automatic check behind them.
+  Kind: test.
+  Source: recommendation-2026-09-08.
+
+- 📋 [DEMO-0031] **Nothing mechanical keeps the pinned action in step with its latest release.**
+  DEMO-0010 is a standing chore: two versions are pinned and both go stale
+  on their own. Checked on 2026-09-08 and both were current, which is the
+  problem -- the check happened because a session went looking.
+
+  The ruff pin has a mechanism already, and a good one: the gate fails if
+  the installed ruff is not the pinned one, so drift between the dev
+  machine and CI cannot go unnoticed. The action pin has nothing. It is a
+  SHA with a version comment, and only a reader comparing it against
+  upstream would ever notice it aging.
+
+  A `.github/dependabot.yml` watching `github-actions` would open a pull
+  request when the action moves, turning that half of DEMO-0010 from a
+  habit into a notification. It costs one small file and no CI minutes on
+  a public repository.
+
+  It does not replace DEMO-0010: the ruff pin still has to move with the
+  version installed here, which no bot can know.
+  **Layman:** Keeping one pinned version fresh depends on somebody remembering to look.
+  Kind: chore.
+  Source: recommendation-2026-09-08.
+
+- 📋 [DEMO-0032] **Decide what the first release's notes actually say before tagging.**
+  CHANGELOG.md carries one entry describing what demoreel is, written on
+  the grounds that nothing has been tagged, so everything belongs to the
+  first release.
+
+  That was reasonable when it was written and is now thin. Several changes
+  have landed since that a reader would want named -- the private display
+  gained an auth cookie, scripted text left the process list, the
+  run-state directory is checked before use. Those are security
+  properties, and a first release that mentions none of them undersells
+  what it ships.
+
+  The release standard warns against reconstructing a changelog from a
+  commit range, so this is not a request to do that. It is a decision to
+  make deliberately before the tag: either the single entry stands as the
+  initial-release description, or the notable items get their own lines.
+
+  Going forward the cheaper habit is to add each item's entry as it lands,
+  using the changelog verb, rather than at release time.
+  **Layman:** The changelog describes what the tool is, and says nothing about the fixes made since.
+  Kind: release.
+  Source: recommendation-2026-09-08.
+
 ## 0.2.0 — Stricter guards and honest durations
 
 Each of these changes what an existing caller receives, which is what a
@@ -691,6 +822,62 @@ MINOR is spent on while the leading zero is there.
   **Layman:** Ask for a 3 second clip and you get just over 4 seconds, after a second of waiting
   Kind: perf.
   Source: in-session-2026-09-07.
+
+- 📋 [DEMO-0033] **When the blank check cannot take its sample, it reports the run as fine.**
+  `display_is_blank` grabs one frame and, when the grab produces nothing,
+  returns False -- with the comment that a failed sample is not evidence
+  of a blank display. The reasoning is sound and the consequence is not:
+  False means not blank, which is the success path.
+
+  So the guard disarms itself precisely when it stops working, and it does
+  so silently. That is the same shape of failure the guard exists to catch
+  -- a valid file, exit 0, and nothing in the picture -- one level up.
+
+  Demonstrated rather than argued: called against a display that cannot be
+  sampled, the function returns False.
+
+  It is not hypothetical. The sample takes the run's environment because
+  the display now needs an auth cookie, so anything wrong with that
+  environment produces an empty grab rather than an error, and the run
+  succeeds. `wait_until_drawn` shares the function, so `--settle` returns
+  immediately in the same conditions.
+
+  The fix is to make the three cases distinct -- blank, not blank, could
+  not tell -- and treat the third as a failure or at minimum a warning
+  naming the reason. Failing a run that succeeds today is breaking under
+  the versioning overrides, which is why this sits here rather than in the
+  patch section.
+  **Layman:** The check that refuses an empty video quietly passes everything if its own measurement breaks.
+  Kind: fix.
+  Source: recommendation-2026-09-08.
+
+- 📋 [DEMO-0034] **A run cannot be stopped until it has already started recording.**
+  A run becomes addressable when it writes its state file, which happens
+  after the window appears and after ffmpeg starts -- so up to the startup
+  timeout, twenty seconds by default, `demoreel stop` cannot find a run
+  that is demonstrably launching.
+
+  Reproduced with the two commands the README used to show side by side:
+  the stop exits 1 saying no recording of that name is running, while the
+  recording carries on. With `-d 0` that leaves a run nothing will ever
+  end, which is how it was found.
+
+  The README now separates the steps and shows a retry loop, and the gate
+  retries for the same reason. Both are workarounds for the same gap, and
+  three cold lanes independently read the original snippet as a defect.
+
+  Two routes, and they are not equivalent. Writing the state file earlier
+  makes the run addressable sooner, but the state file is also what the
+  duplicate-name check reads, so moving it interacts directly with
+  DEMO-0011 and should be designed with it rather than before it. Having
+  `stop` wait briefly for a matching name is smaller, and changes what
+  `stop` does when there is genuinely no such run -- which is a
+  command-line surface the versioning overrides protect.
+
+  Either way the observable behaviour of `stop` changes, so it sits here.
+  **Layman:** Start a recording and try to stop it straight away, and you are told it is not running.
+  Kind: enhancement.
+  Source: recommendation-2026-09-08.
 
 ## 1.0.0 — Every documented path tested
 
