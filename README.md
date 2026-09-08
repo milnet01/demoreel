@@ -431,18 +431,28 @@ about either path: a change to one has to be checked by recording on it by
 hand, and by *looking* at the result — a black video passes every automatic
 check there is.
 
-It runs automatically before a push. A documentation-only push runs
-`./ci.sh --docs` instead — the gate-wiring check, the flag check and the
-readability check, not nothing. `./ci.sh --docs-glob` is the only definition of
-what counts as documentation here, and the gate fails in *both* modes if the
-local git config has drifted from it. That check runs before the documentation
-mode exits, deliberately: the glob is what selects the mode, so a check sitting
-behind that exit could never fire in the mode it guards.
+It runs before a push, once you have turned on the hook this repository ships.
+Do this after cloning:
 
-The workflow does not match against that glob itself: it pipes the changed paths
-into `./ci.sh --docs-mode` and runs whatever comes back, so the decision has one
-home as well as its value. The pre-push hook is machine-wide, so it still does
-its own matching against the glob.
+```sh
+git config core.hooksPath .githooks
+```
+
+Without it a clone has `ci.sh` and nothing that runs it. The hook gates the
+commits being pushed rather than your working tree — those are the same only
+when the tree is clean, and an uncommitted fix would turn the run green for
+commits that will go red.
+
+A documentation-only push runs `./ci.sh --docs` instead — the gate-wiring check,
+the flag check and the readability check, not nothing. `./ci.sh --docs-glob` is
+the only definition of what counts as documentation here, and the gate fails in
+*both* modes if the local git config has drifted from it. That check runs before
+the documentation mode exits, deliberately: the glob is what selects the mode,
+so a check sitting behind that exit could never fire in the mode it guards.
+
+Neither the hook nor the workflow matches against that glob itself. Both pipe
+the changed paths into `./ci.sh --docs-mode` and run whatever comes back, so the
+decision has one home as well as its value.
 
 ## Versioning
 

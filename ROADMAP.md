@@ -692,7 +692,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: refactor.
   Source: recommendation-2026-09-08.
 
-- 📋 [DEMO-0029] **A failing gate step can leave a recorder running and block the next run.**
+- ✅ [DEMO-0029] **A failing gate step can leave a recorder running and block the next run.**
   Two gate steps start a `-d 0` recording in the background. If an
   assertion between the launch and the stop fails, the step exits and the
   recorder is left running -- `-d 0` means it never ends by itself.
@@ -709,6 +709,31 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   One trap at the top of the gate that stops every run it may have
   started, alongside the existing temp-directory trap, would make this
   structural rather than per-step.
+  Resolved (2026-09-08). One EXIT trap, as the item asked. Each step that
+  launches a recorder appends its pid to `gate_pids`; the trap signals
+  them, waits for each to run its own teardown, and SIGKILLs anything that
+  outlives the wait.
+
+  The wait alone was not enough, which only appeared once the abort case
+  was measured properly. A recorder signalled before it has installed its
+  handlers dies without tearing anything down and leaves its Xvfb holding
+  a display number. So the trap also sweeps, matching on the auth file
+  path rather than the process name, and only for the gate's own `gate*`
+  runs -- two sessions may record at once, and killing every Xvfb this
+  user owns would end someone else's recording.
+
+  A/B with an injected failure between the launch and the stop: the old
+  ci.sh leaves an Xvfb and a state file, the new one leaves neither.
+
+  Worth recording, because it cost most of this item: the detector was
+  `pgrep -x demoreel`, which matches nothing. demoreel is a Python script,
+  so its process name is `python3`, and every "no recorder left behind"
+  reading that check produced was true by construction. The Xvfb count was
+  the only honest signal, and it had been reporting the leak throughout.
+
+  Checked separately, and NOT a defect: demoreel's own SIGTERM teardown is
+  clean at every point in startup -- ten of ten, sampled from 0.05s to
+  3.5s -- and its deliberate blank-recording failure exit cleans up too.
   **Layman:** When a check fails, it can leave a recording going that then gets in the way of the next attempt.
   Kind: test.
   Source: recommendation-2026-09-08.

@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# The gate that travels with the repository.
+#
+# Enable it once per clone:
+#
+#     git config core.hooksPath .githooks
+#
+# Without that, a fresh clone has ci.sh and nothing that runs it, and nothing
+# says a gate was ever expected. That was true of this project until now: the
+# gate reached it through core.hooksPath and ants.gate.command set on one
+# machine, neither of which is cloned.
+#
+# For one push, deliberately:  git push --no-verify
+set -Eeuo pipefail
+
+say() { printf 'pre-push: %s\n' "$1" >&2; }
+
+cd "$(git rev-parse --show-toplevel)"
+[ -x ./ci.sh ] || { say 'no ./ci.sh here — nothing to run'; exit 0; }
+
+# git feeds one line per ref: <local ref> <local sha> <remote ref> <remote sha>.
+# The push is decided from that range, never from the working tree: the two are
+# the same only when the tree is clean, and an uncommitted fix turns the run
+# green for commits that will go red.
+ZERO=0000000000000000000000000000000000000000
+changed=""
+tips=()
+unresolved=false
+
+while read -r _lref lsha _rref rsha; do
+    [ "$lsha" = "$ZERO" ] && continue          # deleting a ref pushes no content
+    tips+=("$lsha")
+    if [ "$rsha" = "$ZERO" ]; then
+        # A branch the remote has never seen has no "since" to diff against.
+        files=$(git log --name-only --pretty=format: "$lsha" --not --remotes 2>/dev/null) \
+            || { unresolved=true; continue; }
+    else
+        files=$(git diff --name-only "$rsha" "$lsha" 2>/dev/null) \
+            || { unresolved=true; continue; }
+    fi
+    changed+=$files$'\n'
+done
+
+[ ${#tips[@]} -eq 0 ] && { say 'nothing to check (deletion or empty push)'; exit 0; }
+
+# ci.sh owns the glob AND the matching, so this hook only hands it the paths --
+# the same division the GitHub workflow uses. Anything we could not resolve runs
+# the full gate: a wrong guess here must cost time, never coverage.
+mode=""
+if ! $unresolved && [ -n "${changed//[$'\n' ]/}" ]; then
+    mode=$(printf '%s' "$changed" | ./ci.sh --docs-mode)
+fi
+[ -n "$mode" ] && say "documentation-only push — running ./ci.sh $mode"
+
+# A detached worktree, not a stash: `git stash` exits 0 having stashed nothing
+# when there was nothing to stash, so a hook cannot tell a clean tree from a
+# failed one.
+worktree=""
+cleanup() {
+    [ -n "$worktree" ] && git worktree remove --force "$worktree" 2>/dev/null
+    return 0
+}
+trap cleanup EXIT
+
+for tip in "${tips[@]}"; do
+    worktree=$(mktemp -d)
+    git worktree add --detach --quiet "$worktree" "$tip"
+    say "gating ${tip:0:12}"
+    if ! ( cd "$worktree" && ./ci.sh "$mode" ); then
+        say "gate FAILED on ${tip:0:12} — push aborted"
+        say '  fix it. Bypassing a gate that failed needs a deliberate decision.'
+        exit 1
+    fi
+    cleanup
+    worktree=""
+done
