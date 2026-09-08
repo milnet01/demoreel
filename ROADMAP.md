@@ -133,7 +133,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: chore.
   Source: user-request-2026-09-07.
 
-- 📋 [DEMO-0013] **Drop or condition the faststart rewrite, which re-reads the whole video.**
+- 💭 [DEMO-0013] **Drop or condition the faststart rewrite, which re-reads the whole video.**
   The recorder passes `-movflags +faststart`, which moves the index to the
   front of the file once recording finishes. That is a full extra pass
   over the output.
@@ -164,11 +164,16 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   locally. The bullet assumed the opposite; the assumption is what the
   measurement corrects. Not closing the item -- whether to drop or condition the
   flag is a call for the user, and the numbers are now here to make it on.
+  Decided (2026-09-08) by the user, on the measurement above: keep the
+  faststart rewrite. 7% of encode time on a large file is a fair price for
+  progressive playback, and this tool's own reason for existing is a
+  Flathub submission, where the video is served over HTTP rather than
+  opened locally. Closing as considered -- measured, decided, no change.
   **Layman:** Every recording is written twice; the second pass buys something we may not need
   Kind: perf.
   Source: in-session-2026-09-07.
 
-- 📋 [DEMO-0014] **Tune the encoder for screen content instead of general video.**
+- 💭 [DEMO-0014] **Tune the encoder for screen content instead of general video.**
   The recorder uses `-preset veryfast -crf 23` with no tuning. A GUI
   recording is mostly static with sharp text, which is the case x264's
   still-image and animation tunings exist for, and it is nothing like the
@@ -206,6 +211,12 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
 
   Recommendation: no change. 7% on a demo clip does not earn a default that is
   wrong for half the tool's targets.
+  Decided (2026-09-08) by the user, on the measurement above: leave the
+  encoder alone. The premise did not hold -- `tune stillimage` is about 7%
+  smaller and marginally WORSE by SSIM, not better, and the frames are
+  indistinguishable. One default has to serve both static interfaces and
+  spinning 3D, and no tuning is right for both. Closing as considered --
+  measured, decided, no change.
   **Layman:** The video settings are tuned for film; a mostly-still app window compresses far better
   Kind: perf.
   Source: in-session-2026-09-07.
@@ -767,7 +778,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: release.
   Source: recommendation-2026-09-08.
 
-- 📋 [DEMO-0035] **The gate's linter has never analysed a single source file.**
+- ✅ [DEMO-0035] **The gate's linter has never analysed a single source file.**
   `ci.sh` runs `ruff check .` and reports "All checks passed!". Asked
   which files that command actually selects, ruff answers with one:
   `ruff.toml`. The source file is named `demoreel` with no extension, and
@@ -789,11 +800,29 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   way.
 
   Fix the PLW1510 in the same change, or the first honest run is red.
+  Resolved (2026-09-08). The lint step now names the tree and the
+  source file: `ruff check . demoreel`. Naming the tree as well keeps any
+  *.py added later covered without a second edit.
+
+  The hollow gate was the failure, not the one breach it hid, so the step
+  also asserts ruff selected the file and fails loudly if it did not.
+  Proved the assertion fires by running it against the old invocation --
+  it reports ruff selecting `ruff.toml` alone and exits 1.
+
+  Fixed the PLW1510 breach in the same change. The `xauth` call already
+  tests `added.returncode` itself, so the explicit `check=False` states
+  what the code was doing. Checked the other two `subprocess.run` sites:
+  both were already deliberate -- `xdotool()` takes `check` as a
+  parameter, and the frame grab carries a noqa with its reason.
+
+  Verified: ./ci.sh passes end to end, the lint step reporting "ruff
+  analysed demoreel". Removed the warning paragraph from CLAUDE.md, as
+  that paragraph instructed.
   **Layman:** The automatic code check passes because it is looking at nothing.
   Kind: fix.
   Source: check-code-2026-09-08.
 
-- 📋 [DEMO-0036] **A stale state file lets stop terminate a process it never started.**
+- ✅ [DEMO-0036] **A stale state file lets stop terminate a process it never started.**
   The state file records a pid and nothing else, and `alive()` asks only
   whether SOME process holds that pid. A run killed with SIGKILL, or lost
   to a power cut, leaves its state file behind -- the cleanup is in a
@@ -817,11 +846,37 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   the pid would close it. The start time in field 22 of `/proc/<pid>/stat`
   is the usual choice: it is unique per pid incarnation, readable without
   privilege, and comparing it before signalling costs one file read.
+  Resolved (2026-09-08). The run records the start time from field 22 of
+  /proc/<pid>/stat alongside the pid, and `is_our_run()` compares it
+  before treating a state file as ours. It replaces the bare `alive()` at
+  both call sites.
+
+  The second call site was a bug in its own right, not just a copy: the
+  duplicate-name guard refused to start a new run when a stale file's pid
+  had been recycled, so a crashed recording could block its own name.
+
+  An entry with no recorded start time cannot be checked, and an entry
+  that cannot be checked is the one this refuses. Nothing is released yet,
+  so no state file in the wild has the old shape.
+
+  Reproduced against both versions, using a `sleep` as the stand-in for a
+  process that inherited the number. Pre-fix: stop printed a path, exited
+  0, and the shell reported the sleep dying with "User defined signal 1".
+  Post-fix: the no-start-time and wrong-start-time cases are both refused,
+  the process survives, and the stale files are cleaned up.
+
+  Locked in ci.sh as its own step, proved red against the pre-fix code and
+  green against the fix.
+
+  A race remains in principle -- the process could exit between the check
+  and the signal -- but that window is microseconds against however long a
+  stale file has been lying around. Said so in the code rather than
+  implying the hole is fully closed.
   **Layman:** If a recording is killed abruptly, a later stop can kill an unrelated program instead.
   Kind: security.
   Source: check-code-2026-09-08.
 
-- 📋 [DEMO-0037] **The workflow leaves its credentials readable to every later step.**
+- ✅ [DEMO-0037] **The workflow leaves its credentials readable to every later step.**
   Found by `zizmor` as `artipacked`, medium confidence.
 
   `actions/checkout` writes the job's token into `.git/config` unless it is
@@ -841,11 +896,18 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   The fix is one line under the existing `with:` block. Check first that
   nothing in the gate needs to push or authenticate; nothing appears to,
   since the workflow only reads.
+  Resolved (2026-09-08). `persist-credentials: false` added to the
+  checkout step. Checked first that nothing in the job needs the token:
+  it only reads, and fetch-depth still gets its history during checkout
+  itself.
+
+  Verified: zizmor reports no findings where it previously reported
+  artipacked.
   **Layman:** The build checkout stores a token on disk where anything later in the job can read it.
   Kind: security.
   Source: check-code-2026-09-08.
 
-- 📋 [DEMO-0038] **A step's output is expanded straight into a shell command line.**
+- ✅ [DEMO-0038] **A step's output is expanded straight into a shell command line.**
   Found by `zizmor` as `template-injection`, low confidence.
 
   The workflow's last step is `run: ./ci.sh ${{ steps.mode.outputs.mode
@@ -864,11 +926,24 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
 
   The same step is DEMO-0021's, so this is worth folding in if that area
   is touched again.
+  Resolved (2026-09-08). The mode value now reaches the gate step through
+  `env:` and is referenced as a quoted shell variable.
+
+  Fixed the same pattern in the mode step as well, rather than only the
+  one step zizmor named -- its four expressions are substituted the same
+  way, and leaving them would have been fixing one copy of the defect.
+
+  The argument is quoted and empty for a full run. Verified rather than
+  assumed: `./ci.sh ""` runs past the documentation-only exit into the
+  required-programs and lint steps, because ci.sh reads its argument as
+  "${1:-}" and an empty one is simply not "--docs".
+
+  Verified: actionlint clean, zizmor reports no findings.
   **Layman:** The build pastes a value into a command instead of passing it as data.
   Kind: security.
   Source: check-code-2026-09-08.
 
-- 📋 [DEMO-0039] **Every external tool is invoked by bare name, resolved through PATH.**
+- ✅ [DEMO-0039] **Every external tool is invoked by bare name, resolved through PATH.**
   Flagged at six call sites by both `ruff` (S607) and `bandit` (B607):
   `Xvfb`, `ffmpeg`, `xdotool`, `xauth`, `xwfb-run` and the caller's own
   command are all started by name.
@@ -889,11 +964,28 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   are correct here. The caller's own command stays a bare name whatever is
   decided -- it is the caller's to choose, and the required-programs check
   already uses `shutil.which` for its own probe.
+  Decided (2026-09-08) by the user, with both options put: leave the bare
+  names as they are, and record why.
+
+  The reasoning the investigation asked for. demoreel runs as the caller
+  with no elevation, so anyone who can alter that PATH can already run
+  code as them; `shutil.which` resolves through the same PATH, so pinning
+  would be the same trust wearing a different hat. The asymmetry that made
+  it worth an hour is real and is now written down rather than re-derived:
+  demoreel inherits its PATH rather than choosing one, because it is meant
+  to be started by other tools, so a substituted helper would see the
+  private display.
+
+  Recorded in two places on purpose. SECURITY.md gains it as a trust
+  boundary, where an outside reader looks and where the other boundaries
+  already are. `.claude/audit/audit-config.json` carries the same decision
+  for the next sweep, with a `revisit_if` naming what would overturn it --
+  privilege, setuid, or invocation by something running as another user.
   **Layman:** The tool finds its helper programs by name, so whatever is first on the search path wins.
   Kind: investigate.
   Source: check-code-2026-09-08.
 
-- 📋 [DEMO-0040] **Nothing records which security findings are by design, so every run re-derives them.**
+- ✅ [DEMO-0040] **Nothing records which security findings are by design, so every run re-derives them.**
   This project has no audit config, so a security sweep starts from raw
   tool output every time.
 
@@ -915,6 +1007,21 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
 
   Record the reason, not just the rule id -- a suppression with no
   reasoning is indistinguishable from one added to make a report quiet.
+  Resolved (2026-09-08). `.claude/audit/audit-config.json` now records the
+  calibration, each entry carrying its reason as the item asked: the
+  subprocess family on a tool whose job is starting subprocesses, the
+  bare-name decision from DEMO-0039, B108 on the /tmp fallback that
+  DEMO-0019 guarded rather than removed, and vulture's `signum`, which is
+  a signature the interpreter requires.
+
+  Ran the tools rather than copying this item's description of them, and
+  two things came back different. zizmor's two "suppressed" findings are
+  not its own defaults: --persona=auditor shows `anonymous-definition` and
+  `concurrency-limits`, both real and both below the default threshold.
+  They are recorded under `known_open` rather than `calibrated`, because
+  neither is a false positive and neither was acted on. semgrep is
+  installed but has never been run against this project, so it is marked
+  as having no baseline rather than described as if it had one.
   **Layman:** The security tools flag the same expected things every time, and nobody has written down that they are expected.
   Kind: chore.
   Source: check-code-2026-09-08.
