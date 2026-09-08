@@ -1160,7 +1160,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: chore.
   Source: check-code-2026-09-08.
 
-- 📋 [DEMO-0041] **While --settle waits for an app to draw, it competes with it for the machine.**
+- ✅ [DEMO-0041] **While --settle waits for an app to draw, it competes with it for the machine.**
   `wait_until_drawn` polls `display_is_blank` every 0.25 s, and each call
   spawns a fresh ffmpeg to grab one frame off the display.
 
@@ -1188,6 +1188,30 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   keep one sampler alive instead of spawning per poll. The second is
   faster and larger -- it means holding an ffmpeg open or talking X
   directly, and the project is standard-library-only by design.
+  Resolved (2026-09-08). Took the first of the two options this item left
+  open: back the poll off as the wait lengthens, rather than keeping a
+  sampler alive. The second means holding an ffmpeg open or speaking X
+  directly, and this tool is standard-library-only by design.
+
+  The poll starts tighter than the old fixed interval and widens to a
+  ceiling. From the per-sample cost measured above, a 20s settle takes 22
+  samples instead of 56, and a 30s settle 31 instead of 83. A fast-drawing
+  app is answered sooner than before, because the first interval is
+  shorter.
+
+  What it costs is stated in the code rather than hidden: up to the
+  ceiling between the app drawing and the recorder noticing, against a
+  fixed quarter-second. That is the right trade when the alternative is
+  taking CPU from the app to find out a second earlier.
+
+  The dead end this item measured is recorded beside the loop so it is not
+  retried: decimating the frame gives the same answer and saves about 10%,
+  because the cost is the process spawn and the capture, not the data.
+
+  Verified directly, since the gate does not exercise --settle. Against a
+  display that never draws it returns False after exactly the timeout, in
+  7 samples where the old interval would have taken 12. Against one that
+  draws on the third look it returns True in a quarter of a second.
   **Layman:** The check that waits for the app to appear is itself expensive, and runs four times a second.
   Kind: perf.
   Source: optimisation-pass-2026-09-08.
@@ -1216,6 +1240,39 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   durations suggest, try the two cheapest steps concurrently before
   reaching for the rest. DEMO-0029's teardown trap should land first;
   parallel steps make an orphan harder to attribute, not easier.
+  Measured (2026-09-08), as this item asked, and DEMO-0029's teardown
+  landed first as it also asked.
+
+  The full gate takes about 54 seconds: 53.87s and 53.75s on two runs.
+  Both were taken at a load average around 8, so the quiet-machine figure
+  this item wanted is still missing -- something else on this machine was
+  busy throughout. What the pair does show is that the number is not
+  contention-sensitive: two runs under a heavy load agreed to within a
+  tenth of a second, which is not what a CPU-bound gate does.
+
+  The recordings are as dominant as their durations suggested. The gate
+  makes ten recording runs; their requested durations come to about 36
+  seconds, plus two `-d 0` runs that end when stopped. So roughly
+  three-quarters of the gate is recording, and the remaining ~14 seconds
+  is fixed setup spread over ten runs -- about 1.4s each, which agrees
+  with DEMO-0012's estimate from the other direction.
+
+  The single largest step is the scripted-actions run at 12 seconds, a
+  third of all the recording time. That is a bigger lever than
+  concurrency and does not risk the flakiness this item warns about.
+
+  This item also got MORE expensive today, which is worth stating: the
+  --cursor coverage added under DEMO-0030 is two further 3-second
+  recordings, so about 6 of the 54 seconds is new.
+
+  Recommendation: do not make the steps concurrent. The item's own
+  objection stands -- several steps are timing-sensitive, the stop step
+  already had to be rewritten around a race, and a flaky gate is a bad
+  trade for a check that runs before every push. The payoff is at most
+  ten to fifteen seconds. Shortening the 12-second actions run, if its
+  assertions still hold, is the cheaper and safer place to look.
+
+  Left open for the user's call rather than closed on that recommendation.
   **Layman:** The pre-push check runs nine separate recordings in a row, and waits for each.
   Kind: perf.
   Source: optimisation-pass-2026-09-08.
