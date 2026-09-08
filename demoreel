@@ -138,7 +138,7 @@ def start_xvfb(width, height, name):
     cookie = secrets.token_hex(16)
     added = subprocess.run(["xauth", "-f", str(auth), "add",
                             display, "MIT-MAGIC-COOKIE-1", cookie],
-                           capture_output=True, text=True)
+                           capture_output=True, text=True, check=False)
     if added.returncode != 0:
         proc.kill()
         auth.unlink(missing_ok=True)

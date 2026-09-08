@@ -130,7 +130,22 @@ fi
 echo "ruff $actual (pinned)"
 
 step "lint"
-ruff check .
+# The tree AND the source file by name. `ruff check .` alone selects nothing
+# here: the file is called `demoreel` with no extension, and ruff's default
+# include list is *.py -- so for the whole history before this line the gate
+# reported "All checks passed!" about a config file. Naming the tree as well
+# keeps any *.py added later covered without a second edit.
+ruff check . demoreel
+# Prove ruff opened the source rather than trusting that it did. Without this
+# the hollow gate is one rename away from coming back, and it comes back green.
+selected=$(ruff check --show-files . demoreel)
+if [[ $'\n'$selected$'\n' != *$'\n'$PWD/demoreel$'\n'* ]]; then
+    echo "ruff did not select demoreel, so the lint step checked nothing." >&2
+    echo "it selected:" >&2
+    printf '%s\n' "$selected" >&2
+    exit 1
+fi
+echo "ruff analysed demoreel"
 
 step "parse"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("demoreel").read_text())'

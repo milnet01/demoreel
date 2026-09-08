@@ -15,13 +15,6 @@ roadmap verbs, or the next write reverts your edit.
 There is no spec and none is wanted; `README.md` is the design contract. The
 sections below are the parts a session is most likely to break by accident.
 
-**The linter step is currently hollow, and a green gate does not mean your
-Python was checked.** `ruff check .` selects only `ruff.toml`, because the
-source file has no extension and ruff's default include is `*.py`. Run
-`ruff check demoreel` by hand until DEMO-0035 fixes it — there is a real
-PLW1510 breach in the tree today that the gate passes over. Delete this
-paragraph when that item closes.
-
 Verify a change by running `./ci.sh`. Among its steps: the linter, a parse, a
 check that every flag `README.md` documents is one the tool accepts, and a
 smoke recording that samples a frame and fails if the app never reached the
