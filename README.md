@@ -249,6 +249,16 @@ Checked by running them, not assumed:
 - The `--gpu` display size comes from Xwayland's `-geometry`, not from the
   compositor. Without it, both `cage` and `weston` hand back Xwayland's rootful
   default of 640x480 and `-s` would be silently ignored.
+- **The privacy promise is measured, not just argued.** Every other claim here
+  has a measurement behind it; this one rested on the reasoning that nothing of
+  the user's session is on the display, so nothing of it can be in frame. Tested
+  instead: with KWin's Magnifier enabled and a window of one unique colour open
+  on the real desktop, both backends recorded and every frame was decoded at
+  full resolution. No pixel came within 40 of the marker colour — the closest
+  was 135.8 under `Xvfb` and 117.8 under `--gpu` — and the whole `Xvfb`
+  recording measured zero saturation, so nothing coloured reached it at all.
+  The detector was shown able to fire: over a clip that really is the marker
+  colour, encoded the same way, it matched every pixel.
 - **Scripted `-a` actions work on the `--gpu` path**, not only under `Xvfb`.
   Measured: `-a 'click 130 453' -a 'key Down'` against `gtk4-demo` on the
   compositor selected the clicked row and then moved the selection down, both
