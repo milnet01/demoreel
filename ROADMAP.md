@@ -79,10 +79,27 @@ simplest case, and a gate proves it still records.
 
 Nothing here breaks a documented surface, so all of it lands in a PATCH.
 
-- 📋 [DEMO-0009] **Add a CHANGELOG before cutting the first tagged release.**
+- ✅ [DEMO-0009] **Add a CHANGELOG before cutting the first tagged release.**
   The project has no CHANGELOG.md and no tags. The version scheme is
   now defined, so the remaining piece before a v0.1.0 tag is somewhere
   to record what each release contains.
+  Resolved (2026-09-08): CHANGELOG.md added in Keep a Changelog format, per
+  changelog-format.md section 4, with everything under [Unreleased] because
+  nothing has been tagged. Verified it parses for the tooling -- changelog_query
+  reads the entry back.
+
+  Two further documents the skeleton expects were absent and were added in the
+  same commit: SECURITY.md, which names this project's trust boundaries and links
+  DEMO-0017, DEMO-0018 and DEMO-0019 rather than restating them; and
+  docs/standards/README.md, saying the global standards are read in place and
+  what this directory declares.
+
+  Not created, deliberately: docs/design.md, because this project's CLAUDE.md
+  makes README.md the design contract; docs/discovery.md, because the project was
+  not built through that flow; docs/decisions/, because the decisions already
+  live in README.md and CLAUDE.md.
+
+  ci.sh's readability check covers the new documents.
   **Layman:** There is nowhere yet to record what changed between versions
   Kind: release.
   Source: in-session-2026-09-07.
