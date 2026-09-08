@@ -16,6 +16,18 @@ privileges and does not sandbox it. This is not a privilege boundary — the
 caller could run the same command directly — but it does mean demoreel is not a
 containment mechanism, and should not be used as one.
 
+**The `PATH` demoreel inherits.** The fixed helpers — `Xvfb`, `ffmpeg`,
+`xdotool`, `xauth`, `xwfb-run` — are started by name, so the caller's `PATH`
+decides which binaries run. This is deliberate. It is not a privilege boundary:
+demoreel runs as the caller with no elevation, so anyone who can alter that
+`PATH` can already run code as them, and resolving the names to absolute paths
+would read the same `PATH` to do it. What it does mean is that demoreel inherits
+its `PATH` rather than choosing one — it is meant to be started by other tools —
+and a helper substituted under it would see the private display. Start demoreel
+from an environment you trust as much as the one you would run `ffmpeg` in
+directly. Decided under DEMO-0039; the reasoning is also recorded for the audit
+tools, which flag these call sites on every run.
+
 **The virtual X display.** The whole point of the tool is that what the app
 draws is private to the run. Both backends now put the display behind an
 `MIT-MAGIC-COOKIE-1` cookie in an `Xauthority` file at mode 0600, handed to

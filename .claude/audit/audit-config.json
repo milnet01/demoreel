@@ -1,0 +1,82 @@
+{
+  "_comment": "Project-side audit calibration for demoreel. Read by check-code before triage. Every entry records WHY a finding is expected, not just its rule id -- a suppression with no reasoning is indistinguishable from one added to make a report quiet. Re-decide an entry when its reason stops being true; do not add one to silence a finding you have not understood.",
+  "project": "demoreel",
+  "scope": "The whole tool is one file, `demoreel`. It has no extension, so name it explicitly: several tools default to *.py and select nothing here. `ci.sh` proves ruff selected it.",
+
+  "calibrated": [
+    {
+      "tools": ["bandit", "ruff"],
+      "rules": ["B404", "B603", "S603"],
+      "applies_to": "Every subprocess call site, and the `import subprocess` itself.",
+      "verdict": "expected",
+      "reason": "Starting subprocesses is the whole job: Xvfb, ffmpeg, xdotool, xauth, xwfb-run and the caller's own command. Every argument list is built as a list, never through a shell, so there is no shell metacharacter to inject through. The caller's command is the caller's to choose and demoreel does not sandbox it, which SECURITY.md states as a trust boundary rather than dismissing."
+    },
+    {
+      "tools": ["bandit", "ruff"],
+      "rules": ["B607", "S607"],
+      "applies_to": "The fixed helpers started by bare name, and the caller's own command.",
+      "verdict": "expected, decided deliberately",
+      "reason": "Decided 2026-09-08 by the user under DEMO-0039, after the question was put with both options. demoreel runs as the caller with no elevated privilege, so anyone who can alter that caller's PATH can already run code as them -- resolving absolutely would move nothing real. shutil.which resolves through the same PATH, so pinning would be the same trust wearing a different hat. The caller's own command stays a bare name whatever is decided: it is the caller's to choose. Recorded as a trust boundary in SECURITY.md so the reasoning is where an outside reader looks, not only here.",
+      "revisit_if": "demoreel ever gains privilege, is installed setuid, or is invoked by something running as another user."
+    },
+    {
+      "tools": ["bandit", "ruff"],
+      "rules": ["B108", "S108"],
+      "applies_to": "The /tmp fallback in state_dir().",
+      "verdict": "real, guarded rather than removed",
+      "reason": "The path is genuinely hardcoded and predictable, so the tools will keep naming it. DEMO-0019 guarded it instead of removing it: state_dir() lstats the path so a planted symlink is seen rather than followed, and refuses anything that is not a directory the caller owns. A desktop session sets XDG_RUNTIME_DIR, so the fallback is the unusual path. The gate covers this."
+    },
+    {
+      "tools": ["vulture"],
+      "rules": ["unused variable 'signum'"],
+      "applies_to": "The signal handler.",
+      "verdict": "false positive",
+      "reason": "signal.signal hands the handler two positional arguments. The name is a signature the interpreter requires, not a variable anyone forgot to use."
+    }
+  ],
+
+  "tools": {
+    "ruff": {
+      "command": "ruff",
+      "note": "The lint gate pins its version in ci.sh and installs from there. `ruff check --select S` is the security pass and is NOT what ci.sh runs -- ruff.toml's select list is the project's chosen ruleset, and S is deliberately outside it because every finding it has here is calibrated above.",
+      "invocation": "ruff check --select S demoreel"
+    },
+    "bandit": {
+      "command": "bandit",
+      "invocation": "bandit demoreel",
+      "note": "Reads the file despite the missing extension."
+    },
+    "vulture": {
+      "command": "vulture",
+      "invocation": "vulture demoreel"
+    },
+    "semgrep": {
+      "command": "semgrep",
+      "note": "Installed, but not yet run against this project. Nothing is calibrated for it, so treat its first run as a fresh baseline. Point it at the file by name, as the other tools need."
+    },
+    "gitleaks": {
+      "command": "gitleaks",
+      "invocation": "gitleaks dir .",
+      "note": "Nothing calibrated. A finding here is a finding."
+    },
+    "actionlint": {
+      "command": "actionlint",
+      "invocation": "actionlint .github/workflows/ci.yml"
+    },
+    "zizmor": {
+      "command": "zizmor",
+      "invocation": "zizmor .github/workflows/ci.yml",
+      "note": "Runs offline by default, which disables some audits and auto-fixes. It says two findings are suppressed at the default persona; --persona=auditor shows them, and they are listed under known_open below rather than here. They are real, not defaults."
+    }
+  },
+
+  "known_open": [
+    {
+      "tool": "zizmor",
+      "rules": ["anonymous-definition", "concurrency-limits"],
+      "seen_with": "--persona=auditor",
+      "verdict": "real, below the default threshold, not acted on",
+      "reason": "Neither is calibrated away and neither is a false positive. anonymous-definition wants a `name:` on the job. concurrency-limits wants a concurrency group so a superseded push cancels the run it replaced. Both are cosmetic-to-minor and neither was in the scope of the items that produced this file. Recorded so the next sweep can see they were looked at and left, rather than re-deriving them."
+    }
+  ]
+}
