@@ -14,6 +14,7 @@ import select
 import shlex
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import time
@@ -53,7 +54,20 @@ def note(msg):
 def state_dir():
     base = Path(os.environ.get("XDG_RUNTIME_DIR") or "/tmp")
     d = base / f"demoreel-{os.getuid()}"
-    d.mkdir(parents=True, exist_ok=True)
+    try:
+        d.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        die(f"could not use {d}: {exc.strerror}.")
+    # A desktop session sets XDG_RUNTIME_DIR, so the /tmp fallback is the
+    # unusual path — which is also why it would go unnoticed. The name there is
+    # predictable, so another user can create it first and exist_ok would adopt
+    # it. lstat, not stat: a symlink planted at that name is followed by both
+    # stat and chmod, so checking through it proves nothing.
+    st = os.lstat(d)
+    if not stat.S_ISDIR(st.st_mode) or st.st_uid != os.getuid():
+        die(f"{d} is not a directory you own, so demoreel will not use it.\n"
+            "  On a shared machine another user can create that name first.\n"
+            "  Remove it, or point XDG_RUNTIME_DIR at a directory you own.")
     d.chmod(0o700)
     return d
 

@@ -235,6 +235,27 @@ wait "$recorder" || { echo "the stopped run exited non-zero" >&2; exit 1; }
 [ -f "$tmp/app.log" ] || { echo "--app-log wrote no file" >&2; exit 1; }
 echo "stop ended the run, and --app-log wrote its file"
 
+step "the state directory must be one we own"
+# The run-state directory's name is predictable, so on a shared machine another
+# user can create it first and demoreel would adopt it. The check is exercised
+# inside $tmp with XDG_RUNTIME_DIR pointed at it, so nothing outside this run's
+# own scratch directory is touched -- planting the real name under /tmp would
+# collide with any other recording on the machine.
+mkdir -p "$tmp/fakerun"
+ln -s /tmp "$tmp/fakerun/demoreel-$(id -u)"
+set +e
+XDG_RUNTIME_DIR="$tmp/fakerun" ./demoreel record -o "$tmp/planted.mp4" \
+    -d 3 -s 640x480 -- xclock >"$tmp/planted.out" 2>"$tmp/planted.err"
+planted_status=$?
+set -e
+[ "$planted_status" -ne 0 ] || { echo "demoreel used a planted symlink" >&2; exit 1; }
+grep -q 'not a directory you own' "$tmp/planted.err" || {
+    echo "the run failed, but not on the state-directory guard:" >&2
+    cat "$tmp/planted.err" >&2
+    exit 1
+}
+echo "a state directory we do not own is refused"
+
 step "default output name"
 # -o is optional; without it the file is named from the app and a timestamp.
 ( cd "$tmp" && "$OLDPWD/demoreel" record -d 3 -s 640x480 -- xclock >/dev/null )

@@ -117,6 +117,18 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   If either ever has to stay below its latest release, that becomes a
   hold and needs a ledger row naming what broke, at which version, and
   what would release it.
+  Checked (2026-09-08): both pins are at their latest release, so nothing is
+  owed today and the item stays open as the standing chore it describes.
+
+  ruff is pinned at 0.16.6, which is what the machine has installed and what
+  astral-sh/ruff reports as its latest release -- so a local run and CI lint with
+  the same tool.
+
+  actions/checkout is pinned by SHA 3d3c42e5aac5ba805825da76410c181273ba90b1,
+  commented v7.0.1. Verified the comment rather than trusting it: the tag ref for
+  v7.0.1 resolves to exactly that commit, and v7.0.1 is the latest release.
+
+  Neither is held below its latest, so no hold-ledger row is owed.
   **Layman:** Two version numbers are written down in CI and will go stale unless someone bumps them
   Kind: chore.
   Source: user-request-2026-09-07.
@@ -154,7 +166,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: perf.
   Source: in-session-2026-09-07.
 
-- 📋 [DEMO-0015] **The gate exercises recording only; stop and the scripted actions are untested.**
+- ✅ [DEMO-0015] **The gate exercises recording only; stop and the scripted actions are untested.**
   ci.sh runs `record` twice and nothing else. `stop`, the `-a` scripted
   actions, `--app-log`, `--settle` and `--cursor` are all documented, and
   nothing proves any of them still works.
@@ -166,6 +178,29 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
 
   All of it is reachable with xclock or xterm on the existing Xvfb path,
   so this needs no new infrastructure, unlike the two backend items.
+  Resolved (2026-09-08): two steps added to ci.sh.
+
+  The scripted actions are exercised by recording an xterm running a shell that
+  reads one line and writes it to a file, so the app itself reports what arrived.
+  wait, type and key are covered. move and click are not -- neither xclock nor
+  xterm reports a click anywhere the script can read -- and the step says so
+  rather than implying coverage it lacks.
+
+  stop is exercised by starting a -d 0 run and ending it, asserting stop prints
+  the output path, the run then exits zero, and a video is there. --app-log rides
+  along on the same run. stop is retried rather than waited for on the video
+  file: a run becomes addressable when it writes its state file, after ffmpeg
+  starts, so the .mp4 exists a moment before stop can find it by name. The first
+  version of the step raced exactly there.
+
+  Both steps proved able to fail: disabling the type action reddens the first,
+  making stop print a different path reddens the second.
+
+  xterm is now a gate dependency and joins both the required-programs check and
+  the workflow's apt list; x11-apps does not ship it.
+
+  Still uncovered: --settle and --cursor. --settle needs an app that is uniformly
+  black for a known interval, which neither xclock nor xterm is.
   **Layman:** Half the tool's features have no automatic check behind them
   Kind: test.
   Source: in-session-2026-09-07.
@@ -209,7 +244,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: security.
   Source: in-session-2026-09-07.
 
-- 📋 [DEMO-0018] **Text from `-a type` is visible in the process list while it is typed.**
+- ✅ [DEMO-0018] **Text from `-a type` is visible in the process list while it is typed.**
   The type action runs `xdotool type --delay 60 <text>`, passing the text
   as a command-line argument. Command lines are readable by other local
   users through the process list for as long as the process runs, and the
@@ -220,6 +255,21 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
 
   `xdotool type --file -` reads the text from stdin instead, which keeps
   it out of the process list. Same feature, same grammar, nothing exposed.
+  Resolved (2026-09-08): the type action now feeds xdotool on stdin via
+  `type --file -`. Same feature, same grammar; the helper gained a keyword-only
+  stdin_text argument, so no existing call site changed.
+
+  Measured with a canary as the typed text, scoped to xdotool's own processes --
+  the first attempt matched the test harness's own command line and reported a
+  leak that was the test's. Before: the canary was in xdotool's argv. After: it
+  was not. Typing still lands, checked by having an xterm write back what it
+  received.
+
+  The bullet's "nothing exposed" was half right, and the difference is now
+  measured. demoreel's OWN argv still carries the text, because -a 'type SECRET'
+  is how the caller wrote it, and for the whole run rather than just the typing.
+  Filed as DEMO-0025; SECURITY.md states the residual rather than claiming more
+  than the code does.
   **Layman:** Anything the script types can be read by other users on the machine as it happens.
   Kind: security.
   Source: in-session-2026-09-07.
@@ -414,6 +464,31 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   **Layman:** One exact value makes the tool say the app is there and the gate say it never arrived
   Kind: fix.
   Source: review-contract-2026-09-07 loop 2.
+
+- 📋 [DEMO-0025] **Action text still sits in demoreel's own command line for the whole run.**
+  Found while closing DEMO-0018, by measuring the fix rather than assuming
+  it. That item said `xdotool type --file -` leaves "nothing exposed".
+  Half true: the text is out of xdotool's argv, and it is still in
+  demoreel's, because `-a 'type SECRET'` is how the caller wrote it.
+
+  Measured both, in one run: with a canary as the typed text, xdotool's
+  argv did not contain it and demoreel's did.
+
+  The exposure is also longer than the one that was closed. xdotool held
+  the text only while typing; demoreel holds it from launch to teardown.
+
+  Closing it needs a way to pass action text off the command line -- a
+  file, or stdin. That is a new interface rather than a fix, and it needs
+  weighing against the scope ceiling, which rules out a config file
+  format. It may also be the caller's exposure to accept rather than the
+  tool's to remove: the caller chose to put a secret in a command line,
+  and could pass it some other way.
+
+  Not urgent, and worth stating plainly rather than leaving SECURITY.md
+  claiming more than the code does.
+  **Layman:** Text a script types is no longer visible via the typing tool, but is still visible in demoreel's own command line.
+  Kind: security.
+  Source: in-session-2026-09-08.
 
 ## 0.2.0 — Stricter guards and honest durations
 

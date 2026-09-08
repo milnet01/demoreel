@@ -25,11 +25,12 @@ client through `XAUTHORITY`. The two backends therefore do not offer the same
 protection, and the weaker one is the default. Tracked as DEMO-0017.
 
 **The run-state directory.** `state_dir()` uses `XDG_RUNTIME_DIR` when it is
-set, and `/tmp/demoreel-<uid>` when it is not. The fallback name is predictable
-and the directory is created with `exist_ok=True`, so on a shared machine
-another user can create that path first and have demoreel adopt it. A desktop
-session sets `XDG_RUNTIME_DIR`, so this is the unusual path rather than the
-common one — which is also why it would go unnoticed. Tracked as DEMO-0019.
+set, and `/tmp/demoreel-<uid>` when it is not. The fallback name is predictable,
+so on a shared machine another user can create that path first. demoreel checks
+before using it: `lstat` rather than `stat`, so a planted symlink is seen rather
+than followed, and the run stops unless the path is a directory the caller owns.
+A desktop session sets `XDG_RUNTIME_DIR`, so the fallback is the unusual path —
+which is why the hole would have gone unnoticed. The gate covers this.
 
 **Text given to `-a type`.** demoreel hands it to `xdotool` on stdin, so it is
 not in `xdotool`'s command line. It is still in **demoreel's own**, because the
