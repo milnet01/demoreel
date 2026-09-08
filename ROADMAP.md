@@ -750,6 +750,158 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: release.
   Source: recommendation-2026-09-08.
 
+- 📋 [DEMO-0035] **The gate's linter has never analysed a single source file.**
+  `ci.sh` runs `ruff check .` and reports "All checks passed!". Asked
+  which files that command actually selects, ruff answers with one:
+  `ruff.toml`. The source file is named `demoreel` with no extension, and
+  ruff's default include list is `*.py`, `*.pyi` and `*.ipynb` -- so the
+  only Python in the project is invisible to the only linter.
+
+  Not theoretical. `ruff check demoreel`, same config, reports PLW1510 on
+  the `xauth` call added today: a `subprocess.run` with no explicit
+  `check` argument. PLW is in the project's own select list, so this is a
+  rule the project chose, breached in the tree, with the gate green.
+
+  Every "All checks passed!" in this project's history was that command
+  finding nothing to look at.
+
+  The fix is one line either way: name the file (`ruff check demoreel
+  ci.sh` style) or add `extend-include = ["demoreel"]` to `ruff.toml`.
+  Naming the file in ci.sh is the more honest of the two, because the next
+  source file added would silently fall out of an include list the same
+  way.
+
+  Fix the PLW1510 in the same change, or the first honest run is red.
+  **Layman:** The automatic code check passes because it is looking at nothing.
+  Kind: fix.
+  Source: check-code-2026-09-08.
+
+- 📋 [DEMO-0036] **A stale state file lets stop terminate a process it never started.**
+  The state file records a pid and nothing else, and `alive()` asks only
+  whether SOME process holds that pid. A run killed with SIGKILL, or lost
+  to a power cut, leaves its state file behind -- the cleanup is in a
+  `finally` block, which those paths never reach. Linux then recycles the
+  pid.
+
+  So `cmd_stop` reads a stale file, `alive()` says yes about a process
+  that is not ours, and it sends SIGUSR1. The default action for SIGUSR1
+  is to terminate.
+
+  Demonstrated rather than reasoned about, using a process created for the
+  test: a `sleep` was started, a state file naming its pid was written as
+  a killed run would have left one, and `demoreel stop` ended it. The
+  shell reported "User defined signal 1".
+
+  The impact is bounded -- same user, no privilege gained -- but it is an
+  unrelated process dying because a recording crashed earlier, which is
+  hard to attribute and easy to blame on something else.
+
+  Recording something that identifies the process incarnation alongside
+  the pid would close it. The start time in field 22 of `/proc/<pid>/stat`
+  is the usual choice: it is unique per pid incarnation, readable without
+  privilege, and comparing it before signalling costs one file read.
+  **Layman:** If a recording is killed abruptly, a later stop can kill an unrelated program instead.
+  Kind: security.
+  Source: check-code-2026-09-08.
+
+- 📋 [DEMO-0037] **The workflow leaves its credentials readable to every later step.**
+  Found by `zizmor` as `artipacked`, medium confidence.
+
+  `actions/checkout` writes the job's token into `.git/config` unless it is
+  told `persist-credentials: false`. The workflow does not tell it, so the
+  token stays on disk for the rest of the job -- readable by every later
+  step, and by anything those steps run.
+
+  This job runs `./ci.sh`, which runs the linter, the recorder and the
+  target apps. None of that needs the token, and none of it should be able
+  to reach it.
+
+  The repository is public, so the blast radius is bounded by what the
+  token can do rather than by who can read the workflow -- but a public
+  repository is also the one where a supply-chain step is most likely to
+  be someone else's code.
+
+  The fix is one line under the existing `with:` block. Check first that
+  nothing in the gate needs to push or authenticate; nothing appears to,
+  since the workflow only reads.
+  **Layman:** The build checkout stores a token on disk where anything later in the job can read it.
+  Kind: security.
+  Source: check-code-2026-09-08.
+
+- 📋 [DEMO-0038] **A step's output is expanded straight into a shell command line.**
+  Found by `zizmor` as `template-injection`, low confidence.
+
+  The workflow's last step is `run: ./ci.sh ${{ steps.mode.outputs.mode
+  }}`. GitHub substitutes that expression into the shell script before the
+  shell sees it, so the value is code rather than an argument.
+
+  Here the value comes from `ci.sh --docs-mode`, which prints `--docs` or
+  nothing, so there is no live injection -- which is why the tool rates it
+  low and why this is filed for hardening rather than as a breach.
+
+  What makes it worth closing anyway is that the pattern outlives the
+  reasoning. The guarantee rests on what `--docs-mode` can print, which is
+  a fact about a script that will keep changing, checked by nobody.
+  Passing the value through `env:` and referencing it as a shell variable
+  removes the question rather than answering it.
+
+  The same step is DEMO-0021's, so this is worth folding in if that area
+  is touched again.
+  **Layman:** The build pastes a value into a command instead of passing it as data.
+  Kind: security.
+  Source: check-code-2026-09-08.
+
+- 📋 [DEMO-0039] **Every external tool is invoked by bare name, resolved through PATH.**
+  Flagged at six call sites by both `ruff` (S607) and `bandit` (B607):
+  `Xvfb`, `ffmpeg`, `xdotool`, `xauth`, `xwfb-run` and the caller's own
+  command are all started by name.
+
+  This is an investigation rather than a defect, and the honest reading is
+  that it is probably fine. demoreel runs as the caller with no elevated
+  privilege, so anyone who can alter that caller's PATH can already run
+  code as them -- resolving absolutely would move nothing.
+
+  What makes it worth an hour is the one asymmetry: demoreel is invoked by
+  other sessions and by a skill, so its PATH is inherited rather than
+  chosen, and it is the one program on this machine designed to be started
+  by something else. A tool substituted under it would see the private
+  display, which is the whole thing this project protects.
+
+  Decide it deliberately: either resolve the fixed helpers once at startup
+  with `shutil.which` and use the absolute paths, or record why bare names
+  are correct here. The caller's own command stays a bare name whatever is
+  decided -- it is the caller's to choose, and the required-programs check
+  already uses `shutil.which` for its own probe.
+  **Layman:** The tool finds its helper programs by name, so whatever is first on the search path wins.
+  Kind: investigate.
+  Source: check-code-2026-09-08.
+
+- 📋 [DEMO-0040] **Nothing records which security findings are by design, so every run re-derives them.**
+  This project has no audit config, so a security sweep starts from raw
+  tool output every time.
+
+  Most of that output is by construction. `bandit` at security-pass
+  threshold returns fourteen findings, of which eleven are the subprocess
+  family -- B404, B603, B607 -- on a tool whose entire job is starting
+  subprocesses. `ruff --select S` reports the same sites again as S603 and
+  S607. `vulture` reports the `signum` parameter of the signal handler as
+  an unused variable, which is a signature the interpreter requires.
+
+  One finding is real and already handled: `bandit` B108 on the `/tmp`
+  fallback in `state_dir`, which DEMO-0019 guarded rather than removed --
+  so the path is still hardcoded and the tool will keep naming it.
+
+  A small `.claude/audit/audit-config.json` recording those as calibrated,
+  with the reason beside each, would make the next run's output the part
+  that is new. Without it, whoever runs the next sweep re-decides the same
+  fourteen findings and may decide them differently.
+
+  Record the reason, not just the rule id -- a suppression with no
+  reasoning is indistinguishable from one added to make a report quiet.
+  **Layman:** The security tools flag the same expected things every time, and nobody has written down that they are expected.
+  Kind: chore.
+  Source: check-code-2026-09-08.
+
 ## 0.2.0 — Stricter guards and honest durations
 
 Each of these changes what an existing caller receives, which is what a
