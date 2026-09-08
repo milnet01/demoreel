@@ -95,7 +95,8 @@ done
 echo "every flag README documents is one demoreel accepts"
 
 step "documents are readable"
-for f in README.md CLAUDE.md ROADMAP.md docs/standards/versioning-overrides.md; do
+for f in README.md CLAUDE.md ROADMAP.md CHANGELOG.md SECURITY.md \
+         docs/standards/README.md docs/standards/versioning-overrides.md; do
     [ -s "$f" ] || { echo "missing or empty: $f" >&2; exit 1; }
     python3 -c "import sys; open(sys.argv[1], encoding='utf-8').read()" "$f"
 done

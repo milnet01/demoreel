@@ -338,6 +338,17 @@ names the surfaces that count as breaking, what reaching 1.0 requires, and how
 the numbers move while the leading zero is there — which is not what most
 people assume. That file is the only statement of it; this one would drift.
 
+[CHANGELOG.md](CHANGELOG.md) records what each release contains. Nothing has
+been tagged yet, so everything sits under `[Unreleased]`.
+
+## Security
+
+demoreel runs as you, gains no privilege and opens no network listener, but it
+does start an X display other local processes can reach and write state under a
+path they can predict. [SECURITY.md](SECURITY.md) names those boundaries, links
+the roadmap items already tracking the weak ones, and says how to report
+something not listed there.
+
 ## Roadmap
 
 `ROADMAP.md` is generated from the roadmap store and should not be hand-edited.
