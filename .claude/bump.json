@@ -1,0 +1,24 @@
+{
+  "$": "Where the version lives, enumerated once so it is not rediscovered under release pressure. The whole tool is one file, so `files` is one entry -- but the enumeration is the point, not the length.",
+  "$not-listed": "ROADMAP.md's `## 0.1.0 -- Records anything, from anywhere` and versioning-overrides.md's `0.1.0 -> 0.1.1` example are historical markers, not version-bearing fields. Bumping either would make it false.",
+
+  "version_source": "demoreel",
+  "version_pattern": "__version__ = \"([0-9]+\\.[0-9]+\\.[0-9]+)\"",
+
+  "files": [
+    {
+      "$": "The only field that must BECOME the new version.",
+      "path": "demoreel",
+      "pattern": "__version__ = \"{OLD}\"",
+      "replace": "__version__ = \"{NEW}\""
+    }
+  ],
+
+  "tag": "v{NEW}",
+
+  "todos": [
+    "Cut the changelog with the changelog verb: changelog_log op:\"release\" version:\"{NEW}\" date:\"{TODAY}\". It closes [Unreleased] into a dated section and opens a fresh empty one. Mechanical -- it moves text that already exists and writes no prose."
+  ],
+
+  "post_check": "./ci.sh --version-lockstep"
+}

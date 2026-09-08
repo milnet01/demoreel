@@ -35,6 +35,29 @@ if [ "${1:-}" = "--ruff-version" ]; then
     exit 0
 fi
 
+if [ "${1:-}" = "--version-lockstep" ]; then
+    # The post_check for .claude/bump.json, run after a version bump: every
+    # place the version is written has to say the same thing. Same shape as
+    # --ruff-version and --docs-glob above -- the caller asks this script
+    # rather than restating what it would have to keep in step by hand.
+    tool=$(sed -n 's/^__version__ = "\(.*\)"$/\1/p' demoreel)
+    # The newest DATED section. `[Unreleased]` cannot match: the pattern needs
+    # a digit first, and that is what keeps this from passing on an uncut
+    # changelog.
+    notes=$(sed -n 's/^## \[\([0-9][^]]*\)\].*/\1/p' CHANGELOG.md | head -1)
+    if [ -z "$tool" ]; then
+        echo "could not read __version__ from demoreel" >&2
+        exit 1
+    fi
+    if [ "$tool" != "$notes" ]; then
+        echo "version drift: demoreel says '$tool', CHANGELOG's newest" >&2
+        echo "dated section says '${notes:-<none>}'" >&2
+        exit 1
+    fi
+    printf 'version lockstep: %s\n' "$tool"
+    exit 0
+fi
+
 if [ "${1:-}" = "--docs-mode" ]; then
     # The decision itself, not just the glob it turns on. Callers pipe the
     # changed paths in and run ./ci.sh with whatever comes out, so nobody
