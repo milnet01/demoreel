@@ -224,7 +224,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: security.
   Source: in-session-2026-09-07.
 
-- 📋 [DEMO-0020] **The privacy promise is argued rather than demonstrated.**
+- ✅ [DEMO-0020] **The privacy promise is argued rather than demonstrated.**
   Found by a cold reader answering "how would we know it works" from the
   documents alone. Every other dimension of the stated purpose has a
   recorded measurement behind it -- the GPU path has a shaded cube, the
@@ -239,11 +239,32 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   magnifier active and private windows open on the real desktop, with the
   frames confirmed clean. Once done it belongs in README's verified list
   beside the others.
+  Resolved (2026-09-08): measured, and recorded in README's verified list
+  beside the others.
+
+  KWin's Magnifier was already enabled and was not touched. A window of one
+  unique colour was opened on the real desktop over the user's ordinary
+  session and confirmed mapped there by wmctrl. Both backends then recorded,
+  and every frame of each recording was decoded at full resolution and
+  checked against that colour.
+
+  No pixel came within 40 of it -- closest 135.8 under Xvfb, 117.8 under
+  --gpu. The whole Xvfb recording measured zero saturation. The --gpu frames
+  are the shaded LunarG cube, so that backend reached the card while staying
+  clean.
+
+  The detector was proved able to fire rather than assumed to be: over a clip
+  that really is the marker colour, encoded the same way, it matched every
+  pixel. A first attempt reported a leak through an integer overflow in the
+  analysis, not in the tool; the control is what made that distinguishable.
+
+  Not a gate step -- it needs a real desktop to be private about, and CI has
+  none.
   **Layman:** The one thing this tool exists to guarantee has never been checked in an actual recording.
   Kind: test.
   Source: adopt-project-2026-09-07.
 
-- 📋 [DEMO-0021] **Three places implement the documentation-only decision; only its value has one home.**
+- ✅ [DEMO-0021] **Three places implement the documentation-only decision; only its value has one home.**
   `ci.sh --docs-glob` is the single definition of the pattern, and both the
   workflow and the machine-wide pre-push hook read it. But each then does
   its own matching: the workflow splits and pattern-matches in its own
@@ -258,11 +279,23 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   it rather than reimplementing it, would close it. The hook is
   machine-wide and not this project's to change, so this may only be
   reachable for the workflow half.
+  Resolved (2026-09-08): ci.sh --docs-mode now owns the decision, not just
+  the glob. The workflow pipes the changed paths in and runs whatever comes
+  back, reimplementing nothing.
+
+  The pre-push hook is machine-wide, so its copy stays -- three
+  implementations become two, which is what the bullet said was reachable.
+
+  Behaviour-preserving and measured: the removed workflow logic and
+  ci.sh --docs-mode were run side by side over every commit in this
+  repository's history, and no verdict moved. Edge cases checked
+  separately: all-documentation, mixed, code-only, empty input, blank
+  lines.
   **Layman:** The rule for what counts as a docs push is written once but acted on in three separate places.
   Kind: refactor.
   Source: cold-read-2026-09-07.
 
-- 📋 [DEMO-0022] **The gate never induces a blank recording, so the guard against one is untested.**
+- ✅ [DEMO-0022] **The gate never induces a blank recording, so the guard against one is untested.**
   The smoke step proves a good recording succeeds. Nothing proves a bad one
   fails.
 
@@ -275,6 +308,15 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   parent stays alive leaves the display blank with the run still live,
   which is the branch that fails. That shape was already used by hand this
   session to confirm the behaviour, so the gate can use the same one.
+  Resolved (2026-09-08): ci.sh gained a step that induces the failing
+  branch -- an app that maps a window then kills it while the shell owning
+  it stays alive, leaving the display blank with the run still live. It
+  asserts a non-zero exit, that the blank-display guard was the cause, that
+  no path reached stdout, and that the partial video was left on disk.
+
+  Proved it can fail: downgrading the guard's die() to note(), the exact
+  change CLAUDE.md forbids, reddens the gate with "a blank recording
+  exited 0".
   **Layman:** The check that refuses an empty video has itself never been checked.
   Kind: test.
   Source: cold-read-2026-09-07.
@@ -330,7 +372,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: doc.
   Source: in-session-2026-09-07.
 
-- 📋 [DEMO-0024] **The tool and its gate disagree about a frame measuring exactly the threshold.**
+- ✅ [DEMO-0024] **The tool and its gate disagree about a frame measuring exactly the threshold.**
   `display_is_blank` returns `... > 0.999`, so a frame measuring exactly
   0.999 is NOT blank and the run succeeds. `ci.sh`'s smoke check exits
   non-zero `if dominant >= 0.999`, so the same frame fails the gate.
@@ -345,6 +387,13 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Narrow in practice -- a real frame rarely lands on the boundary
   exactly -- which is why it has gone unnoticed and why it is a PATCH
   rather than urgent. Pick one comparator and use it in both places.
+  Resolved (2026-09-08): ci.sh's smoke assertion now fails at > 0.999,
+  matching display_is_blank. The gate is not a user-facing surface, so
+  aligning it to the tool changes no protected behaviour; changing the
+  tool to match the gate would have failed runs that pass today, which
+  the versioning overrides call breaking. Verified by reading both
+  comparators out of the two files and running a frame measuring exactly
+  the threshold through each: both now say not-blank.
   **Layman:** One exact value makes the tool say the app is there and the gate say it never arrived
   Kind: fix.
   Source: review-contract-2026-09-07 loop 2.
