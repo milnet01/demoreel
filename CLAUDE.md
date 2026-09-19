@@ -149,8 +149,8 @@ something behaves unexpectedly:
   inherits the parent's stdout unless told not to, so the way to reintroduce
   the bug is to drop the `stdout=` argument, not to add anything.
 - **`--settle` and the blank check are the same test**, `display_is_blank`, in
-  two roles: a gate before recording and an assertion after it. That is
-  deliberate — one definition of "nothing is on this display" — and it means
+  two roles: a gate before recording and an assertion during and after it. That
+  is deliberate — one definition of "nothing is on this display" — and it means
   the threshold and its comparator are written once, as `BLANK_THRESHOLD` and
   `frame_is_flat`, and serve both roles. `ci.sh` imports them rather than
   restating them, so it is no longer a copy to keep in step. The remaining
@@ -160,15 +160,17 @@ something behaves unexpectedly:
   app to be ready, so a startup screen with a cursor on it counts as drawn (a
   real `xterm` measures 0.977). Do not tune the threshold for one of the two
   roles alone.
-- **A blank recording is an error, deliberately.** After the duration, one
-  frame is sampled and the run fails if more than 99.9% of it is a single
-  colour. The sample is skipped when the app has already exited: it left an
-  empty display behind, and that video is fine. The check exists because the
-  failure it catches is silent: a valid file, exit 0, and nothing in the
-  picture. Do not downgrade it to a warning. A sample that fails is a third
-  answer, "could not tell", and it fails the run too (`SampleError`). Never
-  fold it into "not blank": that is the success path, and it is how the guard
-  once passed everything whenever its own measurement broke (DEMO-0033).
+- **A blank recording is an error, deliberately.** One frame is sampled halfway
+  through the `-d` countdown and one after it, and the run fails if either is
+  more than 99.9% one colour. Blank at halfway means at least half the
+  countdown is empty, and the run stops there (DEMO-0008). A `-d 0` run has no
+  halfway point. Each sample is skipped when the app has already exited: it
+  left an empty display behind, and that video is fine. The check exists
+  because the failure it catches is silent: a valid file, exit 0, and nothing
+  in the picture. Do not downgrade it to a warning. A sample that fails is a
+  third answer, "could not tell", and it fails the run too (`SampleError`).
+  Never fold it into "not blank": that is the success path, and it is how the
+  guard once passed everything whenever its own measurement broke (DEMO-0033).
 - **A single-instance app will not start on the virtual display.** If a copy is
   already running on the real desktop, the new launch hands over to it and exits
   **0** — a successful process that never shows a window. finbreak behaves this

@@ -646,7 +646,7 @@ def cmd_record(a):
     # Deliberate: as above - closed in the finally block, not here.
     appout = open(applog, "wb") if applog else sys.stderr  # noqa: SIM115
     xvfb = app = ffmpeg = log = auth = None
-    blank = False
+    blank = None  # when the display was found blank: "halfway" or "at the end"
     unsampled = None
     try:
         write_state(statefile, state)
@@ -697,9 +697,26 @@ def cmd_record(a):
             run_action(action, env)
 
         deadline = time.monotonic() + a.duration if a.duration else None
+        # A second look, halfway through the countdown (DEMO-0008). The end
+        # sample alone passes an app that draws only in the final moments,
+        # which is a video mostly empty. Blank at halfway means at least half
+        # of the countdown is empty, and the run fails there rather than
+        # recording the rest. A -d 0 run has no halfway point.
+        halfway = deadline - a.duration / 2 if deadline else None
         while not _stop:
-            if deadline and time.monotonic() >= deadline:
+            now = time.monotonic()
+            if deadline and now >= deadline:
                 break
+            if halfway and now >= halfway:
+                halfway = None
+                if app.poll() is None:
+                    try:
+                        if display_is_blank(env, display, width, height):
+                            blank = "halfway"
+                            break
+                    except SampleError as exc:
+                        unsampled = str(exc)
+                        break
             if ffmpeg.poll() is not None:
                 note(f"ffmpeg stopped early; see {logpath}")
                 break
@@ -717,9 +734,10 @@ def cmd_record(a):
         stop_ffmpeg(ffmpeg)
         # Only meaningful while the app is still up: one that closed itself
         # mid-run leaves an empty display behind, and that video is fine.
-        if app.poll() is None:
+        if blank is None and unsampled is None and app.poll() is None:
             try:
-                blank = display_is_blank(env, display, width, height)
+                if display_is_blank(env, display, width, height):
+                    blank = "at the end"
             except SampleError as exc:
                 unsampled = str(exc)
     finally:
@@ -740,7 +758,9 @@ def cmd_record(a):
     if not output.exists() or output.stat().st_size == 0:
         die(f"no video was written to {output}. See {logpath}")
     if blank:
-        die(f"the virtual display stayed blank, so {output} is a flat colour.\n"
+        what = ("so at least half of it is a flat colour" if blank == "halfway"
+                else "so it ends on a flat colour")
+        die(f"the virtual display was blank {blank}, {what}: {output}\n"
             "  The app ran but drew nothing here. Two causes account for most of it:\n"
             "  - It needs the GPU, and Xvfb has none. An OpenGL or Vulkan app\n"
             "    cannot render on it at all: record it with --gpu instead.\n"

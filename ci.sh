@@ -272,17 +272,21 @@ step "smoke: a blank recording is refused"
 # The app maps a window and then kills it while the shell that owns it stays
 # alive. That leaves the display blank with the run still going, which is the
 # branch that fails; a run whose app exits first skips the check by design.
+#
+# The kill comes AFTER the halfway sample and before the end, so this is the
+# end-of-run check alone. With -d 6 the halfway look lands about 3.5s in and
+# the end about 6.5s in, a second and a half either side of the kill at 5s.
 set +e
 # shellcheck disable=SC2016  # $! and $p belong to the inner sh, not to us
-blank_out=$(./demoreel record -o "$tmp/blank.mp4" -d 4 -s 640x480 \
-    -- sh -c 'xclock & p=$!; sleep 1; kill $p; sleep 10' 2>"$tmp/blank.err")
+blank_out=$(./demoreel record -o "$tmp/blank.mp4" -d 6 -s 640x480 \
+    -- sh -c 'xclock & p=$!; sleep 5; kill $p; sleep 10' 2>"$tmp/blank.err")
 blank_status=$?
 set -e
 [ "$blank_status" -ne 0 ] || { echo "a blank recording exited 0" >&2; exit 1; }
 # The reason matters: a run that failed for some other cause is not this check
 # passing. Any exit is non-zero, but only one of them is the guard firing.
-grep -q 'stayed blank' "$tmp/blank.err" || {
-    echo "the run failed, but not on the blank-display guard:" >&2
+grep -q 'was blank at the end' "$tmp/blank.err" || {
+    echo "the run failed, but not on the end-of-run blank check:" >&2
     cat "$tmp/blank.err" >&2
     exit 1
 }
@@ -290,6 +294,27 @@ grep -q 'stayed blank' "$tmp/blank.err" || {
 # Protected by the versioning overrides: the video already written stays.
 [ -s "$tmp/blank.mp4" ] || { echo "the partial video was not left on disk" >&2; exit 1; }
 echo "a blank recording exits non-zero, prints no path, and leaves its file"
+
+step "a recording blank until its second half is refused"
+# DEMO-0008. The end sample alone passed an app that drew only in the final
+# moments, handing back a video mostly empty. The window goes away at 1s and
+# comes back at 7s; with -d 8 the halfway look lands about 4.5s in, and the
+# end about 8.5s in with the clock drawn again -- so only the halfway sample
+# can fail this run. 0.1.1 returns it with exit 0.
+set +e
+# shellcheck disable=SC2016  # $! and $p belong to the inner sh, not to us
+late_out=$(./demoreel record -o "$tmp/late.mp4" -d 8 -s 640x480 \
+    -- sh -c 'xclock & p=$!; sleep 1; kill $p; sleep 6; exec xclock' 2>"$tmp/late.err")
+late_status=$?
+set -e
+[ "$late_status" -ne 0 ] || { echo "a recording blank until its second half exited 0" >&2; exit 1; }
+grep -q 'was blank halfway' "$tmp/late.err" || {
+    echo "the run failed, but not on the halfway blank check:" >&2
+    cat "$tmp/late.err" >&2
+    exit 1
+}
+[ -z "$late_out" ] || { echo "a failed run printed '$late_out' on stdout" >&2; exit 1; }
+echo "a recording blank at halfway fails there"
 
 step "the blank check says when it could not look"
 # DEMO-0033. A failed sample used to read as "not blank", which is the success

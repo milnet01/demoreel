@@ -14,6 +14,13 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Changed
 
+- **A recording still blank halfway through `-d` now fails there.** (DEMO-0008)
+  The blank check used to look only at the end, so an app that drew
+  something in the last moments passed with a mostly empty video. It now
+  also looks halfway through the countdown. `-d 0` runs have no halfway
+  point and keep the end check only. A run that used to succeed can now
+  fail.
+
 - **`-d` now gives a clip of about the length asked for, and runs start faster.** (DEMO-0012)
   `-d 3` used to produce about 4.2 seconds of video. It now produces
   about 3.2. Each run also finishes about 1.4 seconds sooner, because

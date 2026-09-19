@@ -89,12 +89,15 @@ your own programs: anything running as you can read that file.
 2. Start your app on it.
 3. Wait for the app's window, then resize it to fill the frame.
 4. Optionally run your scripted steps — click, type, wait — while recording.
-5. Record for the duration you asked for.
+5. Record for the duration you asked for. Halfway through, look at the private
+   screen once. If it is still a single flat colour, at least half the video
+   is empty, so the run stops there and fails as step 6 describes.
 6. Look at the private screen one last time. If the app is still running and
    the screen is a single flat colour, that is an error, not a video — the run
-   stops and prints no path, leaving the part-written file on disk. The check
-   is skipped if the app closed itself first: it left an empty screen behind,
-   and that recording is fine. If demoreel cannot look at the screen at all,
+   stops and prints no path, leaving the part-written file on disk. Both looks
+   are skipped if the app closed itself first: it left an empty screen behind,
+   and that recording is fine. With `-d 0` there is no halfway point, so only
+   this last look happens. If demoreel cannot look at the screen at all,
    that is an error too, with the same result: it cannot vouch for the video,
    so it does not hand it back.
 7. Close the app, remove the private screen, leave one video file behind.
