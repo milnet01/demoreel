@@ -14,6 +14,12 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Changed
 
+- **`-d` now gives a clip of about the length asked for, and runs start faster.** (DEMO-0012)
+  `-d 3` used to produce about 4.2 seconds of video. It now produces
+  about 3.2. Each run also finishes about 1.4 seconds sooner, because
+  demoreel waits for things to actually happen instead of sleeping for a
+  fixed time.
+
 - **`demoreel stop` works straight after the run is launched.** (DEMO-0034)
   A run used to be unreachable until it was already recording, so a
   stop issued too early said no such recording existed. stop now finds a

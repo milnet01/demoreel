@@ -228,6 +228,14 @@ out=$(./demoreel record -o "$tmp/smoke.mp4" -d 5 -s 640x480 -- xclock)
 [ -s "$out" ] || { echo "no video written" >&2; exit 1; }
 echo "wrote $out"
 
+# -d means what it says (DEMO-0012). Blind sleeps and a sample taken while
+# still recording made -d 5 a 6.17 second video; it measures 5.2 now. The
+# 0.5 upper bound is room for that remainder, not for the old overshoot.
+length=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$out")
+python3 -c 'import sys; n = float(sys.argv[1]); sys.exit(not 5.0 <= n <= 5.5)' "$length" || {
+    echo "-d 5 produced a ${length}s video" >&2; exit 1; }
+echo "-d 5 produced ${length}s"
+
 ffmpeg -v error -i "$out" -vf 'select=eq(n\,60)' -vframes 1 "$tmp/frame.png" -y
 python3 - "$tmp/frame.png" <<'PY'
 import importlib.machinery, importlib.util, subprocess, sys

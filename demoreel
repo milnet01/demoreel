@@ -19,6 +19,7 @@ import signal
 import stat
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -348,8 +349,22 @@ def wait_for_window(env, app, timeout):
                     "  If not, the command may simply have finished without needing a\n"
                     "  window — in which case there is nothing to record.")
             die(f"the app exited with status {app.returncode} before opening a window.")
-        time.sleep(0.25)
+        # About 2ms of CPU per xdotool spawn, measured, so a tight poll costs
+        # nothing and a loose one costs up to its whole interval in wall time.
+        time.sleep(0.05)
     return None
+
+
+def wait_for_size(env, window, area, timeout=2.0):
+    """Wait until a resize has landed, rather than sleeping a guessed interval.
+
+    No window manager runs here, so the request is applied directly and this
+    normally returns on the first check. The timeout is only for an app that
+    refuses the size; recording goes ahead either way, as it always has.
+    """
+    deadline = time.monotonic() + timeout
+    while window_area(env, window) != area and time.monotonic() < deadline:
+        time.sleep(0.05)
 
 
 def run_action(spec, env):
@@ -384,6 +399,7 @@ def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor
     auth cookie, and ffmpeg is as much a client of that display as xdotool."""
     cmd = [
         "ffmpeg", "-hide_banner", "-loglevel", "warning",
+        "-progress", "pipe:1", "-stats_period", "0.05",
         "-f", "x11grab", "-framerate", str(framerate),
         "-draw_mouse", "1" if cursor else "0",
         "-video_size", f"{width}x{height}", "-i", f"{display}.0",
@@ -395,12 +411,23 @@ def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor
     # record()'s finally block, so it must outlive this statement.
     log = open(logfile, "wb")  # noqa: SIM115
     proc = subprocess.Popen(cmd, env=env, stdin=subprocess.PIPE,
-                            stdout=log, stderr=log)
-    time.sleep(0.5)
-    if proc.poll() is not None:
+                            stdout=subprocess.PIPE, stderr=log)
+    # Return when ffmpeg is actually capturing, not after a guessed interval.
+    # The first progress report is that signal: it arrives once the input is
+    # open and frames are flowing. The duration is counted from here, so a
+    # blind sleep in its place was recorded into every video (DEMO-0012).
+    # The frame count in those reports is no use as the signal -- it counts
+    # ENCODED frames and sits at 0 for most of a second while x264 fills its
+    # look-ahead.
+    ready = select.select([proc.stdout], [], [], DISPLAY_READY_TIMEOUT)[0]
+    if not ready or not proc.stdout.readline():
+        proc.kill()
+        proc.wait()
         log.close()
         tail = Path(logfile).read_text(errors="replace").strip()
         die("ffmpeg could not start recording." + (f"\n  {tail}" if tail else ""))
+    # Keep draining the reports, or ffmpeg blocks once the pipe fills.
+    threading.Thread(target=proc.stdout.read, daemon=True).start()
     return proc, log
 
 
@@ -647,7 +674,7 @@ def cmd_record(a):
             # window already has focus.
             xdotool(env, "windowmove", window, 0, 0)
             xdotool(env, "windowsize", window, width, height)
-            time.sleep(0.5)
+            wait_for_size(env, window, width * height)
 
         try:
             drawn = not a.settle or wait_until_drawn(env, display, width,
@@ -679,8 +706,15 @@ def cmd_record(a):
             if app.poll() is not None:
                 note("the app closed; ending the recording.")
                 break
-            time.sleep(0.2)
+            # Never sleep past the deadline: a fixed interval here added up to
+            # its own length to every video.
+            time.sleep(0.2 if deadline is None
+                       else max(0.0, min(0.2, deadline - time.monotonic())))
 
+        # Stop recording before sampling. The display does not change when the
+        # recorder stops, and sampling first put a third of a second of
+        # overshoot into every video (DEMO-0012).
+        stop_ffmpeg(ffmpeg)
         # Only meaningful while the app is still up: one that closed itself
         # mid-run leaves an empty display behind, and that video is fine.
         if app.poll() is None:
