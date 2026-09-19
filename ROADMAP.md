@@ -1355,7 +1355,7 @@ MINOR is spent on while the leading zero is there.
   Kind: fix.
   Source: in-session-2026-09-07.
 
-- 📋 [DEMO-0011] **Two concurrent runs sharing a name clobber each other's state file.**
+- ✅ [DEMO-0011] **Two concurrent runs sharing a name clobber each other's state file.**
   Measured, not inferred. Two `-d 0` recordings started together with no
   `-n` both write the state file for the name `default`, so the second
   overwrites the first. Stopping then removes the file and the first run is
@@ -1388,6 +1388,11 @@ MINOR is spent on while the leading zero is there.
   So the fix is the ordering, not a new guard -- adding one duplicates
   what is already there. Do not delete the existing `die()`; it covers
   every non-race case.
+  Resolved (2026-09-19): the duplicate-name check is an flock on
+  `<name>.lock` held for the run's life (`claim_name`), so it has no
+  check-then-write gap. Ten simultaneous pairs: one records, one exits 1.
+  Gate step "two runs started together under one name" watched red against
+  the old code (both exited 0). stdout of `stop` is unchanged.
   **Layman:** Start two recordings at once without naming them and one becomes impossible to stop.
   Kind: fix.
   Source: in-session-2026-09-07.
@@ -1462,7 +1467,7 @@ MINOR is spent on while the leading zero is there.
   Kind: fix.
   Source: recommendation-2026-09-08.
 
-- 📋 [DEMO-0034] **A run cannot be stopped until it has already started recording.**
+- ✅ [DEMO-0034] **A run cannot be stopped until it has already started recording.**
   A run becomes addressable when it writes its state file, which happens
   after the window appears and after ffmpeg starts -- so up to the startup
   timeout, twenty seconds by default, `demoreel stop` cannot find a run
@@ -1486,6 +1491,11 @@ MINOR is spent on while the leading zero is there.
   command-line surface the versioning overrides protect.
 
   Either way the observable behaviour of `stop` changes, so it sits here.
+  Resolved (2026-09-19): the state file is written at the run's start with
+  `recording:false` and rewritten once ffmpeg starts. `stop` waits for a
+  starting run to record, and looks for up to STOP_GRACE (1 s) before
+  saying none exists. Ten back-to-back record/stop pairs all produced a
+  video. README's retry loop and the gate's are gone.
   **Layman:** Start a recording and try to stop it straight away, and you are told it is not running.
   Kind: enhancement.
   Source: recommendation-2026-09-08.
