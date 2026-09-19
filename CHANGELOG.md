@@ -12,6 +12,14 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The blank check no longer passes a video it could not look at.** (DEMO-0033)
+  When its sample of the screen failed, the check used to report "not
+  blank", so the run succeeded. That now fails the run with the reason,
+  and --settle stops instead of waiting blind. A run that used to succeed
+  can now fail, which is why this is in a MINOR.
+
 ## [0.1.1] - 2026-09-08
 
 ### Added

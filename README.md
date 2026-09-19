@@ -98,7 +98,9 @@ your own programs: anything running as you can read that file.
    the screen is a single flat colour, that is an error, not a video — the run
    stops and prints no path, leaving the part-written file on disk. The check
    is skipped if the app closed itself first: it left an empty screen behind,
-   and that recording is fine.
+   and that recording is fine. If demoreel cannot look at the screen at all,
+   that is an error too, with the same result: it cannot vouch for the video,
+   so it does not hand it back.
 7. Close the app, remove the private screen, leave one video file behind.
 
 Step 6 matters more than it sounds. A recording of nothing is still a perfectly
@@ -171,7 +173,8 @@ this tool's job.
 `--settle 20` waits up to twenty seconds for the screen to stop being one flat
 colour, then starts recording. If nothing is drawn in that time it says so and
 records anyway, leaving the end-of-run check to fail it — subject to the same
-exception as step 6, so an app that closes itself still succeeds.
+exception as step 6, so an app that closes itself still succeeds. If it cannot
+look at the screen at all, it stops the run there rather than waiting blind.
 
 It is the same test as the blank check at the end of a run, used as a gate
 rather than as a verdict. That is deliberate: one definition of "nothing is on

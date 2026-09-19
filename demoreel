@@ -363,24 +363,36 @@ def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor
     return proc, log
 
 
+class SampleError(Exception):
+    """The display could not be sampled, so whether it is blank is unknown."""
+
+
 def display_is_blank(env, display, width, height):
-    """True if the display is one flat colour, i.e. nothing was ever drawn on it.
+    """True if the display is one flat colour, i.e. nothing is drawn on it.
 
     Silently recording nothing is the worst failure this tool has: valid file,
     exit 0, black picture, every signal saying success. So grab one frame and
     measure how much of it is a single grey level. Measured here: an empty Xvfb
     is 0.99994, and a window as small as 200x100 on a 1280x800 display already
     drops it to 0.98 — so the threshold has room on both sides.
+
+    Raises SampleError when no frame comes back. That is the third answer,
+    "could not tell", and it must not collapse into either of the other two:
+    reading it as "not blank" is how this guard used to pass everything the
+    moment its own measurement broke (DEMO-0033).
     """
-    frame = subprocess.run(  # noqa: PLW1510 - a failed grab is handled below
-        ["ffmpeg", "-hide_banner", "-loglevel", "quiet",
+    grab = subprocess.run(  # noqa: PLW1510 - a failed grab is handled below
+        ["ffmpeg", "-hide_banner", "-loglevel", "error",
          "-f", "x11grab", "-video_size", f"{width}x{height}",
          "-i", f"{display}.0", "-frames:v", "1",
          "-pix_fmt", "gray", "-f", "rawvideo", "-"],
-        env=env, capture_output=True).stdout
-    if not frame:
-        return False  # the sample failed; that is not evidence of a blank display
-    return frame_is_flat(frame)
+        env=env, capture_output=True)
+    if grab.returncode != 0 or len(grab.stdout) != width * height:
+        lines = [ln for ln in grab.stderr.decode(errors="replace").splitlines()
+                 if ln.strip()]
+        raise SampleError("\n  ".join(lines[-3:])
+                          or f"ffmpeg exited {grab.returncode} with no frame")
+    return frame_is_flat(grab.stdout)
 
 
 def dominant_fraction(frame):
@@ -568,6 +580,7 @@ def cmd_record(a):
     appout = open(applog, "wb") if applog else sys.stderr  # noqa: SIM115
     xvfb = app = ffmpeg = log = auth = None
     blank = False
+    unsampled = None
     try:
         if a.gpu:
             # This backend starts the app for us, so there is nothing to launch
@@ -595,7 +608,13 @@ def cmd_record(a):
             xdotool(env, "windowsize", window, width, height)
             time.sleep(0.5)
 
-        if a.settle and not wait_until_drawn(env, display, width, height, a.settle):
+        try:
+            drawn = not a.settle or wait_until_drawn(env, display, width,
+                                                     height, a.settle)
+        except SampleError as exc:
+            die(f"--settle could not sample the display, so it cannot tell "
+                f"when the app has drawn.\n  {exc}")
+        if not drawn:
             note(f"nothing was drawn within {a.settle}s; recording anyway.")
 
         ffmpeg, log = start_ffmpeg(env, display, width, height, a.framerate,
@@ -628,7 +647,10 @@ def cmd_record(a):
         # Only meaningful while the app is still up: one that closed itself
         # mid-run leaves an empty display behind, and that video is fine.
         if app.poll() is None:
-            blank = display_is_blank(env, display, width, height)
+            try:
+                blank = display_is_blank(env, display, width, height)
+            except SampleError as exc:
+                unsampled = str(exc)
     finally:
         # Order matters: finish the video before the app and display go away,
         # or the last frames catch a half-dead app.
@@ -653,6 +675,9 @@ def cmd_record(a):
             "    cannot render on it at all: record it with --gpu instead.\n"
             "  - It rendered somewhere else. A Flatpak needs --nosocket=wayland on\n"
             "    its command line; see README.md.")
+    if unsampled is not None:
+        die(f"could not sample the virtual display to check {output} is not blank,\n"
+            f"  so this run cannot vouch for it.\n  {unsampled}")
     for stale in (logpath, displaylog):
         stale.unlink(missing_ok=True)  # only worth keeping when something failed
     print(output)

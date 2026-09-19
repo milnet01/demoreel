@@ -165,7 +165,10 @@ something behaves unexpectedly:
   colour. The sample is skipped when the app has already exited: it left an
   empty display behind, and that video is fine. The check exists because the
   failure it catches is silent: a valid file, exit 0, and nothing in the
-  picture. Do not downgrade it to a warning.
+  picture. Do not downgrade it to a warning. A sample that fails is a third
+  answer, "could not tell", and it fails the run too (`SampleError`). Never
+  fold it into "not blank": that is the success path, and it is how the guard
+  once passed everything whenever its own measurement broke (DEMO-0033).
 - **A single-instance app will not start on the virtual display.** If a copy is
   already running on the real desktop, the new launch hands over to it and exits
   **0** — a successful process that never shows a window. finbreak behaves this

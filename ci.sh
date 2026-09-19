@@ -283,6 +283,40 @@ grep -q 'stayed blank' "$tmp/blank.err" || {
 [ -s "$tmp/blank.mp4" ] || { echo "the partial video was not left on disk" >&2; exit 1; }
 echo "a blank recording exits non-zero, prints no path, and leaves its file"
 
+step "the blank check says when it could not look"
+# DEMO-0033. A failed sample used to read as "not blank", which is the success
+# path, so the guard passed everything the moment its own measurement broke.
+# The realistic way it breaks is the run's environment losing the display's
+# cookie, so that is the case exercised: a real, empty display, sampled once
+# with the cookie and once without. The first must be blank; the second must
+# raise rather than answer.
+python3 - <<'SAMPLEPY'
+import importlib.machinery, importlib.util, os
+
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+demoreel = importlib.util.module_from_spec(
+    importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(demoreel)
+
+# The name starts with "gate" so the teardown's Xvfb sweep covers it.
+proc, display, auth = demoreel.start_xvfb(320, 240, "gatesample")
+try:
+    env = dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth))
+    if demoreel.display_is_blank(env, display, 320, 240) is not True:
+        raise SystemExit("an empty display did not measure as blank")
+    try:
+        demoreel.display_is_blank(dict(env, XAUTHORITY="/dev/null"),
+                                  display, 320, 240)
+    except demoreel.SampleError as exc:
+        print(f"could not tell, and said why: {str(exc).splitlines()[0]}")
+    else:
+        raise SystemExit("a display it could not sample was given a verdict")
+finally:
+    proc.kill()
+    proc.wait()
+    auth.unlink(missing_ok=True)
+SAMPLEPY
+
 step "scripted actions reach the app"
 # The sharpest gap the gate had: a scripted click or keystroke that quietly
 # stops landing still produces a valid-looking video of an app sitting there
