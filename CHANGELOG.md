@@ -36,6 +36,13 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **Apps that title their window only the modern way, such as vkcube, are now found.** (DEMO-0043)
+  demoreel looked only at a window's older title property, so these
+  windows were never found. Every such run waited the full 20 second
+  startup timeout and recorded the window at its own size, not filling
+  the frame. A `--gpu -- vkcube` run now takes about 4 seconds instead of
+  24.
+
 - **Two runs started together under one name no longer both record.** (DEMO-0011)
   The later one's state file used to hide the earlier one from
   `demoreel stop`. The duplicate-name check is now a lock, so exactly one

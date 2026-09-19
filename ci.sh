@@ -134,13 +134,14 @@ fi
 
 step "required programs"
 missing=()
-for prog in ruff python3 ffmpeg Xvfb xauth xdotool xclock xterm; do
+for prog in ruff python3 ffmpeg Xvfb xauth xdotool xclock xterm xprop; do
     command -v "$prog" >/dev/null || missing+=("$prog")
 done
 if [ ${#missing[@]} -gt 0 ]; then
     echo "missing: ${missing[*]}" >&2
-    echo "xclock comes from x11-apps and xterm from its own package; the" >&2
-    echo "gate uses both as targets. The rest are named in README.md." >&2
+    echo "xclock comes from x11-apps, xterm from its own package and xprop" >&2
+    echo "from x11-utils; the gate uses them to build its targets. The rest" >&2
+    echo "are named in README.md." >&2
     exit 1
 fi
 actual=$(ruff --version | awk '{print $2}')
@@ -370,6 +371,23 @@ got=$(cat "$tmp/typed.txt" 2>/dev/null || true)
     exit 1
 }
 echo "wait, type and key all reached the app"
+
+step "a window titled only by _NET_WM_NAME is found"
+# DEMO-0043. The window search read only the old WM_NAME, so an app setting
+# nothing but _NET_WM_NAME -- vkcube is one -- was never found: every run
+# waited out the startup timeout and recorded the window unresized. This
+# builds such a window without needing Vulkan: an xterm with an empty title,
+# whose own shell then sets _NET_WM_NAME. 0.1.1 says "no window appeared".
+# shellcheck disable=SC2016  # $WINDOWID belongs to xterm's shell, not to us
+./demoreel record -o "$tmp/netwm.mp4" -d 2 -s 640x480 --startup-timeout 5 \
+    -- xterm -T '' -e sh -c \
+    'xprop -id "$WINDOWID" -f _NET_WM_NAME 8u -set _NET_WM_NAME gatewin; sleep 30' \
+    >/dev/null 2>"$tmp/netwm.err"
+if grep -q 'no window appeared' "$tmp/netwm.err"; then
+    echo "a window titled only by _NET_WM_NAME was not found" >&2
+    exit 1
+fi
+echo "found the window by its _NET_WM_NAME title"
 
 step "--cursor draws the pointer, and the default leaves it out"
 # Two recordings of the same static app, one with --cursor and one without.

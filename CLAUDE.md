@@ -184,7 +184,11 @@ something behaves unexpectedly:
   id, so it was never even picking the newest window. Do not add a
   `--window-name` filter either: that is per-app configuration wearing a
   different hat, and size separates the two windows without knowing anything
-  about the app.
+  about the app. The candidates are visible windows with a title under either
+  title property (`named_windows`). Do not narrow that back to
+  `xdotool search --name .`, which reads only WM_NAME and never finds vkcube
+  (DEMO-0043). Do not widen it to every visible window either: that list holds
+  a nameless display-sized window that would win on size.
 - **No window manager runs on the virtual display**, and none should be added —
   one app needs no WM. So `xdotool windowactivate` is skipped; the only window
   already has focus. An app whose dialogs need stacking or positioning may
