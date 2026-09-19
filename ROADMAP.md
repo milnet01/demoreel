@@ -130,6 +130,9 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   v7.0.1 resolves to exactly that commit, and v7.0.1 is the latest release.
 
   Neither is held below its latest, so no hold-ledger row is owed.
+  Checked (2026-09-19): ruff moved 0.16.6 -> 0.16.8, its latest release,
+  in ci.sh and in the machine's pipx install together. actions/checkout is
+  still v7.0.1, its latest. The item stays open as the standing chore.
   **Layman:** Two version numbers are written down in CI and will go stale unless someone bumps them.
   Kind: chore.
   Source: user-request-2026-09-07.
