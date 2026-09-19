@@ -1397,7 +1397,7 @@ MINOR is spent on while the leading zero is there.
   Kind: fix.
   Source: in-session-2026-09-07.
 
-- 📋 [DEMO-0012] **Requested duration overshoots, and every run pays about a second of fixed setup.**
+- ✅ [DEMO-0012] **Requested duration overshoots, and every run pays about a second of fixed setup.**
   Measured: `-d 3 -s 1280x800 -- xclock` produced a 4.07 second video in
   5.09 seconds of wall clock. So the clip is about a third longer than
   asked for, and roughly a second goes on setup before anything is
@@ -1430,6 +1430,12 @@ MINOR is spent on while the leading zero is there.
   spawning an xdotool per poll costs about 2.1 ms of CPU each. It is negligible
   against the sleeps, so waiting on the condition is the whole of the win here
   and the process spawns are not worth removing.
+  Resolved (2026-09-19): the countdown starts at ffmpeg's first
+  progress report, and the recorder stops before the end-of-run sample.
+  The resize and window waits poll real conditions. -d 1/3/6 now give
+  1.2/3.2/6.2 s (was +1.17 s), wall time -d + 0.93 s (was + 2.3 s). The
+  remaining 0.2 s is ffmpeg's own start and stop, left rather than hidden
+  behind a tuned constant. Gate asserts -d 5 lands in [5.0, 5.5].
   **Layman:** Ask for a 3 second clip and you get just over 4 seconds, after a second of waiting.
   Kind: perf.
   Source: in-session-2026-09-07.
@@ -1499,6 +1505,23 @@ MINOR is spent on while the leading zero is there.
   **Layman:** Start a recording and try to stop it straight away, and you are told it is not running.
   Kind: enhancement.
   Source: recommendation-2026-09-08.
+
+- 📋 [DEMO-0043] **On --gpu, vkcube's window is never found, so every run waits out the startup timeout.**
+  Measured on 0.1.1 and on the DEMO-0012 build alike:
+  `record -d 3 -s 640x480 --gpu -- vkcube` prints "no window appeared
+  within 20s; recording anyway", takes about 24 s of wall time, and the
+  cube sits unresized in the frame. The recording itself is correct.
+
+  `wait_for_window` searches `xdotool search --onlyvisible --name .`, so
+  the likely cause is that the window under rootful Xwayland on cage has
+  no name or is not reported as visible. Not yet diagnosed.
+
+  Fixing it changes no protected surface, so it is a PATCH, filed here
+  because 0.2.0 is the next release. The gate cannot catch it: it records
+  on Xvfb only (DEMO-0006).
+  **Layman:** Recording a graphics app takes twenty seconds longer than it should, and its window is not stretched to fill the frame.
+  Kind: fix.
+  Source: in-session-2026-09-19.
 
 ## 1.0.0 — Every documented path tested
 
