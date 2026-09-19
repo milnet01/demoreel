@@ -382,15 +382,12 @@ step "stop ends a run started with -d 0"
     --app-log "$tmp/app.log" -- xclock >/dev/null 2>&1 &
 recorder=$!
 gate_pids="$gate_pids $recorder"
-# Retry rather than waiting on the video file. A run becomes addressable when it
-# writes its state file, and that happens after ffmpeg starts -- so the .mp4
-# exists a moment before stop can find the run by name.
-stopped=""
-for _ in $(seq 1 100); do
-    if stopped=$(./demoreel stop gatestop 2>/dev/null); then break; fi
-    sleep 0.2
-done
-[ -n "$stopped" ] || { echo "stop never found the running recording" >&2; exit 1; }
+# Straight after launching it, with no retry. DEMO-0034: a run used to be
+# unreachable until it was already recording, so this line said "no recording
+# named gatestop" while the run carried on. stop now finds a starting run and
+# waits for it to record.
+stopped=$(./demoreel stop gatestop) || {
+    echo "stop could not find a run launched just before it" >&2; exit 1; }
 [ "$stopped" = "$tmp/stopped.mp4" ] || {
     echo "stop printed '$stopped', not the output path" >&2; exit 1; }
 wait "$recorder" || { echo "the stopped run exited non-zero" >&2; exit 1; }
@@ -398,6 +395,30 @@ wait "$recorder" || { echo "the stopped run exited non-zero" >&2; exit 1; }
 # --app-log rode along: same run, and it is documented too.
 [ -f "$tmp/app.log" ] || { echo "--app-log wrote no file" >&2; exit 1; }
 echo "stop ended the run, and --app-log wrote its file"
+
+step "two runs started together under one name: one records, one is refused"
+# DEMO-0011. The duplicate-name check used to read the state file and write it
+# much later, so two runs launched together both passed it, both recorded, and
+# the later one's state file hid the earlier one from `stop`. Measured at the
+# time. A lock now makes the check atomic.
+./demoreel record -o "$tmp/race1.mp4" -d 3 -n gaterace -s 320x240 \
+    -- xclock >/dev/null 2>"$tmp/race1.err" &
+race1=$!
+./demoreel record -o "$tmp/race2.mp4" -d 3 -n gaterace -s 320x240 \
+    -- xclock >/dev/null 2>"$tmp/race2.err" &
+race2=$!
+gate_pids="$gate_pids $race1 $race2"
+set +e
+wait "$race1"; s1=$?
+wait "$race2"; s2=$?
+set -e
+refused=$(cat "$tmp/race1.err" "$tmp/race2.err" | sed -n '/already running/p')
+if [ $((s1 + s2)) -ne 1 ] || [ -z "$refused" ]; then
+    echo "expected one run to record and one to be refused; exits were $s1 and $s2" >&2
+    cat "$tmp/race1.err" "$tmp/race2.err" >&2
+    exit 1
+fi
+echo "one recorded, and the other said: ${refused#demoreel: }"
 
 step "stop refuses a state file whose process is not ours"
 # A run killed with SIGKILL never reaches the cleanup in its `finally` block,

@@ -7,6 +7,7 @@ end up in the video. README.md explains why that is the whole point.
 """
 
 import argparse
+import fcntl
 import json
 import os
 import re
@@ -128,6 +129,46 @@ def is_our_run(entry):
     # cannot be checked is the one this exists to refuse.
     recorded = entry.get("starttime")
     return recorded is not None and proc_starttime(pid) == recorded
+
+
+def write_state(statefile, entry):
+    """Replace the state file in one step, so `stop` never reads half of it.
+
+    It is written twice per run -- once at start, again when recording begins
+    -- and a reader landing mid-write would see invalid JSON and skip the run.
+    """
+    tmp = statefile.with_suffix(".tmp")
+    tmp.write_text(json.dumps(entry))
+    os.replace(tmp, statefile)
+
+
+def claim_name(name):
+    """Hold the name for this run's whole life, or die if a live run holds it.
+
+    The lock is what makes the duplicate check atomic (DEMO-0011). Checking the
+    state file and writing it later left a gap that two runs started together
+    both passed, and the later one's state file hid the earlier from `stop`.
+    flock has no such gap, and the kernel drops it when the process dies, even
+    to SIGKILL -- so a crashed run cannot hold its name hostage.
+
+    The lock file is never removed. Unlinking it would let a later run lock a
+    fresh inode while an earlier one still holds the old, which is two owners.
+    Returns the open descriptor, which must stay open until the run ends.
+    Children do not inherit it: Popen closes descriptors by default, and an
+    app left running must not keep the name.
+    """
+    fd = os.open(state_dir() / f"{name}.lock", os.O_RDWR | os.O_CREAT, 0o600)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        os.close(fd)
+        try:
+            pid = f" (pid {json.loads((state_dir() / f'{name}.json').read_text())['pid']})"
+        except (OSError, ValueError, KeyError, TypeError):
+            pid = ""
+        die(f"a recording named {name!r} is already running{pid}.\n"
+            f"  Use --name to tell this run apart from it.")
+    return fd
 
 
 def start_xvfb(width, height, name):
@@ -553,20 +594,19 @@ def cmd_record(a):
     if applog:
         applog.parent.mkdir(parents=True, exist_ok=True)
 
-    statefile = state_dir() / f"{a.name}.json"
-    if statefile.exists():
-        try:
-            entry = json.loads(statefile.read_text())
-        except ValueError:
-            entry = None
-        if isinstance(entry, dict) and is_our_run(entry):
-            die(f"a recording named {a.name!r} is already running "
-                f"(pid {entry['pid']}).\n"
-                f"  Use --name to tell this run apart from it.")
-        statefile.unlink()
-
     for sig in (signal.SIGUSR1, signal.SIGINT, signal.SIGTERM):
         signal.signal(sig, _request_stop)
+
+    # The run is addressable from here, before anything slow happens, so a
+    # `stop` issued straight after launching it finds it (DEMO-0034). Holding
+    # the name makes any state file already there a dead run's, so it is
+    # simply replaced. "recording" flips to true once ffmpeg has its first
+    # frame; `stop` waits for that rather than ending a run with no video.
+    claim_name(a.name)
+    statefile = state_dir() / f"{a.name}.json"
+    state = {"name": a.name, "pid": os.getpid(),
+             "starttime": proc_starttime(os.getpid()),
+             "output": str(output), "recording": False}
 
     logpath = state_dir() / f"{a.name}.ffmpeg.log"
     displaylog = state_dir() / f"{a.name}.display.log"
@@ -582,6 +622,7 @@ def cmd_record(a):
     blank = False
     unsampled = None
     try:
+        write_state(statefile, state)
         if a.gpu:
             # This backend starts the app for us, so there is nothing to launch
             # here; see start_gpu_display for why the two cannot be separated.
@@ -619,11 +660,7 @@ def cmd_record(a):
 
         ffmpeg, log = start_ffmpeg(env, display, width, height, a.framerate,
                                    output, logpath, a.cursor)
-        statefile.write_text(json.dumps({
-            "name": a.name, "pid": os.getpid(),
-            "starttime": proc_starttime(os.getpid()),
-            "display": display, "output": str(output),
-        }))
+        write_state(statefile, dict(state, display=display, recording=True))
         note(f"recording {display} to {output} "
              f"({'until stopped' if a.duration == 0 else f'{a.duration}s'})")
 
@@ -683,23 +720,43 @@ def cmd_record(a):
     print(output)
 
 
-def cmd_stop(a):
-    files = sorted(state_dir().glob("*.json"))
+# How long `stop` looks for a run before saying there is none. A run registers
+# itself before anything slow, but not before Python has started, so a stop
+# launched on the very next line of a script can still arrive first -- measured
+# on the second of ten back-to-back tries. A second is far more than that
+# startup, and it is only ever spent when the answer is going to be "none".
+STOP_GRACE = 1.0
+
+
+def live_runs():
+    """Every run whose state file names a process that is still that run.
+
+    A dead run's file is left where it is. The next run of that name replaces
+    it under the name lock, and removing it here could race that run and
+    delete the file it has just written.
+    """
     live = []
-    for f in files:
+    for f in sorted(state_dir().glob("*.json")):
         try:
             entry = json.loads(f.read_text())
-        except ValueError:
-            continue
-        if not isinstance(entry, dict):
-            continue
-        if is_our_run(entry):
+        except (OSError, ValueError):
+            continue  # gone since the glob, or not ours to read
+        if isinstance(entry, dict) and is_our_run(entry):
             live.append(entry)
-        else:
-            f.unlink(missing_ok=True)
+    return live
+
+
+def cmd_stop(a):
+    deadline = time.monotonic() + STOP_GRACE
+    while True:
+        live = live_runs()
+        if a.name:
+            live = [e for e in live if e.get("name") == a.name]
+        if live or time.monotonic() >= deadline:
+            break
+        time.sleep(0.05)
 
     if a.name:
-        live = [e for e in live if e["name"] == a.name]
         if not live:
             die(f"no recording named {a.name!r} is running.")
     elif not live:
@@ -709,9 +766,41 @@ def cmd_stop(a):
         die(f"{len(live)} recordings are running: {names}.\n"
             f"  Name the one to stop, e.g. demoreel stop {min(e['name'] for e in live)}")
 
-    for entry in live:
+    for found in live:
+        entry = wait_until_recording(found)
         os.kill(entry["pid"], signal.SIGUSR1)
         print(entry["output"])
+
+
+def wait_until_recording(entry):
+    """Hold a stop aimed at a run that is still starting, until it records.
+
+    A run is addressable from its first moment, but stopping it before ffmpeg
+    has a frame would leave no video at all -- and stop's one line of stdout
+    is a video path. So wait, and stop it the moment it is recording. That
+    gives a very short video rather than none (DEMO-0034).
+
+    No timeout of its own: the run has its own startup timeouts, and it
+    either starts recording or exits. A run that exits first is reported as
+    such, since there is no path to print.
+    """
+    statefile = state_dir() / f"{entry['name']}.json"
+    pid = entry["pid"]
+    # A file written by 0.1.x has no "recording" key, and existed only once
+    # that run was already recording.
+    while not entry.get("recording", True):
+        time.sleep(0.05)
+        try:
+            entry = json.loads(statefile.read_text())
+        except (OSError, ValueError):
+            entry = {}
+        # Same pid, or a new run that took the name after this one died would
+        # be stopped in its place.
+        if (not isinstance(entry, dict) or entry.get("pid") != pid
+                or not is_our_run(entry)):
+            die("the recording ended before it started recording, so there "
+                "is no video to stop.")
+    return entry
 
 
 def main():

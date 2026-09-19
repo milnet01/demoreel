@@ -35,18 +35,14 @@ demoreel record -o demo.mp4 -d 20 --cursor \
 # record until you say stop, rather than for a set time
 demoreel record -o demo.mp4 -d 0 -n mydemo -- myapp &
 
-# ...then, once it has started recording, in the same or another terminal:
+# ...then, in the same or another terminal:
 demoreel stop mydemo
 ```
 
-`stop` can only find a run once that run is actually recording, which is after
-the app's window has appeared. Run the two lines back to back with no gap and
-the second one says there is no such recording, while the first carries on. If
-you are scripting it rather than typing it, retry until it takes:
-
-```sh
-until demoreel stop mydemo; do sleep 0.2; done
-```
+`stop` works straight away, even on the very next line of a script. If the run
+is still starting up, `stop` waits until it is recording and then stops it, so
+you always get a video. If the run fails before it records anything, `stop`
+says so and exits with an error.
 
 Everything after `--` is the command that starts your app, exactly as you would
 type it yourself. demoreel knows nothing about any particular app.
@@ -143,12 +139,9 @@ command runs.
 That is fine, as long as you give them different names with `-n`. They pick
 separate private screens on their own; you never have to think about that part.
 
-Names are the part you do have to think about. Start a second unnamed recording
-once the first is under way and it refuses, naming the run already going. Start
-two at the same instant and both can get through that check before either
-registers — they both record, and only the later one can be reached by
-`demoreel stop`. So give concurrent runs different `-n` names rather than
-relying on the refusal.
+Names are the part you do have to think about. Two runs with the same name
+cannot record at once: the second one refuses and exits with an error, even if
+both start at the same instant. So give concurrent runs different `-n` names.
 
 ### `--app-log`: keeping what the app said
 

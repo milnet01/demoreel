@@ -12,7 +12,21 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+### Changed
+
+- **`demoreel stop` works straight after the run is launched.** (DEMO-0034)
+  A run used to be unreachable until it was already recording, so a
+  stop issued too early said no such recording existed. stop now finds a
+  starting run, waits for it to record, and stops it. The retry loop the
+  README showed is gone. A stop for a name that is not running now takes
+  a second to say so.
+
 ### Fixed
+
+- **Two runs started together under one name no longer both record.** (DEMO-0011)
+  The later one's state file used to hide the earlier one from
+  `demoreel stop`. The duplicate-name check is now a lock, so exactly one
+  records and the other exits with an error.
 
 - **The blank check no longer passes a video it could not look at.** (DEMO-0033)
   When its sample of the screen failed, the check used to report "not

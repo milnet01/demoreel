@@ -64,12 +64,12 @@ Any change that breaks one of these is wrong, even if it makes the tool simpler:
   number inside `xwfb-run`, and demoreel reads it back out. Do not "simplify"
   that to `xwfb-run -n <number>`. The display number is only half of it: every
   file a run writes under the state directory is keyed off `--name`, which
-  defaults to `default`. The state file is written only after recording
-  starts, and that gap decides what two unnamed runs do. Measured both ways:
-  started seconds apart, the second refuses and says to use `--name`; started
-  together, both pass the check before either writes, both record, and the
-  later overwrites the earlier's state file — leaving it unreachable by
-  `demoreel stop` (DEMO-0011). Never collapse those per-name paths to a fixed
+  defaults to `default`. A run holds an `flock` on `<name>.lock` for its whole
+  life (`claim_name`), and that lock — not the state file — is the duplicate
+  check. Checking the state file and writing it later let two runs started
+  together both record, one of them unreachable by `demoreel stop`
+  (DEMO-0011). Never replace the lock with a check on the state file, never
+  unlink the lock file, and never collapse the per-name paths to a fixed
   filename.
 - **Non-interactive.** No prompts, no portal dialogs, no "pick a window" step.
   Needing a human click is what made Kooha and OBS unusable here.
