@@ -1343,7 +1343,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
 Each of these changes what an existing caller receives, which is what a
 MINOR is spent on while the leading zero is there.
 
-- 📋 [DEMO-0008] **The blank check samples the display once, near the end of the run.**
+- ✅ [DEMO-0008] **The blank check samples the display once, near the end of the run.**
   The guard asks whether the display is blank after recording. An app
   that draws nothing until the final moments passes it, and hands back
   a video that is mostly empty.
@@ -1351,6 +1351,11 @@ MINOR is spent on while the leading zero is there.
   Sampling once more, early in the run, would catch that without
   changing what the check means. The threshold is shared with --settle
   and is load-bearing in both roles, so it must not be tuned for one.
+  Resolved (2026-09-19): a second sample halfway through the -d
+  countdown, chosen by the user over a fixed offset or periodic sampling.
+  Blank there fails the run on the spot; -d 0 keeps the end sample only.
+  Threshold untouched. Gate step "a recording blank until its second half
+  is refused" watched red against the build before it (exit 0).
   **Layman:** A video that was empty for most of its length can still pass the check.
   Kind: fix.
   Source: in-session-2026-09-07.
