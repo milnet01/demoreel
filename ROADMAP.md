@@ -1,4 +1,5 @@
 <!-- ants-roadmap-format: 1 -->
+<!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -21,7 +22,7 @@ simplest case, and a gate proves it still records.
 
   Resolved (2026-09-07): both installed and confirmed working -- the
   skill appeared in the session's own skill list once written.
-  **Layman:** Any session, in any project, can now record a video without being told this tool exists
+  **Layman:** Any session, in any project, can now record a video without being told this tool exists.
   Kind: feature.
   Source: user-request-2026-09-07.
 
@@ -32,7 +33,7 @@ simplest case, and a gate proves it still records.
 
   Resolved (2026-09-07): verified by recording xclock with no -o and
   reading the sampled frame.
-  **Layman:** The simplest possible call is now `demoreel record -- kate`
+  **Layman:** The simplest possible call is now `demoreel record -- kate`.
   Kind: enhancement.
   Source: user-request-2026-09-07.
 
@@ -47,7 +48,7 @@ simplest case, and a gate proves it still records.
   not.
 
   Resolved (2026-09-07): gate passes locally end to end.
-  **Layman:** Problems get caught before a push instead of after one
+  **Layman:** Problems get caught before a push instead of after one.
   Kind: test.
   Source: user-request-2026-09-07.
 
@@ -58,7 +59,7 @@ simplest case, and a gate proves it still records.
 
   Resolved (2026-09-07): registered, and .ants/project.json declares
   the roadmap path.
-  **Layman:** The roadmap is now queryable item by item rather than read whole
+  **Layman:** The roadmap is now queryable item by item rather than read whole.
   Kind: chore.
   Source: user-request-2026-09-07.
 
@@ -69,7 +70,7 @@ simplest case, and a gate proves it still records.
   global versioning standard leaves each project to answer.
 
   Resolved (2026-09-07).
-  **Layman:** It is now written down what each version number means for this tool
+  **Layman:** It is now written down what each version number means for this tool.
   Kind: doc.
   Source: user-request-2026-09-07.
 
@@ -100,7 +101,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   live in README.md and CLAUDE.md.
 
   ci.sh's readability check covers the new documents.
-  **Layman:** There is nowhere yet to record what changed between versions
+  **Layman:** There is nowhere yet to record what changed between versions.
   Kind: release.
   Source: in-session-2026-09-07.
 
@@ -129,7 +130,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   v7.0.1 resolves to exactly that commit, and v7.0.1 is the latest release.
 
   Neither is held below its latest, so no hold-ledger row is owed.
-  **Layman:** Two version numbers are written down in CI and will go stale unless someone bumps them
+  **Layman:** Two version numbers are written down in CI and will go stale unless someone bumps them.
   Kind: chore.
   Source: user-request-2026-09-07.
 
@@ -169,7 +170,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   progressive playback, and this tool's own reason for existing is a
   Flathub submission, where the video is served over HTTP rather than
   opened locally. Closing as considered -- measured, decided, no change.
-  **Layman:** Every recording is written twice; the second pass buys something we may not need
+  **Layman:** Every recording is written twice; the second pass buys something we may not need.
   Kind: perf.
   Source: in-session-2026-09-07.
 
@@ -217,7 +218,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   indistinguishable. One default has to serve both static interfaces and
   spinning 3D, and no tuning is right for both. Closing as considered --
   measured, decided, no change.
-  **Layman:** The video settings are tuned for film; a mostly-still app window compresses far better
+  **Layman:** The video settings are tuned for film; a mostly-still app window compresses far better.
   Kind: perf.
   Source: in-session-2026-09-07.
 
@@ -256,7 +257,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
 
   Still uncovered: --settle and --cursor. --settle needs an app that is uniformly
   black for a known interval, which neither xclock nor xterm is.
-  **Layman:** Half the tool's features have no automatic check behind them
+  **Layman:** Half the tool's features have no automatic check behind them.
   Kind: test.
   Source: in-session-2026-09-07.
 
@@ -290,7 +291,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   is the reading of the command line, and the stub keeps the step working on a
   runner with no Flatpak installed. Proved able to fail: disabling the warning
   reddens it.
-  **Layman:** Recording a Flatpak the wrong way gives a black video and no clue why
+  **Layman:** Recording a Flatpak the wrong way gives a black video and no clue why.
   Kind: enhancement.
   Source: in-session-2026-09-07.
 
@@ -576,7 +577,7 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   the versioning overrides call breaking. Verified by reading both
   comparators out of the two files and running a frame measuring exactly
   the threshold through each: both now say not-blank.
-  **Layman:** One exact value makes the tool say the app is there and the gate say it never arrived
+  **Layman:** One exact value makes the tool say the app is there and the gate say it never arrived.
   Kind: fix.
   Source: review-contract-2026-09-07 loop 2.
 
@@ -1350,7 +1351,7 @@ MINOR is spent on while the leading zero is there.
   Sampling once more, early in the run, would catch that without
   changing what the check means. The threshold is shared with --settle
   and is load-bearing in both roles, so it must not be tuned for one.
-  **Layman:** A video that was empty for most of its length can still pass the check
+  **Layman:** A video that was empty for most of its length can still pass the check.
   Kind: fix.
   Source: in-session-2026-09-07.
 
@@ -1387,7 +1388,7 @@ MINOR is spent on while the leading zero is there.
   So the fix is the ordering, not a new guard -- adding one duplicates
   what is already there. Do not delete the existing `die()`; it covers
   every non-race case.
-  **Layman:** Start two recordings at once without naming them and one becomes impossible to stop
+  **Layman:** Start two recordings at once without naming them and one becomes impossible to stop.
   Kind: fix.
   Source: in-session-2026-09-07.
 
@@ -1424,11 +1425,11 @@ MINOR is spent on while the leading zero is there.
   spawning an xdotool per poll costs about 2.1 ms of CPU each. It is negligible
   against the sleeps, so waiting on the condition is the whole of the win here
   and the process spawns are not worth removing.
-  **Layman:** Ask for a 3 second clip and you get just over 4 seconds, after a second of waiting
+  **Layman:** Ask for a 3 second clip and you get just over 4 seconds, after a second of waiting.
   Kind: perf.
   Source: in-session-2026-09-07.
 
-- 📋 [DEMO-0033] **When the blank check cannot take its sample, it reports the run as fine.**
+- ✅ [DEMO-0033] **When the blank check cannot take its sample, it reports the run as fine.**
   `display_is_blank` grabs one frame and, when the grab produces nothing,
   returns False -- with the comment that a failed sample is not evidence
   of a blank display. The reasoning is sound and the consequence is not:
@@ -1452,6 +1453,11 @@ MINOR is spent on while the leading zero is there.
   naming the reason. Failing a run that succeeds today is breaking under
   the versioning overrides, which is why this sits here rather than in the
   patch section.
+  Resolved (2026-09-19): `display_is_blank` raises `SampleError` with
+  ffmpeg's reason when no full frame comes back. The end-of-run check
+  fails the run on it, and `--settle` stops the run. Gate step "the blank
+  check says when it could not look" samples a real empty display with and
+  without its cookie; watched red against the old `return False`.
   **Layman:** The check that refuses an empty video quietly passes everything if its own measurement breaks.
   Kind: fix.
   Source: recommendation-2026-09-08.
@@ -1495,7 +1501,7 @@ covers both display backends and the Flatpak invocation.
   with a usable card, which an ordinary GitHub runner is not.
 
   This is one of the two conditions for reaching 1.0.
-  **Layman:** The graphics-card recording path is not tested automatically yet
+  **Layman:** The graphics-card recording path is not tested automatically yet.
   Kind: test.
   Source: in-session-2026-09-07.
 
@@ -1505,6 +1511,6 @@ covers both display backends and the Flatpak invocation.
   point at.
 
   This is the second of the two conditions for reaching 1.0.
-  **Layman:** The Flatpak recipe in the README is documented but not tested
+  **Layman:** The Flatpak recipe in the README is documented but not tested.
   Kind: test.
   Source: in-session-2026-09-07.
