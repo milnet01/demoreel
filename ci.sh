@@ -23,7 +23,7 @@ DOCS_GLOB='docs/*|*.md|LICENSE|.github/FUNDING.yml'
 # version pinned only in the workflow is a second copy: this script would accept
 # whatever ruff happened to be on PATH, so the same commit could lint clean in
 # one place and red in the other. That is the drift this file exists to prevent.
-RUFF_VERSION='0.16.6'
+RUFF_VERSION='0.16.8'
 
 if [ "${1:-}" = "--docs-glob" ]; then
     printf '%s\n' "$DOCS_GLOB"
