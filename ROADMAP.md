@@ -1511,7 +1511,7 @@ MINOR is spent on while the leading zero is there.
   Kind: enhancement.
   Source: recommendation-2026-09-08.
 
-- 📋 [DEMO-0043] **On --gpu, vkcube's window is never found, so every run waits out the startup timeout.**
+- ✅ [DEMO-0043] **On --gpu, vkcube's window is never found, so every run waits out the startup timeout.**
   Measured on 0.1.1 and on the DEMO-0012 build alike:
   `record -d 3 -s 640x480 --gpu -- vkcube` prints "no window appeared
   within 20s; recording anyway", takes about 24 s of wall time, and the
@@ -1524,6 +1524,11 @@ MINOR is spent on while the leading zero is there.
   Fixing it changes no protected surface, so it is a PATCH, filed here
   because 0.2.0 is the next release. The gate cannot catch it: it records
   on Xvfb only (DEMO-0006).
+  Resolved (2026-09-19): diagnosed as vkcube setting only _NET_WM_NAME,
+  which `search --name` never reads; Xvfb had the same miss. The new
+  `named_windows` keeps visible windows getwindowname can title. --gpu
+  vkcube: 3.95 s wall (was ~24 s), window fills the frame. Gate step "a
+  window titled only by _NET_WM_NAME is found" watched red against 0.1.1.
   **Layman:** Recording a graphics app takes twenty seconds longer than it should, and its window is not stretched to fill the frame.
   Kind: fix.
   Source: in-session-2026-09-19.
