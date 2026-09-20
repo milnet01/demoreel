@@ -1622,7 +1622,7 @@ protected surface, so the project's own ladder makes it a PATCH.
   Kind: test.
   Source: in-session-2026-09-07.
 
-- 📋 [DEMO-0044] **The documented-flags check reads one direction, so six long forms are undocumented.**
+- ✅ [DEMO-0044] **The documented-flags check reads one direction, so six long forms are undocumented.**
   `ci.sh`'s "documented flags exist" step takes every backticked flag in
   `README.md` and asserts demoreel accepts it. The reverse is unchecked, and
   the reverse is where the drift is.
@@ -1646,6 +1646,17 @@ protected surface, so the project's own ladder makes it a PATCH.
 
   Documenting an alias that already works breaks nothing, so this is a
   PATCH. Withdrawing one instead would be a MINOR.
+  Shipped (2026-09-20) in a1ad64e. Both halves: README's option table
+  carries both spellings per row, and the gate step checks both directions.
+
+  The new direction matches on a word boundary rather than with grep -F --
+  a bare `-o` matches inside "read-only", and the check would have passed
+  on any README containing it. `-h` and `--help` are skipped as argparse's
+  own. The step's help text now includes `stop --help`, which it never read
+  before.
+
+  Proved red before green: with `--output` taken back out of the table the
+  gate exits 1 and names the flag; restored, it exits 0.
   **Layman:** Six spellings of existing options work but are written down nowhere.
   Kind: doc-fix.
   Source: in-session-2026-09-20.

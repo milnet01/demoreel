@@ -49,12 +49,27 @@ makes them the exception to the line above:
 ## Reaching 1.0
 
 **MAJOR stays 0 until the CI gate exercises both display backends and the
-Flatpak invocation.** All three are checkable by anyone reading `ci.sh`.
+Flatpak invocation.** Each is checkable by anyone reading `ci.sh`.
 
-Today the gate records on the `Xvfb` backend only. `--gpu` needs a runner with a
-usable graphics card, and the Flatpak path needs a published application to
-point at. Until both are solved, nothing shows that a change to either path
-still works.
+**A path is exercised when a step records on it, looks at the picture, and
+fails on a flat frame.** Running the tool and getting a file back is not
+exercising it: a black video is a valid file that exits 0.
+
+**The step does not have to run on every machine.** `--gpu` needs a graphics
+card, and the Flatpak step needs Flatpak with an application installed; an
+ordinary GitHub runner has neither. So a step meets this condition when it runs
+wherever the hardware and the application are present and prints why it skipped
+where they are not. Holding 1.0 on cover that runs everywhere would hold it on
+a runner nobody is buying.
+
+**A skip is not a pass**, and it is not permission to change that path without
+recording on it.
+
+As of 2026-09-20 the gate has a step for each of the three (DEMO-0006,
+DEMO-0007). They run on a machine with a card and with Flathub applications
+installed, and skip on GitHub — so the checks GitHub runs still record on
+`Xvfb` alone. This condition is therefore met, and cutting 1.0 is a decision
+rather than something being waited on.
 
 ## While the leading zero is there
 
