@@ -12,6 +12,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-20
+
 ### Changed
 
 - **A recording still blank halfway through `-d` now fails there.** (DEMO-0008)
