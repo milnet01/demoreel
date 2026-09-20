@@ -1536,10 +1536,11 @@ MINOR is spent on while the leading zero is there.
   Kind: fix.
   Source: in-session-2026-09-19.
 
-## 1.0.0 — Every documented path tested
+## 0.2.1 — The gate reaches the paths it documents
 
-The exit condition in docs/standards/versioning-overrides.md: the gate
-covers both display backends and the Flatpak invocation.
+Checks for the two paths `ci.sh` has never exercised, plus the flag surface the
+documentation check reads in one direction only. Nothing here changes a
+protected surface, so the project's own ladder makes it a PATCH.
 
 - 📋 [DEMO-0006] **Cover the --gpu backend in the CI gate.**
   The gate records on Xvfb only, so a regression in the compositor
@@ -1547,6 +1548,16 @@ covers both display backends and the Flatpak invocation.
   with a usable card, which an ordinary GitHub runner is not.
 
   This is one of the two conditions for reaching 1.0.
+  Decided (2026-09-20) by the user, with the options put: add the step now
+  and let it skip where there is no card, rather than waiting for a runner
+  with one. It records `--gpu -- vkcube` and fails if the sampled frame is
+  flat, which is the failure a valid file hides. On a machine without
+  `cage`, `xwfb-run` or a usable card the step skips and says so, so GitHub
+  stays green while this machine gains the cover.
+
+  Moved to the 0.2.1 group in the same decision: the work breaks no
+  protected surface, so it is a PATCH under this project's own ladder, and
+  the 1.0 question it feeds is its own item.
   **Layman:** The graphics-card recording path is not tested automatically yet.
   Kind: test.
   Source: in-session-2026-09-07.
@@ -1557,6 +1568,97 @@ covers both display backends and the Flatpak invocation.
   point at.
 
   This is the second of the two conditions for reaching 1.0.
+  Decided (2026-09-20) by the user, with the options put: point a step at a
+  real installed Flatpak rather than the stub, skipping where that app is
+  absent. The stub tests demoreel's reading of the caller's command line;
+  nothing today tests the recipe against Flatpak itself.
+
+  Target is a plain GTK application from Flathub rather than finbreak,
+  which is the app that hit both known traps -- a startup dialog and
+  single-instance handover. `flatpak list --app` on this machine shows
+  several, org.gimp.GIMP among them.
+
+  Moved to the 0.2.1 group in the same decision, on the same ground as
+  DEMO-0006.
   **Layman:** The Flatpak recipe in the README is documented but not tested.
   Kind: test.
   Source: in-session-2026-09-07.
+
+- 📋 [DEMO-0044] **The documented-flags check reads one direction, so six long forms are undocumented.**
+  `ci.sh`'s "documented flags exist" step takes every backticked flag in
+  `README.md` and asserts demoreel accepts it. The reverse is unchecked, and
+  the reverse is where the drift is.
+
+  Measured 2026-09-20 by comparing the three `--help` outputs against the
+  flags README backticks: `--action`, `--duration`, `--framerate`,
+  `--name`, `--output` and `--size` are accepted and appear nowhere in
+  README.md, which documents only their short forms. `--version` is
+  documented in prose rather than backticked, so it is an artefact of the
+  extraction and not drift.
+
+  It matters because `versioning-overrides.md` § Breaking surfaces makes
+  the command line and its flags protected. An alias nobody wrote down is
+  still a surface a script can depend on, and removing one would be a
+  break nobody could have anticipated from the contract.
+
+  Two halves: document the long forms in README.md, and add the missing
+  direction to the gate step so the next alias cannot arrive unannounced.
+  The step's counter is even named `undocumented` while counting the
+  opposite direction.
+
+  Documenting an alias that already works breaks nothing, so this is a
+  PATCH. Withdrawing one instead would be a MINOR.
+  **Layman:** Six spellings of existing options work but are written down nowhere.
+  Kind: doc-fix.
+  Source: in-session-2026-09-20.
+
+- 📋 [DEMO-0045] **The CI runner image changes under us on 2026-10-19.**
+  Run 35510735694 (the v0.2.0 release commit) carried a GitHub annotation:
+  "The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19,
+  2026", pointing at actions/runner-images issue 14748.
+
+  `ci.yml` asks for `ubuntu-latest` and installs ffmpeg, xvfb, xdotool,
+  x11-apps, x11-utils and xterm from apt. A package renamed or dropped on
+  the new image fails the gate on a commit that changed nothing, and the
+  first run to find out is whichever push lands after the switch.
+
+  Two routes, and the choice is the user's: try the new image early by
+  naming it explicitly in a branch, or pin the image so the switch happens
+  when we choose it. `standards/dependencies.md` counts a runner image as a
+  dependency, and a pin at latest owes no hold-ledger row -- the same
+  reasoning DEMO-0010 records for the other two pins.
+
+  Nothing about the tool changes, so this is a PATCH.
+  **Layman:** The machine GitHub runs our checks on is being replaced; we should try the new one before it arrives.
+  Kind: chore.
+  Source: in-session-2026-09-20.
+
+## 1.0.0 — Every documented path tested
+
+The exit condition in docs/standards/versioning-overrides.md: the gate
+covers both display backends and the Flatpak invocation.
+
+- 📋 [DEMO-0046] **Reword what reaching 1.0 requires, now that coverage can be conditional.**
+  `versioning-overrides.md` § Reaching 1.0 holds MAJOR at 0 until the gate
+  exercises both display backends and the Flatpak invocation, and explains
+  that `--gpu` needs a runner with a usable card and Flatpak needs a
+  published application. DEMO-0006 and DEMO-0007 now take a different
+  route: the steps run where the hardware and the app are present and skip
+  where they are not.
+
+  So the condition as written is about to be satisfied on this machine and
+  not on GitHub, and nothing in the document says which of those it meant.
+
+  Decided (2026-09-20) by the user, with the options put: reword it, so 1.0
+  means the checks exist and run wherever the hardware and the application
+  are there.
+
+  That is a change of direction in a standard -- a conformer reading it
+  would cut 1.0 at a different time -- so the amendment runs
+  `review-contract docs/standards/versioning-overrides.md --genre standard`
+  before anything is built under it, per the machine-wide rule 14. Depends
+  on DEMO-0006 and DEMO-0007 landing first: until the steps exist there is
+  nothing for the new wording to describe.
+  **Layman:** Write down what 1.0 really waits for, now that the two missing checks can run here but not on GitHub.
+  Kind: doc.
+  Source: user-request-2026-09-20.
