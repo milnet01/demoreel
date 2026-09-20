@@ -1732,7 +1732,7 @@ protected surface, so the project's own ladder makes it a PATCH.
 The exit condition in docs/standards/versioning-overrides.md: the gate
 covers both display backends and the Flatpak invocation.
 
-- 📋 [DEMO-0046] **Reword what reaching 1.0 requires, now that coverage can be conditional.**
+- ✅ [DEMO-0046] **Reword what reaching 1.0 requires, now that coverage can be conditional.**
   `versioning-overrides.md` § Reaching 1.0 holds MAJOR at 0 until the gate
   exercises both display backends and the Flatpak invocation, and explains
   that `--gpu` needs a runner with a usable card and Flatpak needs a
@@ -1753,6 +1753,27 @@ covers both display backends and the Flatpak invocation.
   before anything is built under it, per the machine-wide rule 14. Depends
   on DEMO-0006 and DEMO-0007 landing first: until the steps exist there is
   nothing for the new wording to describe.
+  Shipped (2026-09-20) across 12de9ab, 9af13d8, 4cd2796 and e762cc2 --
+  the rewrite and the three `review-contract` loops that gated it, rows 4
+  to 6 of the document's own loop log.
+
+  What the section says now: a path is exercised when a step records on
+  it, looks at the picture and fails on a flat frame; a step need not run
+  on every machine, and each one's prerequisites are named; a skip for one
+  of those reasons prints its reason and does not withdraw the condition,
+  but is still not a pass.
+
+  The gate condition it originally held is met and is recorded as history.
+  The live condition is new, and the user chose it over cutting 1.0 with
+  both options put: MAJOR stays 0 until a video demoreel recorded has been
+  used outside this repository, with the roadmap naming where. That
+  wording is this session's rendering of the choice and is worth a second
+  look by whoever owns the release.
+
+  The gate cost eight fixes over three loops and reached its cap violently
+  -- the last loop's findings were both repairs of the run's own earlier
+  repairs, which is the same shape the document's previous gate recorded.
+  Read row 6 before re-running it.
   **Layman:** Write down what 1.0 really waits for, now that the two missing checks can run here but not on GitHub.
   Kind: doc.
   Source: user-request-2026-09-20.
