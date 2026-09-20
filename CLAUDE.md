@@ -22,10 +22,12 @@ picture. It is the same script CI runs, and it runs before a push. Add a check
 there, never to the workflow. `./ci.sh --docs` is the documentation-only
 subset, which a documentation-only push selects.
 
-The gate covers the `Xvfb` backend only. Touching the `--gpu` path means
-recording on it by hand: `--gpu -- vkcube` is the cheap case, and the frame
-should show a shaded cube rather than a flat colour. A valid file proves
-nothing on its own — a black video passes every check except looking at it.
+The gate now records on `--gpu` and on a real Flatpak as well, but only where
+the machine has what those steps need — both skip on GitHub, so CI still covers
+`Xvfb` alone. Touching the `--gpu` path still means looking at a frame:
+`--gpu -- vkcube` is the cheap case, and it should show a shaded cube rather
+than a flat colour. A valid file proves nothing on its own, and the automatic
+check only knows flat from not-flat — a garbled picture passes it.
 
 This file's review history is kept outside it, in
 `docs/reviews/claude-md-loop-log.md`. `README.md` is gated too, as the design

@@ -424,11 +424,13 @@ programs and runs that same script, and takes the linter version and the
 documentation-only decision from it rather than restating them. Add a check to
 `ci.sh`, never to the workflow.
 
-**It covers the ordinary backend only.** No step runs `--gpu`, and the Flatpak
-step uses a stand-in rather than a real Flatpak. So a green gate says nothing
-about either path: a change to one has to be checked by recording on it by
-hand, and by *looking* at the result — a black video passes every automatic
-check there is.
+**Two of its steps only run where the machine can run them.** One records
+`--gpu -- vkcube` and needs a graphics card with `cage` and `xwfb-run`; another
+records a real Flatpak and needs that application installed. Both print why
+they skipped otherwise, and both skip on GitHub — so the checks GitHub runs
+still cover the ordinary backend alone. And a green step is not the same as a
+good recording: the check can tell a flat colour from a picture, nothing more,
+so a change to either path is still worth *looking* at.
 
 It runs before a push, once you have turned on the hook this repository ships.
 Do this after cloning:
