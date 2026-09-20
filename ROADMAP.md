@@ -1701,6 +1701,32 @@ protected surface, so the project's own ladder makes it a PATCH.
   Kind: chore.
   Source: in-session-2026-09-20.
 
+- 📋 [DEMO-0047] **`stop` hands back a path for a recording that then fails its blank check.**
+  Surfaced by a `review-contract` lane reading the versioning overrides, and
+  confirmed in the code rather than taken from the report.
+
+  `cmd_stop` signals the recorder with SIGUSR1 and prints `entry["output"]`
+  immediately. The recording process then takes its end-of-run sample, and
+  on a blank display it dies without printing a path. So a caller running
+  `out=$(demoreel stop mydemo)` holds a path for a run that failed, while a
+  caller running `out=$(demoreel record ...)` correctly holds nothing.
+
+  That is the silent-failure shape this project keeps closing: a valid
+  file, a path handed back, and nothing in the picture. It is not a
+  documentation defect -- the standard describes `record` accurately -- so
+  it was surfaced rather than fixed in that document.
+
+  Not obvious what the fix is, which is why this is an investigation. stop
+  cannot know the verdict at the moment it signals: it would have to wait
+  for the recorder to exit and take its status, which changes how long a
+  stop takes and what it prints. Weigh that against the exposure before
+  writing anything.
+
+  The gate's stop step uses an app that draws, so it never meets this.
+  **Layman:** Stopping a recording prints the file straight away, even when the recording turns out to be empty and fails.
+  Kind: investigate.
+  Source: review-contract-2026-09-20.
+
 ## 1.0.0 — Every documented path tested
 
 The exit condition in docs/standards/versioning-overrides.md: the gate
