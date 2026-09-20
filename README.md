@@ -110,12 +110,12 @@ you would only find out by watching it.
 
 | Option | What it does |
 |---|---|
-| `-o` | Where to write the video. Without it, the file lands in the current folder, named after the app and the time. |
-| `-d` | How many seconds to record, counted from when the scripted steps finish — so a run with `-a` steps lasts longer than this. `-d 0` means "keep going until I say stop, or until the app closes itself, whichever comes first". |
-| `-s` | The size of the picture, like `1280x800`. Both numbers must be even. |
-| `-r` | Frames per second. |
-| `-n` | A name for this run, so `demoreel stop` knows which one you mean. |
-| `-a` | A scripted step. Repeat it; they run in order. |
+| `-o`, `--output` | Where to write the video. Without it, the file lands in the current folder, named after the app and the time. |
+| `-d`, `--duration` | How many seconds to record, counted from when the scripted steps finish — so a run with `-a` steps lasts longer than this. `-d 0` means "keep going until I say stop, or until the app closes itself, whichever comes first". |
+| `-s`, `--size` | The size of the picture, like `1280x800`. Both numbers must be even. |
+| `-r`, `--framerate` | Frames per second. |
+| `-n`, `--name` | A name for this run, so `demoreel stop` knows which one you mean. |
+| `-a`, `--action` | A scripted step. Repeat it; they run in order. |
 | `--cursor` | Draw the mouse pointer. Off by default, because with no scripted clicks it just sits in the middle of the picture. |
 | `--app-log` | Save what the app printed to a file. |
 | `--settle` | Wait for the app to draw something before starting to record. |

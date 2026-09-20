@@ -105,7 +105,7 @@ step "documented flags exist"
 # flag it documents and the tool does not accept is a defect in the contract --
 # and a commit that breaks it necessarily touches code, which is exactly the
 # push a documentation-only check would never see.
-help=$(./demoreel record --help; ./demoreel --help)
+help=$(./demoreel record --help; ./demoreel stop --help; ./demoreel --help)
 undocumented=0
 for flag in $(grep -oE '`-{1,2}[a-z-]+`' README.md | tr -d '`' | sort -u); do
     # Flags belonging to other programs the caller invokes THROUGH demoreel:
@@ -118,6 +118,27 @@ for flag in $(grep -oE '`-{1,2}[a-z-]+`' README.md | tr -d '`' | sort -u); do
 done
 [ "$undocumented" -eq 0 ] || exit 1
 echo "every flag README documents is one demoreel accepts"
+
+# DEMO-0044. And the other direction, which is where the drift actually was:
+# six long forms were accepted and written down nowhere. The command line is a
+# protected surface (docs/standards/versioning-overrides.md), so a spelling
+# nobody documented is still one a caller's script can depend on, and still a
+# break to remove -- a break nobody could have seen coming from the contract.
+#
+# -h and --help are argparse's own, added to every parser whether we ask or not.
+unmentioned=0
+for flag in $(printf '%s' "$help" | grep -oE '(^|[ ,])--?[a-z][a-z-]+' \
+              | tr -d ' ,' | sort -u); do
+    case "$flag" in -h|--help) continue ;; esac
+    # Not grep -F: a bare `-o` matches inside a word, so the check would pass
+    # on any README that happens to contain "read-only".
+    grep -qE -- "(^|[^A-Za-z0-9_-])$flag([^A-Za-z0-9_-]|\$)" README.md || {
+        echo "demoreel accepts $flag, which README.md never mentions" >&2
+        unmentioned=$((unmentioned + 1))
+    }
+done
+[ "$unmentioned" -eq 0 ] || exit 1
+echo "every flag demoreel accepts is one README mentions"
 
 step "documents are readable"
 for f in README.md CLAUDE.md ROADMAP.md CHANGELOG.md SECURITY.md \
