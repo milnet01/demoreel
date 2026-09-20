@@ -621,6 +621,49 @@ PATH="$tmp/bin:$PATH" ./demoreel record -o "$tmp/fp-ok.mp4" -d 3 -s 640x480 \
 }
 echo "the missing flags are named, and a complete command is left alone"
 
+step "a real Flatpak records with the three flags README documents"
+# DEMO-0007. The step above tests demoreel's reading of a Flatpak command line,
+# against a stub that is not Flatpak at all. Nothing tested the recipe itself,
+# so the three flags README prints could stop working -- a Flatpak release
+# changing what `--socket=x11` binds would do it -- and the gate would stay
+# green.
+#
+# GIMP, deliberately not finbreak: a startup dialog and single-instance handover
+# are the two traps README names, and a gate step is the wrong place to meet
+# them. It is a plain GTK application, installed from Flathub, and it reaches
+# the private display in about five seconds.
+#
+# What this proves is that a real Flatpak draws on the private display through
+# those three flags. It is NOT a check that GIMP finished starting: at three
+# seconds the window in frame is its splash, which is what a recording that
+# short honestly shows.
+#
+# The negative case -- the same app WITHOUT --nosocket=wayland -- is deliberately
+# not run here. Without it the app reaches the user's real compositor, which
+# means opening a window on their desktop, and a gate that runs before every
+# push must not do that. The stub step above covers the warning.
+flatpak_app=org.gimp.GIMP
+if ! command -v flatpak >/dev/null; then
+    echo "skipped: this machine has no flatpak"
+elif ! flatpak info "$flatpak_app" >/dev/null 2>&1; then
+    echo "skipped: $flatpak_app is not installed"
+elif flatpak ps --columns=application 2>/dev/null | grep -qx "$flatpak_app"; then
+    # A running copy takes the launch over on the real desktop and the private
+    # display stays empty, so the step would fail for a reason that is not
+    # demoreel's. Skipping says which it is.
+    echo "skipped: $flatpak_app is already running, so a launch would hand over"
+else
+    ./demoreel record -n gateflatpak -o "$tmp/real-fp.mp4" -d 3 -s 800x600 \
+        --startup-timeout 60 \
+        -- flatpak run --socket=x11 --nosocket=wayland \
+           --filesystem=/tmp/.X11-unix "$flatpak_app" >/dev/null
+    [ -s "$tmp/real-fp.mp4" ] || {
+        echo "no video written for $flatpak_app" >&2; exit 1; }
+    assert_frame_drawn "$tmp/real-fp.mp4" 45 \
+        "$flatpak_app never reached the private display with the documented flags"
+    echo "$flatpak_app drew on the private display with the three flags"
+fi
+
 step "the state directory must be one we own"
 # The run-state directory's name is predictable, so on a shared machine another
 # user can create it first and demoreel would adopt it. The check is exercised
