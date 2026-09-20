@@ -1542,7 +1542,7 @@ Checks for the two paths `ci.sh` has never exercised, plus the flag surface the
 documentation check reads in one direction only. Nothing here changes a
 protected surface, so the project's own ladder makes it a PATCH.
 
-- 📋 [DEMO-0006] **Cover the --gpu backend in the CI gate.**
+- ✅ [DEMO-0006] **Cover the --gpu backend in the CI gate.**
   The gate records on Xvfb only, so a regression in the compositor
   path would reach a user before a check caught it. Needs a runner
   with a usable card, which an ordinary GitHub runner is not.
@@ -1558,6 +1558,20 @@ protected surface, so the project's own ladder makes it a PATCH.
   Moved to the 0.2.1 group in the same decision: the work breaks no
   protected surface, so it is a PATCH under this project's own ladder, and
   the 1.0 question it feeds is its own item.
+  Shipped (2026-09-20) in b7f152f. The step records `--gpu -- vkcube`,
+  samples a frame through the same `assert_frame_drawn` helper the Xvfb
+  smoke test now uses, and bounds the wall time so a window the search
+  cannot find reads as a startup timeout rather than as a slow pass.
+
+  Measured on this machine: RADV NAVI23 selected, WSI xcb -- so the app
+  was pushed to X11 inside cage as the design requires -- dominant grey
+  level 0.7921 against the 0.999 blank threshold, window found in 5s. The
+  frame was looked at rather than only measured: a shaded cube filling the
+  frame. The gate went from 55s to 65s.
+
+  Both skip branches were exercised with the guard lifted verbatim: a
+  missing program names it, and an absent render node says there is no
+  card to reach. A skip prints its reason and is not a pass.
   **Layman:** The graphics-card recording path is not tested automatically yet.
   Kind: test.
   Source: in-session-2026-09-07.
