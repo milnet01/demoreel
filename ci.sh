@@ -225,20 +225,15 @@ cleanup() {
 }
 trap cleanup EXIT
 
-out=$(./demoreel record -o "$tmp/smoke.mp4" -d 5 -s 640x480 -- xclock)
-[ -s "$out" ] || { echo "no video written" >&2; exit 1; }
-echo "wrote $out"
-
-# -d means what it says (DEMO-0012). Blind sleeps and a sample taken while
-# still recording made -d 5 a 6.17 second video; it measures 5.2 now. The
-# 0.5 upper bound is room for that remainder, not for the old overshoot.
-length=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$out")
-python3 -c 'import sys; n = float(sys.argv[1]); sys.exit(not 5.0 <= n <= 5.5)' "$length" || {
-    echo "-d 5 produced a ${length}s video" >&2; exit 1; }
-echo "-d 5 produced ${length}s"
-
-ffmpeg -v error -i "$out" -vf 'select=eq(n\,60)' -vframes 1 "$tmp/frame.png" -y
-python3 - "$tmp/frame.png" <<'PY'
+# One definition of "sample a frame and prove something was drawn in it", used
+# by every step that records something: this smoke test, the --gpu backend and
+# the real Flatpak target. The threshold and its comparator still live in
+# demoreel; this decides which frame to look at and what to say when it is flat.
+assert_frame_drawn() {
+    local video=$1 frame=$2 what=$3
+    ffmpeg -v error -i "$video" -vf "select=eq(n\\,$frame)" -vframes 1 \
+        "$tmp/sample.png" -y
+    python3 - "$tmp/sample.png" "$what" <<'PY'
 import importlib.machinery, importlib.util, subprocess, sys
 
 # Ask the tool rather than restating its test. The threshold and its comparator
@@ -260,9 +255,24 @@ if not raw:
 print(f"dominant grey level: {demoreel.dominant_fraction(raw):.4f}"
       f" (blank above {demoreel.BLANK_THRESHOLD})")
 if demoreel.frame_is_flat(raw):
-    sys.exit("the frame is a flat colour -- the app never reached the recording")
-print("the app is in the frame")
+    sys.exit(f"the frame is a flat colour -- {sys.argv[2]}")
 PY
+}
+
+out=$(./demoreel record -o "$tmp/smoke.mp4" -d 5 -s 640x480 -- xclock)
+[ -s "$out" ] || { echo "no video written" >&2; exit 1; }
+echo "wrote $out"
+
+# -d means what it says (DEMO-0012). Blind sleeps and a sample taken while
+# still recording made -d 5 a 6.17 second video; it measures 5.2 now. The
+# 0.5 upper bound is room for that remainder, not for the old overshoot.
+length=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$out")
+python3 -c 'import sys; n = float(sys.argv[1]); sys.exit(not 5.0 <= n <= 5.5)' "$length" || {
+    echo "-d 5 produced a ${length}s video" >&2; exit 1; }
+echo "-d 5 produced ${length}s"
+
+assert_frame_drawn "$out" 60 "the app never reached the recording"
+echo "the app is in the frame"
 
 step "smoke: a blank recording is refused"
 # The counterpart to the step above. That one proves a good recording succeeds;
@@ -388,6 +398,50 @@ if grep -q 'no window appeared' "$tmp/netwm.err"; then
     exit 1
 fi
 echo "found the window by its _NET_WM_NAME title"
+
+step "the --gpu backend records an app that needs the card"
+# DEMO-0006. Xvfb has no DRI, so a GPU app records black on it whatever flags it
+# is given; --gpu puts a real Xwayland on a headless cage compositor instead.
+# The gate had never recorded on that backend at all, so a regression there
+# reached a user before any check saw it, and the only cover was recording
+# vkcube by hand and looking at the frame.
+#
+# It runs where the machine can reach a card and skips where it cannot: an
+# ordinary GitHub runner has neither cage nor xwfb-run installed and no render
+# node to open. A skip prints why. It is not a pass, and it is not a licence to
+# change this path without recording on it.
+gpu_missing=()
+for prog in xwfb-run cage vkcube; do
+    command -v "$prog" >/dev/null || gpu_missing+=("$prog")
+done
+if [ ${#gpu_missing[@]} -gt 0 ]; then
+    echo "skipped: this machine has no ${gpu_missing[*]}"
+elif ! compgen -G '/dev/dri/renderD*' >/dev/null; then
+    echo "skipped: no render node under /dev/dri, so there is no card to reach"
+else
+    gpu_started=$SECONDS
+    ./demoreel record --gpu -n gategpu -o "$tmp/gpu.mp4" -d 3 -s 640x480 \
+        -- vkcube >/dev/null
+    gpu_elapsed=$((SECONDS - gpu_started))
+    [ -s "$tmp/gpu.mp4" ] || {
+        echo "no video written on the --gpu backend" >&2; exit 1; }
+    # A shaded cube is not one colour; a display with nothing on it is. This is
+    # the check the backend exists for -- an Xvfb recording of vkcube is a valid
+    # file, exit 0 and a black picture.
+    assert_frame_drawn "$tmp/gpu.mp4" 30 "vkcube never reached the frame on --gpu"
+    # And the run has to have FOUND the window rather than waited out the
+    # startup timeout, which is what DEMO-0043 did on this exact app: the
+    # recording succeeded, took 24 seconds instead of 4, and framed the window
+    # at its own size. Measured after that fix, a -d 3 run of vkcube takes about
+    # 4 seconds; the bound separates that from a 20 second timeout without
+    # pinning the setup cost.
+    [ "$gpu_elapsed" -lt 12 ] || {
+        echo "a -d 3 --gpu run took ${gpu_elapsed}s, which is startup-timeout" >&2
+        echo "shaped: the window search is probably not finding vkcube." >&2
+        exit 1
+    }
+    echo "vkcube is in the frame, and the window was found in ${gpu_elapsed}s"
+fi
 
 step "--cursor draws the pointer, and the default leaves it out"
 # Two recordings of the same static app, one with --cursor and one without.
