@@ -1576,7 +1576,7 @@ protected surface, so the project's own ladder makes it a PATCH.
   Kind: test.
   Source: in-session-2026-09-07.
 
-- 📋 [DEMO-0007] **Cover a Flatpak target in the CI gate.**
+- ✅ [DEMO-0007] **Cover a Flatpak target in the CI gate.**
   The README documents three flags a Flatpak target needs, and nothing
   checks that the recipe still works. Needs a published application to
   point at.
@@ -1594,6 +1594,30 @@ protected surface, so the project's own ladder makes it a PATCH.
 
   Moved to the 0.2.1 group in the same decision, on the same ground as
   DEMO-0006.
+  Shipped (2026-09-20) in b00d57f. The step records org.gimp.GIMP with the
+  three documented flags and samples a frame through `assert_frame_drawn`.
+
+  Measured: the private display is reached in about five seconds, dominant
+  grey level 0.7578 against the 0.999 blank threshold. What is in frame at
+  three seconds is GIMP's splash, and the step says so -- it proves a real
+  Flatpak drew on the private display through those flags, not that GIMP
+  finished starting.
+
+  Two candidates were measured and rejected first, rather than guessed at.
+  PeaZip is Qt and could not load its platform plugin, so no window
+  appeared within the startup timeout. Millionaire exited before the end of
+  the run -- MESA reported no DRI3 support -- which skips the blank check by
+  design, so it returned exit 0 with a flat frame.
+
+  Three skips, all exercised: no flatpak, the application not installed,
+  and a copy already running. The last was tested against a real running
+  instance, because a handover leaves the private display empty and would
+  fail the step for a reason that is not demoreel's.
+
+  The negative case -- the same app without --nosocket=wayland -- is
+  deliberately not run. It reaches the user's real compositor, which means
+  opening a window on their desktop, and this gate runs before every push.
+  The stub step above it still covers the warning.
   **Layman:** The Flatpak recipe in the README is documented but not tested.
   Kind: test.
   Source: in-session-2026-09-07.
