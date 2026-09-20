@@ -30,8 +30,8 @@ and changing one is a breaking change:
   countdown and again at the end. A blank sample at either point exits
   non-zero and prints no path on stdout, and so does a sample that could not be
   taken. The video already written is left on disk. Both samples are skipped
-  when the app exited first, and a `-d 0` run has no halfway point, so those
-  recordings succeed today. Tightening any of that — sampling at a third point,
+  when the app exited first, and those recordings succeed today. A `-d 0` run
+  has no halfway point, but is still sampled at the end. Tightening any of that — sampling at a third point,
   deleting the leftover file, failing a run that currently passes — is
   breaking, not a tidy-up.
 - **The scripted action grammar** passed to `-a` — the verbs and their argument
@@ -46,15 +46,24 @@ Excluded deliberately. Reliance on these is not protected, and that is what
 makes them the exception to the line above:
 
 - The encoding parameters no flag exposes — preset, CRF, pixel format — beyond
-  the file remaining playable H.264 in an MP4 container. A flag's default,
+  the video remaining playable H.264. The container follows the caller's `-o`
+  name, so it is theirs rather than ours to promise. A flag's default,
   `-s` and `-r` included, is covered above, not here.
 - Everything on stderr, progress and failure text alike. None of that text is
   protected. The surfaces listed above are untouched by this bullet.
 
 ## Reaching 1.0
 
-**MAJOR stays 0 until the CI gate exercises both display backends and the
-Flatpak invocation.** Each is checkable by anyone reading `ci.sh`.
+**MAJOR stays 0 until a video demoreel recorded has been used outside this
+repository** — published in another project's README, a store listing, or a
+release page. Checkable by someone else: the roadmap names where, with a link.
+Nothing has yet.
+
+**The previous condition is met, and what it required still governs the gate.**
+It held MAJOR at 0 until the gate exercised both display backends and the
+Flatpak invocation; DEMO-0006 and DEMO-0007 finished that on 2026-09-20. The
+rest of this section is what those steps have to keep doing, not a condition
+still being waited on.
 
 **A path is exercised when a step records on it, looks at the picture, and
 fails on a flat frame.** Running the tool and getting a file back is not
@@ -80,10 +89,6 @@ three run on a machine with a card and with Flathub applications installed.
 The last two skip on GitHub, so the checks GitHub runs still record on `Xvfb`
 alone.
 
-**The condition is met.** Whether to spend it is a release decision, and until
-1.0 is deliberately cut the ladder below still applies — so the next release is
-a `0.x` one unless someone decides otherwise.
-
 ## While the leading zero is there
 
 Per the standard's zero-dot-x rule, the levels shift down one inside `0.x`, and
@@ -91,7 +96,7 @@ this is the part most likely to be misread:
 
 | Change | Bump |
 |---|---|
-| Breaking change to any protected surface — the list is not exhaustive | MINOR, and the PATCH resets — `0.1.4` → `0.2.0` |
+| Breaking change to any protected surface — the list is not exhaustive, but § What is not a breaking surface bounds it | MINOR, and the PATCH resets — `0.1.4` → `0.2.0` |
 | Everything else, a new capability included | PATCH — `0.1.0` → `0.1.1` |
 
 So a new flag that breaks nothing is a PATCH, not a MINOR. The MINOR is spent
@@ -105,3 +110,4 @@ only on a break, which is what keeps the number meaningful before `1.0`.
 | 2 | 2026-09-07 | 3, cold — identical brief, packet rebuilt from disk | 0 | 2 | 2 | n/a | **Four verified, four fixed. VIOLENT by § At the cap's measure — three of the four landed on text loop 1 wrote**, and all three were found by all three lanes independently. Loop 1's two fixes collided with each other: it added "changing the default an omitted flag supplies" to the breaking list and "which backend the tool picks when no flag names one" to the exclusions, and `--gpu` is `store_true`, so the backend used when it is omitted **is** that default — one act, named breaking and not-breaking. The backend bullet is deleted rather than reconciled; the flag-default rule already covers it. Loop 1 also wrote "only the next section bounds the promise", reversing `versioning.md` § 3's "not to bound the promise" while this document's own preamble claimed the standard "applies unchanged" — an undeclared delta, and § 3 specifically characterises this file as not containing one. The delta is now declared in the preamble, which `standards/README.md` § The three cases permits. Third, loop 1's "the exit behaviour above governs them" pointed at a bullet that governs exit status and stdout and says nothing about message text, so the pointer resolved to no answer; stderr is now excluded outright. **The fourth was mine, caught by executing a claim rather than reading it.** Acting on a lane's open question, the fix asserted that `stop` prints one line per stopped run. Running the refuting case disproved it: two concurrent runs with no `-n` both write the state file for the name `default`, the second overwrites the first, and `stop` printed one line. `cmd_stop` can only ever print one. **That test also found a real defect in the tool** — the first run was orphaned, still recording, with `demoreel stop` answering "no recording is running" — filed as its own item, not fixed here. |
 | 3 | 2026-09-07 | 3, cold — identical brief, packet rebuilt from disk | 1 | 2 | 0 | n/a | **Three verified, three fixed. Cap reached (3 for a standard); the run files its tail and exits. VIOLENT — all three landed on text this run wrote**, the third consecutive loop where that is the largest class. **All three lanes independently found the same defect**: loop 2's "Only the exit status and whether a path reaches stdout are protected" was written inside the stderr bullet but read as an allowlist over the whole document, stranding the leftover video file, the default output name, the flags and the `-a` grammar — each protected by name a few lines above. One lane found it also narrowed the stdout promise itself from *one line, nothing else* to *a path reaches stdout at all*, so adding a second stdout line would satisfy the exclusion while breaking the contract. The sentence is now bounded to stderr. **The Q1 was a false absolute that had survived every loop**: "stdout carries the finished video path and nothing else" — `--version` sits on the root parser and argparse writes it to stdout, measured at 399 bytes to stdout and none to stderr for `--help`. Now scoped to `record` and `stop`, with the two named. **The remaining Q2 was loop 2's own widening**: making "the default an omitted flag supplies" breaking collided with excluding "the video's internal encoding parameters", because `-s` and `-r` are both at once — so changing the default framerate was MINOR under one bullet and PATCH under the other. The exclusion now covers only parameters no flag exposes. **Both cap measurements: every verified finding across all three loops falls inside the span that armed the gate**, this document having been created by it, so the run was gate rather than audit throughout. **Routing at the cap:** the document is short, so size is not the signal — the oscillation was fixes over-reaching, three loops running, each new absolute (*only*, *nothing else*, *all applies unchanged*) failing on a case the previous loop had not considered. Not re-run as it stands. |
 | 4 | 2026-09-20 | 3, cold — genre pinned `standard`; armed by the § Reaching 1.0 rewrite in 12de9ab | 2 | 1 | 1 | n/a | **Four verified, four fixed, none dismissed; two collateral fixes outside the document.** **Two lanes independently found the exit-behaviour bullet stale**: it described a sample at the end of the run and named "sampling earlier" as a tightening still to come, when the halfway sample shipped in 0.2.0 (DEMO-0008) and the could-not-sample third answer with it (DEMO-0033) — confirmed by reading `demoreel`, where `blank = "halfway"` breaks out of the wait loop before the end sample. A conformer removing that sample would have read this bullet and published a break as a PATCH. **Two lanes also found the new skip account false**: it said `--gpu` needs a graphics card and the Flatpak step needs the application installed, where `ci.sh` requires `xwfb-run`, `cage`, `vkcube` and a render node for the first, and the second skips on a machine where the application IS present but already running. The rule and the verdict below it then disagreed, so an auditor seeing that skip could not tell whether the condition still held; the prerequisites are now named per step and the already-running skip is sanctioned. **The Q3 was the consequence of the rewrite itself**: the exit condition became satisfied and nothing said which number the next release takes, which `versioning.md` § 4 requires a `0.x` project to answer in one line. It now says the condition is met, that spending it is a release decision, and that the `0.x` ladder applies until 1.0 is deliberately cut. **The Q2 was an undeclared delta this document's own preamble denies**: "nothing here exempts their wording" made rewording `--help` a break, against `versioning.md` § 2's stopped-working test, so one conformer cut a PATCH for a typo fix and another a MINOR. Now scoped to `--version` printing a parsable version and both flags existing. **Two of the four landed inside the gated span and two were pre-existing**, so the run was half gate and half audit. Collateral, fixed at home rather than carried here: `README.md` still said no step runs `--gpu` and the Flatpak step uses a stand-in, and `CLAUDE.md` still said the gate covers `Xvfb` alone — both falsified by DEMO-0006 and DEMO-0007 earlier the same day, and both found by two lanes. **All three lanes disclosed that they were not cold**, the harness injecting this project's `CLAUDE.md`, which one lane cited as the source of a finding. |
+| 5 | 2026-09-20 | 3, cold — identical brief, packet rebuilt from disk | 2 | 2 | 0 | n/a | **Four verified, four fixed, none dismissed. Two of the four landed on text loop 4 wrote**, which for a section rewritten wholesale that loop is the expected shape. **All three lanes found the same defect, and it is the run's most consequential**: loop 4 satisfied this document's own exit condition and then said spending it was a release decision, so the same change publishes `1.0.0` to one reader and `0.3.0` to another — and `versioning.md` § 4 requires a `0.x` project to carry a live exit condition checkable by someone else, which a spent one is not. Put to the user with both options; they chose a successor condition over cutting 1.0. The met condition is now recorded as history, and what it required still governs the gate steps. **Two lanes found loop 4's `-d 0` clause false, and the two disagreed about it** — one asserting the end sample is taken on a `-d 0` run, the other that the bullet matched the code. Reading `demoreel` settled it: the end sample is guarded by `blank is None and unsampled is None and app.poll() is None`, with no deadline in the condition, so only the halfway sample is absent and a stopped `-d 0` run with a blank display does fail. A conformer would have priced removing that guard as a tidy-up. **Two lanes found the bump table restating the unbounded rule without the exclusions** the preamble declares as this document's one delta, so a preset or CRF change reads as MINOR from the table and PATCH from the section above it; both lanes called it their weakest and both were right that it names a real level difference. **The fourth came from an open question rather than a finding**: a lane asked whether the file is really MP4, and the code says the muxer follows the caller's `-o` name — so the promise of "an MP4 container" was ours to make about somebody else's filename. Now scoped to the video staying playable H.264. **All three lanes disclosed that they were not cold**, and two named the injected project `CLAUDE.md` as the source of a finding. |

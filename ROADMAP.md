@@ -1661,7 +1661,7 @@ protected surface, so the project's own ladder makes it a PATCH.
   Kind: doc-fix.
   Source: in-session-2026-09-20.
 
-- 📋 [DEMO-0045] **The CI runner image changes under us on 2026-10-19.**
+- ✅ [DEMO-0045] **The CI runner image changes under us on 2026-10-19.**
   Run 35510735694 (the v0.2.0 release commit) carried a GitHub annotation:
   "The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19,
   2026", pointing at actions/runner-images issue 14748.
@@ -1678,6 +1678,25 @@ protected surface, so the project's own ladder makes it a PATCH.
   reasoning DEMO-0010 records for the other two pins.
 
   Nothing about the tool changes, so this is a PATCH.
+  Answered (2026-09-20) by running the gate on the new image rather than
+  by choosing a route blind. The user picked the try-it-early option with
+  both put.
+
+  Branch `runner-image-probe` asked for `ubuntu-26.04` by name and
+  dispatched the workflow against it (run 35517113487). The label already
+  exists, a runner picked the job up, the full gate ran -- "no resolvable
+  range; running the full gate" -- and every check passed on
+  Ubuntu2604-Readme image 20260907.131.
+
+  So the October migration is a non-event for this project and no pin is
+  needed. `ci.yml` keeps `ubuntu-latest`, unchanged.
+
+  The run also verified the new steps' skip branches on a real GitHub
+  runner, which the local harness could only simulate: "skipped: this
+  machine has no xwfb-run cage vkcube" and "skipped: this machine has no
+  flatpak".
+
+  Nothing was merged. The probe branch is deleted; the evidence is the run.
   **Layman:** The machine GitHub runs our checks on is being replaced; we should try the new one before it arrives.
   Kind: chore.
   Source: in-session-2026-09-20.
