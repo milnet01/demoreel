@@ -1727,6 +1727,22 @@ protected surface, so the project's own ladder makes it a PATCH.
   Kind: investigate.
   Source: review-contract-2026-09-20.
 
+- ✅ [DEMO-0048] **Move CLAUDE.md's dated history into docs/history/claude-md.md.**
+  What stays is what is true now and what a breach looks like. What moved
+  is dated provenance, the wording a rule replaced, and the argument that
+  settled a rule. Traps did not move: a trap is what is true now.
+
+  CLAUDE.md 16158 -> 15781 bytes, and docs/history/claude-md.md is 2606.
+  The saving is small because the file is almost all trap and mechanism,
+  which the instruction excluded from the move. Reporting the real figure
+  rather than cutting content that earns its place.
+
+  Rule 14: no line changes for a conformer, so no gate. ./ci.sh --docs
+  green.
+  **Layman:** The project's instructions file now says only what is true today; the story of how each rule got there moved to a separate file it links to.
+  Kind: doc.
+  Source: user-request-2026-09-21 (CFG-0492, relayed via claude-b1).
+
 ## 1.0.0 — Every documented path tested
 
 The exit condition in docs/standards/versioning-overrides.md: the gate

@@ -22,7 +22,7 @@ picture. It is the same script CI runs, and it runs before a push. Add a check
 there, never to the workflow. `./ci.sh --docs` is the documentation-only
 subset, which a documentation-only push selects.
 
-The gate now records on `--gpu` and on a real Flatpak as well, but only where
+The gate records on `--gpu` and on a real Flatpak as well, but only where
 the machine has what those steps need — both skip on GitHub, so CI still covers
 `Xvfb` alone. Touching the `--gpu` path still means looking at a frame:
 `--gpu -- vkcube` is the cheap case, and it should show a shaded cube rather
@@ -86,23 +86,17 @@ a GUI, a daemon, a config file format, plugins, per-app profiles, and recording
 the real screen. Anything needing more than "record this app doing these few
 things" wants OBS instead.
 
-**Do not report or reason about the line count.** Stated by the user on
-2026-08-07: the number of lines is irrelevant as long as the tool does what it
-is supposed to do. The earlier "a few hundred lines, finished" wording invited
-every session to flag the file's size as if it were a finding; it is not one.
-Judge a change by whether it earns its place against the list above, and say
-nothing about length.
+**Do not report or reason about the line count.** Judge a change by whether it
+earns its place against the list above, and say nothing about length.
 
-**Audio was put to the user on 2026-08-07 and stays out**, with the consequence
-stated in the README rather than left implied: the file demoreel produces is
-silent, and a trailer with sound needs a second step elsewhere. The design that
-would have fitted — a per-run null sink, a second `ffmpeg`, one mux — is
-recorded there too, so it does not have to be re-derived to be re-declined.
+**Audio stays out**, and the consequence is stated in `README.md` rather than
+left implied: the file demoreel produces is silent, and a trailer with sound
+needs a second step elsewhere. The design that would have fitted is recorded
+there too, so it does not have to be re-derived to be re-declined.
 
-**There are two display backends and there is not a third.** `--gpu` was added
-the same day, after the "no Wayland compositor backend" line was tested against
-a Vulkan app and lost: `Xvfb` has no DRI, so a GPU app records black on it, and
-no flag changes that. `Xvfb` remains the default.
+**There are two display backends and there is not a third.** `Xvfb` has no DRI,
+so a GPU app records black on it, and no flag changes that. That is what `--gpu`
+exists for, and `Xvfb` remains the default.
 
 ## Verified environment facts
 
@@ -125,9 +119,7 @@ something behaves unexpectedly:
   through its shebang, so the kernel takes the name from the interpreter.
   `pgrep -x demoreel` therefore matches nothing and always reports success,
   whatever is running. Checking for a leaked run means the Xvfb it started, its
-  state file, or the pid the caller already holds. This cost most of DEMO-0029:
-  every "no recorder left behind" reading came from that check and was true by
-  construction, while a real leak went on being reported as clean.
+  state file, or the pid the caller already holds.
 - `-a` actions reach the app on the `--gpu` path as well as under Xvfb —
   measured with a click and a keystroke against `gtk4-demo` on the compositor,
   both landing. No auth or DISPLAY difference for xdotool beyond the run's env,
@@ -147,16 +139,16 @@ something behaves unexpectedly:
 - **stdout carries the finished path and nothing else.** The app's own output
   goes to our stderr, or to `--app-log`, never to stdout — a caller writing
   `out=$(demoreel record ...)` collects whatever the app printed otherwise.
-  This was broken from the start and fixed on 2026-08-07; `subprocess.Popen`
-  inherits the parent's stdout unless told not to, so the way to reintroduce
-  the bug is to drop the `stdout=` argument, not to add anything.
+  `subprocess.Popen` inherits the parent's stdout unless told not to, so the
+  way to reintroduce the bug is to drop the `stdout=` argument, not to add
+  anything.
 - **`--settle` and the blank check are the same test**, `display_is_blank`, in
   two roles: a gate before recording and an assertion during and after it. That
   is deliberate — one definition of "nothing is on this display" — and it means
   the threshold and its comparator are written once, as `BLANK_THRESHOLD` and
   `frame_is_flat`, and serve both roles. `ci.sh` imports them rather than
-  restating them, so it is no longer a copy to keep in step. The remaining
-  copies are prose: `README.md` and the blank-recording trap below. Move them
+  restating them, so it is not a copy to keep in step. The remaining copies
+  are prose: `README.md` and the blank-recording trap below. Move them
   with the definition, or the docs stop describing what the tool does. It also
   sets `--settle`'s honest limit: it waits for any pixel variation, not for the
   app to be ready, so a startup screen with a cursor on it counts as drawn (a
@@ -227,7 +219,7 @@ README rules out.
 ## The `--gpu` backend
 
 `xwfb-run -c cage` puts a real Xwayland server on a headless `cage` compositor,
-which reaches the GPU where `Xvfb` cannot. Both packages are now installed.
+which reaches the GPU where `Xvfb` cannot. Both packages are installed.
 Three details are load-bearing and none is obvious:
 
 - **`-geometry` is what sets the size**, passed as `-s '\-geometry' -s WxH`.
@@ -242,8 +234,8 @@ Three details are load-bearing and none is obvious:
 - **Both displays are behind an auth cookie, so `ffmpeg` and the blank-frame
   sample take the run's `env` rather than inheriting the session's** —
   otherwise they fail with `Cannot open display`, or silently sample an empty
-  frame. Xwayland always demanded one. `Xvfb` had none until 2026-09-08, and a
-  client with no credential could read the display; socket permissions are no
+  frame. `Xvfb` needs one as much as Xwayland does: without a cookie a client
+  with no credential can read the display, and socket permissions are no
   substitute, because it also listens on an abstract socket. Its cookie is
   installed after `-displayfd` reports the number, since the cookie is keyed to
   it: start with an empty auth file, write the cookie, `SIGHUP` the server to
@@ -266,3 +258,10 @@ headless compositor *without* Xwayland in the way — but recording it then need
 a compositor-side capture path, not `x11grab`, which is a different tool from
 this one. This note exists so a future session meeting such an app reaches for
 the known option instead of concluding the whole design was a mistake.
+
+## Rule history
+
+This file states what is true now and what a breach looks like. The dated
+decisions behind a rule, the wording a rule replaced, and the argument that
+settled one are in [`docs/history/claude-md.md`](docs/history/claude-md.md).
+Read it to question a rule; you do not need it to follow one.
