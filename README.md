@@ -71,12 +71,17 @@ say otherwise. Then it runs your `-a` steps, saves one `.png`, closes the app,
 and prints the path. For three pictures, run it three times.
 
 It takes the options `record` takes, less the ones about time: no `-d`, no `-r`,
-and no `-n`. A picture needs no name, because there is nothing to `stop`, and
-a `shot` never collides with a recording or with another `shot`. The size need
-not be even; that rule belongs to video.
+and no `-n`. There is nothing to `stop`, so a `shot` has no name. It keeps its
+private screen's files in a folder of its own, removed when it ends, and writes
+nothing `stop` reads — so it can run beside recordings and other shots. The one
+thing they can share is the default filename, the app and the time to the
+second, so give simultaneous shots of one app their own `-o`. The size need not
+be even; that rule belongs to video.
 
-A picture that is one flat colour fails the run, just as a blank recording
-does, and for the same reasons.
+The picture is always checked, even if the app has closed itself: an app that
+has gone leaves only an empty screen. A picture that is one flat colour fails
+the run, and so does not being able to look at the screen at all. A failed run
+prints no path and leaves the picture on disk.
 
 ## How it avoids filming your desktop
 
@@ -289,8 +294,8 @@ Four requirements follow, and they are requirements rather than preferences:
   does, and Xwayland's own inside `xwfb-run`). Scanning for a free number is not
   a substitute: between finding one free and claiming it, another run can take
   it.
-  Everything a run writes is keyed to its name, so simultaneous runs need
-  different `-n` values.
+  Everything a recording writes is keyed to its name, so simultaneous
+  recordings need different `-n` values.
 - **Never asks you anything.** No prompts, no dialogs, no "pick a window" step.
   A session runs it, waits, and gets a file. Anything needing a human click is a
   design error here — that is exactly what made the existing tools unusable.
