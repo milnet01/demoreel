@@ -12,6 +12,15 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+### Fixed
+
+- **An app that resizes itself after demoreel sizes it is now warned about.** (DEMO-0099)
+  The window used to record cropped or off to one side with no
+  message, because the picture was not flat and every check passed.
+  demoreel now checks the window when it checks for a blank display,
+  and says what size the app chose, so you can record again with -s
+  set to it.
+
 ## [0.2.1] - 2026-09-25
 
 ### Fixed

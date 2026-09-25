@@ -421,6 +421,26 @@ if grep -q 'no window appeared' "$tmp/netwm.err"; then
     exit 1
 fi
 echo "found the window by its _NET_WM_NAME title"
+if grep -q 'resized its window' "$tmp/netwm.err"; then
+    echo "a window that kept its size was reported as resized" >&2
+    exit 1
+fi
+
+step "an app that resizes itself after demoreel sizes it is warned about"
+# DEMO-0099. The window is sized once, before recording; an app that then
+# picks its own size records cropped or off to one side, the picture is not
+# flat, and every check passed. This xterm keeps shrinking itself, as Vestige
+# did. 0.2.1 records it without a word.
+# shellcheck disable=SC2016  # $WINDOWID belongs to xterm's shell, not to us
+./demoreel record -o "$tmp/resized.mp4" -d 2 -s 640x480 -- xterm -e sh -c \
+    'while :; do sleep 0.3; xdotool windowsize "$WINDOWID" 300 200; done' \
+    >/dev/null 2>"$tmp/resized.err"
+if ! grep -q 'resized its window to 300x200' "$tmp/resized.err"; then
+    echo "a window that resized itself was not reported:" >&2
+    cat "$tmp/resized.err" >&2
+    exit 1
+fi
+echo "the self-resized window was reported, with the size to record at"
 
 step "the --gpu backend records an app that needs the card"
 # DEMO-0006. Xvfb has no DRI, so a GPU app records black on it whatever flags it

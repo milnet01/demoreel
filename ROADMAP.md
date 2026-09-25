@@ -1935,7 +1935,7 @@ Xvfb are small, and no item targets them.
   Kind: security.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0099] **An app that resizes itself after demoreel sizes it records partly off-frame, and nothing says so.**
+- 🚧 [DEMO-0099] **An app that resizes itself after demoreel sizes it records partly off-frame, and nothing says so.**
   Found recording Vestige, a GLFW/OpenGL editor, with `--gpu` at the
   default 1600x1000. demoreel moved and sized the window, and
   `wait_for_size` passed. Then the app set itself to 1920x1080, larger
@@ -1952,6 +1952,12 @@ Xvfb are small, and no item targets them.
   the frame, naming the size the app chose so the caller can pass `-s`
   with it. Then find out whether re-applying the size once the app
   settles is safe, or starts a resize fight. Not measured on Xvfb yet.
+  Progress (2026-09-25): detection shipped. window_off_frame
+  reads the window's geometry beside each blank sample and warns
+  once, naming the size to pass to -s. ci.sh has a step with an xterm
+  that keeps shrinking itself: silent on 0.2.1, warned after the fix.
+  Still open: whether re-applying the size once the app settles is
+  safe, or starts a resize fight. Not measured.
   **Layman:** If an app changes its own window size after demoreel has set it, the video shows it cropped or off to one side, and demoreel doesn't warn you.
   Kind: fix.
   Source: peer-request-vestige-2026-09-25.

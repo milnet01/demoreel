@@ -327,13 +327,37 @@ def xdotool(env, *args, check=False, stdin_text=None):
                           check=check)
 
 
-def window_area(env, wid):
+def window_geometry(env, wid):
+    """(x, y, width, height), or None if the window vanished before the query."""
     out = xdotool(env, "getwindowgeometry", "--shell", wid).stdout
     dims = dict(line.split("=", 1) for line in out.split() if "=" in line)
     try:
-        return int(dims["WIDTH"]) * int(dims["HEIGHT"])
+        return tuple(int(dims[k]) for k in ("X", "Y", "WIDTH", "HEIGHT"))
     except (KeyError, ValueError):
-        return 0  # window vanished between the search and the query
+        return None
+
+
+def window_area(env, wid):
+    geometry = window_geometry(env, wid)
+    return geometry[2] * geometry[3] if geometry else 0
+
+
+def window_off_frame(env, window, width, height):
+    """Say how the window no longer fills the frame, or return None if it does.
+
+    demoreel sizes the window once, before recording. An app that then sets
+    its own size records cropped or off to one side, and the picture is not
+    flat, so the blank check passes it (DEMO-0099). This is checked beside
+    each blank sample, and it warns rather than fails: a window that moved is
+    still a video of the app.
+    """
+    geometry = window_geometry(env, window)
+    if geometry is None or geometry == (0, 0, width, height):
+        return None
+    x, y, w, h = geometry
+    return (f"the app resized its window to {w}x{h} at {x},{y}, so it no longer "
+            f"fills the {width}x{height} frame and part of the video is cropped "
+            f"or empty.\n  Record at the app's own size with -s {w}x{h}.")
 
 
 def named_windows(env):
@@ -680,6 +704,7 @@ def cmd_record(a):
     xvfb = app = ffmpeg = log = auth = None
     blank = None  # when the display was found blank: "halfway" or "at the end"
     unsampled = None
+    moved = None  # how the window stopped filling the frame, said once
     try:
         write_state(statefile, state)
         if a.gpu:
@@ -742,6 +767,10 @@ def cmd_record(a):
             if halfway and now >= halfway:
                 halfway = None
                 if app.poll() is None:
+                    if window is not None:
+                        moved = window_off_frame(env, window, width, height)
+                        if moved:
+                            note(moved)
                     try:
                         if display_is_blank(env, display, width, height):
                             blank = "halfway"
@@ -766,6 +795,10 @@ def cmd_record(a):
         stop_ffmpeg(ffmpeg)
         # Only meaningful while the app is still up: one that closed itself
         # mid-run leaves an empty display behind, and that video is fine.
+        if moved is None and window is not None and app.poll() is None:
+            moved = window_off_frame(env, window, width, height)
+            if moved:
+                note(moved)
         if blank is None and unsampled is None and app.poll() is None:
             try:
                 if display_is_blank(env, display, width, height):

@@ -332,6 +332,11 @@ window sits behind it.
 says so after waiting, and records anyway, so you get the app at its own size
 rather than filling the frame. Nothing is lost but the sizing.
 
+**An app that sets its own size after demoreel has sized it is warned about,
+not stopped.** demoreel sizes the window once, before recording. An app that
+then picks another size records cropped, or with an empty band beside it. The
+warning names the size the app chose; record again with `-s` set to it.
+
 ## Constraints already verified on this machine
 
 Checked by running them, not assumed. This section is for maintainers.
