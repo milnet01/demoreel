@@ -14,6 +14,12 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **A private display that stops answering now fails the run instead of hanging it.** (DEMO-0079)
+  Each call to the display used to wait for as long as the display
+  did, so a frozen display hung demoreel for good. Every window call
+  and frame check now gives up after 10 seconds. The run then fails,
+  saying the display stopped answering.
+
 - **An app that resizes itself after demoreel sizes it is now warned about.** (DEMO-0099)
   The window used to record cropped or off to one side with no
   message, because the picture was not flat and every check passed.

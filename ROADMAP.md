@@ -1887,7 +1887,7 @@ Xvfb are small, and no item targets them.
   Kind: perf.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0079] **Put a timeout on every xdotool and frame-sample call.**
+- ✅ [DEMO-0079] **Put a timeout on every xdotool and frame-sample call.**
   Found in the DEMO-0049 hang: `xdotool getwindowname` waited on a frozen
   display for minutes, and `--startup-timeout` never fired. The deadline
   is checked between calls, and nothing bounds a single call. The wrapper
@@ -1899,6 +1899,14 @@ Xvfb are small, and no item targets them.
   turn an expiry into an error that names the display. A sample that
   times out is the "could not tell" answer, SampleError, never "not
   blank" -- DEMO-0033's rule.
+  Resolved (2026-09-25): xdotool() and display_is_blank() both pass
+  CALL_TIMEOUT (10 s; a `type` step gets 0.05 s more per character).
+  An xdotool expiry dies naming the display, and a grab expiry is a
+  SampleError, never "not blank". ci.sh freezes Xvfb with SIGSTOP
+  mid-run: 0.2.1 hung until timeout(1) killed it at 60 s, now the run
+  fails saying the display stopped answering. The grab half was
+  checked on its own against a frozen bare Xvfb: SampleError after
+  10.0 s.
   **Layman:** If the private screen stops answering, the recording should fail with a message instead of waiting forever.
   Kind: fix.
   Source: in-session-2026-09-25.
@@ -1978,6 +1986,53 @@ Xvfb are small, and no item targets them.
   **Layman:** Take a screenshot of an app on the private screen, so nothing from your real desktop is in the picture.
   Kind: feature.
   Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0101] **Quotes inside a `type` step are silently removed before the text is typed.**
+  Found recording Ants Terminal for its session. `-a "type printf '...'"`
+  typed printf and its argument with the single quotes gone, because
+  run_action splits every step with shlex before joining the words back
+  for `type`. The shell then ran the colour codes as commands. Wrapping
+  the text in double quotes works around it.
+
+  `type` should take the rest of the step verbatim after the verb, since
+  it is text to type, not arguments. That changes what an existing step
+  types, so check it against the versioning overrides first. README's
+  Scripted steps list gets one line on quoting either way.
+  **Layman:** Typing a command with quotes in a demo loses the quotes, so the command on screen goes wrong.
+  Kind: fix.
+  Source: peer-request-ants-terminal-2026-09-25.
+
+- 📋 [DEMO-0102] **A Qt app recorded with an isolated, empty config gets a half-dark palette.**
+  Reported by games-hub-35. With XDG_CONFIG_HOME pointed at an empty
+  directory, so the owner's settings stay out of frame, Qt takes the
+  window background dark and the text light-theme: dark on dark grey,
+  and a menu entry invisible. With the owner's kdeglobals it is
+  readable. Reproduced by them on Xvfb at 1600x1000.
+
+  The isolation belongs to the caller's command, not to demoreel, so
+  this is documentation: README and the record-demo skill say to copy
+  ~/.config/kdeglobals into an isolated config. Not verified here yet.
+  Also from finbreak (2026-09-25): a single-instance app need not be
+  closed on the real desktop if the caller points its XDG_* dirs at a
+  temp folder, since its socket lives under them. Say that beside the
+  single-instance note. And say the "Failed to create wl_display" line
+  a Qt app logs is expected: it is demoreel's unresolvable
+  WAYLAND_DISPLAY working. QT_QPA_PLATFORM=xcb stays declined.
+  **Layman:** Recording a KDE or Qt app with fresh settings can make its text dark on dark and hard to read.
+  Kind: doc.
+  Source: peer-request-games-hub-2026-09-25.
+
+- 📋 [DEMO-0103] **The pointer starts in the middle of the private screen and triggers hover highlights.**
+  Reported by games-hub-35: a fresh Xvfb puts the pointer at the
+  centre, so the tile under it shows a hover highlight in frame before
+  any step runs, even though --cursor is off and no pointer is drawn.
+
+  Either move the pointer to a corner before the app starts, or say in
+  README that a first `move` step clears it. Measure which apps it
+  affects first.
+  **Layman:** Before any scripted step, the hidden mouse pointer sits mid-screen and can light up whatever is under it.
+  Kind: ux.
+  Source: peer-request-games-hub-2026-09-25.
 
 ## 0.3.0 — Friendly at a terminal
 
@@ -2541,6 +2596,12 @@ covers both display backends and the Flatpak invocation.
   on demoreel's project page, live in projects hub commit 115f3b8.
   The clip is demoreel recording vkcube on --gpu inside a terminal
   it is also recording.
+  Progress (2026-09-25): second public use. finbreak recorded a 30 s
+  tour with demoreel itself, going public on
+  antsprojectshub.co.za/p/fin-break.html. The Ants Terminal clip
+  (~/Videos/demoreel-demos/ants-terminal-demo.mp4) is with the
+  ants-terminal and hub sessions for its page and README; not
+  confirmed live yet.
   **Layman:** 1.0 waits for a video made with demoreel to be used somewhere real, like another project's page.
   Kind: marketing.
   Source: user-request-2026-09-25.

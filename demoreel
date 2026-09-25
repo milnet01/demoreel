@@ -35,6 +35,13 @@ DISPLAY_READY_TIMEOUT = 15.0
 # move, and this project has already answered that question the same way twice
 # (`ci.sh --ruff-version`, `ci.sh --docs-glob`).
 BLANK_THRESHOLD = 0.999
+# How long one xdotool call or one frame grab may take before the display is
+# taken to have stopped answering (DEMO-0079). Each normally returns in a few
+# milliseconds -- a grab costs about 112ms of CPU on a 1600x1000 display -- so
+# this is a hang detector, not a performance budget. Typing is paced by xdotool
+# at 12ms a key, so a `type` step gets TYPE_SECONDS_PER_CHAR more per character.
+CALL_TIMEOUT = 10
+TYPE_SECONDS_PER_CHAR = 0.05
 
 # Both backends need this. Unset, wl_display_connect() falls back to the
 # hardcoded $XDG_RUNTIME_DIR/wayland-0, which exists on a Wayland session — so
@@ -321,10 +328,20 @@ def start_gpu_display(width, height, command, name, logfile, appout):
 
 def xdotool(env, *args, check=False, stdin_text=None):
     """stdin_text feeds `type --file -`, which is how text stays out of the
-    process list; every other call leaves stdin alone."""
-    return subprocess.run(["xdotool", *[str(a) for a in args]], env=env,
-                          input=stdin_text, capture_output=True, text=True,
-                          check=check)
+    process list; every other call leaves stdin alone.
+
+    Every call is bounded (DEMO-0079). A display that stops answering used to
+    hang the run for good, because the startup deadline is checked between
+    calls and nothing bounded one call.
+    """
+    timeout = CALL_TIMEOUT + TYPE_SECONDS_PER_CHAR * len(stdin_text or "")
+    try:
+        return subprocess.run(["xdotool", *[str(a) for a in args]], env=env,
+                              input=stdin_text, capture_output=True, text=True,
+                              check=check, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        die(f"the private display {env.get('DISPLAY')} stopped answering: "
+            f"`xdotool {args[0]}` did not return within {timeout:g}s.")
 
 
 def window_geometry(env, wid):
@@ -500,14 +517,19 @@ def display_is_blank(env, display, width, height):
     Raises SampleError when no frame comes back. That is the third answer,
     "could not tell", and it must not collapse into either of the other two:
     reading it as "not blank" is how this guard used to pass everything the
-    moment its own measurement broke (DEMO-0033).
+    moment its own measurement broke (DEMO-0033). A grab that does not return
+    in time is that answer too (DEMO-0079): the display stopped answering.
     """
-    grab = subprocess.run(  # noqa: PLW1510 - a failed grab is handled below
-        ["ffmpeg", "-hide_banner", "-loglevel", "error",
-         "-f", "x11grab", "-video_size", f"{width}x{height}",
-         "-i", f"{display}.0", "-frames:v", "1",
-         "-pix_fmt", "gray", "-f", "rawvideo", "-"],
-        env=env, capture_output=True)
+    try:
+        grab = subprocess.run(  # noqa: PLW1510 - a failed grab is handled below
+            ["ffmpeg", "-hide_banner", "-loglevel", "error",
+             "-f", "x11grab", "-video_size", f"{width}x{height}",
+             "-i", f"{display}.0", "-frames:v", "1",
+             "-pix_fmt", "gray", "-f", "rawvideo", "-"],
+            env=env, capture_output=True, timeout=CALL_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        raise SampleError(f"the display did not give up a frame within "
+                          f"{CALL_TIMEOUT}s; it has stopped answering") from None
     if grab.returncode != 0 or len(grab.stdout) != width * height:
         lines = [ln for ln in grab.stderr.decode(errors="replace").splitlines()
                  if ln.strip()]

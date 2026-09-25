@@ -537,6 +537,37 @@ timeout 60 ./demoreel record -o "$tmp/chatter.mp4" -d 1 -s 320x240 \
     exit 1; }
 echo "sixty keymap loads, and the display kept answering"
 
+step "a display that stops answering fails the run instead of hanging it"
+# DEMO-0079. Nothing bounded a single xdotool or frame-sample call, so a
+# display that froze for any other reason hung the run with no timeout. This
+# freezes the Xvfb with SIGSTOP once recording starts; the next call at the
+# halfway point has to give up and fail the run. 0.2.1 hangs until `timeout`.
+./demoreel record -o "$tmp/frozen.mp4" -d 6 -s 320x240 -n gatefrozen \
+    -- xclock >/dev/null 2>"$tmp/frozen.err" &
+frozen_run=$!
+for _ in $(seq 100); do
+    grep -q recording "$tmp/frozen.err" 2>/dev/null && break
+    sleep 0.1
+done
+frozen_xvfb=$(pgrep -P "$frozen_run" -x Xvfb)
+kill -STOP "$frozen_xvfb"
+rc=0
+timeout 60 tail --pid="$frozen_run" -f /dev/null || rc=$?
+kill -CONT "$frozen_xvfb" 2>/dev/null || true
+if [ "$rc" -ne 0 ]; then
+    kill "$frozen_run" 2>/dev/null || true
+    echo "a run on a frozen display was still hanging after 60s" >&2
+    exit 1
+fi
+if wait "$frozen_run"; then
+    echo "a run on a frozen display reported success" >&2
+    exit 1
+fi
+grep -q 'stopped answering' "$tmp/frozen.err" || {
+    echo "a run on a frozen display failed without saying the display stopped:" >&2
+    cat "$tmp/frozen.err" >&2; exit 1; }
+echo "the frozen display was given up on, and the run failed saying why"
+
 step "stop ends a run started with -d 0"
 # record -d 0 runs until told to stop, and stop is the only way to end it. It
 # is documented, and nothing proved either half worked.
