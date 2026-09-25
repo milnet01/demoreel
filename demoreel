@@ -941,7 +941,7 @@ def cmd_shot(a):
             drawn = wait_until_drawn(env, display, width, height, a.settle)
         except SampleError as exc:
             die(f"--settle could not sample the display, so it cannot tell "
-                f"when the app has drawn.\n  {exc}\n  Kept: {rundir}")
+                f"when the app has drawn.\n  {exc}")
         if not drawn:
             note(f"nothing was drawn within {a.settle}s; taking the picture anyway.")
         for action in a.action:
@@ -954,6 +954,10 @@ def cmd_shot(a):
     except subprocess.TimeoutExpired:
         failed = (f"could not take the picture: the display did not answer "
                   f"within {CALL_TIMEOUT}s.")
+    except SystemExit as exc:
+        # Every die() above lands here, so every failure names the folder it
+        # keeps -- which is in RAM, under /run/user (DEMO-0107).
+        raise SystemExit(f"{exc.code}\n  Its display log is kept in {rundir}") from None
     finally:
         if appout is not sys.stderr:
             appout.close()

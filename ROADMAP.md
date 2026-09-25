@@ -2051,6 +2051,36 @@ Xvfb are small, and no item targets them.
   Kind: ux.
   Source: peer-request-games-hub-2026-09-25.
 
+- ✅ [DEMO-0107] **A `shot` that fails early keeps its private folder without naming it, and the folders pile up in RAM.**
+  Album Builder reported two `demoreel shot` runs exiting 1 with no
+  message, where a retry worked. Not reproduced: eight runs of the same
+  shape against kcalc all succeeded. Every exit path in demoreel prints,
+  so the message was probably dropped by the caller; asked for the exact
+  capture. But the failures left four shot-* folders in
+  /run/user/1000/demoreel-1000, which is tmpfs (RAM).
+
+  README promises the kept folder is kept on failure "like the logs",
+  and cmd_shot names it only on the settle-sample and final-picture
+  paths. A die in launch() or place_window() keeps it silently. Fix:
+  name the folder on every failure path, or remove it where there is
+  nothing in it worth reading. Add a gate step that fails a shot early
+  and checks the message names the folder.
+  Settled (2026-09-25): the silent exit was the caller's. Album
+  Builder's failing runs ended in `>/dev/null 2>&1`, which discarded
+  demoreel's own message. Not a demoreel bug. The folder-naming half
+  stands; album-builder deleted the four leftover folders itself.
+  Resolved (2026-09-25): cmd_shot catches SystemExit from every die()
+  inside its run and re-raises it naming the kept folder; the settle
+  path's own "Kept:" line is removed so none names it twice. ci.sh
+  shoots /nonexistent/app: 0.2.1-era code left shot-* unnamed in
+  /run/user, now the message names it and the step deletes it. Gate
+  green apart from the real-Flatpak step, which failed on this
+  machine's unmounted document portal (/run/user/1000/doc empty), not
+  on demoreel; run green with that step skipped.
+  **Layman:** When taking a picture fails, demoreel leaves a small folder behind in memory and doesn't always say where it is.
+  Kind: fix.
+  Source: peer-request-album-builder-2026-09-25.
+
 ## 0.3.0 — Friendly at a terminal
 
 A person at a terminal gets as much from demoreel as a script does. The command line keeps its rules: no prompts, no config file, and stdout carries the path and nothing else. The graphical window the user also asked for on 2026-09-25 is 0.6.0. It builds on the error wording, countdown and restructured recording loop made here.

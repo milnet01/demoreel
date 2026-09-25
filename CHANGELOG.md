@@ -23,6 +23,12 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **A `shot` that fails now always says where it kept its logs.** (DEMO-0107)
+  A shot that failed before taking its picture, for example because
+  the app could not start, kept its small log folder in memory without
+  saying where. Every failure now names the folder, so it can be read
+  and then deleted.
+
 - **A private display that stops answering now fails the run instead of hanging it.** (DEMO-0079)
   Each call to the display used to wait for as long as the display
   did, so a frozen display hung demoreel for good. Every window call

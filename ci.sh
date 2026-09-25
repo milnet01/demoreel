@@ -832,6 +832,21 @@ grep -q 'one flat colour' "$tmp/flat.err" || { cat "$tmp/flat.err" >&2; exit 1; 
 rm -rf "$(sed -n 's/.*display log is kept in //p' "$tmp/flat.err")"
 echo "a flat picture failed the run and printed no path"
 
+step "a shot that fails early names the folder it kept"
+# DEMO-0107. A failed shot keeps its private folder, and that folder lives
+# in RAM under /run/user. Only two failure paths said where it was, so one
+# failing before the picture left it behind unnamed.
+if ./demoreel shot -o "$tmp/none.png" -s 320x240 -- /nonexistent/app \
+       >/dev/null 2>"$tmp/early.err"; then
+    echo "a shot of an app that cannot start succeeded" >&2; exit 1
+fi
+kept=$(sed -n 's/.*display log is kept in //p' "$tmp/early.err")
+[ -n "$kept" ] && [ -d "$kept" ] || {
+    echo "an early shot failure did not name the folder it kept:" >&2
+    cat "$tmp/early.err" >&2; exit 1; }
+rm -rf "$kept"
+echo "the early failure named its folder"
+
 step "default output name"
 # -o is optional; without it the file is named from the app and a timestamp.
 ( cd "$tmp" && "$OLDPWD/demoreel" record -d 3 -s 640x480 -- xclock >/dev/null )
