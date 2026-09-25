@@ -1962,6 +1962,23 @@ Xvfb are small, and no item targets them.
   Kind: fix.
   Source: peer-request-vestige-2026-09-25.
 
+- 🚧 [DEMO-0100] **Add `demoreel shot`, which saves one picture of an app instead of a video.**
+  Asked for by the user on 2026-09-25. Decided with them: a separate
+  command rather than a flag on `record`, and exactly one picture per
+  run. For several pictures, run it several times.
+
+  Same private screen and window sizing as `record`. It waits for the
+  app to draw, runs any `-a` steps, writes one PNG, closes the app and
+  prints the path. A flat picture fails the run, as a blank recording
+  does. No `-d`, `-r` or `stop`. It holds a private run name, so it
+  never collides with a recording.
+
+  README is the design contract and says the tool makes videos, so the
+  README section goes through review-contract before the code.
+  **Layman:** Take a screenshot of an app on the private screen, so nothing from your real desktop is in the picture.
+  Kind: feature.
+  Source: user-request-2026-09-25.
+
 ## 0.3.0 — Friendly at a terminal
 
 A person at a terminal gets as much from demoreel as a script does. The command line keeps its rules: no prompts, no config file, and stdout carries the path and nothing else. The graphical window the user also asked for on 2026-09-25 is 0.6.0. It builds on the error wording, countdown and restructured recording loop made here.
@@ -2519,6 +2536,11 @@ covers both display backends and the Flatpak invocation.
   decides on its README. Offers are waiting in the finbreak and ants-terminal
   mailboxes. The games-hub take also surfaced a real accessibility defect
   there (GHUB-0197): low-contrast controls on the dark palette.
+  Progress (2026-09-25): first public use. The Ants Projects Hub
+  site (antsprojectshub.co.za) now shows docs/media/demoreel-demo.mp4
+  on demoreel's project page, live in projects hub commit 115f3b8.
+  The clip is demoreel recording vkcube on --gpu inside a terminal
+  it is also recording.
   **Layman:** 1.0 waits for a video made with demoreel to be used somewhere real, like another project's page.
   Kind: marketing.
   Source: user-request-2026-09-25.
