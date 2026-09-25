@@ -1966,6 +1966,13 @@ Xvfb are small, and no item targets them.
   that keeps shrinking itself: silent on 0.2.1, warned after the fix.
   Still open: whether re-applying the size once the app settles is
   safe, or starts a resize fight. Not measured.
+  Second case (2026-09-25, from doom-ants): DOOM_Ants on a 1920x1080
+  xwfb-run display sized its own window to 1708x800, so a game can
+  choose a frame smaller than the display too. Their other report,
+  that killing xwfb-run alone leaks cage, Xwayland and the app, does
+  not apply to demoreel: measured the same day, cage/Xwayland/vkcube
+  counts were unchanged after a normal --gpu run, a SIGTERM and a
+  timeout(1) kill, since end_process signals the whole group.
   **Layman:** If an app changes its own window size after demoreel has set it, the video shows it cropped or off to one side, and demoreel doesn't warn you.
   Kind: fix.
   Source: peer-request-vestige-2026-09-25.
