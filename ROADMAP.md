@@ -2105,6 +2105,22 @@ A person at a terminal gets as much from demoreel as a script does. The command 
   Kind: refactor.
   Source: in-session-2026-09-25.
 
+- 📋 [DEMO-0098] **Add a held-key action, for apps that move while a key is down.**
+  Asked for by the vestige session on 2026-09-25: its demo would show
+  walking forward by holding W for a few seconds. The `-a` grammar has
+  `key`, which presses and releases at once, and nothing that holds.
+
+  Add `hold KEY SECONDS`, built on xdotool keydown and keyup. The keyup
+  must run on every exit path, including a stop mid-hold, or the key stays
+  down on the private display for the rest of the run.
+
+  A new verb extends the grammar without changing an existing one, so it
+  is MINOR under the versioning overrides. README, `--help` and the tab
+  completion list it with the others.
+  **Layman:** Let a demo hold a key down for a few seconds, e.g. to walk forward in a 3D scene.
+  Kind: feature.
+  Source: peer-request-vestige-2026-09-25.
+
 ## 0.4.0 — Speaks your language
 
 Every message, --help and the man page in the reader's language, plus a
@@ -2230,6 +2246,25 @@ path, and scripts read it.
   boundaries.
   **Layman:** A bad or tampered translation file must not be able to leak data or crash demoreel.
   Kind: security.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0097] **Invite readers to improve the translations, in README and a new CONTRIBUTING.md.**
+  Requested 2026-09-25. Only once the translations are built: an invitation
+  to a language that does not exist yet asks for work on nothing.
+
+  README gets a short section, near the language links: the translations
+  are drafts until a native speaker confirms them, and improvements are
+  welcome. It lists each language's state and links to CONTRIBUTING.md.
+
+  CONTRIBUTING.md does not exist yet. Create it with how to suggest a
+  better translation: where the catalogs live, how to send a change or an
+  issue, and what happens when a native speaker confirms a language -- the
+  process DEMO-0067 writes down. It is the home for other contribution
+  routes as they appear.
+
+  Depends on both translation batches and on DEMO-0067.
+  **Layman:** Once the languages exist, the project page and a contributor guide ask fluent speakers to suggest better wording.
+  Kind: doc.
   Source: user-request-2026-09-25.
 
 ## 0.5.0 — Installs like any other program
