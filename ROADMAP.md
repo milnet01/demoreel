@@ -113,6 +113,16 @@ closes, so it sits outside every version heading.
   Kind: chore.
   Source: user-request-2026-09-07.
 
+- 📋 [DEMO-0096] **Get each draft translation confirmed by a native speaker.**
+  Decided 2026-09-25: Claude drafts each translation and it stays marked as
+  a draft until a native speaker confirms it. How a confirmation works is
+  0.4.0's to write down. This item is the chasing, which has no end date,
+  so it does not hold any release. Record each language as it is
+  confirmed.
+  **Layman:** Keep asking fluent speakers to check the machine-drafted translations until every one is confirmed.
+  Kind: chore.
+  Source: user-request-2026-09-25.
+
 ## 0.1.1 — Before the first tag
 
 Nothing here breaks a documented surface, so all of it lands in a PATCH.
@@ -1778,6 +1788,607 @@ protected surface, so the project's own ladder makes it a PATCH.
   Kind: fix.
   Source: in-session-2026-09-25.
 
+## 0.2.2 — Quicker and lighter
+
+Faster to start and stop, and less memory while recording. Every item measures
+before it changes anything, and none changes a surface the versioning overrides
+protect, so this is a PATCH. Measured 2026-09-25 on a default 1600x1000
+recording: ffmpeg is the only large consumer. demoreel's own Python process and
+Xvfb are small, and no item targets them.
+
+- 📋 [DEMO-0073] **Cap ffmpeg's encoder threads, which set most of a recording's memory.**
+  Measured 2026-09-25, during a default 1600x1000 recording of xclock:
+  ffmpeg 537568 kB resident, Xvfb 62472 kB, demoreel 23756 kB, the app
+  9504 kB.
+
+  ffmpeg's share follows x264's thread count, which defaults to a
+  multiple of the cores -- twelve here. Encoding a 1600x1000 test pattern
+  for ten seconds at the tool's own settings, peak resident memory:
+
+    threads auto   571136 kB   1.23 s
+    threads 8      377220 kB   1.58 s
+    threads 4      306696 kB   2.49 s
+    threads 2      267116 kB   2.49 s
+
+  Every setting stays several times faster than real time. Fewer threads
+  also leave more CPU for the app being recorded, which is what the video
+  shows.
+
+  Before choosing a number: a test pattern is harder to encode than most
+  screens but is not a live capture. Record a busy app at the default
+  size on a machine with fewer cores, and read ffmpeg's dropped and
+  duplicated frame counts. A cap that drops frames is not worth the
+  memory. Encoding parameters are not a breaking surface.
+  **Layman:** The video encoder uses far more memory than it needs; limiting it roughly halves that.
+  Kind: optimize.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0074] **Measure the `--gpu` backend's memory, and cut what it does not need.**
+  The Xvfb path was measured on 2026-09-25; the `--gpu` path was not. It
+  runs xwfb-run, cage and Xwayland in place of Xvfb, and the recorded app
+  has a GPU context. Measure each process's resident memory during a
+  `--gpu -- vkcube` run and compare against the Xvfb figures. File a fix
+  only for what the numbers show.
+  **Layman:** Find out how much memory the graphics-card recording mode uses, and trim it.
+  Kind: investigate.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0075] **Notice `stop` at once, instead of up to a fifth of a second late.**
+  The recording loop in `cmd_record` sleeps 0.2 s between checks, and the
+  signal handler only sets a flag. Python resumes an interrupted sleep
+  after a handler runs (PEP 475), so a stop lands up to 0.2 s late. That
+  short extra tail ends up in the video.
+
+  Wake the loop from the handler -- a threading.Event waited on with a
+  timeout, or signal.set_wakeup_fd. Measure the time from signal to
+  ffmpeg's quit, before and after.
+  **Layman:** The recording reacts to a stop request immediately rather than after a short pause.
+  Kind: perf.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0076] **Find where the time goes between `stop` and a finished video.**
+  Measured 2026-09-25 with xclock: the recorder exits 0.7 to 0.9 s after
+  `stop` signals it. Since DEMO-0047, `stop` waits that long before it
+  answers. The steps in that gap: ffmpeg finishing and its faststart pass,
+  the end-of-run blank sample, which starts a second ffmpeg to grab one
+  frame, then ending the app and the display.
+
+  Time each step, then shorten the largest. The faststart pass stays --
+  DEMO-0013 decided that on measurement. The blank sample must stay a real
+  sample of the display.
+  **Layman:** Stopping takes nearly a second; find out which step is slow and speed it up.
+  Kind: investigate.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0077] **Find where the time goes between launch and the first recorded frame.**
+  DEMO-0042 measured about 1.4 s of fixed setup per run. The steps:
+  starting Xvfb, installing the cookie and waiting for the reset,
+  launching the app, polling for its window, resizing and waiting for
+  the size, optional `--settle`, then ffmpeg's first frame. Several of
+  these poll at a fixed interval.
+
+  Time each step with a real app and shorten the largest. Every
+  safety check stays: the cookie ordering and the window-size wait each
+  fixed a real defect.
+  **Layman:** Starting a recording has a fixed delay; find out which step is slow and speed it up.
+  Kind: investigate.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0078] **Shorten the gate's longest step, the scripted-actions recording.**
+  DEMO-0042 measured the gate and found the scripted-actions step the
+  single largest, a recording of about twelve seconds. It closed the
+  parallel-steps idea as considered and named this step as the cheaper
+  lever. Since then, steps added for DEMO-0006, DEMO-0007, DEMO-0047 and
+  DEMO-0049 have made the gate longer.
+
+  Shorten the waits inside that step to what the assertions need, and
+  check it still fails when an action is broken.
+  **Layman:** The pre-push checks spend the most time in one test; make that test quicker.
+  Kind: perf.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0079] **Put a timeout on every xdotool and frame-sample call.**
+  Found in the DEMO-0049 hang: `xdotool getwindowname` waited on a frozen
+  display for minutes, and `--startup-timeout` never fired. The deadline
+  is checked between calls, and nothing bounds a single call. The wrapper
+  `xdotool()` and the sampler in `display_is_blank` both call
+  `subprocess.run` with no timeout.
+
+  DEMO-0049 removed the cause found that day. Any other way a display can
+  stop answering hangs the run the same way. Give each call a timeout and
+  turn an expiry into an error that names the display. A sample that
+  times out is the "could not tell" answer, SampleError, never "not
+  blank" -- DEMO-0033's rule.
+  **Layman:** If the private screen stops answering, the recording should fail with a message instead of waiting forever.
+  Kind: fix.
+  Source: in-session-2026-09-25.
+
+- 📋 [DEMO-0080] **Replace the hand-written wait loops with one polling helper.**
+  The file has several loops that poll with a fixed sleep and a deadline:
+  waiting for the display after the cookie reset, for the window, for its
+  size, for the first draw, for a starting run in `stop`, and now for a
+  stopped run to exit. Each picks its own interval, and each writes its
+  own deadline arithmetic.
+
+  One helper, taking a check, a timeout and an interval. Tuning the
+  intervals is then one change, which is what the launch-time item in this
+  version needs, and a new wait cannot get the deadline wrong. Behaviour
+  stays the same, and the gate proves it.
+  **Layman:** Several bits of code each wait for something in their own way; make them share one tidy method.
+  Kind: refactor.
+  Source: in-session-2026-09-25.
+
+- 📋 [DEMO-0082] **Check what happens when the output path is a symlink someone else planted.**
+  ffmpeg is started with `-y`, so it overwrites whatever is at the `-o`
+  path. If a caller records to a shared directory such as `/tmp`, another
+  local user can create a symlink at that name first. The video would
+  then be written through it, over a file the caller owns.
+
+  Unverified: most distros set fs.protected_symlinks=1, which refuses to
+  follow such a link in a sticky world-writable directory. Whether this
+  machine, and the GitHub runner, do was not checked, nor what ffmpeg does
+  when the open is refused. Measure it. If the protection is not
+  guaranteed, refuse an output path that is a symlink the caller does not
+  own, the same way `state_dir()` refuses a planted directory. SECURITY.md
+  gets the result either way.
+  **Layman:** Make sure another user on the same computer can't trick demoreel into overwriting one of your files.
+  Kind: security.
+  Source: user-request-2026-09-25.
+
+## 0.3.0 — Friendly at a terminal
+
+A person at a terminal gets as much from demoreel as a script does. The command line keeps its rules: no prompts, no config file, and stdout carries the path and nothing else. The graphical window the user also asked for on 2026-09-25 is 0.6.0. It builds on the error wording, countdown and restructured recording loop made here.
+
+- 📋 [DEMO-0050] **Show worked examples at the end of `--help`.**
+  `demoreel --help` and `demoreel record --help` list the flags and nothing
+  else. A person meeting the tool for the first time has to go to README.md
+  to learn what a working command looks like.
+
+  Add an examples block under each: a timed recording, `-d 0` with `stop`,
+  scripted actions, `--gpu`, and a Flatpak with its three flags. argparse
+  carries this as an epilog with RawDescriptionHelpFormatter.
+
+  The gate already checks that every flag README documents is one the tool
+  accepts. Extend it so every example in `--help` also parses.
+  **Layman:** Typing demoreel --help shows real commands you can copy, not just a list of options.
+  Kind: ux.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0051] **Name the install command when a required program is missing.**
+  Today a missing program stops the run with its name: `missing required
+  program(s): xdotool`. A person then has to find which package provides
+  it, and the name differs by distro -- `xwfb-run` comes from
+  `xwayland-run`, and `setxkbmap` from `x11-xkb-utils` on Debian.
+
+  Read /etc/os-release and name the install command for openSUSE, Debian
+  and Ubuntu, Fedora and Arch, for the backend in use. An unknown distro
+  gets the program names as today.
+
+  The package table is knowledge about distros, not about apps, so it does
+  not breach the per-app rule. It is shared with the setup-check item
+  below, and written once.
+  **Layman:** If something demoreel needs isn't installed, it tells you the exact command to install it.
+  Kind: ux.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0052] **Add `demoreel check`, which tests a machine's setup without recording.**
+  The only way to learn whether a machine can record is to record, and a
+  missing program is reported one run at a time.
+
+  `demoreel check` reports every program each backend needs, whether
+  Xvfb starts, and for `--gpu` whether a render node exists. It names the
+  install command for each gap, from the table the missing-program item
+  uses. It exits non-zero if the default backend cannot record.
+
+  A new subcommand is a MINOR change under the versioning overrides. It
+  prints to stderr, so stdout keeps its one-line contract.
+  **Layman:** One command tells you whether this computer is ready to record, and what to install if not.
+  Kind: feature.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0053] **Show a live countdown while recording, when stderr is a terminal.**
+  A person running `demoreel record -d 30` sees one line saying recording
+  has started, then nothing until it ends. There is no sign the run is
+  alive, or how long is left.
+
+  When stderr is a terminal, update one line in place with the time left,
+  or the time so far on a `-d 0` run. End with a summary: length and file
+  size. When stderr is not a terminal -- a script, a log, a Claude session
+  -- print exactly what is printed today, so callers see no change.
+
+  The display is magnified on this machine, so keep it to one short line
+  and no colour.
+  **Layman:** While it records, you see how many seconds are left instead of a silent wait.
+  Kind: ux.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0054] **Make Ctrl+C a documented, tested way to finish a recording.**
+  A person running `demoreel record -d 0` in the foreground will reach for
+  Ctrl+C, not a second terminal. The code catches SIGINT and finishes the
+  video, but README never says so and the gate never tests it.
+
+  Unverified: Ctrl+C at a terminal signals the whole foreground process
+  group. The app is started in its own session and escapes that. Whether
+  ffmpeg does has not been checked. If ffmpeg gets SIGINT directly, it
+  may stop on its own before demoreel asks it to. Measure that first.
+
+  Then document it beside `stop` and add a gate step that sends SIGINT
+  to the process group and checks for a finished video.
+  **Layman:** Pressing Ctrl+C should stop the recording and still leave you a good video.
+  Kind: test.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0055] **Rewrite every error so it says what happened and what to do next.**
+  Some errors already do this -- the blank-display error names both
+  likely causes and the fix for each. Others are terse: `--size must look
+  like 1600x1000`, or `Xvfb did not start.` followed by the server's own
+  output.
+
+  Go through every `die()` and `note()` and make each one name the
+  problem, the likely cause, and the next step.
+
+  This goes before the translation work in 0.4.0, which translates these
+  same messages. Rewording them after translation means translating twice.
+  **Layman:** Every error message tells you in plain words what went wrong and how to fix it.
+  Kind: ux.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0056] **Add tab completion for bash, zsh and fish.**
+  Complete the subcommands, every flag, the `-a` action verbs, and the
+  names of running recordings for `demoreel stop`, read from the state
+  directory.
+
+  Hand-written scripts, not a dependency. argcomplete would need a
+  package installed, and the tool is standard library only. The gate
+  checks that each script names every flag the parser accepts, the same
+  check README's flags already get.
+  **Layman:** Pressing Tab completes demoreel's commands and options, like it does for other programs.
+  Kind: feature.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0057] **Write a man page.**
+  A person used to Linux tools types `man demoreel`, and there is nothing.
+
+  Write one covering both subcommands, every flag, the action grammar,
+  exit status, files under the state directory, and the Flatpak and
+  `--gpu` notes. The gate checks it names every flag, like README.
+
+  The install packages in 0.5.0 put it where `man` finds it. Until then,
+  `man ./demoreel.1` reads it in place.
+  **Layman:** `man demoreel` works, like it does for other command-line tools.
+  Kind: doc.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0058] **Give README an Install section and a quick start written for a person.**
+  README has a Quick start but no Install section. It lists what must be
+  installed only under Constraints already verified on this machine, which
+  reads as a note to ourselves. A section headed for Claude Code sessions
+  sits above the one on Flatpaks.
+
+  Add an Install section per distro. Lead with a person's path: install,
+  record, watch the video, stop a long recording. Keep the section for AI
+  callers, placed after the human path.
+
+  Verify it by running it: `verify-instructions` in a clean container per
+  distro, not by reading it.
+  **Layman:** The front page explains how to install it and make a first video, step by step.
+  Kind: doc.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0059] **Put a short demo video at the top of README.**
+  A person landing on the repository reads prose about a video tool
+  without seeing a video.
+
+  Record a short clip of a real app with scripted actions, with demoreel,
+  and embed it at the top of README. Keep the command that made it beside
+  it, so the clip is also a working example.
+
+  This is inside the repository, so it does not meet the 1.0 condition in
+  versioning-overrides.md. That needs use outside it.
+  **Layman:** The project page shows a video made with demoreel, so people see what it does before reading.
+  Kind: marketing.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0081] **Split `cmd_record` into its stages before the countdown hooks into it.**
+  `cmd_record` is by far the longest function in the file. It checks
+  dependencies, parses the size, starts the display and app, sizes the
+  window, waits for a draw, records, samples, tears down and reports, all
+  inline, sharing locals across the whole span.
+
+  The countdown in this version needs a hook in the recording loop. The
+  GUI in 0.6.0 needs progress from it too. Split it into its stages, with
+  the `try`/`finally` teardown kept in one place, before either lands.
+
+  The file stays one file. Splitting it into modules would give up the
+  single-executable property CLAUDE.md states, for no gain.
+  **Layman:** The main recording function does everything in one long block; break it into clear steps.
+  Kind: refactor.
+  Source: in-session-2026-09-25.
+
+## 0.4.0 — Speaks your language
+
+Every message, --help and the man page in the reader's language, plus a
+translated quick-start page. The full README stays English. Decided 2026-09-25:
+Simplified and Traditional Chinese, Japanese, Hebrew, Afrikaans, Spanish,
+Brazilian Portuguese, Italian, French, German, Russian, Korean, Arabic, Dutch,
+Polish and Ukrainian. Claude drafts each one, and it stays marked as a draft
+until a native speaker confirms it. stdout is never translated: it carries the
+path, and scripts read it.
+
+- 📋 [DEMO-0060] **Write the translation spec, and gate it before anything is built.**
+  This is a real design choice, hard to undo once catalogs exist, and it
+  touches every message, the parser, the gate and the docs. It meets the
+  spec triggers, so it goes through `write-spec` and `review-contract`.
+
+  The spec has to settle:
+  - Where catalogs live. The tool is one file today. gettext wants .mo
+    files on disk, found from the script's own path, not the caller's.
+  - Locale selection: LANGUAGE, LC_ALL, LC_MESSAGES and LANG, in the order
+    gettext uses them, with English as the fallback.
+  - argparse's own strings ("usage:", "options:"), which Python ships
+    untranslated.
+  - That stdout, the state file and `--version` are never translated.
+  - How a draft translation is marked, and where that shows.
+  - The gate's completeness check.
+  - Right-to-left text around paths and flags.
+
+  The GUI planned in 0.6.0 uses the same catalogs, so the spec covers it.
+  **Layman:** Decide on paper how translations will work before writing any code for them.
+  Kind: doc.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0061] **Build the translation mechanism with English as the source language.**
+  Wrap every user-facing string -- `die()`, `note()`, argparse help and
+  the examples -- as the spec says. Ship English only at this step.
+
+  The proof it is safe: under LC_ALL=C, stdout, stderr and the exit status
+  of every gate step are byte-identical to before. Scripts and Claude
+  sessions set no locale, or C, and must see no change.
+
+  Depends on the translation spec, and on the error rewrite in 0.3.0
+  landing first.
+  **Layman:** Make every message translatable, without changing anything for English users.
+  Kind: implement.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0062] **Gate every catalog for missing messages and broken placeholders.**
+  Every message must exist in every catalog, and each translation must
+  carry the same placeholders as the English: `{output}` renamed or
+  dropped is a crash, or a path that silently disappears.
+
+  Also run a recording under each locale and check that stdout is still
+  the bare path. That is the contract a translation could most easily
+  break.
+  **Layman:** The automatic checks fail if any language is missing a message or would print garbled text.
+  Kind: test.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0063] **Keep paths, flags and commands readable inside Hebrew and Arabic messages.**
+  A right-to-left sentence containing a path such as `/tmp/demo.mp4` or a
+  command such as `demoreel stop mydemo` can render with its parts
+  reordered. The reader then copies something that is not the command.
+
+  Wrap each left-to-right run in Unicode isolation marks (FSI ... PDI) as
+  the spec decides. Check by eye in Konsole, which does bidi, and in one
+  terminal that does not. A screenshot of each goes in the item when it
+  closes.
+  **Layman:** Right-to-left languages show file names and commands the right way round.
+  Kind: ux.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0064] **Draft translations for the languages named in the request.**
+  Simplified Chinese, Traditional Chinese, Japanese, Hebrew, Afrikaans,
+  Spanish, Brazilian Portuguese, Italian, French and German. Every
+  message, --help and the man page.
+
+  Each is marked as a draft until a native speaker confirms it.
+  **Layman:** First batch of translations: Chinese, Japanese, Hebrew, Afrikaans, Spanish, Portuguese, Italian, French and German.
+  Kind: feature.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0065] **Draft translations for Russian, Korean, Arabic, Dutch, Polish and Ukrainian.**
+  Suggested on 2026-09-25 and accepted: large Linux developer communities,
+  and Arabic is a second right-to-left check beside Hebrew.
+
+  Same scope and draft marking as the first batch.
+  **Layman:** Second batch of translations, chosen for large Linux developer communities.
+  Kind: feature.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0066] **Write a translated quick-start page for each language.**
+  One short page per language: install, record, stop. Linked from the top
+  of README by language name. The full README stays English. It changes
+  often and is where the detail lives.
+
+  Each page's commands are run, not read, like README's quick start.
+  **Layman:** Each language gets a short getting-started page; the full README stays in English.
+  Kind: doc.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0067] **Say which translations are drafts, and how a native speaker confirms one.**
+  A reader should know when a language is a draft. Mark it in the catalog
+  and in `--help`, and list the state of every language in one place.
+
+  Write down how a confirmation happens: what a reviewer reads, how they
+  say it is right or send fixes, and what changes when they do. Chasing
+  reviewers is a standing chore, not part of this version.
+  **Layman:** Be honest about which translations are machine drafts, and make it easy for a fluent speaker to approve one.
+  Kind: doc.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0083] **Treat translation catalogs as untrusted templates.**
+  A translated message is a format template. With Python's str.format, a
+  template can reach attributes and indexes -- `{output.__class__}` and
+  beyond -- so a malicious or careless catalog entry can print internals
+  or raise mid-run.
+
+  Fill templates with plain named substitution that does no attribute or
+  index lookup. Have the catalog gate reject any placeholder the English
+  message does not have. Load catalogs only from the script's own path or
+  the system locale directory, never from the working directory or a path
+  taken from the environment. Add catalogs to SECURITY.md's trust
+  boundaries.
+  **Layman:** A bad or tampered translation file must not be able to leak data or crash demoreel.
+  Kind: security.
+  Source: user-request-2026-09-25.
+
+## 0.5.0 — Installs like any other program
+
+A person installs demoreel from their distro's usual tools, and the programs it
+needs come with it. The man page, tab completion and translations land where the
+system looks for them.
+
+- 📋 [DEMO-0068] **Package demoreel for openSUSE through the Open Build Service.**
+  This machine's distro. The package declares Xvfb, xauth, ffmpeg and
+  xdotool as requirements, and xwayland-run and cage as recommended for
+  `--gpu`. It installs the man page, completions and catalogs.
+  **Layman:** Install demoreel on openSUSE with zypper, dependencies included.
+  Kind: package.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0069] **Package demoreel for Debian and Ubuntu.**
+  The GitHub runner is Ubuntu, so the package can be built and installed
+  there as a gate step. Requirements: xvfb, xauth, ffmpeg, xdotool.
+  Recommends the `--gpu` pair where the distro carries it.
+  **Layman:** Install demoreel on Debian or Ubuntu with apt, dependencies included.
+  Kind: package.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0070] **Package demoreel for Fedora and Arch.**
+  Fedora through COPR, Arch as an AUR PKGBUILD. Same file layout and
+  dependency split as the other packages.
+  **Layman:** Install demoreel on Fedora (dnf) or Arch (from the AUR).
+  Kind: package.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0071] **Let the tool find its translations whether installed or run from a checkout.**
+  A package puts catalogs under /usr/share/locale. A checkout keeps them
+  beside the script. The tool finds them from its own resolved path first,
+  then the system location. The caller's working directory is never used,
+  which the any-project requirement in CLAUDE.md demands.
+  **Layman:** Translations work the same whether demoreel was installed from a package or run from its folder.
+  Kind: implement.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0072] **Document an install from source, and check it in a clean container per distro.**
+  For a distro with no package: which programs to install, where to put
+  the script, man page, completions and catalogs. Verified by running it
+  in a fresh container for each packaged distro, which also catches a
+  missing dependency in the package lists.
+  **Layman:** Anyone can install it by hand with a few commands, and those commands are tested.
+  Kind: doc.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0084] **Let a user verify that what they installed is what was released.**
+  Once demoreel ships as packages and release files, a user needs a way to
+  check that what they got is what this repository built. Publish
+  checksums with each GitHub release, sign release tags, and add a build
+  provenance attestation from the workflow. Say in SECURITY.md how to
+  check each one.
+  **Layman:** Downloads come with a way to check they are genuine and untampered.
+  Kind: security.
+  Source: user-request-2026-09-25.
+
+## 0.6.0 — A window for people who want one
+
+demoreel can be used from the command line or from a graphical window. Requested
+2026-09-25. This reverses the scope ceiling's "no GUI", so that rule is lifted
+first, through the review gate. The command line keeps every other rule: no
+prompts, stdout carries only the path, and the same guarantees hold. The window
+is a front-end to the same recording engine, not a second one.
+
+- 📋 [DEMO-0085] **Lift "no GUI" from the scope ceiling in CLAUDE.md and README, through the review gate.**
+  CLAUDE.md's Scope ceiling and README's What it will never do both name a
+  GUI as permanently out of scope. The user asked for one on 2026-09-25.
+
+  Changing that changes what a conformer builds, so rule 14 applies to
+  both documents. README goes through `review-contract`, as the design
+  contract it is. The rest of the ceiling stays and should be restated
+  beside the change: no audio, no config file format, no plugins, no
+  per-app profiles, no recording the real screen.
+
+  Nothing else in this version starts before this lands.
+  **Layman:** Update the project's rules so a graphical window is allowed, and have that change independently reviewed.
+  Kind: doc.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0086] **Write the GUI spec, and gate it before anything is built.**
+  A spec, through `write-spec` and `review-contract`. It must settle:
+  - The toolkit. Tkinter is in the standard library and keeps the tool
+    dependency-free, but looks dated and scales poorly. Qt is native on
+    this machine's KDE desktop and is a large dependency. GTK 4 is native
+    on GNOME. Weigh looks, dependency weight and accessibility.
+  - Whether the window runs the `demoreel` command as a child process or
+    imports the engine. A child process keeps one engine and needs a
+    machine-readable progress feed; importing needs the engine to raise
+    errors rather than exit.
+  - What it exposes, and what stays command-line only.
+  - How it offers a Flatpak app without becoming the per-app profile
+    registry the ceiling still rules out.
+  - Keyboard use, screen readers, large text and the magnifier.
+  - Translations, from the 0.4.0 catalogs.
+  **Layman:** Decide on paper how the window will look and work before building it.
+  Kind: doc.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0087] **Build the window: pick an app, set the options, record, stop, open the result.**
+  Choose the app by command or from the installed applications. Set size,
+  length or record-until-stopped, the graphics-card mode and the pointer.
+  Press Record and see the countdown. Press Stop. Then open the video or
+  show it in its folder.
+
+  Errors show the same text the command line prints, translated the same
+  way.
+  **Layman:** A window where you choose an app, press Record, and get your video.
+  Kind: feature.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0088] **Edit scripted actions in the window.**
+  A list of steps -- wait, move, click, type, key -- to add, remove,
+  reorder and edit, producing the same `-a` actions the command line
+  takes. Show the equivalent command so a person can copy it into a
+  script. Picking click coordinates on a live preview is a possible later
+  step, not part of this item.
+  **Layman:** Build the list of clicks and key presses for a demo in the window instead of typing them out.
+  Kind: feature.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0089] **Run the app command from the window without a shell.**
+  The window takes a command as text, so it has to become an argument
+  list. Split it with shlex and run it as a list, never with shell=True,
+  which is how the command line already runs it. The desktop entry's
+  Exec line must quote correctly, and a file-picker path must reach the
+  command as one argument, whatever characters it contains.
+  **Layman:** Whatever you type as the app to record is run as-is, never interpreted in a way that could run something else.
+  Kind: security.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0090] **Make the window fully usable by keyboard, screen reader and magnifier.**
+  Every control reachable by Tab and working with the keyboard. Every
+  control named for a screen reader. Text follows the system font size.
+  The layout holds under KWin's magnifier, which the user relies on. Check
+  with the keyboard alone, and with Orca.
+  **Layman:** People who can't use a mouse, use a screen reader, or magnify the screen can all use the window.
+  Kind: accessibility.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0091] **Ship a desktop entry and icon, so the window appears in the app menu.**
+  A .desktop file and an icon, installed by the 0.5.0 packages and by the
+  install from source. The command-line tool installs as before; the menu
+  entry opens the window.
+  **Layman:** demoreel shows up in your applications menu with its own icon.
+  Kind: package.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0092] **Test the window by recording it with demoreel.**
+  The gate runs the window on a private display, which demoreel already
+  provides. xdotool presses Record and Stop. The step checks that a
+  finished video exists and that a frame of the window itself is not
+  flat.
+  **Layman:** The automatic checks open the window on a private screen, press Record, and check a video comes out.
+  Kind: test.
+  Source: user-request-2026-09-25.
+
 ## 1.0.0 — Every documented path tested
 
 The exit condition in docs/standards/versioning-overrides.md: the gate
@@ -1828,3 +2439,37 @@ covers both display backends and the Flatpak invocation.
   **Layman:** Write down what 1.0 really waits for, now that the two missing checks can run here but not on GitHub.
   Kind: doc.
   Source: user-request-2026-09-20.
+
+- 📋 [DEMO-0093] **Get a demoreel video used outside this repository, and record where.**
+  The live 1.0 condition in versioning-overrides.md: a video demoreel
+  recorded, used in another project's README, a store listing or a
+  release page, with the roadmap naming where and linking to it.
+
+  Other projects on this machine have GUI apps and no demo video. Offer
+  them one. The owning session places it, since that project's files are
+  its own. Record the link here when one lands.
+  **Layman:** 1.0 waits for a video made with demoreel to be used somewhere real, like another project's page.
+  Kind: marketing.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0094] **Run a full security pass before 1.0 and fix what it finds.**
+  Everything since the last security look: the stop verdict, translations,
+  packages and the window. Run `check-code` with its security tools
+  (bandit, semgrep, gitleaks), zizmor over the workflow, and a
+  `review-code` lane briefed on SECURITY.md's trust boundaries. Fix every
+  verified finding. Bring SECURITY.md up to date, including the
+  supported-versions line, which changes at 1.0.
+  **Layman:** Before calling it finished, have the code checked end to end for security holes and fix any found.
+  Kind: audit-fix.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0095] **Audit the whole project once before 1.0 and fix what it finds.**
+  One pass per question, each by the skill that owns it: `review-code`
+  for defects, `review-tests` for whether the gate tests what it claims,
+  `verify-instructions` running README and every quick-start page,
+  `review-ledger` for whether ROADMAP and CHANGELOG are true, and
+  `check-dependencies` for the pins. Fix every verified finding before
+  cutting 1.0.
+  **Layman:** Before calling it finished, check that the code, tests, docs and records all hold up, and fix anything that doesn't.
+  Kind: audit-fix.
+  Source: user-request-2026-09-25.
