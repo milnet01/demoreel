@@ -1935,6 +1935,27 @@ Xvfb are small, and no item targets them.
   Kind: security.
   Source: user-request-2026-09-25.
 
+- 📋 [DEMO-0099] **An app that resizes itself after demoreel sizes it records partly off-frame, and nothing says so.**
+  Found recording Vestige, a GLFW/OpenGL editor, with `--gpu` at the
+  default 1600x1000. demoreel moved and sized the window, and
+  `wait_for_size` passed. Then the app set itself to 1920x1080, larger
+  than the display. In one run, the whole 32 s showed the window's corner
+  at about (930, 454), with black everywhere else. In a second run it sat
+  at 0,0 but was cropped at the right and bottom, cutting off a panel.
+  Every check passed both times: the picture was not flat.
+
+  Recording at `-s 1920x1080`, the app's own size, gave a correct video
+  from start to finish.
+
+  Two parts. Detect it: sample the window's geometry again when the blank
+  check samples the display, and warn on stderr if it no longer matches
+  the frame, naming the size the app chose so the caller can pass `-s`
+  with it. Then find out whether re-applying the size once the app
+  settles is safe, or starts a resize fight. Not measured on Xvfb yet.
+  **Layman:** If an app changes its own window size after demoreel has set it, the video shows it cropped or off to one side, and demoreel doesn't warn you.
+  Kind: fix.
+  Source: peer-request-vestige-2026-09-25.
+
 ## 0.3.0 — Friendly at a terminal
 
 A person at a terminal gets as much from demoreel as a script does. The command line keeps its rules: no prompts, no config file, and stdout carries the path and nothing else. The graphical window the user also asked for on 2026-09-25 is 0.6.0. It builds on the error wording, countdown and restructured recording loop made here.
@@ -2483,6 +2504,15 @@ covers both display backends and the Flatpak invocation.
   Other projects on this machine have GUI apps and no demo video. Offer
   them one. The owning session places it, since that project's files are
   its own. Record the link here when one lands.
+  Progress (2026-09-25): demo videos recorded for games-hub (Games Hub,
+  tile grid to Klondike and back) and vestige (meadow scene, --gpu at
+  1920x1080). Copies are in ~/Videos/demoreel-demos/. Neither is public yet.
+  vestige plans a demoreel-recorded video on antsprojectshub.co.za as its
+  3D_E-0695; that published cut waits on its scripted demo mode, 3D_E-0696.
+  vestige will send the URL to this project's mailbox. games-hub's owner
+  decides on its README. Offers are waiting in the finbreak and ants-terminal
+  mailboxes. The games-hub take also surfaced a real accessibility defect
+  there (GHUB-0197): low-contrast controls on the dark palette.
   **Layman:** 1.0 waits for a video made with demoreel to be used somewhere real, like another project's page.
   Kind: marketing.
   Source: user-request-2026-09-25.
