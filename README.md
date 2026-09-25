@@ -72,8 +72,8 @@ and prints the path. For three pictures, run it three times.
 
 It takes the options `record` takes, less the ones about time: no `-d`, no `-r`,
 and no `-n`. There is nothing to `stop`, so a `shot` has no name. It keeps its
-private screen's files in a folder of its own, removed when it ends, and writes
-nothing `stop` reads — so it can run beside recordings and other shots. The one
+private screen's files in a folder of its own, removed when it succeeds and kept
+when it fails, like the logs below, and writes nothing `stop` reads — so it can run beside recordings and other shots. The one
 thing they can share is the default filename, the app and the time to the
 second, so give simultaneous shots of one app their own `-o`. The size need not
 be even; that rule belongs to video.
@@ -81,7 +81,7 @@ be even; that rule belongs to video.
 The picture is always checked, even if the app has closed itself: an app that
 has gone leaves only an empty screen. A picture that is one flat colour fails
 the run, and so does not being able to look at the screen at all. A failed run
-prints no path and leaves the picture on disk.
+prints no path, and keeps any picture it had saved.
 
 ## How it avoids filming your desktop
 
