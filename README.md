@@ -2,15 +2,17 @@
 
 **Record a video of an app running, without filming your desktop.**
 
-You give it an app. It gives you back a video file of that app, and nothing
-else — no other windows, no notifications, no magnifier lens sliding around.
+You give it an app. It gives you back a video file of that app, or one picture
+of it, and nothing else — no other windows, no notifications, no magnifier lens
+sliding around.
 
 It is built to be driven by Claude Code, so you can ask for a demo video and get
 one without touching a recording tool yourself.
 
 ## What you get
 
-One `.mp4` file. Just the app, filling the frame.
+One `.mp4` file. Just the app, filling the frame. Or, with `demoreel shot`, one
+`.png` picture of it — see [Taking a picture](#taking-a-picture).
 
 The video is **silent**. There is no sound and there never will be — see
 [What it will never do](#what-it-will-never-do). If you need a voiceover or
@@ -52,6 +54,29 @@ type it yourself. demoreel knows nothing about any particular app.
 When it finishes it prints one line: the path to your video. Nothing else goes
 on that line, so you can safely capture it in a script. Anything the app itself
 prints goes to the terminal separately, or to a file with `--app-log`.
+
+## Taking a picture
+
+```sh
+# one picture of Kate, into a file named after the app
+demoreel shot -- kate
+
+# choose the filename, and click something first
+demoreel shot -o menu.png -a 'click 40 12' -- myapp
+```
+
+`shot` uses the same private screen as `record`, and sizes the window the same
+way. It waits for the app to draw, for up to `--settle` seconds — 10 unless you
+say otherwise. Then it runs your `-a` steps, saves one `.png`, closes the app,
+and prints the path. For three pictures, run it three times.
+
+It takes the options `record` takes, less the ones about time: no `-d`, no `-r`,
+and no `-n`. A picture needs no name, because there is nothing to `stop`, and
+a `shot` never collides with a recording or with another `shot`. The size need
+not be even; that rule belongs to video.
+
+A picture that is one flat colour fails the run, just as a blank recording
+does, and for the same reasons.
 
 ## How it avoids filming your desktop
 
@@ -302,7 +327,9 @@ Permanently out of scope:
   and adding it back would make every other decision here pointless.
 
 The test is that list, not how long the file is. A change earns its place if it
-makes "record this app doing these few things" work somewhere it did not.
+makes "record this app doing these few things" work somewhere it did not. A
+single picture is the same job, stopped at one frame, which is why `shot` is
+here.
 
 ## Things that catch you out
 
