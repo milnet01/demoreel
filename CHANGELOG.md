@@ -12,6 +12,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-25
+
 ### Fixed
 
 - **An app that makes the virtual display print a lot no longer freezes the recording.** (DEMO-0049)
