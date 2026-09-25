@@ -19,6 +19,7 @@ import signal
 import stat
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from pathlib import Path
@@ -187,7 +188,7 @@ def claim_name(name):
     return fd
 
 
-def start_xvfb(width, height, name, logfile):
+def start_xvfb(width, height, base, logfile):
     """Start Xvfb on a display number it picks itself, behind an auth cookie.
 
     -displayfd is why two sessions can record at once: the server finds a free
@@ -209,7 +210,7 @@ def start_xvfb(width, height, name, logfile):
     pipe nobody drains fills, then blocks the server mid-write. The display
     freezes, and so does every X call waiting on it: GIMP did this in the gate.
     """
-    auth = state_dir() / f"{name}.Xvfb.Xauthority"
+    auth = Path(f"{base}.Xvfb.Xauthority")
     auth.unlink(missing_ok=True)
     auth.touch(mode=0o600)
 
@@ -273,7 +274,7 @@ def start_xvfb(width, height, name, logfile):
     return None  # unreachable; die() exits
 
 
-def start_gpu_display(width, height, command, name, logfile, appout):
+def start_gpu_display(width, height, command, base, logfile, appout):
     """Start the app on a GPU-capable private display; return (proc, display, auth).
 
     Xvfb is a software X server with no DRI, so an OpenGL or Vulkan app cannot
@@ -287,9 +288,9 @@ def start_gpu_display(width, height, command, name, logfile, appout):
     still comes from the server (Xwayland's own -displayfd, inside xwfb-run)
     rather than from a scan, which is what keeps concurrent runs safe.
     """
-    auth = state_dir() / f"{name}.Xauthority"
+    auth = Path(f"{base}.Xauthority")
     auth.touch(mode=0o600)
-    reported = state_dir() / f"{name}.display"
+    reported = Path(f"{base}.display")
     reported.unlink(missing_ok=True)
 
     # cage speaks Wayland, so the app needs the same shove towards X11 as on
@@ -664,7 +665,9 @@ def warn_if_flatpak_underflagged(command):
         note("  recording empty. README.md says what each flag is for.")
 
 
-def cmd_record(a):
+def prepare(a, suffix):
+    """What `record` and `shot` both check before starting anything: the tools,
+    the app command, the size, and where the output and the app log go."""
     required = (["ffmpeg", "xdotool"]
                 + (["xwfb-run", "cage"] if a.gpu else ["Xvfb", "xauth"]))
     missing = [t for t in required if shutil.which(t) is None]
@@ -675,26 +678,79 @@ def cmd_record(a):
     if command and command[0] == "--":
         command.pop(0)
     if not command:
-        die("give the app to run after `--`, e.g. demoreel record -- xclock")
+        die(f"give the app to run after `--`, e.g. demoreel {a.cmd} -- xclock")
     warn_if_flatpak_underflagged(command)
 
     match = SIZE_RE.match(a.size)
     if not match:
         die(f"--size must look like 1600x1000, not {a.size!r}")
     width, height = int(match[1]), int(match[2])
-    if width % 2 or height % 2:
+    if suffix == ".mp4" and (width % 2 or height % 2):
         die("--size needs even numbers; H.264 cannot encode an odd width or height.")
 
     if a.output:
         output = Path(a.output).expanduser().resolve()
     else:
         stem = re.sub(r"[^A-Za-z0-9._-]", "_", Path(command[0]).name) or "demo"
-        output = Path.cwd() / f"{stem}-{time.strftime('%Y%m%d-%H%M%S')}.mp4"
+        output = Path.cwd() / f"{stem}-{time.strftime('%Y%m%d-%H%M%S')}{suffix}"
     output.parent.mkdir(parents=True, exist_ok=True)
 
     applog = Path(a.app_log).expanduser().resolve() if a.app_log else None
     if applog:
         applog.parent.mkdir(parents=True, exist_ok=True)
+    return command, width, height, output, applog
+
+
+def launch(a, command, width, height, base, displaylog, appout):
+    """Start the private display and the app on it: (xvfb, app, display, auth, env).
+
+    xvfb is None on the --gpu backend, whose wrapper owns the display. Nothing
+    is left running if the app cannot be started.
+    """
+    if a.gpu:
+        # This backend starts the app for us, so there is nothing to launch
+        # here; see start_gpu_display for why the two cannot be separated.
+        app, display, auth = start_gpu_display(width, height, command,
+                                               base, displaylog, appout)
+        return None, app, display, auth, dict(os.environ, DISPLAY=display,
+                                              XAUTHORITY=str(auth))
+    xvfb, display, auth = start_xvfb(width, height, base, displaylog)
+    env = dict(os.environ, DISPLAY=display, WAYLAND_DISPLAY=NO_WAYLAND,
+               XAUTHORITY=str(auth))
+    try:
+        app = subprocess.Popen(command, env=env, start_new_session=True,
+                               stdout=appout, stderr=subprocess.STDOUT)
+    except (FileNotFoundError, PermissionError) as exc:
+        end_process(xvfb)
+        auth.unlink(missing_ok=True)
+        die(f"could not run {command[0]!r}: {exc.strerror}.")
+    return xvfb, app, display, auth, env
+
+
+def place_window(env, app, a, width, height, going_on):
+    """Find the app's window and make it fill the frame; None if none appeared."""
+    window = wait_for_window(env, app, a.startup_timeout)
+    if window is None:
+        note(f"no window appeared within {a.startup_timeout}s; {going_on} anyway.")
+    else:
+        # No window manager runs here, so no windowactivate: the only
+        # window already has focus.
+        xdotool(env, "windowmove", window, 0, 0)
+        xdotool(env, "windowsize", window, width, height)
+        wait_for_size(env, window, width * height)
+    return window
+
+
+BLANK_CAUSES = (
+    "  The app ran but drew nothing here. Two causes account for most of it:\n"
+    "  - It needs the GPU, and Xvfb has none. An OpenGL or Vulkan app\n"
+    "    cannot render on it at all: record it with --gpu instead.\n"
+    "  - It rendered somewhere else. A Flatpak needs --nosocket=wayland on\n"
+    "    its command line; see README.md.")
+
+
+def cmd_record(a):
+    command, width, height, output, applog = prepare(a, ".mp4")
 
     for sig in (signal.SIGUSR1, signal.SIGINT, signal.SIGTERM):
         signal.signal(sig, _request_stop)
@@ -729,31 +785,10 @@ def cmd_record(a):
     moved = None  # how the window stopped filling the frame, said once
     try:
         write_state(statefile, state)
-        if a.gpu:
-            # This backend starts the app for us, so there is nothing to launch
-            # here; see start_gpu_display for why the two cannot be separated.
-            app, display, auth = start_gpu_display(width, height, command,
-                                                   a.name, displaylog, appout)
-            env = dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth))
-        else:
-            xvfb, display, auth = start_xvfb(width, height, a.name, displaylog)
-            env = dict(os.environ, DISPLAY=display, WAYLAND_DISPLAY=NO_WAYLAND,
-                       XAUTHORITY=str(auth))
-            try:
-                app = subprocess.Popen(command, env=env, start_new_session=True,
-                                       stdout=appout, stderr=subprocess.STDOUT)
-            except (FileNotFoundError, PermissionError) as exc:
-                die(f"could not run {command[0]!r}: {exc.strerror}.")
-
-        window = wait_for_window(env, app, a.startup_timeout)
-        if window is None:
-            note(f"no window appeared within {a.startup_timeout}s; recording anyway.")
-        else:
-            # No window manager runs here, so no windowactivate: the only
-            # window already has focus.
-            xdotool(env, "windowmove", window, 0, 0)
-            xdotool(env, "windowsize", window, width, height)
-            wait_for_size(env, window, width * height)
+        xvfb, app, display, auth, env = launch(a, command, width, height,
+                                               state_dir() / a.name,
+                                               displaylog, appout)
+        window = place_window(env, app, a, width, height, "recording")
 
         try:
             drawn = not a.settle or wait_until_drawn(env, display, width,
@@ -847,17 +882,88 @@ def cmd_record(a):
         what = ("so at least half of it is a flat colour" if blank == "halfway"
                 else "so it ends on a flat colour")
         die(f"the virtual display was blank {blank}, {what}: {output}\n"
-            "  The app ran but drew nothing here. Two causes account for most of it:\n"
-            "  - It needs the GPU, and Xvfb has none. An OpenGL or Vulkan app\n"
-            "    cannot render on it at all: record it with --gpu instead.\n"
-            "  - It rendered somewhere else. A Flatpak needs --nosocket=wayland on\n"
-            "    its command line; see README.md.")
+            + BLANK_CAUSES)
     if unsampled is not None:
         die(f"could not sample the virtual display to check {output} is not blank,\n"
             f"  so this run cannot vouch for it.\n  {unsampled}")
     for stale in (logpath, displaylog):
         stale.unlink(missing_ok=True)  # only worth keeping when something failed
     write_state(statefile, dict(state, result="ok"))
+    print(output)
+
+
+def take_picture(env, display, width, height, cursor, output):
+    """Save one PNG of the display and check it; the reason it failed, or None.
+
+    The check reads the saved file back rather than grabbing a second frame, so
+    the picture judged is the picture handed over. The test is frame_is_flat,
+    the same one that judges a recording.
+    """
+    grab = subprocess.run(  # noqa: PLW1510 - a failed grab is handled below
+        ["ffmpeg", "-hide_banner", "-loglevel", "error",
+         "-f", "x11grab", "-draw_mouse", "1" if cursor else "0",
+         "-video_size", f"{width}x{height}", "-i", f"{display}.0",
+         "-frames:v", "1", "-y", str(output)],
+        env=env, capture_output=True, timeout=CALL_TIMEOUT)
+    if grab.returncode != 0 or not output.exists():
+        tail = grab.stderr.decode(errors="replace").strip().splitlines()[-3:]
+        return "could not take the picture.\n  " + "\n  ".join(tail)
+    gray = subprocess.run(  # noqa: PLW1510 - a failed read is handled below
+        ["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(output),
+         "-pix_fmt", "gray", "-f", "rawvideo", "-"],
+        capture_output=True, timeout=CALL_TIMEOUT)
+    if gray.returncode != 0 or len(gray.stdout) != width * height:
+        return f"could not read back {output} to check it is not blank."
+    if frame_is_flat(gray.stdout):
+        return f"the picture is one flat colour: {output}\n" + BLANK_CAUSES
+    return None
+
+
+def cmd_shot(a):
+    """One picture of the app, on the same private display `record` uses.
+
+    No name and no state file: there is nothing to stop, so a shot keeps its
+    files in a folder of its own and `stop` never sees it. The folder goes when
+    the shot succeeds and is kept, and named, when it fails.
+    """
+    command, width, height, output, applog = prepare(a, ".png")
+    rundir = Path(tempfile.mkdtemp(prefix="shot-", dir=state_dir()))
+    displaylog = rundir / "display.log"
+    # Deliberate: closed in the finally block, as in cmd_record.
+    appout = open(applog, "wb") if applog else sys.stderr  # noqa: SIM115
+    xvfb = app = auth = None
+    try:
+        xvfb, app, display, auth, env = launch(a, command, width, height,
+                                               rundir / "shot", displaylog,
+                                               appout)
+        window = place_window(env, app, a, width, height, "taking the picture")
+        try:
+            drawn = wait_until_drawn(env, display, width, height, a.settle)
+        except SampleError as exc:
+            die(f"--settle could not sample the display, so it cannot tell "
+                f"when the app has drawn.\n  {exc}\n  Kept: {rundir}")
+        if not drawn:
+            note(f"nothing was drawn within {a.settle}s; taking the picture anyway.")
+        for action in a.action:
+            run_action(action, env)
+        if window is not None:
+            moved = window_off_frame(env, window, width, height)
+            if moved:
+                note(moved)
+        failed = take_picture(env, display, width, height, a.cursor, output)
+    except subprocess.TimeoutExpired:
+        failed = (f"could not take the picture: the display did not answer "
+                  f"within {CALL_TIMEOUT}s.")
+    finally:
+        if appout is not sys.stderr:
+            appout.close()
+        end_process(app, group=True)
+        end_process(xvfb)
+        if auth is not None:
+            auth.unlink(missing_ok=True)
+    if failed:
+        die(f"{failed}\n  Its display log is kept in {rundir}")
+    shutil.rmtree(rundir, ignore_errors=True)
     print(output)
 
 
@@ -1019,6 +1125,40 @@ def main():
     rec.add_argument("command", nargs=argparse.REMAINDER,
                      help="-- followed by the command that starts the app")
     rec.set_defaults(func=cmd_record)
+
+    # The options `record` takes, less the ones about time and names: a shot
+    # has no duration, no frame rate and nothing to stop (README, Taking a
+    # picture). --settle defaults to 10 here, since a picture of a startup
+    # screen is never what anyone wanted.
+    shot = sub.add_parser("shot", help="take one picture of an app and write a PNG")
+    shot.add_argument("-o", "--output",
+                      help="picture file to write (default: "
+                           "./<app>-<timestamp>.png)")
+    shot.add_argument("-s", "--size", default="1600x1000",
+                      help="virtual display size (default: 1600x1000)")
+    shot.add_argument("-a", "--action", action="append", default=[],
+                      metavar="ACTION",
+                      help="scripted step run before the picture, repeatable: "
+                           "'wait 2', 'move X Y', 'click [X Y]', "
+                           "'type some text', 'key Return'")
+    shot.add_argument("--app-log", metavar="PATH",
+                      help="keep the app's own output in PATH; otherwise it "
+                           "goes to this terminal's stderr")
+    shot.add_argument("--settle", type=float, default=10, metavar="SECONDS",
+                      help="wait up to SECONDS for the app to draw before the "
+                           "steps and the picture (default: 10)")
+    shot.add_argument("--gpu", action="store_true",
+                      help="for an app that needs the graphics card: use a "
+                           "headless compositor instead of Xvfb. Needs "
+                           "xwfb-run and cage")
+    shot.add_argument("--cursor", action="store_true",
+                      help="show the mouse pointer in the picture")
+    shot.add_argument("--startup-timeout", type=float, default=20,
+                      metavar="SECONDS",
+                      help="how long to wait for the app's window (default: 20)")
+    shot.add_argument("command", nargs=argparse.REMAINDER,
+                      help="-- followed by the command that starts the app")
+    shot.set_defaults(func=cmd_shot)
 
     stop = sub.add_parser("stop", help="end a running recording early")
     stop.add_argument("name", nargs="?", help="which run to stop (default: the "

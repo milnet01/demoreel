@@ -105,7 +105,8 @@ step "documented flags exist"
 # flag it documents and the tool does not accept is a defect in the contract --
 # and a commit that breaks it necessarily touches code, which is exactly the
 # push a documentation-only check would never see.
-help=$(./demoreel record --help; ./demoreel stop --help; ./demoreel --help)
+help=$(./demoreel record --help; ./demoreel shot --help; ./demoreel stop --help;
+      ./demoreel --help)
 undocumented=0
 for flag in $(grep -oE '`-{1,2}[a-z-]+`' README.md | tr -d '`' | sort -u); do
     # Flags belonging to other programs the caller invokes THROUGH demoreel:
@@ -796,6 +797,40 @@ grep -q 'not a directory you own' "$tmp/planted.err" || {
     exit 1
 }
 echo "a state directory we do not own is refused"
+
+step "shot takes one picture, prints its path, and leaves nothing behind"
+# DEMO-0100. The picture is checked by reading the saved file back, with the
+# same frame_is_flat as a recording. An odd size is allowed: that rule is
+# H.264's. A shot writes no state file, so `stop` cannot see one, and its
+# private folder goes when it succeeds.
+before=$(find "$statedir" -maxdepth 1 -name "shot-*" | wc -l)
+shot=$(./demoreel shot -o "$tmp/clock.png" -s 321x241 -- xclock)
+[ "$shot" = "$tmp/clock.png" ] || { echo "shot printed '$shot', not its path" >&2; exit 1; }
+python3 - "$tmp/clock.png" <<'PY'
+import importlib.machinery, importlib.util, subprocess, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+dr = importlib.util.module_from_spec(
+    importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(dr)
+raw = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", sys.argv[1],
+                      "-pix_fmt", "gray", "-f", "rawvideo", "-"],
+                     capture_output=True, check=True).stdout
+assert len(raw) == 321 * 241, len(raw)
+assert not dr.frame_is_flat(raw), "the picture is flat"
+PY
+after=$(find "$statedir" -maxdepth 1 -name "shot-*" | wc -l)
+[ "$after" -eq "$before" ] || { echo "a successful shot left its folder behind" >&2; exit 1; }
+echo "one 321x241 picture of the app, its path on stdout, nothing left over"
+
+step "a flat picture is refused"
+if out=$(./demoreel shot -o "$tmp/flat.png" -s 320x240 --settle 1 \
+         --startup-timeout 2 -- sleep 30 2>"$tmp/flat.err"); then
+    echo "a picture of nothing was accepted" >&2; exit 1
+fi
+[ -z "$out" ] || { echo "a refused shot still printed a path: $out" >&2; exit 1; }
+grep -q 'one flat colour' "$tmp/flat.err" || { cat "$tmp/flat.err" >&2; exit 1; }
+rm -rf "$(sed -n 's/.*display log is kept in //p' "$tmp/flat.err")"
+echo "a flat picture failed the run and printed no path"
 
 step "default output name"
 # -o is optional; without it the file is named from the app and a timestamp.

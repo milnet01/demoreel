@@ -12,6 +12,15 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+### Added
+
+- **`demoreel shot` saves one picture of an app, on the same private screen as a recording.** (DEMO-0100)
+  `demoreel shot -o pic.png -- myapp` starts the app privately,
+  waits for it to draw, runs any -a steps, saves one PNG and prints its
+  path. Nothing from your real desktop can be in it. A flat picture
+  fails the run, as a blank recording does. It takes record's options
+  apart from -d, -r and -n, and the size need not be even.
+
 ### Fixed
 
 - **A private display that stops answering now fails the run instead of hanging it.** (DEMO-0079)

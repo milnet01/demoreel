@@ -1970,7 +1970,7 @@ Xvfb are small, and no item targets them.
   Kind: fix.
   Source: peer-request-vestige-2026-09-25.
 
-- 🚧 [DEMO-0100] **Add `demoreel shot`, which saves one picture of an app instead of a video.**
+- ✅ [DEMO-0100] **Add `demoreel shot`, which saves one picture of an app instead of a video.**
   Asked for by the user on 2026-09-25. Decided with them: a separate
   command rather than a flag on `record`, and exactly one picture per
   run. For several pictures, run it several times.
@@ -1983,6 +1983,16 @@ Xvfb are small, and no item targets them.
 
   README is the design contract and says the tool makes videos, so the
   README section goes through review-contract before the code.
+  Resolved (2026-09-25): built to the gated README (loop-log rows 4-5).
+  prepare/launch/place_window are lifted out of cmd_record and shared;
+  the display starters take a file prefix instead of a run name, so a
+  shot keeps its files in a mkdtemp folder under the state dir,
+  removed on success and named on failure. take_picture reads the
+  saved PNG back through frame_is_flat. ci.sh: the flag check reads
+  `shot --help`, a 321x241 shot of xclock passes and leaves nothing,
+  a flat picture fails printing no path. Checked by eye: xclock on
+  Xvfb and vkcube on --gpu. The record-demo skill lives in ~/.claude
+  and still needs a line on `shot`.
   **Layman:** Take a screenshot of an app on the private screen, so nothing from your real desktop is in the picture.
   Kind: feature.
   Source: user-request-2026-09-25.
@@ -2523,6 +2533,44 @@ is a front-end to the same recording engine, not a second one.
   Kind: test.
   Source: user-request-2026-09-25.
 
+## 0.7.0 — Sound, when you ask for it
+
+Decided by the user on 2026-09-25: audio becomes an opt-in, and every run gets a private silent sound output by default. The user then asked for sound in the videos where it is relevant, so this section is the next work after `demoreel shot` (DEMO-0100), ahead of its version number. Relevant means the app's sound is part of what the video shows: a game, a music or audio app. Everything else stays silent. The docs' "no audio, ever" is lifted through the review gate before anything is built.
+
+- 📋 [DEMO-0104] **Lift "no audio" from the scope ceiling in CLAUDE.md and README, through the review gate.**
+  README's What it will never do and CLAUDE.md's scope ceiling both
+  say audio is permanently out, and README records the design that
+  would fit it. Rewrite both to allow an opt-in, keep the silent
+  default, and gate each document (CLAUDE.md rule 14). Nothing below
+  this item is built before it lands.
+  **Layman:** Change the rule book so recording sound is allowed, before any sound code is written.
+  Kind: doc.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0105] **Give every run a private silent sound output, so app sounds never reach the speakers.**
+  Today every caller has to set PULSE_SERVER=unix:/nonexistent, or the
+  app's sounds play on the user's speakers. Give each run its own sound
+  output instead, reachable only by that run's app, and discarded by
+  default. Must stay concurrency-safe and be cleaned up on every exit
+  path, like the private screen. Measure PipeWire and PulseAudio both.
+  **Layman:** An app being recorded can never play sound through your speakers, without any setting.
+  Kind: feature.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0106] **Add `--audio`, which records the app's own sound into the video.**
+  Built on the private sound output above: ffmpeg records its monitor
+  beside the picture, into one file. Off by default; without it the
+  video stays silent as today. A new flag, so MINOR under the
+  versioning overrides. The gate records a tone-playing app and checks
+  the track is not silent.
+  User, 2026-09-25: "Games should definitely have audio." A game is
+  the plainest case of a relevant video, so the record-demo skill and
+  README's guidance name games first. Test with one: a tone-only
+  fixture proves the track, a real game proves it is worth having.
+  **Layman:** Optionally put the app's sound into the video, for trailers.
+  Kind: feature.
+  Source: user-request-2026-09-25.
+
 ## 1.0.0 — Every documented path tested
 
 The exit condition in docs/standards/versioning-overrides.md: the gate
@@ -2602,6 +2650,15 @@ covers both display backends and the Flatpak invocation.
   (~/Videos/demoreel-demos/ants-terminal-demo.mp4) is with the
   ants-terminal and hub sessions for its page and README; not
   confirmed live yet.
+  Confirmed (2026-09-25) by the hub session, projects hub c474ce3:
+  https://antsprojectshub.co.za/p/ants-terminal.html (Ants Terminal
+  clip), https://antsprojectshub.co.za/p/fin-break.html (finbreak's
+  tour) and https://antsprojectshub.co.za/p/demoreel.html, each
+  credited "Recorded with demoreel."
+  Confirmed (2026-09-25): the Ants Terminal clip is in the public
+  README of github.com/milnet01/ants-terminal, commit 97d89b2d, as
+  docs/screenshots/ants-terminal-demo.gif made from demoreel's MP4,
+  credited "Recorded with demoreel on a private virtual screen".
   **Layman:** 1.0 waits for a video made with demoreel to be used somewhere real, like another project's page.
   Kind: marketing.
   Source: user-request-2026-09-25.
