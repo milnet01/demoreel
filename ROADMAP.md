@@ -76,34 +76,10 @@ simplest case, and a gate proves it still records.
 
 ## Backlog
 
-## 0.1.1 — Before the first tag
+## Standing chores
 
-Nothing here breaks a documented surface, so all of it lands in a PATCH.
-
-- ✅ [DEMO-0009] **Add a CHANGELOG before cutting the first tagged release.**
-  The project has no CHANGELOG.md and no tags. The version scheme is
-  now defined, so the remaining piece before a v0.1.0 tag is somewhere
-  to record what each release contains.
-  Resolved (2026-09-08): CHANGELOG.md added in Keep a Changelog format, per
-  changelog-format.md section 4, with everything under [Unreleased] because
-  nothing has been tagged. Verified it parses for the tooling -- changelog_query
-  reads the entry back.
-
-  Two further documents the skeleton expects were absent and were added in the
-  same commit: SECURITY.md, which names this project's trust boundaries and links
-  DEMO-0017, DEMO-0018 and DEMO-0019 rather than restating them; and
-  docs/standards/README.md, saying the global standards are read in place and
-  what this directory declares.
-
-  Not created, deliberately: docs/design.md, because this project's CLAUDE.md
-  makes README.md the design contract; docs/discovery.md, because the project was
-  not built through that flow; docs/decisions/, because the decisions already
-  live in README.md and CLAUDE.md.
-
-  ci.sh's readability check covers the new documents.
-  **Layman:** There is nowhere yet to record what changed between versions.
-  Kind: release.
-  Source: in-session-2026-09-07.
+Recurring work with no finished state. It is checked on a schedule and never
+closes, so it sits outside every version heading.
 
 - 📋 [DEMO-0010] **Keep the two pinned versions in step with their latest releases.**
   CI pins ruff and the checkout action. Both are pinned AT their latest
@@ -136,6 +112,35 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   **Layman:** Two version numbers are written down in CI and will go stale unless someone bumps them.
   Kind: chore.
   Source: user-request-2026-09-07.
+
+## 0.1.1 — Before the first tag
+
+Nothing here breaks a documented surface, so all of it lands in a PATCH.
+
+- ✅ [DEMO-0009] **Add a CHANGELOG before cutting the first tagged release.**
+  The project has no CHANGELOG.md and no tags. The version scheme is
+  now defined, so the remaining piece before a v0.1.0 tag is somewhere
+  to record what each release contains.
+  Resolved (2026-09-08): CHANGELOG.md added in Keep a Changelog format, per
+  changelog-format.md section 4, with everything under [Unreleased] because
+  nothing has been tagged. Verified it parses for the tooling -- changelog_query
+  reads the entry back.
+
+  Two further documents the skeleton expects were absent and were added in the
+  same commit: SECURITY.md, which names this project's trust boundaries and links
+  DEMO-0017, DEMO-0018 and DEMO-0019 rather than restating them; and
+  docs/standards/README.md, saying the global standards are read in place and
+  what this directory declares.
+
+  Not created, deliberately: docs/design.md, because this project's CLAUDE.md
+  makes README.md the design contract; docs/discovery.md, because the project was
+  not built through that flow; docs/decisions/, because the decisions already
+  live in README.md and CLAUDE.md.
+
+  ci.sh's readability check covers the new documents.
+  **Layman:** There is nowhere yet to record what changed between versions.
+  Kind: release.
+  Source: in-session-2026-09-07.
 
 - 💭 [DEMO-0013] **Drop or condition the faststart rewrite, which re-reads the whole video.**
   The recorder passes `-movflags +faststart`, which moves the index to the
@@ -1701,7 +1706,7 @@ protected surface, so the project's own ladder makes it a PATCH.
   Kind: chore.
   Source: in-session-2026-09-20.
 
-- 📋 [DEMO-0047] **`stop` hands back a path for a recording that then fails its blank check.**
+- ✅ [DEMO-0047] **`stop` hands back a path for a recording that then fails its blank check.**
   Surfaced by a `review-contract` lane reading the versioning overrides, and
   confirmed in the code rather than taken from the report.
 
@@ -1723,6 +1728,16 @@ protected surface, so the project's own ladder makes it a PATCH.
   writing anything.
 
   The gate's stop step uses an app that draws, so it never meets this.
+  Resolved (2026-09-25): stop now waits for the run to exit and prints the
+  path only if the run succeeded. The user chose this over printing
+  regardless, and over documenting the gap. Measured before the fix: stop
+  returned in about 0.1 s and the recorder finished 0.7-0.9 s later, so the
+  path also named a file ffmpeg was still writing -- ffprobe found no moov
+  atom in it. The run now writes "result": "ok" to its state file just
+  before printing, and leaves that file for stop to read. A zombie counts as
+  exited, since the script waiting on stop may be the one that must reap it.
+  Two gate steps, both red against the old code: stop's path must already
+  probe as a finished video, and stop must fail with a blank run.
   **Layman:** Stopping a recording prints the file straight away, even when the recording turns out to be empty and fails.
   Kind: investigate.
   Source: review-contract-2026-09-20.
@@ -1742,6 +1757,26 @@ protected surface, so the project's own ladder makes it a PATCH.
   **Layman:** The project's instructions file now says only what is true today; the story of how each rule got there moved to a separate file it links to.
   Kind: doc.
   Source: user-request-2026-09-21 (CFG-0492, relayed via claude-b1).
+
+- ✅ [DEMO-0049] **An app that makes Xvfb print a lot freezes the display, and demoreel with it.**
+  Found when the gate hung in the GIMP Flatpak step. `start_xvfb` gave the
+  server a stderr pipe and read it only while starting. Every keymap an app
+  loads makes Xvfb run xkbcomp, whose warnings go to that pipe. Once it
+  filled, the server blocked mid-write: no window appeared, ffmpeg could not
+  connect, and an `xdotool` call waited on the frozen display with no
+  timeout reaching it.
+
+  Reproduced without GIMP: an app running `setxkbmap us` sixty times froze
+  a `-d 2` run until `timeout 60` killed it.
+
+  Resolved (2026-09-25): the server's stderr now goes to the run's display
+  log, the file the `--gpu` backend already writes. It is kept when a run
+  fails and removed when it succeeds. The same repro records in seconds.
+  ci.sh has a step running it, and CI installs x11-xkb-utils for
+  `setxkbmap`.
+  **Layman:** A chatty app could freeze the private screen, and the recording hung forever instead of failing.
+  Kind: fix.
+  Source: in-session-2026-09-25.
 
 ## 1.0.0 — Every documented path tested
 

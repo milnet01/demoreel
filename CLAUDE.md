@@ -118,8 +118,9 @@ something behaves unexpectedly:
 - **demoreel's process name is `python3`, not `demoreel`.** It is a script run
   through its shebang, so the kernel takes the name from the interpreter.
   `pgrep -x demoreel` therefore matches nothing and always reports success,
-  whatever is running. Checking for a leaked run means the Xvfb it started, its
-  state file, or the pid the caller already holds.
+  whatever is running. Checking for a leaked run means the Xvfb it started, or
+  the pid the caller already holds. Not its state file: every run leaves that
+  behind, so `stop` can read how the run ended.
 - `-a` actions reach the app on the `--gpu` path as well as under Xvfb —
   measured with a click and a keystroke against `gtk4-demo` on the compositor,
   both landing. No auth or DISPLAY difference for xdotool beyond the run's env,

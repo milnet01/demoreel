@@ -41,8 +41,10 @@ demoreel stop mydemo
 
 `stop` works straight away, even on the very next line of a script. If the run
 is still starting up, `stop` waits until it is recording and then stops it, so
-you always get a video. If the run fails before it records anything, `stop`
-says so and exits with an error.
+you always get a video. `stop` then waits for the video to be finished and
+checked, and prints its path. If the run fails,
+before it records or after it is stopped, `stop` prints no path and exits with
+an error.
 
 Everything after `--` is the command that starts your app, exactly as you would
 type it yourself. demoreel knows nothing about any particular app.

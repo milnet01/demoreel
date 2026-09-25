@@ -91,30 +91,38 @@ def alive(pid):
     return True
 
 
-def proc_starttime(pid):
-    """The process's start time, field 22 of /proc/<pid>/stat.
+def proc_stat(pid, field):
+    """One field of /proc/<pid>/stat, numbered as proc(5) numbers them.
 
-    Unique per pid incarnation, which is what tells a recycled pid apart from
-    the process we started. Field 2 is the command name in parentheses and may
-    itself contain spaces and parentheses, so the fields are split after the
-    LAST ')' rather than on the whole line.
+    Field 2 is the command name in parentheses and may itself contain spaces
+    and parentheses, so the fields are split after the LAST ')' rather than on
+    the whole line. Only fields from 3 on can be asked for.
     """
     try:
         line = Path(f"/proc/{pid}/stat").read_text()
     except OSError:
         return None
     try:
-        return line[line.rindex(")") + 1:].split()[19]
+        return line[line.rindex(")") + 1:].split()[field - 3]
     except (ValueError, IndexError):
         return None
+
+
+def proc_starttime(pid):
+    """The process's start time, field 22 of /proc/<pid>/stat.
+
+    Unique per pid incarnation, which is what tells a recycled pid apart from
+    the process we started.
+    """
+    return proc_stat(pid, 22)
 
 
 def is_our_run(entry):
     """True when the process a state file names is still the run that wrote it.
 
-    alive() alone asks only whether SOME process holds that pid. A run killed
-    with SIGKILL, or lost to a power cut, never reaches the cleanup in its
-    `finally` block, so its state file outlives it -- and Linux recycles pids.
+    alive() alone asks only whether SOME process holds that pid. Every run's
+    state file outlives it, left for `stop` to read the verdict from -- and
+    Linux recycles pids.
     Acting on alive() alone sends SIGUSR1 to whatever inherited the number, and
     the default action for SIGUSR1 is to terminate.
 
@@ -172,7 +180,7 @@ def claim_name(name):
     return fd
 
 
-def start_xvfb(width, height, name):
+def start_xvfb(width, height, name, logfile):
     """Start Xvfb on a display number it picks itself, behind an auth cookie.
 
     -displayfd is why two sessions can record at once: the server finds a free
@@ -188,6 +196,11 @@ def start_xvfb(width, height, name):
     start with an empty auth file, learn the number, write the cookie for it,
     and SIGHUP the server to re-read. Until that reset the display is open, and
     nothing has been drawn on it yet — the app is launched afterwards.
+
+    The server's stderr goes to a file, never to a pipe. It writes there for
+    the whole run — every keymap an app loads adds xkbcomp's warnings — and a
+    pipe nobody drains fills, then blocks the server mid-write. The display
+    freezes, and so does every X call waiting on it: GIMP did this in the gate.
     """
     auth = state_dir() / f"{name}.Xvfb.Xauthority"
     auth.unlink(missing_ok=True)
@@ -195,13 +208,14 @@ def start_xvfb(width, height, name):
 
     read_fd, write_fd = os.pipe()
     os.set_inheritable(write_fd, True)
-    proc = subprocess.Popen(
-        ["Xvfb", "-displayfd", str(write_fd), "-screen", "0",
-         f"{width}x{height}x24", "-nolisten", "tcp", "-auth", str(auth)],
-        pass_fds=(write_fd,),
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.PIPE,
-    )
+    with open(logfile, "wb") as log:
+        proc = subprocess.Popen(
+            ["Xvfb", "-displayfd", str(write_fd), "-screen", "0",
+             f"{width}x{height}x24", "-nolisten", "tcp", "-auth", str(auth)],
+            pass_fds=(write_fd,),
+            stdout=subprocess.DEVNULL,
+            stderr=log,
+        )
     os.close(write_fd)
 
     buf = b""
@@ -222,7 +236,8 @@ def start_xvfb(width, height, name):
     if not number.isdigit():
         proc.kill()
         auth.unlink(missing_ok=True)
-        stderr = (proc.stderr.read() or b"").decode(errors="replace").strip()
+        proc.wait()
+        stderr = Path(logfile).read_text(errors="replace").strip()
         die("Xvfb did not start." + (f"\n  {stderr}" if stderr else ""))
 
     display = f":{number}"
@@ -643,6 +658,9 @@ def cmd_record(a):
     # the name makes any state file already there a dead run's, so it is
     # simply replaced. "recording" flips to true once ffmpeg has its first
     # frame; `stop` waits for that rather than ending a run with no video.
+    # "result" is written as "ok" just before the path is printed, and the
+    # file is left in place so `stop` can read it after this process has gone
+    # (DEMO-0047). A run that fails never writes it.
     claim_name(a.name)
     statefile = state_dir() / f"{a.name}.json"
     state = {"name": a.name, "pid": os.getpid(),
@@ -671,7 +689,7 @@ def cmd_record(a):
                                                    a.name, displaylog, appout)
             env = dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth))
         else:
-            xvfb, display, auth = start_xvfb(width, height, a.name)
+            xvfb, display, auth = start_xvfb(width, height, a.name, displaylog)
             env = dict(os.environ, DISPLAY=display, WAYLAND_DISPLAY=NO_WAYLAND,
                        XAUTHORITY=str(auth))
             try:
@@ -767,7 +785,6 @@ def cmd_record(a):
         end_process(xvfb)
         if auth is not None:
             auth.unlink(missing_ok=True)
-        statefile.unlink(missing_ok=True)
 
     if not output.exists() or output.stat().st_size == 0:
         die(f"no video was written to {output}. See {logpath}")
@@ -785,6 +802,7 @@ def cmd_record(a):
             f"  so this run cannot vouch for it.\n  {unsampled}")
     for stale in (logpath, displaylog):
         stale.unlink(missing_ok=True)  # only worth keeping when something failed
+    write_state(statefile, dict(state, result="ok"))
     print(output)
 
 
@@ -837,7 +855,34 @@ def cmd_stop(a):
     for found in live:
         entry = wait_until_recording(found)
         os.kill(entry["pid"], signal.SIGUSR1)
+        if not run_succeeded(entry):
+            die("the recording failed after it was stopped, so there is no "
+                "video to hand back.\n  Its own error message says why.")
         print(entry["output"])
+
+
+def run_succeeded(entry):
+    """Wait for a stopped run to exit, then say whether it succeeded.
+
+    A stopped run still has work to do: finish the video, then check the
+    display was not blank. Printing its path before that handed the caller a
+    half-written file, or a path for a run that went on to fail (DEMO-0047).
+    The run writes "result": "ok" to its state file just before it prints its
+    own path. Anything else -- a failure, a kill, the file already replaced by
+    a later run of the same name -- is not a success.
+    """
+    pid = entry["pid"]
+    # A zombie keeps its pid and start time until whatever started it reaps
+    # it, which may be the same script that is waiting on this stop.
+    while is_our_run(entry) and proc_stat(pid, 3) != "Z":
+        time.sleep(0.05)
+    try:
+        final = json.loads((state_dir() / f"{entry['name']}.json").read_text())
+    except (OSError, ValueError):
+        return False
+    return (isinstance(final, dict) and final.get("pid") == pid
+            and final.get("starttime") == entry.get("starttime")
+            and final.get("result") == "ok")
 
 
 def wait_until_recording(entry):

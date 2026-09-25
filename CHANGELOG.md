@@ -12,6 +12,21 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+### Fixed
+
+- **An app that makes the virtual display print a lot no longer freezes the recording.** (DEMO-0049)
+  The display's messages went into a pipe nobody read after startup. An
+  app loading many keyboard maps, GIMP among them, filled it, and the
+  display and demoreel both hung with no timeout. They now go to a log
+  file, kept when a run fails.
+
+- **`demoreel stop` now waits for the video to be finished and checked before printing its path.** (DEMO-0047)
+  It used to print the path the moment it signalled the run. A script
+  reading the file straight away could get a half-written video, and a
+  run that then failed its blank check had already handed back a path.
+  Now `stop` prints the path only if the run succeeded, and otherwise
+  exits with an error.
+
 ## [0.2.0] - 2026-09-20
 
 ### Changed

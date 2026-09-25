@@ -364,7 +364,8 @@ demoreel = importlib.util.module_from_spec(
 loader.exec_module(demoreel)
 
 # The name starts with "gate" so the teardown's Xvfb sweep covers it.
-proc, display, auth = demoreel.start_xvfb(320, 240, "gatesample")
+displaylog = demoreel.state_dir() / "gatesample.display.log"
+proc, display, auth = demoreel.start_xvfb(320, 240, "gatesample", displaylog)
 try:
     env = dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth))
     if demoreel.display_is_blank(env, display, 320, 240) is not True:
@@ -380,6 +381,7 @@ finally:
     proc.kill()
     proc.wait()
     auth.unlink(missing_ok=True)
+    displaylog.unlink(missing_ok=True)
 SAMPLEPY
 
 step "scripted actions reach the app"
@@ -501,6 +503,20 @@ if share > 0.01:
 print("--cursor draws the pointer, and the default leaves it out")
 CURSORPY
 
+step "an app that makes the display chatter does not freeze it"
+# DEMO-0049. Xvfb's stderr was a pipe demoreel stopped reading after startup.
+# Each keymap an app loads makes the server write xkbcomp's warnings there,
+# and once the pipe filled the server blocked mid-write: the display froze,
+# and so did demoreel, with no timeout reaching it. GIMP hit this in this gate.
+# Sixty keymap loads fill the pipe several times over.
+timeout 60 ./demoreel record -o "$tmp/chatter.mp4" -d 1 -s 320x240 \
+    -n gatechatter -- sh -c \
+    'i=0; while [ $i -lt 60 ]; do setxkbmap us; i=$((i+1)); done; exec xclock' \
+    >/dev/null 2>&1 || {
+    echo "a run whose app loads many keymaps froze or failed (exit $?)" >&2
+    exit 1; }
+echo "sixty keymap loads, and the display kept answering"
+
 step "stop ends a run started with -d 0"
 # record -d 0 runs until told to stop, and stop is the only way to end it. It
 # is documented, and nothing proved either half worked.
@@ -516,11 +532,35 @@ stopped=$(./demoreel stop gatestop) || {
     echo "stop could not find a run launched just before it" >&2; exit 1; }
 [ "$stopped" = "$tmp/stopped.mp4" ] || {
     echo "stop printed '$stopped', not the output path" >&2; exit 1; }
+# Before waiting on the recorder: the path stop prints must already be a
+# finished video. It used to print as soon as it signalled, while ffmpeg was
+# still writing the file (DEMO-0047).
+ffprobe -v error "$tmp/stopped.mp4" || {
+    echo "stop returned before the video was finished" >&2; exit 1; }
 wait "$recorder" || { echo "the stopped run exited non-zero" >&2; exit 1; }
 [ -s "$tmp/stopped.mp4" ] || { echo "stop left no video" >&2; exit 1; }
 # --app-log rode along: same run, and it is documented too.
 [ -f "$tmp/app.log" ] || { echo "--app-log wrote no file" >&2; exit 1; }
 echo "stop ended the run, and --app-log wrote its file"
+
+step "stop fails when the run it stopped fails"
+# DEMO-0047. A -d 0 run that is blank when stopped fails its end-of-run check,
+# and stop used to print its path anyway, so `out=$(demoreel stop ...)` held a
+# path for a failed run. sleep opens no window, so the display stays blank.
+./demoreel record -o "$tmp/blankstop.mp4" -d 0 -n gateblankstop -s 320x240 \
+    --startup-timeout 1 -- sleep 60 >/dev/null 2>&1 &
+recorder=$!
+gate_pids="$gate_pids $recorder"
+if blankpath=$(./demoreel stop gateblankstop 2>/dev/null); then
+    echo "stop succeeded for a run that failed, printing '$blankpath'" >&2
+    exit 1
+fi
+[ -z "$blankpath" ] || {
+    echo "stop printed '$blankpath' for a run that failed" >&2; exit 1; }
+if wait "$recorder"; then
+    echo "the blank run succeeded, so this step tested nothing" >&2; exit 1
+fi
+echo "stop failed with the run, and printed no path"
 
 step "two runs started together under one name: one records, one is refused"
 # DEMO-0011. The duplicate-name check used to read the state file and write it

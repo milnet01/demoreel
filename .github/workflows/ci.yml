@@ -27,7 +27,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y \
-            ffmpeg xvfb xdotool x11-apps x11-utils xterm
+            ffmpeg xvfb xdotool x11-apps x11-utils x11-xkb-utils xterm
 
       - name: Install ruff
         # The version is ci.sh's, read from ci.sh. A number written here as well
