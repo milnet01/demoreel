@@ -2410,6 +2410,19 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   - Build on a branch in a separate worktree. Vestige tests that copy by
     path. It merges to main only once their fly-through records smoothly,
     because main is live for every session.
+  Progress (2026-09-26): design gated. README.md and CLAUDE.md amended
+  on branch demo-0111 (worktree ../demoreel-dm0111), review-contract
+  3 loops each, cap reached with nothing unfixed (logs:
+  docs/reviews/readme-loop-log.md rows 6-8, claude-md-loop-log.md rows
+  4-6). Settled beyond the first three decisions: record --gpu also
+  checks the finished video at the display samples' moments; Xwayland
+  runs -displayfd -auth -geometry -fullscreen -noreset -nolisten tcp;
+  the lock is proven by refused-without plus connects-with; --gpu needs
+  xauth, only record --gpu needs wf-recorder. Measured: parking holds on
+  the new Xwayland, x11grab draws the pointer there, wf-recorder never
+  does. For the build: SECURITY.md's -nolisten sentence, ci.sh's skip
+  list (xwfb-run), the stutter note's text, the Status measurements.
+  Filed from the review: DEMO-0112, DEMO-0113.
   **Layman:** Games and 3D apps recorded with --gpu will come out smooth instead of as a slideshow.
   Kind: feature.
   Source: user-request-2026-09-26.
