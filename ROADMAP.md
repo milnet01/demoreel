@@ -2302,6 +2302,25 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: ux.
   Source: peer-request-games-hub-2026-09-25.
 
+- 🚧 [DEMO-0109] **A GPU-heavy app recorded with `--gpu` comes out at a few new frames a second, and nothing says so.**
+  Reported by vestige-1a. Vestige's fly-through at 1920x1080 on --gpu
+  recorded 83-89 unique frames of 770-910 (mpdecimate), while its own
+  profiler showed 35-62 fps throughout. tblend shows exact duplicates in
+  runs with a jump about every 13 frames, including where the app ran a
+  steady 62 fps. glxgears at the same size records ~93% unique, so light
+  apps are fine. Ruled out by them: software GL (radeonsi on an RX 6600),
+  resolution, vsync, the app's own speed under the same xwfb-run+cage.
+  Their hypothesis, unverified: under GPU saturation the Xwayland root
+  that x11grab reads is refreshed only occasionally.
+
+  Two parts. Find the cause and fix the capture if it can be fixed here
+  (compositor-side capture is a different tool; see CLAUDE.md's
+  Wayland-only note). And make it visible: a low unique-frame ratio after
+  a --gpu run should be reported, as a blank video is.
+  **Layman:** A demanding 3D app looks smooth on screen but its demoreel video stutters badly, and demoreel doesn't warn you.
+  Kind: fix.
+  Source: peer-request-vestige-2026-09-26.
+
 ## 0.4.0 — Speaks your language
 
 Every message, --help and the man page in the reader's language, plus a
