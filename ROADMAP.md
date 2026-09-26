@@ -2335,6 +2335,20 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   itself. So the stale picture is Xwayland's X-side copy, and capturing
   from cage on --gpu is the fix candidate; that changes a runtime
   dependency and the README contract, so it goes to the user first.
+  Switch attempted (2026-09-26, user chose "switch, plus a warning"),
+  blocked on sizing. cage's headless output is always 1280x720 and
+  xwfb-run starts Xwayland with -fullscreen, so the X screen is SCALED
+  into it: an 800x600 xterm came out stretched, and the 643/643 Vestige
+  capture above was shrunk to 1280x720. wlr-randr (installed with the
+  user's OK) resizes the output, but Xwayland 24.1.13 keeps its first
+  size: after resizing to 1920x1080 a red xterm filled only the top-left
+  1280x720 (55.6% of the frame black, exactly the uncovered share), and
+  `xrandr -s` on the X side changed nothing. Resized cage + wf-recorder
+  on Vestige: 357 frames, 344 unique, but only 1280x720 of the picture.
+  So the output must be sized BEFORE Xwayland starts, which xwfb-run has
+  no hook for: capturing from cage means demoreel starting cage and
+  Xwayland itself. wf-recorder also needs -D, or SIGINT is ignored while
+  the screen is still, and -y, or it prompts before overwriting.
   **Layman:** A demanding 3D app looks smooth on screen but its demoreel video stutters badly, and demoreel doesn't warn you.
   Kind: fix.
   Source: peer-request-vestige-2026-09-26.
