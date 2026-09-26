@@ -2230,7 +2230,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: security.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0101] **Quotes inside a `type` step are silently removed before the text is typed.**
+- ✅ [DEMO-0101] **Quotes inside a `type` step are silently removed before the text is typed.**
   Found recording Ants Terminal for its session. `-a "type printf '...'"`
   typed printf and its argument with the single quotes gone, because
   run_action splits every step with shlex before joining the words back
@@ -2241,6 +2241,13 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   it is text to type, not arguments. That changes what an existing step
   types, so check it against the versioning overrides first. README's
   Scripted steps list gets one line on quoting either way.
+  Resolved (2026-09-26), breaking, so it opens 0.3.0 (user's choice).
+  `type` now types everything after the verb and one whitespace
+  character, exactly. The other verbs keep shlex, and an unbalanced
+  quote there now dies with one line instead of a traceback. ci.sh's
+  scripted-actions step types an apostrophe, both quotes and a double
+  space; red on 0.2.2 (ValueError), and a mutant typing the joined
+  args typed nothing and failed it.
   **Layman:** Typing a command with quotes in a demo loses the quotes, so the command on screen goes wrong.
   Kind: fix.
   Source: peer-request-ants-terminal-2026-09-25.

@@ -12,6 +12,16 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking: a `type` step now types its text exactly as written.** (DEMO-0101)
+  `-a "type printf 'hi'"` used to type `printf hi`: the step was split
+  like a shell command, which dropped quotes and squeezed repeated
+  spaces, and an apostrophe stopped the whole recording with an error.
+  Now everything after `type` and one space is typed as it stands. If
+  you wrapped the text in an extra pair of double quotes to keep single
+  quotes, remove them, or they will be typed too.
+
 ## [0.2.2] - 2026-09-26
 
 ### Added

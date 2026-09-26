@@ -395,7 +395,11 @@ step "scripted actions reach the app"
 # itself reports what arrived. wait, type and key are all exercised; move and
 # click are not, because neither xclock nor xterm reports a click anywhere this
 # script can read.
-typed="hello from the gate"
+# The text carries both quote marks, an apostrophe and a double space, because
+# `type` types the rest of its step exactly. Splitting it like a shell command
+# dropped the quotes, collapsed the spaces and died on the apostrophe
+# (DEMO-0101).
+typed="it's \"quoted\" 'twice'  here"
 ./demoreel record -o "$tmp/actions.mp4" -d 12 -s 640x480 \
     -a 'wait 2' -a "type $typed" -a 'key Return' \
     -- xterm -e sh -c "read line; printf '%s' \"\$line\" > $tmp/typed.txt" >/dev/null

@@ -440,7 +440,18 @@ def wait_for_size(env, window, area, timeout=2.0):
 
 def run_action(spec, env):
     """One scripted step: wait / click / move / type / key."""
-    parts = shlex.split(spec)
+    # `type` takes the rest of the step exactly, after the verb and one space:
+    # it is text to type, not arguments. Splitting it like a shell command
+    # dropped its quotes, collapsed its spaces and died on an apostrophe
+    # (DEMO-0101). The other verbs take short arguments, and keep the split.
+    head, text = re.match(r"(\S*)\s?(.*)\Z", spec.lstrip(), re.DOTALL).groups()
+    if head == "type":
+        parts = [head]
+    else:
+        try:
+            parts = shlex.split(spec)
+        except ValueError as e:
+            die(f"cannot read the step {spec!r}: {e}.")
     if not parts:
         return
     verb, args = parts[0], parts[1:]
@@ -458,7 +469,7 @@ def run_action(spec, env):
         # typing lasts — and at 60ms a keystroke that is seconds. A demo that
         # types into a login form is the obvious thing to script.
         xdotool(env, "type", "--delay", "60", "--file", "-",
-                stdin_text=" ".join(args))
+                stdin_text=text)
     elif verb == "key":
         xdotool(env, "key", *args)
     else:

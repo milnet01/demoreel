@@ -162,7 +162,9 @@ the recording is going:
 - `wait 2` — pause for two seconds
 - `move 400 300` — move the pointer
 - `click 400 300` — click there, or just `click` where it already is
-- `type hello there` — type some text
+- `type hello there` — type some text. Everything after `type` and one space is
+  typed exactly as written, quotes and spaces included. Only your own shell's
+  quoting around the whole step is removed.
 - `key Return` — press a key
 
 **Do not script typing a password on a shared machine.** Anything you put on the
