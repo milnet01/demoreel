@@ -14,6 +14,13 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Changed
 
+- **Breaking: the pointer now starts in the bottom-right corner, not the centre.** (DEMO-0103)
+  A fresh private screen put the pointer in the middle, where it lit up
+  whatever the app drew under it before any step ran, even with no
+  pointer drawn. demoreel now parks it in the corner first. A bare
+  `click` before any `move` now clicks the corner; give it a position,
+  or `move` first, to click the middle.
+
 - **Breaking: a `type` step now types its text exactly as written.** (DEMO-0101)
   `-a "type printf 'hi'"` used to type `printf hi`: the step was split
   like a shell command, which dropped quotes and squeezed repeated

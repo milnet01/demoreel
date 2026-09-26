@@ -2272,7 +2272,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: doc.
   Source: peer-request-games-hub-2026-09-25.
 
-- 📋 [DEMO-0103] **The pointer starts in the middle of the private screen and triggers hover highlights.**
+- ✅ [DEMO-0103] **The pointer starts in the middle of the private screen and triggers hover highlights.**
   Reported by games-hub-35: a fresh Xvfb puts the pointer at the
   centre, so the tile under it shows a hover highlight in frame before
   any step runs, even though --cursor is off and no pointer is drawn.
@@ -2280,6 +2280,17 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Either move the pointer to a corner before the app starts, or say in
   README that a first `move` step clears it. Measure which apps it
   affects first.
+  Resolved (2026-09-26), breaking, in 0.3.0 (user's choice: park it,
+  not just document it). launch() parks the pointer at the bottom-right
+  corner on both backends: before the app starts on Xvfb, as soon as the
+  display exists on --gpu. Xvfb also needed -noreset: it reset on its last
+  client leaving, which put the parked pointer back at the centre the
+  moment the parking xdotool exited. Measured with an app reading
+  `xdotool getmouselocation` at start: 0.2.2 X=200 Y=150, park without
+  -noreset X=200 Y=150, fixed X=399 Y=299 on a 400x300 display; --gpu
+  reads 399,299 a second in. ci.sh has the step; the --cursor step now
+  moves the pointer mid-frame, since a cornered pointer is mostly off
+  the picture.
   **Layman:** Before any scripted step, the hidden mouse pointer sits mid-screen and can light up whatever is under it.
   Kind: ux.
   Source: peer-request-games-hub-2026-09-25.

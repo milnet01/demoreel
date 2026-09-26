@@ -491,11 +491,26 @@ else
     echo "vkcube is in the frame, and the window was found in ${gpu_elapsed}s"
 fi
 
+step "the pointer starts in the corner, not over the app"
+# DEMO-0103. A fresh display puts the pointer at the centre, where it lights
+# up whatever the app draws under it before any step runs, drawn or not. The
+# app itself reads where the pointer is as it starts. Xvfb once reset on its
+# last client leaving, which put a parked pointer straight back.
+./demoreel record -o "$tmp/pointer.mp4" -d 2 -s 400x300 \
+    -- sh -c "xdotool getmouselocation --shell > $tmp/pointer.txt; exec xterm -e sleep 10" >/dev/null
+where=$(grep -E '^[XY]=' "$tmp/pointer.txt" 2>/dev/null | tr '\n' ' ')
+[ "$where" = "X=399 Y=299 " ] || {
+    echo "the pointer started at '$where', not in the bottom-right corner" >&2
+    exit 1
+}
+echo "the pointer started in the corner"
+
 step "--cursor draws the pointer, and the default leaves it out"
 # Two recordings of the same static app, one with --cursor and one without.
 # Measured while writing this: two runs WITHOUT it are byte-identical in the
-# sampled frame, and adding it changes about 150 bytes of 120000 -- the pointer,
-# sitting in the middle of the picture where README says it sits.
+# sampled frame, and adding it changes about 150 bytes of 120000 -- the pointer.
+# Both runs move it to the middle first: it starts parked in the bottom-right
+# corner (DEMO-0103), where most of it is off the picture.
 #
 # xterm running `sleep`, not xclock: a clock has a moving second hand, and a
 # test that compares two frames cannot tell a moving hand from a drawn pointer.
@@ -504,9 +519,9 @@ step "--cursor draws the pointer, and the default leaves it out"
 # two recordings differed for any unrelated reason; a pointer is a small local
 # change, so a large difference means something else moved and the test has
 # stopped measuring what it claims to.
-./demoreel record -o "$tmp/nocursor.mp4" -d 3 -s 400x300 \
+./demoreel record -o "$tmp/nocursor.mp4" -d 3 -s 400x300 -a 'move 200 150' \
     -- xterm -e sleep 10 >/dev/null
-./demoreel record -o "$tmp/cursor.mp4" -d 3 -s 400x300 --cursor \
+./demoreel record -o "$tmp/cursor.mp4" -d 3 -s 400x300 --cursor -a 'move 200 150' \
     -- xterm -e sleep 10 >/dev/null
 for f in nocursor cursor; do
     ffmpeg -v error -i "$tmp/$f.mp4" -vf 'select=eq(n\,30)' -vframes 1 \

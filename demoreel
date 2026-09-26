@@ -219,7 +219,12 @@ def start_xvfb(width, height, base, logfile):
     with open(logfile, "wb") as log:
         proc = subprocess.Popen(
             ["Xvfb", "-displayfd", str(write_fd), "-screen", "0",
-             f"{width}x{height}x24", "-nolisten", "tcp", "-auth", str(auth)],
+             f"{width}x{height}x24", "-nolisten", "tcp", "-auth", str(auth),
+             # Without it the server resets whenever its last client leaves,
+             # which puts the pointer back at the centre the moment the
+             # xdotool that parked it exits (DEMO-0103). SIGHUP still resets
+             # it, which is how the cookie gets read.
+             "-noreset"],
             pass_fds=(write_fd,),
             stdout=subprocess.DEVNULL,
             stderr=log,
@@ -712,6 +717,13 @@ def prepare(a, suffix):
     return command, width, height, output, applog
 
 
+def park_pointer(env, width, height):
+    """Put the pointer in the bottom-right corner. A fresh display starts it
+    at the centre, where it lights up whatever the app draws under it before
+    any step runs, drawn pointer or not (DEMO-0103)."""
+    xdotool(env, "mousemove", width - 1, height - 1)
+
+
 def launch(a, command, width, height, base, displaylog, appout):
     """Start the private display and the app on it: (xvfb, app, display, auth, env).
 
@@ -721,13 +733,17 @@ def launch(a, command, width, height, base, displaylog, appout):
     if a.gpu:
         # This backend starts the app for us, so there is nothing to launch
         # here; see start_gpu_display for why the two cannot be separated.
+        # The pointer is parked as soon as the display exists, which may be
+        # after the app has seen it: moving it away still ends the hover.
         app, display, auth = start_gpu_display(width, height, command,
                                                base, displaylog, appout)
-        return None, app, display, auth, dict(os.environ, DISPLAY=display,
-                                              XAUTHORITY=str(auth))
+        env = dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth))
+        park_pointer(env, width, height)
+        return None, app, display, auth, env
     xvfb, display, auth = start_xvfb(width, height, base, displaylog)
     env = dict(os.environ, DISPLAY=display, WAYLAND_DISPLAY=NO_WAYLAND,
                XAUTHORITY=str(auth))
+    park_pointer(env, width, height)
     try:
         app = subprocess.Popen(command, env=env, start_new_session=True,
                                stdout=appout, stderr=subprocess.STDOUT)
@@ -1134,7 +1150,7 @@ def main():
                           "of Xvfb, which has no GPU. Needs xwfb-run and cage")
     rec.add_argument("--cursor", action="store_true",
                      help="show the mouse pointer; off by default, since with no "
-                          "actions it just sits in the middle of the picture")
+                          "actions it just sits in the corner")
     rec.add_argument("--startup-timeout", type=float, default=20, metavar="SECONDS",
                      help="how long to wait for the app's window (default: 20)")
     rec.add_argument("command", nargs=argparse.REMAINDER,

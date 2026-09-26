@@ -148,7 +148,7 @@ you would only find out by watching it.
 | `-r`, `--framerate` | Frames per second. |
 | `-n`, `--name` | A name for this run, so `demoreel stop` knows which one you mean. |
 | `-a`, `--action` | A scripted step. Repeat it; they run in order. |
-| `--cursor` | Draw the mouse pointer. Off by default, because with no scripted clicks it just sits in the middle of the picture. |
+| `--cursor` | Draw the mouse pointer. Off by default, because with no scripted clicks it just sits in the corner. |
 | `--app-log` | Save what the app printed to a file. |
 | `--settle` | Wait for the app to draw something before starting to record. |
 | `--gpu` | For apps that need the graphics card. |
@@ -161,7 +161,9 @@ the recording is going:
 
 - `wait 2` — pause for two seconds
 - `move 400 300` — move the pointer
-- `click 400 300` — click there, or just `click` where it already is
+- `click 400 300` — click there, or just `click` where it already is. The
+  pointer starts in the bottom-right corner, so it lights up nothing before
+  your first step.
 - `type hello there` — type some text. Everything after `type` and one space is
   typed exactly as written, quotes and spaces included. Only your own shell's
   quoting around the whole step is removed.
