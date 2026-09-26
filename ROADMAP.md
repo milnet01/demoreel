@@ -1790,102 +1790,7 @@ protected surface, so the project's own ladder makes it a PATCH.
 
 ## 0.2.2 — Quicker and lighter
 
-Faster to start and stop, and less memory while recording. Every item measures
-before it changes anything, and none changes a surface the versioning overrides
-protect, so this is a PATCH. Measured 2026-09-25 on a default 1600x1000
-recording: ffmpeg is the only large consumer. demoreel's own Python process and
-Xvfb are small, and no item targets them.
-
-- 📋 [DEMO-0073] **Cap ffmpeg's encoder threads, which set most of a recording's memory.**
-  Measured 2026-09-25, during a default 1600x1000 recording of xclock:
-  ffmpeg 537568 kB resident, Xvfb 62472 kB, demoreel 23756 kB, the app
-  9504 kB.
-
-  ffmpeg's share follows x264's thread count, which defaults to a
-  multiple of the cores -- twelve here. Encoding a 1600x1000 test pattern
-  for ten seconds at the tool's own settings, peak resident memory:
-
-    threads auto   571136 kB   1.23 s
-    threads 8      377220 kB   1.58 s
-    threads 4      306696 kB   2.49 s
-    threads 2      267116 kB   2.49 s
-
-  Every setting stays several times faster than real time. Fewer threads
-  also leave more CPU for the app being recorded, which is what the video
-  shows.
-
-  Before choosing a number: a test pattern is harder to encode than most
-  screens but is not a live capture. Record a busy app at the default
-  size on a machine with fewer cores, and read ffmpeg's dropped and
-  duplicated frame counts. A cap that drops frames is not worth the
-  memory. Encoding parameters are not a breaking surface.
-  **Layman:** The video encoder uses far more memory than it needs; limiting it roughly halves that.
-  Kind: optimize.
-  Source: user-request-2026-09-25.
-
-- 📋 [DEMO-0074] **Measure the `--gpu` backend's memory, and cut what it does not need.**
-  The Xvfb path was measured on 2026-09-25; the `--gpu` path was not. It
-  runs xwfb-run, cage and Xwayland in place of Xvfb, and the recorded app
-  has a GPU context. Measure each process's resident memory during a
-  `--gpu -- vkcube` run and compare against the Xvfb figures. File a fix
-  only for what the numbers show.
-  **Layman:** Find out how much memory the graphics-card recording mode uses, and trim it.
-  Kind: investigate.
-  Source: user-request-2026-09-25.
-
-- 📋 [DEMO-0075] **Notice `stop` at once, instead of up to a fifth of a second late.**
-  The recording loop in `cmd_record` sleeps 0.2 s between checks, and the
-  signal handler only sets a flag. Python resumes an interrupted sleep
-  after a handler runs (PEP 475), so a stop lands up to 0.2 s late. That
-  short extra tail ends up in the video.
-
-  Wake the loop from the handler -- a threading.Event waited on with a
-  timeout, or signal.set_wakeup_fd. Measure the time from signal to
-  ffmpeg's quit, before and after.
-  **Layman:** The recording reacts to a stop request immediately rather than after a short pause.
-  Kind: perf.
-  Source: user-request-2026-09-25.
-
-- 📋 [DEMO-0076] **Find where the time goes between `stop` and a finished video.**
-  Measured 2026-09-25 with xclock: the recorder exits 0.7 to 0.9 s after
-  `stop` signals it. Since DEMO-0047, `stop` waits that long before it
-  answers. The steps in that gap: ffmpeg finishing and its faststart pass,
-  the end-of-run blank sample, which starts a second ffmpeg to grab one
-  frame, then ending the app and the display.
-
-  Time each step, then shorten the largest. The faststart pass stays --
-  DEMO-0013 decided that on measurement. The blank sample must stay a real
-  sample of the display.
-  **Layman:** Stopping takes nearly a second; find out which step is slow and speed it up.
-  Kind: investigate.
-  Source: user-request-2026-09-25.
-
-- 📋 [DEMO-0077] **Find where the time goes between launch and the first recorded frame.**
-  DEMO-0042 measured about 1.4 s of fixed setup per run. The steps:
-  starting Xvfb, installing the cookie and waiting for the reset,
-  launching the app, polling for its window, resizing and waiting for
-  the size, optional `--settle`, then ffmpeg's first frame. Several of
-  these poll at a fixed interval.
-
-  Time each step with a real app and shorten the largest. Every
-  safety check stays: the cookie ordering and the window-size wait each
-  fixed a real defect.
-  **Layman:** Starting a recording has a fixed delay; find out which step is slow and speed it up.
-  Kind: investigate.
-  Source: user-request-2026-09-25.
-
-- 📋 [DEMO-0078] **Shorten the gate's longest step, the scripted-actions recording.**
-  DEMO-0042 measured the gate and found the scripted-actions step the
-  single largest, a recording of about twelve seconds. It closed the
-  parallel-steps idea as considered and named this step as the cheaper
-  lever. Since then, steps added for DEMO-0006, DEMO-0007, DEMO-0047 and
-  DEMO-0049 have made the gate longer.
-
-  Shorten the waits inside that step to what the assertions need, and
-  check it still fails when an action is broken.
-  **Layman:** The pre-push checks spend the most time in one test; make that test quicker.
-  Kind: perf.
-  Source: user-request-2026-09-25.
+Released early on 2026-09-26 with what was done: `demoreel shot`, the 10 s bound on display calls, the self-resize warning, and the shot log-folder fix. The user chose to cut it then because the next change, typing `type` steps exactly, is breaking. The speed and memory items planned here moved to 0.3.0 unchanged.
 
 - ✅ [DEMO-0079] **Put a timeout on every xdotool and frame-sample call.**
   Found in the DEMO-0049 hang: `xdotool getwindowname` waited on a frozen
@@ -1911,39 +1816,7 @@ Xvfb are small, and no item targets them.
   Kind: fix.
   Source: in-session-2026-09-25.
 
-- 📋 [DEMO-0080] **Replace the hand-written wait loops with one polling helper.**
-  The file has several loops that poll with a fixed sleep and a deadline:
-  waiting for the display after the cookie reset, for the window, for its
-  size, for the first draw, for a starting run in `stop`, and now for a
-  stopped run to exit. Each picks its own interval, and each writes its
-  own deadline arithmetic.
-
-  One helper, taking a check, a timeout and an interval. Tuning the
-  intervals is then one change, which is what the launch-time item in this
-  version needs, and a new wait cannot get the deadline wrong. Behaviour
-  stays the same, and the gate proves it.
-  **Layman:** Several bits of code each wait for something in their own way; make them share one tidy method.
-  Kind: refactor.
-  Source: in-session-2026-09-25.
-
-- 📋 [DEMO-0082] **Check what happens when the output path is a symlink someone else planted.**
-  ffmpeg is started with `-y`, so it overwrites whatever is at the `-o`
-  path. If a caller records to a shared directory such as `/tmp`, another
-  local user can create a symlink at that name first. The video would
-  then be written through it, over a file the caller owns.
-
-  Unverified: most distros set fs.protected_symlinks=1, which refuses to
-  follow such a link in a sticky world-writable directory. Whether this
-  machine, and the GitHub runner, do was not checked, nor what ffmpeg does
-  when the open is refused. Measure it. If the protection is not
-  guaranteed, refuse an output path that is a symlink the caller does not
-  own, the same way `state_dir()` refuses a planted directory. SECURITY.md
-  gets the result either way.
-  **Layman:** Make sure another user on the same computer can't trick demoreel into overwriting one of your files.
-  Kind: security.
-  Source: user-request-2026-09-25.
-
-- 🚧 [DEMO-0099] **An app that resizes itself after demoreel sizes it records partly off-frame, and nothing says so.**
+- ✅ [DEMO-0099] **An app that resizes itself after demoreel sizes it records partly off-frame, and nothing says so.**
   Found recording Vestige, a GLFW/OpenGL editor, with `--gpu` at the
   default 1600x1000. demoreel moved and sized the window, and
   `wait_for_size` passed. Then the app set itself to 1920x1080, larger
@@ -1973,6 +1846,8 @@ Xvfb are small, and no item targets them.
   not apply to demoreel: measured the same day, cage/Xwayland/vkcube
   counts were unchanged after a normal --gpu run, a SIGTERM and a
   timeout(1) kill, since end_process signals the whole group.
+  Closed (2026-09-26) on the detection half, which ships in 0.2.2.
+  The open question, re-applying the size, moved to DEMO-0108.
   **Layman:** If an app changes its own window size after demoreel has set it, the video shows it cropped or off to one side, and demoreel doesn't warn you.
   Kind: fix.
   Source: peer-request-vestige-2026-09-25.
@@ -2003,53 +1878,6 @@ Xvfb are small, and no item targets them.
   **Layman:** Take a screenshot of an app on the private screen, so nothing from your real desktop is in the picture.
   Kind: feature.
   Source: user-request-2026-09-25.
-
-- 📋 [DEMO-0101] **Quotes inside a `type` step are silently removed before the text is typed.**
-  Found recording Ants Terminal for its session. `-a "type printf '...'"`
-  typed printf and its argument with the single quotes gone, because
-  run_action splits every step with shlex before joining the words back
-  for `type`. The shell then ran the colour codes as commands. Wrapping
-  the text in double quotes works around it.
-
-  `type` should take the rest of the step verbatim after the verb, since
-  it is text to type, not arguments. That changes what an existing step
-  types, so check it against the versioning overrides first. README's
-  Scripted steps list gets one line on quoting either way.
-  **Layman:** Typing a command with quotes in a demo loses the quotes, so the command on screen goes wrong.
-  Kind: fix.
-  Source: peer-request-ants-terminal-2026-09-25.
-
-- 📋 [DEMO-0102] **A Qt app recorded with an isolated, empty config gets a half-dark palette.**
-  Reported by games-hub-35. With XDG_CONFIG_HOME pointed at an empty
-  directory, so the owner's settings stay out of frame, Qt takes the
-  window background dark and the text light-theme: dark on dark grey,
-  and a menu entry invisible. With the owner's kdeglobals it is
-  readable. Reproduced by them on Xvfb at 1600x1000.
-
-  The isolation belongs to the caller's command, not to demoreel, so
-  this is documentation: README and the record-demo skill say to copy
-  ~/.config/kdeglobals into an isolated config. Not verified here yet.
-  Also from finbreak (2026-09-25): a single-instance app need not be
-  closed on the real desktop if the caller points its XDG_* dirs at a
-  temp folder, since its socket lives under them. Say that beside the
-  single-instance note. And say the "Failed to create wl_display" line
-  a Qt app logs is expected: it is demoreel's unresolvable
-  WAYLAND_DISPLAY working. QT_QPA_PLATFORM=xcb stays declined.
-  **Layman:** Recording a KDE or Qt app with fresh settings can make its text dark on dark and hard to read.
-  Kind: doc.
-  Source: peer-request-games-hub-2026-09-25.
-
-- 📋 [DEMO-0103] **The pointer starts in the middle of the private screen and triggers hover highlights.**
-  Reported by games-hub-35: a fresh Xvfb puts the pointer at the
-  centre, so the tile under it shows a hover highlight in frame before
-  any step runs, even though --cursor is off and no pointer is drawn.
-
-  Either move the pointer to a corner before the app starts, or say in
-  README that a first `move` step clears it. Measure which apps it
-  affects first.
-  **Layman:** Before any scripted step, the hidden mouse pointer sits mid-screen and can light up whatever is under it.
-  Kind: ux.
-  Source: peer-request-games-hub-2026-09-25.
 
 - ✅ [DEMO-0107] **A `shot` that fails early keeps its private folder without naming it, and the folders pile up in RAM.**
   Album Builder reported two `demoreel shot` runs exiting 1 with no
@@ -2084,6 +1912,8 @@ Xvfb are small, and no item targets them.
 ## 0.3.0 — Friendly at a terminal
 
 A person at a terminal gets as much from demoreel as a script does. The command line keeps its rules: no prompts, no config file, and stdout carries the path and nothing else. The graphical window the user also asked for on 2026-09-25 is 0.6.0. It builds on the error wording, countdown and restructured recording loop made here.
+
+This is a MINOR because two changes to the `-a` grammar are breaking, both chosen by the user on 2026-09-26: `type` types its text exactly (DEMO-0101), and the pointer starts in a corner rather than the centre (DEMO-0103). The speed and memory items first planned for 0.2.2 moved here too.
 
 - 📋 [DEMO-0050] **Show worked examples at the end of `--help`.**
   `demoreel --help` and `demoreel record --help` list the flags and nothing
@@ -2266,6 +2096,186 @@ A person at a terminal gets as much from demoreel as a script does. The command 
   **Layman:** Let a demo hold a key down for a few seconds, e.g. to walk forward in a 3D scene.
   Kind: feature.
   Source: peer-request-vestige-2026-09-25.
+
+- 📋 [DEMO-0108] **Find out whether re-applying the frame size after an app resizes itself is safe.**
+  Split from DEMO-0099, whose detection half shipped in 0.2.2: demoreel
+  warns once and names the size the app chose. Still open: re-apply the
+  frame size once the app settles, or does that start a resize fight?
+  Measure on both backends with Vestige (sets 1920x1080 on a 1600x1000
+  display) and DOOM_Ants (sets 1708x800 on 1920x1080). Not measured yet.
+  **Layman:** When an app changes its own window size, demoreel now warns; this checks whether it could safely put the size back instead.
+  Kind: investigate.
+  Source: peer-request-vestige-2026-09-25.
+
+- 📋 [DEMO-0073] **Cap ffmpeg's encoder threads, which set most of a recording's memory.**
+  Measured 2026-09-25, during a default 1600x1000 recording of xclock:
+  ffmpeg 537568 kB resident, Xvfb 62472 kB, demoreel 23756 kB, the app
+  9504 kB.
+
+  ffmpeg's share follows x264's thread count, which defaults to a
+  multiple of the cores -- twelve here. Encoding a 1600x1000 test pattern
+  for ten seconds at the tool's own settings, peak resident memory:
+
+    threads auto   571136 kB   1.23 s
+    threads 8      377220 kB   1.58 s
+    threads 4      306696 kB   2.49 s
+    threads 2      267116 kB   2.49 s
+
+  Every setting stays several times faster than real time. Fewer threads
+  also leave more CPU for the app being recorded, which is what the video
+  shows.
+
+  Before choosing a number: a test pattern is harder to encode than most
+  screens but is not a live capture. Record a busy app at the default
+  size on a machine with fewer cores, and read ffmpeg's dropped and
+  duplicated frame counts. A cap that drops frames is not worth the
+  memory. Encoding parameters are not a breaking surface.
+  **Layman:** The video encoder uses far more memory than it needs; limiting it roughly halves that.
+  Kind: optimize.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0074] **Measure the `--gpu` backend's memory, and cut what it does not need.**
+  The Xvfb path was measured on 2026-09-25; the `--gpu` path was not. It
+  runs xwfb-run, cage and Xwayland in place of Xvfb, and the recorded app
+  has a GPU context. Measure each process's resident memory during a
+  `--gpu -- vkcube` run and compare against the Xvfb figures. File a fix
+  only for what the numbers show.
+  **Layman:** Find out how much memory the graphics-card recording mode uses, and trim it.
+  Kind: investigate.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0075] **Notice `stop` at once, instead of up to a fifth of a second late.**
+  The recording loop in `cmd_record` sleeps 0.2 s between checks, and the
+  signal handler only sets a flag. Python resumes an interrupted sleep
+  after a handler runs (PEP 475), so a stop lands up to 0.2 s late. That
+  short extra tail ends up in the video.
+
+  Wake the loop from the handler -- a threading.Event waited on with a
+  timeout, or signal.set_wakeup_fd. Measure the time from signal to
+  ffmpeg's quit, before and after.
+  **Layman:** The recording reacts to a stop request immediately rather than after a short pause.
+  Kind: perf.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0076] **Find where the time goes between `stop` and a finished video.**
+  Measured 2026-09-25 with xclock: the recorder exits 0.7 to 0.9 s after
+  `stop` signals it. Since DEMO-0047, `stop` waits that long before it
+  answers. The steps in that gap: ffmpeg finishing and its faststart pass,
+  the end-of-run blank sample, which starts a second ffmpeg to grab one
+  frame, then ending the app and the display.
+
+  Time each step, then shorten the largest. The faststart pass stays --
+  DEMO-0013 decided that on measurement. The blank sample must stay a real
+  sample of the display.
+  **Layman:** Stopping takes nearly a second; find out which step is slow and speed it up.
+  Kind: investigate.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0077] **Find where the time goes between launch and the first recorded frame.**
+  DEMO-0042 measured about 1.4 s of fixed setup per run. The steps:
+  starting Xvfb, installing the cookie and waiting for the reset,
+  launching the app, polling for its window, resizing and waiting for
+  the size, optional `--settle`, then ffmpeg's first frame. Several of
+  these poll at a fixed interval.
+
+  Time each step with a real app and shorten the largest. Every
+  safety check stays: the cookie ordering and the window-size wait each
+  fixed a real defect.
+  **Layman:** Starting a recording has a fixed delay; find out which step is slow and speed it up.
+  Kind: investigate.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0078] **Shorten the gate's longest step, the scripted-actions recording.**
+  DEMO-0042 measured the gate and found the scripted-actions step the
+  single largest, a recording of about twelve seconds. It closed the
+  parallel-steps idea as considered and named this step as the cheaper
+  lever. Since then, steps added for DEMO-0006, DEMO-0007, DEMO-0047 and
+  DEMO-0049 have made the gate longer.
+
+  Shorten the waits inside that step to what the assertions need, and
+  check it still fails when an action is broken.
+  **Layman:** The pre-push checks spend the most time in one test; make that test quicker.
+  Kind: perf.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0080] **Replace the hand-written wait loops with one polling helper.**
+  The file has several loops that poll with a fixed sleep and a deadline:
+  waiting for the display after the cookie reset, for the window, for its
+  size, for the first draw, for a starting run in `stop`, and now for a
+  stopped run to exit. Each picks its own interval, and each writes its
+  own deadline arithmetic.
+
+  One helper, taking a check, a timeout and an interval. Tuning the
+  intervals is then one change, which is what the launch-time item in this
+  version needs, and a new wait cannot get the deadline wrong. Behaviour
+  stays the same, and the gate proves it.
+  **Layman:** Several bits of code each wait for something in their own way; make them share one tidy method.
+  Kind: refactor.
+  Source: in-session-2026-09-25.
+
+- 📋 [DEMO-0082] **Check what happens when the output path is a symlink someone else planted.**
+  ffmpeg is started with `-y`, so it overwrites whatever is at the `-o`
+  path. If a caller records to a shared directory such as `/tmp`, another
+  local user can create a symlink at that name first. The video would
+  then be written through it, over a file the caller owns.
+
+  Unverified: most distros set fs.protected_symlinks=1, which refuses to
+  follow such a link in a sticky world-writable directory. Whether this
+  machine, and the GitHub runner, do was not checked, nor what ffmpeg does
+  when the open is refused. Measure it. If the protection is not
+  guaranteed, refuse an output path that is a symlink the caller does not
+  own, the same way `state_dir()` refuses a planted directory. SECURITY.md
+  gets the result either way.
+  **Layman:** Make sure another user on the same computer can't trick demoreel into overwriting one of your files.
+  Kind: security.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0101] **Quotes inside a `type` step are silently removed before the text is typed.**
+  Found recording Ants Terminal for its session. `-a "type printf '...'"`
+  typed printf and its argument with the single quotes gone, because
+  run_action splits every step with shlex before joining the words back
+  for `type`. The shell then ran the colour codes as commands. Wrapping
+  the text in double quotes works around it.
+
+  `type` should take the rest of the step verbatim after the verb, since
+  it is text to type, not arguments. That changes what an existing step
+  types, so check it against the versioning overrides first. README's
+  Scripted steps list gets one line on quoting either way.
+  **Layman:** Typing a command with quotes in a demo loses the quotes, so the command on screen goes wrong.
+  Kind: fix.
+  Source: peer-request-ants-terminal-2026-09-25.
+
+- 📋 [DEMO-0102] **A Qt app recorded with an isolated, empty config gets a half-dark palette.**
+  Reported by games-hub-35. With XDG_CONFIG_HOME pointed at an empty
+  directory, so the owner's settings stay out of frame, Qt takes the
+  window background dark and the text light-theme: dark on dark grey,
+  and a menu entry invisible. With the owner's kdeglobals it is
+  readable. Reproduced by them on Xvfb at 1600x1000.
+
+  The isolation belongs to the caller's command, not to demoreel, so
+  this is documentation: README and the record-demo skill say to copy
+  ~/.config/kdeglobals into an isolated config. Not verified here yet.
+  Also from finbreak (2026-09-25): a single-instance app need not be
+  closed on the real desktop if the caller points its XDG_* dirs at a
+  temp folder, since its socket lives under them. Say that beside the
+  single-instance note. And say the "Failed to create wl_display" line
+  a Qt app logs is expected: it is demoreel's unresolvable
+  WAYLAND_DISPLAY working. QT_QPA_PLATFORM=xcb stays declined.
+  **Layman:** Recording a KDE or Qt app with fresh settings can make its text dark on dark and hard to read.
+  Kind: doc.
+  Source: peer-request-games-hub-2026-09-25.
+
+- 📋 [DEMO-0103] **The pointer starts in the middle of the private screen and triggers hover highlights.**
+  Reported by games-hub-35: a fresh Xvfb puts the pointer at the
+  centre, so the tile under it shows a hover highlight in frame before
+  any step runs, even though --cursor is off and no pointer is drawn.
+
+  Either move the pointer to a corner before the app starts, or say in
+  README that a first `move` step clears it. Measure which apps it
+  affects first.
+  **Layman:** Before any scripted step, the hidden mouse pointer sits mid-screen and can light up whatever is under it.
+  Kind: ux.
+  Source: peer-request-games-hub-2026-09-25.
 
 ## 0.4.0 — Speaks your language
 
