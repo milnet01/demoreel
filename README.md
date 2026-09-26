@@ -260,8 +260,9 @@ before recording.
 `--cursor` still works. One still picture shows no stutter.
 
 The blank check still looks at the X screen. On `record --gpu` that is not
-where the video comes from, so demoreel also checks a frame of the finished
-video, and a flat one fails the run as a blank screen does.
+where the video comes from, so demoreel also checks the finished video, at the
+same moments as its two looks at the screen and skipped in the same cases. A
+flat frame there fails the run as a blank screen does.
 
 ## Recording a Flatpak app
 

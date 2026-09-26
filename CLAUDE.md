@@ -222,7 +222,8 @@ README rules out.
 
 ## The `--gpu` backend
 
-demoreel starts a headless `cage` compositor (`WLR_BACKENDS=headless`) and a
+demoreel starts a headless `cage` compositor (`WLR_BACKENDS=headless`, and no
+other `WLR_` setting: the pointer measurements below were taken so) and a
 full-screen, rootful `Xwayland` on it, which reaches the GPU where `Xvfb`
 cannot. It records the compositor's output with `wf-recorder`, not the X side
 with `x11grab`. Under a busy 3D app the X side's copy of the picture goes stale:
@@ -272,8 +273,10 @@ are load-bearing and none is obvious:
   words `frames in the middle`: keep them, or change its grep in the same
   commit.
 - **The blank check reads the X side, and the video no longer comes from
-  there.** So `record --gpu` also samples a frame of the finished file with
-  `frame_is_flat`, and a flat one fails the run like a blank display. Without
+  there.** So `record --gpu` also checks the finished file with
+  `frame_is_flat`: one frame for each display sample the run actually took,
+  from the same moment, so the app-has-exited and `-d 0` skips carry over. A
+  flat one fails the run like a blank display. Without
   it, a recorder writing black while the X side is drawn passes every check.
 - **Both displays are behind an auth cookie, so the X-side readers take the
   run's `env` rather than inheriting the session's** — otherwise they fail with
@@ -285,8 +288,8 @@ are load-bearing and none is obvious:
   `SIGHUP` to re-read; do not "simplify" that ordering away. `Xwayland` re-reads
   the changed file with no signal (measured: a client with no credential got in
   before the cookie and was refused after). So on `--gpu` the lock is proven in
-  force by a client *without* the cookie being refused. A client with it
-  connects before the lock too, so its success proves nothing.
+  force by a client *without* the cookie being refused while one with it
+  connects. A dead display refuses both, so the refusal alone proves nothing.
 
 `weston` is also installed, from testing this. Its headless backend falls back
 to software rendering here (`Failed to initialize glamor`,
