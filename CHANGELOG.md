@@ -12,6 +12,15 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+### Added
+
+- **A `--gpu` recording that barely changes now gets a note saying it may stutter.** (DEMO-0109)
+  A busy 3D app recorded with --gpu came out as a slideshow with no
+  message: the picture demoreel reads was refreshed only a few times a
+  second. demoreel now measures how often the middle of a --gpu video
+  changes, and says so when it is rarely. The stutter itself is not
+  fixed yet.
+
 ### Changed
 
 - **Breaking: the pointer now starts in the bottom-right corner, not the centre.** (DEMO-0103)

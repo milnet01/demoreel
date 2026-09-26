@@ -239,6 +239,12 @@ The ordinary screen stays the default, because it is lighter and most apps do
 not need the card. `--gpu` needs `xwfb-run` (the `xwayland-run` package) and
 `cage` installed; demoreel says so plainly if they are missing.
 
+**A busy 3D app can stutter on `--gpu`.** While the app keeps the card busy, the
+picture demoreel records is refreshed only a few times a second, so a smooth
+game can come out as a slideshow. After a `--gpu` run, demoreel checks how often
+the middle of the video changed and prints a note when it is rarely. A still app
+repeats frames too, so the note says "if the app was moving". A fix is planned.
+
 ## Recording a Flatpak app
 
 A Flatpak needs three extra flags on **its own** command line:

@@ -383,6 +383,50 @@ def window_off_frame(env, window, width, height):
             f"or empty.\n  Record at the app's own size with -s {w}x{h}.")
 
 
+# A --gpu video whose frames changed less often than this is noted. Measured
+# with changed_share on 2026-09-26: Vestige's fly-through 48%, vkcube 96%
+# (DEMO-0109).
+CHANGED_NOTE_BELOW = 0.7
+CHANGED_WINDOW = 10
+
+
+def changed_share(output, framerate):
+    """The share of frames that differ from the one before, over a window from
+    the middle of the video; None if it could not be measured.
+
+    On --gpu, Xwayland updates the picture x11grab reads only a few times a
+    second while the GPU is busy, so a moving app records as runs of repeated
+    frames, and nothing else notices (DEMO-0109). A still app repeats frames
+    too, which is why this only ever produces a note. One window, not the whole
+    video: decoding a long recording to count would add most of its length.
+    """
+    try:
+        probe = subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+             "-of", "csv=p=0", str(output)],
+            capture_output=True, text=True, timeout=CALL_TIMEOUT, check=True)
+        duration = float(probe.stdout.strip())
+        window = min(CHANGED_WINDOW, duration)
+        count = subprocess.run(
+            ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
+             "-ss", f"{(duration - window) / 2:.3f}", "-t", f"{window:.3f}",
+             # Any 8x8 block changing by more than 256 counts the frame as
+             # new. The defaults count near-repeats as repeats, which scored
+             # a smooth test pattern 50%; at 256 it scores 100%, a 3 fps
+             # pattern stored at 30 scores 12%, and a still one 0%.
+             "-i", str(output), "-vf", "mpdecimate=hi=256:lo=256:frac=0",
+             "-f", "null", "-",
+             "-progress", "pipe:1", "-nostats"],
+            capture_output=True, text=True, timeout=6 * CALL_TIMEOUT, check=True)
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return None
+    kept = [ln for ln in count.stdout.splitlines() if ln.startswith("frame=")]
+    frames = window * framerate
+    if not kept or frames < framerate:
+        return None
+    return min(1.0, int(kept[-1].split("=", 1)[1]) / frames)
+
+
 def named_windows(env):
     """The visible windows that carry a title, under either title property.
 
@@ -913,6 +957,13 @@ def cmd_record(a):
     if unsampled is not None:
         die(f"could not sample the virtual display to check {output} is not blank,\n"
             f"  so this run cannot vouch for it.\n  {unsampled}")
+    if a.gpu:
+        share = changed_share(output, a.framerate)
+        if share is not None and share < CHANGED_NOTE_BELOW:
+            note(f"only {share:.0%} of the frames in the middle of {output} "
+                 f"changed from the one before.\n  If the app was moving the "
+                 f"whole time, the video stutters: --gpu captures a busy 3D "
+                 f"app only a few times a second (DEMO-0109).")
     for stale in (logpath, displaylog):
         stale.unlink(missing_ok=True)  # only worth keeping when something failed
     write_state(statefile, dict(state, result="ok"))

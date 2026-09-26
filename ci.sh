@@ -447,6 +447,33 @@ if ! grep -q 'resized its window to 300x200' "$tmp/resized.err"; then
 fi
 echo "the self-resized window was reported, with the size to record at"
 
+step "the stutter measure tells a stuttering video from a smooth one"
+# DEMO-0109. On --gpu a busy 3D app records as runs of repeated frames, and
+# changed_share is what notices. Two made-up videos pin it without a card: a
+# moving pattern made at 3 frames a second and stored at 30, and the same
+# pattern at a full 30. The note's own threshold decides both, so this checks
+# the measure and the line together rather than restating either.
+ffmpeg -v error -f lavfi -i testsrc=size=320x240:rate=3 -t 12 -r 30 \
+    -c:v libx264 -pix_fmt yuv420p -y "$tmp/stutter.mp4"
+ffmpeg -v error -f lavfi -i testsrc=size=320x240:rate=30 -t 12 \
+    -c:v libx264 -pix_fmt yuv420p -y "$tmp/smooth.mp4"
+python3 - "$tmp/stutter.mp4" "$tmp/smooth.mp4" <<'CHANGEDPY'
+import importlib.machinery, importlib.util, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+demoreel = importlib.util.module_from_spec(
+    importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(demoreel)
+stutter = demoreel.changed_share(sys.argv[1], 30)
+smooth = demoreel.changed_share(sys.argv[2], 30)
+print(f"stuttering video {stutter}, smooth video {smooth}, "
+      f"note below {demoreel.CHANGED_NOTE_BELOW}")
+if stutter is None or smooth is None:
+    sys.exit("the measure could not read one of the videos")
+if not stutter < demoreel.CHANGED_NOTE_BELOW <= smooth:
+    sys.exit("the measure does not separate a stuttering video from a smooth one")
+CHANGEDPY
+echo "the stutter measure separates the two"
+
 step "the --gpu backend records an app that needs the card"
 # DEMO-0006. Xvfb has no DRI, so a GPU app records black on it whatever flags it
 # is given; --gpu puts a real Xwayland on a headless cage compositor instead.
@@ -469,8 +496,14 @@ elif ! compgen -G '/dev/dri/renderD*' >/dev/null; then
 else
     gpu_started=$SECONDS
     ./demoreel record --gpu -n gategpu -o "$tmp/gpu.mp4" -d 3 -s 640x480 \
-        -- vkcube >/dev/null
+        -- vkcube >/dev/null 2>"$tmp/gpu.err" || { cat "$tmp/gpu.err" >&2; exit 1; }
     gpu_elapsed=$((SECONDS - gpu_started))
+    # vkcube moves every frame and is light, so its video must not draw the
+    # stutter note (DEMO-0109). A note here means the measure calls a smooth
+    # video stuttering, and would cry wolf on every --gpu run.
+    ! grep -q "frames in the middle" "$tmp/gpu.err" || {
+        cat "$tmp/gpu.err" >&2
+        echo "a smooth vkcube recording drew the stutter note" >&2; exit 1; }
     [ -s "$tmp/gpu.mp4" ] || {
         echo "no video written on the --gpu backend" >&2; exit 1; }
     # A shaded cube is not one colour; a display with nothing on it is. This is

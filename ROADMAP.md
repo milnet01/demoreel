@@ -2302,7 +2302,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: ux.
   Source: peer-request-games-hub-2026-09-25.
 
-- 🚧 [DEMO-0109] **A GPU-heavy app recorded with `--gpu` comes out at a few new frames a second, and nothing says so.**
+- ✅ [DEMO-0109] **A GPU-heavy app recorded with `--gpu` comes out at a few new frames a second, and nothing says so.**
   Reported by vestige-1a. Vestige's fly-through at 1920x1080 on --gpu
   recorded 83-89 unique frames of 770-910 (mpdecimate), while its own
   profiler showed 35-62 fps throughout. tblend shows exact duplicates in
@@ -2349,6 +2349,13 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   no hook for: capturing from cage means demoreel starting cage and
   Xwayland itself. wf-recorder also needs -D, or SIGINT is ignored while
   the screen is still, and -y, or it prompts before overwriting.
+  Closed (2026-09-26) on the visible-failure half, the user's choice
+  of "a note on --gpu runs". changed_share counts frames that differ
+  (mpdecimate hi=lo=256, frac=0) over 10 s from the middle; below 70%
+  a --gpu run prints a note worded "if the app was moving". Measured:
+  Vestige 48%, vkcube 96%, a still xterm 1%; synthetic stutter 27%,
+  smooth 100%. ci.sh pins both, and the vkcube --gpu step now fails if
+  it draws the note. The capture fix itself is DEMO-0111.
   **Layman:** A demanding 3D app looks smooth on screen but its demoreel video stutters badly, and demoreel doesn't warn you.
   Kind: fix.
   Source: peer-request-vestige-2026-09-26.
@@ -2363,6 +2370,40 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   **Layman:** When a graphics-card recording comes out blank, demoreel's advice tells you to use the option you already used.
   Kind: fix.
   Source: in-session-2026-09-26.
+
+- 📋 [DEMO-0111] **Record `--gpu` from the compositor, so busy 3D apps record smoothly at full size.**
+  Decided by the user 2026-09-26: switch --gpu capture from x11grab to
+  wf-recorder on cage, and design it first — README and CLAUDE.md
+  change through review-contract (rule 14) before any code. Evidence and
+  dead ends are in DEMO-0109's notes; read them first.
+
+  What the design must settle, all measured on DEMO-0109:
+  - cage's headless output is 1280x720 and Xwayland (-fullscreen, from
+    xwfb-run) scales into it. wlr-randr resizes the output, but Xwayland
+    24.1.13 keeps its start-up size, so the output must be sized BEFORE
+    Xwayland starts. xwfb-run has no hook for that, so demoreel starts
+    cage itself, runs wlr-randr inside it, then Xwayland — and launches
+    the app afterwards, like the Xvfb path (pointer parking then happens
+    before the app, too).
+  - Keep CLAUDE.md's concurrency rules: the display number still comes
+    from -displayfd, never a scan; cage's socket from wlroots' own
+    wayland-N allocation, read back, never guessed.
+  - wf-recorder needs -D (else SIGINT is ignored while the screen is
+    still), -y (else it prompts before overwriting), -r <framerate> and
+    -x yuv420p with libx264. It prints no "capturing now" line like
+    ffmpeg's first progress report; the -d countdown needs a new start
+    signal (DEMO-0012).
+  - --cursor: wf-recorder 0.6 has no pointer option; measure what it
+    draws.
+  - New --gpu dependencies: wf-recorder and wlr-randr (both in openSUSE
+    OSS, installed here with the user's OK); xwfb-run is dropped.
+  - DEMO-0109's stutter note stays; after the switch it should stop
+    firing on Vestige's fly-through.
+  Vestige (vestige-1a) offered to test a build: their repro is in
+  DEMO-0109.
+  **Layman:** Games and 3D apps recorded with --gpu will come out smooth instead of as a slideshow.
+  Kind: feature.
+  Source: user-request-2026-09-26.
 
 ## 0.4.0 — Speaks your language
 
