@@ -2659,7 +2659,7 @@ covers both display backends and the Flatpak invocation.
   Kind: doc.
   Source: user-request-2026-09-20.
 
-- 📋 [DEMO-0093] **Get a demoreel video used outside this repository, and record where.**
+- ✅ [DEMO-0093] **Get a demoreel video used outside this repository, and record where.**
   The live 1.0 condition in versioning-overrides.md: a video demoreel
   recorded, used in another project's README, a store listing or a
   release page, with the roadmap naming where and linking to it.
@@ -2696,6 +2696,12 @@ covers both display backends and the Flatpak invocation.
   README of github.com/milnet01/ants-terminal, commit 97d89b2d, as
   docs/screenshots/ants-terminal-demo.gif made from demoreel's MP4,
   credited "Recorded with demoreel on a private virtual screen".
+  Confirmed (2026-09-26): vestige's page
+  https://antsprojectshub.co.za/p/vestige-engine.html returned HTTP 200
+  and served vestige-meadow.mp4, captioned "Recorded with demoreel."
+  Also in Vestige's README as docs/media/vestige-meadow.mp4, per its
+  session. Closed: the 1.0 condition is met by the Ants Terminal README
+  and the hub pages named above.
   **Layman:** 1.0 waits for a video made with demoreel to be used somewhere real, like another project's page.
   Kind: marketing.
   Source: user-request-2026-09-25.
