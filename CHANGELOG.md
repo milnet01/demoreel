@@ -12,6 +12,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-09-26
+
 ### Added
 
 - **`demoreel shot` saves one picture of an app, on the same private screen as a recording.** (DEMO-0100)
