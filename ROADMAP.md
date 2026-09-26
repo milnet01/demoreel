@@ -2401,6 +2401,15 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
     firing on Vestige's fly-through.
   Vestige (vestige-1a) offered to test a build: their repro is in
   DEMO-0109.
+  Decided by the user (2026-09-26), three design questions:
+  - `shot --gpu` keeps its x11grab still. The stale-picture defect is
+    about refresh rate, which one still does not show, and it avoids
+    adding grim.
+  - If wf-recorder cannot honour --cursor, `--gpu --cursor` is refused
+    before recording, with a message saying why.
+  - Build on a branch in a separate worktree. Vestige tests that copy by
+    path. It merges to main only once their fly-through records smoothly,
+    because main is live for every session.
   **Layman:** Games and 3D apps recorded with --gpu will come out smooth instead of as a slideshow.
   Kind: feature.
   Source: user-request-2026-09-26.
