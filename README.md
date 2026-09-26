@@ -148,7 +148,7 @@ you would only find out by watching it.
 | `-r`, `--framerate` | Frames per second. |
 | `-n`, `--name` | A name for this run, so `demoreel stop` knows which one you mean. |
 | `-a`, `--action` | A scripted step. Repeat it; they run in order. |
-| `--cursor` | Draw the mouse pointer. Off by default, because with no scripted clicks it just sits in the corner. Not available with `--gpu`. |
+| `--cursor` | Draw the mouse pointer. Off by default, because with no scripted clicks it just sits in the corner. Not available with `record --gpu`. |
 | `--app-log` | Save what the app printed to a file. |
 | `--settle` | Wait for the app to draw something before starting to record. |
 | `--gpu` | For apps that need the graphics card. |
@@ -236,8 +236,9 @@ same single file out. Privacy is unchanged — it is still a screen of its own,
 started fresh for this run, with nothing of your session on it.
 
 The ordinary screen stays the default, because it is lighter and most apps do
-not need the card. `--gpu` needs `cage`, `Xwayland`, `wf-recorder` and
-`wlr-randr` installed; demoreel says so plainly if any is missing.
+not need the card. `--gpu` needs `cage`, `Xwayland`, `wlr-randr` and `xauth`
+installed, and `record --gpu` needs `wf-recorder` too; demoreel says so plainly
+if any is missing.
 
 **`--gpu` records from the compositor, not from the X screen.** The private
 screen is an X screen (`Xwayland`) shown by a small compositor (`cage`). While a
@@ -251,12 +252,12 @@ After a `--gpu` run, demoreel still checks how often the middle of the video
 changed, and prints a note when it is rarely. A still app repeats frames too, so
 the note says "if the app was moving".
 
-**`--cursor` is refused with `--gpu`.** The compositor's copy of the picture
+**`record --gpu` refuses `--cursor`.** The compositor's copy of the picture
 never has the pointer in it, so the option cannot be honoured. demoreel says so
 before recording.
 
-`demoreel shot --gpu` still takes its picture from the X screen. One still
-picture shows no stutter, and the X screen needs no extra program. A fix is planned.
+`demoreel shot --gpu` still takes its picture from the X screen, so its
+`--cursor` still works. One still picture shows no stutter.
 
 ## Recording a Flatpak app
 
@@ -452,8 +453,9 @@ Checked by running them, not assumed. This section is for maintainers.
   captured 643 frames, all different. `x11grab` on the X side captured 588, of
   which 156 differed from the one before. The app was drawing about 54 frames a
   second throughout.
-- **`wf-recorder` draws no pointer.** With the pointer parked mid-screen, no
-  recorded frame showed it. It has no option to draw one.
+- **`wf-recorder` draws no pointer.** With the pointer moved mid-screen, a
+  sampled frame did not show it. It has no option to draw one. `x11grab` on the
+  same X screen does draw it.
 - **The private display is private to this run, and that is enforced rather
   than assumed.** Both backends put an `MIT-MAGIC-COOKIE-1` cookie on the
   display. Measured before the cookie existed: a local client with no
@@ -467,7 +469,8 @@ Checked by running them, not assumed. This section is for maintainers.
   instead: with KDE's Magnifier enabled and a window of one unique colour open
   on the real desktop, both backends recorded and every frame was decoded at
   full resolution. No pixel came within 40 of the marker colour — the closest
-  was 135.8 under `Xvfb` and 117.8 under `--gpu` — and the whole `Xvfb`
+  was 135.8 under `Xvfb` and 117.8 under `--gpu`, whose recorder was then
+  `x11grab` and must be re-measured on `wf-recorder` — and the whole `Xvfb`
   recording measured zero saturation, so nothing coloured reached it at all.
   The detector was shown able to fire: over a clip that really is the marker
   colour, encoded the same way, it matched every pixel.

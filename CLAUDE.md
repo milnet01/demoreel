@@ -6,9 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Working. The whole tool is one executable file, `demoreel` — Python 3, standard
 library only, no build step, no dependency manifest. Runtime dependencies are
-`Xvfb`, `xauth`, `ffmpeg` and `xdotool`, plus `cage`, `Xwayland`,
-`wf-recorder` and `wlr-randr` for `--gpu`, all checked at startup against the
-backend actually in use.
+`xauth`, `ffmpeg` and `xdotool` on both backends; `Xvfb` for the default one;
+`cage`, `Xwayland` and `wlr-randr` for `--gpu`, and `wf-recorder` for
+`record --gpu`. All are checked at startup against what the run will use.
 
 `ROADMAP.md` is generated from the roadmap store. Do not hand-edit it — use the
 roadmap verbs, or the next write reverts your edit.
@@ -233,11 +233,13 @@ are load-bearing and none is obvious:
 - **The order is fixed: `cage`, then resize, then `Xwayland`, then the app.**
   `cage`'s headless output is always 1280x720 at start. `wlr-randr --output
   HEADLESS-1 --custom-mode WxH` resizes it, but an `Xwayland` already running
-  keeps its first size and is scaled into the output. So `cage`'s one child is
-  a step that resizes the output, then `exec`s `Xwayland -geometry WxH`. The app
+  keeps its first size. So `cage`'s one child is a step that resizes the
+  output, then `exec`s `Xwayland -geometry WxH -fullscreen -noreset`. The app
   starts afterwards, as on the `Xvfb` path, so pointer parking happens before
-  the app exists. Do not go back to `xwfb-run`: it starts `cage` and `Xwayland`
-  as one step, with no place for the resize.
+  the app exists. `-noreset` is what keeps it parked, as on `Xvfb` (DEMO-0103):
+  without it the server resets when the parking `xdotool` leaves. Do not go
+  back to `xwfb-run`: it starts `cage` and `Xwayland` as one step, with no
+  place for the resize.
 - **The app still has to be pushed to X11 inside the compositor.** `cage`
   speaks Wayland, so an app left to choose renders natively on it. The recorder
   would see that window, but finding the window, sizing it, the scripted steps
@@ -255,12 +257,16 @@ are load-bearing and none is obvious:
   guessed delay** (DEMO-0012). It prints no progress reports like `ffmpeg`'s,
   so the signal is its own start-up output. Which line proves capture has
   begun is for the build to confirm against the video's first frame.
-- **`--cursor` is refused with `--gpu`.** `wf-recorder` has no pointer option,
-  and with the pointer parked mid-screen no recorded frame showed it.
+- **`record --gpu` refuses `--cursor`.** `wf-recorder` has no pointer option,
+  and with the pointer moved mid-screen a sampled frame did not show it.
 - **Only the recording moves to the compositor.** `--settle`, the blank check
   and `demoreel shot` still read the X side with `x11grab`. A stale-by-a-moment
   picture answers "is anything drawn?" correctly, and one still frame shows no
-  stutter.
+  stutter. So `shot --gpu --cursor` still draws the pointer: `x11grab` draws it
+  on this X screen (measured).
+- **DEMO-0109's stutter note stays, but its explanation must change.** Its
+  current text says `--gpu` captures a busy app only a few times a second,
+  which is the defect this backend removes.
 - **Both displays are behind an auth cookie, so the X-side readers take the
   run's `env` rather than inheriting the session's** — otherwise they fail with
   `Cannot open display`, or silently sample an empty frame. Without a cookie a
