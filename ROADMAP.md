@@ -2423,6 +2423,11 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   does. For the build: SECURITY.md's -nolisten sentence, ci.sh's skip
   list (xwfb-run), the stutter note's text, the Status measurements.
   Filed from the review: DEMO-0112, DEMO-0113.
+  Progress (2026-09-26): built on branch demo-0111 (54afb25), full
+  ./ci.sh green with the --gpu step run here. vkcube shaded at 800x600,
+  H.264 yuv420p with faststart, -d 4 gives 4.00s, typing arrives, no X
+  TCP listener, no cage left. Sent the worktree path to vestige-d7 for
+  their fly-through; merge to main waits on that result.
   **Layman:** Games and 3D apps recorded with --gpu will come out smooth instead of as a slideshow.
   Kind: feature.
   Source: user-request-2026-09-26.
