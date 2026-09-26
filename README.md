@@ -346,7 +346,25 @@ here.
 already running on your real desktop, the new one hands over to it and exits
 successfully — so demoreel sees a healthy process that never showed a window.
 finbreak does exactly this (FIBR-0204). Close the running copy first. The error
-message says so, rather than looking like a demoreel bug.
+message says so, rather than looking like a demoreel bug. An app that keeps its
+one-copy lock under its XDG folders can run beside your copy instead: point
+those folders at a temporary one on the app's own command line. finbreak's lock
+lives there.
+
+**Recording with fresh settings can make a KDE or Qt app unreadable.** Pointing
+`XDG_CONFIG_HOME` at an empty folder keeps your own settings out of the video,
+but the app then gets a dark window with dark text. Copy your colour scheme into
+that folder first, and the app draws normally:
+
+    mkdir -p /tmp/cfg && cp ~/.config/kdeglobals /tmp/cfg/
+    demoreel record -o demo.mp4 -- env XDG_CONFIG_HOME=/tmp/cfg myapp
+
+Checked with `kcalc`: an empty folder gave labels too dark to read, and the
+copied `kdeglobals` fixed them.
+
+**A Qt app may print `Failed to create wl_display`.** That is expected. demoreel
+points the app at a Wayland display that does not exist, so it uses the private
+screen instead of your real one.
 
 **Nothing manages windows on the private screen.** None is needed to record one
 app, and adding one is a dependency for no gain — the single window already has

@@ -2252,7 +2252,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: fix.
   Source: peer-request-ants-terminal-2026-09-25.
 
-- 📋 [DEMO-0102] **A Qt app recorded with an isolated, empty config gets a half-dark palette.**
+- ✅ [DEMO-0102] **A Qt app recorded with an isolated, empty config gets a half-dark palette.**
   Reported by games-hub-35. With XDG_CONFIG_HOME pointed at an empty
   directory, so the owner's settings stay out of frame, Qt takes the
   window background dark and the text light-theme: dark on dark grey,
@@ -2268,6 +2268,13 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   single-instance note. And say the "Failed to create wl_display" line
   a Qt app logs is expected: it is demoreel's unresolvable
   WAYLAND_DISPLAY working. QT_QPA_PLATFORM=xcb stays declined.
+  Resolved (2026-09-26) in README "Things that catch you out".
+  Reproduced with kcalc on Xvfb via `demoreel shot`: XDG_CONFIG_HOME
+  pointed at an empty folder gave labels too dark to read; with
+  ~/.config/kdeglobals copied in, readable. README now says to copy it,
+  states finbreak's XDG-lock option beside the single-instance note, and
+  says a Qt app may print "Failed to create wl_display" (kcalc printed
+  nothing, so "may"). The record-demo skill's half is asked of claude-04.
   **Layman:** Recording a KDE or Qt app with fresh settings can make its text dark on dark and hard to read.
   Kind: doc.
   Source: peer-request-games-hub-2026-09-25.
