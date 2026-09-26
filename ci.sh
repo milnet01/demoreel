@@ -532,6 +532,19 @@ else
         cat "$tmp/gpucur.err" >&2
         echo "record --gpu --cursor failed without saying why" >&2; exit 1; }
     echo "record --gpu refuses --cursor"
+    # DEMO-0110. A blank --gpu run was told to "record it with --gpu instead".
+    # Its advice must fit the backend that ran.
+    if ./demoreel record --gpu -n gategpu -o "$tmp/gpublank.mp4" -d 2 \
+            -s 320x240 --startup-timeout 1 -- sleep 10 \
+            >/dev/null 2>"$tmp/gpublank.err"; then
+        echo "a blank --gpu recording was accepted" >&2; exit 1
+    fi
+    if grep -q "record it with --gpu instead" "$tmp/gpublank.err" \
+            || ! grep -q -- "--settle waits" "$tmp/gpublank.err"; then
+        cat "$tmp/gpublank.err" >&2
+        echo "a blank --gpu run was given the Xvfb advice" >&2; exit 1
+    fi
+    echo "a blank --gpu run gets advice for --gpu"
 fi
 
 step "the pointer starts in the corner, not over the app"

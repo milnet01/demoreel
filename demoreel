@@ -630,9 +630,12 @@ def start_wf_recorder(env, wayland, framerate, output, logfile):
            "-x", "yuv420p", "-f", str(part)]
     # Deliberate: closed in record()'s finally block, as start_ffmpeg's is.
     log = open(logfile, "wb")  # noqa: SIM115
+    # Unbuffered, or a readline that pulls in several lines leaves the rest in
+    # Python's buffer, where select cannot see them: the start line sat there
+    # unread until the deadline and the run failed, one run in three.
     proc = subprocess.Popen(cmd, env=dict(env, WAYLAND_DISPLAY=wayland),
                             stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT)
+                            stderr=subprocess.STDOUT, bufsize=0)
     deadline = time.monotonic() + DISPLAY_READY_TIMEOUT
     while True:
         remaining = deadline - time.monotonic()
@@ -974,12 +977,19 @@ def place_window(env, app, a, width, height, going_on):
     return window
 
 
-BLANK_CAUSES = (
-    "  The app ran but drew nothing here. Two causes account for most of it:\n"
-    "  - It needs the GPU, and Xvfb has none. An OpenGL or Vulkan app\n"
-    "    cannot render on it at all: record it with --gpu instead.\n"
-    "  - It rendered somewhere else. A Flatpak needs --nosocket=wayland on\n"
-    "    its command line; see README.md.")
+def blank_causes(gpu):
+    """What usually made the display blank, for the backend that ran. On
+    --gpu the first Xvfb cause cannot apply, and telling that run to use
+    --gpu was advice to do what it had just done (DEMO-0110)."""
+    first = ("  - It had not drawn yet. A GPU app can spend seconds on a black\n"
+             "    screen while it starts: --settle waits for the first picture.\n"
+             if gpu else
+             "  - It needs the GPU, and Xvfb has none. An OpenGL or Vulkan app\n"
+             "    cannot render on it at all: record it with --gpu instead.\n")
+    return ("  The app ran but drew nothing here. Two causes account for most of it:\n"
+            + first
+            + "  - It rendered somewhere else. A Flatpak needs --nosocket=wayland on\n"
+            "    its command line; see README.md.")
 
 
 def cmd_record(a):
@@ -1128,7 +1138,7 @@ def cmd_record(a):
         what = ("so at least half of it is a flat colour" if blank == "halfway"
                 else "so it ends on a flat colour")
         die(f"the virtual display was blank {blank}, {what}: {output}\n"
-            + BLANK_CAUSES)
+            + blank_causes(a.gpu))
     if unsampled is not None:
         die(f"could not sample the virtual display to check {output} is not blank,\n"
             f"  so this run cannot vouch for it.\n  {unsampled}")
@@ -1155,7 +1165,7 @@ def cmd_record(a):
     print(output)
 
 
-def take_picture(env, display, width, height, cursor, output):
+def take_picture(env, display, width, height, cursor, output, gpu):
     """Save one PNG of the display and check it; the reason it failed, or None.
 
     The check reads the saved file back rather than grabbing a second frame, so
@@ -1178,7 +1188,7 @@ def take_picture(env, display, width, height, cursor, output):
     if gray.returncode != 0 or len(gray.stdout) != width * height:
         return f"could not read back {output} to check it is not blank."
     if frame_is_flat(gray.stdout):
-        return f"the picture is one flat colour: {output}\n" + BLANK_CAUSES
+        return f"the picture is one flat colour: {output}\n" + blank_causes(gpu)
     return None
 
 
@@ -1213,7 +1223,8 @@ def cmd_shot(a):
             moved = window_off_frame(env, window, width, height)
             if moved:
                 note(moved)
-        failed = take_picture(env, display, width, height, a.cursor, output)
+        failed = take_picture(env, display, width, height, a.cursor, output,
+                              a.gpu)
     except subprocess.TimeoutExpired:
         failed = (f"could not take the picture: the display did not answer "
                   f"within {CALL_TIMEOUT}s.")
