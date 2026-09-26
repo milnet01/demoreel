@@ -2414,6 +2414,30 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: feature.
   Source: user-request-2026-09-26.
 
+- 📋 [DEMO-0112] **README still says `vkcube` names no window and is never found.**
+  README "Things that catch you out": "An app that names no window at all
+  is not found — `vkcube` is one." DEMO-0043 made named_windows read
+  _NET_WM_NAME too, so vkcube is found (demoreel's own comment says so,
+  and ci.sh fails a --gpu vkcube run that is startup-timeout shaped).
+  Find an app that truly sets no title, or drop the example. Found by a
+  cold lane on the DEMO-0111 gate; outside that change, so filed.
+  **Layman:** The README gives an example of an app demoreel cannot find, but that app has been found since an earlier fix.
+  Kind: doc-fix.
+  Source: review-contract-2026-09-26 README loop 6.
+
+- 📋 [DEMO-0113] **Check that the Xvfb auth lock is in force before the app starts.**
+  start_xvfb waits after SIGHUP until xdotool WITH the cookie connects.
+  On Xwayland, measured 2026-09-26: a server whose -auth file is empty
+  admits a client with no credential, and a client holding the cookie
+  connects before the lock too. If Xvfb behaves the same, that check can
+  pass before the reset lands, so it proves nothing about the lock.
+  Measure on Xvfb; if so, prove the lock the way DEMO-0111 does on
+  --gpu, by a client WITHOUT the cookie being refused. Raised by a cold
+  lane on the DEMO-0111 gate; code-side, so filed.
+  **Layman:** demoreel may start the app a moment before the private screen's lock actually takes effect.
+  Kind: security.
+  Source: review-contract-2026-09-26 CLAUDE.md loop.
+
 ## 0.4.0 — Speaks your language
 
 Every message, --help and the man page in the reader's language, plus a
