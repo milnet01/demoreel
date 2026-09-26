@@ -2317,9 +2317,38 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   (compositor-side capture is a different tool; see CLAUDE.md's
   Wayland-only note). And make it visible: a low unique-frame ratio after
   a --gpu run should be reported, as a blank video is.
+  Measured (2026-09-26), GPU 0% busy before each run, doom-ants
+  holding its GPU work: Vestige repro at 1920x1080, -d 25. demoreel as
+  is: 756 frames, 67 unique. With -fps_mode passthrough: 753 frames, 90
+  unique, so x11grab delivers ~30 grabs/s on time and ffmpeg pads
+  nothing; dup_frames cannot see this. The grabs return a stale picture.
+  Grabbing the app window (-window_id) beside a root grab: 361 frames,
+  89 unique vs root 792/142, so the window is stale too. Next: does
+  compositor-side capture (wlr-screencopy via wf-recorder, in the OSS
+  repo, not installed) see every frame? The warning must compare frame
+  content, not read dup_frames.
+  Confirmed (2026-09-26): compositor-side capture sees every frame.
+  wf-recorder (installed with the user's OK) on cage's own socket,
+  12 s beside a normal demoreel run of the same Vestige fly-through:
+  643 frames, 643 unique (~54 fps). demoreel's x11grab over the same
+  run: 588 frames, 156 unique. GPU read 70% during it, which is Vestige
+  itself. So the stale picture is Xwayland's X-side copy, and capturing
+  from cage on --gpu is the fix candidate; that changes a runtime
+  dependency and the README contract, so it goes to the user first.
   **Layman:** A demanding 3D app looks smooth on screen but its demoreel video stutters badly, and demoreel doesn't warn you.
   Kind: fix.
   Source: peer-request-vestige-2026-09-26.
+
+- 📋 [DEMO-0110] **A blank `--gpu` recording is told to "record it with --gpu instead".**
+  Seen 2026-09-26 while testing DEMO-0109: a --gpu run stopped before
+  Vestige drew anything failed its blank check correctly, but
+  BLANK_CAUSES says the app "needs the GPU, and Xvfb has none ...
+  record it with --gpu instead". The message should know which backend
+  ran and name causes that fit it — on --gpu, the app not having drawn
+  yet (--settle) or rendering natively to Wayland.
+  **Layman:** When a graphics-card recording comes out blank, demoreel's advice tells you to use the option you already used.
+  Kind: fix.
+  Source: in-session-2026-09-26.
 
 ## 0.4.0 — Speaks your language
 
