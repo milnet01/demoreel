@@ -18,10 +18,19 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   A busy 3D app recorded with --gpu came out as a slideshow with no
   message: the picture demoreel reads was refreshed only a few times a
   second. demoreel now measures how often the middle of a --gpu video
-  changes, and says so when it is rarely. The stutter itself is not
-  fixed yet.
+  changes, and says so when it is rarely. The stutter itself is fixed
+  by DEMO-0111, below.
 
 ### Changed
+
+- **Breaking: `--gpu` now needs `cage`, `Xwayland`, `wlr-randr` and `xauth`, and `record --gpu` also `wf-recorder`; `xwfb-run` is no longer used.** (DEMO-0111)
+  demoreel starts the compositor and the X screen itself, so it can size
+  the screen before the X server starts. On openSUSE all of them are in
+  the OSS repository.
+
+- **Breaking: `record --gpu --cursor` is refused.** (DEMO-0111)
+  The compositor's picture never has the pointer in it, so the option
+  could not be honoured. `shot --gpu --cursor` still draws the pointer.
 
 - **Breaking: the pointer now starts in the bottom-right corner, not the centre.** (DEMO-0103)
   A fresh private screen put the pointer in the middle, where it lit up
@@ -37,6 +46,20 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   Now everything after `type` and one space is typed as it stands. If
   you wrapped the text in an extra pair of double quotes to keep single
   quotes, remove them, or they will be typed too.
+
+### Fixed
+
+- **Busy 3D apps recorded with `--gpu` now come out smooth and at full size.** (DEMO-0111)
+  demoreel used to read the picture from the X side, which a busy app
+  refreshed only a few times a second, so a smooth game recorded as a
+  slideshow. `record --gpu` now records the compositor's own picture
+  with wf-recorder: on Vestige's fly-through at 1920x1080, 750 of 751
+  frames were new, against 156 of 588 before. The stutter note stays,
+  and now means the app itself drew few frames.
+
+- **A blank `--gpu` recording no longer tells you to record with `--gpu`.** (DEMO-0110)
+  Its advice now fits the backend that ran: on `--gpu` it names the app
+  not having drawn yet, and `--settle`, which waits for it.
 
 ## [0.2.2] - 2026-09-26
 

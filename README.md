@@ -148,7 +148,7 @@ you would only find out by watching it.
 | `-r`, `--framerate` | Frames per second. |
 | `-n`, `--name` | A name for this run, so `demoreel stop` knows which one you mean. |
 | `-a`, `--action` | A scripted step. Repeat it; they run in order. |
-| `--cursor` | Draw the mouse pointer. Off by default, because with no scripted clicks it just sits in the corner. |
+| `--cursor` | Draw the mouse pointer. Off by default, because with no scripted clicks it just sits in the corner. Not available with `record --gpu`. |
 | `--app-log` | Save what the app printed to a file. |
 | `--settle` | Wait for the app to draw something before starting to record. |
 | `--gpu` | For apps that need the graphics card. |
@@ -236,14 +236,33 @@ same single file out. Privacy is unchanged — it is still a screen of its own,
 started fresh for this run, with nothing of your session on it.
 
 The ordinary screen stays the default, because it is lighter and most apps do
-not need the card. `--gpu` needs `xwfb-run` (the `xwayland-run` package) and
-`cage` installed; demoreel says so plainly if they are missing.
+not need the card. `--gpu` needs `cage`, `Xwayland`, `wlr-randr` and `xauth`
+installed, and `record --gpu` needs `wf-recorder` too; demoreel says so plainly
+if any is missing.
 
-**A busy 3D app can stutter on `--gpu`.** While the app keeps the card busy, the
-picture demoreel records is refreshed only a few times a second, so a smooth
-game can come out as a slideshow. After a `--gpu` run, demoreel checks how often
-the middle of the video changed and prints a note when it is rarely. A still app
-repeats frames too, so the note says "if the app was moving". A fix is planned.
+**`--gpu` records from the compositor, not from the X screen.** The private
+screen is an X screen (`Xwayland`) shown by a small compositor (`cage`). While a
+3D app keeps the card busy, the X side's copy of the picture is refreshed only a
+few times a second. The compositor's copy is not. So `--gpu` records with
+`wf-recorder`, which reads the compositor's copy. Measured on the same 3D app
+over the same run: every frame new from the compositor, about one in four from
+the X side.
+
+After a `--gpu` run, demoreel still checks how often the middle of the video
+changed, and prints a note when it is rarely. A still app repeats frames too, so
+the note says "if the app was moving".
+
+**`record --gpu` refuses `--cursor`.** The compositor's copy of the picture
+never has the pointer in it, so the option cannot be honoured. demoreel says so
+before recording.
+
+`demoreel shot --gpu` still takes its picture from the X screen, so its
+`--cursor` still works. One still picture shows no stutter.
+
+The blank check still looks at the X screen. On `record --gpu` that is not
+where the video comes from, so demoreel also checks the finished video, at the
+same moments as its two looks at the screen and skipped in the same cases. A
+flat frame there fails the run as a blank screen does.
 
 ## Recording a Flatpak app
 
@@ -301,9 +320,10 @@ Four requirements follow, and they are requirements rather than preferences:
   *found*, never fixed — a hardcoded one is a collision waiting to happen, where
   the second run either fails or, worse, quietly records the first run's app.
   The screen has to report its own number back (that is what `Xvfb -displayfd`
-  does, and Xwayland's own inside `xwfb-run`). Scanning for a free number is not
-  a substitute: between finding one free and claiming it, another run can take
-  it.
+  does, and `Xwayland -displayfd` on `--gpu`). Scanning for a free number
+  is not a substitute: between finding one free and claiming it, another run can
+  take it. The `--gpu` compositor's own connection name is found the same way:
+  the compositor picks it, and demoreel reads back the name it picked.
   Everything a recording writes is keyed to its name, so simultaneous
   recordings need different `-n` values.
 - **Never asks you anything.** No prompts, no dialogs, no "pick a window" step.
@@ -419,29 +439,46 @@ Checked by running them, not assumed. This section is for maintainers.
   `Xvfb`, 99.994% of the frame is one grey level; a window only 200x100 brings
   that to 98%. Refusing above 99.9% separates the two without a threshold that
   needs tuning.
-- `xwfb-run` (the `xwayland-run` package) and `cage` are installed, and the
-  combination reaches the real GPU: `glxinfo` inside it reports
-  `AMD Radeon RX 6600 (radeonsi)` rather than `llvmpipe`, and `vkcube` selects
-  the discrete card through the `xcb` surface. `weston`'s headless backend was
-  tried and falls back to software here (`Failed to initialize glamor`), so
-  `cage` is not an arbitrary pick between the two.
-- The `--gpu` display size comes from Xwayland's own geometry setting, not from
-  the compositor. Without it, both `cage` and `weston` hand back Xwayland's
-  rootful default of 640x480 and `-s` would be silently ignored.
+- `Xwayland` on a headless `cage` reaches the real GPU: `glxinfo` inside it
+  reports `AMD Radeon RX 6600 (radeonsi)` rather than `llvmpipe`, and `vkcube`
+  selects the discrete card through the `xcb` surface. `weston`'s headless
+  backend was tried and falls back to software here (`Failed to initialize
+  glamor`), so `cage` is not an arbitrary pick between the two.
+- **The `--gpu` size must be set twice, and in order.** `cage`'s headless
+  screen starts at 1280x720, and a full-screen `Xwayland` is scaled into it.
+  `wlr-randr` resizes `cage`'s screen, but an `Xwayland` already running keeps
+  its first size: resized to 1920x1080, a full-frame window filled only the
+  top-left 1280x720. So demoreel resizes `cage`'s screen first, then starts
+  `Xwayland` with the same size. Measured that way at 1600x900: a full-frame
+  window covered the whole recorded frame, unscaled. `xwfb-run` starts `cage`
+  and `Xwayland` together, with no step between, which is why demoreel no longer
+  uses it.
+- **The compositor's copy of the picture sees every frame; the X side's does
+  not.** On a busy 3D app over the same 12 seconds, `wf-recorder` on `cage`
+  captured 643 frames, all different. `x11grab` on the X side captured 588, of
+  which 156 differed from the one before. The app was drawing about 54 frames a
+  second throughout.
+- **`wf-recorder` draws no pointer.** With the pointer moved over the app, none
+  of the 39 frames of a recording showed it; `x11grab` on the same X screen drew
+  it at that spot. `wf-recorder` has no option to draw one.
 - **The private display is private to this run, and that is enforced rather
   than assumed.** Both backends put an `MIT-MAGIC-COOKIE-1` cookie on the
   display. Measured before the cookie existed: a local client with no
   credential read the geometry and grabbed a frame of what was on screen.
   Measured after: the same client is refused, and one holding the run's cookie
   still works. File permissions on the socket are not an alternative — `Xvfb`
-  listens on an abstract socket too, which has none.
+  listens on an abstract socket too, which has none. On `--gpu` the compositor
+  has a socket of its own, which `wf-recorder` reads the picture through. `cage`
+  makes it in your private runtime folder (`/run/user/<uid>`, mode `0700`), so
+  only programs running as you can reach it.
 - **The privacy promise is measured, not just argued.** Every other claim here
   has a measurement behind it; this one rested on the reasoning that nothing of
   the user's session is on the display, so nothing of it can be in frame. Tested
   instead: with KDE's Magnifier enabled and a window of one unique colour open
   on the real desktop, both backends recorded and every frame was decoded at
   full resolution. No pixel came within 40 of the marker colour — the closest
-  was 135.8 under `Xvfb` and 117.8 under `--gpu` — and the whole `Xvfb`
+  was 135.8 under `Xvfb` and 117.8 under `--gpu`, whose recorder was then
+  `x11grab` and must be re-measured on `wf-recorder` — and the whole `Xvfb`
   recording measured zero saturation, so nothing coloured reached it at all.
   The detector was shown able to fire: over a clip that really is the marker
   colour, encoded the same way, it matched every pixel.
@@ -453,8 +490,9 @@ Checked by running them, not assumed. This section is for maintainers.
   a boring app rather than a broken feature.
 - **A Wayland-only app is the design's limit.** `--nosocket=wayland` breaks such
   an app rather than redirecting it, and `--gpu` does not rescue it: that
-  backend also pushes the app to X11, because a client rendering natively on the
-  compositor is not in the X root window and `x11grab` cannot see it.
+  backend also pushes the app to X11. Its recorder would see a native window,
+  but finding the window, sizing it, the scripted steps and the blank check all
+  work through X.
 
 ## Status
 
@@ -470,6 +508,10 @@ hardware-rendered spinning cube, an ordinary app sized to fill the frame,
 a `--gpu` run and an `Xvfb` run side by side on different displays, and no
 `cage` or `Xwayland` left running afterwards. It has since been used on a real
 target — a hardware ray-traced renderer, recorded headlessly at 1280x800.
+Re-checked after `--gpu` moved to recording the compositor: `vkcube` as a shaded
+cube filling an 800x600 frame, an H.264 `yuv420p` file with its index at the
+front, typed text and a keypress arriving in the app, and no `cage` left
+running afterwards.
 
 `--settle` verified against a window that is uniformly black for five seconds
 and then draws: without it the recording is three seconds of black and the
@@ -492,7 +534,8 @@ documentation-only decision from it rather than restating them. Add a check to
 `ci.sh`, never to the workflow.
 
 **Two of its steps only run where the machine can run them.** One records
-`--gpu -- vkcube` and needs a graphics card with `cage` and `xwfb-run`; another
+`--gpu -- vkcube` and needs a graphics card with `cage`, `Xwayland`,
+`wf-recorder` and `wlr-randr`; another
 records a real Flatpak and needs that application installed. Both print why
 they skipped otherwise, and both skip on GitHub — so the checks GitHub runs
 still cover the ordinary backend alone. And a green step is not the same as a
