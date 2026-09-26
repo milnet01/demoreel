@@ -508,6 +508,10 @@ hardware-rendered spinning cube, an ordinary app sized to fill the frame,
 a `--gpu` run and an `Xvfb` run side by side on different displays, and no
 `cage` or `Xwayland` left running afterwards. It has since been used on a real
 target — a hardware ray-traced renderer, recorded headlessly at 1280x800.
+Re-checked after `--gpu` moved to recording the compositor: `vkcube` as a shaded
+cube filling an 800x600 frame, an H.264 `yuv420p` file with its index at the
+front, typed text and a keypress arriving in the app, and no `cage` left
+running afterwards.
 
 `--settle` verified against a window that is uniformly black for five seconds
 and then draws: without it the recording is three seconds of black and the

@@ -482,11 +482,11 @@ step "the --gpu backend records an app that needs the card"
 # vkcube by hand and looking at the frame.
 #
 # It runs where the machine can reach a card and skips where it cannot: an
-# ordinary GitHub runner has neither cage nor xwfb-run installed and no render
+# ordinary GitHub runner has neither cage nor wf-recorder installed and no render
 # node to open. A skip prints why. It is not a pass, and it is not a licence to
 # change this path without recording on it.
 gpu_missing=()
-for prog in xwfb-run cage vkcube; do
+for prog in cage Xwayland wlr-randr wf-recorder vkcube; do
     command -v "$prog" >/dev/null || gpu_missing+=("$prog")
 done
 if [ ${#gpu_missing[@]} -gt 0 ]; then
@@ -522,6 +522,16 @@ else
         exit 1
     }
     echo "vkcube is in the frame, and the window was found in ${gpu_elapsed}s"
+    # DEMO-0111. record --gpu records the compositor's picture, which never has
+    # the pointer in it, so --cursor must be refused rather than ignored.
+    if ./demoreel record --gpu --cursor -n gategpu -o "$tmp/gpucur.mp4" -d 1 \
+            -- vkcube >/dev/null 2>"$tmp/gpucur.err"; then
+        echo "record --gpu --cursor recorded instead of refusing" >&2; exit 1
+    fi
+    grep -q "not available with record --gpu" "$tmp/gpucur.err" || {
+        cat "$tmp/gpucur.err" >&2
+        echo "record --gpu --cursor failed without saying why" >&2; exit 1; }
+    echo "record --gpu refuses --cursor"
 fi
 
 step "the pointer starts in the corner, not over the app"

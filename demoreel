@@ -279,57 +279,97 @@ def start_xvfb(width, height, base, logfile):
     return None  # unreachable; die() exits
 
 
-def start_gpu_display(width, height, command, base, logfile, appout):
-    """Start the app on a GPU-capable private display; return (proc, display, auth).
+def start_gpu_display(width, height, base, logfile):
+    """Start a GPU-capable private display: (cage, display, auth, wayland).
 
     Xvfb is a software X server with no DRI, so an OpenGL or Vulkan app cannot
-    render on it at all — it is not slow there, it is absent. `xwfb-run` gives
-    us a real Xwayland server on a headless `cage` compositor, which does reach
-    the GPU. Same privacy property: cage shows one client and nothing else, and
-    it is a separate compositor from the user's session.
+    render on it at all — it is not slow there, it is absent. A rootful
+    Xwayland on a headless `cage` compositor reaches the GPU. Same privacy
+    property: cage shows one client and nothing else, and it is a separate
+    compositor from the user's session.
 
-    It launches the app itself rather than handing back a display, so unlike
-    the Xvfb path the app and the display start as one step. The display number
-    still comes from the server (Xwayland's own -displayfd, inside xwfb-run)
-    rather than from a scan, which is what keeps concurrent runs safe.
+    The order is fixed. cage's headless output starts at 1280x720, and an
+    Xwayland already running keeps its first size however the output is
+    resized later, so cage's one child resizes the output and only then
+    becomes Xwayland (DEMO-0111). `xwfb-run` starts the two as one step, with
+    no place for the resize, which is why it is not used.
+
+    Nothing is guessed: cage picks its socket name and Xwayland its display
+    number, and both come back on one pipe, in that order. -noreset keeps the
+    pointer where park_pointer puts it, as on Xvfb (DEMO-0103).
+
+    The cookie goes in after -displayfd reports the number, as on Xvfb, and
+    Xwayland re-reads the changed file without being signalled. So the lock is
+    proven by a client without the cookie being refused while one holding it
+    connects: before the cookie both get in, and a dead display refuses both.
     """
     auth = Path(f"{base}.Xauthority")
+    auth.unlink(missing_ok=True)
     auth.touch(mode=0o600)
-    reported = Path(f"{base}.display")
-    reported.unlink(missing_ok=True)
 
-    # cage speaks Wayland, so the app needs the same shove towards X11 as on
-    # the Xvfb path or it renders where x11grab cannot see it. Then hand the
-    # display Xwayland picked back to us, and become the app.
-    inner = (f"WAYLAND_DISPLAY={NO_WAYLAND}; export WAYLAND_DISPLAY; "
-             f'printf "%s\\n" "$DISPLAY" > {shlex.quote(str(reported))}; exec "$@"')
-    proc = subprocess.Popen(
-        # -geometry sets the size, and needs its dash escaped and its value in
-        # a second -s: xwfb-run passes each -s through as one argument, so
-        # "-geometry 1280x800" would reach Xwayland as a single unknown option.
-        ["xwfb-run", "-c", "cage", "-f", str(auth), "-e", str(logfile),
-         "-s", "\\-geometry", "-s", f"{width}x{height}",
-         "--", "sh", "-c", inner, "demoreel", *command],
-        stdout=appout, stderr=subprocess.STDOUT, start_new_session=True)
+    read_fd, write_fd = os.pipe()
+    os.set_inheritable(write_fd, True)
+    inner = (f'printf "%s\\n" "$WAYLAND_DISPLAY" >&{write_fd} && '
+             f"wlr-randr --output HEADLESS-1 --custom-mode {width}x{height} && "
+             f"exec Xwayland -displayfd {write_fd} -auth {shlex.quote(str(auth))} "
+             f"-geometry {width}x{height} -fullscreen -noreset -nolisten tcp")
+    with open(logfile, "wb") as log:
+        # Its own session, so ending it takes Xwayland with it. The log is a
+        # file for the reason start_xvfb gives: a pipe nobody drains blocks.
+        proc = subprocess.Popen(
+            ["cage", "--", "sh", "-c", inner],
+            env=dict(os.environ, WLR_BACKENDS="headless"),
+            pass_fds=(write_fd,), stdout=subprocess.DEVNULL, stderr=log,
+            start_new_session=True)
+    os.close(write_fd)
 
-    display = ""
+    buf = b""
     deadline = time.monotonic() + DISPLAY_READY_TIMEOUT
-    while time.monotonic() < deadline and proc.poll() is None:
-        text = reported.read_text(errors="replace") if reported.exists() else ""
-        if "\n" in text:
-            display = text.strip()
+    while buf.count(b"\n") < 2:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
             break
-        time.sleep(0.25)
-    reported.unlink(missing_ok=True)
+        if not select.select([read_fd], [], [], remaining)[0]:
+            continue
+        chunk = os.read(read_fd, 64)
+        if not chunk:
+            break
+        buf += chunk
+    os.close(read_fd)
 
-    if not display:
+    lines = buf.decode(errors="replace").split("\n")
+    wayland = lines[0].strip()
+    number = lines[1].strip() if len(lines) > 1 else ""
+    if not wayland or not number.isdigit():
         end_process(proc, group=True)
         auth.unlink(missing_ok=True)
-        log = Path(logfile)
-        tail = "\n  ".join(log.read_text(errors="replace").splitlines()[-3:]
-                           if log.exists() else [])
-        die("the GPU display did not start." + (f"\n  {tail}" if tail.strip() else ""))
-    return proc, display, auth
+        tail = "\n  ".join(Path(logfile).read_text(errors="replace")
+                           .strip().splitlines()[-3:])
+        die("the GPU display did not start." + (f"\n  {tail}" if tail else ""))
+
+    display = f":{number}"
+    added = subprocess.run(["xauth", "-f", str(auth), "add", display,
+                            "MIT-MAGIC-COOKIE-1", secrets.token_hex(16)],
+                           capture_output=True, text=True, check=False)
+    if added.returncode != 0:
+        end_process(proc, group=True)
+        auth.unlink(missing_ok=True)
+        die("could not write the display's auth cookie."
+            + (f"\n  {added.stderr.strip()}" if added.stderr.strip() else ""))
+
+    locked = dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth))
+    stranger = dict(os.environ, DISPLAY=display, XAUTHORITY=os.devnull)
+    deadline = time.monotonic() + DISPLAY_READY_TIMEOUT
+    while time.monotonic() < deadline:
+        if (xdotool(stranger, "getdisplaygeometry").returncode != 0
+                and xdotool(locked, "getdisplaygeometry").returncode == 0):
+            return proc, display, auth, wayland
+        time.sleep(0.1)
+    end_process(proc, group=True)
+    auth.unlink(missing_ok=True)
+    die("the GPU display did not lock: a client without its auth cookie "
+        "could still connect, or none could.")
+    return None  # unreachable; die() exits
 
 
 def xdotool(env, *args, check=False, stdin_text=None):
@@ -394,11 +434,13 @@ def changed_share(output, framerate):
     """The share of frames that differ from the one before, over a window from
     the middle of the video; None if it could not be measured.
 
-    On --gpu, Xwayland updates the picture x11grab reads only a few times a
-    second while the GPU is busy, so a moving app records as runs of repeated
-    frames, and nothing else notices (DEMO-0109). A still app repeats frames
-    too, which is why this only ever produces a note. One window, not the whole
-    video: decoding a long recording to count would add most of its length.
+    On --gpu a moving app that draws few frames records as runs of repeated
+    ones, and nothing else notices. It was written when the X side's stale
+    picture caused exactly that (DEMO-0109); record --gpu now captures the
+    compositor's, so what is left is the app's own rate. A still app repeats
+    frames too, which is why this only ever produces a note. One window, not the
+    whole video: decoding a long recording to count would add most of its
+    length.
     """
     try:
         probe = subprocess.run(
@@ -562,6 +604,81 @@ def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor
     return proc, log
 
 
+def partial_video(output):
+    """Where record --gpu's recorder writes before finish_gpu_video: beside
+    the output, on its disk, and not in the state directory, which is RAM."""
+    return output.with_name(f".{output.stem}.demoreel-part.mp4")
+
+
+def start_wf_recorder(env, wayland, framerate, output, logfile):
+    """Record cage's own output, for record --gpu (DEMO-0111).
+
+    Under a busy 3D app the X side's copy of the picture goes stale, so x11grab
+    records a slideshow: 156 new frames of 588 where this got 643 of 643, over
+    the same run (DEMO-0109). -D asks for every frame rather than only changed
+    ones, without which SIGINT is also ignored while the screen is still, and
+    -y stops it prompting before an overwrite. The encoder settings match
+    start_ffmpeg's, so the two backends hand back the same kind of file.
+
+    It prints no progress reports, so the start signal is the line announcing
+    its output, printed once the encoder has its first frame. The countdown is
+    counted from there, as start_ffmpeg's is from its first report (DEMO-0012).
+    """
+    part = partial_video(output)
+    cmd = ["wf-recorder", "-D", "-y", "-r", str(framerate),
+           "-c", "libx264", "-p", "preset=veryfast", "-p", "crf=23",
+           "-x", "yuv420p", "-f", str(part)]
+    # Deliberate: closed in record()'s finally block, as start_ffmpeg's is.
+    log = open(logfile, "wb")  # noqa: SIM115
+    proc = subprocess.Popen(cmd, env=dict(env, WAYLAND_DISPLAY=wayland),
+                            stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT)
+    deadline = time.monotonic() + DISPLAY_READY_TIMEOUT
+    while True:
+        remaining = deadline - time.monotonic()
+        line = (proc.stdout.readline()
+                if remaining > 0 and select.select([proc.stdout], [], [], remaining)[0]
+                else b"")
+        log.write(line)
+        if line.startswith(b"Output #0"):
+            break
+        if not line:
+            proc.kill()
+            proc.wait()
+            log.close()
+            part.unlink(missing_ok=True)
+            tail = Path(logfile).read_text(errors="replace").strip()
+            die("wf-recorder could not start recording."
+                + (f"\n  {tail}" if tail else ""))
+    # Keep copying its output to the log, or it blocks once the pipe fills.
+    threading.Thread(target=lambda: log.write(proc.stdout.read()),
+                     daemon=True).start()
+    return proc, log
+
+
+def finish_gpu_video(output, logfile):
+    """Give record --gpu's file the +faststart the Xvfb path's has.
+
+    wf-recorder has no option for muxer flags, so a stream copy moves the index
+    to the front. Nothing is re-encoded. The partial file is kept if the copy
+    fails, and the message names it.
+    """
+    part = partial_video(output)
+    if not part.exists():
+        return
+    copy = subprocess.run(  # noqa: PLW1510 - a failed copy is handled below
+        ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
+         "-i", str(part), "-c", "copy", "-movflags", "+faststart",
+         "-y", str(output)],
+        capture_output=True, timeout=6 * CALL_TIMEOUT)
+    if copy.returncode != 0:
+        with open(logfile, "ab") as log:
+            log.write(copy.stderr)
+        die(f"could not finish the video; the recording is kept in {part}. "
+            f"See {logfile}")
+    part.unlink()
+
+
 class SampleError(Exception):
     """The display could not be sampled, so whether it is blank is unknown."""
 
@@ -596,6 +713,33 @@ def display_is_blank(env, display, width, height):
                  if ln.strip()]
         raise SampleError("\n  ".join(lines[-3:])
                           or f"ffmpeg exited {grab.returncode} with no frame")
+    return frame_is_flat(grab.stdout)
+
+
+def video_is_blank(output, at, width, height):
+    """True if the finished video is one flat colour at `at` seconds in, or in
+    its last half second when `at` is None.
+
+    display_is_blank reads the X side, and on record --gpu the video comes from
+    the compositor instead, so a recorder writing black under a drawn display
+    would pass it. This asks the file the same question, at the moments the
+    display was asked, with the same test. Raises SampleError, as that does.
+    """
+    seek = ["-sseof", "-0.5"] if at is None else ["-ss", f"{at:.3f}"]
+    try:
+        grab = subprocess.run(  # noqa: PLW1510 - a failed read is handled below
+            ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
+             *seek, "-i", str(output), "-frames:v", "1",
+             "-pix_fmt", "gray", "-f", "rawvideo", "-"],
+            capture_output=True, timeout=CALL_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        raise SampleError(f"reading a frame of {output} took over "
+                          f"{CALL_TIMEOUT}s") from None
+    if grab.returncode != 0 or len(grab.stdout) != width * height:
+        lines = [ln for ln in grab.stderr.decode(errors="replace").splitlines()
+                 if ln.strip()]
+        raise SampleError("\n  ".join(lines[-3:])
+                          or f"no frame of {output} could be read")
     return frame_is_flat(grab.stdout)
 
 
@@ -657,15 +801,19 @@ def wait_until_drawn(env, display, width, height, timeout):
     return False
 
 
-def stop_ffmpeg(proc):
-    """Ask ffmpeg to finish so the file gets its index written; a killed
-    recorder leaves an mp4 that most players refuse to open."""
+def stop_recorder(proc):
+    """Ask the recorder to finish so the file gets its index written; a killed
+    recorder leaves an mp4 that most players refuse to open. ffmpeg takes `q`
+    on its stdin, wf-recorder takes SIGINT."""
     if proc.poll() is not None:
         return
     try:
-        proc.stdin.write(b"q")
-        proc.stdin.flush()
-        proc.stdin.close()
+        if proc.args[0] == "wf-recorder":
+            proc.send_signal(signal.SIGINT)
+        else:
+            proc.stdin.write(b"q")
+            proc.stdin.flush()
+            proc.stdin.close()
     except OSError:
         proc.terminate()
     try:
@@ -728,11 +876,19 @@ def warn_if_flatpak_underflagged(command):
 def prepare(a, suffix):
     """What `record` and `shot` both check before starting anything: the tools,
     the app command, the size, and where the output and the app log go."""
-    required = (["ffmpeg", "xdotool"]
-                + (["xwfb-run", "cage"] if a.gpu else ["Xvfb", "xauth"]))
+    recording = suffix == ".mp4"
+    required = ["ffmpeg", "xdotool", "xauth"]
+    if a.gpu:
+        required += ["cage", "Xwayland", "wlr-randr"]
+        required += ["wf-recorder"] if recording else []
+    else:
+        required.append("Xvfb")
     missing = [t for t in required if shutil.which(t) is None]
     if missing:
         die(f"missing required program(s): {', '.join(missing)}")
+    if recording and a.gpu and a.cursor:
+        die("--cursor is not available with record --gpu: that backend records "
+            "the compositor's picture, which never has the pointer in it.")
 
     command = list(a.command)
     if command and command[0] == "--":
@@ -769,22 +925,21 @@ def park_pointer(env, width, height):
 
 
 def launch(a, command, width, height, base, displaylog, appout):
-    """Start the private display and the app on it: (xvfb, app, display, auth, env).
+    """Start the private display and the app on it.
 
-    xvfb is None on the --gpu backend, whose wrapper owns the display. Nothing
-    is left running if the app cannot be started.
+    Returns (server, app, display, auth, env, wayland). server is Xvfb, or on
+    --gpu the cage that holds Xwayland, and ends with end_server. wayland is
+    cage's socket name on --gpu, which only the recorder uses, and None on
+    Xvfb. Both backends start the app afterwards, so the pointer is parked
+    before the app first sees it. Nothing is left running if the app cannot
+    be started.
     """
     if a.gpu:
-        # This backend starts the app for us, so there is nothing to launch
-        # here; see start_gpu_display for why the two cannot be separated.
-        # The pointer is parked as soon as the display exists, which may be
-        # after the app has seen it: moving it away still ends the hover.
-        app, display, auth = start_gpu_display(width, height, command,
-                                               base, displaylog, appout)
-        env = dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth))
-        park_pointer(env, width, height)
-        return None, app, display, auth, env
-    xvfb, display, auth = start_xvfb(width, height, base, displaylog)
+        server, display, auth, wayland = start_gpu_display(width, height, base,
+                                                           displaylog)
+    else:
+        server, display, auth = start_xvfb(width, height, base, displaylog)
+        wayland = None
     env = dict(os.environ, DISPLAY=display, WAYLAND_DISPLAY=NO_WAYLAND,
                XAUTHORITY=str(auth))
     park_pointer(env, width, height)
@@ -792,10 +947,17 @@ def launch(a, command, width, height, base, displaylog, appout):
         app = subprocess.Popen(command, env=env, start_new_session=True,
                                stdout=appout, stderr=subprocess.STDOUT)
     except (FileNotFoundError, PermissionError) as exc:
-        end_process(xvfb)
+        end_server(server)
         auth.unlink(missing_ok=True)
         die(f"could not run {command[0]!r}: {exc.strerror}.")
-    return xvfb, app, display, auth, env
+    return server, app, display, auth, env, wayland
+
+
+def end_server(server):
+    """End the display. On --gpu that is cage, in a session of its own, and
+    the group goes so Xwayland goes with it; Xvfb shares ours and must not."""
+    if server is not None:
+        end_process(server, group=server.args[0] == "cage")
 
 
 def place_window(env, app, a, width, height, going_on):
@@ -850,15 +1012,19 @@ def cmd_record(a):
     # every check this tool can make.
     # Deliberate: as above - closed in the finally block, not here.
     appout = open(applog, "wb") if applog else sys.stderr  # noqa: SIM115
-    xvfb = app = ffmpeg = log = auth = None
+    server = app = recorder = log = auth = None
     blank = None  # when the display was found blank: "halfway" or "at the end"
     unsampled = None
+    # When each display sample was taken, as (when, seconds into the video):
+    # record --gpu asks the finished file the same question at the same
+    # moments, so the skips that decided whether a sample was taken carry
+    # over. None means the end of the video.
+    sampled = []
     moved = None  # how the window stopped filling the frame, said once
     try:
         write_state(statefile, state)
-        xvfb, app, display, auth, env = launch(a, command, width, height,
-                                               state_dir() / a.name,
-                                               displaylog, appout)
+        server, app, display, auth, env, wayland = launch(
+            a, command, width, height, state_dir() / a.name, displaylog, appout)
         window = place_window(env, app, a, width, height, "recording")
 
         try:
@@ -870,8 +1036,13 @@ def cmd_record(a):
         if not drawn:
             note(f"nothing was drawn within {a.settle}s; recording anyway.")
 
-        ffmpeg, log = start_ffmpeg(env, display, width, height, a.framerate,
-                                   output, logpath, a.cursor)
+        if a.gpu:
+            recorder, log = start_wf_recorder(env, wayland, a.framerate,
+                                              output, logpath)
+        else:
+            recorder, log = start_ffmpeg(env, display, width, height,
+                                         a.framerate, output, logpath, a.cursor)
+        started = time.monotonic()
         write_state(statefile, dict(state, display=display, recording=True))
         note(f"recording {display} to {output} "
              f"({'until stopped' if a.duration == 0 else f'{a.duration}s'})")
@@ -899,6 +1070,7 @@ def cmd_record(a):
                         moved = window_off_frame(env, window, width, height)
                         if moved:
                             note(moved)
+                    sampled.append(("halfway", now - started))
                     try:
                         if display_is_blank(env, display, width, height):
                             blank = "halfway"
@@ -906,8 +1078,8 @@ def cmd_record(a):
                     except SampleError as exc:
                         unsampled = str(exc)
                         break
-            if ffmpeg.poll() is not None:
-                note(f"ffmpeg stopped early; see {logpath}")
+            if recorder.poll() is not None:
+                note(f"the recorder stopped early; see {logpath}")
                 break
             if app.poll() is not None:
                 note("the app closed; ending the recording.")
@@ -920,7 +1092,7 @@ def cmd_record(a):
         # Stop recording before sampling. The display does not change when the
         # recorder stops, and sampling first put a third of a second of
         # overshoot into every video (DEMO-0012).
-        stop_ffmpeg(ffmpeg)
+        stop_recorder(recorder)
         # Only meaningful while the app is still up: one that closed itself
         # mid-run leaves an empty display behind, and that video is fine.
         if moved is None and window is not None and app.poll() is None:
@@ -928,6 +1100,7 @@ def cmd_record(a):
             if moved:
                 note(moved)
         if blank is None and unsampled is None and app.poll() is None:
+            sampled.append(("at the end", None))
             try:
                 if display_is_blank(env, display, width, height):
                     blank = "at the end"
@@ -936,16 +1109,18 @@ def cmd_record(a):
     finally:
         # Order matters: finish the video before the app and display go away,
         # or the last frames catch a half-dead app.
-        if ffmpeg is not None:
-            stop_ffmpeg(ffmpeg)
+        if recorder is not None:
+            stop_recorder(recorder)
         if log is not None:
             log.close()
         if appout is not sys.stderr:
             appout.close()
         end_process(app, group=True)
-        end_process(xvfb)
+        end_server(server)
         if auth is not None:
             auth.unlink(missing_ok=True)
+        if a.gpu:
+            finish_gpu_video(output, logpath)
 
     if not output.exists() or output.stat().st_size == 0:
         die(f"no video was written to {output}. See {logpath}")
@@ -958,12 +1133,22 @@ def cmd_record(a):
         die(f"could not sample the virtual display to check {output} is not blank,\n"
             f"  so this run cannot vouch for it.\n  {unsampled}")
     if a.gpu:
+        for when, at in sampled:
+            try:
+                flat = video_is_blank(output, at, width, height)
+            except SampleError as exc:
+                die(f"could not read {output} back to check it is not blank,\n"
+                    f"  so this run cannot vouch for it.\n  {exc}")
+            if flat:
+                die(f"the video is a flat colour {when}, though the private "
+                    f"screen was not: {output}\n  The recorder captured "
+                    f"something other than the screen. See {logpath}")
         share = changed_share(output, a.framerate)
         if share is not None and share < CHANGED_NOTE_BELOW:
             note(f"only {share:.0%} of the frames in the middle of {output} "
                  f"changed from the one before.\n  If the app was moving the "
-                 f"whole time, the video stutters: --gpu captures a busy 3D "
-                 f"app only a few times a second (DEMO-0109).")
+                 f"whole time, it drew that few new frames itself: the video "
+                 f"has every frame it drew.")
     for stale in (logpath, displaylog):
         stale.unlink(missing_ok=True)  # only worth keeping when something failed
     write_state(statefile, dict(state, result="ok"))
@@ -1009,11 +1194,11 @@ def cmd_shot(a):
     displaylog = rundir / "display.log"
     # Deliberate: closed in the finally block, as in cmd_record.
     appout = open(applog, "wb") if applog else sys.stderr  # noqa: SIM115
-    xvfb = app = auth = None
+    server = app = auth = None
     try:
-        xvfb, app, display, auth, env = launch(a, command, width, height,
-                                               rundir / "shot", displaylog,
-                                               appout)
+        server, app, display, auth, env, _ = launch(a, command, width, height,
+                                                    rundir / "shot", displaylog,
+                                                    appout)
         window = place_window(env, app, a, width, height, "taking the picture")
         try:
             drawn = wait_until_drawn(env, display, width, height, a.settle)
@@ -1040,7 +1225,7 @@ def cmd_shot(a):
         if appout is not sys.stderr:
             appout.close()
         end_process(app, group=True)
-        end_process(xvfb)
+        end_server(server)
         if auth is not None:
             auth.unlink(missing_ok=True)
     if failed:
@@ -1198,7 +1383,8 @@ def main():
     rec.add_argument("--gpu", action="store_true",
                      help="for an app that needs the graphics card (OpenGL, "
                           "Vulkan): record it on a headless compositor instead "
-                          "of Xvfb, which has no GPU. Needs xwfb-run and cage")
+                          "of Xvfb, which has no GPU. Needs cage, Xwayland, "
+                          "wlr-randr and wf-recorder; not with --cursor")
     rec.add_argument("--cursor", action="store_true",
                      help="show the mouse pointer; off by default, since with no "
                           "actions it just sits in the corner")
@@ -1232,7 +1418,7 @@ def main():
     shot.add_argument("--gpu", action="store_true",
                       help="for an app that needs the graphics card: use a "
                            "headless compositor instead of Xvfb. Needs "
-                           "xwfb-run and cage")
+                           "cage, Xwayland and wlr-randr")
     shot.add_argument("--cursor", action="store_true",
                       help="show the mouse pointer in the picture")
     shot.add_argument("--startup-timeout", type=float, default=20,

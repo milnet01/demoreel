@@ -17,7 +17,8 @@ caller could run the same command directly — but it does mean demoreel is not 
 containment mechanism, and should not be used as one.
 
 **The `PATH` demoreel inherits.** The fixed helpers — `Xvfb`, `ffmpeg`,
-`xdotool`, `xauth`, `xwfb-run` — are started by name, so the caller's `PATH`
+`xdotool`, `xauth`, and on `--gpu` `cage`, `Xwayland`, `wlr-randr` and
+`wf-recorder` — are started by name, so the caller's `PATH`
 decides which binaries run. This is deliberate. It is not a privilege boundary:
 demoreel runs as the caller with no elevation, so anyone who can alter that
 `PATH` can already run code as them, and resolving the names to absolute paths
@@ -31,10 +32,12 @@ tools, which flag these call sites on every run.
 **The virtual X display.** The whole point of the tool is that what the app
 draws is private to the run. Both backends now put the display behind an
 `MIT-MAGIC-COOKIE-1` cookie in an `Xauthority` file at mode 0600, handed to
-every client through `XAUTHORITY`. `Xvfb` is additionally started with
-`-nolisten tcp`. The `--gpu` path's Xwayland is not given that flag and does not
-need it: checked with `ss -ltn` before and during a `--gpu` run, no X server
-opened a TCP listener on any display port. A local process without the cookie is
+every client through `XAUTHORITY`. Both X servers are also started with
+`-nolisten tcp`: checked with `ss -ltn` before and during a `--gpu` run, no X
+server opened a TCP listener on any display port. On `--gpu` the compositor has
+a Wayland socket of its own, which the recorder reads the picture through; it
+lives in `XDG_RUNTIME_DIR` (mode 0700), so only the caller's own processes can
+reach it. A local process without the cookie is
 refused, which was measured before and after: it
 used to read the geometry and grab a frame of whatever was on screen. Socket
 permissions would not have fixed it — `Xvfb` also listens on an abstract socket,
