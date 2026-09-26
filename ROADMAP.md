@@ -2360,18 +2360,20 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: fix.
   Source: peer-request-vestige-2026-09-26.
 
-- 📋 [DEMO-0110] **A blank `--gpu` recording is told to "record it with --gpu instead".**
+- ✅ [DEMO-0110] **A blank `--gpu` recording is told to "record it with --gpu instead".**
   Seen 2026-09-26 while testing DEMO-0109: a --gpu run stopped before
   Vestige drew anything failed its blank check correctly, but
   BLANK_CAUSES says the app "needs the GPU, and Xvfb has none ...
   record it with --gpu instead". The message should know which backend
   ran and name causes that fit it — on --gpu, the app not having drawn
   yet (--settle) or rendering natively to Wayland.
+  Shipped (2026-09-26): blank_causes(gpu) gives --gpu runs the
+  not-drawn-yet / --settle cause; ci.sh checks it. Merged in c17741a.
   **Layman:** When a graphics-card recording comes out blank, demoreel's advice tells you to use the option you already used.
   Kind: fix.
   Source: in-session-2026-09-26.
 
-- 📋 [DEMO-0111] **Record `--gpu` from the compositor, so busy 3D apps record smoothly at full size.**
+- ✅ [DEMO-0111] **Record `--gpu` from the compositor, so busy 3D apps record smoothly at full size.**
   Decided by the user 2026-09-26: switch --gpu capture from x11grab to
   wf-recorder on cage, and design it first — README and CLAUDE.md
   change through review-contract (rule 14) before any code. Evidence and
@@ -2428,6 +2430,11 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   H.264 yuv420p with faststart, -d 4 gives 4.00s, typing arrives, no X
   TCP listener, no cage left. Sent the worktree path to vestige-d7 for
   their fly-through; merge to main waits on that result.
+  Shipped (2026-09-26): merged to main (c17741a). Vestige's retest with
+  --settle 60 and no env override: 750 of 751 frames new at 1920x1080,
+  no stutter note. Its first blank take was the missing --settle, not a
+  leak: the app sees WAYLAND_DISPLAY=demoreel-no-wayland (verified).
+  Full ./ci.sh green with nothing skipped.
   **Layman:** Games and 3D apps recorded with --gpu will come out smooth instead of as a slideshow.
   Kind: feature.
   Source: user-request-2026-09-26.
