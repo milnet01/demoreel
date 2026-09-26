@@ -259,6 +259,10 @@ before recording.
 `demoreel shot --gpu` still takes its picture from the X screen, so its
 `--cursor` still works. One still picture shows no stutter.
 
+The blank check still looks at the X screen. On `record --gpu` that is not
+where the video comes from, so demoreel also checks a frame of the finished
+video, and a flat one fails the run as a blank screen does.
+
 ## Recording a Flatpak app
 
 A Flatpak needs three extra flags on **its own** command line:
@@ -453,16 +457,19 @@ Checked by running them, not assumed. This section is for maintainers.
   captured 643 frames, all different. `x11grab` on the X side captured 588, of
   which 156 differed from the one before. The app was drawing about 54 frames a
   second throughout.
-- **`wf-recorder` draws no pointer.** With the pointer moved mid-screen, a
-  sampled frame did not show it. It has no option to draw one. `x11grab` on the
-  same X screen does draw it.
+- **`wf-recorder` draws no pointer.** With the pointer moved over the app, none
+  of the 39 frames of a recording showed it; `x11grab` on the same X screen drew
+  it at that spot. `wf-recorder` has no option to draw one.
 - **The private display is private to this run, and that is enforced rather
   than assumed.** Both backends put an `MIT-MAGIC-COOKIE-1` cookie on the
   display. Measured before the cookie existed: a local client with no
   credential read the geometry and grabbed a frame of what was on screen.
   Measured after: the same client is refused, and one holding the run's cookie
   still works. File permissions on the socket are not an alternative — `Xvfb`
-  listens on an abstract socket too, which has none.
+  listens on an abstract socket too, which has none. On `--gpu` the compositor
+  has a socket of its own, which `wf-recorder` reads the picture through. `cage`
+  makes it in your private runtime folder (`/run/user/<uid>`, mode `0700`), so
+  only programs running as you can reach it.
 - **The privacy promise is measured, not just argued.** Every other claim here
   has a measurement behind it; this one rested on the reasoning that nothing of
   the user's session is on the display, so nothing of it can be in frame. Tested

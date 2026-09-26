@@ -234,7 +234,8 @@ are load-bearing and none is obvious:
   `cage`'s headless output is always 1280x720 at start. `wlr-randr --output
   HEADLESS-1 --custom-mode WxH` resizes it, but an `Xwayland` already running
   keeps its first size. So `cage`'s one child is a step that resizes the
-  output, then `exec`s `Xwayland -geometry WxH -fullscreen -noreset`. The app
+  output, then `exec`s `Xwayland -displayfd N -auth F -geometry WxH -fullscreen
+  -noreset -nolisten tcp`, with `F` an empty file at that point. The app
   starts afterwards, as on the `Xvfb` path, so pointer parking happens before
   the app exists. `-noreset` is what keeps it parked, as on `Xvfb` (DEMO-0103):
   without it the server resets when the parking `xdotool` leaves. Do not go
@@ -258,7 +259,8 @@ are load-bearing and none is obvious:
   so the signal is its own start-up output. Which line proves capture has
   begun is for the build to confirm against the video's first frame.
 - **`record --gpu` refuses `--cursor`.** `wf-recorder` has no pointer option,
-  and with the pointer moved mid-screen a sampled frame did not show it.
+  and with the pointer moved over the app none of a recording's 39 frames
+  showed it.
 - **Only the recording moves to the compositor.** `--settle`, the blank check
   and `demoreel shot` still read the X side with `x11grab`. A stale-by-a-moment
   picture answers "is anything drawn?" correctly, and one still frame shows no
@@ -266,7 +268,13 @@ are load-bearing and none is obvious:
   on this X screen (measured).
 - **DEMO-0109's stutter note stays, but its explanation must change.** Its
   current text says `--gpu` captures a busy app only a few times a second,
-  which is the defect this backend removes.
+  which is the defect this backend removes. `ci.sh` detects the note by the
+  words `frames in the middle`: keep them, or change its grep in the same
+  commit.
+- **The blank check reads the X side, and the video no longer comes from
+  there.** So `record --gpu` also samples a frame of the finished file with
+  `frame_is_flat`, and a flat one fails the run like a blank display. Without
+  it, a recorder writing black while the X side is drawn passes every check.
 - **Both displays are behind an auth cookie, so the X-side readers take the
   run's `env` rather than inheriting the session's** — otherwise they fail with
   `Cannot open display`, or silently sample an empty frame. Without a cookie a
