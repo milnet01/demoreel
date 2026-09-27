@@ -795,6 +795,40 @@ for kept in set(state.glob("shot-*")) - before:
 print("a hung-up run finishes a playable video, and nothing is left running")
 HUPPY
 
+step "a terminal sees the countdown, and a script sees nothing new"
+# DEMO-0053. On a terminal, one line counts down in place and a summary
+# follows. Anywhere else stderr must be exactly what it was: callers such as
+# Claude sessions read it, and a stream of carriage returns is noise to them.
+python3 - "$tmp" <<'TTYPY'
+import os, pty, subprocess, sys
+
+tmp = sys.argv[1]
+args = ["./demoreel", "record", "-n", "gate", "-d", "2", "-s", "320x240"]
+master, slave = pty.openpty()
+run = subprocess.Popen([*args, "-o", f"{tmp}/tty.mp4", "--", "xclock"],
+                       stdout=subprocess.PIPE, stderr=slave)
+os.close(slave)
+seen = b""
+while True:
+    try:
+        chunk = os.read(master, 4096)
+    except OSError:  # EIO once the run has closed its end
+        break
+    if not chunk:
+        break
+    seen += chunk
+run.communicate()
+os.close(master)
+text = seen.decode(errors="replace")
+if run.returncode != 0 or "s left" not in text or "s of video" not in text:
+    raise SystemExit(f"no countdown or summary on a terminal:\n{text!r}")
+plain = subprocess.run([*args, "-o", f"{tmp}/plain.mp4", "--", "xclock"],
+                       capture_output=True, text=True)
+if plain.returncode != 0 or "\r" in plain.stderr or "left" in plain.stderr:
+    raise SystemExit(f"stderr off a terminal changed:\n{plain.stderr!r}")
+print("a terminal gets the countdown and summary; a pipe gets neither")
+TTYPY
+
 step "a stop is noticed at once"
 # DEMO-0075. The recording loop slept between checks, and a sleep resumes after
 # the signal handler runs, so a stop landed up to a fifth of a second late --

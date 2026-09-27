@@ -59,6 +59,10 @@ When it finishes it prints one line: the path to your video. Nothing else goes
 on that line, so you can safely capture it in a script. Anything the app itself
 prints goes to the terminal separately, or to a file with `--app-log`.
 
+At a terminal you also see how long is left, or on a `-d 0` run how long it has
+been going, on one line that updates in place. It ends with the video's length
+and size. None of this is printed when the output goes to a script or a file.
+
 ## Taking a picture
 
 ```sh

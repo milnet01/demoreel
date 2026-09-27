@@ -14,6 +14,10 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **At a terminal, a recording shows how long is left, then the video's length and size.** (DEMO-0053)
+  One short line updates in place; a `-d 0` run shows how long it has been
+  going. Output to a script or a file is unchanged.
+
 - **A `--gpu` recording that barely changes now gets a note saying it may stutter.** (DEMO-0109)
   A busy 3D app recorded with --gpu came out as a slideshow with no
   message: the picture demoreel reads was refreshed only a few times a

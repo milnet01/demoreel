@@ -1962,7 +1962,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: feature.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0053] **Show a live countdown while recording, when stderr is a terminal.**
+- ✅ [DEMO-0053] **Show a live countdown while recording, when stderr is a terminal.**
   A person running `demoreel record -d 30` sees one line saying recording
   has started, then nothing until it ends. There is no sign the run is
   alive, or how long is left.
@@ -1974,6 +1974,13 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
 
   The display is magnified on this machine, so keep it to one short line
   and no colour.
+  Resolved (2026-09-27): progress() writes one line in place with \r
+  and \033[K (no colour) when stderr is a tty: "recording, Ns left", or
+  "recording for M:SS (Ctrl+C to finish)" on -d 0. note() clears it
+  first; summarise() prints length and size after vouch_for. Off a tty
+  nothing new is written. Both tolerate a closed terminal (DEMO-0115).
+  Checked on a pty for -d 3 and -d 0 + Ctrl+C. Gate step red on the old
+  code, green after. README says so.
   **Layman:** While it records, you see how many seconds are left instead of a silent wait.
   Kind: ux.
   Source: user-request-2026-09-25.

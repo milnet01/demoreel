@@ -9,6 +9,7 @@ end up in the video. README.md explains why that is the whole point.
 import argparse
 import fcntl
 import json
+import math
 import os
 import re
 import secrets
@@ -73,6 +74,31 @@ def _exit_on_signal(signum, frame):
     die(f"ended by {signal.Signals(signum).name}.")
 
 
+_progress_line = ""
+
+
+def progress(text):
+    """Show `text` as one line updated in place on a terminal; None clears it.
+
+    Only on a terminal: a script, a log or a Claude session reading stderr
+    gets exactly what it got before this existed (DEMO-0053). One short line
+    and no colour, because the screen it is read on may be magnified.
+    """
+    global _progress_line  # noqa: PLW0603 - one line on one terminal
+    text = text or ""
+    if not sys.stderr.isatty() or text == _progress_line:
+        return
+    try:
+        # \r goes back to the start of the line; \033[K clears the rest.
+        sys.stderr.write("\r\033[K" + (f"demoreel: {text}" if text else ""))
+        sys.stderr.flush()
+    except OSError:
+        # A closed terminal, as in note(): nobody is reading, and a line
+        # about the recording must not end it (DEMO-0115).
+        sys.stderr = open(os.devnull, "w")  # noqa: SIM115 - lives to exit
+    _progress_line = text
+
+
 def die(msg):
     sys.exit(f"demoreel: {msg}")
 
@@ -82,6 +108,7 @@ def note(msg):
     has gone (a hung-up run finishing its video), losing it must not fail
     the recording it was about (DEMO-0115)."""
     try:
+        progress(None)
         print(f"demoreel: {msg}", file=sys.stderr)
     except OSError:
         # What failed to write is still buffered, and flushing it at exit
@@ -1140,28 +1167,37 @@ def run_countdown(a, env, app, window, display, recorder, width, height,
     # of the countdown is empty, and the run fails there rather than
     # recording the rest. A -d 0 run has no halfway point.
     halfway = deadline - a.duration / 2 if deadline else None
-    while not _stop.is_set():
-        now = time.monotonic()
-        if deadline and now >= deadline:
-            break
-        if halfway and now >= halfway:
-            halfway = None
-            if app.poll() is None:
-                checks.look_at_window(env, window, width, height)
-                checks.sample("halfway", now - started, env, display,
-                              width, height)
-                if checks.failed():
-                    break
-        if recorder.poll() is not None:
-            note(f"the recorder stopped early; see {logpath}")
-            break
-        if app.poll() is not None:
-            note("the app closed; ending the recording.")
-            break
-        # Never wait past the deadline: a fixed interval here added up to
-        # its own length to every video. A stop ends the wait at once.
-        _stop.wait(0.2 if deadline is None
-                   else max(0.0, min(0.2, deadline - time.monotonic())))
+    try:
+        while not _stop.is_set():
+            now = time.monotonic()
+            if deadline and now >= deadline:
+                break
+            if halfway and now >= halfway:
+                halfway = None
+                if app.poll() is None:
+                    checks.look_at_window(env, window, width, height)
+                    checks.sample("halfway", now - started, env, display,
+                                  width, height)
+                    if checks.failed():
+                        break
+            if recorder.poll() is not None:
+                note(f"the recorder stopped early; see {logpath}")
+                break
+            if deadline:
+                progress(f"recording, {math.ceil(deadline - now)}s left")
+            else:
+                seconds = int(now - started)
+                progress(f"recording for {seconds // 60}:{seconds % 60:02d}"
+                         " (Ctrl+C to finish)")
+            if app.poll() is not None:
+                note("the app closed; ending the recording.")
+                break
+            # Never wait past the deadline: a fixed interval here added up to
+            # its own length to every video. A stop ends the wait at once.
+            _stop.wait(0.2 if deadline is None
+                       else max(0.0, min(0.2, deadline - time.monotonic())))
+    finally:
+        progress(None)  # the line goes before anything else is said
 
 
 def check_at_end(env, app, window, display, width, height, checks):
@@ -1235,6 +1271,22 @@ def video_error(output):
     return lines[-1] if lines else "ffprobe could not read it."
 
 
+def summarise(output):
+    """On a terminal, the video's length and size once it is done."""
+    if not sys.stderr.isatty():
+        return
+    try:
+        seconds = float(subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+             "-of", "csv=p=0", str(output)], capture_output=True, text=True,
+            timeout=CALL_TIMEOUT, check=True).stdout)
+    except (subprocess.SubprocessError, ValueError):
+        return  # the video was already vouched for; this is only a courtesy
+    size = output.stat().st_size
+    note(f"{seconds:.1f}s of video, " + (f"{size / 1e6:.1f} MB" if size >= 1e6
+                                         else f"{size / 1e3:.0f} kB"))
+
+
 def cmd_record(a):
     command, width, height, output, applog = prepare(a, ".mp4")
 
@@ -1304,6 +1356,7 @@ def cmd_record(a):
             finish_gpu_video(output, logpath)
 
     vouch_for(a, output, logpath, width, height, checks)
+    summarise(output)
     for stale in (logpath, displaylog):
         stale.unlink(missing_ok=True)  # only worth keeping when something failed
     write_state(statefile, dict(state, result="ok"))
