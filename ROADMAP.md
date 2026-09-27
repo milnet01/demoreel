@@ -2475,13 +2475,17 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: security.
   Source: review-contract-2026-09-26 CLAUDE.md loop.
 
-- 📋 [DEMO-0114] **The gate fails when another session is recording under the default name.**
+- ✅ [DEMO-0114] **The gate fails when another session is recording under the default name.**
   Seen 2026-09-26: `./ci.sh` failed at its first smoke recording with
   "a recording named 'default' is already running", because Vestige was
   recording with demoreel under the default name. The gate's steps that
   do not test the default name itself should pass their own `-n`, so a
   peer's live run cannot fail the gate. The duplicate-name refusal is
   correct behaviour; only the gate's choice of name is at fault.
+  Resolved (2026-09-27): the twelve default-named recordings in ci.sh
+  now pass `-n gate`, and a new step fails the gate if any recording in it
+  omits a name. Proven red on the old ci.sh (it listed all twelve), green
+  after; full ./ci.sh green. No gate step tests the default name itself.
   **Layman:** The project's own test run stops halfway if any other session happens to be recording at the same moment.
   Kind: test.
   Source: in-session-2026-09-26.

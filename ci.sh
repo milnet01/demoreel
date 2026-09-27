@@ -197,6 +197,24 @@ step "parse"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("demoreel").read_text())'
 echo "demoreel parses"
 
+step "every recording in this gate names its run"
+# DEMO-0114. A run left at the default name collides with any other session
+# recording under it, and the gate then fails for a reason that is not ours.
+# Continuation lines are joined, so a -n on the next line still counts.
+python3 - <<'EOF'
+import re, sys
+text = re.sub(r"\\\n", " ", open("ci.sh").read())
+bad = [line.strip() for line in text.splitlines()
+       # Split in two so this line does not match itself.
+       if re.search(r"\./demoreel" r" record\b(?! --help)", line)
+       and not line.lstrip().startswith("#")
+       and not re.search(r" (-n|--name) ", line)]
+for line in bad:
+    print(f"records under the default name: {line[:100]}", file=sys.stderr)
+sys.exit(1 if bad else 0)
+EOF
+echo "no recording here uses the default name"
+
 step "smoke: record an app and prove it reached the frame"
 # The check that matters. A valid video file proves nothing on its own -- a
 # black recording passes every other test, so sample a frame and measure it.
@@ -281,7 +299,7 @@ if demoreel.frame_is_flat(raw):
 PY
 }
 
-out=$(./demoreel record -o "$tmp/smoke.mp4" -d 5 -s 640x480 -- xclock)
+out=$(./demoreel record -n gate -o "$tmp/smoke.mp4" -d 5 -s 640x480 -- xclock)
 [ -s "$out" ] || { echo "no video written" >&2; exit 1; }
 echo "wrote $out"
 
@@ -311,7 +329,7 @@ step "smoke: a blank recording is refused"
 # the end about 6.5s in, a second and a half either side of the kill at 5s.
 set +e
 # shellcheck disable=SC2016  # $! and $p belong to the inner sh, not to us
-blank_out=$(./demoreel record -o "$tmp/blank.mp4" -d 6 -s 640x480 \
+blank_out=$(./demoreel record -n gate -o "$tmp/blank.mp4" -d 6 -s 640x480 \
     -- sh -c 'xclock & p=$!; sleep 5; kill $p; sleep 10' 2>"$tmp/blank.err")
 blank_status=$?
 set -e
@@ -336,7 +354,7 @@ step "a recording blank until its second half is refused"
 # can fail this run. 0.1.1 returns it with exit 0.
 set +e
 # shellcheck disable=SC2016  # $! and $p belong to the inner sh, not to us
-late_out=$(./demoreel record -o "$tmp/late.mp4" -d 8 -s 640x480 \
+late_out=$(./demoreel record -n gate -o "$tmp/late.mp4" -d 8 -s 640x480 \
     -- sh -c 'xclock & p=$!; sleep 1; kill $p; sleep 6; exec xclock' 2>"$tmp/late.err")
 late_status=$?
 set -e
@@ -400,7 +418,7 @@ step "scripted actions reach the app"
 # dropped the quotes, collapsed the spaces and died on the apostrophe
 # (DEMO-0101).
 typed="it's \"quoted\" 'twice'  here"
-./demoreel record -o "$tmp/actions.mp4" -d 12 -s 640x480 \
+./demoreel record -n gate -o "$tmp/actions.mp4" -d 12 -s 640x480 \
     -a 'wait 2' -a "type $typed" -a 'key Return' \
     -- xterm -e sh -c "read line; printf '%s' \"\$line\" > $tmp/typed.txt" >/dev/null
 got=$(cat "$tmp/typed.txt" 2>/dev/null || true)
@@ -417,7 +435,7 @@ step "a window titled only by _NET_WM_NAME is found"
 # builds such a window without needing Vulkan: an xterm with an empty title,
 # whose own shell then sets _NET_WM_NAME. 0.1.1 says "no window appeared".
 # shellcheck disable=SC2016  # $WINDOWID belongs to xterm's shell, not to us
-./demoreel record -o "$tmp/netwm.mp4" -d 2 -s 640x480 --startup-timeout 5 \
+./demoreel record -n gate -o "$tmp/netwm.mp4" -d 2 -s 640x480 --startup-timeout 5 \
     -- xterm -T '' -e sh -c \
     'xprop -id "$WINDOWID" -f _NET_WM_NAME 8u -set _NET_WM_NAME gatewin; sleep 30' \
     >/dev/null 2>"$tmp/netwm.err"
@@ -437,7 +455,7 @@ step "an app that resizes itself after demoreel sizes it is warned about"
 # flat, and every check passed. This xterm keeps shrinking itself, as Vestige
 # did. 0.2.1 records it without a word.
 # shellcheck disable=SC2016  # $WINDOWID belongs to xterm's shell, not to us
-./demoreel record -o "$tmp/resized.mp4" -d 2 -s 640x480 -- xterm -e sh -c \
+./demoreel record -n gate -o "$tmp/resized.mp4" -d 2 -s 640x480 -- xterm -e sh -c \
     'while :; do sleep 0.3; xdotool windowsize "$WINDOWID" 300 200; done' \
     >/dev/null 2>"$tmp/resized.err"
 if ! grep -q 'resized its window to 300x200' "$tmp/resized.err"; then
@@ -552,7 +570,7 @@ step "the pointer starts in the corner, not over the app"
 # up whatever the app draws under it before any step runs, drawn or not. The
 # app itself reads where the pointer is as it starts. Xvfb once reset on its
 # last client leaving, which put a parked pointer straight back.
-./demoreel record -o "$tmp/pointer.mp4" -d 2 -s 400x300 \
+./demoreel record -n gate -o "$tmp/pointer.mp4" -d 2 -s 400x300 \
     -- sh -c "xdotool getmouselocation --shell > $tmp/pointer.txt; exec xterm -e sleep 10" >/dev/null
 where=$(grep -E '^[XY]=' "$tmp/pointer.txt" 2>/dev/null | tr '\n' ' ')
 [ "$where" = "X=399 Y=299 " ] || {
@@ -575,9 +593,9 @@ step "--cursor draws the pointer, and the default leaves it out"
 # two recordings differed for any unrelated reason; a pointer is a small local
 # change, so a large difference means something else moved and the test has
 # stopped measuring what it claims to.
-./demoreel record -o "$tmp/nocursor.mp4" -d 3 -s 400x300 -a 'move 200 150' \
+./demoreel record -n gate -o "$tmp/nocursor.mp4" -d 3 -s 400x300 -a 'move 200 150' \
     -- xterm -e sleep 10 >/dev/null
-./demoreel record -o "$tmp/cursor.mp4" -d 3 -s 400x300 --cursor -a 'move 200 150' \
+./demoreel record -n gate -o "$tmp/cursor.mp4" -d 3 -s 400x300 --cursor -a 'move 200 150' \
     -- xterm -e sleep 10 >/dev/null
 for f in nocursor cursor; do
     ffmpeg -v error -i "$tmp/$f.mp4" -vf 'select=eq(n\,30)' -vframes 1 \
@@ -803,7 +821,7 @@ step "a Flatpak target missing its flags is warned about"
 mkdir -p "$tmp/bin"
 printf '#!/bin/sh\nexec xclock\n' > "$tmp/bin/flatpak"
 chmod +x "$tmp/bin/flatpak"
-PATH="$tmp/bin:$PATH" ./demoreel record -o "$tmp/fp.mp4" -d 3 -s 640x480 \
+PATH="$tmp/bin:$PATH" ./demoreel record -n gate -o "$tmp/fp.mp4" -d 3 -s 640x480 \
     -- flatpak run org.example.App >/dev/null 2>"$tmp/fp.err"
 grep -q -- '--nosocket=wayland' "$tmp/fp.err" || {
     echo "an under-flagged Flatpak target drew no warning:" >&2
@@ -811,7 +829,7 @@ grep -q -- '--nosocket=wayland' "$tmp/fp.err" || {
     exit 1
 }
 # And a fully-flagged one must stay quiet, or the warning is noise.
-PATH="$tmp/bin:$PATH" ./demoreel record -o "$tmp/fp-ok.mp4" -d 3 -s 640x480 \
+PATH="$tmp/bin:$PATH" ./demoreel record -n gate -o "$tmp/fp-ok.mp4" -d 3 -s 640x480 \
     -- flatpak run --socket=x11 --nosocket=wayland --filesystem=/tmp/.X11-unix \
     org.example.App >/dev/null 2>"$tmp/fp-ok.err"
 ! grep -q 'is missing' "$tmp/fp-ok.err" || {
@@ -872,7 +890,7 @@ step "the state directory must be one we own"
 mkdir -p "$tmp/fakerun"
 ln -s /tmp "$tmp/fakerun/demoreel-$(id -u)"
 set +e
-XDG_RUNTIME_DIR="$tmp/fakerun" ./demoreel record -o "$tmp/planted.mp4" \
+XDG_RUNTIME_DIR="$tmp/fakerun" ./demoreel record -n gate -o "$tmp/planted.mp4" \
     -d 3 -s 640x480 -- xclock >"$tmp/planted.out" 2>"$tmp/planted.err"
 planted_status=$?
 set -e
