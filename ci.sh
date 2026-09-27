@@ -688,6 +688,48 @@ wait "$recorder" || { echo "the stopped run exited non-zero" >&2; exit 1; }
 [ -f "$tmp/app.log" ] || { echo "--app-log wrote no file" >&2; exit 1; }
 echo "stop ended the run, and --app-log wrote its file"
 
+step "Ctrl+C finishes a recording, and the blank check still runs"
+# DEMO-0054. A terminal sends Ctrl+C's SIGINT to the whole foreground process
+# group. Xvfb was in that group and went down with it, so the app died too and
+# the end-of-run blank check was skipped as if the app had closed itself. The
+# second run draws nothing: it must fail on the blank check, which it can only
+# reach if the display outlived the Ctrl+C.
+python3 - "$tmp" <<'CTRLCPY'
+import os, signal, subprocess, sys, time
+
+tmp = sys.argv[1]
+
+
+def ctrl_c(name, app, extra=()):
+    err = f"{tmp}/{name}.err"
+    with open(err, "w") as errfile:
+        run = subprocess.Popen(
+            ["./demoreel", "record", "-n", "gate", "-o", f"{tmp}/{name}.mp4",
+             "-d", "0", "-s", "320x240", *extra, "--", *app],
+            stdout=subprocess.PIPE, stderr=errfile, start_new_session=True)
+        for _ in range(300):
+            time.sleep(0.1)
+            if "recording :" in open(err).read():
+                break
+        else:
+            run.kill()
+            raise SystemExit(f"{name}: the run never started recording:\n"
+                             + open(err).read())
+        time.sleep(1)
+        os.killpg(run.pid, signal.SIGINT)  # what a terminal's Ctrl+C sends
+        out, _ = run.communicate(timeout=60)
+    return run.returncode, out.decode().strip(), open(err).read()
+
+
+status, out, err = ctrl_c("ctrlc", ["xclock"])
+if status != 0 or out != f"{tmp}/ctrlc.mp4" or not os.path.getsize(out):
+    raise SystemExit(f"Ctrl+C did not finish the video (exit {status}):\n{err}")
+status, out, err = ctrl_c("ctrlcblank", ["sleep", "60"], ["--startup-timeout", "1"])
+if status == 0 or "was blank at the end" not in err:
+    raise SystemExit(f"after Ctrl+C the blank check did not run (exit {status}):\n{err}")
+print("Ctrl+C leaves a finished video, and the end-of-run blank check still runs")
+CTRLCPY
+
 step "a stop is noticed at once"
 # DEMO-0075. The recording loop slept between checks, and a sleep resumes after
 # the signal handler runs, so a stop landed up to a fifth of a second late --

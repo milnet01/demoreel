@@ -48,6 +48,10 @@ checked, and prints its path. If the run fails,
 before it records or after it is stopped, `stop` prints no path and exits with
 an error.
 
+**Ctrl+C does the same for a run in the foreground.** Leave off the `&`, press
+Ctrl+C when you have enough, and the video is finished, checked and its path
+printed, exactly as with `stop`.
+
 Everything after `--` is the command that starts your app, exactly as you would
 type it yourself. demoreel knows nothing about any particular app.
 

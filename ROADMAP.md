@@ -1978,7 +1978,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: ux.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0054] **Make Ctrl+C a documented, tested way to finish a recording.**
+- ✅ [DEMO-0054] **Make Ctrl+C a documented, tested way to finish a recording.**
   A person running `demoreel record -d 0` in the foreground will reach for
   Ctrl+C, not a second terminal. The code catches SIGINT and finishes the
   video, but README never says so and the gate never tests it.
@@ -1990,6 +1990,16 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
 
   Then document it beside `stop` and add a gate step that sends SIGINT
   to the process group and checks for a finished video.
+  Resolved (2026-09-27): measured SIGINT to the run's process group.
+  --gpu was fine (cage has its own session; wf-recorder finishes on
+  SIGINT). On Xvfb the run exited 0 with a video, but Xvfb shared the
+  group and died, the app died with it, and check_at_end skipped the blank
+  sample as if the app had closed itself. ffmpeg also gets the SIGINT and
+  finishes the file itself, which is harmless. Xvfb now starts in its own
+  session; end_server kills the group for both backends. README documents
+  Ctrl+C beside stop. Gate step: Ctrl+C gives a finished video, and on an
+  app that draws nothing it fails "blank at the end". Red on the old code
+  ("could not sample"), green after.
   **Layman:** Pressing Ctrl+C should stop the recording and still leave you a good video.
   Kind: test.
   Source: user-request-2026-09-25.

@@ -258,6 +258,11 @@ def start_xvfb(width, height, base, logfile):
             pass_fds=(write_fd,),
             stdout=subprocess.DEVNULL,
             stderr=log,
+            # Its own session, so Ctrl+C at a terminal does not reach it. It
+            # did: Xvfb went down with the run's own SIGINT, the app with it,
+            # and the end-of-run blank check was skipped as if the app had
+            # closed itself (DEMO-0054).
+            start_new_session=True,
         )
     os.close(write_fd)
 
@@ -1004,10 +1009,10 @@ def launch(a, command, width, height, base, displaylog, appout):
 
 
 def end_server(server):
-    """End the display. On --gpu that is cage, in a session of its own, and
-    the group goes so Xwayland goes with it; Xvfb shares ours and must not."""
+    """End the display. Both servers run in a session of their own, and the
+    group goes, so on --gpu Xwayland goes with cage."""
     if server is not None:
-        end_process(server, group=server.args[0] == "cage")
+        end_process(server, group=True)
 
 
 def place_window(env, app, a, width, height, going_on):

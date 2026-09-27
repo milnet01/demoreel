@@ -54,6 +54,11 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **Ctrl+C finishes a foreground recording properly, and README now says so.** (DEMO-0054)
+  Ctrl+C at a terminal also reached the private display, which shut down
+  with the app on it, so the final check for a blank picture was skipped.
+  The display is now out of Ctrl+C's reach, and the check runs.
+
 - **Busy 3D apps recorded with `--gpu` now come out smooth and at full size.** (DEMO-0111)
   demoreel used to read the picture from the X side, which a busy app
   refreshed only a few times a second, so a smooth game recorded as a
