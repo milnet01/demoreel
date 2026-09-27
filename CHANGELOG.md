@@ -14,6 +14,11 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **`demoreel check` says whether this machine can record, without recording.** (DEMO-0052)
+  It checks every program each backend needs, that ffmpeg can encode the
+  video, and that a private display starts; `--gpu` also needs a graphics
+  render node. Anything missing comes with its install command.
+
 - **A missing program is named with the command that installs it on your distro.** (DEMO-0051)
   openSUSE, Debian, Ubuntu, Fedora and Arch; the package names were looked
   up in each distro's own package index.

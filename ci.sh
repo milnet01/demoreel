@@ -909,6 +909,30 @@ grep -q 'cannot encode H.264 with libx264' "$tmp/nox264.err" || {
 }
 echo "a missing program names its install command; no libx264 is refused"
 
+step "check says whether this machine can record"
+# DEMO-0052. This machine can, so check must say so, exit 0 and print nothing
+# on stdout. The PATH without xdotool from the step above cannot: check must
+# say NOT READY with the install command, and exit non-zero.
+check_out=$(./demoreel check 2>"$tmp/check.err") || {
+    echo "check failed on a machine that records:" >&2; cat "$tmp/check.err" >&2; exit 1
+}
+[ -z "$check_out" ] && grep -q 'record and shot: ready' "$tmp/check.err" || {
+    echo "check did not report ready, or wrote to stdout ('$check_out'):" >&2
+    cat "$tmp/check.err" >&2
+    exit 1
+}
+set +e
+PATH="$tmp/noxdo" "$py" ./demoreel check 2>"$tmp/check-noxdo.err"
+check_status=$?
+set -e
+[ "$check_status" -ne 0 ] && grep -q 'record and shot: NOT READY' "$tmp/check-noxdo.err" \
+    && [ -n "$(sed -n '/Install with: .*xdotool/p' "$tmp/check-noxdo.err")" ] || {
+    echo "check without xdotool exited $check_status:" >&2
+    cat "$tmp/check-noxdo.err" >&2
+    exit 1
+}
+echo "check reports ready here, and names the install command when it is not"
+
 step "a stop is noticed at once"
 # DEMO-0075. The recording loop slept between checks, and a sleep resumes after
 # the signal handler runs, so a stop landed up to a fifth of a second late --

@@ -1954,7 +1954,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: ux.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0052] **Add `demoreel check`, which tests a machine's setup without recording.**
+- ✅ [DEMO-0052] **Add `demoreel check`, which tests a machine's setup without recording.**
   The only way to learn whether a machine can record is to record, and a
   missing program is reported one run at a time.
 
@@ -1965,6 +1965,14 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
 
   A new subcommand is a MINOR change under the versioning overrides. It
   prints to stderr, so stdout keeps its one-line contract.
+  Resolved (2026-09-27): cmd_check reports "record and shot" and
+  "--gpu" as ready or NOT READY: missing programs (with DEMO-0051's
+  install hint), libx264 (DEMO-0117), for the default backend an Xvfb
+  started and locked the way a run does, and for --gpu a /dev/dri
+  renderD* node. stderr only. Exits 1 only when the default backend is
+  not ready. Checked with doctored PATHs (missing tools, no libx264, an
+  Xvfb that fails). Gate step: ready here with empty stdout, NOT READY
+  with the install command without xdotool. README mentions it.
   **Layman:** One command tells you whether this computer is ready to record, and what to install if not.
   Kind: feature.
   Source: user-request-2026-09-25.

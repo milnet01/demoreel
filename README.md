@@ -23,6 +23,9 @@ music, that is a second step in something else.
 `demoreel` works from any folder, so you can just type it. Its home is
 `/mnt/Games/Scripts/Linux/demoreel/`, if you ever need the full path.
 
+First time on a machine? `demoreel check` says whether it can record, without
+recording anything, and names the command that installs whatever is missing.
+
 ```sh
 # record Kate for 30 seconds, into a file named after the app
 demoreel record -- kate

@@ -1050,17 +1050,21 @@ def has_libx264():
     return " libx264 " in encoders
 
 
+def required_programs(gpu, recording):
+    """What a run needs installed, for its backend and for record or shot."""
+    required = ["ffmpeg", "xdotool", "xauth"] + (["ffprobe"] if recording else [])
+    if gpu:
+        return required + ["cage", "Xwayland", "wlr-randr"] + (
+            ["wf-recorder"] if recording else [])
+    return [*required, "Xvfb"]
+
+
 def prepare(a, suffix):
     """What `record` and `shot` both check before starting anything: the tools,
     the app command, the size, and where the output and the app log go."""
     recording = suffix == ".mp4"
-    required = ["ffmpeg", "xdotool", "xauth"] + (["ffprobe"] if recording else [])
-    if a.gpu:
-        required += ["cage", "Xwayland", "wlr-randr"]
-        required += ["wf-recorder"] if recording else []
-    else:
-        required.append("Xvfb")
-    missing = [t for t in required if shutil.which(t) is None]
+    missing = [t for t in required_programs(a.gpu, recording)
+               if shutil.which(t) is None]
     if missing:
         die(f"missing required program(s): {', '.join(missing)}"
             + install_hint(missing))
@@ -1540,6 +1544,56 @@ def cmd_shot(a):
     print(output)
 
 
+def cmd_check(a):
+    """Say whether this machine can record, on each backend (DEMO-0052).
+
+    Everything goes to stderr, like every other message: stdout carries a
+    finished path and nothing else, and a check has no path to print.
+    """
+    ready = True
+    for gpu in (False, True):
+        name = "--gpu" if gpu else "record and shot"
+        missing = [t for t in dict.fromkeys(required_programs(gpu, True))
+                   if shutil.which(t) is None]
+        problems = [f"missing {', '.join(missing)}{install_hint(missing)}"] \
+            if missing else []
+        if "ffmpeg" not in missing and not has_libx264():
+            problems.append("this ffmpeg has no libx264, which every recording "
+                            "uses." + X264_ADVICE.get(distro_family(),
+                                                      X264_ADVICE[None]))
+        if gpu and not list(Path("/dev/dri").glob("renderD*")):
+            problems.append("no graphics render node in /dev/dri, so there is "
+                            "no GPU for it to use.")
+        if not gpu and not missing:
+            problems += display_problem()
+        if problems:
+            note(f"{name}: NOT READY\n  - " + "\n  - ".join(
+                problem.replace("\n", "\n    ") for problem in problems))
+            if not gpu:  # only the default backend decides the exit status
+                ready = False
+        else:
+            note(f"{name}: ready")
+    if not ready:
+        sys.exit(1)
+
+
+def display_problem():
+    """Start and end a private display, the way a run does; [] if that works."""
+    base = Path(tempfile.mkdtemp(prefix="check-", dir=state_dir()))
+    server = auth = None
+    try:
+        server, _, auth = start_xvfb(320, 240, base / "check", base / "display.log")
+    except SystemExit as exc:
+        reason = str(exc.code).removeprefix("demoreel: ")
+        return [f"a private display did not start: {reason}"]
+    finally:
+        end_server(server)
+        if auth is not None:
+            auth.unlink(missing_ok=True)
+        shutil.rmtree(base, ignore_errors=True)
+    return []
+
+
 # How long `stop` looks for a run before saying there is none. A run registers
 # itself before anything slow, but not before Python has started, so a stop
 # launched on the very next line of a script can still arrive first -- measured
@@ -1730,6 +1784,14 @@ def main():
     shot.add_argument("command", nargs=argparse.REMAINDER,
                       help="-- followed by the command that starts the app")
     shot.set_defaults(func=cmd_shot)
+
+    check = sub.add_parser(
+        "check", help="test whether this machine can record, without recording",
+        description="Report what each backend needs and whether it is "
+                    "installed, start a private display to prove it works, "
+                    "and name the install command for anything missing. "
+                    "Exits non-zero if the default backend cannot record.")
+    check.set_defaults(func=cmd_check)
 
     stop = sub.add_parser("stop", help="end a running recording early")
     stop.add_argument("name", nargs="?", help="which run to stop (default: the "
