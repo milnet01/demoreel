@@ -2213,7 +2213,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: refactor.
   Source: in-session-2026-09-25.
 
-- 📋 [DEMO-0082] **Check what happens when the output path is a symlink someone else planted.**
+- ✅ [DEMO-0082] **Check what happens when the output path is a symlink someone else planted.**
   ffmpeg is started with `-y`, so it overwrites whatever is at the `-o`
   path. If a caller records to a shared directory such as `/tmp`, another
   local user can create a symlink at that name first. The video would
@@ -2226,6 +2226,15 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   guaranteed, refuse an output path that is a symlink the caller does not
   own, the same way `state_dir()` refuses a planted directory. SECURITY.md
   gets the result either way.
+  Resolved (2026-09-27): worse than the item assumed. prepare() called
+  resolve() on -o and --app-log, so demoreel followed the link itself and
+  fs.protected_symlinks (1 here) never applied: a link at the -o path had
+  its target overwritten, exit 0. own_path() now refuses a symlink whose
+  owner is not the caller, and follows the caller's own. Gate step uses a
+  root-owned /usr/bin link as the foreign one; red on the old code (it
+  wrote through to /usr/libexec/getconf/getconf), green after. SECURITY.md
+  records it. The GitHub runner's sysctl was not checked; the refusal does
+  not depend on it.
   **Layman:** Make sure another user on the same computer can't trick demoreel into overwriting one of your files.
   Kind: security.
   Source: user-request-2026-09-25.

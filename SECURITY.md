@@ -51,6 +51,16 @@ than followed, and the run stops unless the path is a directory the caller owns.
 A desktop session sets `XDG_RUNTIME_DIR`, so the fallback is the unusual path —
 which is why the hole would have gone unnoticed. The gate covers this.
 
+**The paths demoreel writes: `-o` and `--app-log`.** Another local user can
+create a symlink at a name the caller will write to, most easily in `/tmp`.
+demoreel resolves these paths itself, so the kernel's `fs.protected_symlinks`
+never sees the link. Measured before the fix: a link at the `-o` path had its
+target overwritten, and the run exited 0. So demoreel refuses a path that is a
+symlink owned by another user, and follows a link the caller made. A link
+planted after that check is opened by the writer itself, and there the kernel's
+protection applies where it is on. It is on on this machine
+(`fs.protected_symlinks = 1`). The gate covers the refusal (DEMO-0082).
+
 **Text given to `-a type`.** demoreel hands it to `xdotool` on stdin, so it is
 not in `xdotool`'s command line. It is still in **demoreel's own**, because the
 caller wrote it there, and a command line is readable by other local users

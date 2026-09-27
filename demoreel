@@ -920,16 +920,35 @@ def prepare(a, suffix):
         die("--size needs even numbers; H.264 cannot encode an odd width or height.")
 
     if a.output:
-        output = Path(a.output).expanduser().resolve()
+        output = own_path(a.output, "the output")
     else:
         stem = re.sub(r"[^A-Za-z0-9._-]", "_", Path(command[0]).name) or "demo"
         output = Path.cwd() / f"{stem}-{time.strftime('%Y%m%d-%H%M%S')}{suffix}"
     output.parent.mkdir(parents=True, exist_ok=True)
 
-    applog = Path(a.app_log).expanduser().resolve() if a.app_log else None
+    applog = own_path(a.app_log, "the app log") if a.app_log else None
     if applog:
         applog.parent.mkdir(parents=True, exist_ok=True)
     return command, width, height, output, applog
+
+
+def own_path(raw, what):
+    """Resolve a path demoreel will write, refusing a symlink someone else made.
+
+    resolve() follows the link here, in demoreel, so the writer is handed its
+    target and the kernel's fs.protected_symlinks never gets to refuse it.
+    Measured: a link at the -o path had its target overwritten, exit 0. So
+    another local user could plant /tmp/demo.mp4 pointing at one of your files
+    and have your run overwrite it (DEMO-0082). A link you made yourself is
+    yours to follow. A link planted after this check is opened by the writer,
+    and there the kernel's protection applies.
+    """
+    path = Path(os.path.abspath(Path(raw).expanduser()))
+    if path.is_symlink() and path.lstat().st_uid != os.getuid():
+        die(f"{what} {path} is a symbolic link another user made, so demoreel\n"
+            f"  will not write through it: it could point at a file of yours.\n"
+            f"  Choose another path, or remove the link if it is not meant to be there.")
+    return path.resolve()
 
 
 def park_pointer(env, width, height):

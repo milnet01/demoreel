@@ -902,6 +902,32 @@ grep -q 'not a directory you own' "$tmp/planted.err" || {
 }
 echo "a state directory we do not own is refused"
 
+step "an output path that is another user's symlink is refused"
+# DEMO-0082. demoreel resolves -o itself, so the kernel's protected_symlinks
+# never sees the link: a planted /tmp/demo.mp4 had its target overwritten. A
+# root-owned link in /usr/bin stands in for another user's, since the gate
+# cannot make a link owned by someone else. It is refused before anything runs.
+foreign=$(find /usr/bin -maxdepth 1 -type l -user 0 -print -quit)
+[ -n "$foreign" ] || { echo "no root-owned symlink in /usr/bin to test with" >&2; exit 1; }
+for flag in -o --app-log; do
+    set +e
+    if [ "$flag" = -o ]; then
+        ./demoreel shot -o "$foreign" -s 320x240 -- xclock 2>"$tmp/foreign.err"
+    else
+        ./demoreel shot -o "$tmp/foreign.png" --app-log "$foreign" -s 320x240 \
+            -- xclock 2>"$tmp/foreign.err"
+    fi
+    foreign_status=$?
+    set -e
+    [ "$foreign_status" -ne 0 ] || { echo "$flag wrote through $foreign" >&2; exit 1; }
+    grep -q 'symbolic link another user made' "$tmp/foreign.err" || {
+        echo "$flag failed, but not on the planted-link guard:" >&2
+        cat "$tmp/foreign.err" >&2
+        exit 1
+    }
+done
+echo "-o and --app-log refuse a symlink another user made"
+
 step "shot takes one picture, prints its path, and leaves nothing behind"
 # DEMO-0100. The picture is checked by reading the saved file back, with the
 # same frame_is_flat as a recording. An odd size is allowed: that rule is

@@ -63,6 +63,11 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Security
 
+- **A symlink another user planted at `-o` or `--app-log` is refused instead of written through.** (DEMO-0082)
+  demoreel resolved these paths itself, so the kernel's symlink protection
+  never saw the link, and a planted /tmp/demo.mp4 could overwrite any file
+  of yours it pointed at. A link you made yourself is still followed.
+
 - **The private screen's lock is proven on before the app starts, on both backends.** (DEMO-0113)
   A client without the run's auth cookie must be refused and one holding it
   must connect. The old Xvfb check tried only the holder, which gets in
