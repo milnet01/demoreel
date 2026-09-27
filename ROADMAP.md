@@ -2026,7 +2026,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: test.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0055] **Rewrite every error so it says what happened and what to do next.**
+- ✅ [DEMO-0055] **Rewrite every error so it says what happened and what to do next.**
   Some errors already do this -- the blank-display error names both
   likely causes and the fix for each. Others are terse: `--size must look
   like 1600x1000`, or `Xvfb did not start.` followed by the server's own
@@ -2037,6 +2037,16 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
 
   This goes before the translation work in 0.4.0, which translates these
   same messages. Rewording them after translation means translating twice.
+  Resolved (2026-09-27): went through every die() and note() (listed
+  with ast). Those already naming cause and next step were left alone.
+  Rewritten: signal exit, state dir, Xvfb and GPU display start, cookie
+  write, recorder starts, GPU finish, --size (an odd size now suggests the
+  next even one), could not run the app, app exited before a window (the
+  command to run it alone), no window / nothing drawn (the flag to raise),
+  no video, stop with no match (names what is running). Malformed -a
+  steps crashed with a traceback: parse_step() now reads every step before
+  the display starts and gives an example. Clauses the gate greps for are
+  unchanged. Gate step red on the old code (IndexError), green after.
   **Layman:** Every error message tells you in plain words what went wrong and how to fix it.
   Kind: ux.
   Source: user-request-2026-09-25.

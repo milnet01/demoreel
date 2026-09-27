@@ -40,6 +40,12 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Changed
 
+- **Error messages now say what happened, why, and what to do next.** (DEMO-0055)
+  A mistyped `-a` step is caught before anything starts and shows how to
+  write it, where it used to end the run with a Python traceback. Other
+  failures point at `demoreel check`, the setting to raise, or the log
+  that says why.
+
 - **A stop ends the recording at once, instead of up to a fifth of a second late.** (DEMO-0075)
   That extra tail used to end up in the video: a median 107 ms, now under
   a millisecond. A stop during a scripted `wait` step also ends it at once,

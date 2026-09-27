@@ -71,7 +71,8 @@ def _exit_on_signal(signum, frame):
     finally blocks that end the display and the app still run. Left at their
     default, either signal ended Python on the spot and leaked Xvfb, which
     holds its display number for good (DEMO-0115)."""
-    die(f"ended by {signal.Signals(signum).name}.")
+    die(f"ended by {signal.Signals(signum).name} before it finished, so there "
+        "is nothing to hand back.")
 
 
 _progress_line = ""
@@ -147,7 +148,9 @@ def state_dir():
     try:
         d.mkdir(parents=True, exist_ok=True)
     except OSError as exc:
-        die(f"could not use {d}: {exc.strerror}.")
+        die(f"could not use {d}: {exc.strerror}.\n"
+            "  demoreel keeps its run files there. Point XDG_RUNTIME_DIR at a "
+            "directory you can write to.")
     # A desktop session sets XDG_RUNTIME_DIR, so the /tmp fallback is the
     # unusual path — which is also why it would go unnoticed. The name there is
     # predictable, so another user can create it first and exist_ok would adopt
@@ -329,7 +332,9 @@ def start_xvfb(width, height, base, logfile):
         auth.unlink(missing_ok=True)
         proc.wait()
         stderr = Path(logfile).read_text(errors="replace").strip()
-        die("Xvfb did not start." + (f"\n  {stderr}" if stderr else ""))
+        die("Xvfb did not start, so there is no private display to record."
+            + (f"\n  It said: {stderr}" if stderr else "")
+            + "\n  `demoreel check` tests this start on its own.")
 
     display = f":{number}"
     cookie = secrets.token_hex(16)
@@ -339,8 +344,10 @@ def start_xvfb(width, height, base, logfile):
     if added.returncode != 0:
         proc.kill()
         auth.unlink(missing_ok=True)
-        die("could not write the display's auth cookie."
-            + (f"\n  {added.stderr.strip()}" if added.stderr.strip() else ""))
+        die("could not write the display's auth cookie, so the display "
+            "cannot be made private." + (f"\n  xauth said: {added.stderr.strip()}"
+                                          if added.stderr.strip() else "")
+            + "\n  `demoreel check` tests this on its own.")
     proc.send_signal(signal.SIGHUP)  # the server re-reads its auth file on reset
 
     # Do not report success until the cookie is actually in force. A client
@@ -436,7 +443,9 @@ def start_gpu_display(width, height, base, logfile):
         auth.unlink(missing_ok=True)
         tail = "\n  ".join(Path(logfile).read_text(errors="replace")
                            .strip().splitlines()[-3:])
-        die("the GPU display did not start." + (f"\n  {tail}" if tail else ""))
+        die("the GPU display did not start, so there is nothing to record on."
+            + (f"\n  The end of its log:\n  {tail}" if tail else "")
+            + "\n  `demoreel check` says whether --gpu has what it needs.")
 
     display = f":{number}"
     added = subprocess.run(["xauth", "-f", str(auth), "add", display,
@@ -445,8 +454,10 @@ def start_gpu_display(width, height, base, logfile):
     if added.returncode != 0:
         end_process(proc, group=True)
         auth.unlink(missing_ok=True)
-        die("could not write the display's auth cookie."
-            + (f"\n  {added.stderr.strip()}" if added.stderr.strip() else ""))
+        die("could not write the display's auth cookie, so the display "
+            "cannot be made private." + (f"\n  xauth said: {added.stderr.strip()}"
+                                          if added.stderr.strip() else "")
+            + "\n  `demoreel check` tests this on its own.")
 
     if wait_until_locked(display, auth):
         return proc, display, auth, wayland
@@ -594,7 +605,9 @@ def wait_for_window(env, app, timeout):
                     "  successfully. If a copy is running, close it and try again.\n"
                     "  If not, the command may simply have finished without needing a\n"
                     "  window — in which case there is nothing to record.")
-            die(f"the app exited with status {app.returncode} before opening a window.")
+            die(f"the app exited with status {app.returncode} before opening a "
+                f"window.\n  Its own output, above or in --app-log, says why. To "
+                f"see it on its own, run: {shlex.join(app.args)}")
         return None
     # About 2ms of CPU per xdotool spawn, measured, so a tight poll costs
     # nothing and a loose one costs up to its whole interval in wall time.
@@ -611,30 +624,66 @@ def wait_for_size(env, window, area, timeout=2.0):
     poll(lambda: window_area(env, window) == area, timeout, interval=0.05)
 
 
-def run_action(spec, env):
-    """One scripted step: wait / click / move / type / key."""
+# Every action verb, with the example a malformed step is told to follow.
+ACTION_EXAMPLES = {"wait": "wait 2", "move": "move 400 300",
+                   "click": "click 400 300", "type": "type some text",
+                   "key": "key Return", "hold": "hold w 3"}
+
+
+def parse_step(spec):
+    """Read one -a step into (verb, values), or die saying how to write it.
+
+    Every step is read before the display starts (prepare), so a typo in the
+    last step fails the run at once rather than after most of a recording.
+    None for an empty step, which does nothing.
+    """
     # `type` takes the rest of the step exactly, after the verb and one space:
     # it is text to type, not arguments. Splitting it like a shell command
     # dropped its quotes, collapsed its spaces and died on an apostrophe
     # (DEMO-0101). The other verbs take short arguments, and keep the split.
     head, text = re.match(r"(\S*)\s?(.*)\Z", spec.lstrip(), re.DOTALL).groups()
     if head == "type":
-        parts = [head]
-    else:
-        try:
-            parts = shlex.split(spec)
-        except ValueError as e:
-            die(f"cannot read the step {spec!r}: {e}.")
+        return "type", {"text": text}
+    try:
+        parts = shlex.split(spec)
+    except ValueError as e:
+        die(f"cannot read the step {spec!r}: {e}.")
     if not parts:
-        return
+        return None
     verb, args = parts[0], parts[1:]
+    if verb not in ACTION_EXAMPLES:
+        die(f"unknown action {verb!r}. The steps are: "
+            f"{', '.join(repr(e) for e in ACTION_EXAMPLES.values())}.")
+    # A malformed step used to reach float() or args[1] unchecked and end
+    # the run with a Python traceback.
+    try:
+        if verb == "wait":
+            return verb, {"seconds": float(args[0])}
+        if verb == "hold":
+            return verb, {"key": args[0], "seconds": float(args[1])}
+        if verb == "move" or (verb == "click" and args):
+            return verb, {"at": (str(int(args[0])), str(int(args[1])))}
+        if verb == "key" and not args:
+            raise IndexError
+    except (IndexError, ValueError):
+        die(f"cannot read the step {spec!r}: write it like "
+            f"{ACTION_EXAMPLES[verb]!r}.")
+    return verb, {"keys": args, "at": None}
+
+
+def run_action(spec, env):
+    """One scripted step: wait / move / click / type / key / hold."""
+    step = parse_step(spec)
+    if step is None:
+        return
+    verb, v = step
     if verb == "wait":
-        _stop.wait(float(args[0]))  # a stop ends the wait, as it ends the run
+        _stop.wait(v["seconds"])  # a stop ends the wait, as it ends the run
     elif verb == "move":
-        xdotool(env, "mousemove", "--sync", args[0], args[1])
+        xdotool(env, "mousemove", "--sync", *v["at"])
     elif verb == "click":
-        if len(args) >= 2:
-            xdotool(env, "mousemove", "--sync", args[0], args[1])
+        if v["at"]:
+            xdotool(env, "mousemove", "--sync", *v["at"])
         xdotool(env, "click", "1")
     elif verb == "type":
         # --file - takes the text on stdin. As an argument it sits in the
@@ -642,24 +691,17 @@ def run_action(spec, env):
         # typing lasts — and at 60ms a keystroke that is seconds. A demo that
         # types into a login form is the obvious thing to script.
         xdotool(env, "type", "--delay", "60", "--file", "-",
-                stdin_text=text)
+                stdin_text=v["text"])
     elif verb == "key":
-        xdotool(env, "key", *args)
+        xdotool(env, "key", *v["keys"])
     elif verb == "hold":
-        try:
-            key, seconds = args[0], float(args[1])
-        except (IndexError, ValueError):
-            die(f"cannot read the step {spec!r}: it takes a key and a number of "
-                f"seconds, e.g. 'hold w 3'.")
         # The keyup runs however the hold ends -- time up, a stop, an error --
         # or the key stays down on the display for the rest of the run.
-        xdotool(env, "keydown", key)
+        xdotool(env, "keydown", v["key"])
         try:
-            _stop.wait(seconds)
+            _stop.wait(v["seconds"])
         finally:
-            xdotool(env, "keyup", key)
-    else:
-        die(f"unknown action {verb!r}. Use: wait, move, click, type, key, hold.")
+            xdotool(env, "keyup", v["key"])
 
 
 def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor):
@@ -697,7 +739,8 @@ def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor
         proc.wait()
         log.close()
         tail = Path(logfile).read_text(errors="replace").strip()
-        die("ffmpeg could not start recording." + (f"\n  {tail}" if tail else ""))
+        die("ffmpeg could not start recording." + (f"\n  It said: {tail}" if tail else "")
+            + "\n  `demoreel check` tests the programs and the encoder it needs.")
     # Keep draining the reports, or ffmpeg blocks once the pipe fills.
     threading.Thread(target=proc.stdout.read, daemon=True).start()
     return proc, log
@@ -752,7 +795,8 @@ def start_wf_recorder(env, wayland, framerate, output, logfile):
             part.unlink(missing_ok=True)
             tail = Path(logfile).read_text(errors="replace").strip()
             die("wf-recorder could not start recording."
-                + (f"\n  {tail}" if tail else ""))
+                + (f"\n  It said: {tail}" if tail else "")
+                + "\n  `demoreel check` says whether --gpu has what it needs.")
     # Keep copying its output to the log, or it blocks once the pipe fills.
     threading.Thread(target=lambda: log.write(proc.stdout.read()),
                      daemon=True).start()
@@ -777,8 +821,9 @@ def finish_gpu_video(output, logfile):
     if copy.returncode != 0:
         with open(logfile, "ab") as log:
             log.write(copy.stderr)
-        die(f"could not finish the video; the recording is kept in {part}. "
-            f"See {logfile}")
+        die(f"could not finish the video: turning the recording into {output.name}"
+            f" failed.\n  What was recorded is kept in {part}, and {logfile}"
+            f" says why.")
     part.unlink()
 
 
@@ -1075,6 +1120,9 @@ def prepare(a, suffix):
         die("--cursor is not available with record --gpu: that backend records "
             "the compositor's picture, which never has the pointer in it.")
 
+    for spec in a.action:
+        parse_step(spec)  # every step is readable before anything starts
+
     command = list(a.command)
     if command and command[0] == "--":
         command.pop(0)
@@ -1084,10 +1132,12 @@ def prepare(a, suffix):
 
     match = SIZE_RE.match(a.size)
     if not match:
-        die(f"--size must look like 1600x1000, not {a.size!r}")
+        die(f"--size takes a width and a height in pixels, like 1600x1000, "
+            f"not {a.size!r}.")
     width, height = int(match[1]), int(match[2])
     if suffix == ".mp4" and (width % 2 or height % 2):
-        die("--size needs even numbers; H.264 cannot encode an odd width or height.")
+        die(f"--size needs even numbers for a video, since H.264 cannot encode "
+            f"an odd width or height.\n  Try {width + width % 2}x{height + height % 2}.")
 
     if a.output:
         output = own_path(a.output, "the output")
@@ -1153,7 +1203,9 @@ def launch(a, command, width, height, base, displaylog, appout):
     except (FileNotFoundError, PermissionError) as exc:
         end_server(server)
         auth.unlink(missing_ok=True)
-        die(f"could not run {command[0]!r}: {exc.strerror}.")
+        die(f"could not run {command[0]!r}: {exc.strerror}.\n"
+            "  Check that the command after `--` is installed and spelled as you "
+            "would type it.")
     return server, app, display, auth, env, wayland
 
 
@@ -1168,7 +1220,8 @@ def place_window(env, app, a, width, height, going_on):
     """Find the app's window and make it fill the frame; None if none appeared."""
     window = wait_for_window(env, app, a.startup_timeout)
     if window is None:
-        note(f"no window appeared within {a.startup_timeout}s; {going_on} anyway.")
+        note(f"no window appeared within {a.startup_timeout}s; {going_on} anyway.\n"
+             "  If the app is slow to start, give it longer with --startup-timeout.")
     else:
         # No window manager runs here, so no windowactivate: the only
         # window already has focus.
@@ -1239,7 +1292,8 @@ def settle(a, env, display, width, height):
         die(f"--settle could not sample the display, so it cannot tell "
             f"when the app has drawn.\n  {exc}")
     if not drawn:
-        note(f"nothing was drawn within {a.settle}s; recording anyway.")
+        note(f"nothing was drawn within {a.settle}s; recording anyway.\n"
+             "  If the app takes longer to show its first picture, raise --settle.")
 
 
 def start_recorder(a, env, display, wayland, width, height, output, logpath):
@@ -1320,7 +1374,8 @@ def check_at_end(env, app, window, display, width, height, checks):
 def vouch_for(a, output, logpath, width, height, checks):
     """Fail the run unless the finished video is one it can stand behind."""
     if not output.exists() or output.stat().st_size == 0:
-        die(f"no video was written to {output}. See {logpath}")
+        die(f"no video was written to {output}: the recorder produced nothing."
+            f"\n  Its log, {logpath}, says why.")
     unreadable = video_error(output)
     if unreadable:
         die(f"the video cannot be played: {output}\n  {unreadable}\n"
@@ -1515,7 +1570,9 @@ def cmd_shot(a):
             die(f"--settle could not sample the display, so it cannot tell "
                 f"when the app has drawn.\n  {exc}")
         if not drawn:
-            note(f"nothing was drawn within {a.settle}s; taking the picture anyway.")
+            note(f"nothing was drawn within {a.settle}s; taking the picture "
+                 f"anyway.\n  If the app takes longer to show its first picture, "
+                 f"raise --settle.")
         for action in a.action:
             run_action(action, env)
         if window is not None:
@@ -1627,9 +1684,11 @@ def cmd_stop(a):
 
     if a.name:
         if not live:
-            die(f"no recording named {a.name!r} is running.")
+            others = sorted(e["name"] for e in live_runs())
+            die(f"no recording named {a.name!r} is running."
+                + (f"\n  Running now: {', '.join(others)}." if others else ""))
     elif not live:
-        die("no recording is running.")
+        die("no recording is running, so there is nothing to stop.")
     elif len(live) > 1:
         names = ", ".join(sorted(e["name"] for e in live))
         die(f"{len(live)} recordings are running: {names}.\n"

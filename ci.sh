@@ -933,6 +933,23 @@ set -e
 }
 echo "check reports ready here, and names the install command when it is not"
 
+step "a malformed step is refused before anything starts"
+# DEMO-0055. A step with a missing or wrong argument reached float() or args[1]
+# and ended the run with a Python traceback, mid-recording when it was a late
+# step. Every step is now read first, and the error shows how to write it.
+set +e
+./demoreel record -n gate -o "$tmp/badstep.mp4" -a 'wait 1' -a 'move 5' -- xclock \
+    2>"$tmp/badstep.err"
+badstep_status=$?
+set -e
+[ "$badstep_status" -ne 0 ] && grep -q "write it like 'move 400 300'" "$tmp/badstep.err" \
+    && ! grep -q 'Traceback\|recording :' "$tmp/badstep.err" || {
+    echo "a malformed step was not refused up front (exit $badstep_status):" >&2
+    cat "$tmp/badstep.err" >&2
+    exit 1
+}
+echo "a malformed step is refused before the display starts, with an example"
+
 step "a stop is noticed at once"
 # DEMO-0075. The recording loop slept between checks, and a sleep resumes after
 # the signal handler runs, so a stop landed up to a fifth of a second late --
