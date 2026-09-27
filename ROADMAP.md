@@ -2103,7 +2103,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: refactor.
   Source: in-session-2026-09-25.
 
-- 📋 [DEMO-0098] **Add a held-key action, for apps that move while a key is down.**
+- ✅ [DEMO-0098] **Add a held-key action, for apps that move while a key is down.**
   Asked for by the vestige session on 2026-09-25: its demo would show
   walking forward by holding W for a few seconds. The `-a` grammar has
   `key`, which presses and releases at once, and nothing that holds.
@@ -2115,6 +2115,12 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   A new verb extends the grammar without changing an existing one, so it
   is MINOR under the versioning overrides. README, `--help` and the tab
   completion list it with the others.
+  Resolved (2026-09-27): `hold KEY SECONDS` = xdotool keydown, a wait on
+  the stop event, and keyup in a finally. A bad step dies naming the
+  form ('hold w 3'). In --help for record and shot, and in README. Gate
+  step holds `a` in an xterm and stops mid-hold: 22 auto-repeated letters
+  during, none after. Red with the keyup skipped on a stop (35, then 72).
+  Tab completion (DEMO-0056) must list it too.
   **Layman:** Let a demo hold a key down for a few seconds, e.g. to walk forward in a 3D scene.
   Kind: feature.
   Source: peer-request-vestige-2026-09-25.

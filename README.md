@@ -176,6 +176,8 @@ the recording is going:
   typed exactly as written, quotes and spaces included. Only your own shell's
   quoting around the whole step is removed.
 - `key Return` — press a key
+- `hold w 3` — hold a key down for three seconds, for an app that moves while
+  a key is held. It is let go however the step ends, a stop included.
 
 **Do not script typing a password on a shared machine.** Anything you put on the
 command line can be read by other people using that computer, for as long as the

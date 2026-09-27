@@ -14,6 +14,10 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **A `hold KEY SECONDS` step holds a key down, for apps that move while a key is held.** (DEMO-0098)
+  `-a 'hold w 3'` walks forward for three seconds in a 3D scene. The key is
+  let go however the step ends, a stop included.
+
 - **At a terminal, a recording shows how long is left, then the video's length and size.** (DEMO-0053)
   One short line updates in place; a `-d 0` run shows how long it has been
   going. Output to a script or a file is unchanged.

@@ -645,8 +645,21 @@ def run_action(spec, env):
                 stdin_text=text)
     elif verb == "key":
         xdotool(env, "key", *args)
+    elif verb == "hold":
+        try:
+            key, seconds = args[0], float(args[1])
+        except (IndexError, ValueError):
+            die(f"cannot read the step {spec!r}: it takes a key and a number of "
+                f"seconds, e.g. 'hold w 3'.")
+        # The keyup runs however the hold ends -- time up, a stop, an error --
+        # or the key stays down on the display for the rest of the run.
+        xdotool(env, "keydown", key)
+        try:
+            _stop.wait(seconds)
+        finally:
+            xdotool(env, "keyup", key)
     else:
-        die(f"unknown action {verb!r}. Use: wait, move, click, type, key.")
+        die(f"unknown action {verb!r}. Use: wait, move, click, type, key, hold.")
 
 
 def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor):
@@ -1576,7 +1589,7 @@ def main():
     rec.add_argument("-a", "--action", action="append", default=[], metavar="ACTION",
                      help="scripted step, repeatable and run in order: "
                           "'wait 2', 'move X Y', 'click [X Y]', 'type some text', "
-                          "'key Return'")
+                          "'key Return', 'hold w 3'")
     rec.add_argument("--app-log", metavar="PATH",
                      help="keep the app's own output in PATH; otherwise it goes "
                           "to this terminal's stderr. Useful when the app prints "
@@ -1614,7 +1627,7 @@ def main():
                       metavar="ACTION",
                       help="scripted step run before the picture, repeatable: "
                            "'wait 2', 'move X Y', 'click [X Y]', "
-                           "'type some text', 'key Return'")
+                           "'type some text', 'key Return', 'hold w 3'")
     shot.add_argument("--app-log", metavar="PATH",
                       help="keep the app's own output in PATH; otherwise it "
                            "goes to this terminal's stderr")

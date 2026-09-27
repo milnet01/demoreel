@@ -829,6 +829,53 @@ if plain.returncode != 0 or "\r" in plain.stderr or "left" in plain.stderr:
 print("a terminal gets the countdown and summary; a pipe gets neither")
 TTYPY
 
+step "a held key is let go when a stop cuts the hold short"
+# DEMO-0098. `hold KEY SECONDS` presses a key and waits. If a stop ends the
+# wait and the keyup is skipped, the key stays down on the display for the
+# rest of the run. A held key auto-repeats, so an xterm writing what it gets
+# to a file shows it: letters arrive during the hold and must stop after.
+python3 - "$tmp" <<'HOLDPY'
+import importlib.machinery, importlib.util, os, signal, subprocess, sys, threading, time
+
+tmp = sys.argv[1]
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+demoreel = importlib.util.module_from_spec(
+    importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(demoreel)
+signal.signal(signal.SIGUSR1, demoreel._request_stop)
+
+# The name starts with "gate" so the teardown's Xvfb sweep covers it.
+displaylog = demoreel.state_dir() / "gatehold.display.log"
+proc, display, auth = demoreel.start_xvfb(320, 240, "gatehold", displaylog)
+env = dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth))
+keys = f"{tmp}/held.txt"
+app = subprocess.Popen(["xterm", "-e", "sh", "-c",
+                        f"stty -icanon -echo min 1; cat > {keys}"],
+                       env=env, start_new_session=True)
+try:
+    if demoreel.wait_for_window(env, app, 10) is None:
+        raise SystemExit("the xterm never showed a window")
+    time.sleep(1)
+    threading.Timer(1.5, lambda: os.kill(os.getpid(), signal.SIGUSR1)).start()
+    demoreel.run_action("hold a 30", env)
+    time.sleep(0.5)
+    during = os.path.getsize(keys)
+    time.sleep(1.5)
+    after = os.path.getsize(keys)
+finally:
+    demoreel.end_process(app, group=True)
+    demoreel.end_server(proc)
+    auth.unlink(missing_ok=True)
+    displaylog.unlink(missing_ok=True)
+if during < 2:
+    raise SystemExit(f"only {during} letters while held: auto-repeat is off, "
+                     "so this step cannot tell a held key from a released one")
+if after != during:
+    raise SystemExit(f"the key was still down after the stop: {during} letters, "
+                     f"then {after}")
+print(f"{during} letters while held, none after the stop")
+HOLDPY
+
 step "a stop is noticed at once"
 # DEMO-0075. The recording loop slept between checks, and a sleep resumes after
 # the signal handler runs, so a stop landed up to a fifth of a second late --
