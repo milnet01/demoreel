@@ -1036,6 +1036,152 @@ def blank_causes(gpu):
             "    its command line; see README.md.")
 
 
+class Checks:
+    """What the display samples found during a run, read after teardown.
+
+    blank: when the display was found blank, "halfway" or "at the end".
+    unsampled: why a sample could not be taken, which fails the run too.
+    sampled: when each display sample was taken, as (when, seconds into the
+    video). record --gpu asks the finished file the same question at the same
+    moments, so the skips that decided whether a sample was taken carry over.
+    None means the end of the video.
+    moved: how the window stopped filling the frame, said once.
+    """
+
+    def __init__(self):
+        self.blank = None
+        self.unsampled = None
+        self.sampled = []
+        self.moved = None
+
+    def failed(self):
+        return self.blank is not None or self.unsampled is not None
+
+    def sample(self, when, at, env, display, width, height):
+        """Sample the display now, and record what was found."""
+        self.sampled.append((when, at))
+        try:
+            if display_is_blank(env, display, width, height):
+                self.blank = when
+        except SampleError as exc:
+            self.unsampled = str(exc)
+
+    def look_at_window(self, env, window, width, height):
+        if self.moved is None and window is not None:
+            self.moved = window_off_frame(env, window, width, height)
+            if self.moved:
+                note(self.moved)
+
+
+def settle(a, env, display, width, height):
+    """--settle: wait for the app's first picture before recording."""
+    try:
+        drawn = not a.settle or wait_until_drawn(env, display, width,
+                                                 height, a.settle)
+    except SampleError as exc:
+        die(f"--settle could not sample the display, so it cannot tell "
+            f"when the app has drawn.\n  {exc}")
+    if not drawn:
+        note(f"nothing was drawn within {a.settle}s; recording anyway.")
+
+
+def start_recorder(a, env, display, wayland, width, height, output, logpath):
+    if a.gpu:
+        return start_wf_recorder(env, wayland, a.framerate, output, logpath)
+    return start_ffmpeg(env, display, width, height, a.framerate, output,
+                        logpath, a.cursor)
+
+
+def run_countdown(a, env, app, window, display, recorder, width, height,
+                  logpath, started, checks):
+    """Play the scripted actions, then record until the run should end.
+
+    It ends at the -d deadline, on a stop request, when the recorder or the
+    app goes away, or when the halfway sample finds the display blank.
+    """
+    for action in a.action:
+        if _stop:
+            break
+        run_action(action, env)
+
+    deadline = time.monotonic() + a.duration if a.duration else None
+    # A second look, halfway through the countdown (DEMO-0008). The end
+    # sample alone passes an app that draws only in the final moments,
+    # which is a video mostly empty. Blank at halfway means at least half
+    # of the countdown is empty, and the run fails there rather than
+    # recording the rest. A -d 0 run has no halfway point.
+    halfway = deadline - a.duration / 2 if deadline else None
+    while not _stop:
+        now = time.monotonic()
+        if deadline and now >= deadline:
+            break
+        if halfway and now >= halfway:
+            halfway = None
+            if app.poll() is None:
+                checks.look_at_window(env, window, width, height)
+                checks.sample("halfway", now - started, env, display,
+                              width, height)
+                if checks.failed():
+                    break
+        if recorder.poll() is not None:
+            note(f"the recorder stopped early; see {logpath}")
+            break
+        if app.poll() is not None:
+            note("the app closed; ending the recording.")
+            break
+        # Never sleep past the deadline: a fixed interval here added up to
+        # its own length to every video.
+        time.sleep(0.2 if deadline is None
+                   else max(0.0, min(0.2, deadline - time.monotonic())))
+
+
+def check_at_end(env, app, window, display, width, height, checks):
+    """The end-of-run look, taken after the recorder stops.
+
+    Stop recording before sampling. The display does not change when the
+    recorder stops, and sampling first put a third of a second of overshoot
+    into every video (DEMO-0012). Only meaningful while the app is still up:
+    one that closed itself mid-run leaves an empty display behind, and that
+    video is fine.
+    """
+    if app.poll() is not None:
+        return
+    checks.look_at_window(env, window, width, height)
+    if not checks.failed():
+        checks.sample("at the end", None, env, display, width, height)
+
+
+def vouch_for(a, output, logpath, width, height, checks):
+    """Fail the run unless the finished video is one it can stand behind."""
+    if not output.exists() or output.stat().st_size == 0:
+        die(f"no video was written to {output}. See {logpath}")
+    if checks.blank:
+        what = ("so at least half of it is a flat colour"
+                if checks.blank == "halfway" else "so it ends on a flat colour")
+        die(f"the virtual display was blank {checks.blank}, {what}: {output}\n"
+            + blank_causes(a.gpu))
+    if checks.unsampled is not None:
+        die(f"could not sample the virtual display to check {output} is not blank,\n"
+            f"  so this run cannot vouch for it.\n  {checks.unsampled}")
+    if a.gpu:
+        for when, at in checks.sampled:
+            try:
+                flat = video_is_blank(output, at, width, height)
+            except SampleError as exc:
+                die(f"could not read {output} back to check it is not blank,\n"
+                    f"  so this run cannot vouch for it.\n  {exc}")
+            if flat:
+                die(f"the video is a flat colour {when}, though the private "
+                    f"screen was not: {output}\n  The recorder captured "
+                    f"something other than the screen. See {logpath}")
+        share = changed_share(output, a.framerate)
+        if share is not None and share < CHANGED_NOTE_BELOW:
+            note(f"only {share:.0%} of the frames in the middle of {output} "
+                 f"changed from the one before.\n  If the app was moving the "
+                 f"whole time, it drew that few new frames itself: the video "
+                 f"has every frame it drew.")
+
+
 def cmd_record(a):
     command, width, height, output, applog = prepare(a, ".mp4")
 
@@ -1067,99 +1213,25 @@ def cmd_record(a):
     # Deliberate: as above - closed in the finally block, not here.
     appout = open(applog, "wb") if applog else sys.stderr  # noqa: SIM115
     server = app = recorder = log = auth = None
-    blank = None  # when the display was found blank: "halfway" or "at the end"
-    unsampled = None
-    # When each display sample was taken, as (when, seconds into the video):
-    # record --gpu asks the finished file the same question at the same
-    # moments, so the skips that decided whether a sample was taken carry
-    # over. None means the end of the video.
-    sampled = []
-    moved = None  # how the window stopped filling the frame, said once
+    checks = Checks()
     try:
         write_state(statefile, state)
         server, app, display, auth, env, wayland = launch(
             a, command, width, height, state_dir() / a.name, displaylog, appout)
         window = place_window(env, app, a, width, height, "recording")
+        settle(a, env, display, width, height)
 
-        try:
-            drawn = not a.settle or wait_until_drawn(env, display, width,
-                                                     height, a.settle)
-        except SampleError as exc:
-            die(f"--settle could not sample the display, so it cannot tell "
-                f"when the app has drawn.\n  {exc}")
-        if not drawn:
-            note(f"nothing was drawn within {a.settle}s; recording anyway.")
-
-        if a.gpu:
-            recorder, log = start_wf_recorder(env, wayland, a.framerate,
-                                              output, logpath)
-        else:
-            recorder, log = start_ffmpeg(env, display, width, height,
-                                         a.framerate, output, logpath, a.cursor)
+        recorder, log = start_recorder(a, env, display, wayland, width, height,
+                                       output, logpath)
         started = time.monotonic()
         write_state(statefile, dict(state, display=display, recording=True))
         note(f"recording {display} to {output} "
              f"({'until stopped' if a.duration == 0 else f'{a.duration}s'})")
 
-        for action in a.action:
-            if _stop:
-                break
-            run_action(action, env)
-
-        deadline = time.monotonic() + a.duration if a.duration else None
-        # A second look, halfway through the countdown (DEMO-0008). The end
-        # sample alone passes an app that draws only in the final moments,
-        # which is a video mostly empty. Blank at halfway means at least half
-        # of the countdown is empty, and the run fails there rather than
-        # recording the rest. A -d 0 run has no halfway point.
-        halfway = deadline - a.duration / 2 if deadline else None
-        while not _stop:
-            now = time.monotonic()
-            if deadline and now >= deadline:
-                break
-            if halfway and now >= halfway:
-                halfway = None
-                if app.poll() is None:
-                    if window is not None:
-                        moved = window_off_frame(env, window, width, height)
-                        if moved:
-                            note(moved)
-                    sampled.append(("halfway", now - started))
-                    try:
-                        if display_is_blank(env, display, width, height):
-                            blank = "halfway"
-                            break
-                    except SampleError as exc:
-                        unsampled = str(exc)
-                        break
-            if recorder.poll() is not None:
-                note(f"the recorder stopped early; see {logpath}")
-                break
-            if app.poll() is not None:
-                note("the app closed; ending the recording.")
-                break
-            # Never sleep past the deadline: a fixed interval here added up to
-            # its own length to every video.
-            time.sleep(0.2 if deadline is None
-                       else max(0.0, min(0.2, deadline - time.monotonic())))
-
-        # Stop recording before sampling. The display does not change when the
-        # recorder stops, and sampling first put a third of a second of
-        # overshoot into every video (DEMO-0012).
+        run_countdown(a, env, app, window, display, recorder, width, height,
+                      logpath, started, checks)
         stop_recorder(recorder)
-        # Only meaningful while the app is still up: one that closed itself
-        # mid-run leaves an empty display behind, and that video is fine.
-        if moved is None and window is not None and app.poll() is None:
-            moved = window_off_frame(env, window, width, height)
-            if moved:
-                note(moved)
-        if blank is None and unsampled is None and app.poll() is None:
-            sampled.append(("at the end", None))
-            try:
-                if display_is_blank(env, display, width, height):
-                    blank = "at the end"
-            except SampleError as exc:
-                unsampled = str(exc)
+        check_at_end(env, app, window, display, width, height, checks)
     finally:
         # Order matters: finish the video before the app and display go away,
         # or the last frames catch a half-dead app.
@@ -1176,33 +1248,7 @@ def cmd_record(a):
         if a.gpu:
             finish_gpu_video(output, logpath)
 
-    if not output.exists() or output.stat().st_size == 0:
-        die(f"no video was written to {output}. See {logpath}")
-    if blank:
-        what = ("so at least half of it is a flat colour" if blank == "halfway"
-                else "so it ends on a flat colour")
-        die(f"the virtual display was blank {blank}, {what}: {output}\n"
-            + blank_causes(a.gpu))
-    if unsampled is not None:
-        die(f"could not sample the virtual display to check {output} is not blank,\n"
-            f"  so this run cannot vouch for it.\n  {unsampled}")
-    if a.gpu:
-        for when, at in sampled:
-            try:
-                flat = video_is_blank(output, at, width, height)
-            except SampleError as exc:
-                die(f"could not read {output} back to check it is not blank,\n"
-                    f"  so this run cannot vouch for it.\n  {exc}")
-            if flat:
-                die(f"the video is a flat colour {when}, though the private "
-                    f"screen was not: {output}\n  The recorder captured "
-                    f"something other than the screen. See {logpath}")
-        share = changed_share(output, a.framerate)
-        if share is not None and share < CHANGED_NOTE_BELOW:
-            note(f"only {share:.0%} of the frames in the middle of {output} "
-                 f"changed from the one before.\n  If the app was moving the "
-                 f"whole time, it drew that few new frames itself: the video "
-                 f"has every frame it drew.")
+    vouch_for(a, output, logpath, width, height, checks)
     for stale in (logpath, displaylog):
         stale.unlink(missing_ok=True)  # only worth keeping when something failed
     write_state(statefile, dict(state, result="ok"))

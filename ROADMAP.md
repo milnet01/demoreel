@@ -2065,7 +2065,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: marketing.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0081] **Split `cmd_record` into its stages before the countdown hooks into it.**
+- ✅ [DEMO-0081] **Split `cmd_record` into its stages before the countdown hooks into it.**
   `cmd_record` is by far the longest function in the file. It checks
   dependencies, parses the size, starts the display and app, sizes the
   window, waits for a draw, records, samples, tears down and reports, all
@@ -2077,6 +2077,11 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
 
   The file stays one file. Splitting it into modules would give up the
   single-executable property CLAUDE.md states, for no gain.
+  Resolved (2026-09-27): cmd_record now reads as its stages: launch,
+  place_window, settle, start_recorder, run_countdown (the loop the
+  countdown hooks into), stop, check_at_end, then vouch_for after the one
+  try/finally teardown. The five shared sample locals became a Checks
+  object. Stage bodies moved unchanged. Still one file. Full ./ci.sh green.
   **Layman:** The main recording function does everything in one long block; break it into clear steps.
   Kind: refactor.
   Source: in-session-2026-09-25.
