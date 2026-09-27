@@ -688,6 +688,41 @@ wait "$recorder" || { echo "the stopped run exited non-zero" >&2; exit 1; }
 [ -f "$tmp/app.log" ] || { echo "--app-log wrote no file" >&2; exit 1; }
 echo "stop ended the run, and --app-log wrote its file"
 
+step "a stop is noticed at once"
+# DEMO-0075. The recording loop slept between checks, and a sleep resumes after
+# the signal handler runs, so a stop landed up to a fifth of a second late --
+# a median 107 ms, all of it in the video. Ten stops at random moments: the
+# old loop misses 50 ms on three in four, so it cannot pass all ten.
+python3 - <<'STOPPY'
+import importlib.machinery, importlib.util, os, random, signal, threading, time, types
+
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+demoreel = importlib.util.module_from_spec(
+    importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(demoreel)
+signal.signal(signal.SIGUSR1, demoreel._request_stop)
+
+
+class Running:  # an app and a recorder that never exit on their own
+    def poll(self):
+        return None
+
+
+worst = 0.0
+for _ in range(10):
+    demoreel._stop.clear()
+    sent = []
+    threading.Timer(random.uniform(0.05, 0.3), lambda: (
+        sent.append(time.monotonic()), os.kill(os.getpid(), signal.SIGUSR1))).start()
+    demoreel.run_countdown(types.SimpleNamespace(action=[], duration=0), {},
+                           Running(), None, ":0", Running(), 2, 2, "log",
+                           time.monotonic(), demoreel.Checks())
+    worst = max(worst, time.monotonic() - sent[0])
+if worst > 0.05:
+    raise SystemExit(f"a stop took {worst * 1000:.0f} ms to be noticed")
+print(f"a stop is noticed within {worst * 1000:.1f} ms")
+STOPPY
+
 step "stop fails when the run it stopped fails"
 # DEMO-0047. A -d 0 run that is blank when stopped fails its end-of-run check,
 # and stop used to print its path anyway, so `out=$(demoreel stop ...)` held a

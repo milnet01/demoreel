@@ -2149,7 +2149,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: investigate.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0075] **Notice `stop` at once, instead of up to a fifth of a second late.**
+- ✅ [DEMO-0075] **Notice `stop` at once, instead of up to a fifth of a second late.**
   The recording loop in `cmd_record` sleeps 0.2 s between checks, and the
   signal handler only sets a flag. Python resumes an interrupted sleep
   after a handler runs (PEP 475), so a stop lands up to 0.2 s late. That
@@ -2158,6 +2158,13 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Wake the loop from the handler -- a threading.Event waited on with a
   timeout, or signal.set_wakeup_fd. Measure the time from signal to
   ffmpeg's quit, before and after.
+  Resolved (2026-09-27): _stop is a threading.Event; the recording loop
+  and the `wait` action wait on it instead of sleeping. Measured signal to
+  loop exit, in process, 30 stops at random moments: before median 107 ms,
+  max 192 ms; after 0.1 ms. The loop exit calls stop_recorder straight
+  away, so this is the signal-to-quit delay; the end-to-end figure was not
+  taken separately. A stop 0.1 s into `wait 5` now returns at 0.10 s. New
+  gate step: red at 195 ms with the sleep put back, green at 0.1 ms.
   **Layman:** The recording reacts to a stop request immediately rather than after a short pause.
   Kind: perf.
   Source: user-request-2026-09-25.

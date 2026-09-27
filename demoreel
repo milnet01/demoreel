@@ -53,13 +53,16 @@ TYPE_SECONDS_PER_CHAR = 0.05
 # QT_QPA_PLATFORM=xcb it does not need to know the app's toolkit.
 NO_WAYLAND = "demoreel-no-wayland"
 
-_stop = False
+# An Event, not a flag, so a wait on it ends the moment a stop arrives. A
+# plain sleep resumes after the handler runs (PEP 475), and a stop landed up
+# to one sleep late: a median 107 ms, measured, all of it in the video
+# (DEMO-0075).
+_stop = threading.Event()
 
 
 def _request_stop(signum, frame):
     """SIGUSR1 (from `demoreel stop`), SIGINT or SIGTERM: finish the video now."""
-    global _stop  # noqa: PLW0603 - a signal handler sets a flag; that is the idiom
-    _stop = True
+    _stop.set()
 
 
 def die(msg):
@@ -578,7 +581,7 @@ def run_action(spec, env):
         return
     verb, args = parts[0], parts[1:]
     if verb == "wait":
-        time.sleep(float(args[0]))
+        _stop.wait(float(args[0]))  # a stop ends the wait, as it ends the run
     elif verb == "move":
         xdotool(env, "mousemove", "--sync", args[0], args[1])
     elif verb == "click":
@@ -1100,7 +1103,7 @@ def run_countdown(a, env, app, window, display, recorder, width, height,
     app goes away, or when the halfway sample finds the display blank.
     """
     for action in a.action:
-        if _stop:
+        if _stop.is_set():
             break
         run_action(action, env)
 
@@ -1111,7 +1114,7 @@ def run_countdown(a, env, app, window, display, recorder, width, height,
     # of the countdown is empty, and the run fails there rather than
     # recording the rest. A -d 0 run has no halfway point.
     halfway = deadline - a.duration / 2 if deadline else None
-    while not _stop:
+    while not _stop.is_set():
         now = time.monotonic()
         if deadline and now >= deadline:
             break
@@ -1129,9 +1132,9 @@ def run_countdown(a, env, app, window, display, recorder, width, height,
         if app.poll() is not None:
             note("the app closed; ending the recording.")
             break
-        # Never sleep past the deadline: a fixed interval here added up to
-        # its own length to every video.
-        time.sleep(0.2 if deadline is None
+        # Never wait past the deadline: a fixed interval here added up to
+        # its own length to every video. A stop ends the wait at once.
+        _stop.wait(0.2 if deadline is None
                    else max(0.0, min(0.2, deadline - time.monotonic())))
 
 

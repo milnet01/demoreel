@@ -23,6 +23,11 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Changed
 
+- **A stop ends the recording at once, instead of up to a fifth of a second late.** (DEMO-0075)
+  That extra tail used to end up in the video: a median 107 ms, now under
+  a millisecond. A stop during a scripted `wait` step also ends it at once,
+  where it used to sit out the whole wait.
+
 - **Breaking: `--gpu` now needs `cage`, `Xwayland`, `wlr-randr` and `xauth`, and `record --gpu` also `wf-recorder`; `xwfb-run` is no longer used.** (DEMO-0111)
   demoreel starts the compositor and the X screen itself, so it can size
   the screen before the X server starts. On openSUSE all of them are in
