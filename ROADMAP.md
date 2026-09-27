@@ -2089,6 +2089,11 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
 
   Verify it by running it: `verify-instructions` in a clean container per
   distro, not by reading it.
+  Progress (2026-09-27): podman images opensuse/tumbleweed, ubuntu:24.04,
+  debian:stable, fedora:latest and archlinux:latest were pulled to look up
+  package names (DEMO-0051) and are kept for this item's per-distro
+  verify-instructions run. Remove the ones this project pulled once it is
+  done (ubuntu:24.04 was already there before).
   **Layman:** The front page explains how to install it and make a first video, step by step.
   Kind: doc.
   Source: user-request-2026-09-25.
@@ -2103,6 +2108,9 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
 
   This is inside the repository, so it does not meet the 1.0 condition in
   versioning-overrides.md. That needs use outside it.
+  Decided by the user (2026-09-27): the clip is a small, compressed file
+  committed in the repo under docs/, recorded with demoreel itself, kept
+  around 1 MB or less. Not a GIF, and not hosted elsewhere.
   **Layman:** The project page shows a video made with demoreel, so people see what it does before reading.
   Kind: marketing.
   Source: user-request-2026-09-25.
@@ -2146,6 +2154,9 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   step holds `a` in an xterm and stops mid-hold: 22 auto-repeated letters
   during, none after. Red with the keyup skipped on a stop (35, then 72).
   Tab completion (DEMO-0056) must list it too.
+  Follow-up (2026-09-27): the vestige session asked for this but was not
+  running when it shipped, so it has not been told. Message it when one
+  is live (ListAgents), naming `-a 'hold w 3'`.
   **Layman:** Let a demo hold a key down for a few seconds, e.g. to walk forward in a 3D scene.
   Kind: feature.
   Source: peer-request-vestige-2026-09-25.
@@ -2615,6 +2626,14 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   **Layman:** On a fresh Fedora or openSUSE install the video encoder demoreel needs is missing, so it should say so up front and name where to get it.
   Kind: fix.
   Source: in-session-2026-09-27.
+
+- 📋 [DEMO-0118] **Cut and publish 0.3.0 once every other item in this section is closed.**
+  Decided by the user (2026-09-27): when the rest of 0.3.0 is done, cut
+  the release without asking again (cut-release: bump, tag, push). The
+  version string still says 0.2.2.
+  **Layman:** When everything planned for version 0.3.0 is finished, publish it.
+  Kind: release.
+  Source: user-request-2026-09-27.
 
 ## 0.4.0 — Speaks your language
 
