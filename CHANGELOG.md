@@ -54,6 +54,9 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **A recording whose encoder died partway now fails, instead of handing back a file that will not play.** (DEMO-0116)
+  demoreel reads the finished video back before it prints the path.
+
 - **Closing the terminal mid-recording now finishes the video and leaves nothing running.** (DEMO-0115)
   It used to end demoreel on the spot and leave the private display running
   in the background. `shot` tidies up the same way when it is sent SIGTERM

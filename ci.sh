@@ -830,6 +830,36 @@ if worst > 0.05:
 print(f"a stop is noticed within {worst * 1000:.1f} ms")
 STOPPY
 
+step "a recorder killed mid-run fails the run"
+# DEMO-0116. A killed ffmpeg leaves an mp4 with no index. The file is there
+# and not empty, and the run used to print its path and exit 0.
+set +e
+./demoreel record -n gate -o "$tmp/killed.mp4" -d 6 -s 320x240 -- xclock \
+    >"$tmp/killed.out" 2>"$tmp/killed.err" &
+killed_rec=$!
+gate_pids="$gate_pids $killed_rec"
+for _ in $(seq 1 100); do
+    # sed, not grep: see the cookie step -- grep's exit 1 kills a pipefail run.
+    [ -n "$(sed -n '/recording :/p' "$tmp/killed.err")" ] && break
+    sleep 0.1
+done
+sleep 1.5
+pkill -KILL -f "^ffmpeg .*$tmp/killed.mp4"
+wait "$killed_rec"
+killed_status=$?
+set -e
+[ "$killed_status" -ne 0 ] && [ ! -s "$tmp/killed.out" ] || {
+    echo "a run whose recorder was killed exited $killed_status and printed" \
+         "'$(cat "$tmp/killed.out")'" >&2
+    exit 1
+}
+grep -q 'the video cannot be played' "$tmp/killed.err" || {
+    echo "the run failed, but not on the playable-video check:" >&2
+    cat "$tmp/killed.err" >&2
+    exit 1
+}
+echo "a run whose recorder was killed fails, and prints no path"
+
 step "stop fails when the run it stopped fails"
 # DEMO-0047. A -d 0 run that is blank when stopped fails its end-of-run check,
 # and stop used to print its path anyway, so `out=$(demoreel stop ...)` held a

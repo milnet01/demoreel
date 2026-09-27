@@ -934,7 +934,7 @@ def prepare(a, suffix):
     """What `record` and `shot` both check before starting anything: the tools,
     the app command, the size, and where the output and the app log go."""
     recording = suffix == ".mp4"
-    required = ["ffmpeg", "xdotool", "xauth"]
+    required = ["ffmpeg", "xdotool", "xauth"] + (["ffprobe"] if recording else [])
     if a.gpu:
         required += ["cage", "Xwayland", "wlr-randr"]
         required += ["wf-recorder"] if recording else []
@@ -1184,6 +1184,11 @@ def vouch_for(a, output, logpath, width, height, checks):
     """Fail the run unless the finished video is one it can stand behind."""
     if not output.exists() or output.stat().st_size == 0:
         die(f"no video was written to {output}. See {logpath}")
+    unreadable = video_error(output)
+    if unreadable:
+        die(f"the video cannot be played: {output}\n  {unreadable}\n"
+            f"  The recorder most likely stopped before it finished the file. "
+            f"See {logpath}")
     if checks.blank:
         what = ("so at least half of it is a flat colour"
                 if checks.blank == "halfway" else "so it ends on a flat colour")
@@ -1209,6 +1214,25 @@ def vouch_for(a, output, logpath, width, height, checks):
                  f"changed from the one before.\n  If the app was moving the "
                  f"whole time, it drew that few new frames itself: the video "
                  f"has every frame it drew.")
+
+
+def video_error(output):
+    """Why the finished video cannot be read back, or None if it can.
+
+    A file that is there and not empty is not yet a video: a recorder killed
+    mid-run leaves an mp4 with no index, and the run printed its path and
+    exited 0 (DEMO-0116).
+    """
+    try:
+        probe = subprocess.run(["ffprobe", "-v", "error", str(output)],
+                               capture_output=True, text=True,
+                               timeout=CALL_TIMEOUT, check=False)
+    except subprocess.TimeoutExpired:
+        return f"reading it back took over {CALL_TIMEOUT}s."
+    if probe.returncode == 0:
+        return None
+    lines = probe.stderr.strip().splitlines()
+    return lines[-1] if lines else "ffprobe could not read it."
 
 
 def cmd_record(a):

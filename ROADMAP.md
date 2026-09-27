@@ -2548,6 +2548,20 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: fix.
   Source: in-session-2026-09-27.
 
+- ✅ [DEMO-0116] **A recorder that dies mid-run leaves an unplayable file the run reports as its video.**
+  Measured 2026-09-27: ffmpeg killed with SIGKILL 1.5 s into a -d 6 run.
+  demoreel noted "the recorder stopped early", exited 0 and printed the
+  path; ffprobe says "moov atom not found". vouch_for only checks the file
+  is non-empty. Read the finished file back before vouching for it, and
+  fail the run when it cannot be read.
+  Resolved (2026-09-27): vouch_for reads the file back with ffprobe
+  (video_error) and fails the run when it cannot. ffprobe joins record's
+  startup dependency check. Gate step kills ffmpeg 1.5 s into a -d 6 run:
+  red on the old code (exit 0, path printed), green after.
+  **Layman:** If the video encoder crashed partway, demoreel still said the recording worked and handed back a file that will not play.
+  Kind: fix.
+  Source: in-session-2026-09-27.
+
 ## 0.4.0 — Speaks your language
 
 Every message, --help and the man page in the reader's language, plus a
