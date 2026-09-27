@@ -970,6 +970,86 @@ def warn_if_flatpak_underflagged(command):
         note("  recording empty. README.md says what each flag is for.")
 
 
+# Which package gives each program, per package manager, looked up in each
+# distro's own package index on 2026-09-27 (DEMO-0051): openSUSE from rpm on
+# this machine, the rest with apt-file, dnf repoquery and pacman -F in their
+# own containers. Knowledge about distros, not about apps.
+PACKAGES = {
+    "zypper": ("sudo zypper install", {
+        "ffmpeg": "ffmpeg", "ffprobe": "ffmpeg", "xdotool": "xdotool",
+        "xauth": "xauth", "Xvfb": "xorg-x11-server-Xvfb", "cage": "cage",
+        "Xwayland": "xwayland", "wlr-randr": "wlr-randr",
+        "wf-recorder": "wf-recorder"}),
+    "apt": ("sudo apt install", {
+        "ffmpeg": "ffmpeg", "ffprobe": "ffmpeg", "xdotool": "xdotool",
+        "xauth": "xauth", "Xvfb": "xvfb", "cage": "cage",
+        "Xwayland": "xwayland", "wlr-randr": "wlr-randr",
+        "wf-recorder": "wf-recorder"}),
+    "dnf": ("sudo dnf install", {
+        "ffmpeg": "ffmpeg", "ffprobe": "ffmpeg", "xdotool": "xdotool",
+        "xauth": "xorg-x11-xauth", "Xvfb": "xorg-x11-server-Xvfb",
+        "cage": "cage", "Xwayland": "xorg-x11-server-Xwayland",
+        "wlr-randr": "wlr-randr", "wf-recorder": "wf-recorder"}),
+    "pacman": ("sudo pacman -S", {
+        "ffmpeg": "ffmpeg", "ffprobe": "ffmpeg", "xdotool": "xdotool",
+        "xauth": "xorg-xauth", "Xvfb": "xorg-server-xvfb", "cage": "cage",
+        "Xwayland": "xorg-xwayland", "wlr-randr": "wlr-randr",
+        "wf-recorder": "wf-recorder"}),
+}
+# /etc/os-release ID or ID_LIKE -> package manager.
+DISTRO_FAMILIES = {"opensuse": "zypper", "suse": "zypper", "debian": "apt",
+                   "ubuntu": "apt", "fedora": "dnf", "arch": "pacman"}
+# Measured in containers the same day: the distros' own ffmpeg on openSUSE
+# (ffmpeg-8) and Fedora (ffmpeg-free) has no libx264 encoder; Packman's and
+# RPM Fusion's do (DEMO-0117).
+X264_ADVICE = {
+    "zypper": "\n  openSUSE's own ffmpeg leaves it out. Install ffmpeg from the "
+              "Packman repository,\n  which has it.",
+    "dnf": "\n  Fedora's ffmpeg-free leaves it out. Enable RPM Fusion, then:\n"
+           "    sudo dnf swap ffmpeg-free ffmpeg --allowerasing",
+    None: "\n  Install a build of ffmpeg that includes libx264.",
+}
+
+
+def distro_family():
+    """The package manager this distro uses, from /etc/os-release; None if
+    it is not one the table knows."""
+    try:
+        lines = Path("/etc/os-release").read_text().splitlines()
+    except OSError:
+        return None
+    fields = dict(line.split("=", 1) for line in lines if "=" in line)
+    ids = [fields.get("ID", ""), *fields.get("ID_LIKE", "").split()]
+    for name in (i.strip('"') for i in ids):
+        family = DISTRO_FAMILIES.get(name)
+        if family:
+            return family
+    return None
+
+
+def install_hint(programs):
+    """The command that installs `programs` here, or "" on an unknown distro."""
+    family = distro_family()
+    if family is None:
+        return ""
+    command, names = PACKAGES[family]
+    packages = list(dict.fromkeys(names[p] for p in programs if p in names))
+    hint = f"\n  Install with: {command} {' '.join(packages)}"
+    if "ffmpeg" in packages and family in X264_ADVICE:
+        hint += X264_ADVICE[family]
+    return hint
+
+
+def has_libx264():
+    try:
+        encoders = subprocess.run(["ffmpeg", "-hide_banner", "-encoders"],
+                                  capture_output=True, text=True,
+                                  timeout=CALL_TIMEOUT, check=False).stdout
+    except subprocess.TimeoutExpired:
+        return True  # cannot tell; let the recording itself say what is wrong
+    return " libx264 " in encoders
+
+
 def prepare(a, suffix):
     """What `record` and `shot` both check before starting anything: the tools,
     the app command, the size, and where the output and the app log go."""
@@ -982,7 +1062,11 @@ def prepare(a, suffix):
         required.append("Xvfb")
     missing = [t for t in required if shutil.which(t) is None]
     if missing:
-        die(f"missing required program(s): {', '.join(missing)}")
+        die(f"missing required program(s): {', '.join(missing)}"
+            + install_hint(missing))
+    if recording and not has_libx264():
+        die("this ffmpeg cannot encode H.264 with libx264, which every "
+            "recording uses." + X264_ADVICE.get(distro_family(), X264_ADVICE[None]))
     if recording and a.gpu and a.cursor:
         die("--cursor is not available with record --gpu: that backend records "
             "the compositor's picture, which never has the pointer in it.")

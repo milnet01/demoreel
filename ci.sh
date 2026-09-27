@@ -876,6 +876,39 @@ if after != during:
 print(f"{during} letters while held, none after the stop")
 HOLDPY
 
+step "a missing program, or an ffmpeg without libx264, says what to install"
+# DEMO-0051: a missing program is named with the command that installs it on
+# this distro. DEMO-0117: the distros' own ffmpeg on openSUSE and Fedora has
+# no libx264, so every recording failed there; it is refused up front. Both
+# use a PATH built for the test, so the machine's own tools are untouched.
+mkdir -p "$tmp/noxdo" "$tmp/nox264"
+for t in ffmpeg ffprobe xauth Xvfb xclock; do ln -s "$(command -v "$t")" "$tmp/noxdo/$t"; done
+for t in ffprobe xdotool xauth Xvfb xclock; do ln -s "$(command -v "$t")" "$tmp/nox264/$t"; done
+printf '#!/bin/sh\ncase "$*" in *-encoders*) echo " V....D libopenh264 OpenH264" ;;\n*) exec %s "$@" ;; esac\n' \
+    "$(command -v ffmpeg)" >"$tmp/nox264/ffmpeg"
+chmod +x "$tmp/nox264/ffmpeg"
+py=$(command -v python3)
+for case in noxdo nox264; do
+    set +e
+    PATH="$tmp/$case" "$py" ./demoreel record -n gate -o "$tmp/$case.mp4" -- xclock \
+        2>"$tmp/$case.err"
+    case_status=$?
+    set -e
+    [ "$case_status" -ne 0 ] || { echo "$case: the run did not fail" >&2; exit 1; }
+done
+grep -q 'missing required program(s): xdotool' "$tmp/noxdo.err" \
+    && [ -n "$(sed -n '/Install with: .*xdotool/p' "$tmp/noxdo.err")" ] || {
+    echo "a missing xdotool did not name its install command:" >&2
+    cat "$tmp/noxdo.err" >&2
+    exit 1
+}
+grep -q 'cannot encode H.264 with libx264' "$tmp/nox264.err" || {
+    echo "an ffmpeg without libx264 was not refused:" >&2
+    cat "$tmp/nox264.err" >&2
+    exit 1
+}
+echo "a missing program names its install command; no libx264 is refused"
+
 step "a stop is noticed at once"
 # DEMO-0075. The recording loop slept between checks, and a sleep resumes after
 # the signal handler runs, so a stop landed up to a fifth of a second late --

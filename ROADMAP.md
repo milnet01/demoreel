@@ -1930,7 +1930,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: ux.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0051] **Name the install command when a required program is missing.**
+- ✅ [DEMO-0051] **Name the install command when a required program is missing.**
   Today a missing program stops the run with its name: `missing required
   program(s): xdotool`. A person then has to find which package provides
   it, and the name differs by distro -- `xwfb-run` comes from
@@ -1943,6 +1943,13 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   The package table is knowledge about distros, not about apps, so it does
   not breach the per-app rule. It is shared with the setup-check item
   below, and written once.
+  Resolved (2026-09-27): PACKAGES maps each program to its package for
+  zypper, apt, dnf and pacman, looked up that day in each distro's own
+  index (rpm here; apt-file on ubuntu:24.04 and debian:stable; dnf
+  repoquery on fedora; pacman -F on archlinux). distro_family() reads
+  ID and ID_LIKE from /etc/os-release; an unknown distro gets the names
+  only, as before. Gate step with a PATH lacking xdotool, red on the old
+  code. DEMO-0052 reuses the table.
   **Layman:** If something demoreel needs isn't installed, it tells you the exact command to install it.
   Kind: ux.
   Source: user-request-2026-09-25.
@@ -2572,6 +2579,22 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   startup dependency check. Gate step kills ffmpeg 1.5 s into a -d 6 run:
   red on the old code (exit 0, path printed), green after.
   **Layman:** If the video encoder crashed partway, demoreel still said the recording worked and handed back a file that will not play.
+  Kind: fix.
+  Source: in-session-2026-09-27.
+
+- ✅ [DEMO-0117] **Stock Fedora and openSUSE ffmpeg cannot encode the video demoreel writes.**
+  Measured 2026-09-27 in containers: Fedora's ffmpeg-free and
+  Tumbleweed's own ffmpeg-8 have no libx264 encoder (Tumbleweed offers
+  libopenh264; Fedora only hardware h264 encoders). demoreel records with
+  libx264 on both backends, so every recording fails there. RPM Fusion's
+  ffmpeg (Fedora) and Packman's (openSUSE, as on this machine) have it.
+  Check for libx264 at startup and say which build to install.
+  Resolved (2026-09-27): record checks `ffmpeg -encoders` for libx264
+  at startup and names Packman (openSUSE) or `dnf swap ffmpeg-free ffmpeg`
+  after enabling RPM Fusion (Fedora; checked in a container: that ffmpeg
+  has libx264). shot does not encode H.264 and is not checked. Gate step
+  with a fake ffmpeg listing no libx264: red on the old code, green after.
+  **Layman:** On a fresh Fedora or openSUSE install the video encoder demoreel needs is missing, so it should say so up front and name where to get it.
   Kind: fix.
   Source: in-session-2026-09-27.
 

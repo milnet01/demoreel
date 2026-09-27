@@ -14,6 +14,10 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **A missing program is named with the command that installs it on your distro.** (DEMO-0051)
+  openSUSE, Debian, Ubuntu, Fedora and Arch; the package names were looked
+  up in each distro's own package index.
+
 - **A `hold KEY SECONDS` step holds a key down, for apps that move while a key is held.** (DEMO-0098)
   `-a 'hold w 3'` walks forward for three seconds in a 3D scene. The key is
   let go however the step ends, a stop included.
@@ -61,6 +65,11 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   quotes, remove them, or they will be typed too.
 
 ### Fixed
+
+- **On a distro whose ffmpeg cannot encode H.264, recording stops at once and says which ffmpeg to install.** (DEMO-0117)
+  The ffmpeg that openSUSE and Fedora ship themselves leaves out libx264,
+  which every recording uses. demoreel now names Packman (openSUSE) or RPM
+  Fusion (Fedora).
 
 - **A recording whose encoder died partway now fails, instead of handing back a file that will not play.** (DEMO-0116)
   demoreel reads the finished video back before it prints the path.
