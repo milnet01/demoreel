@@ -61,6 +61,15 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   Its advice now fits the backend that ran: on `--gpu` it names the app
   not having drawn yet, and `--settle`, which waits for it.
 
+### Security
+
+- **The private screen's lock is proven on before the app starts, on both backends.** (DEMO-0113)
+  A client without the run's auth cookie must be refused and one holding it
+  must connect. The old Xvfb check tried only the holder, which gets in
+  before the lock as well as after. Measured: Xvfb's lock was already on in
+  practice, because nothing connects before the cookie is written; the
+  check now proves it instead of relying on that.
+
 ## [0.2.2] - 2026-09-26
 
 ### Added

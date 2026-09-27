@@ -748,8 +748,12 @@ step "the virtual display refuses a client with no cookie"
 # existed: a client with no credential at all read the geometry and grabbed a
 # frame of whatever was on screen. Socket permissions cannot fix it, because
 # Xvfb also listens on an abstract socket, which has none.
+# The app itself probes first: the lock must already be in force when the app
+# starts, not only by the time the gate looks (DEMO-0113).
 ./demoreel record -o "$tmp/cookie.mp4" -d 0 -n gatecookie -s 640x480 \
-    -- xclock >/dev/null 2>"$tmp/cookie.err" &
+    -- sh -c 'XAUTHORITY=/dev/null xdotool getdisplaygeometry >/dev/null 2>&1
+              echo $? >"$1"; exec xclock' sh "$tmp/cookie.atstart" \
+    >/dev/null 2>"$tmp/cookie.err" &
 cookie_rec=$!
 gate_pids="$gate_pids $cookie_rec"
 disp=""
@@ -775,11 +779,18 @@ uncredentialed=$?
 set -e
 ./demoreel stop gatecookie >/dev/null
 wait "$cookie_rec" || true
+atstart=$(cat "$tmp/cookie.atstart" 2>/dev/null || echo missing)
+case "$atstart" in
+    missing|0)
+        echo "a client with no cookie was not refused when the app started" \
+             "(probe: $atstart) -- the lock was not yet in force" >&2
+        exit 1 ;;
+esac
 [ "$uncredentialed" -ne 0 ] || {
     echo "a client with no cookie read $disp -- the display is not private" >&2
     exit 1
 }
-echo "a client with no cookie cannot reach the display"
+echo "a client with no cookie cannot reach the display, from the app's start on"
 
 step "a Flatpak target missing its flags is warned about"
 # Without the flags a Flatpak renders on the real compositor and the run fails

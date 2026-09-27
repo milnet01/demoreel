@@ -2450,7 +2450,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: doc-fix.
   Source: review-contract-2026-09-26 README loop 6.
 
-- 📋 [DEMO-0113] **Check that the Xvfb auth lock is in force before the app starts.**
+- ✅ [DEMO-0113] **Check that the Xvfb auth lock is in force before the app starts.**
   start_xvfb waits after SIGHUP until xdotool WITH the cookie connects.
   On Xwayland, measured 2026-09-26: a server whose -auth file is empty
   admits a client with no credential, and a client holding the cookie
@@ -2459,6 +2459,14 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Measure on Xvfb; if so, prove the lock the way DEMO-0111 does on
   --gpu, by a client WITHOUT the cookie being refused. Raised by a cold
   lane on the DEMO-0111 gate; code-side, so filed.
+  Resolved (2026-09-27): measured on Xvfb. The server loads its auth
+  file at the first connection, and demoreel makes none before writing the
+  cookie, so the lock was on from the first; a client that connects before
+  the cookie does leave it open, and then the holder-only check passed.
+  start_xvfb and start_gpu_display now share wait_until_locked (stranger
+  refused AND holder connects). The gate's cookie step has the app probe
+  without the cookie as it starts; proven red against an early client with
+  no SIGHUP and the old check, green after.
   **Layman:** demoreel may start the app a moment before the private screen's lock actually takes effect.
   Kind: security.
   Source: review-contract-2026-09-26 CLAUDE.md loop.

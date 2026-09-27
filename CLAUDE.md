@@ -287,9 +287,11 @@ are load-bearing and none is obvious:
   it: start with an empty auth file, then write the cookie. `Xvfb` is then sent
   `SIGHUP` to re-read; do not "simplify" that ordering away. `Xwayland` re-reads
   the changed file with no signal (measured: a client with no credential got in
-  before the cookie and was refused after). So on `--gpu` the lock is proven in
-  force by a client *without* the cookie being refused while one with it
-  connects. A dead display refuses both, so the refusal alone proves nothing.
+  before the cookie and was refused after). So on both backends the lock is
+  proven in force by a client *without* the cookie being refused while one with
+  it connects (`wait_until_locked`). A client holding the cookie gets in before
+  the lock as well as after, so it alone proves nothing (DEMO-0113); a dead
+  display refuses both, so the refusal alone proves nothing either.
 
 `weston` is also installed, from testing this. Its headless backend falls back
 to software rendering here (`Failed to initialize glamor`,

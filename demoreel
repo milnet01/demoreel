@@ -202,8 +202,10 @@ def start_xvfb(width, height, base, logfile):
 
     The number has to come first and the cookie is keyed to it, so the order is:
     start with an empty auth file, learn the number, write the cookie for it,
-    and SIGHUP the server to re-read. Until that reset the display is open, and
-    nothing has been drawn on it yet — the app is launched afterwards.
+    and SIGHUP the server to re-read. Measured: Xvfb loads the file at its
+    first connection, and none is made before the cookie is written, so the
+    lock is on from the first. The SIGHUP covers a server that loaded the file
+    earlier, and wait_until_locked proves the lock rather than trusting either.
 
     The server's stderr goes to a file, never to a pipe. It writes there for
     the whole run — every keymap an app loads adds xkbcomp's warnings — and a
@@ -265,18 +267,34 @@ def start_xvfb(width, height, base, logfile):
             + (f"\n  {added.stderr.strip()}" if added.stderr.strip() else ""))
     proc.send_signal(signal.SIGHUP)  # the server re-reads its auth file on reset
 
-    # Do not report success until the cookie is actually in force: a client
-    # connecting before the reset lands would work by having no protection.
-    deadline = time.monotonic() + DISPLAY_READY_TIMEOUT
-    env = dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth))
-    while time.monotonic() < deadline:
-        if xdotool(env, "getdisplaygeometry").returncode == 0:
-            return proc, display, auth
-        time.sleep(0.1)
+    # Do not report success until the cookie is actually in force. A client
+    # holding the cookie connects before the lock as well as after it
+    # (measured), so it alone proves nothing (DEMO-0113).
+    if wait_until_locked(display, auth):
+        return proc, display, auth
     proc.kill()
     auth.unlink(missing_ok=True)
-    die("the display did not come back after its auth cookie was installed.")
+    die("the display did not lock: a client without its auth cookie "
+        "could still connect, or none could.")
     return None  # unreachable; die() exits
+
+
+def wait_until_locked(display, auth):
+    """True once a client without the cookie is refused and one with it gets in.
+
+    Both halves are needed. Before the cookie is in force both clients get in,
+    so the holder connecting proves nothing; a dead display refuses both, so
+    the stranger's refusal alone proves nothing either.
+    """
+    locked = dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth))
+    stranger = dict(os.environ, DISPLAY=display, XAUTHORITY=os.devnull)
+    deadline = time.monotonic() + DISPLAY_READY_TIMEOUT
+    while time.monotonic() < deadline:
+        if (xdotool(stranger, "getdisplaygeometry").returncode != 0
+                and xdotool(locked, "getdisplaygeometry").returncode == 0):
+            return True
+        time.sleep(0.1)
+    return False
 
 
 def start_gpu_display(width, height, base, logfile):
@@ -357,14 +375,8 @@ def start_gpu_display(width, height, base, logfile):
         die("could not write the display's auth cookie."
             + (f"\n  {added.stderr.strip()}" if added.stderr.strip() else ""))
 
-    locked = dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth))
-    stranger = dict(os.environ, DISPLAY=display, XAUTHORITY=os.devnull)
-    deadline = time.monotonic() + DISPLAY_READY_TIMEOUT
-    while time.monotonic() < deadline:
-        if (xdotool(stranger, "getdisplaygeometry").returncode != 0
-                and xdotool(locked, "getdisplaygeometry").returncode == 0):
-            return proc, display, auth, wayland
-        time.sleep(0.1)
+    if wait_until_locked(display, auth):
+        return proc, display, auth, wayland
     end_process(proc, group=True)
     auth.unlink(missing_ok=True)
     die("the GPU display did not lock: a client without its auth cookie "
