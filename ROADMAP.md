@@ -2198,7 +2198,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: perf.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0080] **Replace the hand-written wait loops with one polling helper.**
+- ✅ [DEMO-0080] **Replace the hand-written wait loops with one polling helper.**
   The file has several loops that poll with a fixed sleep and a deadline:
   waiting for the display after the cookie reset, for the window, for its
   size, for the first draw, for a starting run in `stop`, and now for a
@@ -2209,6 +2209,12 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   intervals is then one change, which is what the launch-time item in this
   version needs, and a new wait cannot get the deadline wrong. Behaviour
   stays the same, and the gate proves it.
+  Resolved (2026-09-27): poll(check, timeout, interval, grow, ceiling)
+  now carries seven waits: the lock, the window, its size, the first draw
+  (its 0.1 s growing to 1 s kept), stop finding a run, stop waiting for it
+  to record, and stop waiting for it to exit. Intervals unchanged. Left
+  out on purpose: the three pipe reads, which wait in select, and the
+  recording loop, which DEMO-0081 and DEMO-0075 rework. Full ./ci.sh green.
   **Layman:** Several bits of code each wait for something in their own way; make them share one tidy method.
   Kind: refactor.
   Source: in-session-2026-09-25.

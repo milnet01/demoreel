@@ -70,6 +70,31 @@ def note(msg):
     print(f"demoreel: {msg}", file=sys.stderr)
 
 
+def poll(check, timeout, interval=0.05, grow=1.0, ceiling=None):
+    """Call check() until it returns something true, and return that.
+
+    None once `timeout` seconds pass without it, or never with timeout=None.
+    Every wait for a condition goes through here, so none can sleep past its
+    own deadline and tuning an interval is one argument (DEMO-0080). The pipe
+    reads wait in select instead, and the recording loop is its own. check() runs
+    at least once, and once more at the deadline, however short the timeout.
+    `grow` widens the interval after each miss, up to `ceiling`.
+    """
+    deadline = None if timeout is None else time.monotonic() + timeout
+    while True:
+        result = check()
+        if result:
+            return result
+        if deadline is None:
+            time.sleep(interval)
+        else:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return None
+            time.sleep(min(interval, remaining))
+        interval = interval * grow if ceiling is None else min(interval * grow, ceiling)
+
+
 def state_dir():
     base = Path(os.environ.get("XDG_RUNTIME_DIR") or "/tmp")
     d = base / f"demoreel-{os.getuid()}"
@@ -288,13 +313,10 @@ def wait_until_locked(display, auth):
     """
     locked = dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth))
     stranger = dict(os.environ, DISPLAY=display, XAUTHORITY=os.devnull)
-    deadline = time.monotonic() + DISPLAY_READY_TIMEOUT
-    while time.monotonic() < deadline:
-        if (xdotool(stranger, "getdisplaygeometry").returncode != 0
-                and xdotool(locked, "getdisplaygeometry").returncode == 0):
-            return True
-        time.sleep(0.1)
-    return False
+    return bool(poll(
+        lambda: (xdotool(stranger, "getdisplaygeometry").returncode != 0
+                 and xdotool(locked, "getdisplaygeometry").returncode == 0),
+        DISPLAY_READY_TIMEOUT, interval=0.1))
 
 
 def start_gpu_display(width, height, base, logfile):
@@ -504,8 +526,7 @@ def wait_for_window(env, app, timeout):
     behind it. Size is the one signal that separates them without knowing
     anything about the app.
     """
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
+    def biggest():
         ids = named_windows(env)
         if ids:
             return max(ids, key=lambda wid: window_area(env, wid))
@@ -523,10 +544,10 @@ def wait_for_window(env, app, timeout):
                     "  If not, the command may simply have finished without needing a\n"
                     "  window — in which case there is nothing to record.")
             die(f"the app exited with status {app.returncode} before opening a window.")
-        # About 2ms of CPU per xdotool spawn, measured, so a tight poll costs
-        # nothing and a loose one costs up to its whole interval in wall time.
-        time.sleep(0.05)
-    return None
+        return None
+    # About 2ms of CPU per xdotool spawn, measured, so a tight poll costs
+    # nothing and a loose one costs up to its whole interval in wall time.
+    return poll(biggest, timeout, interval=0.05)
 
 
 def wait_for_size(env, window, area, timeout=2.0):
@@ -536,9 +557,7 @@ def wait_for_size(env, window, area, timeout=2.0):
     normally returns on the first check. The timeout is only for an app that
     refuses the size; recording goes ahead either way, as it always has.
     """
-    deadline = time.monotonic() + timeout
-    while window_area(env, window) != area and time.monotonic() < deadline:
-        time.sleep(0.05)
+    poll(lambda: window_area(env, window) == area, timeout, interval=0.05)
 
 
 def run_action(spec, env):
@@ -806,14 +825,8 @@ def wait_until_drawn(env, display, width, height, timeout):
     # A smaller frame is NOT the lever, and was measured: decimating to a
     # hundredth of the data gives an all but identical answer and saves about
     # 10%, because the cost is the process spawn and the capture, not the data.
-    interval, ceiling = 0.1, 1.0
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        if not display_is_blank(env, display, width, height):
-            return True
-        time.sleep(min(interval, max(0.0, deadline - time.monotonic())))
-        interval = min(interval * 1.5, ceiling)
-    return False
+    return bool(poll(lambda: not display_is_blank(env, display, width, height),
+                     timeout, interval=0.1, grow=1.5, ceiling=1.0))
 
 
 def stop_recorder(proc):
@@ -1303,14 +1316,9 @@ def live_runs():
 
 
 def cmd_stop(a):
-    deadline = time.monotonic() + STOP_GRACE
-    while True:
-        live = live_runs()
-        if a.name:
-            live = [e for e in live if e.get("name") == a.name]
-        if live or time.monotonic() >= deadline:
-            break
-        time.sleep(0.05)
+    def matching():
+        return [e for e in live_runs() if not a.name or e.get("name") == a.name]
+    live = poll(matching, STOP_GRACE, interval=0.05) or []
 
     if a.name:
         if not live:
@@ -1344,8 +1352,7 @@ def run_succeeded(entry):
     pid = entry["pid"]
     # A zombie keeps its pid and start time until whatever started it reaps
     # it, which may be the same script that is waiting on this stop.
-    while is_our_run(entry) and proc_stat(pid, 3) != "Z":
-        time.sleep(0.05)
+    poll(lambda: not is_our_run(entry) or proc_stat(pid, 3) == "Z", None)
     try:
         final = json.loads((state_dir() / f"{entry['name']}.json").read_text())
     except (OSError, ValueError):
@@ -1371,19 +1378,22 @@ def wait_until_recording(entry):
     pid = entry["pid"]
     # A file written by 0.1.x has no "recording" key, and existed only once
     # that run was already recording.
-    while not entry.get("recording", True):
-        time.sleep(0.05)
+    if entry.get("recording", True):
+        return entry
+
+    def recording():
         try:
-            entry = json.loads(statefile.read_text())
+            current = json.loads(statefile.read_text())
         except (OSError, ValueError):
-            entry = {}
+            current = {}
         # Same pid, or a new run that took the name after this one died would
         # be stopped in its place.
-        if (not isinstance(entry, dict) or entry.get("pid") != pid
-                or not is_our_run(entry)):
+        if (not isinstance(current, dict) or current.get("pid") != pid
+                or not is_our_run(current)):
             die("the recording ended before it started recording, so there "
                 "is no video to stop.")
-    return entry
+        return current if current.get("recording", True) else None
+    return poll(recording, None)
 
 
 def main():
