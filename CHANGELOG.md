@@ -54,6 +54,12 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **Closing the terminal mid-recording now finishes the video and leaves nothing running.** (DEMO-0115)
+  It used to end demoreel on the spot and leave the private display running
+  in the background. `shot` tidies up the same way when it is sent SIGTERM
+  or SIGHUP. The recorder is also out of reach of the terminal's signals now, so
+  it cannot be cut off before its file is finished.
+
 - **Ctrl+C finishes a foreground recording properly, and README now says so.** (DEMO-0054)
   Ctrl+C at a terminal also reached the private display, which shut down
   with the app on it, so the final check for a blank picture was skipped.

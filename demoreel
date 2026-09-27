@@ -65,12 +65,28 @@ def _request_stop(signum, frame):
     _stop.set()
 
 
+def _exit_on_signal(signum, frame):
+    """SIGTERM or SIGHUP anywhere but a recording: exit through die(), so the
+    finally blocks that end the display and the app still run. Left at their
+    default, either signal ended Python on the spot and leaked Xvfb, which
+    holds its display number for good (DEMO-0115)."""
+    die(f"ended by {signal.Signals(signum).name}.")
+
+
 def die(msg):
     sys.exit(f"demoreel: {msg}")
 
 
 def note(msg):
-    print(f"demoreel: {msg}", file=sys.stderr)
+    """Tell the caller something on stderr. A note is advice: if the terminal
+    has gone (a hung-up run finishing its video), losing it must not fail
+    the recording it was about (DEMO-0115)."""
+    try:
+        print(f"demoreel: {msg}", file=sys.stderr)
+    except OSError:
+        # What failed to write is still buffered, and flushing it at exit
+        # fails again and turns the exit status to 120. Nobody is reading.
+        sys.stderr = open(os.devnull, "w")  # noqa: SIM115 - lives to exit
 
 
 def poll(check, timeout, interval=0.05, grow=1.0, ceiling=None):
@@ -622,8 +638,12 @@ def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor
     # Deliberate: the handle is owned by the ffmpeg process and closed in
     # record()'s finally block, so it must outlive this statement.
     log = open(logfile, "wb")  # noqa: SIM115
+    # Its own session, so a terminal's Ctrl+C or hang-up cannot end it before
+    # stop_recorder does: a SIGHUP killed it with no index written, and the
+    # run printed the path of a file nothing could play (DEMO-0115).
     proc = subprocess.Popen(cmd, env=env, stdin=subprocess.PIPE,
-                            stdout=subprocess.PIPE, stderr=log)
+                            stdout=subprocess.PIPE, stderr=log,
+                            start_new_session=True)
     # Return when ffmpeg is actually capturing, not after a guessed interval.
     # The first progress report is that signal: it arrives once the input is
     # open and frames are flowing. The duration is counted from here, so a
@@ -674,7 +694,8 @@ def start_wf_recorder(env, wayland, framerate, output, logfile):
     # unread until the deadline and the run failed, one run in three.
     proc = subprocess.Popen(cmd, env=dict(env, WAYLAND_DISPLAY=wayland),
                             stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT, bufsize=0)
+                            stderr=subprocess.STDOUT, bufsize=0,
+                            start_new_session=True)  # as ffmpeg's, DEMO-0115
     deadline = time.monotonic() + DISPLAY_READY_TIMEOUT
     while True:
         remaining = deadline - time.monotonic()
@@ -1193,7 +1214,9 @@ def vouch_for(a, output, logpath, width, height, checks):
 def cmd_record(a):
     command, width, height, output, applog = prepare(a, ".mp4")
 
-    for sig in (signal.SIGUSR1, signal.SIGINT, signal.SIGTERM):
+    # SIGHUP is a closed terminal: finish the video as for Ctrl+C, rather
+    # than dying where we stand and leaking the display (DEMO-0115).
+    for sig in (signal.SIGUSR1, signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
         signal.signal(sig, _request_stop)
 
     # The run is addressable from here, before anything slow happens, so a
@@ -1540,6 +1563,8 @@ def main():
     stop.set_defaults(func=cmd_stop)
 
     args = parser.parse_args()
+    for sig in (signal.SIGTERM, signal.SIGHUP):
+        signal.signal(sig, _exit_on_signal)
     args.func(args)
 
 

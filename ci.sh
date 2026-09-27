@@ -730,6 +730,71 @@ if status == 0 or "was blank at the end" not in err:
 print("Ctrl+C leaves a finished video, and the end-of-run blank check still runs")
 CTRLCPY
 
+step "a closed terminal finishes the video and leaves nothing running"
+# DEMO-0115. Closing a terminal sends its session SIGHUP. demoreel did not
+# handle it: it died on the spot and left Xvfb running, and once it did handle
+# it, ffmpeg -- in the same group -- died without writing its index, and the
+# run printed the path of a file nothing could play. The run's stderr is a
+# pseudo-terminal that is closed first, as a real one would be.
+python3 - "$tmp" <<'HUPPY'
+import os, pty, shutil, signal, subprocess, sys, time
+from pathlib import Path
+
+tmp = sys.argv[1]
+
+
+def servers(marker):
+    ps = subprocess.run(["pgrep", "-a", "-x", "Xvfb"], capture_output=True,
+                        text=True).stdout.splitlines()
+    return [line.split()[0] for line in ps if marker in line]
+
+
+def hang_up(args, marker, ready):
+    master, slave = pty.openpty()
+    run = subprocess.Popen(["./demoreel", *args], stdout=subprocess.PIPE,
+                           stderr=slave, start_new_session=True)
+    os.close(slave)
+    seen = b""
+    for _ in range(300):
+        time.sleep(0.1)
+        try:
+            seen += os.read(master, 4096)
+        except OSError:
+            pass
+        if ready in seen:
+            break
+    else:
+        run.kill()
+        raise SystemExit(f"never saw {ready!r}:\n{seen.decode(errors='replace')}")
+    time.sleep(1)
+    started = servers(marker)
+    os.close(master)                 # the terminal goes away...
+    os.killpg(run.pid, signal.SIGHUP)  # ...and its session is hung up
+    out, _ = run.communicate(timeout=60)
+    time.sleep(1)
+    left = [pid for pid in started if os.path.exists(f"/proc/{pid}")]
+    if not started or left:
+        raise SystemExit(f"{args[0]}: Xvfb {started}, still running after: {left}")
+    return run.returncode, out.decode().strip()
+
+
+video = f"{tmp}/hup.mp4"
+status, out = hang_up(["record", "-n", "gate", "-o", video, "-d", "0", "-s",
+                       "320x240", "--", "xclock"], "gate.Xvfb", b"recording :")
+readable = subprocess.run(["ffprobe", "-v", "error", video],
+                          capture_output=True).returncode == 0
+if status != 0 or out != video or not readable:
+    raise SystemExit(f"record: exit {status}, stdout {out!r}, playable {readable}")
+# A failed shot keeps its folder, and here nobody could read where: remove it.
+state = Path(os.environ.get("XDG_RUNTIME_DIR") or "/tmp") / f"demoreel-{os.getuid()}"
+before = set(state.glob("shot-*"))
+hang_up(["shot", "-o", f"{tmp}/hup.png", "-s", "320x240", "--startup-timeout",
+         "1", "--settle", "30", "--", "sleep", "60"], "/shot-", b"no window")
+for kept in set(state.glob("shot-*")) - before:
+    shutil.rmtree(kept)
+print("a hung-up run finishes a playable video, and nothing is left running")
+HUPPY
+
 step "a stop is noticed at once"
 # DEMO-0075. The recording loop slept between checks, and a sleep resumes after
 # the signal handler runs, so a stop landed up to a fifth of a second late --

@@ -2527,6 +2527,27 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: test.
   Source: in-session-2026-09-26.
 
+- ✅ [DEMO-0115] **Closing the terminal leaves the private display running.**
+  Measured 2026-09-27 while working DEMO-0054: SIGHUP to a run's process
+  group, which is what closing its terminal sends, killed demoreel and
+  ffmpeg and left Xvfb running. demoreel does not handle SIGHUP, so its
+  finally block never ran. CLAUDE.md makes cleanup on every exit path
+  non-negotiable, since a leaked Xvfb holds its display number. Handle
+  SIGHUP like SIGINT and SIGTERM, and check the finished video and the
+  teardown both survive a terminal that has gone away.
+  Resolved (2026-09-27): record handles SIGHUP like SIGINT; every other
+  command turns SIGTERM and SIGHUP into die(), so finally blocks run.
+  Handling SIGHUP exposed a worse case: ffmpeg, in the same group, died
+  without its index and the run printed the path of an unplayable file,
+  exit 0. Both recorders now start in their own session. note() survives a
+  closed terminal and moves stderr to /dev/null, since a flush failing at
+  exit set the status to 120. Measured with a closed pty plus SIGHUP:
+  record exit 0 with a playable video on Xvfb and --gpu, shot cleaned up,
+  nothing left running. Gate step red on the old code (Xvfb leaked).
+  **Layman:** Closing the terminal while recording left a hidden screen running in the background; it should tidy up like any other stop.
+  Kind: fix.
+  Source: in-session-2026-09-27.
+
 ## 0.4.0 — Speaks your language
 
 Every message, --help and the man page in the reader's language, plus a
