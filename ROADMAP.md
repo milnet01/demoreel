@@ -2439,13 +2439,17 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: feature.
   Source: user-request-2026-09-26.
 
-- 📋 [DEMO-0112] **README still says `vkcube` names no window and is never found.**
+- ✅ [DEMO-0112] **README still says `vkcube` names no window and is never found.**
   README "Things that catch you out": "An app that names no window at all
   is not found — `vkcube` is one." DEMO-0043 made named_windows read
   _NET_WM_NAME too, so vkcube is found (demoreel's own comment says so,
   and ci.sh fails a --gpu vkcube run that is startup-timeout shaped).
   Find an app that truly sets no title, or drop the example. Found by a
   cold lane on the DEMO-0111 gate; outside that change, so filed.
+  Resolved (2026-09-27): example dropped. The behaviour described is
+  still what place_window does (a note, then recording at the app's own
+  size); only vkcube was wrong, found since DEMO-0043. No replacement
+  example was searched for; the rule reads correctly without one.
   **Layman:** The README gives an example of an app demoreel cannot find, but that app has been found since an earlier fix.
   Kind: doc-fix.
   Source: review-contract-2026-09-26 README loop 6.

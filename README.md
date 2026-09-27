@@ -408,8 +408,8 @@ without knowing anything about the app — pick by search order instead and you
 get the dialog about half the time, stretched to fill the frame while the real
 window sits behind it.
 
-**An app that names no window at all is not found** — `vkcube` is one. demoreel
-says so after waiting, and records anyway, so you get the app at its own size
+**An app that names no window at all is not found.** demoreel says so after
+waiting, and records anyway, so you get the app at its own size
 rather than filling the frame. Nothing is lost but the sizing.
 
 **An app that sets its own size after demoreel has sized it is warned about,
