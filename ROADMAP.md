@@ -76,6 +76,18 @@ simplest case, and a gate proves it still records.
 
 ## Backlog
 
+- 📋 [DEMO-0119] **Correct two stale facts: README says nothing is tagged, DEMO-0068 lists the old --gpu programs.**
+  README.md § Versioning says "Nothing has been tagged yet, so everything
+  sits under [Unreleased]". v0.1.1, v0.2.0, v0.2.1 and v0.2.2 are tagged.
+  DEMO-0068 names xwayland-run and cage as the recommended --gpu packages.
+  --gpu now needs cage, Xwayland and wlr-randr, and record --gpu also needs
+  wf-recorder (README § Apps that need the graphics card). Found while
+  answering the website session on 2026-09-28; the user has not yet said
+  whether to fix them.
+  **Layman:** Two places in the notes still describe how things used to be, and need updating.
+  Kind: doc-fix.
+  Source: in-session-2026-09-28.
+
 ## Standing chores
 
 Recurring work with no finished state. It is checked on a schedule and never
