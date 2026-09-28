@@ -12,6 +12,10 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-28
+
+**Theme:** Friendly at a terminal.
+
 ### Added
 
 - **The top of README shows demoreel at work: KCalc driven by scripted steps.** (DEMO-0059)
