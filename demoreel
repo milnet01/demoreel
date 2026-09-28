@@ -722,6 +722,12 @@ def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor
         "-draw_mouse", "1" if cursor else "0",
         "-video_size", f"{width}x{height}", "-i", f"{display}.0",
         "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+        # x264's default is a multiple of the cores, and its buffers set most
+        # of a recording's memory: about 530 MB peak on twelve cores, about
+        # 270 MB at four. Four threads pinned to four cores still encoded a
+        # full-frame glxgears at 1600x1000 with no dropped or duplicated
+        # frame (DEMO-0073).
+        "-threads", "4",
         "-pix_fmt", "yuv420p", "-movflags", "+faststart",
         "-y", str(output),
     ]

@@ -2232,7 +2232,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: investigate.
   Source: peer-request-vestige-2026-09-25.
 
-- 📋 [DEMO-0073] **Cap ffmpeg's encoder threads, which set most of a recording's memory.**
+- ✅ [DEMO-0073] **Cap ffmpeg's encoder threads, which set most of a recording's memory.**
   Measured 2026-09-25, during a default 1600x1000 recording of xclock:
   ffmpeg 537568 kB resident, Xvfb 62472 kB, demoreel 23756 kB, the app
   9504 kB.
@@ -2266,6 +2266,9 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   this, run ./ci.sh, re-measure peak RSS on a real record (about 530 ->
   about 280 MB expected), then flip. wf-recorder (--gpu) was not
   measured for threads and peaks near 150 MB already (DEMO-0074).
+  Resolved (2026-09-28): start_ffmpeg passes -threads 4. ./ci.sh green.
+  Two default 1600x1000 xclock recordings, load about 2 on 12 cores:
+  ffmpeg peak 265728 kB and 271796 kB, down from 537568 kB.
   **Layman:** The video encoder uses far more memory than it needs; limiting it roughly halves that.
   Kind: optimize.
   Source: user-request-2026-09-25.

@@ -71,6 +71,12 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Changed
 
+- **A recording uses about half the memory it did.** (DEMO-0073)
+  The video encoder now runs four threads, not a number scaled to the
+  processor's cores. On
+  a twelve-core machine its peak dropped from about 537 MB to about
+  270 MB, with no dropped frames on a busy app.
+
 - **`stop` and the end of a recording return about 0.1 s sooner.** (DEMO-0076)
   The blank check asks only whether one grey level covers more than 99.9%
   of a frame, and now counts one likely candidate instead of every value:
