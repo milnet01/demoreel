@@ -2141,7 +2141,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: doc.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0059] **Put a short demo video at the top of README.**
+- ✅ [DEMO-0059] **Put a short demo video at the top of README.**
   A person landing on the repository reads prose about a video tool
   without seeing a video.
 
@@ -2159,6 +2159,13 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   2026-09-27, because GitHub strips a video tag in a README and does not
   play a video file stored in the repo. Still in the repo, not hosted
   elsewhere, not a GIF, around 1 MB.
+  Resolved (2026-09-28): docs/media/readme-demo.webp, 58 KB, 800x500,
+  KCalc driven by -a steps (click, 1234*5678, Return, /2, Return), with
+  both commands beside it in README. Checked on GitHub after the push:
+  the rendered README keeps the <img>, and the file is served as
+  image/webp. Not observed playing in a browser (the Chrome extension
+  was not connected); the file is a valid animated WebP (ANIM chunk, 46
+  frames).
   **Layman:** The project page shows a video made with demoreel, so people see what it does before reading.
   Kind: marketing.
   Source: user-request-2026-09-25.
