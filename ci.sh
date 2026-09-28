@@ -1582,6 +1582,16 @@ elif ! podman image exists "$PARITY_IMAGE"; then
     echo "build it once (a few minutes): ./ci.sh --parity-build"
     exit 0
 else
+    # GitHub's runner takes Ubuntu's package updates every week; the image keeps
+    # the ones it was built with. So say when it has had time to fall behind.
+    # A warning, not a rebuild: a rebuild takes minutes and does not belong
+    # inside a push.
+    built=$(podman image inspect --format '{{.Created.Unix}}' "$PARITY_IMAGE")
+    age_days=$(( ($(date +%s) - built) / 86400 ))
+    if [ "$age_days" -ge 14 ]; then
+        echo "note: the image is $age_days days old, and GitHub's packages may have moved on."
+        echo "      rebuild it: ./ci.sh --parity-build"
+    fi
     git ls-files -coz --exclude-standard | tar --null -T - -cf - \
         | timeout 900 podman run --rm -i -e DEMOREEL_PARITY_INSIDE=1 "$PARITY_IMAGE" \
             bash -c 'mkdir w && tar -xf - -C w && cd w && taskset -c 0-3 ./ci.sh' \

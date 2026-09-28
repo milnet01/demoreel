@@ -28,7 +28,9 @@ built from the same package list the workflow installs (`./ci.sh
 --ci-packages`), so a difference in GitHub's older packages fails here first.
 `./ci.sh --parity-build` builds the image; a changed package list or ruff
 version changes its tag and asks for a rebuild. Without it the gate's last line
-says the Ubuntu step was skipped. That is not a pass.
+says the Ubuntu step was skipped. That is not a pass. GitHub's packages move
+weekly and the image does not, so the step prints a note once the image is two
+weeks old; rebuild then.
 
 The gate records on `--gpu` and on a real Flatpak as well, but only where
 the machine has what those steps need — both skip on GitHub, so CI still covers
