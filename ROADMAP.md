@@ -76,7 +76,7 @@ simplest case, and a gate proves it still records.
 
 ## Backlog
 
-- 📋 [DEMO-0119] **Correct two stale facts: README says nothing is tagged, DEMO-0068 lists the old --gpu programs.**
+- ✅ [DEMO-0119] **Correct two stale facts: README says nothing is tagged, DEMO-0068 lists the old --gpu programs.**
   README.md § Versioning says "Nothing has been tagged yet, so everything
   sits under [Unreleased]". v0.1.1, v0.2.0, v0.2.1 and v0.2.2 are tagged.
   DEMO-0068 names xwayland-run and cage as the recommended --gpu packages.
@@ -84,6 +84,9 @@ simplest case, and a gate proves it still records.
   wf-recorder (README § Apps that need the graphics card). Found while
   answering the website session on 2026-09-28; the user has not yet said
   whether to fix them.
+  Resolved (2026-09-28): README § Versioning now says each tagged release
+  has its own section and unreleased changes sit under [Unreleased].
+  DEMO-0068 now names cage, Xwayland, wlr-randr and wf-recorder.
   **Layman:** Two places in the notes still describe how things used to be, and need updating.
   Kind: doc-fix.
   Source: in-session-2026-09-28.
@@ -2801,8 +2804,8 @@ system looks for them.
 
 - 📋 [DEMO-0068] **Package demoreel for openSUSE through the Open Build Service.**
   This machine's distro. The package declares Xvfb, xauth, ffmpeg and
-  xdotool as requirements, and xwayland-run and cage as recommended for
-  `--gpu`. It installs the man page, completions and catalogs.
+  xdotool as requirements, and cage, Xwayland, wlr-randr and wf-recorder
+  as recommended for `--gpu`. It installs the man page, completions and catalogs.
   Follow-up (2026-09-28): when the first package is attached to a GitHub
   release, message the Ants Projects Hub website project
   (session_message). Its demoreel download button stays on "Download

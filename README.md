@@ -587,8 +587,9 @@ names the surfaces that count as breaking, what reaching 1.0 requires, and how
 the numbers move while the leading zero is there — which is not what most
 people assume. That file is the only statement of it; this one would drift.
 
-[CHANGELOG.md](CHANGELOG.md) records what each release contains. Nothing has
-been tagged yet, so everything sits under `[Unreleased]`.
+[CHANGELOG.md](CHANGELOG.md) records what each release contains. Each tagged
+release has its own section, and changes not yet released sit under
+`[Unreleased]`.
 
 ## Security
 
