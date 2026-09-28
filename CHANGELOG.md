@@ -71,6 +71,12 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Changed
 
+- **`stop` and the end of a recording return about 0.1 s sooner.** (DEMO-0076)
+  The blank check asks only whether one grey level covers more than 99.9%
+  of a frame, and now counts one likely candidate instead of every value:
+  under 1 ms on a busy 1600x1000 frame instead of about 100 ms, with the
+  same answer. The halfway sample and `--settle` get the same saving.
+
 - **A run whose private display stops answering now fails in about 13 seconds, not 38.** (DEMO-0078)
   Once a call to the display times out, the run has failed and returns no
   video. The recorder and the display are now ended at once, rather than

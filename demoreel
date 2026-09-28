@@ -919,7 +919,23 @@ def frame_is_flat(frame):
     The threshold AND its comparator live here together, because splitting them
     is what let a copy drift: a frame measuring exactly the threshold would pass
     one side and fail the other.
+
+    The question is yes or no, so it seldom needs every value counted
+    (DEMO-0076). Count one likely candidate, the commonest value in a thin
+    sample. Over the threshold: flat. At least the rest (1 - threshold): not
+    flat, since no other value can then reach the threshold. Only a sample
+    that picked a rare value falls back to dominant_fraction. The answer is
+    the same either way; on a busy 1600x1000 frame it takes a fraction of the
+    time, which the end-of-run check waits on.
     """
+    sample = frame[::997]
+    if sample:
+        candidate = max(set(sample), key=sample.count)
+        share = frame.count(candidate) / len(frame)
+        if share > BLANK_THRESHOLD:
+            return True
+        if share >= 1 - BLANK_THRESHOLD:
+            return False
     return dominant_fraction(frame) > BLANK_THRESHOLD
 
 

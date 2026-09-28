@@ -2249,6 +2249,17 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   size on a machine with fewer cores, and read ffmpeg's dropped and
   duplicated frame counts. A cap that drops frames is not worth the
   memory. Encoding parameters are not a breaking surface.
+  Progress (2026-09-28): the drop test the item asked for is done.
+  glxgears full-frame on a 1600x1000 Xvfb, with Xvfb, the app and ffmpeg
+  all pinned to 4 cores (taskset -c 0-3), ffmpeg with start_ffmpeg's
+  exact arguments plus -threads N, 12 s, two runs each, load 1.5-4.7:
+    auto 315 MB, 8 358 MB, 4 276 MB, 2 236 MB peak RSS;
+    every run 360 of 360 frames, drop=0 dup=0.
+  On this 12-core machine auto is 528 MB (DEMO-0074's run). Next: add
+  "-threads", "4" to start_ffmpeg's x264 options with a comment citing
+  this, run ./ci.sh, re-measure peak RSS on a real record (about 530 ->
+  about 280 MB expected), then flip. wf-recorder (--gpu) was not
+  measured for threads and peaks near 150 MB already (DEMO-0074).
   **Layman:** The video encoder uses far more memory than it needs; limiting it roughly halves that.
   Kind: optimize.
   Source: user-request-2026-09-25.
@@ -2298,7 +2309,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: perf.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0076] **Find where the time goes between `stop` and a finished video.**
+- ✅ [DEMO-0076] **Find where the time goes between `stop` and a finished video.**
   Measured 2026-09-25 with xclock: the recorder exits 0.7 to 0.9 s after
   `stop` signals it. Since DEMO-0047, `stop` waits that long before it
   answers. The steps in that gap: ffmpeg finishing and its faststart pass,
@@ -2308,11 +2319,24 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Time each step, then shorten the largest. The faststart pass stays --
   DEMO-0013 decided that on measurement. The blank sample must stay a real
   sample of the display.
+  Resolved (2026-09-28). Timed per step with a harness that wraps
+  demoreel's functions without editing it, 5 runs each of xclock and
+  kcalc at 1600x1000, machine quiet (load 1.7-2.1). Stop to exit:
+  median 0.47 s (item said 0.7-0.9). Largest step: the end-of-run
+  blank check, 0.25-0.26 s = ffmpeg grab 0.15 + analysis 0.11. Then
+  stop_recorder 0.11 (ffmpeg finishing, faststart included), vouch_for
+  0.09, teardown 0.01. Shortened the analysis: frame_is_flat now counts
+  one candidate (the mode of a 1-in-997 sample) and decides exactly,
+  falling back to dominant_fraction only when the candidate is under
+  1 - threshold. Verdicts diffed old vs new over 13 frames (real app
+  screens, threshold edge cases, a frame built to force the fallback):
+  0 moved; busy frame 102 ms -> 0.7 ms. After: stop to exit 0.36-0.42 s,
+  check_at_end 0.15 s. The grab stays a real sample of the display.
   **Layman:** Stopping takes nearly a second; find out which step is slow and speed it up.
   Kind: investigate.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0077] **Find where the time goes between launch and the first recorded frame.**
+- ✅ [DEMO-0077] **Find where the time goes between launch and the first recorded frame.**
   DEMO-0042 measured about 1.4 s of fixed setup per run. The steps:
   starting Xvfb, installing the cookie and waiting for the reset,
   launching the app, polling for its window, resizing and waiting for
@@ -2322,6 +2346,14 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Time each step with a real app and shorten the largest. Every
   safety check stays: the cookie ordering and the window-size wait each
   fixed a real defect.
+  Resolved (2026-09-28), measured, no fix needed. Same harness, 5 runs
+  each, quiet machine. Launch to capturing: median 0.46 s with xclock,
+  0.57 s with kcalc (DEMO-0042 measured about 1.4 s). Steps: python
+  start 0.11, Xvfb + cookie + app launch 0.10, finding the window
+  0.07 (xclock) / 0.18 (kcalc: the app's own startup), resize wait
+  0.005, ffmpeg start to first frame 0.17. The largest demoreel-owned
+  step is ffmpeg's own start-up, which the first-frame signal must wait
+  for (DEMO-0012). Nothing left worth shortening.
   **Layman:** Starting a recording has a fixed delay; find out which step is slow and speed it up.
   Kind: investigate.
   Source: user-request-2026-09-25.
