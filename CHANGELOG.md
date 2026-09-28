@@ -14,6 +14,11 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **The top of README shows demoreel at work: KCalc driven by scripted steps.** (DEMO-0059)
+  A looping animated WebP of under 60 KB, in docs/media/, recorded by
+  demoreel itself. The exact commands that made it sit beside it, so it
+  is also a working example of scripted steps.
+
 - **README has an Install section, and its quick start is written for a person.** (DEMO-0058)
   One install line per distro for openSUSE, Debian and Ubuntu, Fedora
   and Arch, the Packman and RPM Fusion step for an ffmpeg that can write

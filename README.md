@@ -2,6 +2,18 @@
 
 **Record a video of an app running, without filming your desktop.**
 
+![KCalc, driven by demoreel: a click on its display, then 1234*5678 and Return, then /2 and Return](docs/media/readme-demo.webp)
+
+Made by demoreel itself, with scripted steps, then turned into this looping
+picture with ffmpeg:
+
+```sh
+demoreel record -o kcalc.mp4 -d 3 -s 800x500 -r 15 --settle 10 --cursor \
+  -a 'wait 1' -a 'click 400 80' -a 'type 1234*5678' -a 'key Return' \
+  -a 'wait 1' -a 'type /2' -a 'key Return' -- kcalc
+ffmpeg -i kcalc.mp4 -c:v libwebp_anim -q:v 80 -loop 0 readme-demo.webp
+```
+
 You give it an app. It gives you back a video file of that app, or one picture
 of it, and nothing else — no other windows, no notifications, no magnifier lens
 sliding around.

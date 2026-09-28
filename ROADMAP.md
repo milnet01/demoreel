@@ -2154,6 +2154,11 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Decided by the user (2026-09-27): the clip is a small, compressed file
   committed in the repo under docs/, recorded with demoreel itself, kept
   around 1 MB or less. Not a GIF, and not hosted elsewhere.
+  Decided by the user (2026-09-28): an animated WebP committed under
+  docs/, shown at the top of README as an image. Replaces the MP4 of
+  2026-09-27, because GitHub strips a video tag in a README and does not
+  play a video file stored in the repo. Still in the repo, not hosted
+  elsewhere, not a GIF, around 1 MB.
   **Layman:** The project page shows a video made with demoreel, so people see what it does before reading.
   Kind: marketing.
   Source: user-request-2026-09-25.
