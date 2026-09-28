@@ -6,8 +6,9 @@ You give it an app. It gives you back a video file of that app, or one picture
 of it, and nothing else — no other windows, no notifications, no magnifier lens
 sliding around.
 
-It is built to be driven by Claude Code, so you can ask for a demo video and get
-one without touching a recording tool yourself.
+You can run it yourself at a terminal. It is also built to be driven by Claude
+Code, so you can ask for a demo video and get one without touching a recording
+tool yourself.
 
 ## What you get
 
@@ -18,13 +19,83 @@ The video is **silent**. There is no sound and there never will be — see
 [What it will never do](#what-it-will-never-do). If you need a voiceover or
 music, that is a second step in something else.
 
+## Install
+
+demoreel is one Python 3 script. It drives a few common programs, and each
+distro below packages all of them.
+
+**1. Install the programs it drives.** One line, for your distro:
+
+```sh
+# openSUSE
+sudo zypper install ffmpeg xdotool xauth xorg-x11-server-Xvfb
+# Debian and Ubuntu
+sudo apt install ffmpeg xdotool xauth xvfb
+# Fedora
+sudo dnf install ffmpeg xdotool xorg-x11-xauth xorg-x11-server-Xvfb
+# Arch
+sudo pacman -S ffmpeg xdotool xorg-xauth xorg-server-xvfb
+```
+
+You also need `python3` and `git`.
+
+**On openSUSE and Fedora, the distro's own ffmpeg cannot write the video.** It
+leaves out the H.264 encoder, libx264. Take ffmpeg from Packman on openSUSE,
+or from RPM Fusion on Fedora:
+
+```sh
+# openSUSE
+sudo zypper addrepo -cfp 90 https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Tumbleweed/ packman
+sudo zypper install --from packman --allow-vendor-change ffmpeg
+# Fedora
+sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
+sudo dnf swap ffmpeg-free ffmpeg --allowerasing
+```
+
+zypper asks whether to trust Packman's signing key the first time. Answer
+`a`, to trust it always.
+
+**2. Get demoreel, and put it on your PATH.**
+
+```sh
+git clone https://github.com/milnet01/demoreel.git
+mkdir -p ~/.local/bin
+ln -s "$PWD/demoreel/demoreel" ~/.local/bin/demoreel
+```
+
+If the shell then says `demoreel: command not found`, `~/.local/bin` is not on
+your PATH yet. Add this line to `~/.bashrc` and open a new terminal:
+
+```sh
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+**3. Check it.**
+
+```sh
+demoreel check
+```
+
+It records nothing. It says `ready`, or names what is missing and the command
+that installs it.
+
+**For apps that need the graphics card**, `--gpu` needs four more programs:
+
+```sh
+# openSUSE
+sudo zypper install cage xwayland wlr-randr wf-recorder
+# Debian and Ubuntu
+sudo apt install cage xwayland wlr-randr wf-recorder
+# Fedora
+sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
+# Arch
+sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
+```
+
 ## Quick start
 
-`demoreel` works from any folder, so you can just type it. Its home is
-`/mnt/Games/Scripts/Linux/demoreel/`, if you ever need the full path.
-
-First time on a machine? `demoreel check` says whether it can record, without
-recording anything, and names the command that installs whatever is missing.
+Run `demoreel` from any folder. Without `-o`, the video lands in the folder you
+run it from, named after the app and the time.
 
 ```sh
 # record Kate for 30 seconds, into a file named after the app
@@ -32,6 +103,9 @@ demoreel record -- kate
 
 # choose the filename and how long to record
 demoreel record -o demo.mp4 -d 20 -- kate
+
+# watch it, in your usual video player
+xdg-open demo.mp4
 
 # show the app being used, not just sitting there
 demoreel record -o demo.mp4 -d 20 --cursor \

@@ -190,6 +190,32 @@ sys.exit(1 if bad else 0)
 EXAMPLESPY
 echo "every example --help shows is one demoreel accepts"
 
+step "README's install lines are the ones demoreel check prints"
+# DEMO-0058. The package names have one home, PACKAGES in demoreel, which
+# `demoreel check` reads to name what is missing. README § Install shows them
+# too, so hold each of its lines to that table: per distro, the default
+# backend's packages, and the four more --gpu needs.
+python3 - <<'INSTALLPY'
+import importlib.machinery, importlib.util, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+demoreel = importlib.util.module_from_spec(
+    importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(demoreel)
+readme = open("README.md", encoding="utf-8").read().splitlines()
+default = demoreel.required_programs(False, True)
+gpu = [p for p in demoreel.required_programs(True, True) if p not in default]
+bad = 0
+for family, (command, names) in demoreel.PACKAGES.items():
+    for programs in (default, gpu):
+        line = " ".join([command, *dict.fromkeys(
+            names[p] for p in programs if p in names)])
+        if line not in readme:
+            print(f"README.md § Install lacks this line: {line}", file=sys.stderr)
+            bad += 1
+sys.exit(1 if bad else 0)
+INSTALLPY
+echo "every install line in README matches the package table"
+
 step "the man page names everything demoreel accepts"
 # DEMO-0057. Held to the same rule as README above: every option, subcommand
 # and step demoreel accepts appears in demoreel.1, so one added to the tool and

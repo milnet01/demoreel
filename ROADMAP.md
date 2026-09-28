@@ -2107,7 +2107,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: doc.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0058] **Give README an Install section and a quick start written for a person.**
+- ✅ [DEMO-0058] **Give README an Install section and a quick start written for a person.**
   README has a Quick start but no Install section. It lists what must be
   installed only under Constraints already verified on this machine, which
   reads as a note to ourselves. A section headed for Claude Code sessions
@@ -2124,6 +2124,19 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   package names (DEMO-0051) and are kept for this item's per-distro
   verify-instructions run. Remove the ones this project pulled once it is
   done (ubuntu:24.04 was already there before).
+  Resolved (2026-09-28): verify-instructions at --isolation container on
+  opensuse/tumbleweed, debian:stable, ubuntu:24.04, fedora:latest (44)
+  and archlinux:latest. On each: the install line, clone and link as an
+  ordinary user, demoreel check, and a 3-second xclock recording that
+  came out h264 1600x1000. Stock ffmpeg on openSUSE and Fedora was
+  reported not ready, and ready after the Packman / RPM Fusion step.
+  Substituted: root for sudo, non-interactive flags, a package-list
+  refresh on the fresh images, auto-trusting Packman's key (README now
+  says to answer `a`). Found: ~/.local/bin is never on PATH on Arch, even
+  in a new login shell; README's ~/.bashrc line fixed it on all five.
+  Unverified here: xdg-open (no desktop) and --gpu recording (no card);
+  the --gpu package names all resolved. The images this project pulled
+  are removed.
   **Layman:** The front page explains how to install it and make a first video, step by step.
   Kind: doc.
   Source: user-request-2026-09-25.

@@ -14,6 +14,14 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **README has an Install section, and its quick start is written for a person.** (DEMO-0058)
+  One install line per distro for openSUSE, Debian and Ubuntu, Fedora
+  and Arch, the Packman and RPM Fusion step for an ffmpeg that can write
+  the video, then clone, link and `demoreel check`. Every step was run in
+  a clean container of each distro. The gate holds each install line to
+  the package table `demoreel check` prints from. The quick start adds
+  watching the video, and no longer names a path on one machine.
+
 - **A man page, `demoreel.1`.** (DEMO-0057)
   Every command, option and step, the exit statuses, the files a run
   keeps, and the Flatpak and `--gpu` notes. `man ./demoreel.1` reads it
