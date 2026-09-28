@@ -687,8 +687,11 @@ echo "the pointer started in the corner"
 
 step "--cursor draws the pointer, and the default leaves it out"
 # Two recordings of the same static app, one with --cursor and one without.
-# Measured while writing this: two runs WITHOUT it are byte-identical in the
-# sampled frame, and adding it changes about 150 bytes of 120000 -- the pointer.
+# Only a VISIBLE change counts: a pixel whose grey level moved by more than
+# NOISE. The pointer is a small input change, and x264 may answer it by
+# shifting its quantisation across the whole frame by a few levels. Ubuntu's
+# ffmpeg 6.1 at four threads moved 6557 bytes that way, 28 of them by more
+# than 16 -- the pointer (DEMO-0073).
 # Both runs move it to the middle first: it starts parked in the bottom-right
 # corner (DEMO-0103), where most of it is off the picture.
 #
@@ -713,9 +716,10 @@ off = pathlib.Path(sys.argv[1]).read_bytes()
 on = pathlib.Path(sys.argv[2]).read_bytes()
 if not off or len(off) != len(on):
     sys.exit(f"could not compare the frames ({len(off)} and {len(on)} bytes)")
-differing = sum(1 for a, b in zip(off, on) if a != b)
+NOISE = 16
+differing = sum(1 for a, b in zip(off, on) if abs(a - b) > NOISE)
 share = differing / len(off)
-print(f"--cursor changed {differing} of {len(off)} bytes ({share * 100:.3f}%)")
+print(f"--cursor visibly changed {differing} of {len(off)} bytes ({share * 100:.3f}%)")
 if differing == 0:
     sys.exit("--cursor changed nothing -- the pointer was not drawn")
 if share > 0.01:
