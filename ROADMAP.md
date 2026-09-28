@@ -138,32 +138,6 @@ closes, so it sits outside every version heading.
   Kind: chore.
   Source: user-request-2026-09-25.
 
-- 💭 [DEMO-0120] **Consider running ci.sh's recording checks in parallel.**
-  local-gate.md section 9's test-parallelism lever, the one not taken on
-  2026-09-28. Measured then on GitHub: install 24 s, ruff 4 s, the gate
-  124 s, nearly all of it recordings run one after another. Safe only
-  where checks share no state: each needs its own --name, and several
-  checks time things (DEMO-0078's frozen display, the countdown) and
-  would flake on a loaded machine. Measure before and after, one lever
-  per change, and run the changed gate repeatedly before trusting it.
-  Not taken now because 2.5 min per push is already cheap on a public
-  repository and the flake risk is real.
-  **Layman:** The automatic checks spend about two minutes making test recordings one after another; running some side by side could cut that.
-  Kind: perf.
-  Source: claude-config-request-2026-09-28.
-
-- 📋 [DEMO-0121] **Put the frame size back once when an app resizes its own window.**
-  DEMO-0108 measured this as safe for Vestige (it redrew at the new size,
-  letterboxed) and found no drift on DOOM_Ants. Design to decide:
-  re-apply ONCE where window_off_frame fires, re-check after
-  wait_for_size, and keep today's warning only when the app takes the
-  size again, so an app that fights cannot loop. Frames before the
-  re-apply are still cropped, so the warning may still be owed for them.
-  Touches record and shot; README's description of the warning changes.
-  **Layman:** When an app changes its own window size mid-recording, demoreel could quietly put it back instead of only warning.
-  Kind: enhancement.
-  Source: DEMO-0108-finding-2026-09-28.
-
 ## 0.1.1 — Before the first tag
 
 Nothing here breaks a documented surface, so all of it lands in a PATCH.
@@ -2949,6 +2923,37 @@ path, and scripts read it.
   Kind: doc.
   Source: user-request-2026-09-25.
 
+- 📋 [DEMO-0122] **Re-measure the privacy test on the compositor recorder `--gpu` now uses.**
+  DEMO-0020 measured the privacy promise with a marker colour on the
+  real desktop: no recorded pixel within 40 of it, closest 135.8 under
+  Xvfb and 117.8 under --gpu. The --gpu figure was taken with x11grab.
+  DEMO-0111 (2026-09-26) moved --gpu recording to wf-recorder on the
+  compositor, and README says the figure "must be re-measured on
+  wf-recorder". Nothing records that it was. Found by the 2026-09-28
+  adopt-project cold read. Re-run DEMO-0020's method on the --gpu path,
+  record the closest distance, and update README's figure.
+  **Layman:** The check that nothing of your real desktop ends up in a video was last run on the old graphics-card recorder; run it again on the new one.
+  Kind: test.
+  Source: adopt-project-2026-09-28.
+
+- 📋 [DEMO-0121] **Put the frame size back once when an app resizes its own window.**
+  DEMO-0108 measured this as safe for Vestige (it redrew at the new size,
+  letterboxed) and found no drift on DOOM_Ants. Design to decide:
+  re-apply ONCE where window_off_frame fires, re-check after
+  wait_for_size, and keep today's warning only when the app takes the
+  size again, so an app that fights cannot loop. Frames before the
+  re-apply are still cropped, so the warning may still be owed for them.
+  Touches record and shot; README's description of the warning changes.
+  Data point (2026-09-28, doom-ants session): under xwfb-run with cage
+  and -geometry 1920x1080, DOOM_Ants with renderer 1 or 2 (Vulkan) and
+  no -windowed drew 1280x800 by its own in-engine screenshot on every
+  run, and 1708x800 in an earlier note. So its size follows the renderer
+  and the config's window settings, not the display. DEMO-0108 measured
+  renderer 0 only. Worth trying renderer 1 or 2 when this is built.
+  **Layman:** When an app changes its own window size mid-recording, demoreel could quietly put it back instead of only warning.
+  Kind: enhancement.
+  Source: DEMO-0108-finding-2026-09-28.
+
 ## 0.5.0 — Installs like any other program
 
 A person installs demoreel from their distro's usual tools, and the programs it
@@ -3271,3 +3276,17 @@ covers both display backends and the Flatpak invocation.
   **Layman:** Before calling it finished, check that the code, tests, docs and records all hold up, and fix anything that doesn't.
   Kind: audit-fix.
   Source: user-request-2026-09-25.
+
+- 💭 [DEMO-0120] **Consider running ci.sh's recording checks in parallel.**
+  local-gate.md section 9's test-parallelism lever, the one not taken on
+  2026-09-28. Measured then on GitHub: install 24 s, ruff 4 s, the gate
+  124 s, nearly all of it recordings run one after another. Safe only
+  where checks share no state: each needs its own --name, and several
+  checks time things (DEMO-0078's frozen display, the countdown) and
+  would flake on a loaded machine. Measure before and after, one lever
+  per change, and run the changed gate repeatedly before trusting it.
+  Not taken now because 2.5 min per push is already cheap on a public
+  repository and the flake risk is real.
+  **Layman:** The automatic checks spend about two minutes making test recordings one after another; running some side by side could cut that.
+  Kind: perf.
+  Source: claude-config-request-2026-09-28.
