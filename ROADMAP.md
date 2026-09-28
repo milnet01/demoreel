@@ -2791,6 +2791,10 @@ system looks for them.
   This machine's distro. The package declares Xvfb, xauth, ffmpeg and
   xdotool as requirements, and xwayland-run and cage as recommended for
   `--gpu`. It installs the man page, completions and catalogs.
+  Follow-up (2026-09-28): when the first package is attached to a GitHub
+  release, message the Ants Projects Hub website project
+  (session_message). Its demoreel download button stays on "Download
+  source" until then.
   **Layman:** Install demoreel on openSUSE with zypper, dependencies included.
   Kind: package.
   Source: user-request-2026-09-25.
@@ -2799,6 +2803,8 @@ system looks for them.
   The GitHub runner is Ubuntu, so the package can be built and installed
   there as a gate step. Requirements: xvfb, xauth, ffmpeg, xdotool.
   Recommends the `--gpu` pair where the distro carries it.
+  Follow-up (2026-09-28): see DEMO-0068 - tell the website project when
+  a package is attached to a release.
   **Layman:** Install demoreel on Debian or Ubuntu with apt, dependencies included.
   Kind: package.
   Source: user-request-2026-09-25.
@@ -2806,6 +2812,8 @@ system looks for them.
 - 📋 [DEMO-0070] **Package demoreel for Fedora and Arch.**
   Fedora through COPR, Arch as an AUR PKGBUILD. Same file layout and
   dependency split as the other packages.
+  Follow-up (2026-09-28): see DEMO-0068 - tell the website project when
+  a package is attached to a release.
   **Layman:** Install demoreel on Fedora (dnf) or Arch (from the AUR).
   Kind: package.
   Source: user-request-2026-09-25.
