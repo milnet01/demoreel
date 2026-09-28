@@ -616,6 +616,25 @@ Checked by running them, not assumed. This section is for maintainers.
   but finding the window, sizing it, the scripted steps and the blank check all
   work through X.
 
+## Signs it is working
+
+The four things demoreel must do, each labelled so a roadmap item can name
+the one it serves. Each bar lives in the section linked; this list points at
+it and does not restate it.
+
+- **S1 — The video shows the app, never a flat colour.** A blank recording
+  fails the run instead of being returned. The threshold is under
+  [Constraints already verified](#constraints-already-verified-on-this-machine).
+- **S2 — Nothing of your real desktop is in the frame.** How:
+  [How it avoids filming your desktop](#how-it-avoids-filming-your-desktop).
+  The measurement is the privacy entry under
+  [Constraints already verified](#constraints-already-verified-on-this-machine).
+- **S3 — Any Claude Code session can run it unattended.** The bars are in
+  [Any Claude Code session must be able to drive it](#any-claude-code-session-must-be-able-to-drive-it).
+- **S4 — A video demoreel recorded is used outside this repository.** This is
+  the 1.0 condition in
+  [versioning-overrides.md](docs/standards/versioning-overrides.md).
+
 ## Status
 
 Working. One file, `demoreel`, Python 3 and the standard library only.
