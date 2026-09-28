@@ -2790,10 +2790,15 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: fix.
   Source: in-session-2026-09-27.
 
-- 📋 [DEMO-0118] **Cut and publish 0.3.0 once every other item in this section is closed.**
+- ✅ [DEMO-0118] **Cut and publish 0.3.0 once every other item in this section is closed.**
   Decided by the user (2026-09-27): when the rest of 0.3.0 is done, cut
   the release without asking again (cut-release: bump, tag, push). The
   version string still says 0.2.2.
+  Resolved (2026-09-28): 0.3.0 cut with cut-release. Release commit
+  1f16eec, tag v0.3.0, full ./ci.sh green on the bumped tree, GitHub CI
+  green on the release commit, published at
+  https://github.com/milnet01/demoreel/releases/tag/v0.3.0 with the
+  changelog section as its notes.
   **Layman:** When everything planned for version 0.3.0 is finished, publish it.
   Kind: release.
   Source: user-request-2026-09-27.
