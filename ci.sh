@@ -35,6 +35,56 @@ if [ "${1:-}" = "--ruff-version" ]; then
     exit 0
 fi
 
+# The Ubuntu packages the gate needs, owned here for the same reason as the ruff
+# version: the workflow installs `./ci.sh --ci-packages`, and the parity image
+# below is built from the same list, so the two cannot disagree about it.
+CI_PACKAGES='ffmpeg xvfb xdotool x11-apps x11-utils x11-xkb-utils xterm zsh fish'
+
+if [ "${1:-}" = "--ci-packages" ]; then
+    printf '%s\n' "$CI_PACKAGES"
+    exit 0
+fi
+
+# The parity leg: this whole gate, run again inside the Ubuntu release GitHub
+# runs, with that release's ffmpeg, Xvfb and xterm. A local pass on this
+# machine's newer packages once went red on GitHub (DEMO-0073: x264 in Ubuntu's
+# ffmpeg 6.1 spread a tiny input change across the frame, and ffmpeg 8 here did
+# not). The image is built once, by hand, and reused: a cold build is never
+# started inside a push. What goes into it decides its tag, so a changed package
+# list or ruff version needs a rebuild, and the gate says so.
+PARITY_BASE='docker.io/library/ubuntu:24.04'
+# Beyond CI_PACKAGES: what GitHub's runner image already carries and this base
+# does not.
+PARITY_EXTRA='python3 pipx xauth procps groff-base ca-certificates'
+parity_containerfile() {
+    cat <<EOF
+FROM $PARITY_BASE
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install --no-install-recommends -y \\
+        $CI_PACKAGES $PARITY_EXTRA && rm -rf /var/lib/apt/lists/*
+# Not root, as on GitHub: several checks turn on who owns a file.
+RUN useradd -m ci
+USER ci
+ENV PATH=/home/ci/.local/bin:\$PATH
+RUN pipx install "ruff==$RUFF_VERSION"
+WORKDIR /home/ci
+EOF
+}
+PARITY_IMAGE="localhost/demoreel-ci:$(parity_containerfile | sha256sum | cut -c1-12)"
+
+if [ "${1:-}" = "--parity-build" ]; then
+    command -v podman >/dev/null || { echo "podman is not installed" >&2; exit 1; }
+    # The build needs nothing from the tree, so its context is an empty folder.
+    ctx=$(mktemp -d)
+    parity_containerfile | podman build -t "$PARITY_IMAGE" -f - "$ctx"
+    rmdir "$ctx"
+    # Older builds are superseded by this one; nothing else uses them.
+    podman images --format '{{.Repository}}:{{.Tag}}' localhost/demoreel-ci \
+        | grep -vxF "$PARITY_IMAGE" | xargs -r podman rmi >/dev/null || true
+    echo "built $PARITY_IMAGE"
+    exit 0
+fi
+
 if [ "${1:-}" = "--version-lockstep" ]; then
     # The post_check for .claude/bump.json, run after a version bump: every
     # place the version is written has to say the same thing. Same shape as
@@ -1516,5 +1566,34 @@ step "default output name"
 # -o is optional; without it the file is named from the app and a timestamp.
 ( cd "$tmp" && "$OLDPWD/demoreel" record -d 3 -s 640x480 -- xclock >/dev/null )
 ls "$tmp"/xclock-*.mp4 >/dev/null
+
+step "the same gate on GitHub's Ubuntu"
+# Last, because it is the slow one and everything above is cheaper to fail on.
+# It runs the files as they are here -- tracked and new, not ignored -- which is
+# what the checks above just ran. Four cores, as on GitHub's runner: x264 sizes
+# its threads from the cores it may use, and that is what differed last time.
+if [ -n "${GITHUB_ACTIONS:-}" ] || [ -n "${DEMOREEL_PARITY_INSIDE:-}" ]; then
+    echo "not applicable: this run already is on that Ubuntu"
+elif ! command -v podman >/dev/null; then
+    printf '\n=== checks passed; the Ubuntu leg was SKIPPED: podman is not installed ===\n'
+    exit 0
+elif ! podman image exists "$PARITY_IMAGE"; then
+    printf '\n=== checks passed; the Ubuntu leg was SKIPPED: its image is not built ===\n'
+    echo "build it once (a few minutes): ./ci.sh --parity-build"
+    exit 0
+else
+    git ls-files -coz --exclude-standard | tar --null -T - -cf - \
+        | timeout 900 podman run --rm -i -e DEMOREEL_PARITY_INSIDE=1 "$PARITY_IMAGE" \
+            bash -c 'mkdir w && tar -xf - -C w && cd w && taskset -c 0-3 ./ci.sh' \
+        > "$tmp/parity.log" 2>&1 || {
+        echo "the gate failed on $PARITY_BASE; its output:" >&2
+        cat "$tmp/parity.log" >&2
+        exit 1; }
+    grep -q '^=== all checks passed ===$' "$tmp/parity.log" || {
+        echo "the Ubuntu run exited 0 without finishing; its output:" >&2
+        cat "$tmp/parity.log" >&2
+        exit 1; }
+    echo "every check above also passed on $PARITY_BASE"
+fi
 
 printf '\n=== all checks passed ===\n'

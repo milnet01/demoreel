@@ -23,6 +23,13 @@ picture. It is the same script CI runs, and it runs before a push. Add a check
 there, never to the workflow. `./ci.sh --docs` is the documentation-only
 subset, which a documentation-only push selects.
 
+The full gate ends by running itself again in a local `ubuntu:24.04` image
+built from the same package list the workflow installs (`./ci.sh
+--ci-packages`), so a difference in GitHub's older packages fails here first.
+`./ci.sh --parity-build` builds the image; a changed package list or ruff
+version changes its tag and asks for a rebuild. Without it the gate's last line
+says the Ubuntu step was skipped. That is not a pass.
+
 The gate records on `--gpu` and on a real Flatpak as well, but only where
 the machine has what those steps need — both skip on GitHub, so CI still covers
 `Xvfb` alone. Touching the `--gpu` path still means looking at a frame:

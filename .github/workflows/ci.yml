@@ -18,7 +18,9 @@ concurrency:
 
 jobs:
   ci:
-    runs-on: ubuntu-latest
+    # Pinned, not ubuntu-latest: ci.sh's parity leg runs the same gate locally
+    # in this release, and ubuntu-latest moves to a new one without a commit.
+    runs-on: ubuntu-24.04
     # A hung job otherwise burns up to six hours. There is no cache, so every
     # run is cold, and a full one takes under three minutes.
     timeout-minutes: 15
@@ -34,11 +36,12 @@ jobs:
           persist-credentials: false
 
       - name: Install the programs demoreel needs
+        # The list is ci.sh's, like the ruff version below: its parity image is
+        # built from the same list, so the two cannot drift apart.
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends -y \
-            ffmpeg xvfb xdotool x11-apps x11-utils x11-xkb-utils xterm \
-            zsh fish
+          # shellcheck disable=SC2046  # one word per package, deliberately
+          sudo apt-get install --no-install-recommends -y $(./ci.sh --ci-packages)
 
       - name: Install ruff
         # The version is ci.sh's, read from ci.sh. A number written here as well
