@@ -128,16 +128,6 @@ closes, so it sits outside every version heading.
   Kind: chore.
   Source: user-request-2026-09-07.
 
-- 📋 [DEMO-0096] **Get each draft translation confirmed by a native speaker.**
-  Decided 2026-09-25: Claude drafts each translation and it stays marked as
-  a draft until a native speaker confirms it. How a confirmation works is
-  0.4.0's to write down. This item is the chasing, which has no end date,
-  so it does not hold any release. Record each language as it is
-  confirmed.
-  **Layman:** Keep asking fluent speakers to check the machine-drafted translations until every one is confirmed.
-  Kind: chore.
-  Source: user-request-2026-09-25.
-
 ## 0.1.1 — Before the first tag
 
 Nothing here breaks a documented surface, so all of it lands in a PATCH.
@@ -2932,6 +2922,8 @@ path, and scripts read it.
   wf-recorder". Nothing records that it was. Found by the 2026-09-28
   adopt-project cold read. Re-run DEMO-0020's method on the --gpu path,
   record the closest distance, and update README's figure.
+  Serves S2 (README, Signs it is working): nothing of the real desktop
+  in the frame.
   **Layman:** The check that nothing of your real desktop ends up in a video was last run on the old graphics-card recorder; run it again on the new one.
   Kind: test.
   Source: adopt-project-2026-09-28.
@@ -2950,9 +2942,21 @@ path, and scripts read it.
   run, and 1708x800 in an earlier note. So its size follows the renderer
   and the config's window settings, not the display. DEMO-0108 measured
   renderer 0 only. Worth trying renderer 1 or 2 when this is built.
+  Serves S1 (README, Signs it is working): the video shows the app
+  filling the frame.
   **Layman:** When an app changes its own window size mid-recording, demoreel could quietly put it back instead of only warning.
   Kind: enhancement.
   Source: DEMO-0108-finding-2026-09-28.
+
+- 📋 [DEMO-0096] **Get each draft translation confirmed by a native speaker.**
+  Decided 2026-09-25: Claude drafts each translation and it stays marked as
+  a draft until a native speaker confirms it. How a confirmation works is
+  0.4.0's to write down. This item is the chasing, which has no end date,
+  so it does not hold any release. Record each language as it is
+  confirmed.
+  **Layman:** Keep asking fluent speakers to check the machine-drafted translations until every one is confirmed.
+  Kind: chore.
+  Source: user-request-2026-09-25.
 
 ## 0.5.0 — Installs like any other program
 
