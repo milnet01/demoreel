@@ -1,0 +1,92 @@
+#compdef demoreel
+# zsh completion for demoreel (DEMO-0056).
+# Put this directory on $fpath before compinit runs, in ~/.zshrc:
+#   fpath=(/path/to/demoreel/completions $fpath)
+# or install the file as /usr/share/zsh/site-functions/_demoreel.
+
+# The names of recordings still running, for `demoreel stop`. Asked of
+# demoreel's own live_runs(), the test `stop` itself uses: every run leaves its
+# state file behind, so the files alone would offer finished runs too. Never
+# test the run's lock instead -- taking it, even for a moment, can make a run
+# starting at that instant refuse to record.
+_demoreel_running() {
+  # $words has been narrowed to the subcommand's own words by now, so the
+  # command's name comes from _demoreel, which saved it before that.
+  local exe=${commands[$_demoreel_cmd]:-$_demoreel_cmd}
+  local -a names
+  names=(${(f)"$(python3 -c 'import importlib.machinery as m, importlib.util as u, sys
+l = m.SourceFileLoader("demoreel", sys.argv[1])
+d = u.module_from_spec(u.spec_from_loader("demoreel", l))
+l.exec_module(d)
+sys.stdout.write("".join(e["name"] + "\n" for e in d.live_runs()))' \
+    $exe 2>/dev/null)"})
+  _describe -t runs 'running recording' names
+}
+
+# A step is one quoted word, 'click 400 300': offer the verb, and let the user
+# finish the step inside the quotes.
+_demoreel_step() {
+  local -a verbs=(wait move click type key hold)
+  compset -P "['\"]"
+  compadd -S ' ' -q -- $verbs
+}
+
+_demoreel() {
+  local curcontext=$curcontext state line _demoreel_cmd=$words[1]
+  local -a both
+  both=(
+    '(- *)'{-h,--help}'[show help]'
+    '*'{-a+,--action=}'[scripted step, repeatable]:step:_demoreel_step'
+    '--app-log=[keep the app'\''s own output in a file]:file:_files'
+    '--settle=[wait up to SECONDS for the first frame]:seconds:'
+    '--gpu[for an app that needs the graphics card]'
+    '--cursor[show the mouse pointer]'
+    '--startup-timeout=[how long to wait for the app'\''s window]:seconds:'
+    {-s+,--size=}'[virtual display size]:WxH:'
+  )
+  _arguments -C \
+    '(- :)'{-h,--help}'[show help]' \
+    '(- :)--version[show the version]' \
+    '1:command:->command' \
+    '*::argument:->argument'
+  case $state in
+    command)
+      local -a cmds=(
+        'record:record an app and write a video file'
+        'shot:take one picture of an app and write a PNG'
+        'check:test whether this machine can record, without recording'
+        'stop:end a running recording early'
+      )
+      _describe -t commands 'demoreel command' cmds ;;
+    argument)
+      curcontext=${curcontext%:*:*}:demoreel-$words[1]:
+      # Everything after -- is the app's own command line, completed as if it
+      # had been typed alone. Found by hand: _arguments -S gave a different
+      # answer depending on whether an option came before the --.
+      local dashes=${words[(i)--]}
+      if [[ $words[1] == (record|shot) ]] && (( dashes < CURRENT )); then
+        shift $dashes words
+        (( CURRENT -= dashes ))
+        _normal
+        return
+      fi
+      case $words[1] in
+        record)
+          _arguments -S $both \
+            {-o+,--output=}'[video file to write]:file:_files' \
+            {-d+,--duration=}'[seconds to record; 0 means until stop]:seconds:' \
+            {-r+,--framerate=}'[frames per second]:fps:' \
+            {-n+,--name=}'[name for this run]:name:' ;;
+        shot)
+          _arguments -S $both \
+            {-o+,--output=}'[picture file to write]:file:_files' ;;
+        check)
+          _arguments '(-)'{-h,--help}'[show help]' ;;
+        stop)
+          _arguments '(-)'{-h,--help}'[show help]' \
+            '1:running recording:_demoreel_running' ;;
+      esac ;;
+  esac
+}
+
+_demoreel "$@"

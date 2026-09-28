@@ -230,6 +230,24 @@ be ready. An app that paints a cursor or a border over its black startup screen
 counts as drawn. A real `xterm` measures 97.7% uniform, well under the 99.9%
 bar, so it is built for a startup screen that is genuinely blank.
 
+### Tab completion
+
+`completions/` has scripts for bash, zsh and fish. They complete the
+subcommands, every option, the step names after `-a`, and, after
+`demoreel stop`, the names of the recordings still running. Everything after
+`--` is completed as the app's own command line. To turn them on:
+
+```sh
+# bash: add this line to ~/.bashrc
+source /path/to/demoreel/completions/demoreel.bash
+
+# zsh: add this line to ~/.zshrc, before compinit runs
+fpath=(/path/to/demoreel/completions $fpath)
+
+# fish: run this once
+ln -s /path/to/demoreel/completions/demoreel.fish ~/.config/fish/completions/
+```
+
 ## Apps that need the graphics card
 
 Some apps — 3D, games, anything using OpenGL or Vulkan — cannot draw at all on
@@ -568,7 +586,8 @@ when the tree is clean, and an uncommitted fix would turn the run green for
 commits that will go red.
 
 A documentation-only push runs `./ci.sh --docs` instead — the gate-wiring check,
-the flag check and the readability check, not nothing. `./ci.sh --docs-glob` is
+the flag check, the check that every `--help` example parses, and the
+readability check, not nothing. `./ci.sh --docs-glob` is
 the only definition of what counts as documentation here, and the gate fails in
 *both* modes if the local git config has drifted from it. That check runs before
 the documentation mode exits, deliberately: the glob is what selects the mode,

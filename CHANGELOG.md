@@ -14,6 +14,13 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **Tab completion for bash, zsh and fish, in `completions/`.** (DEMO-0056)
+  Completes the subcommands, every option, the step names after `-a`,
+  the names of recordings still running after `demoreel stop`, and the
+  app's own command line after `--`. README § Tab completion says how to
+  turn it on. The gate asks each shell what it offers and holds the answer
+  against demoreel's own parser.
+
 - **`demoreel --help` and `demoreel record --help` end with worked examples.** (DEMO-0050)
   A timed recording, `-d 0` with `stop`, scripted steps, `--gpu`, and a
   Flatpak with its three flags, ready to copy. The gate parses every

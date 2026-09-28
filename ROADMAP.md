@@ -2070,7 +2070,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: ux.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0056] **Add tab completion for bash, zsh and fish.**
+- ✅ [DEMO-0056] **Add tab completion for bash, zsh and fish.**
   Complete the subcommands, every flag, the `-a` action verbs, and the
   names of running recordings for `demoreel stop`, read from the state
   directory.
@@ -2079,6 +2079,12 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   package installed, and the tool is standard library only. The gate
   checks that each script names every flag the parser accepts, the same
   check README's flags already get.
+  Resolved (2026-09-28): completions/demoreel.bash, _demoreel and
+  demoreel.fish. Running names come from demoreel's own live_runs() via
+  python3, never from the lock, which a completion must not take. The
+  gate step drives each shell (zsh through zpty) and was shown red with a
+  flag missing from bash, `hold` missing from zsh, and fish listing every
+  state file. CI now installs zsh and fish so GitHub covers all three.
   **Layman:** Pressing Tab completes demoreel's commands and options, like it does for other programs.
   Kind: feature.
   Source: user-request-2026-09-25.

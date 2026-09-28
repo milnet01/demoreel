@@ -1353,6 +1353,95 @@ kept=$(sed -n 's/.*display log is kept in //p' "$tmp/early.err")
 rm -rf "$kept"
 echo "the early failure named its folder"
 
+step "tab completion offers what demoreel accepts, in bash, zsh and fish"
+# DEMO-0056. Each script is asked what it offers, the way the shell asks it,
+# and the answer is held against demoreel's own parser: the subcommands, every
+# option of record and shot, and the -a verbs. So a flag added to the tool and
+# forgotten in a script fails here. `stop` must offer the runs still going and
+# nothing else: every run leaves its state file behind, and a file whose pid
+# has been recycled is not a run either. Three fake state files cover the
+# three cases, against a sleep standing in for a live run.
+sleep 300 &
+fake_run=$!
+gate_pids="$gate_pids $fake_run"
+expected=$(XDG_RUNTIME_DIR="$tmp/xdg" python3 - "$fake_run" <<'COMPLETIONPY'
+import argparse, importlib.machinery, importlib.util, json, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+demoreel = importlib.util.module_from_spec(
+    importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(demoreel)
+pid = int(sys.argv[1])
+d = demoreel.state_dir()
+for name, entry in {
+        "gatelive": {"pid": pid, "starttime": demoreel.proc_starttime(pid)},
+        "gaterecycled": {"pid": pid, "starttime": "1"},
+        "gatefinished": {"pid": 2 ** 22 + 1, "starttime": "1"}}.items():
+    (d / f"{name}.json").write_text(json.dumps({"name": name, **entry}))
+sub = next(a for a in demoreel.build_parser()._actions
+           if isinstance(a, argparse._SubParsersAction))
+# Each line: the command line exactly as typed before Tab | what it must offer.
+print("demoreel |" + " ".join(sub.choices))
+for cmd in ("record", "shot"):
+    print(f"demoreel {cmd} -|" + " ".join(
+        o for a in sub.choices[cmd]._actions for o in a.option_strings))
+print("demoreel record -a |" + " ".join(demoreel.ACTION_EXAMPLES))
+print("demoreel stop |gatelive")
+COMPLETIONPY
+)
+cat > "$tmp/zcomp.zsh" <<'ZCOMP'
+# zsh completes only at an interactive prompt, so drive one through zpty and
+# wrap compadd to print each candidate. The markers are split in two so that
+# the terminal echoing these lines back cannot match them.
+zmodload zsh/zpty
+zpty z zsh -f -i
+zpty -w z "PS1= fpath=($1 \$fpath); autoload -Uz compinit; compinit -u -D"
+zpty -w z 'compadd () {
+  if [[ ${@[1,(i)(-|--)]} == *-(O|A|D)\ * ]]; then builtin compadd "$@"; return; fi
+  typeset -a __hits; builtin compadd -A __hits "$@"
+  local h; for h in $__hits; print -r -- "<""HIT>$h"
+  builtin compadd -Q -U ""
+}'
+zpty -w z 'finish () { print "<""DONE>"; zle kill-whole-line; zle -R }
+zle -N finish; bindkey "^X" finish'
+zpty -n -w z "$2"$'\t'
+zpty -n -w z $'\C-X'
+while zpty -r z line; do
+  [[ $line == *'<DONE>'* ]] && break
+  [[ $line == *'<HIT>'* ]] && print -r -- "${${line#*<HIT>}//[$'\r\n']/}"
+done
+zpty -d z
+ZCOMP
+offered() {  # shell, command line -> the candidates, one per line
+    case $1 in
+    bash) bash -c 'source completions/demoreel.bash
+        read -ra COMP_WORDS <<< "$1"; [[ $1 == *" " ]] && COMP_WORDS+=("")
+        COMP_CWORD=$((${#COMP_WORDS[@]} - 1))
+        _demoreel 2>/dev/null; printf "%s\n" "${COMPREPLY[@]}"' _ "$2" ;;
+    zsh) timeout 20 zsh "$tmp/zcomp.zsh" "$PWD/completions" "$2" ;;
+    fish) fish -c 'source completions/demoreel.fish
+        complete -C $argv[1] | cut -f1' "$2" ;;
+    esac
+}
+completion_bad=0
+for shell in bash zsh fish; do
+    command -v "$shell" >/dev/null || { echo "skipped $shell: not installed"; continue; }
+    bad_before=$completion_bad
+    while IFS='|' read -r line want; do
+        # Quotes and the trailing space are how a step is offered, not what;
+        # a lone - or -- is the separator, not an option.
+        got=$(XDG_RUNTIME_DIR="$tmp/xdg" PATH="$PWD:$PATH" offered "$shell" "$line" \
+              </dev/null | sed "s/^['\"]//; s/ *\$//; /^-\{0,2\}\$/d" | sort -u | xargs)
+        want=$(printf '%s\n' $want | sort -u | xargs)
+        [ "$got" = "$want" ] || {
+            printf '%s offers for "%s":\n  %s\nbut demoreel accepts:\n  %s\n' \
+                "$shell" "$line" "$got" "$want" >&2
+            completion_bad=$((completion_bad + 1)); }
+    done <<< "$expected"
+    [ "$completion_bad" -eq "$bad_before" ] && echo "$shell: subcommands, options, steps and running recordings all match"
+done
+kill "$fake_run" 2>/dev/null
+[ "$completion_bad" -eq 0 ] || exit 1
+
 step "default output name"
 # -o is optional; without it the file is named from the app and a timestamp.
 ( cd "$tmp" && "$OLDPWD/demoreel" record -d 3 -s 640x480 -- xclock >/dev/null )
