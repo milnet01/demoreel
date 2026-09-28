@@ -138,6 +138,20 @@ closes, so it sits outside every version heading.
   Kind: chore.
   Source: user-request-2026-09-25.
 
+- 💭 [DEMO-0120] **Consider running ci.sh's recording checks in parallel.**
+  local-gate.md section 9's test-parallelism lever, the one not taken on
+  2026-09-28. Measured then on GitHub: install 24 s, ruff 4 s, the gate
+  124 s, nearly all of it recordings run one after another. Safe only
+  where checks share no state: each needs its own --name, and several
+  checks time things (DEMO-0078's frozen display, the countdown) and
+  would flake on a loaded machine. Measure before and after, one lever
+  per change, and run the changed gate repeatedly before trusting it.
+  Not taken now because 2.5 min per push is already cheap on a public
+  repository and the flake risk is real.
+  **Layman:** The automatic checks spend about two minutes making test recordings one after another; running some side by side could cut that.
+  Kind: perf.
+  Source: claude-config-request-2026-09-28.
+
 ## 0.1.1 — Before the first tag
 
 Nothing here breaks a documented surface, so all of it lands in a PATCH.
