@@ -2314,7 +2314,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: investigate.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0078] **Shorten the gate's longest step, the scripted-actions recording.**
+- ✅ [DEMO-0078] **Shorten the gate's longest step, the scripted-actions recording.**
   DEMO-0042 measured the gate and found the scripted-actions step the
   single largest, a recording of about twelve seconds. It closed the
   parallel-steps idea as considered and named this step as the cheaper
@@ -2323,6 +2323,18 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
 
   Shorten the waits inside that step to what the assertions need, and
   check it still fails when an action is broken.
+  Resolved (2026-09-28). The premise had moved: the scripted-actions
+  step now takes about 4.5 s, because a run already ends when its app
+  closes. Timed per step on 2026-09-28 (machine busy, load ~4-6 on 12
+  cores, so ranking only), the longest was "a display that stops
+  answering fails the run", 39 s of a 169 s gate. Of that, 25 s was
+  teardown: stop_recorder's graceful 15 s + 5 s and end_server's 5 s,
+  each waiting on the frozen display for a video the run does not
+  return. Now a display-call timeout sets _display_gone, and the
+  recorder and the display are killed at once. The run fails in 13 s,
+  with the same message. The step asserts it gives up within 25 s: red
+  on the previous commit (38 s), green on the fix (13 s). Longest step
+  after: 14 s.
   **Layman:** The pre-push checks spend the most time in one test; make that test quicker.
   Kind: perf.
   Source: user-request-2026-09-25.

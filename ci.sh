@@ -751,8 +751,10 @@ for _ in $(seq 100); do
 done
 frozen_xvfb=$(pgrep -P "$frozen_run" -x Xvfb)
 kill -STOP "$frozen_xvfb"
+frozen_at=$SECONDS
 rc=0
 timeout 60 tail --pid="$frozen_run" -f /dev/null || rc=$?
+frozen_took=$((SECONDS - frozen_at))
 kill -CONT "$frozen_xvfb" 2>/dev/null || true
 if [ "$rc" -ne 0 ]; then
     kill "$frozen_run" 2>/dev/null || true
@@ -766,7 +768,14 @@ fi
 grep -q 'stopped answering' "$tmp/frozen.err" || {
     echo "a run on a frozen display failed without saying the display stopped:" >&2
     cat "$tmp/frozen.err" >&2; exit 1; }
-echo "the frozen display was given up on, and the run failed saying why"
+# DEMO-0078. Giving up takes the halfway wait and one call's timeout, about
+# 13s. The recorder and the display are then ended at once: both wait on the
+# frozen display, and stopping them gracefully ran out 25s more of timeouts
+# for a video the run does not return. 25s is the old total's margin, not the
+# new one's.
+[ "$frozen_took" -le 25 ] || {
+    echo "a run on a frozen display took ${frozen_took}s to give up" >&2; exit 1; }
+echo "the frozen display was given up on in ${frozen_took}s, and the run failed saying why"
 
 step "stop ends a run started with -d 0"
 # record -d 0 runs until told to stop, and stop is the only way to end it. It

@@ -7,6 +7,7 @@ end up in the video. README.md explains why that is the whole point.
 """
 
 import argparse
+import contextlib
 import fcntl
 import json
 import math
@@ -59,6 +60,12 @@ NO_WAYLAND = "demoreel-no-wayland"
 # to one sleep late: a median 107 ms, measured, all of it in the video
 # (DEMO-0075).
 _stop = threading.Event()
+
+# Set once a call to the display has timed out (DEMO-0079): the run has failed
+# and hands back no video. The recorder and the display are then ended at
+# once, since each waits on the frozen display and a graceful stop only runs
+# out its timeouts, 25 seconds of them (DEMO-0078).
+_display_gone = threading.Event()
 
 
 def _request_stop(signum, frame):
@@ -482,6 +489,7 @@ def xdotool(env, *args, check=False, stdin_text=None):
                               input=stdin_text, capture_output=True, text=True,
                               check=check, timeout=timeout)
     except subprocess.TimeoutExpired:
+        _display_gone.set()
         die(f"the private display {env.get('DISPLAY')} stopped answering: "
             f"`xdotool {args[0]}` did not return within {timeout:g}s.")
 
@@ -854,6 +862,7 @@ def display_is_blank(env, display, width, height):
              "-pix_fmt", "gray", "-f", "rawvideo", "-"],
             env=env, capture_output=True, timeout=CALL_TIMEOUT)
     except subprocess.TimeoutExpired:
+        _display_gone.set()
         raise SampleError(f"the display did not give up a frame within "
                           f"{CALL_TIMEOUT}s; it has stopped answering") from None
     if grab.returncode != 0 or len(grab.stdout) != width * height:
@@ -948,6 +957,10 @@ def stop_recorder(proc):
     recorder leaves an mp4 that most players refuse to open. ffmpeg takes `q`
     on its stdin, wf-recorder takes SIGINT."""
     if proc.poll() is not None:
+        return
+    if _display_gone.is_set():  # no video to save, and it cannot finish
+        proc.kill()
+        proc.wait()
         return
     try:
         if proc.args[0] == "wf-recorder":
@@ -1212,8 +1225,14 @@ def launch(a, command, width, height, base, displaylog, appout):
 def end_server(server):
     """End the display. Both servers run in a session of their own, and the
     group goes, so on --gpu Xwayland goes with cage."""
-    if server is not None:
-        end_process(server, group=True)
+    if server is None or server.poll() is not None:
+        return
+    if _display_gone.is_set():  # a hung server may not act on SIGTERM
+        with contextlib.suppress(ProcessLookupError, PermissionError):
+            os.killpg(os.getpgid(server.pid), signal.SIGKILL)
+        server.wait()
+        return
+    end_process(server, group=True)
 
 
 def place_window(env, app, a, width, height, going_on):

@@ -66,6 +66,12 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Changed
 
+- **A run whose private display stops answering now fails in about 13 seconds, not 38.** (DEMO-0078)
+  Once a call to the display times out, the run has failed and returns no
+  video. The recorder and the display are now ended at once, rather than
+  each being given a graceful stop that could only run out its timeouts
+  on the frozen display.
+
 - **Error messages now say what happened, why, and what to do next.** (DEMO-0055)
   A mistyped `-a` step is caught before anything starts and shows how to
   write it, where it used to end the run with a Python traceback. Other
