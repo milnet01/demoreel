@@ -152,6 +152,18 @@ closes, so it sits outside every version heading.
   Kind: perf.
   Source: claude-config-request-2026-09-28.
 
+- 📋 [DEMO-0121] **Put the frame size back once when an app resizes its own window.**
+  DEMO-0108 measured this as safe for Vestige (it redrew at the new size,
+  letterboxed) and found no drift on DOOM_Ants. Design to decide:
+  re-apply ONCE where window_off_frame fires, re-check after
+  wait_for_size, and keep today's warning only when the app takes the
+  size again, so an app that fights cannot loop. Frames before the
+  re-apply are still cropped, so the warning may still be owed for them.
+  Touches record and shot; README's description of the warning changes.
+  **Layman:** When an app changes its own window size mid-recording, demoreel could quietly put it back instead of only warning.
+  Kind: enhancement.
+  Source: DEMO-0108-finding-2026-09-28.
+
 ## 0.1.1 — Before the first tag
 
 Nothing here breaks a documented surface, so all of it lands in a PATCH.
@@ -2230,7 +2242,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: feature.
   Source: peer-request-vestige-2026-09-25.
 
-- 📋 [DEMO-0108] **Find out whether re-applying the frame size after an app resizes itself is safe.**
+- ✅ [DEMO-0108] **Find out whether re-applying the frame size after an app resizes itself is safe.**
   Split from DEMO-0099, whose detection half shipped in 0.2.2: demoreel
   warns once and names the size the app chose. Still open: re-apply the
   frame size once the app settles, or does that start a resize fight?
@@ -2242,6 +2254,20 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Vestige/build-release/bin/vestige and
   DOOM_Ants/packaging/build/doom_ants-0.7.2-x86_64.AppImage. The vestige
   message also delivered the `-a 'hold w 3'` note (DEMO-0098).
+  Resolved (2026-09-28): re-applying is safe for both apps measured.
+  Method: a scratch copy of demoreel that, when window_off_frame fires,
+  runs windowmove 0 0 and windowsize WxH, then logs the window geometry
+  every 0.1 s for 8 s. Launch commands from the vestige and doom-ants
+  sessions.
+  Vestige, --gpu --settle 60 -s 1600x1000 --demo-flythrough: drifted to
+  1920x1080 before halfway; after the re-apply it held 1600x1000 for all
+  8 s (one geometry, no fight). It redrew the whole scene at the new
+  size, letterboxed to keep 16:9; before, the frame showed a crop.
+  Vestige was not tried on Xvfb, where a GPU app records black.
+  DOOM_Ants 0.7.2 AppImage, -windowed, renderer 0, -s 1920x1080: no
+  drift on Xvfb or --gpu; it filled the frame both times. The 1708x800
+  case did not reproduce with that command.
+  Limit: 8 s watched, two apps. Follow-up to build it: DEMO-0121.
   **Layman:** When an app changes its own window size, demoreel now warns; this checks whether it could safely put the size back instead.
   Kind: investigate.
   Source: peer-request-vestige-2026-09-25.
