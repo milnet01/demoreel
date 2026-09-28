@@ -1930,7 +1930,7 @@ A person at a terminal gets as much from demoreel as a script does. The command 
 
 This is a MINOR because two changes to the `-a` grammar are breaking, both chosen by the user on 2026-09-26: `type` types its text exactly (DEMO-0101), and the pointer starts in a corner rather than the centre (DEMO-0103). The speed and memory items first planned for 0.2.2 moved here too.
 
-- 📋 [DEMO-0050] **Show worked examples at the end of `--help`.**
+- ✅ [DEMO-0050] **Show worked examples at the end of `--help`.**
   `demoreel --help` and `demoreel record --help` list the flags and nothing
   else. A person meeting the tool for the first time has to go to README.md
   to learn what a working command looks like.
@@ -1941,6 +1941,10 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
 
   The gate already checks that every flag README documents is one the tool
   accepts. Extend it so every example in `--help` also parses.
+  Resolved (2026-09-28): EXAMPLES and RECORD_EXAMPLES are the epilogs,
+  and the parser moved into build_parser() so ci.sh can use it. The
+  gate step "every --help example parses" shows red with no examples,
+  a bad -a step and an example naming no app.
   **Layman:** Typing demoreel --help shows real commands you can copy, not just a list of options.
   Kind: ux.
   Source: user-request-2026-09-25.

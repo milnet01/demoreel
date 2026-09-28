@@ -141,6 +141,55 @@ done
 [ "$unmentioned" -eq 0 ] || exit 1
 echo "every flag demoreel accepts is one README mentions"
 
+step "every --help example parses"
+# DEMO-0050. The examples at the end of --help are what a first-time user
+# copies, so each one must be a command demoreel accepts: parsed by the tool's
+# own parser, with every -a step read the way a run reads it. This also covers
+# the check above, which takes its list of accepted flags from the same help
+# text: a flag an example uses cannot be one the parser has dropped.
+python3 - <<'EXAMPLESPY'
+import importlib.machinery, importlib.util, shlex, subprocess, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+demoreel = importlib.util.module_from_spec(
+    importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(demoreel)
+bad = 0
+for page in (["--help"], ["record", "--help"]):
+    text = subprocess.run(["./demoreel", *page], capture_output=True,
+                          text=True, check=True).stdout
+    examples, lines = [], iter(text.splitlines())
+    for line in lines:
+        line = line.strip()
+        if not line.startswith("demoreel "):
+            continue
+        while line.endswith("\\"):
+            line = line[:-1] + " " + next(lines).strip()
+        examples.append(line)
+    if not examples:
+        print(f"demoreel {' '.join(page)} shows no examples", file=sys.stderr)
+        bad += 1
+    for example in examples:
+        argv = shlex.split(example)[1:]
+        if argv[-1:] == ["&"]:
+            argv.pop()
+        try:
+            args = demoreel.build_parser().parse_args(argv)
+            if args.cmd in ("record", "shot") and not [
+                    c for c in args.command if c != "--"]:
+                sys.exit("it names no app to run")
+            for step in getattr(args, "action", []):
+                demoreel.parse_step(step)
+        except SystemExit as e:
+            # argparse prints its own reason and exits with a number.
+            why = e.code if isinstance(e.code, str) else "argparse says why above"
+            print(f"this --help example does not parse: {example}\n  {why}",
+                  file=sys.stderr)
+            bad += 1
+    print(f"demoreel {' '.join(page)}: {len(examples)} examples")
+sys.exit(1 if bad else 0)
+EXAMPLESPY
+echo "every example --help shows is one demoreel accepts"
+
 step "documents are readable"
 for f in README.md CLAUDE.md ROADMAP.md CHANGELOG.md SECURITY.md \
          docs/standards/README.md docs/standards/versioning-overrides.md; do

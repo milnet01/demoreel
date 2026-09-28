@@ -1760,16 +1760,62 @@ def wait_until_recording(entry):
     return poll(recording, None)
 
 
-def main():
+# The examples at the end of --help (DEMO-0050). ci.sh parses every line that
+# starts with `demoreel `, so each one must stay a command the tool accepts.
+EXAMPLES = """\
+examples:
+  # can this machine record? If not, it says what to install
+  demoreel check
+
+  # record Kate for 20 seconds
+  demoreel record -o demo.mp4 -d 20 -- kate
+
+  # one picture instead of a video
+  demoreel shot -o kate.png -- kate
+
+  # record until you say stop, then stop it from any terminal
+  demoreel record -o demo.mp4 -d 0 -n mydemo -- kate &
+  demoreel stop mydemo
+
+more examples: demoreel record --help"""
+
+RECORD_EXAMPLES = """\
+examples:
+  # record Kate for 20 seconds
+  demoreel record -o demo.mp4 -d 20 -- kate
+
+  # record until you say stop, then stop it from any terminal
+  demoreel record -o demo.mp4 -d 0 -n mydemo -- kate &
+  demoreel stop mydemo
+
+  # show the app being used: these steps run while it records
+  demoreel record -o demo.mp4 -d 20 --cursor \\
+    -a 'wait 2' -a 'click 400 300' -a 'type hello' -a 'key Return' -- kate
+
+  # an app that needs the graphics card (OpenGL, Vulkan)
+  demoreel record -o cube.mp4 -d 10 --gpu -- vkcube
+
+  # a Flatpak app, which needs three flags on its own command line
+  demoreel record -o demo.mp4 -d 20 -- \\
+    flatpak run --socket=x11 --nosocket=wayland \\
+    --filesystem=/tmp/.X11-unix org.kde.kate"""
+
+
+def build_parser():
+    """The command line. Separate from main() so ci.sh can parse the --help
+    examples with it without running anything."""
     parser = argparse.ArgumentParser(
         prog="demoreel",
         description="Record a GUI app on a private virtual display, so nothing "
-                    "of your real desktop is in frame.")
+                    "of your real desktop\nis in frame.",
+        epilog=EXAMPLES, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--version", action="version",
                         version=f"demoreel {__version__}")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    rec = sub.add_parser("record", help="record an app and write a video file")
+    rec = sub.add_parser("record", help="record an app and write a video file",
+                         epilog=RECORD_EXAMPLES,
+                         formatter_class=argparse.RawDescriptionHelpFormatter)
     rec.add_argument("-o", "--output",
                      help="video file to write (default: "
                           "./<app>-<timestamp>.mp4)")
@@ -1856,8 +1902,11 @@ def main():
     stop.add_argument("name", nargs="?", help="which run to stop (default: the "
                                               "only one running)")
     stop.set_defaults(func=cmd_stop)
+    return parser
 
-    args = parser.parse_args()
+
+def main():
+    args = build_parser().parse_args()
     for sig in (signal.SIGTERM, signal.SIGHUP):
         signal.signal(sig, _exit_on_signal)
     args.func(args)
