@@ -2241,12 +2241,27 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: optimize.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0074] **Measure the `--gpu` backend's memory, and cut what it does not need.**
+- ✅ [DEMO-0074] **Measure the `--gpu` backend's memory, and cut what it does not need.**
   The Xvfb path was measured on 2026-09-25; the `--gpu` path was not. It
   runs xwfb-run, cage and Xwayland in place of Xvfb, and the recorded app
   has a GPU context. Measure each process's resident memory during a
   `--gpu -- vkcube` run and compare against the Xvfb figures. File a fix
   only for what the numbers show.
+  Resolved (2026-09-28), measured, no fix filed. Each process's VmHWM
+  (the kernel's peak-RSS mark), sampled every 0.2 s over its whole tree,
+  during `record --gpu -d 10 -- vkcube`, three runs:
+    wf-recorder 138544-150116 kB, cage 83668-102264 kB, Xwayland 88960-
+    89092 kB, vkcube 30876-30940 kB, demoreel (python3) 26896-27136 kB.
+  While recording that is about 400 MB. The same run on Xvfb with xclock:
+  ffmpeg 528500 kB, Xvfb 131492 kB, demoreel 27160 kB, app 9452 kB, about
+  700 MB. So --gpu is the lighter backend, and its largest part is the
+  encoder again. A second ffmpeg of about 138 MB is the stutter measure
+  (mpdecimate over the finished file); it runs after recording stops, so
+  it does not raise the run's peak. Nothing here holds memory a setting
+  would remove: cage and Xwayland are the backend itself. The encoder
+  cap is DEMO-0073. The machine was busy (load ~4 on 12 cores), which
+  moves timings, not peak memory. This item's first line predates the
+  backend change: it runs cage, Xwayland and wf-recorder, not xwfb-run.
   **Layman:** Find out how much memory the graphics-card recording mode uses, and trim it.
   Kind: investigate.
   Source: user-request-2026-09-25.
