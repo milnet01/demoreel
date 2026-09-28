@@ -2222,6 +2222,12 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   frame size once the app settles, or does that start a resize fight?
   Measure on both backends with Vestige (sets 1920x1080 on a 1600x1000
   display) and DOOM_Ants (sets 1708x800 on 1920x1080). Not measured yet.
+  Progress (2026-09-28): asked the vestige and doom-ants sessions
+  (session_message ids 120, 121) for the exact command to launch each
+  app for a recording; no reply yet. Builds exist:
+  Vestige/build-release/bin/vestige and
+  DOOM_Ants/packaging/build/doom_ants-0.7.2-x86_64.AppImage. The vestige
+  message also delivered the `-a 'hold w 3'` note (DEMO-0098).
   **Layman:** When an app changes its own window size, demoreel now warns; this checks whether it could safely put the size back instead.
   Kind: investigate.
   Source: peer-request-vestige-2026-09-25.
