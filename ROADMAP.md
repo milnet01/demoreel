@@ -2089,7 +2089,7 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: feature.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0057] **Write a man page.**
+- ✅ [DEMO-0057] **Write a man page.**
   A person used to Linux tools types `man demoreel`, and there is nothing.
 
   Write one covering both subcommands, every flag, the action grammar,
@@ -2098,6 +2098,11 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
 
   The install packages in 0.5.0 put it where `man` finds it. Until then,
   `man ./demoreel.1` reads it in place.
+  Resolved (2026-09-28): demoreel.1 at the top of the repository, with
+  no version or date in .TH so a release has nothing more to bump. The
+  gate step names every option, subcommand and step against the parser,
+  and runs groff -ww; shown red with an option and a step removed, and
+  with an undefined macro.
   **Layman:** `man demoreel` works, like it does for other command-line tools.
   Kind: doc.
   Source: user-request-2026-09-25.

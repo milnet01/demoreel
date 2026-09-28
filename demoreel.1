@@ -1,0 +1,274 @@
+.\" demoreel(1). README.md is the full account; this page is the reference.
+.\" ci.sh checks it names every option, subcommand and step demoreel accepts.
+.TH DEMOREEL 1 "" "demoreel" "User Commands"
+.SH NAME
+demoreel \- record a GUI app on a private virtual display
+.SH SYNOPSIS
+.B demoreel record
+.RI [ options ]
+.B \-\-
+.I command
+.RI [ args ...]
+.br
+.B demoreel shot
+.RI [ options ]
+.B \-\-
+.I command
+.RI [ args ...]
+.br
+.B demoreel stop
+.RI [ name ]
+.br
+.B demoreel check
+.br
+.B demoreel
+.RB [ \-\-version ]
+.RB [ \-h | \-\-help ]
+.SH DESCRIPTION
+.B demoreel
+starts a private virtual display, runs
+.I command
+on it, sizes the app's window to fill the frame, and records it.
+Your real desktop is never in the picture, because the app never runs there.
+When the run succeeds,
+.B demoreel
+prints the path of the finished file on standard output, and nothing else.
+The app's own output goes to standard error, or to
+.BR \-\-app\-log .
+.PP
+The file is an H.264 MP4 with no sound.
+A recording that is one flat colour is refused, not returned.
+.SH COMMANDS
+.TP
+.B record
+Record the app and write a video file.
+.TP
+.B shot
+Take one picture of the app and write a PNG.
+It waits for the app to draw, runs any
+.B \-a
+steps, saves the picture and closes the app.
+It takes the options of
+.B record
+except
+.BR \-d ,
+.B \-r
+and
+.BR \-n .
+.TP
+.B stop
+End a running recording early, wait until its video is finished and checked,
+and print its path.
+With no
+.IR name ,
+it stops the only recording running.
+It works straight after launching the run, even before it has started
+recording.
+.TP
+.B check
+Report what each backend needs and whether it is installed, start a private
+display to prove it works, and name the install command for anything missing.
+It records nothing.
+.SH OPTIONS
+.TP
+.BR \-o ", " \-\-output " \fIpath\fR"
+Where to write the file.
+The default is the current directory, named after the app and the time.
+.TP
+.BR \-d ", " \-\-duration " \fIseconds\fR"
+How long to record, counted from when the scripted steps finish (default 30).
+.B \-d 0
+records until
+.B demoreel stop
+or until the app closes itself.
+.B record
+only.
+.TP
+.BR \-s ", " \-\-size " \fIW\fBx\fIH\fR"
+The size of the picture (default 1600x1000).
+For
+.BR record ,
+both numbers must be even.
+.TP
+.BR \-r ", " \-\-framerate " \fIfps\fR"
+Frames per second (default 30).
+.B record
+only.
+.TP
+.BR \-n ", " \-\-name " \fIname\fR"
+A name for this run, so
+.B demoreel stop
+can find it (default
+.BR default ).
+Two runs with the same name cannot record at once; the second refuses.
+.B record
+only.
+.TP
+.BR \-a ", " \-\-action " \fIstep\fR"
+A scripted step, run while the app is recorded.
+Repeat it; the steps run in order.
+See
+.BR STEPS .
+.TP
+.BI \-\-app\-log " path"
+Save the app's own output in
+.IR path .
+.TP
+.BI \-\-settle " seconds"
+Wait up to
+.I seconds
+for the app to draw something before recording, instead of filming its black
+startup screen.
+The default is 0 for
+.B record
+and 10 for
+.BR shot .
+.TP
+.B \-\-gpu
+For an app that needs the graphics card (OpenGL, Vulkan).
+The default display,
+.BR Xvfb ,
+has no GPU, so such an app records black on it.
+This records on a headless
+.B cage
+compositor instead.
+It needs
+.BR cage ,
+.B Xwayland
+and
+.BR wlr\-randr ,
+and
+.B record \-\-gpu
+also needs
+.BR wf\-recorder .
+.TP
+.B \-\-cursor
+Draw the mouse pointer.
+Off by default.
+Not available with
+.BR "record \-\-gpu" .
+.TP
+.BI \-\-startup\-timeout " seconds"
+How long to wait for the app's window (default 20).
+.TP
+.BR \-h ", " \-\-help
+Show the options.
+.B "demoreel \-\-help"
+and
+.B "demoreel record \-\-help"
+end with worked examples.
+.TP
+.B \-\-version
+Show the version.
+.SH STEPS
+Each
+.B \-a
+takes one step, quoted as one word:
+.TP
+.BI "wait " seconds
+Pause.
+.TP
+.BI "move " "x y"
+Move the pointer.
+.TP
+.BR click " [\fIx y\fR]"
+Click there, or where the pointer already is.
+The pointer starts in the bottom-right corner.
+.TP
+.BI "type " text
+Type
+.IR text ,
+exactly as written after
+.B type
+and one space.
+.TP
+.BI "key " name
+Press a key, such as
+.B Return
+or
+.BR ctrl+s .
+.TP
+.BI "hold " "key seconds"
+Hold a key down.
+It is let go however the step ends.
+.PP
+Anything on a command line can be read by other users of the machine, so do
+not script typing a password on a shared one.
+.SH EXIT STATUS
+.TP
+.B 0
+The file was written and checked, and its path printed.
+For
+.BR check ,
+the default backend can record.
+.TP
+.B 1
+The run failed, and the message on standard error says why and what to do.
+A failed run prints no path.
+.TP
+.B 2
+The command line was not understood.
+.SH FILES
+Run files live in
+.IR $XDG_RUNTIME_DIR/demoreel\-UID ,
+or
+.I /tmp/demoreel\-UID
+when that variable is unset.
+The directory must belong to you.
+.TP
+.IB name .lock
+Held for the whole of a run, so two runs cannot share a name.
+.TP
+.IB name .json
+What
+.B demoreel stop
+reads to find the run and learn how it ended.
+It stays after the run.
+.TP
+.IB name .ffmpeg.log "\fR, \fP" name .display.log
+The recorder's and the display's logs.
+Kept when a run fails, removed when it succeeds.
+.TP
+.I shot\-*
+A folder for one
+.BR shot ,
+removed when it succeeds and kept, and named, when it fails.
+.TP
+.I check\-*
+A folder for
+.BR check 's
+test display, always removed.
+.SH NOTES
+.SS A Flatpak app
+A Flatpak does not see the private display on its own.
+Give its own command line three flags:
+.PP
+.RS
+.nf
+demoreel record \-o demo.mp4 \-\- \e
+  flatpak run \-\-socket=x11 \-\-nosocket=wayland \e
+  \-\-filesystem=/tmp/.X11\-unix org.example.App
+.fi
+.RE
+.SS An app already running
+A single-instance app that is already open on your desktop hands the new launch
+to its running copy, which exits at once.
+Close the running copy first.
+.SH EXAMPLES
+.nf
+demoreel check
+demoreel record \-o demo.mp4 \-d 20 \-\- kate
+demoreel record \-o demo.mp4 \-d 20 \-\-cursor \e
+  \-a \(aqwait 2\(aq \-a \(aqclick 400 300\(aq \-a \(aqtype hello\(aq \-\- kate
+demoreel record \-o demo.mp4 \-d 0 \-n mydemo \-\- kate &
+demoreel stop mydemo
+demoreel record \-o cube.mp4 \-d 10 \-\-gpu \-\- vkcube
+demoreel shot \-o menu.png \-a \(aqclick 40 12\(aq \-\- kate
+.fi
+.SH SEE ALSO
+.BR Xvfb (1),
+.BR ffmpeg (1),
+.BR xdotool (1),
+.BR cage (1)
+.PP
+README.md in the source repository covers why each part works as it does.

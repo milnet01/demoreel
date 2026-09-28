@@ -14,6 +14,12 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **A man page, `demoreel.1`.** (DEMO-0057)
+  Every command, option and step, the exit statuses, the files a run
+  keeps, and the Flatpak and `--gpu` notes. `man ./demoreel.1` reads it
+  in place until the 0.5.0 packages install it. The gate checks it names
+  everything demoreel accepts and renders without a groff warning.
+
 - **Tab completion for bash, zsh and fish, in `completions/`.** (DEMO-0056)
   Completes the subcommands, every option, the step names after `-a`,
   the names of recordings still running after `demoreel stop`, and the

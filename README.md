@@ -230,6 +230,11 @@ be ready. An app that paints a cursor or a border over its black startup screen
 counts as drawn. A real `xterm` measures 97.7% uniform, well under the 99.9%
 bar, so it is built for a startup screen that is genuinely blank.
 
+### The manual page
+
+`demoreel.1` is the reference: every command, option and step, the exit
+statuses, and the files a run keeps. Read it in place with `man ./demoreel.1`.
+
 ### Tab completion
 
 `completions/` has scripts for bash, zsh and fish. They complete the
@@ -586,8 +591,8 @@ when the tree is clean, and an uncommitted fix would turn the run green for
 commits that will go red.
 
 A documentation-only push runs `./ci.sh --docs` instead — the gate-wiring check,
-the flag check, the check that every `--help` example parses, and the
-readability check, not nothing. `./ci.sh --docs-glob` is
+the flag check, the check that every `--help` example parses, the check that
+the man page names every option, and the readability check, not nothing. `./ci.sh --docs-glob` is
 the only definition of what counts as documentation here, and the gate fails in
 *both* modes if the local git config has drifted from it. That check runs before
 the documentation mode exits, deliberately: the glob is what selects the mode,

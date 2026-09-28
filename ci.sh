@@ -190,6 +190,37 @@ sys.exit(1 if bad else 0)
 EXAMPLESPY
 echo "every example --help shows is one demoreel accepts"
 
+step "the man page names everything demoreel accepts"
+# DEMO-0057. Held to the same rule as README above: every option, subcommand
+# and step demoreel accepts appears in demoreel.1, so one added to the tool and
+# forgotten there fails here. roff writes a hyphen as \-, hence the sed. And it
+# must render without a groff warning, where groff is installed to say.
+man_text=$(sed 's/\\-/-/g' demoreel.1)
+man_missing=0
+for word in $(printf '%s' "$help" | grep -oE '(^|[ ,])--?[a-z][a-z-]+' \
+              | tr -d ' ,' | sort -u) \
+            $(python3 -c 'import importlib.machinery as m, importlib.util as u
+l = m.SourceFileLoader("demoreel", "./demoreel")
+d = u.module_from_spec(u.spec_from_loader("demoreel", l)); l.exec_module(d)
+import argparse
+sub = next(a for a in d.build_parser()._actions
+           if isinstance(a, argparse._SubParsersAction))
+print(*sub.choices, *d.ACTION_EXAMPLES)'); do
+    printf '%s' "$man_text" | grep -qE -- "(^|[^A-Za-z0-9_-])$word([^A-Za-z0-9_-]|\$)" || {
+        echo "demoreel accepts $word, which demoreel.1 never mentions" >&2
+        man_missing=$((man_missing + 1))
+    }
+done
+[ "$man_missing" -eq 0 ] || exit 1
+if command -v groff >/dev/null; then
+    warnings=$(groff -man -ww -z demoreel.1 2>&1)
+    [ -z "$warnings" ] || { echo "groff warns about demoreel.1:" >&2
+                            echo "$warnings" >&2; exit 1; }
+    echo "demoreel.1 names every option, command and step, and renders cleanly"
+else
+    echo "demoreel.1 names every option, command and step (no groff to render it)"
+fi
+
 step "documents are readable"
 for f in README.md CLAUDE.md ROADMAP.md CHANGELOG.md SECURITY.md \
          docs/standards/README.md docs/standards/versioning-overrides.md; do
