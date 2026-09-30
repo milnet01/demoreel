@@ -307,11 +307,29 @@ you like; the indent is only for your eyes.
   clip's own file, like the clip's `from` and `to`; on a card they count from
   the card's start. Left out, the text stays for the whole scene.
 - `size 4` sets another height, as a percentage of the frame's.
-- Text too wide for the frame at its size is refused. Nothing is shrunk
-  without you asking. The font is the machine's own bold sans, so a line that
+- `font "DejaVu Serif"` draws it in that font, by the name `fc-list` gives it.
+  Add `:bold` for the font's bold: `font "DejaVu Serif:bold"`. A path to a
+  font file works too. A font the machine does not have is refused, never
+  swapped for another.
+- `colour #FFD040` sets the text's colour, written `#RRGGBB`.
+- `outline #000000` draws a line of that colour round each letter, and
+  `shadow #000000` a shadow of that colour below and to the right of it. How
+  thick the line is, and how far off the shadow, follow the text's height.
+- `fade-in 0.5` brings the text in over half a second from its `from`, and
+  `fade-out 0.5` takes it away over the half second before its `to`. Its band
+  fades with it. The two together may not be longer than the text shows.
+- `band off` takes the dark band away, and `band on` gives a card's text one.
+- `at top`, `at middle` or `at bottom` says where it sits. With a band, the
+  band runs across the frame there, against the edge at the top or bottom.
+  Without one, the text sits a twentieth of the frame's height in from that
+  edge. On a card, the picture is fitted into the room left between a text at
+  the top and a text at the bottom, and a text in the middle lies over it.
+- Text too wide for the frame at its size is refused, its outline counted.
+  Nothing is shrunk without you asking. Unless the line names a font, it is
+  the machine's own bold sans, so a line that
   only just fits on one machine may be refused on another. It is found with
   `fc-match`; on a machine without that program the text is drawn in the
-  regular weight.
+  regular weight, and a font asked for by name is refused.
 - A scene may have several texts, but only one on screen at a time: two whose
   times overlap are refused. A text shows from its `from` up to its `to` and
   not on the frame at `to`, so one may start at the time another ends.
@@ -360,6 +378,9 @@ demoreel card -o title.mp4 -d 3 --like demo.mp4 --text 'Saving a file'
   `--fade-in` and `--fade-out`. Its size and
   frame rate come from `--like FILE`; `-s` and `-r` set them by hand and win
   over `--like`. With none of them it is 1600x1000 at 30.
+
+A text's `font`, `colour`, `outline`, `shadow`, `band`, `at` and its own fades
+are the script's alone. A shortcut sets a text's words, times and size.
 
 Chaining shortcuts encodes the picture once per step. For more than one step,
 write the script.
@@ -720,7 +741,8 @@ Permanently out of scope:
 - No editing beyond [Finishing a recording](#finishing-a-recording). demoreel
   may cut the ends off a video, measure it, take a frame from it, play scenes
   one after another, show a picture, still or animated, on a card between
-  them, put one line of text on or between them, and fade. That is the whole
+  them, put one line of text on or between them, styled as the script says,
+  and fade. That is the whole
   list. A script is a list of scenes in order and nothing more: no
   layers, no two pictures on screen at once, no transition other than a fade,
   no zoom, no text that moves, no speeding up or slowing down. Nothing is ever

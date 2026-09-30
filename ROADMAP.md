@@ -3456,6 +3456,22 @@ said where this sits against 0.5.0 to 0.7.0.
   Kind: doc.
   Source: review-contract-2026-09-30 README loop 9.
 
+- 🚧 [DEMO-0135] **Let a script style its text: font, colour, outline, shadow, fade, band and place.**
+  Asked for by the user on 2026-09-30 when shown the text samples: the
+  default size is right (7% on a card, 5% on a caption), and a session
+  should be able to dictate the rest in the script. `size` is already
+  there. To add, per text line: font, colour, outline, drop shadow, fade
+  in and out, the caption band on or off, and one of three fixed places
+  (top, middle, bottom). Chosen by the user from the options put.
+  Still one line of text that does not move, so README's list in
+  What it will never do holds. README is the design contract: its
+  wording goes in first and is reviewed before the build. Goes into the
+  release that carries the finishing commands, ahead of DEMO-0133.
+  Serves S4 (README, Signs it is working).
+  **Layman:** A film's script can choose how each line of text looks: its font, colour, outline, shadow, whether it fades in and out, whether the dark strip shows, and where it sits.
+  Kind: enhancement.
+  Source: user-request-2026-09-30.
+
 ## 1.0.0 — Every documented path tested
 
 The exit condition in docs/standards/versioning-overrides.md: the gate
