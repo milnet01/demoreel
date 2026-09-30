@@ -3161,6 +3161,105 @@ Decided by the user on 2026-09-25: audio becomes an opt-in, and every run gets a
   Kind: feature.
   Source: user-request-2026-09-25.
 
+## 0.8.0 — Finishes what it recorded
+
+Light editing of demoreel's own recordings, so a session can publish a video
+without hand-typed ffmpeg. Asked for by the user on 2026-09-30, through the
+Slipcase session and then directly: trim, smoothness report, poster, join, image
+and text cards, and text over a scene. Still out: audio mixing, transitions,
+zoom, cursor highlighting, a timeline, and cutting out still stretches
+automatically. The version number is a slot, not an order: the user has not yet
+said where this sits against 0.5.0 to 0.7.0.
+
+- 📋 [DEMO-0123] **Move the scope ceiling to allow light editing of demoreel's own recordings.**
+  README `What it will never do` and CLAUDE.md `Scope ceiling` both say no
+  editing, trimming, overlays or captions. The user lifted that on
+  2026-09-30 ("All five", then: text between clips and text overlaying
+  certain scenes would be useful). Proposed new line: demoreel may cut,
+  measure, take a frame from, join end to end, and put text on or between
+  the recordings it made. Still out: audio mixing, transitions, zoom,
+  cursor highlighting, a timeline, a GUI editor, and removing still
+  stretches automatically (it hides a real wait). README's `--settle`
+  section calls trimming "editing, and editing is deliberately not this
+  tool's job": that sentence changes too. A change of direction in a
+  gated contract, so review-contract runs on README before
+  DEMO-0124 to DEMO-0129 are built.
+  Serves S4 (README, Signs it is working).
+  **Layman:** Rewrite the 'will never do' list so trimming, joining and text are allowed, and say plainly what still is not.
+  Kind: doc.
+  Source: user-request-2026-09-30.
+
+- 📋 [DEMO-0124] **`demoreel trim`: cut the start and end off a recording.**
+  `demoreel trim IN -o OUT [--from T] [--to T]`. Re-encodes, so the cut
+  lands on the frame asked for, with the recorder's own encoder settings
+  (DEMO-0014 decided 2026-09-08 to leave them alone; this does not reopen
+  it). Output has the same shape as a recording: silent H.264, yuv420p,
+  faststart. Never writes over IN. stdout carries the finished path and
+  nothing else, as `record` does. Slipcase proposed this as `finish
+  --trim`; a demoreel file is already web-shaped, so the trim is the
+  whole of it.
+  Serves S4 (README, Signs it is working).
+  **Layman:** Cut the dead time off the front and back of a video.
+  Kind: feature.
+  Source: user-request-2026-09-30.
+
+- 📋 [DEMO-0125] **`demoreel motion`: report how smooth a recording is and where it stands still.**
+  `demoreel motion FILE [--still SECONDS]`. Read-only. Reports distinct
+  frames per second and every stretch with no change longer than the
+  threshold, with start and end times. Slipcase did this by hand with
+  `mpdecimate,showinfo`. It is the DEMO-0109 measurement made a command,
+  and tells a caller where to trim. It reports; it does not fail a file
+  and does not cut anything.
+  Serves S4 (README, Signs it is working).
+  **Layman:** A read-only report: how many different pictures per second the video really has, and where nothing moves.
+  Kind: feature.
+  Source: user-request-2026-09-30.
+
+- 📋 [DEMO-0126] **`demoreel poster`: save one frame of a recording as a picture.**
+  `demoreel poster FILE -t TIME -o OUT`. `shot` photographs an app; this
+  photographs the video, which is what the Ants Projects Hub site
+  requires of a poster. Picture format follows the `-o` extension.
+  Serves S4 (README, Signs it is working).
+  **Layman:** Pick a moment in the video and save it as the still picture a website shows before play.
+  Kind: feature.
+  Source: user-request-2026-09-30.
+
+- 📋 [DEMO-0127] **`demoreel join`: put clips end to end.**
+  `demoreel join A B [C...] -o OUT`. Hard cuts only; no transitions. Clips
+  are brought to the first clip's frame size and rate. A clip with a
+  different aspect ratio is refused, never stretched. To measure before
+  building: whether a `--gpu` recording (wf-recorder) has a steady frame
+  rate, since a variable one needs normalising first.
+  Serves S4 (README, Signs it is working).
+  **Layman:** Stick several videos together, one after the other, with plain cuts.
+  Kind: feature.
+  Source: user-request-2026-09-30.
+
+- 📋 [DEMO-0128] **`demoreel card`: make a clip from an image or from text alone.**
+  `demoreel card -o CLIP -d SECONDS [IMAGE] [--text T] [-s WxH]
+  [--background COLOR]`. Covers Slipcase's `still` (a still or animated
+  PNG/GIF on a plain background) and the user's "text between clips"
+  (no image, text only). Text is drawn with ffmpeg `drawtext`, present
+  in this machine's build; its absence must be a startup error, like the
+  other dependency checks. The user is partially sighted: default text
+  is large and high-contrast, and must stay readable at the frame size.
+  Serves S4 (README, Signs it is working).
+  **Layman:** Make a short clip out of a picture, an animated picture, or just a line of text, to go between recordings.
+  Kind: feature.
+  Source: user-request-2026-09-30.
+
+- 📋 [DEMO-0129] **`demoreel caption`: put a line of text over a scene for a stretch of time.**
+  `demoreel caption IN -o OUT --text T [--from T] [--to T]`. Asked for
+  by the user directly on 2026-09-30 ("text overlaying certain scenes").
+  One line, one position (bottom, on a dark band so it reads over any
+  picture), one time range per call. Same large, high-contrast default
+  as DEMO-0128, and the same `drawtext` check. Not subtitles from a file,
+  not animated text: a caller wanting several captions runs it again.
+  Serves S4 (README, Signs it is working).
+  **Layman:** Show a line of text over part of a video, from one moment to another.
+  Kind: feature.
+  Source: user-request-2026-09-30.
+
 ## 1.0.0 — Every documented path tested
 
 The exit condition in docs/standards/versioning-overrides.md: the gate
