@@ -134,6 +134,12 @@ simplest case, and a gate proves it still records.
      default output name. The stamp's own format (`YYYYmmdd-HHMMSS`)
      is neither protected nor excluded; a glob survives a change to it,
      a script that sorts by name or parses the stamp does not.
+  Put to the user 2026-09-30, not yet answered. Recommendations given:
+  (1) protect playability: a move to a pixel format browsers cannot
+  play is breaking; (2) protect exit status both ways: a run that
+  failed and now succeeds, or the reverse, is breaking; (3) protect
+  only the default name's prefix and ending, not the stamp's format.
+  Each answer changes the document, which is a gated standard.
   **Layman:** Two phrases in the rules on what counts as a breaking change can be read two ways; say which is meant.
   Kind: doc-fix.
   Source: review-contract-2026-09-30 versioning-overrides loop 8.
