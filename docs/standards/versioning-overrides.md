@@ -22,14 +22,13 @@ and changing one is a breaking change:
   `out=$(demoreel record ...)` depends on this. `--version` and `--help` print
   to stdout too, and both flags existing is protected. `--version` prints the
   name, a space, then the version — a caller takes the second field, so
-  changing that shape breaks them. `--help`'s prose is not protected: rewording
-  it stops nothing working, which is the governing standard's test
-  (`versioning.md` § 2).
+  changing that shape breaks them.
 - **The default output name.** Without `-o`, `record` writes
   `<app>-<timestamp>.mp4` and `shot` writes `<app>-<timestamp>.png`, in the
-  current directory. A script that globs for it depends on the shape. The
-  `<app>-` start and the ending are protected; the timestamp's own format is
-  not, so a script that sorts by it or reads a date from it is not covered.
+  current directory. `<app>` is the command's file name with every character
+  outside `[A-Za-z0-9._-]` made `_`, or `demo` when nothing is left. A script
+  that globs for it depends on the shape, so the `<app>-` start, made that way,
+  and the ending are protected.
 - **Exit behaviour on a blank recording, and the exit status generally.** While
   the app is still running, the display is sampled halfway through the `-d`
   countdown and again at the end. A blank sample at either point exits
@@ -40,8 +39,7 @@ and changing one is a breaking change:
   deleting the leftover file, failing a run that currently passes — is
   breaking, not a tidy-up. Beyond a blank recording, whether a run exits zero
   or non-zero is protected in both directions: a run that failed and now
-  succeeds is breaking, as is one that succeeded and now fails. Which non-zero
-  value a failure exits with is not protected.
+  succeeds is breaking, as is one that succeeded and now fails.
 - **`motion`'s report.** `motion` writes no file, so its report is its stdout:
   `name: value` lines, or one JSON object with `--json`. Removing or renaming a
   line or a key, or changing what one means, the unit it is in, or the form its
@@ -79,6 +77,11 @@ makes them the exception to the line above:
   it can between two machines; that is not protected either.
 - How `motion` decides a frame is new. The test's tuning may change, and the
   figures it reports for a given video with it.
+- `--help`'s prose: rewording it stops nothing working, which is the governing
+  standard's test (`versioning.md` § 2).
+- The default output name's timestamp format. A script that sorts by it or
+  reads a date from it is not covered.
+- Which non-zero value a failed run exits with.
 - Everything on stderr, progress and failure text alike. None of that text is
   protected. The surfaces listed above are untouched by this bullet.
 
@@ -145,3 +148,4 @@ only on a break, which is what keeps the number meaningful before `1.0`.
 | 7 | 2026-09-30 | 2, cold — genre pinned `standard`; armed by DEMO-0133 naming the finishing commands, `motion`'s report and the `edit` script; dispatched from outside the project, so neither lane held this project's `CLAUDE.md`, memory or a git snapshot | 3 | 0 | 1 | n/a | **Four verified, four fixed, none dismissed.** **Both lanes found the same stale list**: the `--gpu` step's prerequisites named `xwfb-run`, which `ci.sh` has not tested since the recorder moved to the compositor (DEMO-0111); it tests `cage`, `Xwayland`, `wlr-randr`, `wf-recorder` and `vkcube`. A conformer judging a skip against the old list would call a missing `wf-recorder` an unsanctioned skip. One lane: the default output name was stated as `.mp4` only, true of `record`; `shot` writes `.png` (`prepare(a, ".png")`). One lane: the exclusion of "encoding parameters" did not say which side a video's silence and its index at the front fall on, and README promises both so one command's output can be another's input; both are now named as protected. From an open question both lanes raised: "the container of a `-o` run follows the caller's name" is true of `record` and false of the finishing commands, which refuse any ending but `.mp4`; now scoped to `record`. No finding from the rest: the Flatpak step's three skip reasons match `ci.sh`, and the read-back check on a `--gpu` video is not named in the exit-behaviour bullet, which a lane asked about and neither filed. **One of the four falls inside the armed span** (the container sentence, reached by the newly named commands); the other three are older text, fixed here as records of code that exists. |
 | 8 | 2026-09-30 | 2, cold — identical brief, packet rebuilt from disk with three measured facts added | 0 | 1 | 3 | n/a | **Four verified, two fixed, two filed; none dismissed.** **Both lanes found the same collision, on text this run's draft wrote**: "which font the machine supplies when the line names none" was excluded, while the same bullet and the `edit` bullet protect what a line does with a word left out, and `font` is a word. So a change from bold sans to another face read as PATCH from one line and MINOR from another. The exclusion now covers only which file the machine answers a request with; what a line asks for is protected. It also says a line at the edge of the width limit may start or stop fitting under such a change, which README already says of two machines. From an open question both lanes raised: "its index at the front" is an `.mp4` property and `record -o` may name another container, so row 7's addition is now scoped to an `.mp4`. **Filed, not fixed, as DEMO-0138, both outside what DEMO-0133 touched**: "playable H.264" names no player while pixel format is listed as unprotected, and "the exit status generally" has a heading and no rule. Each is a decision about what is promised, not a record of code. From measurement, no finding: `./demoreel --version` prints on stdout. **Own-fix share: 1 of 4** (the index sentence). |
 | 9 | 2026-09-30 | 2, cold — identical brief, packet rebuilt from disk | 0 | 0 | 3 | n/a | **Three verified, two fixed, one filed. Cap reached (3 for a standard); the run files its tail and exits. CALM by § At the cap's measure — none of the three landed on text this run's fix passes wrote.** Neither lane found the other's. Both fixed findings are on the `motion` bullet DEMO-0133 added. One: the breaking list named a line's name, meaning and unit and not the form its value is written in, while README relies on a time having three decimals; the form is now named. The other: retuning the new-frame test moves every figure while each name and unit stays, and nothing said which level that owes; it is now listed as not breaking, as the encoder's parameters are. **Filed into DEMO-0138, outside what DEMO-0133 touched**: the default name's timestamp format is neither protected nor excluded. From open questions, no finding: the `--gpu` recorder's file is H.264, silent and index-first by `CLAUDE.md`'s own account of `finish_gpu_video`, not checked against a recording on this run; the rest were unwindowed and unchecked, and are not claims about the document. Second share: 5 of the run's 11 verified findings (rows 7 to 9) fall inside the armed span. Final sweep for the old wording (`record` and `stop` named as the subcommands): no other document carries it. Filed from this run: DEMO-0138. |
+| 10 | 2026-10-01 | 2, cold — genre pinned `standard`; armed by DEMO-0138, the user's three answers; dispatched with `neutral-lane`, so neither lane held this project's `CLAUDE.md`, memory or a git snapshot; every lane held every question | 0 | 1 | 1 | n/a | **Two verified, two fixed, none dismissed.** One lane: the answers put two exclusions (the stamp's format, the non-zero value) inside § Breaking surfaces, where an older one (`--help`'s prose) already sat, while the file says only § What is not a breaking surface bounds the promise; so a conformer read MINOR from one line and PATCH from another. All three now sit in that section. The other lane: "the `<app>-` start" is protected, and nothing said what `<app>` is; it now states `prepare()`'s derivation. Open questions resolved clean, none a finding: `--gpu` gets faststart from a stream-copy remux and the finishing commands from `ENCODER`; `--version` prints two fields. Both lanes noted the `--gpu` read-back failures go unnamed in the exit bullet; the both-directions rule covers them. |
