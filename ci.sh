@@ -1144,7 +1144,9 @@ SCRIPT
     assert_eq "edit: size is the first clip's" 320x240 "$(v_size "$ft/out/E1.mp4")"
     assert_eq "edit: rate is the first clip's" 10.00 "$(v_rate "$ft/out/E1.mp4")"
     # README: "`edit` encodes once however many scenes the film has."
-    encodes=$(grep -c '264' "$ft/log/ffmpeg.calls" || true)
+    # Counted by the encoder's own name, as a whole word. A bare "264" also
+    # matched digits in a temporary path, which failed this step at random.
+    encodes=$(grep -cw 'libx264' "$ft/log/ffmpeg.calls" || true)
     assert_eq "edit: number of ffmpeg runs that encode H.264 (four scenes)" 1 "$encodes"
     # README: "the plan goes to stderr" - each scene, and where it ends.
     [ "$(grep -c . "$fe")" -ge 4 ] || fail "edit: the plan on stderr should list each of the 4 scenes
@@ -1240,7 +1242,7 @@ card 1
         grep -qiE "line[^0-9]{0,3}$want([^0-9.]|\$)" "$fe" || fail "edit with a bad last line: the message should name line $want
     expected: 'line $want' on stderr
     actual:   $(cat "$fe")"
-        assert_eq "edit with a bad last line: ffmpeg runs that encode (nothing is made first)" 0 "$(grep -c '264' "$ft/log/ffmpeg.calls" || true)"
+        assert_eq "edit with a bad last line: ffmpeg runs that encode (nothing is made first)" 0 "$(grep -cw 'libx264' "$ft/log/ffmpeg.calls" || true)"
         assert_absent "edit with a bad last line" "$ft/out/H$n.mp4"
         assert_eq "edit with a bad last line left the folder as it was" "$before" "$(snap)"
     done

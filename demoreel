@@ -2136,7 +2136,7 @@ def check_texts(scene, length, width, height, workdir):
     so one may start where another ends.
     """
     default = CARD_TEXT_SIZE if scene.kind == "card" else CAPTION_TEXT_SIZE
-    for count, text in enumerate(scene.texts):
+    for text in scene.texts:
         where = text.get("where", scene.where)
         words = text["words"]
         if not words.strip() or "\n" in words:
@@ -2154,7 +2154,7 @@ def check_texts(scene, length, width, height, workdir):
             die(f"{where}: a text's size is a percentage of the frame's "
                 f"height, between 0 and 50, not {size:g}.")
         fontsize = max(1, round(size / 100 * height))
-        textfile = workdir / f"text-{id(scene)}-{count}.txt"
+        textfile = workdir / f"text-{len(list(workdir.iterdir()))}.txt"
         textfile.write_text(words, encoding="utf-8")
         wide, _ = text_size(textfile, fontsize)
         room = width - 2 * round(CARD_MARGIN * width)
