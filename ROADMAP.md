@@ -115,7 +115,7 @@ simplest case, and a gate proves it still records.
   Kind: feature.
   Source: user-request-2026-09-30.
 
-- 📋 [DEMO-0138] **The versioning rules leave "playable" and "the exit status generally" undefined.**
+- ✅ [DEMO-0138] **The versioning rules leave "playable" and "the exit status generally" undefined.**
   Filed from the DEMO-0133 gate, outside what that change touched; do
   not re-review, fold in directly, then gate the edit.
   1. `docs/standards/versioning-overrides.md`, What is not a breaking
@@ -145,6 +145,14 @@ simplest case, and a gate proves it still records.
   is protected both ways; (3) only the default name's prefix and ending
   are protected, not the stamp's format. Next: edit the standard, gate
   the edit.
+  Resolved (2026-10-01): all three answers written into
+  versioning-overrides.md and gated, three loops to a calm cap (loop-log
+  rows 10 to 12). The exit-status answer is written as: a run that
+  succeeded and now fails is breaking, unless an exclusion names the
+  cause; a `record` run one of vouch_for's checks fails must not start
+  succeeding; any other failure (a crash, a refused flag) may. Taken
+  literally, "either direction" made every crash fix breaking, which both
+  lanes found. Filed from the gate: DEMO-0139.
   **Layman:** Two phrases in the rules on what counts as a breaking change can be read two ways; say which is meant.
   Kind: doc-fix.
   Source: review-contract-2026-09-30 versioning-overrides loop 8.
