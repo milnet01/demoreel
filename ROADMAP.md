@@ -91,6 +91,30 @@ simplest case, and a gate proves it still records.
   Kind: doc-fix.
   Source: in-session-2026-09-28.
 
+- 💭 [DEMO-0130] **Grow demoreel into a fully featured video editing tool.**
+  Raised by the user on 2026-09-30 as an idea, not a decision: "I am just
+  toying with the idea but we may be able to turn this into a fully
+  featuring video editing tool in the future."
+
+  Nothing is planned or designed. DEMO-0123 to DEMO-0129 are the light
+  editing that is planned; this is what might lie beyond them.
+
+  What it would reopen if taken up, all of it named out of scope today in
+  README `What it will never do` and CLAUDE.md `Scope ceiling`: a
+  timeline, transitions, zoom, sound mixing, and a way to keep a project
+  between runs (a config or project file). DEMO-0123's new ceiling is
+  written to hold those out, so taking this up means moving the ceiling
+  again, with the user.
+
+  Worth deciding first, if it comes back: whether a full editor is still
+  demoreel, or a second tool that takes demoreel's files. The recorder's
+  promises (private display, no prompts, safe to run twice at once) do not
+  depend on any editing, and an editor's size would sit beside them in one
+  file.
+  **Layman:** An idea the user is toying with: one day, demoreel could become a full video editor, not only a recorder with light editing.
+  Kind: feature.
+  Source: user-request-2026-09-30.
+
 ## Standing chores
 
 Recurring work with no finished state. It is checked on a schedule and never
@@ -3199,6 +3223,9 @@ said where this sits against 0.5.0 to 0.7.0.
   --trim`; a demoreel file is already web-shaped, so the trim is the
   whole of it.
   Serves S4 (README, Signs it is working).
+  From Slipcase (2026-09-30): the cut must be frame-accurate. A stream-copy
+  trim cuts only at keyframes, and a mostly still recording has few. So it
+  re-encodes, and the help says so.
   **Layman:** Cut the dead time off the front and back of a video.
   Kind: feature.
   Source: user-request-2026-09-30.
@@ -3211,6 +3238,12 @@ said where this sits against 0.5.0 to 0.7.0.
   and tells a caller where to trim. It reports; it does not fail a file
   and does not cut anything.
   Serves S4 (README, Signs it is working).
+  From Slipcase (2026-09-30), what it read by hand and so what to print:
+  plain `name: value` lines by default and `--json` for a parser; unique
+  frames and unique frames per second for the whole file and for a
+  `--from`/`--to` range; each still stretch over the threshold with start
+  and end (it used 0.7 s and 1.2 s); and the time of the last change,
+  which is where to trim.
   **Layman:** A read-only report: how many different pictures per second the video really has, and where nothing moves.
   Kind: feature.
   Source: user-request-2026-09-30.
@@ -3231,6 +3264,9 @@ said where this sits against 0.5.0 to 0.7.0.
   building: whether a `--gpu` recording (wf-recorder) has a steady frame
   rate, since a variable one needs normalising first.
   Serves S4 (README, Signs it is working).
+  From Slipcase (2026-09-30): every command that writes a video hands back
+  the shape `record` does (silent H.264, yuv420p, faststart), so commands
+  chain with no fix-up pass. Applies to trim, join, card and caption.
   **Layman:** Stick several videos together, one after the other, with plain cuts.
   Kind: feature.
   Source: user-request-2026-09-30.
@@ -3244,6 +3280,18 @@ said where this sits against 0.5.0 to 0.7.0.
   other dependency checks. The user is partially sighted: default text
   is large and high-contrast, and must stay readable at the frame size.
   Serves S4 (README, Signs it is working).
+  From Slipcase (2026-09-30): add `--like FILE` to take frame size and
+  rate from a recording, `-s` overriding; a card that differs is what join
+  refuses. An animated image loops to fill `-d` at its own frame rate,
+  not resampled down (its case: 46 frames at 20 fps, looped three times).
+  A transparent image sits on the background colour, scaled to fit with
+  room left for the text.
+  Text defaults, Slipcase's suggestion: height as a fraction of the frame
+  so it follows the size (about 7% here), bold, white on near-black, and
+  a refusal when the text does not fit on one line, never a silent
+  shrink. Its website card used DejaVu Sans Bold 42 px on 1280x800, about
+  5%, which it judged a floor. Not tested with the user; show them a
+  frame before settling the default.
   **Layman:** Make a short clip out of a picture, an animated picture, or just a line of text, to go between recordings.
   Kind: feature.
   Source: user-request-2026-09-30.
@@ -3256,6 +3304,11 @@ said where this sits against 0.5.0 to 0.7.0.
   as DEMO-0128, and the same `drawtext` check. Not subtitles from a file,
   not animated text: a caller wanting several captions runs it again.
   Serves S4 (README, Signs it is working).
+  From Slipcase (2026-09-30): trim, then caption, then join is three lossy
+  encodes of one picture. To decide at build: accept several
+  text/from/to groups in one call, so ten captions are one encode, not
+  ten. README gets a line on stacking either way. Text default about 5%
+  of frame height, always on the band, refusal when it does not fit.
   **Layman:** Show a line of text over part of a video, from one moment to another.
   Kind: feature.
   Source: user-request-2026-09-30.
