@@ -99,8 +99,10 @@ Nothing has yet.
 **The previous condition is met, and what it required still governs the gate.**
 It held MAJOR at 0 until the gate exercised both display backends and the
 Flatpak invocation; DEMO-0006 and DEMO-0007 finished that on 2026-09-20. The
-rest of this section is what those steps have to keep doing, not a condition
-still being waited on.
+rest of this section is what those steps have to keep doing. It binds the
+gate, not the version: MAJOR waits on the condition above alone. A broken step
+still stops a 1.0 release, because the gate runs before every push, a
+release's included.
 
 **A path is exercised when a step records on it, looks at the picture, and
 fails on a flat frame.** Running the tool and getting a file back is not
