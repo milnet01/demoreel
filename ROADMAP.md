@@ -101,7 +101,7 @@ simplest case, and a gate proves it still records.
 
   What it would reopen if taken up, all of it named out of scope today in
   README `What it will never do` and CLAUDE.md `Scope ceiling`: a
-  timeline, transitions, zoom, sound mixing, and a way to keep a project
+  timeline, transitions beyond a fade, zoom, sound mixing, and a way to keep a project
   between runs (a config or project file). DEMO-0123's new ceiling is
   written to hold those out, so taking this up means moving the ceiling
   again, with the user.
@@ -3190,7 +3190,7 @@ Decided by the user on 2026-09-25: audio becomes an opt-in, and every run gets a
 Light editing of demoreel's own recordings, so a session can publish a video
 without hand-typed ffmpeg. Asked for by the user on 2026-09-30, through the
 Slipcase session and then directly: trim, smoothness report, poster, join, image
-and text cards, and text over a scene. Still out: audio mixing, transitions,
+and text cards, and text over a scene. Still out: audio mixing, every transition other than a fade (DEMO-0131 adds fades on request),
 zoom, cursor highlighting, a timeline, and cutting out still stretches
 automatically. The version number is a slot, not an order: the user has not yet
 said where this sits against 0.5.0 to 0.7.0.
@@ -3201,7 +3201,8 @@ said where this sits against 0.5.0 to 0.7.0.
   2026-09-30 ("All five", then: text between clips and text overlaying
   certain scenes would be useful). Proposed new line: demoreel may cut,
   measure, take a frame from, join end to end, and put text on or between
-  the recordings it made. Still out: audio mixing, transitions, zoom,
+  the recordings it made. Fades are in, on request (user, 2026-09-30, second message). Still out:
+  audio mixing, every transition other than a fade, zoom,
   cursor highlighting, a timeline, a GUI editor, and removing still
   stretches automatically (it hides a real wait). README's `--settle`
   section calls trimming "editing, and editing is deliberately not this
@@ -3258,7 +3259,8 @@ said where this sits against 0.5.0 to 0.7.0.
   Source: user-request-2026-09-30.
 
 - 📋 [DEMO-0127] **`demoreel join`: put clips end to end.**
-  `demoreel join A B [C...] -o OUT`. Hard cuts only; no transitions. Clips
+  `demoreel join A B [C...] -o OUT`. Hard cuts by default; a fade between clips only when asked for, and no
+  other transition. Clips
   are brought to the first clip's frame size and rate. A clip with a
   different aspect ratio is refused, never stretched. To measure before
   building: whether a `--gpu` recording (wf-recorder) has a steady frame
@@ -3310,6 +3312,29 @@ said where this sits against 0.5.0 to 0.7.0.
   ten. README gets a line on stacking either way. Text default about 5%
   of frame height, always on the band, refusal when it does not fit.
   **Layman:** Show a line of text over part of a video, from one moment to another.
+  Kind: feature.
+  Source: user-request-2026-09-30.
+
+- 📋 [DEMO-0131] **Fades on request: fade in, fade out, and a fade between joined clips.**
+  Asked for by the user on 2026-09-30: "also cater for small transitions
+  such as fading in and out on request by the relevant people/sessions."
+
+  Off unless asked for; a plain cut stays the default everywhere.
+  Proposed shape, to settle at build: `--fade-in SECONDS` and
+  `--fade-out SECONDS` on the commands that write a video (DEMO-0124,
+  DEMO-0127, DEMO-0128, DEMO-0129), so a fade rides in an encode that is
+  already happening and costs no extra lossy pass; and
+  `join --crossfade SECONDS` for a fade between clips. Fades are to and
+  from black.
+
+  A crossfade overlaps two clips, so the joined video is shorter than the
+  sum of its parts by the fade length at each join. The command prints the
+  finished length so a caller is not surprised.
+
+  The line this draws for DEMO-0123: fades are in. Wipes, slides, zooms
+  and any other transition stay out.
+  Serves S4 (README, Signs it is working).
+  **Layman:** When a session asks for it, a video can fade in at the start, fade out at the end, or fade from one clip to the next.
   Kind: feature.
   Source: user-request-2026-09-30.
 
