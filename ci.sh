@@ -2460,8 +2460,15 @@ printf 'wait 2\n# a comment\n\ntype %s\nkey Return\n' "$secret" |
     -- xterm -e sh -c "read line; printf '%s' \"\$line\" > $tmp/steps.txt" \
     >/dev/null &
 pid=$!
-sleep 4
-args=$(tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null || true)
+gate_pids="$gate_pids $pid"
+# Read the command line for as long as the run lasts, not once at a guess:
+# the app exits after Return, which ends the run, and how soon that is
+# depends on the machine.
+args=""
+while kill -0 "$pid" 2>/dev/null; do
+    args+=$(tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null || true)
+    sleep 0.2
+done
 wait "$pid"
 [ -n "$args" ] || { echo "could not read demoreel's command line" >&2; exit 1; }
 case $args in *"$secret"*)
