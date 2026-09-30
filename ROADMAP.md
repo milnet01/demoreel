@@ -3309,7 +3309,7 @@ path, and scripts read it.
   Kind: security.
   Source: in-session-2026-09-08.
 
-- 📋 [DEMO-0030] **The gate still does not exercise --settle or --cursor.**
+- ✅ [DEMO-0030] **The gate still does not exercise --settle or --cursor.**
   Named when DEMO-0015 closed, and filed here so it is not lost with it.
   Both flags are documented in README.md, and ci.sh mentions neither.
 
@@ -3378,6 +3378,12 @@ path, and scripts read it.
   Unverified until tried: if such an xterm does not measure flat, this
   goes back to considered with that measurement.
   Serves S1 (README, Signs it is working).
+  Resolved (2026-10-01, deac5dd): the cheaper fixture works. An xterm
+  with background, text and cursor black and the cursor hidden measures
+  flat (`shot --settle 0` refuses it), then prints white rows after four
+  seconds. ci.sh now records it without --settle (fails blank at
+  halfway) and with --settle 20 (first frame drawn, dominant grey
+  0.877); proved red with --settle 0. Both flags are now gated.
   **Layman:** Two documented options have no automatic check behind them.
   Kind: test.
   Source: recommendation-2026-09-08.
