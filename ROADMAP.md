@@ -3334,6 +3334,15 @@ said where this sits against 0.5.0 to 0.7.0.
   The line this draws for DEMO-0123: fades are in. Wipes, slides, zooms
   and any other transition stay out.
   Serves S4 (README, Signs it is working).
+  Added by the user (2026-09-30): "Or fade between scenes as well again
+  on request by people / session." Read as two cases. Scenes that are
+  separate clips: `join --crossfade`, above. A scene change inside ONE
+  recording: a fade at a moment the caller names, dipping to black and
+  back, with no cut and no change in length. Proposed shape, to settle at
+  build: `--fade-at TIME` (repeatable) with a length, on the same
+  commands. The caller names the moment; demoreel does not guess where a
+  scene changes. If the user meant something else by "scenes", ask them
+  before building.
   **Layman:** When a session asks for it, a video can fade in at the start, fade out at the end, or fade from one clip to the next.
   Kind: feature.
   Source: user-request-2026-09-30.
