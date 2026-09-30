@@ -3085,6 +3085,12 @@ path, and scripts read it.
   - Right-to-left text around paths and flags.
 
   The GUI planned in 0.6.0 uses the same catalogs, so the spec covers it.
+  Decided (2026-10-01) by the user, with the options put: catalogs are
+  .po files that demoreel reads directly. Not compiled .mo files, which
+  would add a build step the project does not have, and not JSON, which
+  no translation tool opens. So demoreel carries a small .po reader, and
+  translators can use Poedit or Weblate. Nothing drafted yet; next is
+  write-spec DEMO-0060.
   **Layman:** Decide on paper how translations will work before writing any code for them.
   Kind: doc.
   Source: user-request-2026-09-25.
