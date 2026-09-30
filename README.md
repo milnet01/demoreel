@@ -25,7 +25,9 @@ tool yourself.
 ## What you get
 
 One `.mp4` file. Just the app, filling the frame. Or, with `demoreel shot`, one
-`.png` picture of it — see [Taking a picture](#taking-a-picture).
+`.png` picture of it — see [Taking a picture](#taking-a-picture). A video can
+then be cut, joined to others and given a line of text — see
+[Finishing a recording](#finishing-a-recording).
 
 The video is **silent**. There is no sound and there never will be — see
 [What it will never do](#what-it-will-never-do). If you need a voiceover or
@@ -180,6 +182,243 @@ has gone leaves only an empty screen. A picture that is one flat colour fails
 the run, and so does not being able to look at the screen at all. A failed run
 prints no path, and keeps any picture it had saved.
 
+## Finishing a recording
+
+A recording is rarely what you publish. `demoreel edit` takes a short script,
+a list of scenes in plain words, and makes the finished film from it.
+Shortcuts do the one-step jobs without a script, and `motion` and `poster`
+look at a video without changing it.
+
+Each of these works on video files, not on an app. So it starts no private
+screen, takes no `-n` name, and can run beside recordings.
+
+```sh
+# see where the picture stops changing in each clip
+demoreel motion intro.mp4
+
+# make the film: a script on standard input, one scene per line
+demoreel edit - -o film.mp4 <<'EOF'
+clip intro.mp4 from 2 to 29.8 fade-in 1
+  text "Opening a file" from 3 to 6
+
+card 3
+  text "Saving a file"
+
+clip save.mp4
+  text "Now it saves" from 8 to 12
+
+card 6.9 spin.png crossfade 0.5 fade-out 1
+  text "The saved file"
+EOF
+
+# the still picture a website shows before the film plays
+demoreel poster film.mp4 -t 14.9 -o poster.jpg
+```
+
+What they share:
+
+- **`-o` is required by every command that writes a file**, and it may not be
+  one of the files being read. A command never writes over its own input.
+- **Every command that writes a video writes a silent H.264 `.mp4` with its
+  index at the front**, and `-o` must end in `.mp4`; any other ending is
+  refused. So one command's output can be another's input. Sound in an input
+  is dropped.
+- **stdout carries the finished path and nothing else**, as with `record`.
+  `motion` writes no file, so its report is what it prints there. Everything
+  else these commands say goes to stderr.
+- **Times are in seconds and may have a fraction**: `29.8`. A time in a clip is
+  counted from the start of that clip's own file, so the numbers `motion`
+  prints can be used as they are. A time past the end of the file is an error,
+  not a guess.
+- **Everything is checked before anything is made.** A mistake in the last
+  line of a script stops the run at once, and the message names the line.
+- **A command that fails leaves nothing at `-o`.** A file already there is
+  left as it was.
+- **The picture is encoded again each time a video is written, and each encode
+  loses a little.** `edit` encodes once however many scenes the film has,
+  which is the reason to use it for anything more than one step.
+- **They need `ffmpeg` and nothing new**, and read any video it can read.
+  Text also needs an `ffmpeg` built to draw text, and a font on the machine.
+  `demoreel check` draws a line of text to find out, and reports the finishing
+  commands and their text on lines of their own. Those lines
+  never change its exit status, which still says only whether the default
+  backend can record.
+
+### `edit`: a film from a script
+
+```sh
+demoreel edit film.txt -o film.mp4
+```
+
+The script is a text file, or `-` to read it from standard input. Each line is
+one scene, played in the order written. A blank line, or a line starting with
+`#`, is ignored. A `#` anywhere else is an ordinary character. A file named in a script is looked for from the folder you run
+demoreel in. A line is split into words the way a shell splits one: a name or
+a text with a space in it goes in single or double quotes, and inside double
+quotes `\"` is a quote mark.
+
+**`clip FILE`** plays a video. After the file name, any of these, in any
+order:
+
+- `from 2` and `to 29.8` — keep only that part. Leave one out and that end
+  stays where it is. The cut lands on the frame at the time you gave, and the
+  frame on screen at `to` is the last one kept. So `to` set to the `last
+  change` that `motion` prints ends the scene on the last new picture. A `to`
+  equal to the file's length, as `motion` prints it, is accepted and means the
+  last frame.
+- `fade-in 1` — the scene starts black and the picture arrives over a second.
+- `fade-out 1` — the picture goes to black over the scene's last second.
+- `fade-at 12` — a fade between two scenes inside one recording. The picture
+  goes to black just before that moment and comes back just after. Nothing is
+  cut and the scene keeps its length. It may be given more than once. Each half
+  takes `fade-length` seconds, half a second unless the line says otherwise.
+  You name the moment; demoreel does not guess where a scene changes.
+- `crossfade 0.5` — fade from the scene before into this one, over half a
+  second, where a plain cut would otherwise be. The two scenes overlap for that
+  long, so the film is that much shorter than its scenes added together.
+
+Nothing takes a piece out of the middle of a clip. To skip a part, use the clip
+twice, with a different `from` and `to` each time.
+
+**`card SECONDS`** shows a plain background for that long, with a picture on
+it, or text, or both.
+
+- A file name after the seconds puts that picture on the card:
+  `card 6.9 spin.png`. It is scaled to fit and centred, never stretched and
+  never enlarged. A see-through picture shows the background through it. An
+  animated picture (`.gif`, or an animated `.png`) plays at its own speed and
+  starts again when it ends, until the card is over.
+- `background #202830` sets the colour, written `#RRGGBB`. Without it the
+  background is `#101418`.
+- `fade-in`, `fade-out` and `crossfade` work as on a clip.
+
+**`text "WORDS"`** puts one line of text on the scene above it. Indent it if
+you like; the indent is only for your eyes.
+
+- On a clip, the text sits on a dark band across the bottom of the picture, so
+  it reads over anything. It is bold and white, and its height is 5% of the
+  frame's.
+- On a card, the text is the card's title: bold, near the top when the card
+  has a picture and in the middle when it has none. Its height is 7% of the
+  frame's. It is white on a dark background and near-black on a light one.
+- `from 3` and `to 6` say when it shows. On a clip these are times in the
+  clip's own file, like the clip's `from` and `to`; on a card they count from
+  the card's start. Left out, the text stays for the whole scene.
+- `size 4` sets another height, as a percentage of the frame's.
+- Text too wide for the frame at its size is refused. Nothing is shrunk
+  without you asking. The font is the machine's own bold sans, so a line that
+  only just fits on one machine may be refused on another.
+- A scene may have several texts, but only one on screen at a time: two whose
+  times overlap are refused. A text shows from its `from` up to its `to` and
+  not on the frame at `to`, so one may start at the time another ends.
+
+**The film's picture size and frame rate** are the first clip's. `-s` and
+`-r` set them by hand. A film with no clip in it, cards only, is 1600x1000 at
+30 unless you say, as `record` is. Every other clip is scaled to the film's
+size and brought to its frame rate. A clip whose shape differs from the
+film's, wider or taller, is refused rather than stretched.
+
+As it starts, `edit` prints the plan on stderr: each scene, and when it starts
+and ends in the finished film.
+
+### The shortcuts
+
+Each is one scene, or one kind of scene, without writing a script. They take
+the script's words as options and do exactly what the script would.
+
+```sh
+# cut the ends off: one clip, with from and to
+demoreel trim demo.mp4 -o short.mp4 --from 2 --to 29.8
+
+# text over part of a video: one clip, with its texts
+demoreel caption demo.mp4 -o out.mp4 --text 'Opening a file' --from 2 --to 6 \
+  --text 'Saving it' --from 8 --to 12
+
+# clips end to end: one clip scene each
+demoreel join intro.mp4 demo.mp4 outro.mp4 -o final.mp4 --crossfade 0.5
+
+# one card, the size of the recording it will sit beside
+demoreel card -o title.mp4 -d 3 --like demo.mp4 --text 'Saving a file'
+```
+
+- `trim` takes `--from`, `--to`, `--fade-in`, `--fade-out`, `--fade-at` and
+  `--fade-length`. With only a fade it adds the fade and cuts nothing.
+- `caption` takes one or more `--text`. A `--from`, `--to` or `--text-size`
+  belongs to the `--text` before it, and one given before the first `--text`
+  is refused: `caption` never cuts the video. It also takes `--fade-in` and
+  `--fade-out`.
+- `join` takes two or more videos. `--crossfade` applies at every join;
+  without it each join is a plain cut. `--fade-in` is for the first clip and
+  `--fade-out` for the last.
+- `card` takes `-d` for its length, which is required. A picture is given as
+  a bare file name, as in the script: `demoreel card -o spin.mp4 -d 6.9
+  spin.png`. It also takes `--text`, `--text-size`, `--background`,
+  `--fade-in` and `--fade-out`. Its size and
+  frame rate come from `--like FILE`; `-s` and `-r` set them by hand and win
+  over `--like`. With none of them it is 1600x1000 at 30.
+
+Chaining shortcuts encodes the picture once per step. For more than one step,
+write the script.
+
+### `motion`: how smooth is it, and where does it stand still
+
+```sh
+demoreel motion demo.mp4
+demoreel motion demo.mp4 --from 30 --to 37 --still 0.7
+```
+
+Reads the video and changes nothing. A frame counts as new when the picture has
+changed since the last new frame, by the same test as the note a `--gpu`
+recording prints
+about frames that rarely change. One definition of "the picture changed". The
+report:
+
+```
+duration: 37.500
+frames: 1125
+new frames: 412
+new frames per second: 10.99
+last change: 29.800
+still: 12.300 to 16.800 (4.500)
+still: 29.800 to 37.500 (7.700)
+```
+
+- `duration` — seconds of video looked at.
+- `frames` — how many frames that is.
+- `new frames` — how many of them are new by that test.
+- `new frames per second` — the figure that says whether it is smooth. A file
+  can be stored at 30 frames a second and show three new ones.
+- `last change` — the time of the last new frame. That is where to cut: a
+  clip's `to` keeps the frame at that time.
+- `still` — one line for each stretch with no change longer than `--still`
+  seconds (1 unless you say). Its start is the time of the last new frame
+  before it, its end is the time of the next new frame, or the end of the
+  video, and its length is in brackets. No such stretch, no such line.
+
+`--from` and `--to` look at part of the video; the times printed are still
+times in the file. `--json` prints the same report as one JSON object, for a
+script:
+
+```json
+{"duration": 37.5, "frames": 1125, "new_frames": 412,
+ "new_frames_per_second": 10.99, "last_change": 29.8,
+ "still": [{"from": 12.3, "to": 16.8, "seconds": 4.5},
+           {"from": 29.8, "to": 37.5, "seconds": 7.7}]}
+```
+
+`motion` never fails a video and never cuts one. Cutting out a still stretch
+would hide a real wait, so that stays your decision.
+
+### `poster`: one frame as a picture
+
+```sh
+demoreel poster demo.mp4 -t 14.9 -o poster.jpg
+```
+
+Saves the frame on screen at `-t`, or `--time`, as a picture. `-t` is
+required. `-o` ends in `.png` or `.jpg`. `shot` photographs an app; `poster` photographs the video, so the
+picture is a frame of the very file you publish.
+
 ## How it avoids filming your desktop
 
 This is the whole idea, so it is worth a minute.
@@ -298,8 +537,7 @@ there is something to read, and removed when it succeeds.
 
 Some apps, especially graphics-heavy ones, sit on a black screen for several
 seconds while they warm up. Without this you record that black screen and have
-to trim it off afterwards — which is editing, and editing is deliberately not
-this tool's job.
+to `trim` it off afterwards, which costs a second encode.
 
 `--settle 20` waits up to twenty seconds for the screen to stop being one flat
 colour, then starts recording. If nothing is drawn in that time it says so and
@@ -459,11 +697,12 @@ holds its slot and slowly spoils the pool for later sessions.
 
 **This is a small tool and it stays a small tool.** The temptation is to grow it
 into a general recording suite. If a job needs more than "record this app doing
-these few things", that job wants OBS.
+these few things, and make that recording fit to publish", that job wants OBS
+and a video editor.
 
 Permanently out of scope:
 
-- No audio, webcam, overlays, captions or cursor highlighting.
+- No audio, webcam or cursor highlighting.
 
   **The file demoreel hands back is silent, and it will stay that way.** Worth
   saying outright, because `-d 20` looks like it produces something you could
@@ -472,9 +711,17 @@ Permanently out of scope:
   Capturing the app's own audio would mean a private sound channel per run, a
   second recorder and a merge at the end — a coherent design, and still a no.
 
-- No editing, trimming or post-production.
+- No editing beyond [Finishing a recording](#finishing-a-recording). demoreel
+  may cut the ends off a video, measure it, take a frame from it, play scenes
+  one after another, show a picture, still or animated, on a card between
+  them, put one line of text on or between them, and fade. That is the whole
+  list. A script is a list of scenes in order and nothing more: no
+  layers, no two pictures on screen at once, no transition other than a fade,
+  no zoom, no text that moves, no speeding up or slowing down. Nothing is ever
+  removed from a video automatically.
 - No graphical interface, no background service, no config file — options go on
-  the command line.
+  the command line. An `edit` script describes one film; it holds no settings
+  for demoreel and is not read unless you name it.
 - No plugins, no per-app profiles.
 - No third kind of private screen. The ordinary one covers ordinary apps and
   `--gpu` covers the ones needing the card. The second was added because the
@@ -486,7 +733,9 @@ Permanently out of scope:
 The test is that list, not how long the file is. A change earns its place if it
 makes "record this app doing these few things" work somewhere it did not. A
 single picture is the same job, stopped at one frame, which is why `shot` is
-here.
+here. The finishing commands are here because every video made for a website
+needed the same few steps afterwards, typed by hand each time. A new one earns
+its place only if it is on the list above.
 
 ## Things that catch you out
 

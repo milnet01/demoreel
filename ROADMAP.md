@@ -217,6 +217,10 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   progressive playback, and this tool's own reason for existing is a
   Flathub submission, where the video is served over HTTP rather than
   opened locally. Closing as considered -- measured, decided, no change.
+  Reviewed (2026-09-30) at the user's request. Stays considered. The
+  2026-09-08 measurement and decision still hold, and the finishing
+  commands (DEMO-0132) now promise the same index-at-the-front file, which
+  the Ants Projects Hub site requires of every video.
   **Layman:** Every recording is written twice; the second pass buys something we may not need.
   Kind: perf.
   Source: in-session-2026-09-07.
@@ -265,6 +269,9 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   indistinguishable. One default has to serve both static interfaces and
   spinning 3D, and no tuning is right for both. Closing as considered --
   measured, decided, no change.
+  Reviewed (2026-09-30) at the user's request. Stays considered. The
+  2026-09-08 measurement still holds, and Slipcase's own figures that day
+  agree: its hand re-encode did not make the file smaller.
   **Layman:** The video settings are tuned for film; a mostly-still app window compresses far better.
   Kind: perf.
   Source: in-session-2026-09-07.
@@ -628,43 +635,6 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   Kind: fix.
   Source: review-contract-2026-09-07 loop 2.
 
-- 💭 [DEMO-0025] **Action text still sits in demoreel's own command line for the whole run.**
-  Found while closing DEMO-0018, by measuring the fix rather than assuming
-  it. That item said `xdotool type --file -` leaves "nothing exposed".
-  Half true: the text is out of xdotool's argv, and it is still in
-  demoreel's, because `-a 'type SECRET'` is how the caller wrote it.
-
-  Measured both, in one run: with a canary as the typed text, xdotool's
-  argv did not contain it and demoreel's did.
-
-  The exposure is also longer than the one that was closed. xdotool held
-  the text only while typing; demoreel holds it from launch to teardown.
-
-  Closing it needs a way to pass action text off the command line -- a
-  file, or stdin. That is a new interface rather than a fix, and it needs
-  weighing against the scope ceiling, which rules out a config file
-  format. It may also be the caller's exposure to accept rather than the
-  tool's to remove: the caller chose to put a secret in a command line,
-  and could pass it some other way.
-
-  Not urgent, and worth stating plainly rather than leaving SECURITY.md
-  claiming more than the code does.
-  Decided (2026-09-08) by the user, with the options put: accept it, and
-  record why.
-
-  The caller wrote the secret into a command line themselves and could
-  have passed it another way, so the exposure is theirs to avoid rather
-  than the tool's to remove. Closing it would mean a second way to feed
-  action text in -- a file, or stdin -- which is the input format the
-  scope ceiling rules out, exactly as this item predicted.
-
-  SECURITY.md now says this is a decided limit rather than pending work.
-  Before, it read "Tracked as DEMO-0025", which promised a fix that is not
-  coming.
-  **Layman:** Text a script types is no longer visible via the typing tool, but is still visible in demoreel's own command line.
-  Kind: security.
-  Source: in-session-2026-09-08.
-
 - ✅ [DEMO-0026] **Any app that exits 0 without a window is told it is a single-instance app.**
   Surfaced by a cold lane during the README gate, as a code-side note
   rather than a document finding.
@@ -846,69 +816,6 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   clean at every point in startup -- ten of ten, sampled from 0.05s to
   3.5s -- and its deliberate blank-recording failure exit cleans up too.
   **Layman:** When a check fails, it can leave a recording going that then gets in the way of the next attempt.
-  Kind: test.
-  Source: recommendation-2026-09-08.
-
-- 💭 [DEMO-0030] **The gate still does not exercise --settle or --cursor.**
-  Named when DEMO-0015 closed, and filed here so it is not lost with it.
-  Both flags are documented in README.md, and ci.sh mentions neither.
-
-  `--cursor` is the cheap one: record with it and without it and assert
-  the frames differ, which needs no new target app.
-
-  `--settle` is harder and that is why it was left. It needs an app that
-  is uniformly one colour for a known interval and then draws, which
-  neither xclock nor xterm is. A tiny X client written for the purpose
-  would do it, but that is a test fixture the project would then own --
-  weigh that against the value before building one.
-
-  The README already records a hand-verification of `--settle` against
-  exactly such a window, so the behaviour is not unverified; it is
-  unguarded against regression.
-  Progress (2026-09-08). `--cursor` is covered; `--settle` is not, and
-  this item stays open for it.
-
-  The `--cursor` step records the same static app twice, once with the
-  flag and once without, and compares a sampled frame. The control was
-  measured before the assertion was written: two runs WITHOUT the flag are
-  byte-identical in that frame -- zero differing bytes -- and adding it
-  changes 153 of 120000. Without that control the test would prove
-  nothing.
-
-  xterm running `sleep`, not xclock: a clock's second hand moves, and a
-  frame comparison cannot tell a moving hand from a drawn pointer.
-
-  Bounded at both ends. A bare "the frames differ" would pass if the two
-  recordings differed for any unrelated reason, so the step also refuses a
-  difference too large to be a pointer. Proved not hollow: with
-  `-draw_mouse` forced to 0, the step reports "--cursor changed nothing"
-  and exits 1.
-
-  `--settle` still needs the fixture this item predicted. Checked whether
-  an existing target could serve and none can: the fixture must be
-  uniformly one colour for a known interval and then draw, and this
-  project has already measured a real xterm at 0.977 -- below the blank
-  threshold -- because it paints a cursor. So covering `--settle` means
-  owning a purpose-built X client, which is the trade this item asked to
-  weigh. Left for the user to decide rather than decided quietly.
-  Decided (2026-09-08) by the user, with the options put: `--cursor` is
-  covered by the gate, and `--settle` stays hand-verified.
-
-  The fixture this item predicted is real and was checked rather than
-  assumed: it must be uniformly one colour for a known interval and then
-  draw, and nothing installed does that -- this project has already
-  measured a real xterm at 0.977, below the blank threshold, because it
-  paints a cursor. So covering `--settle` means owning a purpose-built X
-  client for the life of the project.
-
-  Weighed as the item asked. The behaviour is already hand-verified and
-  written up in README.md, so what is missing is protection against future
-  regression, not evidence that it works. Not worth a permanent fixture
-  today.
-
-  Closing as considered rather than shipped: half of what this item asked
-  for is done, and saying otherwise would be a false record.
-  **Layman:** Two documented options have no automatic check behind them.
   Kind: test.
   Source: recommendation-2026-09-08.
 
@@ -1381,6 +1288,10 @@ Nothing here breaks a documented surface, so all of it lands in a PATCH.
   the gate is recording, the fixed setup is about 1.4s per run, and the
   single largest step is the twelve-second scripted-actions run. That last
   is the cheaper lever if the gate's cost ever does become a problem.
+  Reviewed (2026-09-30) at the user's request. Stays considered. It is
+  the same question as DEMO-0120, which was looked at again on
+  2026-09-28 with a newer measurement and left for the same reason: a
+  check that fails at random is worse than a slow one.
   **Layman:** The pre-push check runs nine separate recordings in a row, and waits for each.
   Kind: perf.
   Source: optimisation-pass-2026-09-08.
@@ -2982,6 +2893,127 @@ path, and scripts read it.
   Kind: chore.
   Source: user-request-2026-09-25.
 
+- 📋 [DEMO-0025] **Action text still sits in demoreel's own command line for the whole run.**
+  Found while closing DEMO-0018, by measuring the fix rather than assuming
+  it. That item said `xdotool type --file -` leaves "nothing exposed".
+  Half true: the text is out of xdotool's argv, and it is still in
+  demoreel's, because `-a 'type SECRET'` is how the caller wrote it.
+
+  Measured both, in one run: with a canary as the typed text, xdotool's
+  argv did not contain it and demoreel's did.
+
+  The exposure is also longer than the one that was closed. xdotool held
+  the text only while typing; demoreel holds it from launch to teardown.
+
+  Closing it needs a way to pass action text off the command line -- a
+  file, or stdin. That is a new interface rather than a fix, and it needs
+  weighing against the scope ceiling, which rules out a config file
+  format. It may also be the caller's exposure to accept rather than the
+  tool's to remove: the caller chose to put a secret in a command line,
+  and could pass it some other way.
+
+  Not urgent, and worth stating plainly rather than leaving SECURITY.md
+  claiming more than the code does.
+  Decided (2026-09-08) by the user, with the options put: accept it, and
+  record why.
+
+  The caller wrote the secret into a command line themselves and could
+  have passed it another way, so the exposure is theirs to avoid rather
+  than the tool's to remove. Closing it would mean a second way to feed
+  action text in -- a file, or stdin -- which is the input format the
+  scope ceiling rules out, exactly as this item predicted.
+
+  SECURITY.md now says this is a decided limit rather than pending work.
+  Before, it read "Tracked as DEMO-0025", which promised a fix that is not
+  coming.
+  Reopened (2026-09-30) at the user's request to review the considered
+  items. The 2026-09-08 decision rested on one ground: closing this needs
+  a second way to feed step text in, a file or stdin, "which is the input
+  format the scope ceiling rules out". That ground is gone. On 2026-09-30
+  the user approved `demoreel edit`, which reads a script from a file or
+  from stdin (DEMO-0132). So steps read the same way no longer cross the
+  ceiling. To build: a way for `record` and `shot` to take their `-a`
+  steps from a file or stdin, so typed text never sits in demoreel's own
+  command line. SECURITY.md calls this a decided limit; it changes with
+  the fix.
+  Serves S3 (README, Signs it is working).
+  **Layman:** Text a script types is no longer visible via the typing tool, but is still visible in demoreel's own command line.
+  Kind: security.
+  Source: in-session-2026-09-08.
+
+- 📋 [DEMO-0030] **The gate still does not exercise --settle or --cursor.**
+  Named when DEMO-0015 closed, and filed here so it is not lost with it.
+  Both flags are documented in README.md, and ci.sh mentions neither.
+
+  `--cursor` is the cheap one: record with it and without it and assert
+  the frames differ, which needs no new target app.
+
+  `--settle` is harder and that is why it was left. It needs an app that
+  is uniformly one colour for a known interval and then draws, which
+  neither xclock nor xterm is. A tiny X client written for the purpose
+  would do it, but that is a test fixture the project would then own --
+  weigh that against the value before building one.
+
+  The README already records a hand-verification of `--settle` against
+  exactly such a window, so the behaviour is not unverified; it is
+  unguarded against regression.
+  Progress (2026-09-08). `--cursor` is covered; `--settle` is not, and
+  this item stays open for it.
+
+  The `--cursor` step records the same static app twice, once with the
+  flag and once without, and compares a sampled frame. The control was
+  measured before the assertion was written: two runs WITHOUT the flag are
+  byte-identical in that frame -- zero differing bytes -- and adding it
+  changes 153 of 120000. Without that control the test would prove
+  nothing.
+
+  xterm running `sleep`, not xclock: a clock's second hand moves, and a
+  frame comparison cannot tell a moving hand from a drawn pointer.
+
+  Bounded at both ends. A bare "the frames differ" would pass if the two
+  recordings differed for any unrelated reason, so the step also refuses a
+  difference too large to be a pointer. Proved not hollow: with
+  `-draw_mouse` forced to 0, the step reports "--cursor changed nothing"
+  and exits 1.
+
+  `--settle` still needs the fixture this item predicted. Checked whether
+  an existing target could serve and none can: the fixture must be
+  uniformly one colour for a known interval and then draw, and this
+  project has already measured a real xterm at 0.977 -- below the blank
+  threshold -- because it paints a cursor. So covering `--settle` means
+  owning a purpose-built X client, which is the trade this item asked to
+  weigh. Left for the user to decide rather than decided quietly.
+  Decided (2026-09-08) by the user, with the options put: `--cursor` is
+  covered by the gate, and `--settle` stays hand-verified.
+
+  The fixture this item predicted is real and was checked rather than
+  assumed: it must be uniformly one colour for a known interval and then
+  draw, and nothing installed does that -- this project has already
+  measured a real xterm at 0.977, below the blank threshold, because it
+  paints a cursor. So covering `--settle` means owning a purpose-built X
+  client for the life of the project.
+
+  Weighed as the item asked. The behaviour is already hand-verified and
+  written up in README.md, so what is missing is protection against future
+  regression, not evidence that it works. Not worth a permanent fixture
+  today.
+
+  Closing as considered rather than shipped: half of what this item asked
+  for is done, and saying otherwise would be a false record.
+  Reopened (2026-09-30) at the user's request to review the considered
+  items. `--cursor` is covered; `record --settle` still has no check in
+  `ci.sh`. The 2026-09-08 decision declined it because the fixture would
+  be a purpose-built X client the project then owns. A cheaper fixture
+  looks possible and was not tried then: an `xterm` whose background,
+  text and cursor are all one colour, which prints coloured text after a
+  few seconds. That is an ordinary command line, not an owned program.
+  Unverified until tried: if such an xterm does not measure flat, this
+  goes back to considered with that measurement.
+  Serves S1 (README, Signs it is working).
+  **Layman:** Two documented options have no automatic check behind them.
+  Kind: test.
+  Source: recommendation-2026-09-08.
+
 ## 0.5.0 — Installs like any other program
 
 A person installs demoreel from their distro's usual tools, and the programs it
@@ -3346,6 +3378,40 @@ said where this sits against 0.5.0 to 0.7.0.
   **Layman:** When a session asks for it, a video can fade in at the start, fade out at the end, or fade from one clip to the next.
   Kind: feature.
   Source: user-request-2026-09-30.
+
+- 📋 [DEMO-0132] **`demoreel edit`: build a whole film from a plain-text script, in one save.**
+  Asked for by the user on 2026-09-30: a session records a few clips,
+  then "provides a script that is used to edit the videos". The user chose
+  "Script plus shortcuts" and "Plain lines" the same day.
+
+  `demoreel edit SCRIPT -o OUT`, with `-` for a script on stdin. One
+  scene per line, `clip FILE ...` or `card SECONDS [IMAGE] ...`; a `text`
+  line puts words on the scene above it. Scenes cut straight to the next
+  unless a line says `crossfade`. The whole script is read and checked
+  before anything is made, and an error names its line. The film is
+  encoded once, which is the point: chaining DEMO-0124, DEMO-0127,
+  DEMO-0128 and DEMO-0129 re-encodes at every step.
+
+  Those four become shortcuts over the same renderer, so each thing is
+  done one way. README § Finishing a recording is the contract.
+  Serves S4 (README, Signs it is working).
+  **Layman:** A session writes a short list of scenes — clips, title cards, text, fades — and demoreel makes the finished film from it, saving the video once.
+  Kind: feature.
+  Source: user-request-2026-09-30.
+
+- 📋 [DEMO-0133] **Name the finishing commands in the versioning rules' protected surfaces.**
+  `docs/standards/versioning-overrides.md` § Breaking surfaces names the
+  subcommands `record` and `stop`, and a stdout contract of one path line
+  from those two. The finishing commands add subcommands, the `edit`
+  script grammar, and `motion`'s report on stdout (plain and `--json`).
+  Both lanes of the README gate raised it. "A surface nobody wrote down
+  is still a surface" already protects them; this names them so the
+  common case stays cheap. The document is a gated standard, so the edit
+  is a change of direction for it and owes its own review.
+  Serves S4 (README, Signs it is working).
+  **Layman:** The rules on what counts as a breaking change only name `record` and `stop`; add the new commands, the edit script's wording and the `motion` report.
+  Kind: doc.
+  Source: review-contract-2026-09-30 README loop 9.
 
 ## 1.0.0 — Every documented path tested
 
