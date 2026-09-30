@@ -302,29 +302,37 @@ you like; the indent is only for your eyes.
   frame's.
 - On a card, the text is the card's title: bold, near the top when the card
   has a picture and in the middle when it has none. Its height is 7% of the
-  frame's. It is white on a dark background and near-black on a light one.
+  frame's. Without a band it is white on a dark background and near-black on
+  a light one.
 - `from 3` and `to 6` say when it shows. On a clip these are times in the
   clip's own file, like the clip's `from` and `to`; on a card they count from
   the card's start. Left out, the text stays for the whole scene.
 - `size 4` sets another height, as a percentage of the frame's.
-- `font "DejaVu Serif"` draws it in that font, by the name `fc-list` gives it.
-  Add `:bold` for the font's bold: `font "DejaVu Serif:bold"`. A path to a
-  font file works too. A font the machine does not have is refused, never
-  swapped for another.
+- `font "DejaVu Serif"` draws it in that font family, by the name `fc-list`
+  gives it. Anything after a colon is handed to `fc-match` as written, so
+  `font "DejaVu Serif:bold"` asks for the family's bold. A family the machine
+  does not have is refused, never swapped for another. A face the family does
+  not have, a bold where it has only a regular, is drawn in the nearest face
+  it has. A value with a `/` in it is a font file and is used as it is.
 - `colour #FFD040` sets the text's colour, written `#RRGGBB`.
 - `outline #000000` draws a line of that colour round each letter, and
   `shadow #000000` a shadow of that colour below and to the right of it. How
   thick the line is, and how far off the shadow, follow the text's height.
 - `fade-in 0.5` brings the text in over half a second from its `from`, and
-  `fade-out 0.5` takes it away over the half second before its `to`. Its band
-  fades with it. The two together may not be longer than the text shows.
+  `fade-out 0.5` takes it away over the half second before its `to`. The two
+  together may not be longer than the text shows. Its band fades with it,
+  which needs an ffmpeg whose text filter can size its own box (`boxw` in
+  `ffmpeg -h filter=drawtext`). On one that cannot, a text that fades with
+  its band on is refused.
 - `band off` takes the dark band away, and `band on` gives a card's text one.
+  Text on a band is white unless `colour` says otherwise.
 - `at top`, `at middle` or `at bottom` says where it sits. With a band, the
   band runs across the frame there, against the edge at the top or bottom.
   Without one, the text sits a twentieth of the frame's height in from that
   edge. On a card, the picture is fitted into the room left between a text at
   the top and a text at the bottom, and a text in the middle lies over it.
-- Text too wide for the frame at its size is refused, its outline counted.
+- Text wider than the frame less a twentieth of its width at each side is
+  refused, its outline counted.
   Nothing is shrunk without you asking. Unless the line names a font, it is
   the machine's own bold sans, so a line that
   only just fits on one machine may be refused on another. It is found with
