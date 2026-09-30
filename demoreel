@@ -1949,6 +1949,17 @@ CARD_MARGIN = 0.05
 # A time may overshoot the end of its file by this much and still mean the
 # end: `motion` prints three decimals, so its own figure can round up.
 TIME_SLACK = 0.0006
+
+
+def frame_at(moment, step):
+    """The number of the frame on screen at `moment`, with frames `step`
+    apart. A moment up to TIME_SLACK before a frame starts means that frame:
+    `motion` prints three decimals, so a frame starting at 1.33333 comes back
+    as 1.333, and README says its numbers can be used as they are
+    (DEMO-0137)."""
+    return math.floor((moment + TIME_SLACK) / step + 1e-9)
+
+
 SCENE_WORDS = {
     "clip": ("from", "to", "fade-in", "fade-out", "fade-at", "fade-length",
              "crossfade"),
@@ -2208,7 +2219,11 @@ def check_texts(scene, length, width, height, workdir):
         if not words.strip() or "\n" in words:
             die(f"{where}: a text is one line of words, and this one is "
                 f"{'empty' if not words.strip() else 'more than one line'}.")
+        # A time printed just short of a frame's start means that frame, so a
+        # text may start that much before its scene does (DEMO-0136).
         begin = text.get("start", scene.start) - scene.start
+        if -TIME_SLACK <= begin < 0:
+            begin = 0.0
         finish = (text["end"] - scene.start) if "end" in text else length
         if begin < 0 or finish > length + TIME_SLACK or begin >= finish:
             die(f"{where}: the text {words!r} is asked to show from "
@@ -2266,9 +2281,9 @@ def check_texts(scene, length, width, height, workdir):
 def check_scene(scene, width, height, rate, workdir):
     """Check one scene against the film's size and return its length.
 
-    A clip's cut is snapped to its file's frames: the frame on screen at `to`
-    is the last one kept (README), so the numbers `motion` prints can be used
-    as they are.
+    A clip's cut is snapped to its file's frames: the frame on screen at
+    `from` is the first one kept and the frame on screen at `to` the last
+    (README), so the numbers `motion` prints can be used as they are.
     """
     where = scene.where
     if scene.kind == "card":
@@ -2296,13 +2311,13 @@ def check_scene(scene, width, height, rate, workdir):
             if value is not None and value > whole + TIME_SLACK:
                 die(f"{where}: `{what} {value:g}` is past the end of "
                     f"{scene.path}, which is {whole:.3f} seconds long.")
-        first = math.ceil(scene.start / step - 1e-6)
+        first = frame_at(scene.start, step)
         scene.start = first * step
-        if scene.end is None or scene.end >= whole - step:
+        if scene.end is None or scene.end + TIME_SLACK >= whole - step:
             last = None
             length = whole - scene.start
         else:
-            last = math.floor(scene.end / step + 1e-6)
+            last = frame_at(scene.end, step)
             length = (last + 1) * step - scene.start
         if length <= 0:
             die(f"{where}: `from` must come before `to`, and both inside "
@@ -2720,7 +2735,7 @@ def cmd_poster(a):
     # The frame on screen at a time is the last one that started at or before
     # it; seeking lands on the first frame at or after the point given, so
     # aim half a frame before that frame's own start.
-    frame = min(math.floor(a.time / step + 1e-6),
+    frame = min(frame_at(a.time, step),
                 max(0, math.ceil(whole / step - 1e-6) - 1))
     part = output.with_name(f".{output.stem}.demoreel-part{output.suffix}")
     try:

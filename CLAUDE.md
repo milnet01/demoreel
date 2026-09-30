@@ -355,6 +355,12 @@ stop agreeing.
   seek starts half a frame early and the read ends half a frame late, so
   neither edge turns on how a float rounds. Do not replace that with `-ss` and
   `-t` at the times as given: the last frame is then kept or lost by rounding.
+- **A time picks the frame on screen then, with a little slack, in one place.**
+  `frame_at` serves a clip's `from` and `to` and `poster -t`. `motion` prints
+  three decimals, so a frame starting at 1.33333 comes back as 1.333; without
+  `TIME_SLACK` a cut there lost frame 40 of a 30-a-second clip (DEMO-0137).
+  Do not go back to a bare `floor` or `ceil`, and do not snap in a second
+  place.
 - **A text shows up to its `to` and not on it**, so captions can sit back to
   back. A clip's `to` is inclusive and a text's is not; both are in README.
 - **The bold font is passed as a file.** drawtext's `font` option takes a

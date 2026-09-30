@@ -3456,7 +3456,7 @@ said where this sits against 0.5.0 to 0.7.0.
   Kind: doc.
   Source: review-contract-2026-09-30 README loop 9.
 
-- 🚧 [DEMO-0135] **Let a script style its text: font, colour, outline, shadow, fade, band and place.**
+- ✅ [DEMO-0135] **Let a script style its text: font, colour, outline, shadow, fade, band and place.**
   Asked for by the user on 2026-09-30 when shown the text samples: the
   default size is right (7% on a card, 5% on a caption), and a session
   should be able to dictate the rest in the script. `size` is already
@@ -3468,11 +3468,17 @@ said where this sits against 0.5.0 to 0.7.0.
   wording goes in first and is reviewed before the build. Goes into the
   release that carries the finishing commands, ahead of DEMO-0133.
   Serves S4 (README, Signs it is working).
+  Shipped (2026-09-30). README gated first, three loops to the cap
+  (rows 12 to 14 of docs/reviews/readme-loop-log.md). Eleven new steps
+  in `./ci.sh --finishing`; 17 of 18 deliberate breakages each caught
+  by its own check, the 18th harmless. The shortcuts keep words, times
+  and size; the styling words are the script's alone. Samples for the
+  user: ~/Videos/demoreel-demos/text-style-samples.png.
   **Layman:** A film's script can choose how each line of text looks: its font, colour, outline, shadow, whether it fades in and out, whether the dark strip shows, and where it sits.
   Kind: enhancement.
   Source: user-request-2026-09-30.
 
-- 📋 [DEMO-0136] **A text starting where its clip's cut starts is refused when the cut snaps to a frame.**
+- ✅ [DEMO-0136] **A text starting where its clip's cut starts is refused when the cut snaps to a frame.**
   Reproduced 2026-09-30 on a 29.97-a-second clip:
   `clip N.mp4 from 2` with `text "Hi" from 2 to 3` is refused as
   "not inside its scene (2.002 to 4.004)". `check_scene` snaps the
@@ -3483,11 +3489,17 @@ said where this sits against 0.5.0 to 0.7.0.
   seconds. To do: a text time that falls in the part the snap took
   counts as the scene's start; regression check in `ci.sh`.
   Serves S4 (README, Signs it is working).
+  Fixed (2026-09-30) with DEMO-0137. A text start that falls up to
+  `TIME_SLACK` before its scene counts as the scene's start, and the
+  cut now keeps the frame on screen at `from`, so `from 2` on a
+  29.97 clip starts at or before 2. Check: the last step of
+  `./ci.sh --finishing`; with the slack removed it failed on the
+  0.033 case.
   **Layman:** On some videos, a caption told to start at the same second as its clip is wrongly refused.
   Kind: review-fix.
   Source: review-contract-2026-09-30 README loop 13.
 
-- 📋 [DEMO-0137] **A cut at the time `motion` prints can land one frame off at 30 frames a second.**
+- ✅ [DEMO-0137] **A cut at the time `motion` prints can land one frame off at 30 frames a second.**
   Reproduced 2026-09-30: a 30-a-second clip whose last new frame is
   number 40 reports `last change: 1.333`; `trim --to 1.333` keeps 40
   frames, not 41. The frame starts at 1.33333 and `motion` prints three
@@ -3501,6 +3513,11 @@ said where this sits against 0.5.0 to 0.7.0.
   To do: snap that way in one place; checks at 30 a second.
   Shares its fix with DEMO-0136.
   Serves S4 (README, Signs it is working).
+  Fixed (2026-09-30). `frame_at` picks the frame on screen at a time
+  and takes a time up to `TIME_SLACK` before a frame's start as that
+  frame; a clip's `from` and `to` and `poster -t` all use it. Red
+  first: the new `ci.sh` step failed with 40 frames where 41 were
+  due. Four deliberate breakages each caught by that step.
   **Layman:** Cutting a video at the moment the `motion` report names can drop the last new picture, because the report rounds the time.
   Kind: review-fix.
   Source: review-contract-2026-09-30 README loop 14.

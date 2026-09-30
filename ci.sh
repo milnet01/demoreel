@@ -528,6 +528,11 @@ FINPY
     ff -f lavfi -i "testsrc=s=320x240:r=3:d=3" -r 30 $x264 "$ft/S.mp4"
     ff -f lavfi -i "color=c=#808080:s=320x240:r=10:d=4" $x264 "$ft/G.mp4"
     ff -f lavfi -i "color=c=#00C000:s=800x800" -frames:v 1 "$ft/sq.png"
+    # F: 30 a second, a new picture on each frame up to number 40, then still.
+    # N: 29.97 a second, where no frame starts on a whole second.
+    ff -f lavfi -i "testsrc2=s=320x240:r=30:d=3" \
+       -vf "select='lte(n,40)',tpad=stop_mode=clone:stop_duration=2,fps=30" -t 3 $x264 "$ft/F.mp4"
+    ff -f lavfi -i "testsrc2=s=320x240:r=30000/1001:d=4" $x264 "$ft/N.mp4"
     printf 'this is not a video\n' > "$ft/bad.mp4"
     # Pictures for cards.
     ff -f lavfi -i "testsrc2=s=100x80:r=10:d=1" -vf "select=eq(n\\,3)" -frames:v 1 "$ft/small.png"
@@ -558,8 +563,8 @@ SHIM
 
     # ---- trim -------------------------------------------------------------
     fin_s1() {
-    # README: "The cut lands on the frame at the time you gave, and the frame on
-    # screen at `to` is the last one kept." A frame every 0.1 s: 2 to 4.5 is the
+    # README: "The frame on screen at `from` is the first one kept, and the frame
+    # on screen at `to` is the last one kept." A frame every 0.1 s: 2 to 4.5 is the
     # 26 frames from number 20 to number 45.
     run trim A.mp4 -o "$ft/out/t1.mp4" --from 2 --to 4.5
     expect_ok "trim --from 2 --to 4.5"
@@ -1890,6 +1895,52 @@ E
     done
     echo "caption and card refused each of the script-only text words"
     }
+    fin_s40() {
+    # README: "`motion` prints a time to a thousandth of a second, so wherever a
+    # time picks a frame, one within half a thousandth before a frame's start
+    # means that frame." "The frame on screen at `from` is the first one kept,
+    # and the frame on screen at `to` is the last one kept." F is 30 a second
+    # and moves up to frame 40, which starts at 1.33333: motion prints 1.333,
+    # just short of it (DEMO-0137).
+    run motion F.mp4
+    expect_ok "motion F.mp4"
+    lc=$(sed -n 's/^last change: //p' "$fo")
+    assert_eq "motion F.mp4: last change (frame 40 of a 30-a-second clip, to three decimals)" 1.333 "$lc"
+    run trim F.mp4 -o "$ft/out/z1.mp4" --to "$lc"
+    expect_ok "trim F.mp4 --to $lc"
+    assert_eq "trim --to <last change> at 30 a second: frames (0 to 40)" 41 "$(v_frames "$ft/out/z1.mp4")"
+    assert_is_frame "trim --to <last change> at 30 a second: the last frame is the last new picture" \
+        "$ft/out/z1.mp4" 40 "$ft/F.mp4" 40 30 40
+    # 0.067 is frame 2's start (0.06667) rounded up, and 0.1 is frame 3's.
+    run trim F.mp4 -o "$ft/out/z2.mp4" --from 0.067 --to 0.1
+    expect_ok "trim F.mp4 --from 0.067 --to 0.1"
+    assert_eq "trim --from 0.067 --to 0.1 at 30 a second: frames (2 and 3)" 2 "$(v_frames "$ft/out/z2.mp4")"
+    assert_is_frame "trim --from 0.067: the first frame is the one on screen then" \
+        "$ft/out/z2.mp4" 0 "$ft/F.mp4" 2 0 10
+    # A time inside a frame keeps the frame on screen, not the next one.
+    run trim F.mp4 -o "$ft/out/z3.mp4" --from 0.05 --to 0.1
+    expect_ok "trim F.mp4 --from 0.05 --to 0.1"
+    assert_is_frame "trim --from 0.05: the first frame is frame 1, on screen from 0.0333" \
+        "$ft/out/z3.mp4" 0 "$ft/F.mp4" 1 0 10
+    # 0.033 is frame 1's start (0.03333) rounded down.
+    run poster F.mp4 -t 0.033 -o "$ft/out/z4.png"
+    expect_ok "poster F.mp4 -t 0.033"
+    assert_is_frame "poster -t 0.033 at 30 a second" "$ft/out/z4.png" 0 "$ft/F.mp4" 1 0 10
+    # README: "On a clip these are times in the clip's own file, like the clip's
+    # `from` and `to`": the same number works on both lines (DEMO-0136). N is
+    # 29.97 a second, where no frame starts at 2.
+    printf 'clip N.mp4 from 2\n  text "Hi" from 2 to 3\n' > "$ft/z5.txt"
+    run edit z5.txt -o "$ft/out/z5.mp4"
+    expect_ok "edit: a clip from 2 with a text from 2, at 29.97 a second"
+    printf 'clip F.mp4 from 0.033\n  text "Hi" from 0.033 to 1\n' > "$ft/z6.txt"
+    run edit z6.txt -o "$ft/out/z6.mp4"
+    expect_ok "edit: a clip from 0.033 with a text from 0.033, at 30 a second"
+    printf 'clip N.mp4 from 2\n  text "Hi" from 1 to 3\n' > "$ft/z7.txt"
+    run edit z7.txt -o "$ft/out/z7.mp4"
+    expect_refused "edit: a text from 1 on a clip from 2"
+    assert_absent "edit: a text from 1 on a clip from 2" "$ft/out/z7.mp4"
+    echo "motion's times cut on the frame they were printed for at 30 a second, and a text started with its clip"
+    }
     fin_step "trim keeps the frames from --from to --to, the last one included" fin_s1
     fin_step "every video a command writes is silent H.264, yuv420p, index first" fin_s2
     fin_step "-o may not be an input, and must end in .mp4" fin_s3
@@ -1929,6 +1980,7 @@ E
     fin_step "text font: a family the machine has draws differently; a missing one, a general name and a bad path are refused" fin_s37
     fin_step "text words with a bad value are refused, name their line and leave nothing at -o" fin_s38
     fin_step "caption and card do not take the script-only text words" fin_s39
+    fin_step "a time motion prints picks the frame it was printed for, at 30 a second" fin_s40
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }
 
