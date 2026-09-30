@@ -130,6 +130,10 @@ simplest case, and a gate proves it still records.
      run exiting 0), which non-zero code, and the other failing exits
      in `vouch_for` (no video, an unplayable one, and the `--gpu`
      read-back). Both are the user's call on what is promised.
+  3. Added from loop 9 of the same gate: Breaking surfaces, the
+     default output name. The stamp's own format (`YYYYmmdd-HHMMSS`)
+     is neither protected nor excluded; a glob survives a change to it,
+     a script that sorts by name or parses the stamp does not.
   **Layman:** Two phrases in the rules on what counts as a breaking change can be read two ways; say which is meant.
   Kind: doc-fix.
   Source: review-contract-2026-09-30 versioning-overrides loop 8.
@@ -2721,6 +2725,298 @@ This is a MINOR because two changes to the `-a` grammar are breaking, both chose
   Kind: release.
   Source: user-request-2026-09-27.
 
+## 0.3.1 — Finishes what it recorded
+
+Light editing of demoreel's own recordings, so a session can publish a video
+without hand-typed ffmpeg. Asked for by the user on 2026-09-30, through the
+Slipcase session and then directly: trim, smoothness report, poster, join, image
+and text cards, and text over a scene. Still out: audio mixing, every transition other than a fade (DEMO-0131 adds fades on request),
+zoom, cursor highlighting, a timeline, and cutting out still stretches
+automatically. The version number is a slot, not an order: the user has not yet
+said where this sits against 0.5.0 to 0.7.0.
+
+- ✅ [DEMO-0123] **Move the scope ceiling to allow light editing of demoreel's own recordings.**
+  README `What it will never do` and CLAUDE.md `Scope ceiling` both say no
+  editing, trimming, overlays or captions. The user lifted that on
+  2026-09-30 ("All five", then: text between clips and text overlaying
+  certain scenes would be useful). Proposed new line: demoreel may cut,
+  measure, take a frame from, join end to end, and put text on or between
+  the recordings it made. Fades are in, on request (user, 2026-09-30, second message). Still out:
+  audio mixing, every transition other than a fade, zoom,
+  cursor highlighting, a timeline, a GUI editor, and removing still
+  stretches automatically (it hides a real wait). README's `--settle`
+  section calls trimming "editing, and editing is deliberately not this
+  tool's job": that sentence changes too. A change of direction in a
+  gated contract, so review-contract runs on README before
+  DEMO-0124 to DEMO-0129 are built.
+  Serves S4 (README, Signs it is working).
+  Done (2026-09-30). README § What it will never do and CLAUDE.md § Scope
+  ceiling rewritten. README gated: rows 9 to 11 of
+  docs/reviews/readme-loop-log.md.
+  **Layman:** Rewrite the 'will never do' list so trimming, joining and text are allowed, and say plainly what still is not.
+  Kind: doc.
+  Source: user-request-2026-09-30.
+
+- ✅ [DEMO-0124] **`demoreel trim`: cut the start and end off a recording.**
+  `demoreel trim IN -o OUT [--from T] [--to T]`. Re-encodes, so the cut
+  lands on the frame asked for, with the recorder's own encoder settings
+  (DEMO-0014 decided 2026-09-08 to leave them alone; this does not reopen
+  it). Output has the same shape as a recording: silent H.264, yuv420p,
+  faststart. Never writes over IN. stdout carries the finished path and
+  nothing else, as `record` does. Slipcase proposed this as `finish
+  --trim`; a demoreel file is already web-shaped, so the trim is the
+  whole of it.
+  Serves S4 (README, Signs it is working).
+  From Slipcase (2026-09-30): the cut must be frame-accurate. A stream-copy
+  trim cuts only at keyframes, and a mostly still recording has few. So it
+  re-encodes, and the help says so.
+  Done (2026-09-30). `trim` is one clip scene through `make_film`. The cut
+  is snapped to the clip's frames and the frame at `--to` is kept.
+  **Layman:** Cut the dead time off the front and back of a video.
+  Kind: feature.
+  Source: user-request-2026-09-30.
+
+- ✅ [DEMO-0125] **`demoreel motion`: report how smooth a recording is and where it stands still.**
+  `demoreel motion FILE [--still SECONDS]`. Read-only. Reports distinct
+  frames per second and every stretch with no change longer than the
+  threshold, with start and end times. Slipcase did this by hand with
+  `mpdecimate,showinfo`. It is the DEMO-0109 measurement made a command,
+  and tells a caller where to trim. It reports; it does not fail a file
+  and does not cut anything.
+  Serves S4 (README, Signs it is working).
+  From Slipcase (2026-09-30), what it read by hand and so what to print:
+  plain `name: value` lines by default and `--json` for a parser; unique
+  frames and unique frames per second for the whole file and for a
+  `--from`/`--to` range; each still stretch over the threshold with start
+  and end (it used 0.7 s and 1.2 s); and the time of the last change,
+  which is where to trim.
+  Done (2026-09-30). Its frame test uses a threshold of 640, not the
+  `--gpu` note's 256: at 256 the encoder's sharpening counted as new
+  frames. The measurements are beside `MOTION_NEW_FRAME`. DEMO-0134 files
+  the same over-count in the note.
+  **Layman:** A read-only report: how many different pictures per second the video really has, and where nothing moves.
+  Kind: feature.
+  Source: user-request-2026-09-30.
+
+- ✅ [DEMO-0126] **`demoreel poster`: save one frame of a recording as a picture.**
+  `demoreel poster FILE -t TIME -o OUT`. `shot` photographs an app; this
+  photographs the video, which is what the Ants Projects Hub site
+  requires of a poster. Picture format follows the `-o` extension.
+  Serves S4 (README, Signs it is working).
+  Done (2026-09-30). `.png` or `.jpg`; the frame on screen at `-t`.
+  **Layman:** Pick a moment in the video and save it as the still picture a website shows before play.
+  Kind: feature.
+  Source: user-request-2026-09-30.
+
+- ✅ [DEMO-0127] **`demoreel join`: put clips end to end.**
+  `demoreel join A B [C...] -o OUT`. Hard cuts by default; a fade between clips only when asked for, and no
+  other transition. Clips
+  are brought to the first clip's frame size and rate. A clip with a
+  different aspect ratio is refused, never stretched. To measure before
+  building: whether a `--gpu` recording (wf-recorder) has a steady frame
+  rate, since a variable one needs normalising first.
+  Serves S4 (README, Signs it is working).
+  From Slipcase (2026-09-30): every command that writes a video hands back
+  the shape `record` does (silent H.264, yuv420p, faststart), so commands
+  chain with no fix-up pass. Applies to trim, join, card and caption.
+  Done (2026-09-30). Not measured as planned: whether a wf-recorder file
+  has a steady frame rate. Every clip goes through an `fps` filter to the
+  film's rate, so an unsteady one is evened out, not refused.
+  **Layman:** Stick several videos together, one after the other, with plain cuts.
+  Kind: feature.
+  Source: user-request-2026-09-30.
+
+- ✅ [DEMO-0128] **`demoreel card`: make a clip from an image or from text alone.**
+  `demoreel card -o CLIP -d SECONDS [IMAGE] [--text T] [-s WxH]
+  [--background COLOR]`. Covers Slipcase's `still` (a still or animated
+  PNG/GIF on a plain background) and the user's "text between clips"
+  (no image, text only). Text is drawn with ffmpeg `drawtext`, present
+  in this machine's build; its absence must be a startup error, like the
+  other dependency checks. The user is partially sighted: default text
+  is large and high-contrast, and must stay readable at the frame size.
+  Serves S4 (README, Signs it is working).
+  From Slipcase (2026-09-30): add `--like FILE` to take frame size and
+  rate from a recording, `-s` overriding; a card that differs is what join
+  refuses. An animated image loops to fill `-d` at its own frame rate,
+  not resampled down (its case: 46 frames at 20 fps, looped three times).
+  A transparent image sits on the background colour, scaled to fit with
+  room left for the text.
+  Text defaults, Slipcase's suggestion: height as a fraction of the frame
+  so it follows the size (about 7% here), bold, white on near-black, and
+  a refusal when the text does not fit on one line, never a silent
+  shrink. Its website card used DejaVu Sans Bold 42 px on 1280x800, about
+  5%, which it judged a floor. Not tested with the user; show them a
+  frame before settling the default.
+  Done (2026-09-30). In a script the card's words are a `text` line under
+  it, as for a clip. A card's picture repeats inside the filter graph;
+  reading it with ffmpeg's own looping ran ffmpeg to 14 GB. Text is
+  drawn bold from the font file `fc-match` names. Sample frames for the
+  user to judge the text size: ~/Videos/demoreel-demos/text-sample-*.png.
+  **Layman:** Make a short clip out of a picture, an animated picture, or just a line of text, to go between recordings.
+  Kind: feature.
+  Source: user-request-2026-09-30.
+
+- ✅ [DEMO-0129] **`demoreel caption`: put a line of text over a scene for a stretch of time.**
+  `demoreel caption IN -o OUT --text T [--from T] [--to T]`. Asked for
+  by the user directly on 2026-09-30 ("text overlaying certain scenes").
+  One line, one position (bottom, on a dark band so it reads over any
+  picture), one time range per call. Same large, high-contrast default
+  as DEMO-0128, and the same `drawtext` check. Not subtitles from a file,
+  not animated text: a caller wanting several captions runs it again.
+  Serves S4 (README, Signs it is working).
+  From Slipcase (2026-09-30): trim, then caption, then join is three lossy
+  encodes of one picture. To decide at build: accept several
+  text/from/to groups in one call, so ten captions are one encode, not
+  ten. README gets a line on stacking either way. Text default about 5%
+  of frame height, always on the band, refusal when it does not fit.
+  Done (2026-09-30). Several `--text` in one call, each with its own
+  `--from` and `--to`, so ten captions are one encode.
+  **Layman:** Show a line of text over part of a video, from one moment to another.
+  Kind: feature.
+  Source: user-request-2026-09-30.
+
+- ✅ [DEMO-0131] **Fades on request: fade in, fade out, and a fade between joined clips.**
+  Asked for by the user on 2026-09-30: "also cater for small transitions
+  such as fading in and out on request by the relevant people/sessions."
+
+  Off unless asked for; a plain cut stays the default everywhere.
+  Proposed shape, to settle at build: `--fade-in SECONDS` and
+  `--fade-out SECONDS` on the commands that write a video (DEMO-0124,
+  DEMO-0127, DEMO-0128, DEMO-0129), so a fade rides in an encode that is
+  already happening and costs no extra lossy pass; and
+  `join --crossfade SECONDS` for a fade between clips. Fades are to and
+  from black.
+
+  A crossfade overlaps two clips, so the joined video is shorter than the
+  sum of its parts by the fade length at each join. The command prints the
+  finished length so a caller is not surprised.
+
+  The line this draws for DEMO-0123: fades are in. Wipes, slides, zooms
+  and any other transition stay out.
+  Serves S4 (README, Signs it is working).
+  Added by the user (2026-09-30): "Or fade between scenes as well again
+  on request by people / session." Read as two cases. Scenes that are
+  separate clips: `join --crossfade`, above. A scene change inside ONE
+  recording: a fade at a moment the caller names, dipping to black and
+  back, with no cut and no change in length. Proposed shape, to settle at
+  build: `--fade-at TIME` (repeatable) with a length, on the same
+  commands. The caller names the moment; demoreel does not guess where a
+  scene changes. If the user meant something else by "scenes", ask them
+  before building.
+  Done (2026-09-30). `fade-in`, `fade-out`, `fade-at` with `fade-length`,
+  and `crossfade`, as script words and as options. A fade-at is a fade
+  out then a fade in, each switched on for its own half only.
+  **Layman:** When a session asks for it, a video can fade in at the start, fade out at the end, or fade from one clip to the next.
+  Kind: feature.
+  Source: user-request-2026-09-30.
+
+- ✅ [DEMO-0132] **`demoreel edit`: build a whole film from a plain-text script, in one save.**
+  Asked for by the user on 2026-09-30: a session records a few clips,
+  then "provides a script that is used to edit the videos". The user chose
+  "Script plus shortcuts" and "Plain lines" the same day.
+
+  `demoreel edit SCRIPT -o OUT`, with `-` for a script on stdin. One
+  scene per line, `clip FILE ...` or `card SECONDS [IMAGE] ...`; a `text`
+  line puts words on the scene above it. Scenes cut straight to the next
+  unless a line says `crossfade`. The whole script is read and checked
+  before anything is made, and an error names its line. The film is
+  encoded once, which is the point: chaining DEMO-0124, DEMO-0127,
+  DEMO-0128 and DEMO-0129 re-encodes at every step.
+
+  Those four become shortcuts over the same renderer, so each thing is
+  done one way. README § Finishing a recording is the contract.
+  Serves S4 (README, Signs it is working).
+  Done (2026-09-30). `./ci.sh --finishing` holds the README section
+  sentence by sentence; ten deliberate breakages of the code were each
+  caught by it. The whole gate passed here and on the Ubuntu image.
+  **Layman:** A session writes a short list of scenes — clips, title cards, text, fades — and demoreel makes the finished film from it, saving the video once.
+  Kind: feature.
+  Source: user-request-2026-09-30.
+
+- ✅ [DEMO-0133] **Name the finishing commands in the versioning rules' protected surfaces.**
+  `docs/standards/versioning-overrides.md` § Breaking surfaces names the
+  subcommands `record` and `stop`, and a stdout contract of one path line
+  from those two. The finishing commands add subcommands, the `edit`
+  script grammar, and `motion`'s report on stdout (plain and `--json`).
+  Both lanes of the README gate raised it. "A surface nobody wrote down
+  is still a surface" already protects them; this names them so the
+  common case stays cheap. The document is a gated standard, so the edit
+  is a change of direction for it and owes its own review.
+  Serves S4 (README, Signs it is working).
+  Shipped (2026-09-30). Breaking surfaces name every subcommand, the
+  path on stdout, `motion`'s report and the `edit` script. Gated as a
+  standard, three loops to a calm cap: rows 7 to 9 of the document's
+  loop log. Tail filed as DEMO-0138.
+  **Layman:** The rules on what counts as a breaking change only name `record` and `stop`; add the new commands, the edit script's wording and the `motion` report.
+  Kind: doc.
+  Source: review-contract-2026-09-30 README loop 9.
+
+- ✅ [DEMO-0135] **Let a script style its text: font, colour, outline, shadow, fade, band and place.**
+  Asked for by the user on 2026-09-30 when shown the text samples: the
+  default size is right (7% on a card, 5% on a caption), and a session
+  should be able to dictate the rest in the script. `size` is already
+  there. To add, per text line: font, colour, outline, drop shadow, fade
+  in and out, the caption band on or off, and one of three fixed places
+  (top, middle, bottom). Chosen by the user from the options put.
+  Still one line of text that does not move, so README's list in
+  What it will never do holds. README is the design contract: its
+  wording goes in first and is reviewed before the build. Goes into the
+  release that carries the finishing commands, ahead of DEMO-0133.
+  Serves S4 (README, Signs it is working).
+  Shipped (2026-09-30). README gated first, three loops to the cap
+  (rows 12 to 14 of docs/reviews/readme-loop-log.md). Eleven new steps
+  in `./ci.sh --finishing`; 17 of 18 deliberate breakages each caught
+  by its own check, the 18th harmless. The shortcuts keep words, times
+  and size; the styling words are the script's alone. Samples for the
+  user: ~/Videos/demoreel-demos/text-style-samples.png.
+  **Layman:** A film's script can choose how each line of text looks: its font, colour, outline, shadow, whether it fades in and out, whether the dark strip shows, and where it sits.
+  Kind: enhancement.
+  Source: user-request-2026-09-30.
+
+- ✅ [DEMO-0136] **A text starting where its clip's cut starts is refused when the cut snaps to a frame.**
+  Reproduced 2026-09-30 on a 29.97-a-second clip:
+  `clip N.mp4 from 2` with `text "Hi" from 2 to 3` is refused as
+  "not inside its scene (2.002 to 4.004)". `check_scene` snaps the
+  cut's start up to a frame and `check_texts` then finds the text's
+  start before it. README says a text's times on a clip are the
+  clip's own, like its `from` and `to`, so the same number must work
+  on both lines. A 30-a-second recording does not hit it at whole
+  seconds. To do: a text time that falls in the part the snap took
+  counts as the scene's start; regression check in `ci.sh`.
+  Serves S4 (README, Signs it is working).
+  Fixed (2026-09-30) with DEMO-0137. A text start that falls up to
+  `TIME_SLACK` before its scene counts as the scene's start, and the
+  cut now keeps the frame on screen at `from`, so `from 2` on a
+  29.97 clip starts at or before 2. Check: the last step of
+  `./ci.sh --finishing`; with the slack removed it failed on the
+  0.033 case.
+  **Layman:** On some videos, a caption told to start at the same second as its clip is wrongly refused.
+  Kind: review-fix.
+  Source: review-contract-2026-09-30 README loop 13.
+
+- ✅ [DEMO-0137] **A cut at the time `motion` prints can land one frame off at 30 frames a second.**
+  Reproduced 2026-09-30: a 30-a-second clip whose last new frame is
+  number 40 reports `last change: 1.333`; `trim --to 1.333` keeps 40
+  frames, not 41. The frame starts at 1.33333 and `motion` prints three
+  decimals, so the printed time falls just short and the cut floors to
+  the frame before. `from` has the mirror fault: it rounds up, so a
+  time printed just past a frame's start skips that frame. `ci.sh`
+  holds this promise on a 10-a-second clip only, where it cannot show.
+  README now states the rule: the frame on screen at `from` is the
+  first kept, and a time within half a thousandth before a frame's
+  start means that frame, on `clip`, `text` and `poster -t` alike.
+  To do: snap that way in one place; checks at 30 a second.
+  Shares its fix with DEMO-0136.
+  Serves S4 (README, Signs it is working).
+  Fixed (2026-09-30). `frame_at` picks the frame on screen at a time
+  and takes a time up to `TIME_SLACK` before a frame's start as that
+  frame; a clip's `from` and `to` and `poster -t` all use it. Red
+  first: the new `ci.sh` step failed with 40 frames where 41 were
+  due. Four deliberate breakages each caught by that step.
+  **Layman:** Cutting a video at the moment the `motion` report names can drop the last new picture, because the report rounds the time.
+  Kind: review-fix.
+  Source: review-contract-2026-09-30 README loop 14.
+
 ## 0.4.0 — Speaks your language
 
 Every message, --help and the man page in the reader's language, plus a
@@ -3252,294 +3548,6 @@ Decided by the user on 2026-09-25: audio becomes an opt-in, and every run gets a
   **Layman:** Optionally put the app's sound into the video, for trailers.
   Kind: feature.
   Source: user-request-2026-09-25.
-
-## 0.8.0 — Finishes what it recorded
-
-Light editing of demoreel's own recordings, so a session can publish a video
-without hand-typed ffmpeg. Asked for by the user on 2026-09-30, through the
-Slipcase session and then directly: trim, smoothness report, poster, join, image
-and text cards, and text over a scene. Still out: audio mixing, every transition other than a fade (DEMO-0131 adds fades on request),
-zoom, cursor highlighting, a timeline, and cutting out still stretches
-automatically. The version number is a slot, not an order: the user has not yet
-said where this sits against 0.5.0 to 0.7.0.
-
-- ✅ [DEMO-0123] **Move the scope ceiling to allow light editing of demoreel's own recordings.**
-  README `What it will never do` and CLAUDE.md `Scope ceiling` both say no
-  editing, trimming, overlays or captions. The user lifted that on
-  2026-09-30 ("All five", then: text between clips and text overlaying
-  certain scenes would be useful). Proposed new line: demoreel may cut,
-  measure, take a frame from, join end to end, and put text on or between
-  the recordings it made. Fades are in, on request (user, 2026-09-30, second message). Still out:
-  audio mixing, every transition other than a fade, zoom,
-  cursor highlighting, a timeline, a GUI editor, and removing still
-  stretches automatically (it hides a real wait). README's `--settle`
-  section calls trimming "editing, and editing is deliberately not this
-  tool's job": that sentence changes too. A change of direction in a
-  gated contract, so review-contract runs on README before
-  DEMO-0124 to DEMO-0129 are built.
-  Serves S4 (README, Signs it is working).
-  Done (2026-09-30). README § What it will never do and CLAUDE.md § Scope
-  ceiling rewritten. README gated: rows 9 to 11 of
-  docs/reviews/readme-loop-log.md.
-  **Layman:** Rewrite the 'will never do' list so trimming, joining and text are allowed, and say plainly what still is not.
-  Kind: doc.
-  Source: user-request-2026-09-30.
-
-- ✅ [DEMO-0124] **`demoreel trim`: cut the start and end off a recording.**
-  `demoreel trim IN -o OUT [--from T] [--to T]`. Re-encodes, so the cut
-  lands on the frame asked for, with the recorder's own encoder settings
-  (DEMO-0014 decided 2026-09-08 to leave them alone; this does not reopen
-  it). Output has the same shape as a recording: silent H.264, yuv420p,
-  faststart. Never writes over IN. stdout carries the finished path and
-  nothing else, as `record` does. Slipcase proposed this as `finish
-  --trim`; a demoreel file is already web-shaped, so the trim is the
-  whole of it.
-  Serves S4 (README, Signs it is working).
-  From Slipcase (2026-09-30): the cut must be frame-accurate. A stream-copy
-  trim cuts only at keyframes, and a mostly still recording has few. So it
-  re-encodes, and the help says so.
-  Done (2026-09-30). `trim` is one clip scene through `make_film`. The cut
-  is snapped to the clip's frames and the frame at `--to` is kept.
-  **Layman:** Cut the dead time off the front and back of a video.
-  Kind: feature.
-  Source: user-request-2026-09-30.
-
-- ✅ [DEMO-0125] **`demoreel motion`: report how smooth a recording is and where it stands still.**
-  `demoreel motion FILE [--still SECONDS]`. Read-only. Reports distinct
-  frames per second and every stretch with no change longer than the
-  threshold, with start and end times. Slipcase did this by hand with
-  `mpdecimate,showinfo`. It is the DEMO-0109 measurement made a command,
-  and tells a caller where to trim. It reports; it does not fail a file
-  and does not cut anything.
-  Serves S4 (README, Signs it is working).
-  From Slipcase (2026-09-30), what it read by hand and so what to print:
-  plain `name: value` lines by default and `--json` for a parser; unique
-  frames and unique frames per second for the whole file and for a
-  `--from`/`--to` range; each still stretch over the threshold with start
-  and end (it used 0.7 s and 1.2 s); and the time of the last change,
-  which is where to trim.
-  Done (2026-09-30). Its frame test uses a threshold of 640, not the
-  `--gpu` note's 256: at 256 the encoder's sharpening counted as new
-  frames. The measurements are beside `MOTION_NEW_FRAME`. DEMO-0134 files
-  the same over-count in the note.
-  **Layman:** A read-only report: how many different pictures per second the video really has, and where nothing moves.
-  Kind: feature.
-  Source: user-request-2026-09-30.
-
-- ✅ [DEMO-0126] **`demoreel poster`: save one frame of a recording as a picture.**
-  `demoreel poster FILE -t TIME -o OUT`. `shot` photographs an app; this
-  photographs the video, which is what the Ants Projects Hub site
-  requires of a poster. Picture format follows the `-o` extension.
-  Serves S4 (README, Signs it is working).
-  Done (2026-09-30). `.png` or `.jpg`; the frame on screen at `-t`.
-  **Layman:** Pick a moment in the video and save it as the still picture a website shows before play.
-  Kind: feature.
-  Source: user-request-2026-09-30.
-
-- ✅ [DEMO-0127] **`demoreel join`: put clips end to end.**
-  `demoreel join A B [C...] -o OUT`. Hard cuts by default; a fade between clips only when asked for, and no
-  other transition. Clips
-  are brought to the first clip's frame size and rate. A clip with a
-  different aspect ratio is refused, never stretched. To measure before
-  building: whether a `--gpu` recording (wf-recorder) has a steady frame
-  rate, since a variable one needs normalising first.
-  Serves S4 (README, Signs it is working).
-  From Slipcase (2026-09-30): every command that writes a video hands back
-  the shape `record` does (silent H.264, yuv420p, faststart), so commands
-  chain with no fix-up pass. Applies to trim, join, card and caption.
-  Done (2026-09-30). Not measured as planned: whether a wf-recorder file
-  has a steady frame rate. Every clip goes through an `fps` filter to the
-  film's rate, so an unsteady one is evened out, not refused.
-  **Layman:** Stick several videos together, one after the other, with plain cuts.
-  Kind: feature.
-  Source: user-request-2026-09-30.
-
-- ✅ [DEMO-0128] **`demoreel card`: make a clip from an image or from text alone.**
-  `demoreel card -o CLIP -d SECONDS [IMAGE] [--text T] [-s WxH]
-  [--background COLOR]`. Covers Slipcase's `still` (a still or animated
-  PNG/GIF on a plain background) and the user's "text between clips"
-  (no image, text only). Text is drawn with ffmpeg `drawtext`, present
-  in this machine's build; its absence must be a startup error, like the
-  other dependency checks. The user is partially sighted: default text
-  is large and high-contrast, and must stay readable at the frame size.
-  Serves S4 (README, Signs it is working).
-  From Slipcase (2026-09-30): add `--like FILE` to take frame size and
-  rate from a recording, `-s` overriding; a card that differs is what join
-  refuses. An animated image loops to fill `-d` at its own frame rate,
-  not resampled down (its case: 46 frames at 20 fps, looped three times).
-  A transparent image sits on the background colour, scaled to fit with
-  room left for the text.
-  Text defaults, Slipcase's suggestion: height as a fraction of the frame
-  so it follows the size (about 7% here), bold, white on near-black, and
-  a refusal when the text does not fit on one line, never a silent
-  shrink. Its website card used DejaVu Sans Bold 42 px on 1280x800, about
-  5%, which it judged a floor. Not tested with the user; show them a
-  frame before settling the default.
-  Done (2026-09-30). In a script the card's words are a `text` line under
-  it, as for a clip. A card's picture repeats inside the filter graph;
-  reading it with ffmpeg's own looping ran ffmpeg to 14 GB. Text is
-  drawn bold from the font file `fc-match` names. Sample frames for the
-  user to judge the text size: ~/Videos/demoreel-demos/text-sample-*.png.
-  **Layman:** Make a short clip out of a picture, an animated picture, or just a line of text, to go between recordings.
-  Kind: feature.
-  Source: user-request-2026-09-30.
-
-- ✅ [DEMO-0129] **`demoreel caption`: put a line of text over a scene for a stretch of time.**
-  `demoreel caption IN -o OUT --text T [--from T] [--to T]`. Asked for
-  by the user directly on 2026-09-30 ("text overlaying certain scenes").
-  One line, one position (bottom, on a dark band so it reads over any
-  picture), one time range per call. Same large, high-contrast default
-  as DEMO-0128, and the same `drawtext` check. Not subtitles from a file,
-  not animated text: a caller wanting several captions runs it again.
-  Serves S4 (README, Signs it is working).
-  From Slipcase (2026-09-30): trim, then caption, then join is three lossy
-  encodes of one picture. To decide at build: accept several
-  text/from/to groups in one call, so ten captions are one encode, not
-  ten. README gets a line on stacking either way. Text default about 5%
-  of frame height, always on the band, refusal when it does not fit.
-  Done (2026-09-30). Several `--text` in one call, each with its own
-  `--from` and `--to`, so ten captions are one encode.
-  **Layman:** Show a line of text over part of a video, from one moment to another.
-  Kind: feature.
-  Source: user-request-2026-09-30.
-
-- ✅ [DEMO-0131] **Fades on request: fade in, fade out, and a fade between joined clips.**
-  Asked for by the user on 2026-09-30: "also cater for small transitions
-  such as fading in and out on request by the relevant people/sessions."
-
-  Off unless asked for; a plain cut stays the default everywhere.
-  Proposed shape, to settle at build: `--fade-in SECONDS` and
-  `--fade-out SECONDS` on the commands that write a video (DEMO-0124,
-  DEMO-0127, DEMO-0128, DEMO-0129), so a fade rides in an encode that is
-  already happening and costs no extra lossy pass; and
-  `join --crossfade SECONDS` for a fade between clips. Fades are to and
-  from black.
-
-  A crossfade overlaps two clips, so the joined video is shorter than the
-  sum of its parts by the fade length at each join. The command prints the
-  finished length so a caller is not surprised.
-
-  The line this draws for DEMO-0123: fades are in. Wipes, slides, zooms
-  and any other transition stay out.
-  Serves S4 (README, Signs it is working).
-  Added by the user (2026-09-30): "Or fade between scenes as well again
-  on request by people / session." Read as two cases. Scenes that are
-  separate clips: `join --crossfade`, above. A scene change inside ONE
-  recording: a fade at a moment the caller names, dipping to black and
-  back, with no cut and no change in length. Proposed shape, to settle at
-  build: `--fade-at TIME` (repeatable) with a length, on the same
-  commands. The caller names the moment; demoreel does not guess where a
-  scene changes. If the user meant something else by "scenes", ask them
-  before building.
-  Done (2026-09-30). `fade-in`, `fade-out`, `fade-at` with `fade-length`,
-  and `crossfade`, as script words and as options. A fade-at is a fade
-  out then a fade in, each switched on for its own half only.
-  **Layman:** When a session asks for it, a video can fade in at the start, fade out at the end, or fade from one clip to the next.
-  Kind: feature.
-  Source: user-request-2026-09-30.
-
-- ✅ [DEMO-0132] **`demoreel edit`: build a whole film from a plain-text script, in one save.**
-  Asked for by the user on 2026-09-30: a session records a few clips,
-  then "provides a script that is used to edit the videos". The user chose
-  "Script plus shortcuts" and "Plain lines" the same day.
-
-  `demoreel edit SCRIPT -o OUT`, with `-` for a script on stdin. One
-  scene per line, `clip FILE ...` or `card SECONDS [IMAGE] ...`; a `text`
-  line puts words on the scene above it. Scenes cut straight to the next
-  unless a line says `crossfade`. The whole script is read and checked
-  before anything is made, and an error names its line. The film is
-  encoded once, which is the point: chaining DEMO-0124, DEMO-0127,
-  DEMO-0128 and DEMO-0129 re-encodes at every step.
-
-  Those four become shortcuts over the same renderer, so each thing is
-  done one way. README § Finishing a recording is the contract.
-  Serves S4 (README, Signs it is working).
-  Done (2026-09-30). `./ci.sh --finishing` holds the README section
-  sentence by sentence; ten deliberate breakages of the code were each
-  caught by it. The whole gate passed here and on the Ubuntu image.
-  **Layman:** A session writes a short list of scenes — clips, title cards, text, fades — and demoreel makes the finished film from it, saving the video once.
-  Kind: feature.
-  Source: user-request-2026-09-30.
-
-- 📋 [DEMO-0133] **Name the finishing commands in the versioning rules' protected surfaces.**
-  `docs/standards/versioning-overrides.md` § Breaking surfaces names the
-  subcommands `record` and `stop`, and a stdout contract of one path line
-  from those two. The finishing commands add subcommands, the `edit`
-  script grammar, and `motion`'s report on stdout (plain and `--json`).
-  Both lanes of the README gate raised it. "A surface nobody wrote down
-  is still a surface" already protects them; this names them so the
-  common case stays cheap. The document is a gated standard, so the edit
-  is a change of direction for it and owes its own review.
-  Serves S4 (README, Signs it is working).
-  **Layman:** The rules on what counts as a breaking change only name `record` and `stop`; add the new commands, the edit script's wording and the `motion` report.
-  Kind: doc.
-  Source: review-contract-2026-09-30 README loop 9.
-
-- ✅ [DEMO-0135] **Let a script style its text: font, colour, outline, shadow, fade, band and place.**
-  Asked for by the user on 2026-09-30 when shown the text samples: the
-  default size is right (7% on a card, 5% on a caption), and a session
-  should be able to dictate the rest in the script. `size` is already
-  there. To add, per text line: font, colour, outline, drop shadow, fade
-  in and out, the caption band on or off, and one of three fixed places
-  (top, middle, bottom). Chosen by the user from the options put.
-  Still one line of text that does not move, so README's list in
-  What it will never do holds. README is the design contract: its
-  wording goes in first and is reviewed before the build. Goes into the
-  release that carries the finishing commands, ahead of DEMO-0133.
-  Serves S4 (README, Signs it is working).
-  Shipped (2026-09-30). README gated first, three loops to the cap
-  (rows 12 to 14 of docs/reviews/readme-loop-log.md). Eleven new steps
-  in `./ci.sh --finishing`; 17 of 18 deliberate breakages each caught
-  by its own check, the 18th harmless. The shortcuts keep words, times
-  and size; the styling words are the script's alone. Samples for the
-  user: ~/Videos/demoreel-demos/text-style-samples.png.
-  **Layman:** A film's script can choose how each line of text looks: its font, colour, outline, shadow, whether it fades in and out, whether the dark strip shows, and where it sits.
-  Kind: enhancement.
-  Source: user-request-2026-09-30.
-
-- ✅ [DEMO-0136] **A text starting where its clip's cut starts is refused when the cut snaps to a frame.**
-  Reproduced 2026-09-30 on a 29.97-a-second clip:
-  `clip N.mp4 from 2` with `text "Hi" from 2 to 3` is refused as
-  "not inside its scene (2.002 to 4.004)". `check_scene` snaps the
-  cut's start up to a frame and `check_texts` then finds the text's
-  start before it. README says a text's times on a clip are the
-  clip's own, like its `from` and `to`, so the same number must work
-  on both lines. A 30-a-second recording does not hit it at whole
-  seconds. To do: a text time that falls in the part the snap took
-  counts as the scene's start; regression check in `ci.sh`.
-  Serves S4 (README, Signs it is working).
-  Fixed (2026-09-30) with DEMO-0137. A text start that falls up to
-  `TIME_SLACK` before its scene counts as the scene's start, and the
-  cut now keeps the frame on screen at `from`, so `from 2` on a
-  29.97 clip starts at or before 2. Check: the last step of
-  `./ci.sh --finishing`; with the slack removed it failed on the
-  0.033 case.
-  **Layman:** On some videos, a caption told to start at the same second as its clip is wrongly refused.
-  Kind: review-fix.
-  Source: review-contract-2026-09-30 README loop 13.
-
-- ✅ [DEMO-0137] **A cut at the time `motion` prints can land one frame off at 30 frames a second.**
-  Reproduced 2026-09-30: a 30-a-second clip whose last new frame is
-  number 40 reports `last change: 1.333`; `trim --to 1.333` keeps 40
-  frames, not 41. The frame starts at 1.33333 and `motion` prints three
-  decimals, so the printed time falls just short and the cut floors to
-  the frame before. `from` has the mirror fault: it rounds up, so a
-  time printed just past a frame's start skips that frame. `ci.sh`
-  holds this promise on a 10-a-second clip only, where it cannot show.
-  README now states the rule: the frame on screen at `from` is the
-  first kept, and a time within half a thousandth before a frame's
-  start means that frame, on `clip`, `text` and `poster -t` alike.
-  To do: snap that way in one place; checks at 30 a second.
-  Shares its fix with DEMO-0136.
-  Serves S4 (README, Signs it is working).
-  Fixed (2026-09-30). `frame_at` picks the frame on screen at a time
-  and takes a time up to `TIME_SLACK` before a frame's start as that
-  frame; a clip's `from` and `to` and `poster -t` all use it. Red
-  first: the new `ci.sh` step failed with 40 frames where 41 were
-  due. Four deliberate breakages each caught by that step.
-  **Layman:** Cutting a video at the moment the `motion` report names can drop the last new picture, because the report rounds the time.
-  Kind: review-fix.
-  Source: review-contract-2026-09-30 README loop 14.
 
 ## 1.0.0 — Every documented path tested
 
