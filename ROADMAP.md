@@ -149,6 +149,21 @@ simplest case, and a gate proves it still records.
   Kind: doc-fix.
   Source: review-contract-2026-09-30 versioning-overrides loop 8.
 
+- 📋 [DEMO-0139] **The versioning rules do not say whether the met display-paths condition is part of the 1.0 exit.**
+  Filed from the DEMO-0138 gate, loop 3 (row 12), outside what that
+  change touched. `docs/standards/versioning-overrides.md` § Reaching
+  1.0 gives one exit condition (outside use of a recorded video), then
+  keeps the previous, met condition (all three display paths exercised
+  by a step that fails on a flat frame): "what it required still
+  governs the gate", "not a condition still being waited on", and "a
+  skip for one of those reasons does not withdraw the condition". One
+  conformer cuts 1.0.0 on the first line alone while a --gpu or Flatpak
+  step is broken; another stays at 0.x. Say in one sentence whether the
+  path requirement binds the version or only the gate. Gate the edit.
+  **Layman:** The rules for when demoreel reaches version 1.0 can be read two ways; say which is meant.
+  Kind: doc-fix.
+  Source: review-contract-2026-10-01 versioning-overrides loop 12.
+
 ## Standing chores
 
 Recurring work with no finished state. It is checked on a schedule and never
