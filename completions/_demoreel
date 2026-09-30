@@ -37,6 +37,7 @@ _demoreel() {
   both=(
     '(- *)'{-h,--help}'[show help]'
     '*'{-a+,--action=}'[scripted step, repeatable]:step:_demoreel_step'
+    '(-a --action)--steps=[read the scripted steps from a file, - for stdin]:file:_files'
     '--app-log=[keep the app'\''s own output in a file]:file:_files'
     '--settle=[wait up to SECONDS for the first frame]:seconds:'
     '--gpu[for an app that needs the graphics card]'

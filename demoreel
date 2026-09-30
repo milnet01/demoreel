@@ -697,6 +697,21 @@ def parse_step(spec):
     return verb, {"keys": args, "at": None}
 
 
+def read_steps(path):
+    """The steps in a --steps file, or on stdin for `-`: one per line, as -a
+    takes them. A step read this way is never in demoreel's own command line,
+    which any local user can read for the whole run (DEMO-0025). A blank line
+    and a line starting with `#` are skipped, as in an `edit` script."""
+    try:
+        text = sys.stdin.read() if path == "-" else Path(
+            path).expanduser().read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        die(f"could not read the steps file {path}: "
+            f"{getattr(exc, 'strerror', None) or exc}.")
+    return [line for line in text.splitlines()
+            if line.strip() and not line.lstrip().startswith("#")]
+
+
 def run_action(spec, env):
     """One scripted step: wait / move / click / type / key / hold."""
     step = parse_step(spec)
@@ -1179,6 +1194,10 @@ def prepare(a, suffix):
         die("--cursor is not available with record --gpu: that backend records "
             "the compositor's picture, which never has the pointer in it.")
 
+    if a.steps is not None:
+        if a.action:
+            die("give the steps with -a or with --steps, not both.")
+        a.action = read_steps(a.steps)
     for spec in a.action:
         parse_step(spec)  # every step is readable before anything starts
 
@@ -2861,6 +2880,10 @@ def build_parser():
                      help="scripted step, repeatable and run in order: "
                           "'wait 2', 'move X Y', 'click [X Y]', 'type some text', "
                           "'key Return', 'hold w 3'")
+    rec.add_argument("--steps", metavar="FILE",
+                     help="read the scripted steps from FILE, one per line, "
+                          "or from standard input for -; keeps typed text "
+                          "out of the process list. Not with -a")
     rec.add_argument("--app-log", metavar="PATH",
                      help="keep the app's own output in PATH; otherwise it goes "
                           "to this terminal's stderr. Useful when the app prints "
@@ -2899,6 +2922,9 @@ def build_parser():
                       help="scripted step run before the picture, repeatable: "
                            "'wait 2', 'move X Y', 'click [X Y]', "
                            "'type some text', 'key Return', 'hold w 3'")
+    shot.add_argument("--steps", metavar="FILE",
+                      help="read the scripted steps from FILE, one per line, "
+                           "or from standard input for -. Not with -a")
     shot.add_argument("--app-log", metavar="PATH",
                       help="keep the app's own output in PATH; otherwise it "
                            "goes to this terminal's stderr")

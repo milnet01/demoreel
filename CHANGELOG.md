@@ -12,6 +12,13 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+### Security
+
+- **`record` and `shot` take `--steps FILE`, or `--steps -` for standard input, so typed text stays out of the process list** (DEMO-0025)
+  Text given with `-a type` sat in demoreel's own command line, which
+  other local users can read, for the whole run. `--steps` reads the
+  same steps one per line, and cannot be mixed with `-a`.
+
 ## [0.3.1] - 2026-09-30
 
 **Theme:** Finishes what it recorded.

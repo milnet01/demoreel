@@ -524,6 +524,7 @@ you would only find out by watching it.
 | `-r`, `--framerate` | Frames per second. |
 | `-n`, `--name` | A name for this run, so `demoreel stop` knows which one you mean. |
 | `-a`, `--action` | A scripted step. Repeat it; they run in order. |
+| `--steps` | Read the scripted steps from a file, one per line, or from standard input with `--steps -`. Use it instead of `-a` when a step types something private. |
 | `--cursor` | Draw the mouse pointer. Off by default, because with no scripted clicks it just sits in the corner. Not available with `record --gpu`. |
 | `--app-log` | Save what the app printed to a file. |
 | `--settle` | Wait for the app to draw something before starting to record. |
@@ -547,9 +548,18 @@ the recording is going:
 - `hold w 3` — hold a key down for three seconds, for an app that moves while
   a key is held. It is let go however the step ends, a stop included.
 
-**Do not script typing a password on a shared machine.** Anything you put on the
+**Typing something private? Use `--steps`, not `-a`.** Anything you put on the
 command line can be read by other people using that computer, for as long as the
-command runs.
+command runs. `--steps` reads the same steps from a file, or from standard input
+with `--steps -`, so they never appear there. One step per line; a blank line
+and a line starting with `#` are skipped. It cannot be mixed with `-a`.
+
+```bash
+printf 'wait 2\ntype my secret\nkey Return\n' | demoreel record --steps - -- kate
+```
+
+That keeps the text out of demoreel's command line. The shell line above still
+holds it, so for a real secret put the steps in a file only you can read.
 
 ### Running two recordings at once
 
@@ -761,8 +771,9 @@ Permanently out of scope:
   no zoom, no text that moves, no speeding up or slowing down. Nothing is ever
   removed from a video automatically.
 - No graphical interface, no background service, no config file — options go on
-  the command line. An `edit` script describes one film; it holds no settings
-  for demoreel and is not read unless you name it.
+  the command line. An `edit` script describes one film, and a `--steps` file lists
+  scripted steps; neither holds settings for demoreel, and neither is read
+  unless you name it.
 - No plugins, no per-app profiles.
 - No third kind of private screen. The ordinary one covers ordinary apps and
   `--gpu` covers the ones needing the card. The second was added because the

@@ -61,18 +61,15 @@ planted after that check is opened by the writer itself, and there the kernel's
 protection applies where it is on. It is on on this machine
 (`fs.protected_symlinks = 1`). The gate covers the refusal (DEMO-0082).
 
-**Text given to `-a type`.** demoreel hands it to `xdotool` on stdin, so it is
-not in `xdotool`'s command line. It is still in **demoreel's own**, because the
-caller wrote it there, and a command line is readable by other local users
-through the process list for as long as the process runs — the whole recording,
-not just the typing. Measured both ways. So scripting a demo that types a
-password or a token is the case to avoid on a shared machine.
-
-This is a decided limit, not pending work. Closing it would mean a second way
-to feed action text in — a file, or stdin — which is the input format the scope
-ceiling rules out, and the exposure is the caller's to avoid: they chose to put
-the secret on a command line and can pass it another way. DEMO-0025 records the
-reasoning.
+**Text a scripted step types.** demoreel hands it to `xdotool` on stdin, so it
+is never in `xdotool`'s command line. Given with `-a`, it is in **demoreel's
+own**, and a command line is readable by other local users through the process
+list for the whole recording, not just the typing. `--steps` reads the steps
+from a file or from stdin instead, so they are in no command line at all. The
+gate checks this: a canary typed through `--steps -` reaches the app and is
+absent from demoreel's command line (DEMO-0025). Use `--steps` for a password
+or a token, from a file only you can read; a shell line that pipes the steps
+in holds them itself.
 
 **The video and the logs demoreel writes.** Whatever the app draws is in the
 video, and `--app-log` keeps whatever the app printed. Both are ordinary files

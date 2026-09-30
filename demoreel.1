@@ -196,6 +196,21 @@ Repeat it; the steps run in order.
 See
 .BR STEPS .
 .TP
+.BI \-\-steps " file"
+Read the scripted steps from
+.IR file ,
+one per line, or from standard input if
+.I file
+is
+.BR \- .
+A blank line and a line starting with
+.B #
+are skipped.
+The steps then never appear in demoreel's own command line, which other local
+users can read.
+Not with
+.BR \-a .
+.TP
 .BI \-\-app\-log " path"
 Save the app's own output in
 .IR path .

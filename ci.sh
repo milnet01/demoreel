@@ -2022,7 +2022,10 @@ for flag in $(grep -oE '`-{1,2}[a-z-]+`' README.md | tr -d '`' | sort -u); do
     # Flags belonging to other programs the caller invokes THROUGH demoreel:
     # flatpak's sockets, and the -geometry demoreel forwards to Xwayland.
     case "$flag" in --socket|--nosocket|--filesystem|-geometry) continue ;; esac
-    if ! printf '%s' "$help" | grep -qF -- "$flag"; then
+    # A here-string, not a pipe: grep -q stops reading at its first match,
+    # the writer then dies of SIGPIPE, and pipefail reports that as a miss.
+    # A longer help text is all it takes to hit it.
+    if ! grep -qF -- "$flag" <<<"$help"; then
         echo "README documents $flag, which demoreel does not accept" >&2
         undocumented=$((undocumented + 1))
     fi
@@ -2142,7 +2145,9 @@ import argparse
 sub = next(a for a in d.build_parser()._actions
            if isinstance(a, argparse._SubParsersAction))
 print(*sub.choices, *d.ACTION_EXAMPLES)'); do
-    printf '%s' "$man_text" | grep -qE -- "(^|[^A-Za-z0-9_-])$word([^A-Za-z0-9_-]|\$)" || {
+    # A here-string, as in the flags step: a pipe into grep -q can fail on
+    # SIGPIPE under pipefail after grep has already matched.
+    grep -qE -- "(^|[^A-Za-z0-9_-])$word([^A-Za-z0-9_-]|\$)" <<<"$man_text" || {
         echo "demoreel accepts $word, which demoreel.1 never mentions" >&2
         man_missing=$((man_missing + 1))
     }
@@ -2443,6 +2448,31 @@ got=$(cat "$tmp/typed.txt" 2>/dev/null || true)
     exit 1
 }
 echo "wait, type and key all reached the app"
+
+step "--steps reaches the app and keeps typed text off the command line"
+# DEMO-0025. -a puts typed text in demoreel's own command line, which any
+# local user can read for the whole run. --steps reads the same steps from a
+# file or stdin, so the text should arrive and never be in the process list.
+# The comment and the blank line are skipped, as in an edit script.
+secret="steps-canary-$$"
+printf 'wait 2\n# a comment\n\ntype %s\nkey Return\n' "$secret" |
+    ./demoreel record -n gate -o "$tmp/steps.mp4" -d 8 -s 640x480 --steps - \
+    -- xterm -e sh -c "read line; printf '%s' \"\$line\" > $tmp/steps.txt" \
+    >/dev/null &
+pid=$!
+sleep 4
+args=$(tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null || true)
+wait "$pid"
+[ -n "$args" ] || { echo "could not read demoreel's command line" >&2; exit 1; }
+case $args in *"$secret"*)
+    echo "the typed text is in demoreel's command line: $args" >&2; exit 1 ;;
+esac
+got=$(cat "$tmp/steps.txt" 2>/dev/null || true)
+[ "$got" = "$secret" ] || {
+    echo "the app received '$got', not '$secret' -- --steps did not land" >&2
+    exit 1
+}
+echo "--steps typed its text, and the text was not in the process list"
 
 step "a window titled only by _NET_WM_NAME is found"
 # DEMO-0043. The window search read only the old WM_NAME, so an app setting
