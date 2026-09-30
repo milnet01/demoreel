@@ -3487,6 +3487,24 @@ said where this sits against 0.5.0 to 0.7.0.
   Kind: review-fix.
   Source: review-contract-2026-09-30 README loop 13.
 
+- 📋 [DEMO-0137] **A cut at the time `motion` prints can land one frame off at 30 frames a second.**
+  Reproduced 2026-09-30: a 30-a-second clip whose last new frame is
+  number 40 reports `last change: 1.333`; `trim --to 1.333` keeps 40
+  frames, not 41. The frame starts at 1.33333 and `motion` prints three
+  decimals, so the printed time falls just short and the cut floors to
+  the frame before. `from` has the mirror fault: it rounds up, so a
+  time printed just past a frame's start skips that frame. `ci.sh`
+  holds this promise on a 10-a-second clip only, where it cannot show.
+  README now states the rule: the frame on screen at `from` is the
+  first kept, and a time within half a thousandth before a frame's
+  start means that frame, on `clip`, `text` and `poster -t` alike.
+  To do: snap that way in one place; checks at 30 a second.
+  Shares its fix with DEMO-0136.
+  Serves S4 (README, Signs it is working).
+  **Layman:** Cutting a video at the moment the `motion` report names can drop the last new picture, because the report rounds the time.
+  Kind: review-fix.
+  Source: review-contract-2026-09-30 README loop 14.
+
 ## 1.0.0 — Every documented path tested
 
 The exit condition in docs/standards/versioning-overrides.md: the gate

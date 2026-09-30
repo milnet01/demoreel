@@ -228,8 +228,10 @@ What they share:
   else these commands say goes to stderr.
 - **Times are in seconds and may have a fraction**: `29.8`. A time in a clip is
   counted from the start of that clip's own file, so the numbers `motion`
-  prints can be used as they are. A time past the end of the file is an error,
-  not a guess.
+  prints can be used as they are. `motion` prints a time to a thousandth of a
+  second, so wherever a time picks a frame, one within half a thousandth
+  before a frame's start means that frame. A time past the end of the file is
+  an error, not a guess.
 - **Everything is checked before anything is made.** A mistake in the last
   line of a script stops the run at once, and the message names the line.
 - **A command that fails leaves nothing at `-o`.** A file already there is
@@ -261,8 +263,8 @@ quotes `\"` is a quote mark.
 order:
 
 - `from 2` and `to 29.8` — keep only that part. Leave one out and that end
-  stays where it is. The cut lands on the frame at the time you gave, and the
-  frame on screen at `to` is the last one kept. So `to` set to the `last
+  stays where it is. The frame on screen at `from` is the first one kept, and
+  the frame on screen at `to` is the last one kept. So `to` set to the `last
   change` that `motion` prints ends the scene on the last new picture. A `to`
   equal to the file's length, as `motion` prints it, is accepted and means the
   last frame.
