@@ -27,7 +27,9 @@ and changing one is a breaking change:
   (`versioning.md` § 2).
 - **The default output name.** Without `-o`, `record` writes
   `<app>-<timestamp>.mp4` and `shot` writes `<app>-<timestamp>.png`, in the
-  current directory. A script that globs for it depends on the shape.
+  current directory. A script that globs for it depends on the shape. The
+  `<app>-` start and the ending are protected; the timestamp's own format is
+  not, so a script that sorts by it or reads a date from it is not covered.
 - **Exit behaviour on a blank recording, and the exit status generally.** While
   the app is still running, the display is sampled halfway through the `-d`
   countdown and again at the end. A blank sample at either point exits
@@ -36,7 +38,10 @@ and changing one is a breaking change:
   when the app exited first, and those recordings succeed today. A `-d 0` run
   has no halfway point, but is still sampled at the end. Tightening any of that — sampling at a third point,
   deleting the leftover file, failing a run that currently passes — is
-  breaking, not a tidy-up.
+  breaking, not a tidy-up. Beyond a blank recording, whether a run exits zero
+  or non-zero is protected in both directions: a run that failed and now
+  succeeds is breaking, as is one that succeeded and now fails. Which non-zero
+  value a failure exits with is not protected.
 - **`motion`'s report.** `motion` writes no file, so its report is its stdout:
   `name: value` lines, or one JSON object with `--json`. Removing or renaming a
   line or a key, or changing what one means, the unit it is in, or the form its
@@ -59,8 +64,9 @@ Excluded deliberately. Reliance on these is not protected, and that is what
 makes them the exception to the line above:
 
 - The encoding parameters no flag exposes — preset, CRF, pixel format — beyond
-  the video remaining playable H.264, silent, and in an `.mp4` with its index
-  at the front. The
+  the video remaining H.264 that a web browser plays, silent, and in an `.mp4`
+  with its index at the front. A pixel format browsers cannot play is
+  breaking. The
   container of a `record -o` run follows the
   caller's own name, so it is theirs rather than ours to promise; the default
   name's `.mp4` is part of the shape protected above. A flag's default,
