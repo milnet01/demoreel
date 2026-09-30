@@ -115,6 +115,25 @@ simplest case, and a gate proves it still records.
   Kind: feature.
   Source: user-request-2026-09-30.
 
+- 📋 [DEMO-0138] **The versioning rules leave "playable" and "the exit status generally" undefined.**
+  Filed from the DEMO-0133 gate, outside what that change touched; do
+  not re-review, fold in directly, then gate the edit.
+  1. `docs/standards/versioning-overrides.md`, What is not a breaking
+     surface: pixel format is listed as unprotected "beyond the video
+     remaining playable H.264", and "playable" names no player. The
+     code pins `yuv420p`, which is what browsers play. One conformer
+     ships a move off it as a PATCH, another as a break. Say what
+     playable is measured against, or protect the pixel format.
+  2. Breaking surfaces, "Exit behaviour on a blank recording, and the
+     exit status generally": the body gives no rule for "generally". It
+     names only tightening as breaking. Unsettled: loosening (a blank
+     run exiting 0), which non-zero code, and the other failing exits
+     in `vouch_for` (no video, an unplayable one, and the `--gpu`
+     read-back). Both are the user's call on what is promised.
+  **Layman:** Two phrases in the rules on what counts as a breaking change can be read two ways; say which is meant.
+  Kind: doc-fix.
+  Source: review-contract-2026-09-30 versioning-overrides loop 8.
+
 ## Standing chores
 
 Recurring work with no finished state. It is checked on a schedule and never
