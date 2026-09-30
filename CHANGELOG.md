@@ -12,6 +12,10 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-09-30
+
+**Theme:** Finishes what it recorded.
+
 ### Added
 
 - **A script can style each line of text: `font`, `colour`, `outline`, `shadow`, `fade-in`, `fade-out`, `band` and `at`** (DEMO-0135)
