@@ -12,6 +12,13 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+### Changed
+
+- **The 1.0 rule says which condition holds the version back** (DEMO-0139)
+  1.0 waits only on a demoreel video being used on another project's
+  README, store listing or release page. The display-path checks bind
+  the gate, which a 1.0 release passes like any other.
+
 ### Security
 
 - **`record` and `shot` take `--steps FILE`, or `--steps -` for standard input, so typed text stays out of the process list** (DEMO-0025)

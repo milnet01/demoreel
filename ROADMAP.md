@@ -157,7 +157,7 @@ simplest case, and a gate proves it still records.
   Kind: doc-fix.
   Source: review-contract-2026-09-30 versioning-overrides loop 8.
 
-- 📋 [DEMO-0139] **The versioning rules do not say whether the met display-paths condition is part of the 1.0 exit.**
+- ✅ [DEMO-0139] **The versioning rules do not say whether the met display-paths condition is part of the 1.0 exit.**
   Filed from the DEMO-0138 gate, loop 3 (row 12), outside what that
   change touched. `docs/standards/versioning-overrides.md` § Reaching
   1.0 gives one exit condition (outside use of a recorded video), then
@@ -168,6 +168,12 @@ simplest case, and a gate proves it still records.
   conformer cuts 1.0.0 on the first line alone while a --gpu or Flatpak
   step is broken; another stays at 0.x. Say in one sentence whether the
   path requirement binds the version or only the gate. Gate the edit.
+  Resolved (2026-10-01, 5230748): the user chose that the display-paths
+  requirement binds the gate, not the version. MAJOR waits on outside
+  use alone; a broken step still stops a 1.0 release through the
+  pre-push gate. Gate rows 13-15 converged at loop 3, also naming whose
+  page counts for the exit condition and naming GIMP as the Flatpak
+  step's app.
   **Layman:** The rules for when demoreel reaches version 1.0 can be read two ways; say which is meant.
   Kind: doc-fix.
   Source: review-contract-2026-10-01 versioning-overrides loop 12.
@@ -3249,7 +3255,7 @@ path, and scripts read it.
   Kind: chore.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0025] **Action text still sits in demoreel's own command line for the whole run.**
+- ✅ [DEMO-0025] **Action text still sits in demoreel's own command line for the whole run.**
   Found while closing DEMO-0018, by measuring the fix rather than assuming
   it. That item said `xdotool type --file -` leaves "nothing exposed".
   Half true: the text is out of xdotool's argv, and it is still in
@@ -3293,6 +3299,12 @@ path, and scripts read it.
   command line. SECURITY.md calls this a decided limit; it changes with
   the fix.
   Serves S3 (README, Signs it is working).
+  Resolved (2026-10-01, fa896bb, 360aa7f): record and shot take --steps
+  FILE, or --steps - for stdin, one step per line, not mixable with -a.
+  Measured: a canary typed via -a showed in one process's command line,
+  via --steps - in none. ci.sh checks both halves and went red on the -a
+  form. README gate converged in one loop (readme-loop-log row 15);
+  SECURITY.md now describes --steps instead of a decided limit.
   **Layman:** Text a script types is no longer visible via the typing tool, but is still visible in demoreel's own command line.
   Kind: security.
   Source: in-session-2026-09-08.
