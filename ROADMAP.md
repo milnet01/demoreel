@@ -140,6 +140,11 @@ simplest case, and a gate proves it still records.
   failed and now succeeds, or the reverse, is breaking; (3) protect
   only the default name's prefix and ending, not the stamp's format.
   Each answer changes the document, which is a gated standard.
+  Answered (2026-10-01): the user took all three recommendations.
+  (1) a pixel format browsers cannot play is breaking; (2) exit status
+  is protected both ways; (3) only the default name's prefix and ending
+  are protected, not the stamp's format. Next: edit the standard, gate
+  the edit.
   **Layman:** Two phrases in the rules on what counts as a breaking change can be read two ways; say which is meant.
   Kind: doc-fix.
   Source: review-contract-2026-09-30 versioning-overrides loop 8.
@@ -3169,7 +3174,7 @@ path, and scripts read it.
   Kind: doc.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0122] **Re-measure the privacy test on the compositor recorder `--gpu` now uses.**
+- ✅ [DEMO-0122] **Re-measure the privacy test on the compositor recorder `--gpu` now uses.**
   DEMO-0020 measured the privacy promise with a marker colour on the
   real desktop: no recorded pixel within 40 of it, closest 135.8 under
   Xvfb and 117.8 under --gpu. The --gpu figure was taken with x11grab.
@@ -3180,6 +3185,13 @@ path, and scripts read it.
   record the closest distance, and update README's figure.
   Serves S2 (README, Signs it is working): nothing of the real desktop
   in the frame.
+  Resolved (2026-10-01): re-measured on wf-recorder with DEMO-0020's
+  method. KDE Magnifier on (KWin reported it loaded); a 500x400 window
+  of #FF00FF on the real desktop, confirmed mapped by wmctrl before and
+  after; `record --gpu -d 8 -- vkcube`, 241 frames at 1600x1000. Every
+  frame decoded to RGB: no pixel within 40 of the marker, closest 191.9.
+  Control: a clip of the marker colour encoded with libx264 yuv420p
+  matched every pixel (closest 2.2). README's figure updated.
   **Layman:** The check that nothing of your real desktop ends up in a video was last run on the old graphics-card recorder; run it again on the new one.
   Kind: test.
   Source: adopt-project-2026-09-28.

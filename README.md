@@ -905,9 +905,9 @@ Checked by running them, not assumed. This section is for maintainers.
   instead: with KDE's Magnifier enabled and a window of one unique colour open
   on the real desktop, both backends recorded and every frame was decoded at
   full resolution. No pixel came within 40 of the marker colour — the closest
-  was 135.8 under `Xvfb` and 117.8 under `--gpu`, whose recorder was then
-  `x11grab` and must be re-measured on `wf-recorder` — and the whole `Xvfb`
-  recording measured zero saturation, so nothing coloured reached it at all.
+  was 135.8 under `Xvfb` and 191.9 under `--gpu` with `wf-recorder`, every
+  `--gpu` frame the shaded LunarG cube — and the whole `Xvfb` recording
+  measured zero saturation, so nothing coloured reached it at all.
   The detector was shown able to fire: over a clip that really is the marker
   colour, encoded the same way, it matched every pixel.
 - **Scripted `-a` actions work on the `--gpu` path**, not only under `Xvfb`.
