@@ -981,9 +981,9 @@ the same day, by looking at frames and by breaking each part of the code in
 turn to see its check fail: a colour, an outline, a shadow, a named font, a
 band that fades with its text, and each of the three places.
 
-`--settle` verified against a window that is uniformly black for five seconds
-and then draws: without it the recording is three seconds of black and the
-blank check fails the run; with it the picture is there in the first frame.
+`--settle` is checked by the gate against a window that is one flat colour for
+four seconds and then draws: without it the blank check fails the run; with it
+the picture is there in the first frame.
 
 ## Checks
 

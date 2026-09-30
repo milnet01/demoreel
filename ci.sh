@@ -2674,6 +2674,25 @@ if share > 0.01:
 print("--cursor draws the pointer, and the default leaves it out")
 CURSORPY
 
+step "--settle waits for the app's first picture"
+# DEMO-0030. The fixture is an xterm painted one colour -- background, text
+# and cursor all black, the cursor hidden -- which measures flat, and which
+# prints rows of white after a few seconds. An ordinary xterm is no use here:
+# its cursor alone keeps it under the blank threshold. So without --settle the
+# halfway sample finds the display blank and the run fails; with it the
+# recording starts once the rows are drawn, and its first frame shows them.
+late_app=(xterm -bg black -fg black -cr black -b 0 -e sh -c
+    'printf "\033[?25l"; sleep 4; i=0; while [ $i -lt 30 ]; do printf "\033[47m%80s\033[0m\n" " "; i=$((i+1)); done; sleep 60')
+if ./demoreel record -n gate -o "$tmp/unsettled.mp4" -d 3 -s 640x480 \
+        -- "${late_app[@]}" >/dev/null 2>&1; then
+    echo "the fixture was drawn before the halfway sample, so it cannot test --settle" >&2
+    exit 1
+fi
+out=$(./demoreel record -n gate -o "$tmp/settled.mp4" -d 2 -s 640x480 --settle 20 \
+    -- "${late_app[@]}")
+assert_frame_drawn "$out" 0 "--settle started recording before the app drew"
+echo "without --settle the run failed blank; with it the first frame is drawn"
+
 step "an app that makes the display chatter does not freeze it"
 # DEMO-0049. Xvfb's stderr was a pipe demoreel stopped reading after startup.
 # Each keymap an app loads makes the server write xkbcomp's warnings there,
