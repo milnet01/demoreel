@@ -3472,6 +3472,21 @@ said where this sits against 0.5.0 to 0.7.0.
   Kind: enhancement.
   Source: user-request-2026-09-30.
 
+- 📋 [DEMO-0136] **A text starting where its clip's cut starts is refused when the cut snaps to a frame.**
+  Reproduced 2026-09-30 on a 29.97-a-second clip:
+  `clip N.mp4 from 2` with `text "Hi" from 2 to 3` is refused as
+  "not inside its scene (2.002 to 4.004)". `check_scene` snaps the
+  cut's start up to a frame and `check_texts` then finds the text's
+  start before it. README says a text's times on a clip are the
+  clip's own, like its `from` and `to`, so the same number must work
+  on both lines. A 30-a-second recording does not hit it at whole
+  seconds. To do: a text time that falls in the part the snap took
+  counts as the scene's start; regression check in `ci.sh`.
+  Serves S4 (README, Signs it is working).
+  **Layman:** On some videos, a caption told to start at the same second as its clip is wrongly refused.
+  Kind: review-fix.
+  Source: review-contract-2026-09-30 README loop 13.
+
 ## 1.0.0 — Every documented path tested
 
 The exit condition in docs/standards/versioning-overrides.md: the gate

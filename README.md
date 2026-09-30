@@ -275,7 +275,9 @@ order:
   You name the moment; demoreel does not guess where a scene changes.
 - `crossfade 0.5` — fade from the scene before into this one, over half a
   second, where a plain cut would otherwise be. The two scenes overlap for that
-  long, so the film is that much shorter than its scenes added together.
+  long, so the film is that much shorter than its scenes added together. A
+  scene takes a crossfade or a fade-in, not both, and the first scene takes
+  no crossfade.
 
 Nothing takes a piece out of the middle of a clip. To skip a part, use the clip
 twice, with a different `from` and `to` each time.
@@ -309,11 +311,12 @@ you like; the indent is only for your eyes.
   the card's start. Left out, the text stays for the whole scene.
 - `size 4` sets another height, as a percentage of the frame's.
 - `font "DejaVu Serif"` draws it in that font family, by the name `fc-list`
-  gives it. Anything after a colon is handed to `fc-match` as written, so
-  `font "DejaVu Serif:bold"` asks for the family's bold. A family the machine
-  does not have is refused, never swapped for another. A face the family does
-  not have, a bold where it has only a regular, is drawn in the nearest face
-  it has. A value with a `/` in it is a font file and is used as it is.
+  gives it, in the family's regular face and not in bold. Anything after a
+  colon is handed to `fc-match` as written, so `font "DejaVu Serif:bold"`
+  asks for the family's bold. A family the machine does not have is refused,
+  never swapped for another, and so is a general name like `serif`, which is
+  no family's name. A face the family does not have, a bold where it has only
+  a regular, is drawn in the nearest face it has. A value with a `/` in it is a font file and is used as it is.
 - `colour #FFD040` sets the text's colour, written `#RRGGBB`.
 - `outline #000000` draws a line of that colour round each letter, and
   `shadow #000000` a shadow of that colour below and to the right of it. How
