@@ -13,11 +13,12 @@ demoreel is a command-line tool. Nothing imports it, so "the public API" has no
 referent here. These are the surfaces a user or a calling script can depend on,
 and changing one is a breaking change:
 
-- **The command line.** The subcommands `record` and `stop`, their flags, and
-  the top-level flags. Removing one, renaming one, changing what an existing
+- **The command line.** Every subcommand, its flags, and the top-level flags.
+  Removing one, renaming one, changing what an existing
   flag means, or changing the default an omitted flag supplies.
-- **The stdout contract.** From `record` and `stop`, stdout carries one line:
-  the finished video path, and nothing else. A caller writing
+- **The stdout contract.** From a command that writes a file, stdout carries
+  one line: that file's path, and nothing else. `stop` prints the path of the
+  video it stopped. A caller writing
   `out=$(demoreel record ...)` depends on this. `--version` and `--help` print
   to stdout too, and both flags existing is protected. `--version` prints the
   name, a space, then the version — a caller takes the second field, so
@@ -35,8 +36,17 @@ and changing one is a breaking change:
   has no halfway point, but is still sampled at the end. Tightening any of that — sampling at a third point,
   deleting the leftover file, failing a run that currently passes — is
   breaking, not a tidy-up.
+- **`motion`'s report.** `motion` writes no file, so its report is its stdout:
+  `name: value` lines, or one JSON object with `--json`. Removing or renaming a
+  line or a key, or changing what one means or the unit it is in, is breaking.
+  Adding one is not: a caller reads the lines and keys it knows by name.
 - **The scripted action grammar** passed to `-a` — the verbs and their argument
   order.
+- **The `edit` script.** The line verbs `clip`, `card` and `text`, the words
+  each takes, what each word means, and what a line does with a word left out.
+  A script that made a film must go on making the same scenes, in the same
+  order, at the same lengths, with each text showing at the same times and in
+  the same place. Adding a verb or a word is not breaking.
 
 A surface nobody wrote down is still a surface, except for what the next
 section names. The list above makes the common cases cheap.
@@ -51,6 +61,10 @@ makes them the exception to the line above:
   caller's own name, so it is theirs rather than ours to promise; the default
   name's `.mp4` is part of the shape protected above. A flag's default,
   `-s` and `-r` included, is covered above, not here.
+- How a text is drawn beyond what its line's words set: which font the machine
+  supplies when the line names none, how thick an outline is, how far a shadow
+  falls, and the band's shade. A word's own default, such as a text's size, is
+  covered above, not here.
 - Everything on stderr, progress and failure text alike. None of that text is
   protected. The surfaces listed above are untouched by this bullet.
 
