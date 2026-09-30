@@ -1860,33 +1860,86 @@ class _CaptionField(argparse.Action):
         namespace.texts[-1][self.dest] = values
 
 
-_text_font = None
+_text_fonts = {}
 
 
-def text_font():
-    """The drawtext option naming the font: the machine's own bold sans, so
-    the same line measures differently on two machines (README says so).
+def text_font(name=None, where=None):
+    """The drawtext option naming a text's font: the one its line names, else
+    the machine's own bold sans, so the same line measures differently on two
+    machines (README says so).
 
     Asked of fontconfig's fc-match and passed as a file. drawtext's own `font`
     option takes a fontconfig pattern, and measured here it ignores the weight
     in one: Sans:bold, Sans:style=Bold and Sans:weight=bold all drew the
     regular face, 310 pixels wide where the bold file draws 332. Without
-    fc-match, or with a path the filter syntax cannot carry, the text is drawn
-    in the regular face rather than not at all.
+    fc-match, or with a path the filter syntax cannot carry, the machine's
+    font is drawn in the regular face rather than not at all.
+
+    A font the line names is refused rather than swapped. fc-match never says
+    no: asked for a font the machine lacks it answers with another (measured:
+    "Noto Sans Mono" came back as Liberation Mono). So the family it answers
+    with is compared with the one asked for. A name with a slash in it is a
+    font file and is used as it is.
     """
-    global _text_font  # noqa: PLW0603 - asked once per run
-    if _text_font is None:
-        _text_font = "font='Sans'"
+    if name in _text_fonts:
+        return _text_fonts[name]
+    families = ""
+    if name and "/" in name:
+        found = str(Path(name).expanduser())
+        if not Path(found).is_file():
+            die(f"{where}: there is no font file {found}")
+    else:
+        # A hyphen in a fontconfig pattern starts a size, so one in a family's
+        # name is escaped: unescaped, "Goha-Tibeb Zemen" came back as Roboto.
+        family, colon, rest = (name or "sans:bold").partition(":")
+        pattern = family.replace("-", "\\-") + colon + rest
         try:
-            found = subprocess.run(
-                ["fc-match", "-f", "%{file}", "sans:bold"],
+            answer = subprocess.run(
+                ["fc-match", "-f", "%{file}\n%{family}", pattern],
                 capture_output=True, text=True, timeout=CALL_TIMEOUT,
-                check=False).stdout.strip()
+                check=False).stdout
         except (OSError, subprocess.TimeoutExpired):
-            found = ""
-        if found and Path(found).is_file() and not set(found) & set("':\\,;[]"):
-            _text_font = f"fontfile='{found}'"
-    return _text_font
+            answer = ""
+        found, _, families = answer.strip().partition("\n")
+    if name and "/" not in name:
+        asked = name.split(":")[0].strip()
+        if not found:
+            die(f"{where}: a font is found by its name with fc-match, which "
+                f"gave no answer here. Give the font's file instead: "
+                f"font /path/to/font.ttf")
+        if asked.lower() not in [f.strip().lower() for f in families.split(",")]:
+            die(f"{where}: this machine has no font named {asked!r}; the "
+                f"nearest it offers is {families.split(',')[0]!r}.\n"
+                f"  `fc-list : family` lists the names it has.")
+    usable = bool(found) and Path(found).is_file() \
+        and not set(found) & set("':\\,;[]")
+    if name and not usable:
+        die(f"{where}: the font file {found} has a character in its path that "
+            f"ffmpeg's filters cannot carry. Copy it to a plainer path.")
+    _text_fonts[name] = f"fontfile='{found}'" if usable else "font='Sans'"
+    return _text_fonts[name]
+
+
+_box_can_be_sized = None
+
+
+def box_can_be_sized():
+    """Whether this ffmpeg's drawtext can make its box a size of our choosing
+    (`boxw`), which is how a band fades with its text: drawbox cannot change
+    with time. Present in ffmpeg 6.1.1 and 8.1.2, the two measured. An ffmpeg
+    without it draws its bands with drawbox, and a band that fades is
+    refused."""
+    global _box_can_be_sized  # noqa: PLW0603 - asked once per run
+    if _box_can_be_sized is None:
+        try:
+            told = subprocess.run(
+                ["ffmpeg", "-hide_banner", "-h", "filter=drawtext"],
+                capture_output=True, text=True, timeout=CALL_TIMEOUT,
+                check=False).stdout
+        except (OSError, subprocess.TimeoutExpired):
+            told = ""
+        _box_can_be_sized = bool(re.search(r"^\s+boxw\s", told, re.MULTILINE))
+    return _box_can_be_sized
 
 
 # A caption's band is this many times its text's height, and a card keeps this
@@ -1900,8 +1953,17 @@ SCENE_WORDS = {
     "clip": ("from", "to", "fade-in", "fade-out", "fade-at", "fade-length",
              "crossfade"),
     "card": ("background", "fade-in", "fade-out", "crossfade"),
-    "text": ("from", "to", "size"),
+    "text": ("from", "to", "size", "font", "colour", "outline", "shadow",
+             "fade-in", "fade-out", "band", "at"),
 }
+# The words of a text line whose value is not a number.
+TEXT_NAMES = ("font", "colour", "outline", "shadow", "band", "at")
+TEXT_PLACES = ("top", "middle", "bottom")
+COLOUR_RE = re.compile(r"#[0-9a-fA-F]{6}")
+# An outline is this share of its text's height thick, and a shadow falls this
+# share of it down and to the right.
+OUTLINE_SHARE = 1 / 16
+SHADOW_SHARE = 1 / 12
 
 
 class Scene:
@@ -1954,6 +2016,8 @@ def script_words(target, words, kind, where):
             target.background = value
         elif word == "fade-at":
             target.fade_at.append(script_number(value, where, word))
+        elif kind == "text" and word in TEXT_NAMES:
+            target[word] = value
         elif kind == "text":
             target[names.get(word, word)] = script_number(value, where, word)
         else:
@@ -2100,9 +2164,10 @@ def rate_text(rate):
     return str(round(rate)) if abs(rate - round(rate)) < 0.01 else f"{rate:.3f}"
 
 
-def text_size(textfile, fontsize):
+def text_size(textfile, fontsize, font=None, border=0):
     """(width, height) in pixels of the text in `textfile` at `fontsize`, as
-    ffmpeg will draw it; dies if this machine cannot draw text at all.
+    ffmpeg will draw it in `font` with an outline `border` pixels thick; dies
+    if this machine cannot draw text at all.
 
     Measured by drawing it: white on a black strip, then ffmpeg's own bounding
     box of what is not black. Nothing else knows the font's metrics, and there
@@ -2114,8 +2179,9 @@ def text_size(textfile, fontsize):
              "-f", "lavfi", "-i",
              f"color=black:s={fontsize * 80}x{fontsize * 3}:d=1",
              "-vf", f"drawtext=textfile='{textfile}':expansion=none:"
-                    f"{text_font()}:fontsize={fontsize}:fontcolor=white:x=0:y=0,"
-                    "bbox",
+                    f"{font or text_font()}:fontsize={fontsize}:"
+                    f"fontcolor=white:borderw={border}:bordercolor=white:"
+                    f"x={border}:y={border},bbox",
              "-frames:v", "1", "-f", "null", "-"],
             capture_output=True, text=True, timeout=CALL_TIMEOUT, check=False)
     except subprocess.TimeoutExpired:
@@ -2153,10 +2219,33 @@ def check_texts(scene, length, width, height, workdir):
         if not 0 < size <= 50:
             die(f"{where}: a text's size is a percentage of the frame's "
                 f"height, between 0 and 50, not {size:g}.")
+        for what in ("colour", "outline", "shadow"):
+            if what in text and not COLOUR_RE.fullmatch(text[what]):
+                die(f"{where}: a text's {what} is a colour written #RRGGBB, "
+                    f"like #FFD040, not {text[what]!r}.")
+        band = text.get("band", "on" if scene.kind == "clip" else "off")
+        if band not in ("on", "off"):
+            die(f"{where}: a text's band is on or off, not {band!r}.")
+        place = text.get("at", "bottom" if scene.kind == "clip"
+                         else "top" if scene.path is not None else "middle")
+        if place not in TEXT_PLACES:
+            die(f"{where}: a text sits at {', '.join(TEXT_PLACES[:-1])} or "
+                f"{TEXT_PLACES[-1]}, not at {place!r}.")
+        fades = text.get("fade_in", 0) + text.get("fade_out", 0)
+        if fades > min(finish, length) - begin + 1e-6:
+            die(f"{where}: the text {words!r} fades for {fades:g} seconds, "
+                f"and shows for only {min(finish, length) - begin:g}.")
+        if fades and band == "on" and not box_can_be_sized():
+            die(f"{where}: a band that fades with its text needs a newer "
+                f"ffmpeg than this one: its text filter has no `boxw`.\n"
+                f"  Give the text `band off`, or take its fade away.")
         fontsize = max(1, round(size / 100 * height))
+        font = text_font(text.get("font"), where)
+        border = max(1, round(fontsize * OUTLINE_SHARE)) \
+            if "outline" in text else 0
         textfile = workdir / f"text-{len(list(workdir.iterdir()))}.txt"
         textfile.write_text(words, encoding="utf-8")
-        wide, _ = text_size(textfile, fontsize)
+        wide, _ = text_size(textfile, fontsize, font, border)
         room = width - 2 * round(CARD_MARGIN * width)
         if wide > room:
             die(f"{where}: the text {words!r} is {wide} pixels wide at size "
@@ -2164,7 +2253,8 @@ def check_texts(scene, length, width, height, workdir):
                 f"or give it a smaller size: about "
                 f"{size * room / wide:.1f} would fit.")
         text.update(begin=begin, finish=min(finish, length), fontsize=fontsize,
-                    textfile=textfile)
+                    textfile=textfile, fontfile=font, border=border,
+                    banded=band == "on", place=place)
     ordered = sorted(scene.texts, key=lambda t: t["begin"])
     for before, after in itertools.pairwise(ordered):
         if after["begin"] < before["finish"] - 1e-6:
@@ -2184,7 +2274,7 @@ def check_scene(scene, width, height, rate, workdir):
     if scene.kind == "card":
         if scene.seconds <= 0:
             die(f"{where}: a card needs a length above zero.")
-        if not re.fullmatch(r"#[0-9a-fA-F]{6}", scene.background):
+        if not COLOUR_RE.fullmatch(scene.background):
             die(f"{where}: a background is a colour written #RRGGBB, like "
                 f"{CARD_BACKGROUND}, not {scene.background!r}.")
         if scene.path is not None:
@@ -2232,6 +2322,10 @@ def check_scene(scene, width, height, rate, workdir):
         die(f"{where}: its fades come to {scene.fade_in + scene.fade_out:g} "
             f"seconds, and the scene is only {length:.3f} long.")
     check_texts(scene, length, width, height, workdir)
+    if scene.kind == "card" and scene.path is not None \
+            and picture_room(scene, width, height)[2] < 2:
+        die(f"{where}: its texts leave no room for the picture between them. "
+            f"Give them a smaller size.")
     return length
 
 
@@ -2269,25 +2363,61 @@ def text_filters(scene, width, height):
     if scene.kind == "card":
         red, green, blue = (int(scene.background[i:i + 2], 16) for i in (1, 3, 5))
         dark = 0.299 * red + 0.587 * green + 0.114 * blue < 140
+    margin = round(CARD_MARGIN * height)
     filters = []
     for text in scene.texts:
-        when = f"enable='gte(t,{text['begin']:.4f})*lt(t,{text['finish']:.4f})'"
-        size = text["fontsize"]
-        if scene.kind == "clip":
+        begin, finish, size = text["begin"], text["finish"], text["fontsize"]
+        colour = ("0x" + text["colour"][1:] if "colour" in text
+                  else "white" if dark or text["banded"] else "0x101418")
+        draw = [f"drawtext=textfile='{text['textfile']}'", "expansion=none",
+                text["fontfile"], f"fontsize={size}", f"fontcolor={colour}"]
+        if text["border"]:
+            draw += [f"borderw={text['border']}",
+                     f"bordercolor=0x{text['outline'][1:]}"]
+        if "shadow" in text:
+            off = max(1, round(size * SHADOW_SHARE))
+            draw += [f"shadowx={off}", f"shadowy={off}",
+                     f"shadowcolor=0x{text['shadow'][1:]}"]
+        fade_in, fade_out = text.get("fade_in", 0), text.get("fade_out", 0)
+        when = f"enable='gte(t,{begin:.4f})*lt(t,{finish:.4f})'"
+        if text["banded"]:
             band = round(size * CAPTION_BAND)
-            top = height - band + (band - size) // 2
-            filters.append(f"drawbox=x=0:y={height - band}:w={width}:h={band}:"
-                           f"color=black@0.75:t=fill:{when}")
-        elif scene.path is not None:
-            top = round(CARD_MARGIN * height)
+            top = {"top": 0, "middle": (height - band) // 2,
+                   "bottom": height - band}[text["place"]]
+            if box_can_be_sized():
+                # The text's own box, which fades with it. An ffmpeg that
+                # cannot size that box gets drawbox, which cannot fade.
+                draw += ["box=1", "boxcolor=black@0.75", f"boxw={width}",
+                         f"boxh={band}", "text_align=C+M", "x=0", f"y={top}"]
+            else:
+                filters.append(f"drawbox=x=0:y={top}:w={width}:h={band}:"
+                               f"color=black@0.75:t=fill:{when}")
+                draw += ["x=(w-text_w)/2", f"y={top + (band - size) // 2}"]
         else:
-            top = (height - size) // 2
-        filters.append(
-            f"drawtext=textfile='{text['textfile']}':expansion=none:"
-            f"{text_font()}:fontsize={size}:"
-            f"fontcolor={'white' if dark else '0x101418'}:"
-            f"x=(w-text_w)/2:y={top}:{when}")
+            top = {"top": margin, "middle": (height - size) // 2,
+                   "bottom": height - margin - size}[text["place"]]
+            draw += ["x=(w-text_w)/2", f"y={top}"]
+        if fade_in or fade_out:
+            rise = f"(t-{begin:.4f})/{fade_in:.4f}" if fade_in else "1"
+            fall = f"({finish:.4f}-t)/{fade_out:.4f}" if fade_out else "1"
+            draw.append(f"alpha='min(1,min({rise},{fall}))'")
+        filters.append(":".join([*draw, when]))
     return filters
+
+
+def picture_room(scene, width, height):
+    """(top, width, height) of the room a card leaves its picture: the frame
+    inside its margins, less what a text at the top or the bottom takes. A
+    text in the middle takes none and lies over the picture."""
+    margin = round(CARD_MARGIN * height)
+    edge = {"top": margin, "bottom": margin}
+    for text in scene.texts:
+        if text["place"] != "middle":
+            size = text["fontsize"]
+            taken = round(size * CAPTION_BAND) if text["banded"] \
+                else margin + round(size * 1.3)
+            edge[text["place"]] = max(edge[text["place"]], taken + margin // 2)
+    return edge["top"], width - 2 * margin, height - edge["top"] - edge["bottom"]
 
 
 def fade_filters(scene, length):
@@ -2338,11 +2468,7 @@ def scene_graph(scene, length, number, first_input, width, height, rate):
     # animated .png read that way, waiting behind another scene, is what
     # filled the memory.
     inputs += ["-i", str(scene.path)]
-    margin = round(CARD_MARGIN * height)
-    top = margin
-    if scene.texts:
-        top += round(max(t["fontsize"] for t in scene.texts) * 1.3) + margin // 2
-    room_w, room_h = width - 2 * margin, height - top - margin
+    top, room_w, room_h = picture_room(scene, width, height)
     return inputs, [
         # Fitted into the room left for it, keeping its shape, never enlarged.
         f"[{first_input + 1}:v]loop=loop=-1:size={scene.frames}:start=0,"

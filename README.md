@@ -965,7 +965,10 @@ their frames:
 a title card, a caption on its dark band over a recording, and a picture card
 under its title, all in bold type that reads at a glance. A film of four
 scenes, one with an animated picture and a crossfade, came out at its planned
-length to the frame, 104 frames, using 116 MB of memory.
+length to the frame, 104 frames, using 116 MB of memory. Styled text verified
+the same day, by looking at frames and by breaking each part of the code in
+turn to see its check fail: a colour, an outline, a shadow, a named font, a
+band that fades with its text, and each of the three places.
 
 `--settle` verified against a window that is uniformly black for five seconds
 and then draws: without it the recording is three seconds of black and the

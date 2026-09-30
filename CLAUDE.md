@@ -360,6 +360,17 @@ stop agreeing.
 - **The bold font is passed as a file.** drawtext's `font` option takes a
   fontconfig pattern and ignores the weight in it: `Sans:bold` drew the regular
   face, measured by width. `text_font` asks `fc-match` for the file.
+- **`fc-match` never says no, so a named font is checked by family.** Asked
+  for a font the machine lacks it answers with another: `Noto Sans Mono` came
+  back as Liberation Mono. `text_font` compares the family it answers with the
+  one asked for and refuses a different one. Do not drop that comparison. A
+  hyphen in a family's name is escaped first: unescaped, fontconfig reads it
+  as the start of a size.
+- **A text's band is the text's own box, and that is how it fades.**
+  `drawbox` cannot change with time; drawtext's `boxw` box follows the text's
+  `alpha`, as do its outline and shadow (measured on ffmpeg 6.1.1 and 8.1.2).
+  An ffmpeg without `boxw` gets `drawbox`, and a fading band is refused there.
+  No ffmpeg older than 6.1.1 has been measured.
 - **Text is measured by drawing it.** `text_size` draws the line on a black
   strip and reads ffmpeg's `bbox`. The refusal of a too-wide line rests on it,
   and so does `demoreel check`'s text line.

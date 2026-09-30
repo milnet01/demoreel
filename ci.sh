@@ -295,6 +295,27 @@ finishing_checks() {
     card() { local out=$1; shift; run card -o "$ft/out/$out" -s 320x240 -r 10 "$@"; expect_ok "card $*"; }
     # Line N of the report in $lines.
     l() { printf '%s\n' "$lines" | sed -n "$1p"; }
+    # A script on standard input, made into out/NAME at 320x240 and 10 a second
+    # (a script with a clip in it takes the clip's shape instead).
+    ed() { local out=$1; cat > "$ft/sc.txt"; run edit sc.txt -o "$ft/out/$out" -s 320x240 -r 10; }
+    ed_ok() { ed "$@"; expect_ok "edit $1 ($(tr '\n' '|' < "$ft/sc.txt"))"; }
+    # How many pixels of frame IDX match SPEC (see px.py `find`); the rest of the
+    # words are the region, as fractions of the frame.
+    n_of() { px find "$@" | awk '{ print $1 }'; }
+    # A comparison of two numbers, spelled out when it fails.
+    assert_cmp() {  # what a op b
+        awk "BEGIN { exit !($2 $3 $4) }" || fail "$1
+    expected: $2 $3 $4
+    actual:   $2 = $(awk "BEGIN { print $2 }" 2>/dev/null), wanted $3 $4"
+    }
+    # Refused, the message names line N, and nothing was left at -o.
+    refused_naming_line() {  # what out line
+        expect_refused "$1"
+        grep -qiE "line[^0-9]{0,3}$3([^0-9.]|\$)" "$fe" || fail "$1: the message should name line $3
+    expected: 'line $3' on stderr
+    actual:   $(cat "$fe")"
+        assert_absent "$1" "$ft/out/$2"
+    }
     # Each check below runs on its own, so one failing does not hide the next:
     # a check that fails ends only itself, and the run fails at the end.
     fin_failed=0
@@ -315,7 +336,7 @@ finishing_checks() {
 import subprocess, sys
 
 REGIONS = {"full": (0, 1), "top": (0, .7), "bottom": (.8, 1),
-           "centre": (.35, .65), "topband": (0, .3)}
+           "centre": (.35, .65), "topband": (0, .3), "lower": (.6, 1)}
 
 
 def run(cmd):
@@ -430,6 +451,38 @@ def main(argv):
         b = cut(one(argv[3], int(argv[4]), w, h), w, h, argv[5])
         print(sum(1 for i in range(0, len(a), 3)
                   if min(a[i:i + 3]) > 220 and min(b[i:i + 3]) <= 220))
+    elif cmd == "find":      # FILE IDX SPEC [X0 Y0 X1 Y1]: count and box of matching pixels
+        # SPEC is #RRGGBB:TOLERANCE (each channel within it), dark:LUMA or
+        # light:LUMA. The box is in fractions of the frame; the region likewise.
+        f, idx, spec = argv[1], int(argv[2]), argv[3]
+        w, h = size(f)
+        d = one(f, idx, w, h)
+        rx0, ry0, rx1, ry1 = (float(v) for v in argv[4:8]) if len(argv) > 4 else (0, 0, 1, 1)
+        kind, _, val = spec.partition(":")
+        if kind.startswith("#"):
+            want = tuple(int(kind[i:i + 2], 16) for i in (1, 3, 5))
+            tol = float(val or 60)
+
+            def hit(p):
+                return max(abs(p[i] - want[i]) for i in range(3)) <= tol
+        else:
+            lim = float(val)
+
+            def hit(p):
+                y = 0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2]
+                return y < lim if kind == "dark" else y > lim
+        xs, ys = [], []
+        for y in range(int(ry0 * h), int(ry1 * h)):
+            for x in range(int(rx0 * w), int(rx1 * w)):
+                o = (y * w + x) * 3
+                if hit(d[o:o + 3]):
+                    xs.append(x)
+                    ys.append(y)
+        if not xs:
+            print(0)
+        else:
+            print(len(xs), min(xs) / w, min(ys) / h, (max(xs) + 1) / w,
+                  (max(ys) + 1) / h)
     elif cmd == "atoms":     # FILE: top-level boxes in order
         names = []
         with open(argv[1], "rb") as fh:
@@ -473,6 +526,8 @@ FINPY
     ff -f lavfi -i "testsrc2=s=640x240:r=10:d=3" $x264 "$ft/W.mp4"
     ff -f lavfi -i "testsrc2=s=320x480:r=10:d=3" $x264 "$ft/T.mp4"
     ff -f lavfi -i "testsrc=s=320x240:r=3:d=3" -r 30 $x264 "$ft/S.mp4"
+    ff -f lavfi -i "color=c=#808080:s=320x240:r=10:d=4" $x264 "$ft/G.mp4"
+    ff -f lavfi -i "color=c=#00C000:s=800x800" -frames:v 1 "$ft/sq.png"
     printf 'this is not a video\n' > "$ft/bad.mp4"
     # Pictures for cards.
     ff -f lavfi -i "testsrc2=s=100x80:r=10:d=1" -vf "select=eq(n\\,3)" -frames:v 1 "$ft/small.png"
@@ -1326,6 +1381,515 @@ card 1
     assert_eq "check: exit status with no way to draw text is the one it has with it" "$rc_plain" "$rc_nodraw"
     echo "check reported the finishing commands and their text; the exit status stayed $rc_plain"
     }
+    fin_s29() {
+    # README: "`colour #FFD040` sets the text's colour, written `#RRGGBB`."
+    # "Text on a band is white unless `colour` says otherwise." Counted in
+    # pixels near the colour, never by comparing encoded frames.
+    ed_ok k1.mp4 <<'E'
+card 2
+  text "Hello" size 20
+E
+    ed_ok k2.mp4 <<'E'
+card 2
+  text "Hello" size 20 colour #FFD040
+E
+    ed_ok k3.mp4 <<'E'
+card 2
+  text "Hello" size 20 colour #20A0FF
+E
+    assert_cmp "control: a card's text with no colour is white (pixels near white)" "$(n_of "$ft/out/k1.mp4" 5 '#FFFFFF:60')" '>=' 400
+    assert_cmp "control: a card's text with no colour has no #FFD040 in it" "$(n_of "$ft/out/k1.mp4" 5 '#FFD040:50')" '<=' 20
+    assert_cmp "colour #FFD040: pixels near #FFD040" "$(n_of "$ft/out/k2.mp4" 5 '#FFD040:50')" '>=' 400
+    assert_cmp "colour #FFD040: pixels near white (the text is not white)" "$(n_of "$ft/out/k2.mp4" 5 '#FFFFFF:60')" '<=' 20
+    assert_cmp "colour #20A0FF: pixels near #20A0FF" "$(n_of "$ft/out/k3.mp4" 5 '#20A0FF:50')" '>=' 400
+    assert_cmp "colour #20A0FF: pixels near #FFD040 (the colour asked for, not the last one)" "$(n_of "$ft/out/k3.mp4" 5 '#FFD040:50')" '<=' 20
+    # The same on a clip, where the text sits on the band.
+    ed_ok k4.mp4 <<'E'
+clip G.mp4
+  text "Hello" size 20
+E
+    ed_ok k5.mp4 <<'E'
+clip G.mp4
+  text "Hello" size 20 colour #FFD040
+E
+    assert_cmp "clip text with no colour: white pixels in the lower part" "$(n_of "$ft/out/k4.mp4" 5 '#FFFFFF:60' 0 .6 1 1)" '>=' 400
+    assert_cmp "clip text with no colour: no #FFD040 pixels" "$(n_of "$ft/out/k4.mp4" 5 '#FFD040:50' 0 .6 1 1)" '<=' 20
+    assert_cmp "clip text, colour #FFD040: pixels near #FFD040 in the lower part" "$(n_of "$ft/out/k5.mp4" 5 '#FFD040:50' 0 .6 1 1)" '>=' 400
+    assert_cmp "clip text, colour #FFD040: white pixels in the lower part" "$(n_of "$ft/out/k5.mp4" 5 '#FFFFFF:60' 0 .6 1 1)" '<=' 20
+    # "Text on a band is white unless `colour` says otherwise", on a light card,
+    # where a dark text would be the default without a band.
+    ed_ok k6.mp4 <<'E'
+card 2 background #f0f0f0
+  text "Hello" size 20 band on
+E
+    ed_ok k7.mp4 <<'E'
+card 2 background #f0f0f0
+  text "Hello" size 20 band on colour #FF2020
+E
+    read -r nd _ dy0 _ dy1 <<<"$(px find "$ft/out/k6.mp4" 5 dark:100)"
+    assert_cmp "band on, a light card: a dark band is there (dark pixels)" "${nd:-0}" '>=' 2000
+    in0=$(awk -v a="$dy0" 'BEGIN { print a + 0.03 }'); in1=$(awk -v a="$dy1" 'BEGIN { print a - 0.03 }')
+    assert_cmp "text on a band, no colour, on a light card: white pixels inside the band" "$(n_of "$ft/out/k6.mp4" 5 '#FFFFFF:40' 0 "$in0" 1 "$in1")" '>=' 300
+    assert_cmp "text on a band, colour #FF2020: red pixels inside the band" "$(n_of "$ft/out/k7.mp4" 5 '#FF2020:60' 0 "$in0" 1 "$in1")" '>=' 300
+    assert_cmp "text on a band, colour #FF2020: white pixels inside the band" "$(n_of "$ft/out/k7.mp4" 5 '#FFFFFF:40' 0 "$in0" 1 "$in1")" '<=' 20
+    echo "colour was the text's colour, on a card and on a clip, and white on a band without it"
+
+    }
+    fin_s30() {
+    # README: "`outline #000000` draws a line of that colour round each letter,
+    # and `shadow #000000` a shadow of that colour below and to the right of it."
+    ed_ok o1.mp4 <<'E'
+card 2
+  text "Hello" size 20
+E
+    ed_ok o2.mp4 <<'E'
+card 2
+  text "Hello" size 20 outline #FF0000
+E
+    ed_ok o3.mp4 <<'E'
+card 2
+  text "Hello" size 20 shadow #00FF00
+E
+    read -r _ wx0 wy0 wx1 wy1 <<<"$(px find "$ft/out/o2.mp4" 5 '#FFFFFF:60')"
+    assert_cmp "outline: the text itself is still there (white pixels)" "$(n_of "$ft/out/o2.mp4" 5 '#FFFFFF:60')" '>=' 400
+    assert_cmp "control: no outline, no red pixels" "$(n_of "$ft/out/o1.mp4" 5 '#FF0000:70')" '<=' 20
+    read -r rn rx0 ry0 rx1 ry1 <<<"$(px find "$ft/out/o2.mp4" 5 '#FF0000:70')"
+    assert_cmp "outline #FF0000: red pixels" "${rn:-0}" '>=' 400
+    assert_cmp "outline: reaches left of the text (red left edge, text left edge)" "${rx0:-1}" '<' "$wx0"
+    assert_cmp "outline: reaches above the text (red top edge, text top edge)" "${ry0:-1}" '<' "$wy0"
+    assert_cmp "outline: reaches right of the text (red right edge, text right edge)" "${rx1:-0}" '>' "$wx1"
+    assert_cmp "outline: reaches below the text (red bottom edge, text bottom edge)" "${ry1:-0}" '>' "$wy1"
+    read -r _ wx0 wy0 wx1 wy1 <<<"$(px find "$ft/out/o3.mp4" 5 '#FFFFFF:60')"
+    assert_cmp "control: no shadow, no green pixels" "$(n_of "$ft/out/o1.mp4" 5 '#00FF00:90')" '<=' 20
+    read -r gn gx0 gy0 gx1 gy1 <<<"$(px find "$ft/out/o3.mp4" 5 '#00FF00:90')"
+    assert_cmp "shadow #00FF00: green pixels" "${gn:-0}" '>=' 300
+    assert_cmp "shadow: reaches right of the text (green right edge, text right edge)" "${gx1:-0}" '>' "$wx1"
+    assert_cmp "shadow: reaches below the text (green bottom edge, text bottom edge)" "${gy1:-0}" '>' "$wy1"
+    # Below and to the right, not round: it starts no further left or higher
+    # than the text does, give or take a pixel or two.
+    assert_cmp "shadow: does not reach left of the text (green left edge, text left edge less 0.01)" "${gx0:-0}" '>=' "$(awk -v a="$wx0" 'BEGIN { print a - 0.01 }')"
+    assert_cmp "shadow: does not reach above the text (green top edge, text top edge less 0.01)" "${gy0:-0}" '>=' "$(awk -v a="$wy0" 'BEGIN { print a - 0.01 }')"
+    echo "outline surrounded the text and the shadow fell below and to its right"
+
+    }
+    fin_s31() {
+    # README: "Text wider than the frame less a twentieth of its width at each
+    # side is refused, its outline counted." The widest size that fits is found
+    # by asking, so the check does not depend on which font the machine has.
+    # The control is the same line at that size, accepted without the outline.
+    fits() {  # size [outline words]: run rc is 0 when the line is accepted
+        printf 'card 1\n  text "Hello world" size %s %s\n' "$1" "${2:-}" > "$ft/wf.txt"
+        run edit wf.txt -o "$ft/out/wf.mp4" -s 320x240 -r 10
+    }
+    lo=5; hi=60
+    fits $lo; expect_ok "control: 'Hello world' at size $lo"
+    fits $hi; [ "$rc" -ne 0 ] || fail "size $hi should be too wide for 320 pixels, but it was accepted"
+    for _ in 1 2 3 4 5 6 7 8 9; do
+        mid=$(awk -v a="$lo" -v b="$hi" 'BEGIN { printf "%.3f", (a + b) / 2 }')
+        fits "$mid"
+        if [ "$rc" -eq 0 ]; then lo=$mid; else hi=$mid; fi
+    done
+    rm -f "$ft/out/wf.mp4"
+    fits "$lo"
+    expect_ok "control: the widest size that fits ($lo), no outline"
+    rm -f "$ft/out/wf.mp4"
+    fits "$lo" 'outline #000000'
+    expect_refused "the same line at size $lo with an outline, which makes it too wide"
+    grep -qiE 'line[^0-9]{0,3}2([^0-9.]|$)' "$fe" || fail "the outline refusal should name line 2
+    actual: $(cat "$fe")"
+    assert_absent "outline made the text too wide" "$ft/out/wf.mp4"
+    fits "$(awk -v a="$lo" 'BEGIN { print a - 3 }')" 'outline #000000'
+    expect_ok "control: an outline on a size that has room for it"
+    echo "an outline counted toward the width: $lo fits without one and is refused with one"
+
+    }
+    fin_s32() {
+    # README: "`fade-in 0.5` brings the text in over half a second from its
+    # `from`, and `fade-out 0.5` takes it away over the half second before its
+    # `to`." A clip of one flat grey, the text from 0.5 to 3.5 with a second of
+    # fade at each end, so frame N is at N/10. "Fainter" is counted as white
+    # pixels: only a text at nearly full strength has any.
+    ed_ok fd1.mp4 <<'E'
+clip G.mp4
+  text "Hello" size 15 from 0.5 to 3.5 band off
+E
+    ed_ok fd2.mp4 <<'E'
+clip G.mp4
+  text "Hello" size 15 from 0.5 to 3.5 fade-in 1 fade-out 1 band off
+E
+    assert_cmp "control: with no fade the text is at full strength on its first frame (frame 5)" "$(n_of "$ft/out/fd1.mp4" 5 light:200 0 .6 1 1)" '>=' 300
+    assert_cmp "fade-in 1: text fainter on its first frame (frame 5, white pixels)" "$(n_of "$ft/out/fd2.mp4" 5 light:200 0 .6 1 1)" '<=' 20
+    assert_cmp "fade-in 1: text still faint at 0.3 s in (frame 8)" "$(n_of "$ft/out/fd2.mp4" 8 light:200 0 .6 1 1)" '<=' 20
+    assert_cmp "fade-in 1: text at full strength just after the fade (frame 16)" "$(n_of "$ft/out/fd2.mp4" 16 light:200 0 .6 1 1)" '>=' 300
+    assert_cmp "fade-in and fade-out: full strength in the middle (frame 20)" "$(n_of "$ft/out/fd2.mp4" 20 light:200 0 .6 1 1)" '>=' 300
+    assert_cmp "fade-out 1: text still at full strength just before the fade (frame 24)" "$(n_of "$ft/out/fd2.mp4" 24 light:200 0 .6 1 1)" '>=' 300
+    assert_cmp "fade-out 1: text faint 0.3 s before its end (frame 32)" "$(n_of "$ft/out/fd2.mp4" 32 light:200 0 .6 1 1)" '<=' 20
+    assert_cmp "fade-out 1: text faint on its last frame (frame 34)" "$(n_of "$ft/out/fd2.mp4" 34 light:200 0 .6 1 1)" '<=' 20
+    # "Its band fades with it, which needs an ffmpeg whose text filter can size
+    # its own box (`boxw` in `ffmpeg -h filter=drawtext`). On one that cannot,
+    # a text that fades with its band on is refused."
+    printf 'clip G.mp4\n  text "Hello" size 15 from 0.5 to 3.5 fade-in 1 fade-out 1\n' > "$ft/fd3.txt"
+    run edit fd3.txt -o "$ft/out/fd3.mp4" -s 320x240 -r 10
+    dt_help=$(ffmpeg -hide_banner -h filter=drawtext 2>&1 || true)
+    if grep -q boxw <<<"$dt_help"; then
+        expect_ok "edit: a fading text on a band (this ffmpeg has boxw)"
+        assert_cmp "control: full-strength band under a full-strength text (frame 20, dark pixels)" "$(n_of "$ft/out/fd3.mp4" 20 dark:100 0 .6 1 1)" '>=' 2000
+        assert_cmp "fade-in: the band is faint with the text (frame 6, dark pixels)" "$(n_of "$ft/out/fd3.mp4" 6 dark:100 0 .6 1 1)" '<=' 20
+        assert_cmp "fade-out: the band is faint with the text (frame 34, dark pixels)" "$(n_of "$ft/out/fd3.mp4" 34 dark:100 0 .6 1 1)" '<=' 20
+        echo "the band faded with the text"
+    else
+        refused_naming_line "a fading text on a band, with an ffmpeg that has no boxw" fd3.mp4 2
+        echo "this ffmpeg has no boxw: the fading text on a band was refused, as README says"
+    fi
+    # The same on a card, whose text counts from the card's start.
+    ed_ok fd4.mp4 <<'E'
+card 2
+  text "Hello" size 20 fade-in 0.8 fade-out 0.8
+E
+    assert_cmp "card, fade-in 0.8: faint on the first frames (frame 1)" "$(n_of "$ft/out/fd4.mp4" 1 light:200)" '<=' 20
+    assert_cmp "card, fade-in 0.8 fade-out 0.8: full strength in the middle (frame 10)" "$(n_of "$ft/out/fd4.mp4" 10 light:200)" '>=' 300
+    assert_cmp "card, fade-out 0.8: faint on the last frames (frame 19)" "$(n_of "$ft/out/fd4.mp4" 19 light:200)" '<=' 20
+    echo "the text was faint at each end of its window and full in the middle"
+
+    }
+    fin_s33() {
+    # README: "The two together may not be longer than the text shows."
+    ed_ok ft0.mp4 <<'E'
+clip G.mp4
+  text "Hello" from 1 to 2 fade-in 0.4 fade-out 0.4 band off
+E
+    ed ft1.mp4 <<'E'
+clip G.mp4
+  text "Hello" from 1 to 2 fade-in 0.7 fade-out 0.7 band off
+E
+    refused_naming_line "fades of 0.7 + 0.7 on a text that shows for 1" ft1.mp4 2
+    ed ft2.mp4 <<'E'
+clip G.mp4
+  text "Hello" from 1 to 2 fade-in 1.5 band off
+E
+    refused_naming_line "a fade-in of 1.5 on a text that shows for 1" ft2.mp4 2
+    ed ft3.mp4 <<'E'
+card 2
+  text "Hello" fade-in 1.5 fade-out 1 band off
+E
+    refused_naming_line "fades of 1.5 + 1 on a card text that shows for the card's 2" ft3.mp4 2
+    ed_ok ft4.mp4 <<'E'
+card 2
+  text "Hello" fade-in 1.5 fade-out 0.4 band off
+E
+    echo "fades longer than the text shows were refused; shorter ones were not"
+
+    }
+    fin_s34() {
+    # README: "`band off` takes the dark band away, and `band on` gives a card's
+    # text one." "On a clip, the text sits on a dark band across the bottom of
+    # the picture". A flat grey clip and a flat grey card, so a band is the dark
+    # pixels and nothing else is.
+    ed_ok b1.mp4 <<'E'
+clip G.mp4
+  text "Hello" size 15
+E
+    ed_ok b2.mp4 <<'E'
+clip G.mp4
+  text "Hello" size 15 band off
+E
+    assert_cmp "control: a clip's text has a dark band by default (dark pixels)" "$(n_of "$ft/out/b1.mp4" 5 dark:100)" '>=' 2000
+    assert_cmp "band off on a clip: no dark pixels" "$(n_of "$ft/out/b2.mp4" 5 dark:100)" '<=' 20
+    assert_cmp "band off on a clip: the text is still there (white pixels)" "$(n_of "$ft/out/b2.mp4" 5 light:200)" '>=' 300
+    ed_ok b3.mp4 <<'E'
+card 2 background #808080
+  text "Hello" size 15
+E
+    ed_ok b4.mp4 <<'E'
+card 2 background #808080
+  text "Hello" size 15 band on
+E
+    ed_ok b5.mp4 <<'E'
+card 2 background #808080
+  text "Hello" size 15 band off
+E
+    assert_cmp "control: a card's text has no band by default (dark pixels)" "$(n_of "$ft/out/b3.mp4" 5 dark:100)" '<=' 20
+    assert_cmp "band on for a card: a dark band across the frame (dark pixels)" "$(n_of "$ft/out/b4.mp4" 5 dark:100)" '>=' 2000
+    assert_cmp "band on for a card: the band reaches the frame's left edge (dark pixels in the leftmost 2%)" "$(n_of "$ft/out/b4.mp4" 5 dark:100 0 0 .02 1)" '>=' 20
+    assert_cmp "band on for a card: the band reaches the frame's right edge (dark pixels in the rightmost 2%)" "$(n_of "$ft/out/b4.mp4" 5 dark:100 .98 0 1 1)" '>=' 20
+    assert_cmp "band off for a card: no dark pixels" "$(n_of "$ft/out/b5.mp4" 5 dark:100)" '<=' 20
+    echo "band off took the band away and band on gave a card's text one"
+
+    }
+    fin_s35() {
+    # README: "`at top`, `at middle` or `at bottom` says where it sits. With a
+    # band, the band runs across the frame there, against the edge at the top or
+    # bottom. Without one, the text sits a twentieth of the frame's height in
+    # from that edge." Sizes are read off the drawn pixels, to within a few
+    # percent, because the letters' own spacing differs from font to font.
+    for at in top middle bottom; do
+        ed_ok "p-$at.mp4" <<E
+card 2
+  text "Hello" size 10 at $at band off
+E
+        read -r n x0 y0 x1 y1 <<<"$(px find "$ft/out/p-$at.mp4" 5 '#FFFFFF:60')"
+        assert_cmp "at $at, no band: the text is drawn (white pixels)" "${n:-0}" '>=' 200
+        eval "ty0_$at=$y0 ty1_$at=$y1"
+    done
+    assert_cmp "at top, no band: the top of the text is about a twentieth of the height in" "$ty0_top" '>=' 0.03
+    assert_cmp "at top, no band: the top of the text is about a twentieth of the height in" "$ty0_top" '<=' 0.12
+    assert_cmp "at middle, no band: the text's centre is the frame's" "($ty0_middle + $ty1_middle) / 2" '>=' 0.44
+    assert_cmp "at middle, no band: the text's centre is the frame's" "($ty0_middle + $ty1_middle) / 2" '<=' 0.56
+    assert_cmp "at bottom, no band: the bottom of the text is about a twentieth of the height in" "$ty1_bottom" '<=' 0.96
+    assert_cmp "at bottom, no band: the bottom of the text is about a twentieth of the height in" "$ty1_bottom" '>=' 0.88
+    # With a band: a flat grey card, so the band is the dark pixels.
+    for at in top middle bottom; do
+        ed_ok "q-$at.mp4" <<E
+card 2 background #808080
+  text "Hello" size 10 at $at band on
+E
+        read -r n x0 y0 x1 y1 <<<"$(px find "$ft/out/q-$at.mp4" 5 dark:100)"
+        assert_cmp "at $at, band: a band is there (dark pixels)" "${n:-0}" '>=' 2000
+        assert_cmp "at $at, band: it runs across the frame (left edge)" "$x0" '<=' 0.01
+        assert_cmp "at $at, band: it runs across the frame (right edge)" "$x1" '>=' 0.99
+        read -r tn tx0 ty0 tx1 ty1 <<<"$(px find "$ft/out/q-$at.mp4" 5 light:200)"
+        assert_cmp "at $at, band: the text is drawn (white pixels)" "${tn:-0}" '>=' 200
+        assert_cmp "at $at, band: the text is inside the band (its top is not above the band's)" "${ty0:-0}" '>=' "$y0"
+        assert_cmp "at $at, band: the text is inside the band (its bottom is not below the band's)" "${ty1:-1}" '<=' "$y1"
+        case $at in
+            top)    assert_cmp "at top, band: against the top edge" "$y0" '<=' 0.005
+                    assert_cmp "at top, band: not against the bottom edge" "$y1" '<' 0.5 ;;
+            bottom) assert_cmp "at bottom, band: against the bottom edge" "$y1" '>=' 0.995
+                    assert_cmp "at bottom, band: not against the top edge" "$y0" '>' 0.5 ;;
+            middle) assert_cmp "at middle, band: clear of the top edge" "$y0" '>' 0.15
+                    assert_cmp "at middle, band: clear of the bottom edge" "$y1" '<' 0.85 ;;
+        esac
+    done
+    # On a clip the band is at the bottom unless `at` says otherwise.
+    ed_ok q-clip1.mp4 <<'E'
+clip G.mp4
+  text "Hello" size 10
+E
+    ed_ok q-clip2.mp4 <<'E'
+clip G.mp4
+  text "Hello" size 10 at top
+E
+    read -r _ _ y0 _ y1 <<<"$(px find "$ft/out/q-clip1.mp4" 5 dark:100)"
+    assert_cmp "a clip's text with no at: band against the bottom edge" "${y1:-0}" '>=' 0.995
+    assert_cmp "a clip's text with no at: band not against the top edge" "${y0:-0}" '>' 0.5
+    read -r _ _ y0 _ y1 <<<"$(px find "$ft/out/q-clip2.mp4" 5 dark:100)"
+    assert_cmp "a clip's text, at top: band against the top edge" "${y0:-1}" '<=' 0.005
+    assert_cmp "a clip's text, at top: band not against the bottom edge" "${y1:-0}" '<' 0.5
+    echo "the text and its band sat at the top, middle and bottom as asked"
+
+    }
+    fin_s36() {
+    # README: "On a card, the picture is fitted into the room left between a text
+    # at the top and a text at the bottom, and a text in the middle lies over
+    # it." sq.png is a green square, larger than the card, so it fills the
+    # card's height unless a text takes some of it. The texts are white and the
+    # picture green, so the two are told apart by colour.
+    ed_ok pf0.mp4 <<'E'
+card 2 sq.png
+E
+    read -r _ _ full0 _ full1 <<<"$(px find "$ft/out/pf0.mp4" 5 '#00C000:60')"
+    assert_cmp "control: a picture with no text is there and tall (its height)" "${full1:-0} - ${full0:-0}" '>=' 0.8
+    ed_ok pf1.mp4 <<'E'
+card 2 sq.png
+  text "Hello" size 12 at top band off
+E
+    read -r _ _ ty0 _ ty1 <<<"$(px find "$ft/out/pf1.mp4" 5 '#FFFFFF:60')"
+    read -r _ _ gy0 _ gy1 <<<"$(px find "$ft/out/pf1.mp4" 5 '#00C000:60')"
+    assert_cmp "a text at the top: the text is drawn" "${ty1:-0}" '>' 0
+    assert_cmp "a text at the top: the picture starts below the text (picture top, text bottom)" "${gy0:-0}" '>=' "${ty1:-1}"
+    assert_cmp "a text at the top: the picture is smaller than it is with no text (its height)" "${gy1:-1} - ${gy0:-0}" '<' "$full1 - $full0 - 0.1"
+    ed_ok pf2.mp4 <<'E'
+card 2 sq.png
+  text "Top" size 12 at top band off from 0 to 1
+  text "Bottom" size 12 at bottom band off from 1 to 2
+E
+    read -r _ _ ty0 _ ty1 <<<"$(px find "$ft/out/pf2.mp4" 5 '#FFFFFF:60')"
+    read -r _ _ gy0 _ gy1 <<<"$(px find "$ft/out/pf2.mp4" 5 '#00C000:60')"
+    assert_cmp "top and bottom texts, while the top one shows: the picture starts below it (picture top, text bottom)" "${gy0:-0}" '>=' "${ty1:-1}"
+    assert_cmp "top and bottom texts, while the top one shows: the picture is smaller than the card's height" "${gy1:-1} - ${gy0:-0}" '<' "$full1 - $full0 - 0.1"
+    read -r _ _ by0 _ by1 <<<"$(px find "$ft/out/pf2.mp4" 15 '#FFFFFF:60')"
+    read -r _ _ gy0 _ gy1 <<<"$(px find "$ft/out/pf2.mp4" 15 '#00C000:60')"
+    assert_cmp "top and bottom texts, while the bottom one shows: the picture ends above it (picture bottom, text top)" "${gy1:-1}" '<=' "${by0:-0}"
+    assert_cmp "top and bottom texts, while the bottom one shows: the picture is smaller than the card's height" "${gy1:-1} - ${gy0:-0}" '<' "$full1 - $full0 - 0.1"
+    ed_ok pf3.mp4 <<'E'
+card 2 sq.png
+  text "Hello" size 12 at middle band off
+E
+    read -r wn _ ty0 _ ty1 <<<"$(px find "$ft/out/pf3.mp4" 5 '#FFFFFF:60')"
+    read -r _ _ gy0 _ gy1 <<<"$(px find "$ft/out/pf3.mp4" 5 '#00C000:60')"
+    assert_cmp "a text in the middle: the picture keeps the height it has with no text (top edge)" "${gy0:-1}" '<=' "$full0 + 0.02"
+    assert_cmp "a text in the middle: the picture keeps the height it has with no text (bottom edge)" "${gy1:-0}" '>=' "$full1 - 0.02"
+    assert_cmp "a text in the middle lies over the picture (white pixels)" "${wn:-0}" '>=' 200
+    assert_cmp "a text in the middle lies over the picture (text top, picture top)" "${ty0:-0}" '>' "${gy0:-1}"
+    assert_cmp "a text in the middle lies over the picture (text bottom, picture bottom)" "${ty1:-1}" '<' "${gy1:-0}"
+    # With a band the room left is what the band leaves: a flat grey card, so
+    # the band is the dark pixels down the frame's left edge, clear of the picture.
+    ed_ok pf4.mp4 <<'E'
+card 2 sq.png background #808080
+  text "Hello" size 12 at top band on
+E
+    read -r _ _ _ _ by1 <<<"$(px find "$ft/out/pf4.mp4" 5 dark:100 0 0 .08 1)"
+    read -r _ _ gy0 _ _ <<<"$(px find "$ft/out/pf4.mp4" 5 '#00C000:60')"
+    assert_cmp "a text at the top with a band: the picture starts below the band (picture top, band bottom)" "${gy0:-0}" '>=' "${by1:-1}"
+    echo "the picture was fitted between top and bottom texts, and left whole under a middle one"
+
+    }
+    fin_s37() {
+    # README: "`font "DejaVu Serif"` draws it in that font family, by the name
+    # `fc-list` gives it". The families are asked of the machine, never named
+    # here: the gate also runs where only DejaVu is installed. Two families
+    # that draw are found, and they have to differ from the default and from
+    # each other; the same family twice has to agree, or the difference means
+    # nothing.
+    if ! command -v fc-match >/dev/null || ! command -v fc-list >/dev/null; then
+        # README: "on a machine without that program ... a font asked for by
+        # name is refused."
+        ed ff0.mp4 <<'E'
+card 2
+  text "Hello" font "DejaVu Serif"
+E
+        refused_naming_line "a font asked for by name on a machine without fc-match" ff0.mp4 2
+        echo "no fc-match here: a font asked for by name was refused, as README says"
+        return 0
+    fi
+    drawn() {  # out family: a card in that family; sets rc
+        ed "$1" <<E
+card 2
+  text "Hamburgefonts" size 12 font "$2"
+E
+    }
+    all=$(fc-list : family | sed 's/,.*//' | sort -u \
+            | grep -viE 'symbol|emoji|math|dingbat|outline|console|syriac|estrangelo|serto|special|ocr|cursor|chancery|gallant' || true)
+    # Serifs and monospaces first: they look least like the default.
+    fams=$( { printf '%s\n' "$all" | grep -iE 'serif|mono' || true
+              printf '%s\n' "$all" | grep -viE 'serif|mono' || true; } | head -14)
+    ed_ok fa0.mp4 <<'E'
+card 2
+  text "Hamburgefonts" size 12
+E
+    found=""; nfound=0
+    while IFS= read -r fam; do
+        [ -n "$fam" ] || continue
+        drawn "fa-$nfound.mp4" "$fam"
+        [ "$rc" -eq 0 ] || continue
+        [ "$(n_of "$ft/out/fa-$nfound.mp4" 5 '#FFFFFF:60')" -ge 200 ] || continue
+        found="$found$fam
+"
+        nfound=$((nfound + 1))
+        [ "$nfound" -ge 2 ] && break
+    done <<<"$fams"
+    [ "$nfound" -ge 2 ] || fail "font: expected two installed families to draw text
+    expected: two of the families \`fc-list : family\` gives are accepted and draw
+    actual:   $nfound did; candidates were: $(printf '%s' "$fams" | tr '\n' ',')
+    the last refusal, if any: $(cat "$fe")"
+    fam1=$(printf '%s' "$found" | sed -n 1p); fam2=$(printf '%s' "$found" | sed -n 2p)
+    drawn fa-again.mp4 "$fam1"; expect_ok "font \"$fam1\" a second time"
+    same=$(px changed "$ft/out/fa-again.mp4" 5 "$ft/out/fa-0.mp4" 5 full)
+    assert_cmp "control: the same family twice draws the same (pixels that differ)" "$same" '<=' 20
+    d_def=$(px changed "$ft/out/fa-0.mp4" 5 "$ft/out/fa0.mp4" 5 full)
+    assert_cmp "font \"$fam1\" draws differently from the default (pixels that differ)" "$d_def" '>=' 200
+    d_def2=$(px changed "$ft/out/fa-1.mp4" 5 "$ft/out/fa0.mp4" 5 full)
+    assert_cmp "font \"$fam2\" draws differently from the default (pixels that differ)" "$d_def2" '>=' 200
+    d_two=$(px changed "$ft/out/fa-0.mp4" 5 "$ft/out/fa-1.mp4" 5 full)
+    assert_cmp "\"$fam1\" and \"$fam2\" draw differently from each other (pixels that differ)" "$d_two" '>=' 200
+    # "Anything after a colon is handed to `fc-match` as written, so
+    # `font "DejaVu Serif:bold"` asks for the family's bold." Only where the
+    # family has a bold to ask for.
+    bolded=""
+    for fam in "$fam1" "$fam2"; do
+        wr=$(fc-match -f '%{weight}' "$fam"); wb=$(fc-match -f '%{weight}' "$fam:bold")
+        if [ "$wr" != "$wb" ]; then bolded=$fam; break; fi
+    done
+    if [ -n "$bolded" ]; then
+        drawn fa-b.mp4 "$bolded:bold"; expect_ok "font \"$bolded:bold\""
+        drawn fa-r.mp4 "$bolded"; expect_ok "font \"$bolded\""
+        d_bold=$(px changed "$ft/out/fa-b.mp4" 5 "$ft/out/fa-r.mp4" 5 full)
+        assert_cmp "font \"$bolded:bold\" draws differently from \"$bolded\" (pixels that differ)" "$d_bold" '>=' 100
+    else
+        echo "note: neither $fam1 nor $fam2 has a bold face here, so \":bold\" was not exercised"
+    fi
+    # "A value with a `/` in it is a font file and is used as it is."
+    file=$(fc-match -f '%{file}' "$fam1")
+    case $file in /*) [ -f "$file" ] || file="" ;; *) file="" ;; esac
+    if [ -n "$file" ]; then
+        drawn fa-f.mp4 "$file"; expect_ok "font \"$file\""
+        d_file=$(px changed "$ft/out/fa-f.mp4" 5 "$ft/out/fa0.mp4" 5 full)
+        assert_cmp "font FILE ($file) draws differently from the default (pixels that differ)" "$d_file" '>=' 200
+    else
+        echo "note: fc-match gave no file for $fam1, so a font file was not exercised"
+    fi
+    # Refused: a control that succeeds first, then a family the machine lacks, a
+    # general name, and a value with a / that is not a file.
+    drawn fr0.mp4 "$fam1"; expect_ok "control: font \"$fam1\""
+    for bad in "No Such Family Xyzzy" serif sans-serif monospace "/no/such/font.ttf" "./nofile.ttf" /usr; do
+        drawn fr1.mp4 "$bad"
+        refused_naming_line "font \"$bad\"" fr1.mp4 2
+    done
+    echo "families drew differently; a missing family, a general name and a bad path were refused"
+
+    }
+    fin_s38() {
+    # README: "Each line is one scene" ... "Everything is checked before
+    # anything is made ... the message names the line." "A command that fails
+    # leaves nothing at `-o`. A file already there is left as it was." Each
+    # value that is not one the README names is refused after a control with the
+    # value that is.
+    ed_ok v0.mp4 <<'E'
+card 1
+  text "Hi" colour #FFD040 band on at top
+E
+    keep=$(sha256sum < "$ft/out/v0.mp4")
+    for bad in 'colour red' 'colour #FFD04' 'colour FFD040' 'colour #GGGGGG' 'band maybe' 'band 1' 'at left' 'at centre'; do
+        cp "$ft/out/v0.mp4" "$ft/out/v1.mp4"
+        : > "$ft/log/ffmpeg.calls"
+        printf 'card 1\n  text "Hi" %s\n' "$bad" > "$ft/v1.txt"
+        FIN_PATH="$ft/shim:$PATH" run edit v1.txt -o "$ft/out/v1.mp4" -s 320x240 -r 10
+        expect_refused "text ... $bad"
+        grep -qiE 'line[^0-9]{0,3}2([^0-9.]|$)' "$fe" || fail "text ... $bad: the message should name line 2
+    expected: 'line 2' on stderr
+    actual:   $(cat "$fe")"
+        assert_eq "text ... $bad: the file already at -o" "$keep" "$(sha256sum < "$ft/out/v1.mp4")"
+        assert_eq "text ... $bad: ffmpeg runs that encode (nothing is made first)" 0 "$(grep -cw 'libx264' "$ft/log/ffmpeg.calls" || true)"
+        rm -f "$ft/out/v2.mp4"
+        run edit v1.txt -o "$ft/out/v2.mp4" -s 320x240 -r 10
+        assert_absent "text ... $bad" "$ft/out/v2.mp4"
+    done
+    # The line named is the bad one, not a neighbour: a bad value under the
+    # third scene of four.
+    printf 'card 1\ncard 1\n  text "ok"\ncard 1\n  text "Hi" band maybe\ncard 1\n' > "$ft/v3.txt"
+    run edit v3.txt -o "$ft/out/v3.mp4" -s 320x240 -r 10
+    refused_naming_line "a bad band value on line 5 of a script of six" v3.mp4 5
+    echo "eight bad values were refused, named by line, and left nothing"
+
+    }
+    fin_s39() {
+    # README: "A text's `font`, `colour`, `outline`, `shadow`, `band`, `at` and
+    # its own fades are the script's alone. A shortcut sets a text's words,
+    # times and size." Each shortcut is run first without the option, and
+    # succeeds; then with it, and is refused, naming the option.
+    run caption A.mp4 -o "$ft/out/sc0.mp4" --text hi --from 1 --to 2
+    expect_ok "control: caption --text hi --from 1 --to 2"
+    run card -o "$ft/out/sc1.mp4" -d 1 -s 320x240 -r 10 --text hi
+    expect_ok "control: card -d 1 --text hi"
+    for opt in "--font Sans" "--colour #FFD040" "--outline #000000" "--shadow #000000" \
+               "--band off" "--at top" "--text-fade-in 0.5" "--text-fade-out 0.5"; do
+        # shellcheck disable=SC2086
+        run caption A.mp4 -o "$ft/out/sc2.mp4" --text hi --from 1 --to 2 $opt
+        expect_refused "caption ... $opt"
+        grep -q -- "${opt%% *}" "$fe" || fail "caption ... $opt: the refusal should name the option
+    expected: '${opt%% *}' on stderr
+    actual:   $(cat "$fe")"
+        assert_absent "caption ... $opt" "$ft/out/sc2.mp4"
+        # shellcheck disable=SC2086
+        run card -o "$ft/out/sc3.mp4" -d 1 -s 320x240 -r 10 --text hi $opt
+        expect_refused "card ... $opt"
+        grep -q -- "${opt%% *}" "$fe" || fail "card ... $opt: the refusal should name the option
+    expected: '${opt%% *}' on stderr
+    actual:   $(cat "$fe")"
+        assert_absent "card ... $opt" "$ft/out/sc3.mp4"
+    done
+    echo "caption and card refused each of the script-only text words"
+    }
     fin_step "trim keeps the frames from --from to --to, the last one included" fin_s1
     fin_step "every video a command writes is silent H.264, yuv420p, index first" fin_s2
     fin_step "-o may not be an input, and must end in .mp4" fin_s3
@@ -1354,6 +1918,17 @@ card 1
     fin_step "edit: crossfade on a scene overlaps it with the one before" fin_s26
     fin_step "a shortcut and the script it stands for agree" fin_s27
     fin_step "check reports the finishing commands and their text, without changing its exit status" fin_s28
+    fin_step "text colour: the text is drawn in it, and white on a band without it" fin_s29
+    fin_step "text outline and shadow: a line round the letters, a shadow below and to the right" fin_s30
+    fin_step "text outline counts toward the too-wide refusal" fin_s31
+    fin_step "text fade-in and fade-out: fainter at the ends of its window, and its band with it" fin_s32
+    fin_step "text fades longer than the text shows are refused" fin_s33
+    fin_step "text band on and off" fin_s34
+    fin_step "text at top, middle or bottom, with and without a band" fin_s35
+    fin_step "card picture is fitted between a text at the top and one at the bottom" fin_s36
+    fin_step "text font: a family the machine has draws differently; a missing one, a general name and a bad path are refused" fin_s37
+    fin_step "text words with a bad value are refused, name their line and leave nothing at -o" fin_s38
+    fin_step "caption and card do not take the script-only text words" fin_s39
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }
 

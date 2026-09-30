@@ -14,6 +14,11 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **A script can style each line of text: `font`, `colour`, `outline`, `shadow`, `fade-in`, `fade-out`, `band` and `at`** (DEMO-0135)
+  On a `text` line of an `edit` script, beside `size`. A font the machine
+  does not have is refused, never swapped for another. The band fades
+  with its text. `at top`, `at middle` or `at bottom` places it.
+
 - **`demoreel edit`: make a finished film from a plain-text script of scenes, encoded once** (DEMO-0132)
   A script lists scenes in order: `clip FILE` with `from`, `to` and fades,
   `card SECONDS [PICTURE]`, and `text "WORDS"` on the scene above. Read
