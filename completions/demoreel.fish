@@ -46,8 +46,15 @@ complete -c demoreel -n __fish_use_subcommand -a record -d 'record an app and wr
 complete -c demoreel -n __fish_use_subcommand -a shot -d 'take one picture of an app and write a PNG'
 complete -c demoreel -n __fish_use_subcommand -a check -d 'test whether this machine can record, without recording'
 complete -c demoreel -n __fish_use_subcommand -a stop -d 'end a running recording early'
+complete -c demoreel -n __fish_use_subcommand -a edit -d 'make a film from a script of scenes'
+complete -c demoreel -n __fish_use_subcommand -a trim -d 'cut the start and the end off a video'
+complete -c demoreel -n __fish_use_subcommand -a caption -d 'put text over part of a video'
+complete -c demoreel -n __fish_use_subcommand -a join -d 'put videos end to end'
+complete -c demoreel -n __fish_use_subcommand -a card -d 'make a clip from a picture, or from text'
+complete -c demoreel -n __fish_use_subcommand -a motion -d 'report how smooth a video is and where it stands still'
+complete -c demoreel -n __fish_use_subcommand -a poster -d 'save one frame of a video as a picture'
 
-complete -c demoreel -n '__demoreel_on record shot check stop' -s h -l help -d 'show help'
+complete -c demoreel -n '__demoreel_on record shot check stop edit trim caption join card motion poster' -s h -l help -d 'show help'
 
 complete -c demoreel -n '__demoreel_on record' -s o -l output -r -F -d 'video file to write'
 complete -c demoreel -n '__demoreel_on shot' -s o -l output -r -F -d 'picture file to write'
@@ -64,3 +71,25 @@ complete -c demoreel -n '__demoreel_on record shot' -l cursor -d 'show the mouse
 complete -c demoreel -n '__demoreel_on record shot' -l startup-timeout -x -d "how long to wait for the app's window"
 
 complete -c demoreel -n '__demoreel_on stop' -a '(__demoreel_running)' -d 'running recording'
+
+# The finishing commands take files: a script, videos, a picture.
+complete -c demoreel -n '__demoreel_on edit trim caption join card motion poster' -F
+complete -c demoreel -n '__demoreel_on edit trim caption join card' -s o -l output -r -F -d 'video file to write'
+complete -c demoreel -n '__demoreel_on poster' -s o -l output -r -F -d 'picture file to write'
+complete -c demoreel -n '__demoreel_on edit card' -s s -l size -x -d 'the picture size'
+complete -c demoreel -n '__demoreel_on edit card' -s r -l framerate -x -d 'frames per second'
+complete -c demoreel -n '__demoreel_on trim caption motion' -l from -x -d 'where it starts'
+complete -c demoreel -n '__demoreel_on trim caption motion' -l to -x -d 'where it ends'
+complete -c demoreel -n '__demoreel_on trim caption join card' -l fade-in -x -d 'start black'
+complete -c demoreel -n '__demoreel_on trim caption join card' -l fade-out -x -d 'end on black'
+complete -c demoreel -n '__demoreel_on trim' -l fade-at -x -d 'fade to black and back around this moment'
+complete -c demoreel -n '__demoreel_on trim' -l fade-length -x -d 'how long each half of a fade-at takes'
+complete -c demoreel -n '__demoreel_on join' -l crossfade -x -d 'fade from each video into the next'
+complete -c demoreel -n '__demoreel_on caption card' -l text -x -d 'one line of text'
+complete -c demoreel -n '__demoreel_on caption card' -l text-size -x -d 'the height of the text'
+complete -c demoreel -n '__demoreel_on card' -s d -l duration -x -d 'how many seconds the card lasts'
+complete -c demoreel -n '__demoreel_on card' -l background -x -d 'the background colour'
+complete -c demoreel -n '__demoreel_on card' -l like -r -F -d 'take the size and frame rate from this video'
+complete -c demoreel -n '__demoreel_on motion' -l still -x -d 'report a stretch with no change longer than this'
+complete -c demoreel -n '__demoreel_on motion' -l json -d 'print the report as one JSON object'
+complete -c demoreel -n '__demoreel_on poster' -s t -l time -x -d 'which moment to save'

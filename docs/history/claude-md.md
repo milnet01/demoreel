@@ -58,3 +58,20 @@ introduced it.
 Until 2026-09-08 the `Xvfb` backend installed no cookie, so any client on the
 machine could read the display. Xwayland always demanded one, which is why the
 `--gpu` path was never exposed this way.
+
+## Editing came in, as finishing a recording
+
+Until 2026-09-30 the scope ceiling listed overlays, captions and
+editing/trimming as permanently out. The Slipcase session had made a website
+video that day and typed six ffmpeg steps by hand after `demoreel record`, one
+of which failed on its first try. The user lifted the rule the same day, in
+steps: the five additions Slipcase proposed, then text between clips and over a
+scene, then fades on request, then a plain-text script so a film is encoded
+once.
+
+Slipcase proposed "one ffmpeg pass" as the new ceiling. It was not taken:
+zoom, overlays and transitions are each one pass too, so it held nothing out.
+The ceiling is a list of what may be done to a recording.
+
+A full video editor was raised by the user as an idea only, and is filed as
+considered (DEMO-0130).

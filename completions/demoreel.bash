@@ -23,7 +23,8 @@ _demoreel() {
     local i sub=
     for ((i = 1; i < COMP_CWORD; i++)); do
         case ${COMP_WORDS[i]} in
-            record | shot | check | stop)
+            record | shot | check | stop | edit | trim | caption | join | \
+                card | motion | poster)
                 [[ -z $sub ]] && sub=${COMP_WORDS[i]} ;;
             --)
                 # Everything after -- is the app's own command line.
@@ -42,7 +43,7 @@ _demoreel() {
     done
 
     case $prev in
-        -o | --output | --app-log)
+        -o | --output | --app-log | --like)
             compopt -o default
             COMPREPLY=()
             return ;;
@@ -58,7 +59,9 @@ _demoreel() {
             compopt -o nospace
             return ;;
         -d | --duration | -s | --size | -r | --framerate | -n | --name | \
-            --settle | --startup-timeout)
+            --settle | --startup-timeout | --from | --to | --fade-in | \
+            --fade-out | --fade-at | --fade-length | --crossfade | --text | \
+            --text-size | --background | --still | -t | --time)
             return ;;
     esac
 
@@ -68,7 +71,8 @@ _demoreel() {
             if [[ $cur == -* ]]; then
                 words="-h --help --version"
             else
-                words="record shot check stop"
+                words="record shot check stop edit trim caption join card
+                    motion poster"
             fi ;;
         record) words="-o --output -d --duration -s --size -r --framerate
                 -n --name -a --action --app-log --settle --gpu --cursor
@@ -76,6 +80,17 @@ _demoreel() {
         shot) words="-o --output -s --size -a --action --app-log --settle
                 --gpu --cursor --startup-timeout -h --help --" ;;
         check) words="-h --help" ;;
+        edit) words="-o --output -s --size -r --framerate -h --help" ;;
+        trim) words="-o --output --from --to --fade-in --fade-out --fade-at
+                --fade-length -h --help" ;;
+        caption) words="-o --output --text --from --to --text-size --fade-in
+                --fade-out -h --help" ;;
+        join) words="-o --output --crossfade --fade-in --fade-out -h --help" ;;
+        card) words="-o --output -d --duration --text --text-size --background
+                --like -s --size -r --framerate --fade-in --fade-out
+                -h --help" ;;
+        motion) words="--from --to --still --json -h --help" ;;
+        poster) words="-o --output -t --time -h --help" ;;
         stop)
             if [[ $cur == -* ]]; then
                 words="-h --help"
@@ -85,6 +100,12 @@ _demoreel() {
                 return
             fi ;;
     esac
+    # The finishing commands take files: a script, videos, a picture.
+    if [[ $cur != -* && $sub == @(edit|trim|caption|join|card|motion|poster) ]]; then
+        compopt -o default
+        COMPREPLY=()
+        return
+    fi
     mapfile -t COMPREPLY < <(compgen -W "$words" -- "$cur")
 }
 

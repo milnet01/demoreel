@@ -44,6 +44,14 @@ _demoreel() {
     '--startup-timeout=[how long to wait for the app'\''s window]:seconds:'
     {-s+,--size=}'[virtual display size]:WxH:'
   )
+  # The finishing commands: files in, a file out.
+  local -a finish video fades
+  finish=('(- *)'{-h,--help}'[show help]')
+  video=({-o+,--output=}'[video file to write]:file:_files')
+  fades=(
+    '--fade-in=[start black]:seconds:'
+    '--fade-out=[end on black]:seconds:'
+  )
   _arguments -C \
     '(- :)'{-h,--help}'[show help]' \
     '(- :)--version[show the version]' \
@@ -56,6 +64,13 @@ _demoreel() {
         'shot:take one picture of an app and write a PNG'
         'check:test whether this machine can record, without recording'
         'stop:end a running recording early'
+        'edit:make a film from a script of scenes'
+        'trim:cut the start and the end off a video'
+        'caption:put text over part of a video'
+        'join:put videos end to end'
+        'card:make a clip from a picture, or from text'
+        'motion:report how smooth a video is and where it stands still'
+        'poster:save one frame of a video as a picture'
       )
       _describe -t commands 'demoreel command' cmds ;;
     argument)
@@ -85,6 +100,51 @@ _demoreel() {
         stop)
           _arguments '(-)'{-h,--help}'[show help]' \
             '1:running recording:_demoreel_running' ;;
+        edit)
+          _arguments -S $finish $video \
+            {-s+,--size=}'[the film'\''s picture size]:WxH:' \
+            {-r+,--framerate=}'[the film'\''s frames per second]:fps:' \
+            '1:script:_files' ;;
+        trim)
+          _arguments -S $finish $video $fades \
+            '--from=[where the kept part starts]:seconds:' \
+            '--to=[the last moment kept]:seconds:' \
+            '*--fade-at=[fade to black and back around this moment]:seconds:' \
+            '--fade-length=[how long each half of a fade-at takes]:seconds:' \
+            '1:video:_files' ;;
+        caption)
+          _arguments -S $finish $video $fades \
+            '*--text=[one line of text, repeatable]:words:' \
+            '*--from=[when the text before it appears]:seconds:' \
+            '*--to=[when the text before it goes]:seconds:' \
+            '*--text-size=[the height of the text before it]:percent:' \
+            '1:video:_files' ;;
+        join)
+          _arguments -S $finish $video $fades \
+            '--crossfade=[fade from each video into the next]:seconds:' \
+            '*:video:_files' ;;
+        card)
+          _arguments -S $finish $video $fades \
+            {-d+,--duration=}'[how many seconds the card lasts]:seconds:' \
+            '--text=[one line of text]:words:' \
+            '--text-size=[the height of the text]:percent:' \
+            '--background=[the background colour]:#RRGGBB:' \
+            '--like=[take the size and frame rate from this video]:video:_files' \
+            {-s+,--size=}'[the picture size]:WxH:' \
+            {-r+,--framerate=}'[frames per second]:fps:' \
+            '1:picture:_files' ;;
+        motion)
+          _arguments -S $finish \
+            '--from=[look from here]:seconds:' \
+            '--to=[look up to here]:seconds:' \
+            '--still=[report a stretch with no change longer than this]:seconds:' \
+            '--json[print the report as one JSON object]' \
+            '1:video:_files' ;;
+        poster)
+          _arguments -S $finish \
+            {-o+,--output=}'[picture file to write]:file:_files' \
+            {-t+,--time=}'[which moment to save]:seconds:' \
+            '1:video:_files' ;;
       esac ;;
   esac
 }

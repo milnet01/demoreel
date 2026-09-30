@@ -280,14 +280,16 @@ order:
 Nothing takes a piece out of the middle of a clip. To skip a part, use the clip
 twice, with a different `from` and `to` each time.
 
-**`card SECONDS`** shows a plain background for that long, with a picture on
-it, or text, or both.
+**`card SECONDS`** shows a plain background for that long. It may carry a
+picture, text, or both.
 
 - A file name after the seconds puts that picture on the card:
   `card 6.9 spin.png`. It is scaled to fit and centred, never stretched and
   never enlarged. A see-through picture shows the background through it. An
   animated picture (`.gif`, or an animated `.png`) plays at its own speed and
-  starts again when it ends, until the card is over.
+  starts again when it ends, until the card is over. It is held in memory to
+  do that, so a very large animation is refused: make it a video and use it as
+  a clip.
 - `background #202830` sets the colour, written `#RRGGBB`. Without it the
   background is `#101418`.
 - `fade-in`, `fade-out` and `crossfade` work as on a clip.
@@ -307,7 +309,9 @@ you like; the indent is only for your eyes.
 - `size 4` sets another height, as a percentage of the frame's.
 - Text too wide for the frame at its size is refused. Nothing is shrunk
   without you asking. The font is the machine's own bold sans, so a line that
-  only just fits on one machine may be refused on another.
+  only just fits on one machine may be refused on another. It is found with
+  `fc-match`; on a machine without that program the text is drawn in the
+  regular weight.
 - A scene may have several texts, but only one on screen at a time: two whose
   times overlap are refused. A text shows from its `from` up to its `to` and
   not on the frame at `to`, so one may start at the time another ends.
@@ -368,9 +372,11 @@ demoreel motion demo.mp4 --from 30 --to 37 --still 0.7
 ```
 
 Reads the video and changes nothing. A frame counts as new when the picture has
-changed since the last new frame, by the same test as the note a `--gpu`
-recording prints
-about frames that rarely change. One definition of "the picture changed". The
+changed since the last new frame. The test is set to ignore the encoder's own
+sharpening of a picture after it changes, so a stuttering video cannot pass as
+smooth. Its cost: very faint, slow movement, such as a gradient drifting a
+little each frame, is counted only as it adds up. Movement with edges in it,
+like text, a pointer or a moving window, is counted frame by frame. The
 report:
 
 ```
@@ -829,6 +835,22 @@ Checked by running them, not assumed. This section is for maintainers.
   captured 643 frames, all different. `x11grab` on the X side captured 588, of
   which 156 differed from the one before. The app was drawing about 54 frames a
   second throughout.
+- **No one threshold for "the picture changed" serves both `motion` and the
+  `--gpu` note.** x264 improves a picture over the frames after it changes.
+  Measured 2026-09-30 on patterns with a known number of new frames, encoded
+  as the recorder encodes, counting any 8x8 block that moved by more than the
+  threshold: 9 new frames in 90 scored 44 at 256 and 9 at 640, and 36 in 360
+  scored 167 and 36. A gradient drifting a little each frame, new in all 360,
+  scored 360 at 256 and 145 at 640. A moving pattern with edges scored 60 of 60
+  at both. So `motion` uses 640, where a stuttering video cannot pass as
+  smooth, and the `--gpu` note keeps 256, where that gradient does not read as
+  stutter.
+- **An input that never ends fills the memory.** While the finishing commands
+  were built, an animated `.png` read with ffmpeg's own looping, behind
+  another scene, took ffmpeg to 14 GB in six minutes. Every stream in a film is
+  now cut to its own number of frames, pictures repeat inside the filter graph
+  where a frame is made only when wanted, and the ffmpeg that makes a film may
+  take at most half the machine's memory, or 4 GB where that is more.
 - **`wf-recorder` draws no pointer.** With the pointer moved over the app, none
   of the 39 frames of a recording showed it; `x11grab` on the same X screen drew
   it at that spot. `wf-recorder` has no option to draw one.
@@ -903,6 +925,13 @@ cube filling an 800x600 frame, an H.264 `yuv420p` file with its index at the
 front, typed text and a keypress arriving in the app, and no `cage` left
 running afterwards.
 
+The finishing commands verified on 2026-09-30 by making films and looking at
+their frames:
+a title card, a caption on its dark band over a recording, and a picture card
+under its title, all in bold type that reads at a glance. A film of four
+scenes, one with an animated picture and a crossfade, came out at its planned
+length to the frame, 104 frames, using 116 MB of memory.
+
 `--settle` verified against a window that is uniformly black for five seconds
 and then draws: without it the recording is three seconds of black and the
 blank check fails the run; with it the picture is there in the first frame.
@@ -922,6 +951,13 @@ we do not own, which must be refused. `.github/workflows/ci.yml` installs the
 programs and runs that same script, and takes the linter version and the
 documentation-only decision from it rather than restating them. Add a check to
 `ci.sh`, never to the workflow.
+
+**The finishing commands have their own checks, and `./ci.sh --finishing` runs
+only those.** They make their inputs with ffmpeg, not by recording, so they
+need no display. Each holds one sentence of
+[Finishing a recording](#finishing-a-recording): the frames a cut keeps, where
+text and fades show, a film's length, what is refused, and that a failure
+leaves nothing behind. The full gate runs them too.
 
 **Two of its steps only run where the machine can run them.** One records
 `--gpu -- vkcube` and needs a graphics card with `cage`, `Xwayland`,

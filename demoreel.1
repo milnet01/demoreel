@@ -21,6 +21,35 @@ demoreel \- record a GUI app on a private virtual display
 .br
 .B demoreel check
 .br
+.B demoreel edit
+.I script
+.B \-o
+.I film.mp4
+.RI [ options ]
+.br
+.B demoreel trim
+|
+.B caption
+|
+.B join
+|
+.B card
+.RI [ options ]
+.B \-o
+.I out.mp4
+.RI [ input ...]
+.br
+.B demoreel motion
+.I video
+.RI [ options ]
+.br
+.B demoreel poster
+.I video
+.B \-t
+.I seconds
+.B \-o
+.I picture
+.br
 .B demoreel
 .RB [ \-\-version ]
 .RB [ \-h | \-\-help ]
@@ -36,7 +65,7 @@ prints the path of the finished file on standard output, and nothing else.
 The app's own output goes to standard error, or to
 .BR \-\-app\-log .
 .PP
-The file is an H.264 MP4 with no sound.
+A video is an H.264 MP4 with no sound.
 A recording that is one flat colour is refused, not returned.
 .SH COMMANDS
 .TP
@@ -69,11 +98,61 @@ recording.
 Report what each backend needs and whether it is installed, start a private
 display to prove it works, and name the install command for anything missing.
 It records nothing.
+.PP
+The finishing commands work on video files, not on an app.
+They start no display and take no
+.BR \-n .
+.TP
+.B edit
+Make a film from a script of scenes, encoding the picture once.
+See
+.BR "EDIT SCRIPT" .
+.TP
+.B trim
+Cut the start and the end off a video:
+one clip, with
+.B \-\-from
+and
+.BR \-\-to .
+.TP
+.B caption
+Put text over part of a video:
+one clip, with one or more
+.BR \-\-text .
+.TP
+.B join
+Put two or more videos end to end.
+.TP
+.B card
+Make a clip from a picture, from text, or both.
+.TP
+.B motion
+Report how often a video's picture changes and where it stands still.
+It writes no file; its report goes to standard output.
+.TP
+.B poster
+Save the frame on screen at
+.B \-t
+as a picture.
 .SH OPTIONS
 .TP
 .BR \-o ", " \-\-output " \fIpath\fR"
 Where to write the file.
-The default is the current directory, named after the app and the time.
+For
+.B record
+and
+.B shot
+the default is the current directory, named after the app and the time.
+The finishing commands require it:
+a video must end in
+.BR .mp4 ,
+a
+.B poster
+picture in
+.B .png
+or
+.BR .jpg ,
+and it may not be a file the command reads.
 .TP
 .BR \-d ", " \-\-duration " \fIseconds\fR"
 How long to record, counted from when the scripted steps finish (default 30).
@@ -81,19 +160,26 @@ How long to record, counted from when the scripted steps finish (default 30).
 records until
 .B demoreel stop
 or until the app closes itself.
-.B record
-only.
+For
+.BR card ,
+how long the card lasts; required.
 .TP
 .BR \-s ", " \-\-size " \fIW\fBx\fIH\fR"
 The size of the picture (default 1600x1000).
+For a video, both numbers must be even.
 For
-.BR record ,
-both numbers must be even.
+.BR edit ,
+the default is the first clip's size.
 .TP
 .BR \-r ", " \-\-framerate " \fIfps\fR"
 Frames per second (default 30).
-.B record
-only.
+.BR record ,
+.B edit
+and
+.BR card .
+For
+.BR edit ,
+the default is the first clip's rate.
 .TP
 .BR \-n ", " \-\-name " \fIname\fR"
 A name for this run, so
@@ -151,6 +237,76 @@ Not available with
 .BI \-\-startup\-timeout " seconds"
 How long to wait for the app's window (default 20).
 .TP
+.BI \-\-from " seconds" "\fR, \fP" \-\-to " seconds"
+.BR trim :
+the part to keep; the frame on screen at
+.B \-\-to
+is the last one kept.
+.BR motion :
+the part to look at.
+.BR caption :
+when the
+.B \-\-text
+before it shows.
+.TP
+.BI \-\-fade\-in " seconds" "\fR, \fP" \-\-fade\-out " seconds"
+Start from black, or end on black.
+.BR trim ,
+.BR caption ,
+.B join
+and
+.BR card .
+.TP
+.BI \-\-fade\-at " seconds"
+.BR trim :
+fade to black and back around this moment, keeping the length.
+Repeatable.
+.TP
+.BI \-\-fade\-length " seconds"
+How long each half of a
+.B \-\-fade\-at
+takes (default 0.5).
+.TP
+.BI \-\-crossfade " seconds"
+.BR join :
+fade from each video into the next, where a plain cut would be.
+The videos overlap for that long.
+.TP
+.BI \-\-text " words"
+One line of text.
+.BR caption :
+repeatable, shown on a dark band at the bottom.
+.BR card :
+the card's title.
+.TP
+.BI \-\-text\-size " percent"
+The text's height as a percentage of the frame's
+(default 5 for
+.BR caption ,
+7 for
+.BR card ).
+Text too wide for the frame is refused.
+.TP
+.BI \-\-background " #RRGGBB"
+.BR card :
+the background colour (default #101418).
+.TP
+.BI \-\-like " video"
+.BR card :
+take the size and frame rate from this video.
+.TP
+.BI \-\-still " seconds"
+.BR motion :
+report a stretch with no change longer than this (default 1).
+.TP
+.B \-\-json
+.BR motion :
+print the report as one JSON object.
+.TP
+.BR \-t ", " \-\-time " \fIseconds\fR"
+.BR poster :
+which moment to save; required.
+.TP
 .BR \-h ", " \-\-help
 Show the options.
 .B "demoreel \-\-help"
@@ -194,6 +350,46 @@ It is let go however the step ends.
 .PP
 Anything on a command line can be read by other users of the machine, so do
 not script typing a password on a shared one.
+.SH EDIT SCRIPT
+One scene a line, played in order.
+A blank line, or a line starting with
+.BR # ,
+is ignored.
+A line is split into words as a shell splits one.
+Times are seconds; on a clip they count from the start of its own file.
+.TP
+.BI "clip " file
+Play a video.
+Then any of
+.BI from " s"\fR,\fP
+.BI to " s"\fR,\fP
+.BI fade\-in " s"\fR,\fP
+.BI fade\-out " s"\fR,\fP
+.BI fade\-at " s"\fR,\fP
+.BI fade\-length " s"
+and
+.BI crossfade " s"\fR.\fP
+.TP
+.BI "card " "seconds \fR[\fPpicture\fR]\fP"
+Show a plain background, with a picture on it, or text, or both.
+A .gif or an animated .png keeps playing.
+Then any of
+.BI background " #RRGGBB"\fR,\fP
+.BR fade\-in ,
+.B fade\-out
+and
+.BR crossfade .
+.TP
+.BI "text " "\(dqwords\(dq"
+Put one line of text on the scene above.
+Then any of
+.BI from " s"\fR,\fP
+.BI to " s"
+and
+.BI size " percent"\fR.\fP
+.PP
+The whole script is checked before anything is made, and an error names its
+line.
 .SH EXIT STATUS
 .TP
 .B 0
@@ -238,6 +434,9 @@ removed when it succeeds and kept, and named, when it fails.
 A folder for
 .BR check 's
 test display, always removed.
+.TP
+.I edit\-*
+A folder for the texts of one film, always removed.
 .SH NOTES
 .SS A Flatpak app
 A Flatpak does not see the private display on its own.
@@ -264,6 +463,10 @@ demoreel record \-o demo.mp4 \-d 0 \-n mydemo \-\- kate &
 demoreel stop mydemo
 demoreel record \-o cube.mp4 \-d 10 \-\-gpu \-\- vkcube
 demoreel shot \-o menu.png \-a \(aqclick 40 12\(aq \-\- kate
+demoreel motion demo.mp4
+demoreel trim demo.mp4 \-o short.mp4 \-\-to 29.8
+demoreel edit film.txt \-o film.mp4
+demoreel poster film.mp4 \-t 14.9 \-o poster.jpg
 .fi
 .SH SEE ALSO
 .BR Xvfb (1),

@@ -12,6 +12,36 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+### Added
+
+- **`demoreel edit`: make a finished film from a plain-text script of scenes, encoded once** (DEMO-0132)
+  A script lists scenes in order: `clip FILE` with `from`, `to` and fades,
+  `card SECONDS [PICTURE]`, and `text "WORDS"` on the scene above. Read
+  from a file or from standard input. README, Finishing a recording.
+
+- **`trim`, `caption`, `join` and `card`: one-step shortcuts over the same machinery as `edit`** (DEMO-0124)
+  Cut the ends off a video, put text over part of it, put videos end to
+  end, and make a clip from a picture or a line of text. DEMO-0127,
+  DEMO-0128 and DEMO-0129 are the other three.
+
+- **Fades, on request: `--fade-in`, `--fade-out`, `--fade-at` inside one recording, and `--crossfade` between clips** (DEMO-0131)
+
+- **`demoreel motion`: report how often a video's picture changes and where it stands still** (DEMO-0125)
+  Read-only. Prints plain `name: value` lines, or one JSON object with
+  `--json`. Its `last change` is where to cut.
+
+- **`demoreel poster`: save one frame of a video as a `.png` or `.jpg`** (DEMO-0126)
+
+- **`demoreel check` reports whether the finishing commands and their text can run** (DEMO-0132)
+  On lines of their own. They never change its exit status.
+
+### Changed
+
+- **The scope ceiling now allows finishing a recording, and says what editing stays out** (DEMO-0123)
+  README, What it will never do: no layers, no transition other than a
+  fade, no zoom, no moving text, no change of speed, and nothing removed
+  from a video automatically.
+
 ## [0.3.0] - 2026-09-28
 
 **Theme:** Friendly at a terminal.

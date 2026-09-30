@@ -3014,6 +3014,23 @@ path, and scripts read it.
   Kind: test.
   Source: recommendation-2026-09-08.
 
+- 📋 [DEMO-0134] **The `--gpu` note's frame test counts the encoder's sharpening as new frames.**
+  Found while building `motion` (DEMO-0125). `changed_share` counts a
+  frame as new at a threshold of 256. Measured 2026-09-30 on a pattern
+  with 36 new frames in 360, encoded as the recorder encodes: it counted
+  167, which is 46%. That is still under the note's 70% line, so that
+  video is noted. A video with about 1 new frame in 4 would be counted
+  near or over 70% and not noted. `motion` uses 640, which counts
+  exactly, and was not given to the note because `ci.sh`'s smooth fixture
+  (a faint drifting gradient) then scores 39% and reads as stutter.
+  To do: measure a real stuttering `--gpu` recording at both thresholds,
+  and decide whether the note needs a second test or a better fixture.
+  DEMO-0109 holds the note's original calibration.
+  Serves S1 (README, Signs it is working).
+  **Layman:** The note that warns about a stuttering --gpu video over-counts new frames, so it may stay silent on a video that really stutters.
+  Kind: investigate.
+  Source: DEMO-0125-finding-2026-09-30.
+
 ## 0.5.0 — Installs like any other program
 
 A person installs demoreel from their distro's usual tools, and the programs it
@@ -3227,7 +3244,7 @@ zoom, cursor highlighting, a timeline, and cutting out still stretches
 automatically. The version number is a slot, not an order: the user has not yet
 said where this sits against 0.5.0 to 0.7.0.
 
-- 📋 [DEMO-0123] **Move the scope ceiling to allow light editing of demoreel's own recordings.**
+- ✅ [DEMO-0123] **Move the scope ceiling to allow light editing of demoreel's own recordings.**
   README `What it will never do` and CLAUDE.md `Scope ceiling` both say no
   editing, trimming, overlays or captions. The user lifted that on
   2026-09-30 ("All five", then: text between clips and text overlaying
@@ -3242,11 +3259,14 @@ said where this sits against 0.5.0 to 0.7.0.
   gated contract, so review-contract runs on README before
   DEMO-0124 to DEMO-0129 are built.
   Serves S4 (README, Signs it is working).
+  Done (2026-09-30). README § What it will never do and CLAUDE.md § Scope
+  ceiling rewritten. README gated: rows 9 to 11 of
+  docs/reviews/readme-loop-log.md.
   **Layman:** Rewrite the 'will never do' list so trimming, joining and text are allowed, and say plainly what still is not.
   Kind: doc.
   Source: user-request-2026-09-30.
 
-- 📋 [DEMO-0124] **`demoreel trim`: cut the start and end off a recording.**
+- ✅ [DEMO-0124] **`demoreel trim`: cut the start and end off a recording.**
   `demoreel trim IN -o OUT [--from T] [--to T]`. Re-encodes, so the cut
   lands on the frame asked for, with the recorder's own encoder settings
   (DEMO-0014 decided 2026-09-08 to leave them alone; this does not reopen
@@ -3259,11 +3279,13 @@ said where this sits against 0.5.0 to 0.7.0.
   From Slipcase (2026-09-30): the cut must be frame-accurate. A stream-copy
   trim cuts only at keyframes, and a mostly still recording has few. So it
   re-encodes, and the help says so.
+  Done (2026-09-30). `trim` is one clip scene through `make_film`. The cut
+  is snapped to the clip's frames and the frame at `--to` is kept.
   **Layman:** Cut the dead time off the front and back of a video.
   Kind: feature.
   Source: user-request-2026-09-30.
 
-- 📋 [DEMO-0125] **`demoreel motion`: report how smooth a recording is and where it stands still.**
+- ✅ [DEMO-0125] **`demoreel motion`: report how smooth a recording is and where it stands still.**
   `demoreel motion FILE [--still SECONDS]`. Read-only. Reports distinct
   frames per second and every stretch with no change longer than the
   threshold, with start and end times. Slipcase did this by hand with
@@ -3277,20 +3299,25 @@ said where this sits against 0.5.0 to 0.7.0.
   `--from`/`--to` range; each still stretch over the threshold with start
   and end (it used 0.7 s and 1.2 s); and the time of the last change,
   which is where to trim.
+  Done (2026-09-30). Its frame test uses a threshold of 640, not the
+  `--gpu` note's 256: at 256 the encoder's sharpening counted as new
+  frames. The measurements are beside `MOTION_NEW_FRAME`. DEMO-0134 files
+  the same over-count in the note.
   **Layman:** A read-only report: how many different pictures per second the video really has, and where nothing moves.
   Kind: feature.
   Source: user-request-2026-09-30.
 
-- 📋 [DEMO-0126] **`demoreel poster`: save one frame of a recording as a picture.**
+- ✅ [DEMO-0126] **`demoreel poster`: save one frame of a recording as a picture.**
   `demoreel poster FILE -t TIME -o OUT`. `shot` photographs an app; this
   photographs the video, which is what the Ants Projects Hub site
   requires of a poster. Picture format follows the `-o` extension.
   Serves S4 (README, Signs it is working).
+  Done (2026-09-30). `.png` or `.jpg`; the frame on screen at `-t`.
   **Layman:** Pick a moment in the video and save it as the still picture a website shows before play.
   Kind: feature.
   Source: user-request-2026-09-30.
 
-- 📋 [DEMO-0127] **`demoreel join`: put clips end to end.**
+- ✅ [DEMO-0127] **`demoreel join`: put clips end to end.**
   `demoreel join A B [C...] -o OUT`. Hard cuts by default; a fade between clips only when asked for, and no
   other transition. Clips
   are brought to the first clip's frame size and rate. A clip with a
@@ -3301,11 +3328,14 @@ said where this sits against 0.5.0 to 0.7.0.
   From Slipcase (2026-09-30): every command that writes a video hands back
   the shape `record` does (silent H.264, yuv420p, faststart), so commands
   chain with no fix-up pass. Applies to trim, join, card and caption.
+  Done (2026-09-30). Not measured as planned: whether a wf-recorder file
+  has a steady frame rate. Every clip goes through an `fps` filter to the
+  film's rate, so an unsteady one is evened out, not refused.
   **Layman:** Stick several videos together, one after the other, with plain cuts.
   Kind: feature.
   Source: user-request-2026-09-30.
 
-- 📋 [DEMO-0128] **`demoreel card`: make a clip from an image or from text alone.**
+- ✅ [DEMO-0128] **`demoreel card`: make a clip from an image or from text alone.**
   `demoreel card -o CLIP -d SECONDS [IMAGE] [--text T] [-s WxH]
   [--background COLOR]`. Covers Slipcase's `still` (a still or animated
   PNG/GIF on a plain background) and the user's "text between clips"
@@ -3326,11 +3356,16 @@ said where this sits against 0.5.0 to 0.7.0.
   shrink. Its website card used DejaVu Sans Bold 42 px on 1280x800, about
   5%, which it judged a floor. Not tested with the user; show them a
   frame before settling the default.
+  Done (2026-09-30). In a script the card's words are a `text` line under
+  it, as for a clip. A card's picture repeats inside the filter graph;
+  reading it with ffmpeg's own looping ran ffmpeg to 14 GB. Text is
+  drawn bold from the font file `fc-match` names. Sample frames for the
+  user to judge the text size: ~/Videos/demoreel-demos/text-sample-*.png.
   **Layman:** Make a short clip out of a picture, an animated picture, or just a line of text, to go between recordings.
   Kind: feature.
   Source: user-request-2026-09-30.
 
-- 📋 [DEMO-0129] **`demoreel caption`: put a line of text over a scene for a stretch of time.**
+- ✅ [DEMO-0129] **`demoreel caption`: put a line of text over a scene for a stretch of time.**
   `demoreel caption IN -o OUT --text T [--from T] [--to T]`. Asked for
   by the user directly on 2026-09-30 ("text overlaying certain scenes").
   One line, one position (bottom, on a dark band so it reads over any
@@ -3343,11 +3378,13 @@ said where this sits against 0.5.0 to 0.7.0.
   text/from/to groups in one call, so ten captions are one encode, not
   ten. README gets a line on stacking either way. Text default about 5%
   of frame height, always on the band, refusal when it does not fit.
+  Done (2026-09-30). Several `--text` in one call, each with its own
+  `--from` and `--to`, so ten captions are one encode.
   **Layman:** Show a line of text over part of a video, from one moment to another.
   Kind: feature.
   Source: user-request-2026-09-30.
 
-- 📋 [DEMO-0131] **Fades on request: fade in, fade out, and a fade between joined clips.**
+- ✅ [DEMO-0131] **Fades on request: fade in, fade out, and a fade between joined clips.**
   Asked for by the user on 2026-09-30: "also cater for small transitions
   such as fading in and out on request by the relevant people/sessions."
 
@@ -3375,11 +3412,14 @@ said where this sits against 0.5.0 to 0.7.0.
   commands. The caller names the moment; demoreel does not guess where a
   scene changes. If the user meant something else by "scenes", ask them
   before building.
+  Done (2026-09-30). `fade-in`, `fade-out`, `fade-at` with `fade-length`,
+  and `crossfade`, as script words and as options. A fade-at is a fade
+  out then a fade in, each switched on for its own half only.
   **Layman:** When a session asks for it, a video can fade in at the start, fade out at the end, or fade from one clip to the next.
   Kind: feature.
   Source: user-request-2026-09-30.
 
-- 📋 [DEMO-0132] **`demoreel edit`: build a whole film from a plain-text script, in one save.**
+- ✅ [DEMO-0132] **`demoreel edit`: build a whole film from a plain-text script, in one save.**
   Asked for by the user on 2026-09-30: a session records a few clips,
   then "provides a script that is used to edit the videos". The user chose
   "Script plus shortcuts" and "Plain lines" the same day.
@@ -3395,6 +3435,9 @@ said where this sits against 0.5.0 to 0.7.0.
   Those four become shortcuts over the same renderer, so each thing is
   done one way. README § Finishing a recording is the contract.
   Serves S4 (README, Signs it is working).
+  Done (2026-09-30). `./ci.sh --finishing` holds the README section
+  sentence by sentence; ten deliberate breakages of the code were each
+  caught by it. The whole gate passed here and on the Ubuntu image.
   **Layman:** A session writes a short list of scenes — clips, title cards, text, fades — and demoreel makes the finished film from it, saving the video once.
   Kind: feature.
   Source: user-request-2026-09-30.

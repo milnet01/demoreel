@@ -9,6 +9,10 @@
 # ./ci.sh --docs runs the documentation checks only. The pre-push hook selects
 # it on a documentation-only push; it is not a skip, and it is not for you to
 # pass by hand to get past a red gate.
+#
+# ./ci.sh --finishing runs only the checks for the finishing commands (edit,
+# trim, caption, join, card, motion, poster), which need no display and take
+# seconds. The full gate runs the same checks, from the same function.
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -135,8 +139,1232 @@ fi
 
 DOCS_ONLY=false
 [ "${1:-}" = "--docs" ] && DOCS_ONLY=true
+FINISHING_ONLY=false
+[ "${1:-}" = "--finishing" ] && FINISHING_ONLY=true
 
 step() { printf '\n=== %s ===\n' "$1"; }
+
+# The finishing commands (edit, trim, caption, join, card, motion, poster), held
+# to README.md § "Finishing a recording". One definition, run by the full gate
+# and alone by `./ci.sh --finishing`. Every input is made by ffmpeg from a
+# generated source, so nothing here needs a display and it takes seconds.
+#
+# Each check quotes the README sentence it holds. A refusal is only believed
+# after a control: the same command made valid succeeded first, so "refused"
+# cannot be a command that fails whatever it is given.
+finishing_checks() {
+    local DR="$PWD/demoreel" ft="$tmp/fin" fo fe rc
+    mkdir -p "$ft/log" "$ft/out" "$ft/shim"
+    fo="$ft/log/stdout"; fe="$ft/log/stderr"
+    local REAL_FFMPEG; REAL_FFMPEG=$(command -v ffmpeg)
+
+    # ---- helpers ----------------------------------------------------------
+    fail() { echo "FAIL: $*" >&2; exit 1; }
+    show_err() { sed 's/^/    stderr: /' "$fe" >&2; }
+    # Runs demoreel from the folder holding the inputs. rc, stdout and stderr
+    # are kept for the assertions. FIN_PATH lets one check put a shim first.
+    run() {
+        rc=0
+        ( cd "$ft" && export SHIM_LOG="$ft/log/ffmpeg.calls" \
+              REAL_FFMPEG="$REAL_FFMPEG" && PATH="${FIN_PATH:-$PATH}" \
+              "$DR" "$@" ) >"$fo" 2>"$fe" || rc=$?
+    }
+    expect_ok() {
+        [ "$rc" -eq 0 ] && return 0
+        echo "FAIL: $1: expected exit 0, got $rc" >&2; show_err; exit 1
+    }
+    # Refused: non-zero, said why, and did not pretend to finish. The stub's
+    # own message is not a reason.
+    expect_refused() {
+        [ "$rc" -ne 0 ] || fail "$1: expected it to be refused (non-zero exit), got exit 0"
+        [ -s "$fe" ] || fail "$1: refused without saying why (stderr empty)"
+        if grep -q 'not built yet' "$fe"; then
+            echo "FAIL: $1: expected a refusal naming the mistake, got: " >&2
+            show_err; exit 1
+        fi
+        [ ! -s "$fo" ] || fail "$1: refused but printed on stdout: $(cat "$fo")"
+    }
+    expect_stdout_path() {
+        local got; got=$(cat "$fo")
+        [ "$got" = "$2" ] || fail "$1: stdout should be the path alone
+    expected: $2
+    actual:   $got"
+    }
+    assert_eq() { [ "$2" = "$3" ] || fail "$1
+    expected: $2
+    actual:   $3"; }
+    assert_near() {  # what expected actual tolerance
+        awk -v e="$2" -v a="$3" -v t="$4" \
+            'BEGIN { d = a - e; if (d < 0) d = -d; exit !(d <= t) }' \
+            || fail "$1
+    expected: $2 (within $4)
+    actual:   $3"
+    }
+    assert_between() {  # what low high actual
+        awk -v lo="$2" -v hi="$3" -v a="$4" 'BEGIN { exit !(a >= lo && a <= hi) }' \
+            || fail "$1
+    expected: between $2 and $3
+    actual:   $4"
+    }
+    assert_absent() { [ ! -e "$2" ] || fail "$1: expected nothing at $2, but it exists"; }
+    assert_file() { [ -s "$2" ] || fail "$1: expected a file at $2, none there"; }
+    snap() { ( cd "$ft" && find . -type f -not -path './log/*' -print0 | sort -z \
+                 | xargs -0 -r sha256sum | sha256sum ); }
+    px() { python3 "$ft/px.py" "$@"; }
+    v_dur() { ffprobe -v error -show_entries format=duration -of csv=p=0 "$1"; }
+    v_frames() { ffprobe -v error -count_frames -select_streams v:0 \
+                   -show_entries stream=nb_read_frames -of csv=p=0 "$1"; }
+    v_size() { ffprobe -v error -select_streams v:0 \
+                 -show_entries stream=width,height -of csv=s=x:p=0 "$1"; }
+    v_rate() { ffprobe -v error -select_streams v:0 \
+                 -show_entries stream=avg_frame_rate -of csv=p=0 "$1" \
+                 | awk -F/ '{ printf "%.2f", $1 / $2 }'; }
+    # H.264, yuv420p, silent, index before the pictures.
+    assert_finished() {
+        local f=$1 what=$2 codec audio atoms
+        assert_file "$what" "$f"
+        codec=$(ffprobe -v error -select_streams v:0 \
+                  -show_entries stream=codec_name,pix_fmt -of csv=p=0 "$f")
+        assert_eq "$what: video codec and pixel format" "h264,yuv420p" "$codec"
+        audio=$(ffprobe -v error -select_streams a -show_entries stream=index \
+                  -of csv=p=0 "$f" | wc -l)
+        assert_eq "$what: number of audio streams" 0 "$audio"
+        atoms=$(px atoms "$f")
+        printf '%s\n' "$atoms" | awk '{ for (i = 1; i <= NF; i++) {
+                if ($i == "moov" && !m) m = i; if ($i == "mdat" && !d) d = i }
+                exit !(m && d && m < d) }' \
+            || fail "$what: the index (moov) must come before the pictures (mdat)
+    expected: moov before mdat
+    actual:   top-level boxes in order: $atoms"
+    }
+    # Frame counts are exact; lengths are checked to a frame or so.
+    assert_len() {  # what file frames rate
+        assert_eq "$1: number of frames" "$3" "$(v_frames "$2")"
+        assert_near "$1: length in seconds" "$(awk -v n="$3" -v r="$4" 'BEGIN{print n/r}')" \
+            "$(v_dur "$2")" 0.06
+    }
+    # Which frame of SRC is frame IDX of FILE (argmin of picture difference).
+    assert_is_frame() {  # what file idx src src_idx [lo hi]
+        local got; got=$(px match "$2" "$3" "$4" "${@:6}")
+        assert_eq "$1: frame $3 of $(basename "$2") should be frame $5 of $(basename "$4")" "$5" "$got"
+    }
+    luma() { px mean "$1" "$2"; }
+    assert_dark() {  # what out idx src src_idx
+        local o s; o=$(luma "$2" "$3"); s=$(luma "$4" "$5")
+        awk -v o="$o" -v s="$s" 'BEGIN { exit !(o < 0.25 * s) }' \
+            || fail "$1: frame $3 should be nearly black
+    expected: brightness below 25% of the input's ($s), i.e. under $(awk -v s="$s" 'BEGIN{print 0.25*s}')
+    actual:   $o"
+    }
+    assert_bright() {
+        local o s; o=$(luma "$2" "$3"); s=$(luma "$4" "$5")
+        awk -v o="$o" -v s="$s" 'BEGIN { exit !(o > 0.8 * s) }' \
+            || fail "$1: frame $3 should be the ordinary picture
+    expected: brightness above 80% of the input's ($s), i.e. over $(awk -v s="$s" 'BEGIN{print 0.8*s}')
+    actual:   $o"
+    }
+    # Text on a clip shows as a changed bottom strip against the input.
+    text_on() {  # what out idx src src_idx
+        local n; n=$(px changed "$2" "$3" "$4" "$5" bottom)
+        awk -v n="$n" 'BEGIN { exit !(n >= 300) }' \
+            || fail "$1: text should be on screen at frame $3
+    expected: at least 300 changed pixels in the bottom strip
+    actual:   $n"
+    }
+    text_off() {
+        local n; n=$(px changed "$2" "$3" "$4" "$5" bottom)
+        awk -v n="$n" 'BEGIN { exit !(n <= 100) }' \
+            || fail "$1: no text should be on screen at frame $3
+    expected: at most 100 changed pixels in the bottom strip
+    actual:   $n"
+    }
+    # A card's pixel near a fraction of the frame, against an expected colour.
+    assert_colour() {  # what file idx fx fy r g b tol
+        local got; got=$(px px "$2" "$3" "$4" "$5")
+        set -- "$1" "$got" "$6" "$7" "$8" "$9"
+        awk -v g="$2" -v r="$3" -v gg="$4" -v b="$5" -v t="$6" 'BEGIN {
+            split(g, c, " ");
+            d1 = c[1] - r; d2 = c[2] - gg; d3 = c[3] - b
+            if (d1 < 0) d1 = -d1; if (d2 < 0) d2 = -d2; if (d3 < 0) d3 = -d3
+            exit !(d1 <= t && d2 <= t && d3 <= t) }' \
+            || fail "$1: colour
+    expected: $3 $4 $5 (within $6 in each channel)
+    actual:   $2"
+    }
+    # A 320x240 card at 10 a second, written to out/NAME.
+    card() { local out=$1; shift; run card -o "$ft/out/$out" -s 320x240 -r 10 "$@"; expect_ok "card $*"; }
+    # Line N of the report in $lines.
+    l() { printf '%s\n' "$lines" | sed -n "$1p"; }
+    # Each check below runs on its own, so one failing does not hide the next:
+    # a check that fails ends only itself, and the run fails at the end.
+    fin_failed=0
+    fin_step() {
+        local st
+        step "$1"
+        set +e; ( set -e; "$2" ); st=$?; set -e
+        [ "$st" -eq 0 ] || fin_failed=$((fin_failed + 1))
+    }
+
+    # ---- the pieces every check works from --------------------------------
+    step "finishing: inputs are generated, not recorded"
+    # A: 6 s, 320x240, 10/s, a different hue each second, a bar that moves so
+    # no two frames match, and a sound track (an input's sound must be dropped).
+    # C: moving 0-3 s, still 3-5, moving 5-7, still 7-9, so the stills start and
+    # end at known times. B: another rate. W and T: another shape.
+    cat > "$ft/px.py" <<'FINPY'
+import subprocess, sys
+
+REGIONS = {"full": (0, 1), "top": (0, .7), "bottom": (.8, 1),
+           "centre": (.35, .65), "topband": (0, .3)}
+
+
+def run(cmd):
+    return subprocess.run(cmd, capture_output=True, check=True).stdout
+
+
+def size(f):
+    out = run(["ffprobe", "-v", "error", "-select_streams", "v:0",
+               "-show_entries", "stream=width,height", "-of", "csv=s=x:p=0",
+               f]).decode().strip()
+    w, h = out.split("x")
+    return int(w), int(h)
+
+
+def frames(f, w=80, h=50):
+    raw = run(["ffmpeg", "-v", "error", "-i", f, "-vf",
+               f"scale={w}:{h}:flags=area", "-fps_mode", "passthrough",
+               "-f", "rawvideo", "-pix_fmt", "rgb24", "-"])
+    n = w * h * 3
+    return [raw[i:i + n] for i in range(0, len(raw) - n + 1, n)]
+
+
+def one(f, idx, w=80, h=50):
+    fr = frames(f, w, h)
+    if idx >= len(fr):
+        sys.exit(f"{f} has {len(fr)} frames, no frame {idx}")
+    return fr[idx]
+
+
+def cut(data, w, h, name):
+    a, b = REGIONS[name]
+    return data[int(a * h) * w * 3:int(b * h) * w * 3]
+
+
+def luma(data):
+    r, g, b = data[0::3], data[1::3], data[2::3]
+    return (0.299 * sum(r) + 0.587 * sum(g) + 0.114 * sum(b)) / max(len(r), 1)
+
+
+def dist(x, y):
+    return sum(abs(p - q) for p, q in zip(x, y)) / max(len(x), 1)
+
+
+def main(argv):
+    cmd = argv[0]
+    if cmd == "mean":        # FILE IDX [REGION]
+        d = cut(one(argv[1], int(argv[2])), 80, 50,
+                argv[3] if len(argv) > 3 else "full")
+        print(f"{luma(d):.2f}")
+    elif cmd == "diff":      # FILE IDX FILE IDX [REGION]
+        reg = argv[5] if len(argv) > 5 else "full"
+        a = cut(one(argv[1], int(argv[2])), 80, 50, reg)
+        b = cut(one(argv[3], int(argv[4])), 80, 50, reg)
+        print(f"{dist(a, b):.2f}")
+    elif cmd == "match":     # FILE IDX SRC [LO HI]: which SRC frame is FILE's IDX
+        target = one(argv[1], int(argv[2]))
+        src = frames(argv[3])
+        lo = int(argv[4]) if len(argv) > 4 else 0
+        hi = int(argv[5]) if len(argv) > 5 else len(src) - 1
+        best = min(range(lo, min(hi, len(src) - 1) + 1),
+                   key=lambda i: dist(target, src[i]))
+        print(best)
+    elif cmd == "bbox":      # FILE IDX #RRGGBB: box of what differs from the background
+        f, idx, hexcol = argv[1], int(argv[2]), argv[3].lstrip("#")
+        bg = tuple(int(hexcol[i:i + 2], 16) for i in (0, 2, 4))
+        w, h = size(f)
+        d = one(f, idx, w, h)
+        xs, ys = [], []
+        for y in range(h):
+            row = d[y * w * 3:(y + 1) * w * 3]
+            for x in range(w):
+                p = row[x * 3:x * 3 + 3]
+                if max(abs(p[i] - bg[i]) for i in range(3)) > 60:
+                    xs.append(x)
+                    ys.append(y)
+        if not xs:
+            print("none")
+        else:
+            print(min(xs) / w, min(ys) / h, (max(xs) + 1) / w, (max(ys) + 1) / h)
+    elif cmd == "px":        # FILE IDX FX FY: colour near that fraction of the frame
+        f, idx = argv[1], int(argv[2])
+        fx, fy = float(argv[3]), float(argv[4])
+        w, h = size(f)
+        d = one(f, idx, w, h)
+        x0, y0 = int(fx * w), int(fy * h)
+        acc = [0, 0, 0]
+        n = 0
+        for y in range(max(y0 - 2, 0), min(y0 + 3, h)):
+            for x in range(max(x0 - 2, 0), min(x0 + 3, w)):
+                for i in range(3):
+                    acc[i] += d[(y * w + x) * 3 + i]
+                n += 1
+        print(*(round(a / n) for a in acc))
+    elif cmd == "minmax":    # FILE IDX REGION: darkest and brightest luma at full size
+        f, idx = argv[1], int(argv[2])
+        w, h = size(f)
+        d = cut(one(f, idx, w, h), w, h, argv[3])
+        ls = [0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]
+              for i in range(0, len(d), 3)]
+        print(f"{min(ls):.0f} {max(ls):.0f}")
+    elif cmd == "changed":   # FILE IDX FILE IDX REGION: pixels differing by >40
+        f, idx = argv[1], int(argv[2])
+        w, h = size(f)
+        a = cut(one(f, idx, w, h), w, h, argv[5])
+        b = cut(one(argv[3], int(argv[4]), w, h), w, h, argv[5])
+        print(sum(1 for i in range(0, len(a), 3)
+                  if max(abs(a[i + k] - b[i + k]) for k in range(3)) > 40))
+    elif cmd == "whitened":  # FILE IDX SRC IDX REGION: pixels white here, not white there
+        f, idx = argv[1], int(argv[2])
+        w, h = size(f)
+        a = cut(one(f, idx, w, h), w, h, argv[5])
+        b = cut(one(argv[3], int(argv[4]), w, h), w, h, argv[5])
+        print(sum(1 for i in range(0, len(a), 3)
+                  if min(a[i:i + 3]) > 220 and min(b[i:i + 3]) <= 220))
+    elif cmd == "atoms":     # FILE: top-level boxes in order
+        names = []
+        with open(argv[1], "rb") as fh:
+            while True:
+                head = fh.read(8)
+                if len(head) < 8:
+                    break
+                n = int.from_bytes(head[:4], "big")
+                names.append(head[4:].decode("latin1"))
+                if n == 1:
+                    n = int.from_bytes(fh.read(8), "big")
+                    fh.seek(n - 16, 1)
+                elif n == 0:
+                    break
+                else:
+                    fh.seek(n - 8, 1)
+        print(*names)
+    else:
+        sys.exit(f"px.py: unknown command {cmd}")
+
+
+main(sys.argv[1:])
+FINPY
+    ff() { ffmpeg -v error -y "$@"; }
+    x264="-c:v libx264 -pix_fmt yuv420p -movflags +faststart"
+    ff -f lavfi -i "testsrc2=s=320x240:r=10:d=6" -f lavfi -i "sine=d=6" \
+       -f lavfi -i "color=c=white:s=16x240:r=10:d=6" \
+       -filter_complex "[0:v]hue=h='floor(t)*60'[b];[b][2:v]overlay=x='mod(n*5,300)':y=0,format=yuv420p[v]" \
+       -map '[v]' -map 1:a -c:a aac -shortest $x264 "$ft/A.mp4"
+    ff -f lavfi -i "testsrc2=s=320x240:r=10:d=8" \
+       -vf "select=eq(n\\,77),hue=h=120" -frames:v 1 "$ft/still1.png"
+    ff -f lavfi -i "testsrc2=s=320x240:r=10:d=8" \
+       -vf "select=eq(n\\,33),hue=h=240" -frames:v 1 "$ft/still2.png"
+    ff -f lavfi -i "testsrc2=s=320x240:r=10:d=3" \
+       -loop 1 -framerate 10 -t 2 -i "$ft/still1.png" \
+       -f lavfi -i "testsrc2=s=320x240:r=10:d=2" \
+       -loop 1 -framerate 10 -t 2 -i "$ft/still2.png" \
+       -filter_complex "[0:v]setsar=1,format=yuv420p[a];[1:v]fps=10,setsar=1,format=yuv420p[b];[2:v]hue=h=200,setsar=1,format=yuv420p[c];[3:v]fps=10,setsar=1,format=yuv420p[d];[a][b][c][d]concat=n=4:v=1:a=0[v]" \
+       -map '[v]' $x264 "$ft/C.mp4"
+    ff -f lavfi -i "testsrc=s=320x240:r=15:d=4" $x264 "$ft/B.mp4"
+    ff -f lavfi -i "testsrc2=s=640x240:r=10:d=3" $x264 "$ft/W.mp4"
+    ff -f lavfi -i "testsrc2=s=320x480:r=10:d=3" $x264 "$ft/T.mp4"
+    ff -f lavfi -i "testsrc=s=320x240:r=3:d=3" -r 30 $x264 "$ft/S.mp4"
+    printf 'this is not a video\n' > "$ft/bad.mp4"
+    # Pictures for cards.
+    ff -f lavfi -i "testsrc2=s=100x80:r=10:d=1" -vf "select=eq(n\\,3)" -frames:v 1 "$ft/small.png"
+    ff -f lavfi -i "testsrc2=s=800x400:r=10:d=1" -vf "select=eq(n\\,3)" -frames:v 1 "$ft/wide.png"
+    ff -f lavfi -i "color=c=red:s=100x80,format=rgba,geq=r=255:g=0:b=0:a='if(lt(X,50),255,0)'" \
+       -frames:v 1 "$ft/half.png"
+    ff -f lavfi -i "testsrc2=s=100x80:r=10:d=1,hue=h='n*36'" -f gif "$ft/spin.gif"
+    ff -f lavfi -i "testsrc2=s=100x80:r=10:d=1,hue=h='n*36'" -plays 0 -f apng "$ft/spin.png"
+    assert_eq "A has 60 frames" 60 "$(v_frames "$ft/A.mp4")"
+    assert_eq "C has 90 frames" 90 "$(v_frames "$ft/C.mp4")"
+    assert_eq "spin.png is animated (frames)" 10 \
+        "$(ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=nb_read_frames -of csv=p=0 "$ft/spin.png")"
+    cat > "$ft/shim/ffmpeg" <<'SHIM'
+#!/bin/sh
+# Logs every call, then runs the real ffmpeg. SHIM_MODE=nodraw also makes text
+# drawing unavailable, as on an ffmpeg built without it.
+echo "$*" >> "$SHIM_LOG"
+if [ "$SHIM_MODE" = nodraw ]; then
+    case " $* " in
+        *" -filters "*) "$REAL_FFMPEG" "$@" | grep -v drawtext; exit 0 ;;
+        *drawtext*) echo "shim: no drawtext here" >&2; exit 1 ;;
+    esac
+fi
+exec "$REAL_FFMPEG" "$@"
+SHIM
+    chmod +x "$ft/shim/ffmpeg"
+    echo "inputs made: A (6 s, sound), C (stills at 3-5 and 7-9), B, W, T, S, pictures"
+
+    # ---- trim -------------------------------------------------------------
+    fin_s1() {
+    # README: "The cut lands on the frame at the time you gave, and the frame on
+    # screen at `to` is the last one kept." A frame every 0.1 s: 2 to 4.5 is the
+    # 26 frames from number 20 to number 45.
+    run trim A.mp4 -o "$ft/out/t1.mp4" --from 2 --to 4.5
+    expect_ok "trim --from 2 --to 4.5"
+    assert_len "trim 2 to 4.5" "$ft/out/t1.mp4" 26 10
+    assert_is_frame "trim: first frame" "$ft/out/t1.mp4" 0 "$ft/A.mp4" 20
+    assert_is_frame "trim: last frame" "$ft/out/t1.mp4" 25 "$ft/A.mp4" 45
+    # "Leave one out and that end stays where it is."
+    run trim A.mp4 -o "$ft/out/t2.mp4" --from 4
+    expect_ok "trim --from 4"
+    assert_len "trim from 4, no --to" "$ft/out/t2.mp4" 20 10
+    assert_is_frame "trim from 4: first frame" "$ft/out/t2.mp4" 0 "$ft/A.mp4" 40
+    run trim A.mp4 -o "$ft/out/t3.mp4" --to 1.9
+    expect_ok "trim --to 1.9"
+    assert_len "trim to 1.9, no --from" "$ft/out/t3.mp4" 20 10
+    assert_is_frame "trim to 1.9: first frame" "$ft/out/t3.mp4" 0 "$ft/A.mp4" 0
+    assert_is_frame "trim to 1.9: last frame" "$ft/out/t3.mp4" 19 "$ft/A.mp4" 19
+    echo "trim cut on the frames asked for and kept the one at --to"
+
+    }
+    fin_s2() {
+    # README: "Every command that writes a video writes a silent H.264 `.mp4`
+    # with its index at the front ... Sound in an input is dropped." A has sound.
+    # And: "stdout carries the finished path and nothing else."
+    run trim A.mp4 -o "$ft/out/f1.mp4" --from 1 --to 3
+    expect_ok "trim of a video with sound"
+    expect_stdout_path "trim" "$ft/out/f1.mp4"
+    assert_finished "$ft/out/f1.mp4" "trim of a video with sound"
+    run caption A.mp4 -o "$ft/out/f2.mp4" --text hi
+    expect_ok "caption"
+    expect_stdout_path "caption" "$ft/out/f2.mp4"
+    assert_finished "$ft/out/f2.mp4" caption
+    run join A.mp4 B.mp4 -o "$ft/out/f3.mp4"
+    expect_ok "join"
+    expect_stdout_path "join" "$ft/out/f3.mp4"
+    assert_finished "$ft/out/f3.mp4" join
+    run card -o "$ft/out/f4.mp4" -d 1 -s 320x240 -r 10
+    expect_ok "card"
+    expect_stdout_path "card" "$ft/out/f4.mp4"
+    assert_finished "$ft/out/f4.mp4" card
+    printf 'clip A.mp4 from 1 to 2\n' > "$ft/f5.txt"
+    run edit f5.txt -o "$ft/out/f5.mp4"
+    expect_ok "edit"
+    expect_stdout_path "edit" "$ft/out/f5.mp4"
+    assert_finished "$ft/out/f5.mp4" edit
+    echo "trim, caption, join, card and edit each wrote a silent yuv420p H.264 file, index first, path alone on stdout"
+
+    }
+    fin_s3() {
+    # README: "-o ... may not be one of the files being read. A command never
+    # writes over its own input." and "-o must end in .mp4; any other ending is
+    # refused."
+    cp "$ft/A.mp4" "$ft/in.mp4"; cp "$ft/B.mp4" "$ft/in2.mp4"
+    ln -sf in.mp4 "$ft/alias.mp4"
+    run trim in.mp4 -o "$ft/out/ctl.mp4" --to 2
+    expect_ok "control: trim to another file"
+    printf 'clip in.mp4 from 1 to 2\n' > "$ft/self.txt"
+    before=$(snap)
+    for target in "$ft/in.mp4" ./in.mp4 alias.mp4; do
+        run trim in.mp4 -o "$target" --to 2
+        expect_refused "trim with -o $target (the input itself)"
+    done
+    run caption in.mp4 -o in.mp4 --text hi
+    expect_refused "caption with -o the input"
+    run join in.mp4 in2.mp4 -o in2.mp4
+    expect_refused "join with -o one of its inputs"
+    run card -o in.mp4 -d 1 --like in.mp4
+    expect_refused "card with -o the file --like reads"
+    run edit self.txt -o in.mp4
+    expect_refused "edit with -o a clip the script reads"
+    assert_eq "an input is left untouched by a refused command" "$before" "$(snap)"
+    for bad in out.mov out.txt out noext.MP4x; do
+        run trim in.mp4 -o "$ft/out/$bad" --to 2
+        expect_refused "trim with -o ending in the wrong way ($bad)"
+        assert_absent "trim -o $bad" "$ft/out/$bad"
+    done
+    for cmd in caption card join; do
+        case $cmd in
+            caption) set -- caption in.mp4 --text hi ;;
+            card)    set -- card -d 1 ;;
+            join)    set -- join in.mp4 in2.mp4 ;;
+        esac
+        run "$@" -o "$ft/out/wrong.mov"
+        expect_refused "$cmd with -o ending .mov"
+        assert_absent "$cmd -o .mov" "$ft/out/wrong.mov"
+    done
+    run edit f5.txt -o "$ft/out/wrong.mov"
+    expect_refused "edit with -o ending .mov"
+    assert_absent "edit -o .mov" "$ft/out/wrong.mov"
+    echo "an input is never overwritten; -o must end in .mp4"
+
+    }
+    fin_s4() {
+    # README: "A time past the end of the file is an error, not a guess." and
+    # "A `to` equal to the file's length, as `motion` prints it, is accepted and
+    # means the last frame."
+    run trim A.mp4 -o "$ft/out/e1.mp4" --to 6
+    expect_ok "trim --to 6 (the length of a 6 s file)"
+    assert_eq "trim --to <length>: frames (means the last frame)" 60 "$(v_frames "$ft/out/e1.mp4")"
+    for args in "--to 6.5" "--to 99" "--from 6.5" "--from 99 --to 100"; do
+        run trim A.mp4 -o "$ft/out/e2.mp4" $args
+        expect_refused "trim $args on a 6 s file"
+        assert_absent "trim $args" "$ft/out/e2.mp4"
+    done
+    run motion A.mp4 --to 99
+    expect_refused "motion --to 99 on a 6 s file"
+    run poster A.mp4 -t 99 -o "$ft/out/e3.png"
+    expect_refused "poster -t 99 on a 6 s file"
+    assert_absent "poster -t 99" "$ft/out/e3.png"
+    printf 'clip A.mp4 from 2 to 99\n' > "$ft/e4.txt"
+    run edit e4.txt -o "$ft/out/e4.mp4"
+    expect_refused "edit: clip to 99 on a 6 s file"
+    echo "times past the end were refused; --to at the length was accepted"
+
+    }
+    fin_s5() {
+    # README: "A command that fails leaves nothing at `-o`. A file already there
+    # is left as it was."
+    cp "$ft/B.mp4" "$ft/out/keep.mp4"
+    keep=$(sha256sum < "$ft/out/keep.mp4")
+    run trim A.mp4 -o "$ft/out/keep.mp4" --to 2
+    expect_ok "control: a good trim may write over an older output"
+    cp "$ft/B.mp4" "$ft/out/keep.mp4"
+    before=$(snap)
+    for what in "trim A.mp4 --to 99" "trim bad.mp4 --to 1" "caption bad.mp4 --text hi" \
+                "join A.mp4 W.mp4" "join A.mp4 bad.mp4" "join A.mp4"; do
+        # shellcheck disable=SC2086
+        run ${what%% *} ${what#* } -o "$ft/out/keep.mp4"
+        expect_refused "$what, -o an existing file"
+        assert_eq "$what: the file already at -o" "$keep" "$(sha256sum < "$ft/out/keep.mp4")"
+        # shellcheck disable=SC2086
+        run ${what%% *} ${what#* } -o "$ft/out/nothing.mp4"
+        expect_refused "$what"
+        assert_absent "$what" "$ft/out/nothing.mp4"
+    done
+    run edit e4.txt -o "$ft/out/keep.mp4"
+    expect_refused "edit with a bad line, -o an existing file"
+    assert_eq "edit: the file already at -o" "$keep" "$(sha256sum < "$ft/out/keep.mp4")"
+    assert_eq "no stray file after failures" "$before" "$(snap)"
+    echo "failures left nothing new and the older file byte for byte"
+
+    # ---- motion -----------------------------------------------------------
+    }
+    fin_s6() {
+    # README: the report is `duration`, `frames`, `new frames`, `new frames per
+    # second`, `last change`, then one `still` line for each stretch.
+    run motion C.mp4
+    expect_ok "motion C.mp4"
+    lines=$(cat "$fo")
+    printf '%s\n' "$(l 1)" | grep -qE '^duration: [0-9]+\.[0-9]{3}$' \
+        || fail "motion line 1: expected 'duration: N.NNN', actual: '$(l 1)'"
+    printf '%s\n' "$(l 2)" | grep -qE '^frames: [0-9]+$' \
+        || fail "motion line 2: expected 'frames: N', actual: '$(l 2)'"
+    printf '%s\n' "$(l 3)" | grep -qE '^new frames: [0-9]+$' \
+        || fail "motion line 3: expected 'new frames: N', actual: '$(l 3)'"
+    printf '%s\n' "$(l 4)" | grep -qE '^new frames per second: [0-9]+\.[0-9]{2}$' \
+        || fail "motion line 4: expected 'new frames per second: N.NN', actual: '$(l 4)'"
+    printf '%s\n' "$(l 5)" | grep -qE '^last change: [0-9]+\.[0-9]{3}$' \
+        || fail "motion line 5: expected 'last change: N.NNN', actual: '$(l 5)'"
+    rest=$(printf '%s\n' "$lines" | sed -n '6,$p')
+    printf '%s\n' "$rest" | grep -vE '^still: [0-9]+\.[0-9]{3} to [0-9]+\.[0-9]{3} \([0-9]+\.[0-9]{3}\)$' \
+        | grep -q . && fail "motion: every line after the fifth should be 'still: N.NNN to N.NNN (N.NNN)'
+    actual: $rest"
+    # What the numbers mean, on a clip made to stand still at 3-5 and at 7-9.
+    assert_eq "motion: frames" "$(v_frames "$ft/C.mp4")" "$(l 2 | sed 's/^frames: //')"
+    assert_near "motion: duration" 9 "$(l 1 | sed 's/^duration: //')" 0.06
+    new=$(l 3 | sed 's/^new frames: //')
+    assert_between "motion: new frames (30 + 1 + 20 + 1 by the clip's construction)" 50 56 "$new"
+    assert_near "motion: new frames per second is new frames over duration" \
+        "$(awk -v n="$new" 'BEGIN { printf "%.2f", n / 9 }')" \
+        "$(l 4 | sed 's/^new frames per second: //')" 0.1
+    echo "the plain report has the README's lines, in its order"
+
+    }
+    fin_s7() {
+    # README: "`last change` — the time of the last new frame." "`still` — one
+    # line for each stretch with no change longer than `--still` seconds (1
+    # unless you say). Its start is the time of the last new frame before it,
+    # its end is the time of the next new frame, or the end of the video, and
+    # its length is in brackets. No such stretch, no such line."
+    run motion C.mp4
+    expect_ok "motion C.mp4"
+    lines=$(cat "$fo")
+    rest=$(printf '%s\n' "$lines" | sed -n '6,$p')
+    last=$(l 5 | sed 's/^last change: //')
+    assert_near "motion: last change (the clip goes still for good at 7.0)" 7 "$last" 0.25
+    assert_eq "motion: number of still lines (3-5 and 7-9)" 2 "$(printf '%s\n' "$rest" | grep -c '^still:')"
+    s1=$(printf '%s\n' "$rest" | sed -n 1p); s2=$(printf '%s\n' "$rest" | sed -n 2p)
+    read -r _ a1 _ b1 c1 <<<"$s1"; c1=${c1//[()]/}
+    read -r _ a2 _ b2 c2 <<<"$s2"; c2=${c2//[()]/}
+    assert_near "first still: start" 3 "$a1" 0.25
+    assert_near "first still: end (the next new picture)" 5 "$b1" 0.25
+    assert_near "first still: bracketed length is end minus start" "$(awk -v a="$a1" -v b="$b1" 'BEGIN{print b-a}')" "$c1" 0.002
+    assert_near "second still: start" 7 "$a2" 0.25
+    assert_near "second still: end (the end of the video)" 9 "$b2" 0.06
+    assert_eq "the last still starts at the last change" "$last" "$a2"
+    # `--still`: only stretches longer than it.
+    run motion C.mp4 --still 2.5
+    expect_ok "motion --still 2.5"
+    assert_eq "motion --still 2.5: still lines (both stretches are 2 s)" 0 "$(grep -c '^still:' "$fo" || true)"
+    run motion C.mp4 --still 1.5
+    expect_ok "motion --still 1.5"
+    assert_eq "motion --still 1.5: still lines" 2 "$(grep -c '^still:' "$fo")"
+    # A clip that never stops has none, and its last change is its last frame.
+    run motion A.mp4
+    expect_ok "motion A.mp4"
+    assert_eq "motion of a clip that never stands still: still lines" 0 "$(grep -c '^still:' "$fo" || true)"
+    assert_eq "motion of a moving clip: new frames = frames" 60 "$(sed -n 's/^new frames: //p' "$fo")"
+    assert_near "motion of a moving clip: last change is its last frame" 5.9 "$(sed -n 's/^last change: //p' "$fo")" 0.06
+    assert_near "motion of a moving clip: new frames per second" 10 "$(sed -n 's/^new frames per second: //p' "$fo")" 0.05
+    # `--from` and `--to` look at part; the times printed are still file times.
+    run motion C.mp4 --from 6 --to 9
+    expect_ok "motion --from 6 --to 9"
+    assert_near "motion --from 6 --to 9: duration is the part looked at" 3 "$(sed -n 's/^duration: //p' "$fo")" 0.06
+    sl=$(grep '^still:' "$fo" | tail -1)
+    read -r _ a3 _ b3 _ <<<"$sl"
+    assert_near "motion --from 6 --to 9: the still starts at its time in the file, not in the part" 7 "$a3" 0.25
+    # README: "A file can be stored at 30 frames a second and show three new ones."
+    run motion S.mp4
+    expect_ok "motion of a 3-new-frames-a-second clip stored at 30"
+    assert_between "motion: new frames per second of a video stored at 30 showing 3" 2.5 3.5 "$(sed -n 's/^new frames per second: //p' "$fo")"
+    assert_eq "motion: frames of a video stored at 30" "$(v_frames "$ft/S.mp4")" "$(sed -n 's/^frames: //p' "$fo")"
+    echo "last change and the still lines match the clip's construction"
+
+    }
+    fin_s8() {
+    # README: "`--json` prints the same report as one JSON object" with keys
+    # duration, frames, new_frames, new_frames_per_second, last_change, still
+    # (a list of {from, to, seconds}).
+    run motion C.mp4
+    cp "$fo" "$ft/log/plain"
+    run motion C.mp4 --json
+    expect_ok "motion --json"
+    python3 - "$fo" "$ft/log/plain" <<'JSONPY' || fail "motion --json disagrees with the plain report (see above)"
+import json, re, sys
+try:
+    data = json.loads(open(sys.argv[1]).read())
+except ValueError as e:
+    sys.exit(f"expected one JSON object on stdout, got: {open(sys.argv[1]).read()[:200]!r} ({e})")
+want = ["duration", "frames", "new_frames", "new_frames_per_second",
+        "last_change", "still"]
+if not isinstance(data, dict) or sorted(data) != sorted(want):
+    sys.exit(f"expected keys {sorted(want)}, actual {sorted(data) if isinstance(data, dict) else data!r}")
+plain = open(sys.argv[2]).read()
+def field(name):
+    return float(re.search(rf"^{name}: ([0-9.]+)", plain, re.M).group(1))
+for key, name in [("duration", "duration"), ("frames", "frames"),
+                  ("new_frames", "new frames"),
+                  ("new_frames_per_second", "new frames per second"),
+                  ("last_change", "last change")]:
+    if abs(data[key] - field(name)) > 0.006:
+        sys.exit(f"{key}: expected {field(name)} (the plain report's '{name}'), actual {data[key]}")
+stills = re.findall(r"^still: ([0-9.]+) to ([0-9.]+) \(([0-9.]+)\)", plain, re.M)
+if len(data["still"]) != len(stills):
+    sys.exit(f"still: expected {len(stills)} entries, actual {len(data['still'])}")
+for got, (a, b, c) in zip(data["still"], stills):
+    if sorted(got) != ["from", "seconds", "to"]:
+        sys.exit(f"a still entry should have keys from, to, seconds; actual {sorted(got)}")
+    for k, v in (("from", a), ("to", b), ("seconds", c)):
+        if abs(got[k] - float(v)) > 0.006:
+            sys.exit(f"still {k}: expected {v}, actual {got[k]}")
+JSONPY
+    echo "the JSON has the README's keys and the plain report's numbers"
+
+    }
+    fin_s9() {
+    # README: "Reads the video and changes nothing." "`motion` writes no file".
+    before=$(snap)
+    run motion C.mp4 --still 0.7 --from 1 --to 8
+    expect_ok "motion --still 0.7 --from 1 --to 8"
+    run motion C.mp4 --json
+    expect_ok "motion --json"
+    assert_eq "motion left the folder as it was" "$before" "$(snap)"
+    echo "motion made and changed no file"
+
+    }
+    fin_s10() {
+    # README: "So `to` set to the `last change` that `motion` prints ends the
+    # scene on the last new picture."
+    run motion C.mp4
+    expect_ok "motion C.mp4"
+    lc=$(sed -n 's/^last change: //p' "$fo")
+    lcframe=$(awk -v t="$lc" 'BEGIN { printf "%d", t * 10 + 0.5 }')
+    run trim C.mp4 -o "$ft/out/rt.mp4" --to "$lc"
+    expect_ok "trim --to $lc"
+    assert_eq "trim --to <last change>: frames (the last new picture is the last frame)" \
+        "$((lcframe + 1))" "$(v_frames "$ft/out/rt.mp4")"
+    assert_is_frame "trim --to <last change>: last frame is the last new picture" \
+        "$ft/out/rt.mp4" "$lcframe" "$ft/C.mp4" "$lcframe" 0 "$lcframe"
+    run motion "$ft/out/rt.mp4"
+    expect_ok "motion of the trimmed clip"
+    assert_near "motion of the trimmed clip: its last change is its last frame" \
+        "$(awk -v n="$lcframe" 'BEGIN { print n / 10 }')" "$(sed -n 's/^last change: //p' "$fo")" 0.06
+    printf 'clip C.mp4 to %s\n' "$lc" > "$ft/rt.txt"
+    run edit rt.txt -o "$ft/out/rt2.mp4"
+    expect_ok "edit: clip C.mp4 to <last change>"
+    assert_eq "edit: clip to <last change>: frames" "$((lcframe + 1))" "$(v_frames "$ft/out/rt2.mp4")"
+    echo "trim and edit both ended on the last new picture"
+
+    # ---- poster -----------------------------------------------------------
+    }
+    fin_s11() {
+    # README: "Saves the frame on screen at `-t`, or `--time`, as a picture."
+    # "`-o` ends in `.png` or `.jpg`." One picture, the size of the video.
+    run poster A.mp4 -t 2.5 -o "$ft/out/p1.png"
+    expect_ok "poster -t 2.5 -o .png"
+    expect_stdout_path "poster" "$ft/out/p1.png"
+    assert_eq "poster .png: codec, size" "png,320,240" \
+        "$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height -of csv=p=0 "$ft/out/p1.png")"
+    assert_eq "poster .png: one picture" 1 "$(v_frames "$ft/out/p1.png")"
+    assert_is_frame "poster -t 2.5" "$ft/out/p1.png" 0 "$ft/A.mp4" 25
+    run poster A.mp4 --time 2.55 -o "$ft/out/p2.png"
+    expect_ok "poster --time 2.55"
+    assert_is_frame "poster --time 2.55 (frame 25 is on screen from 2.5 to 2.6)" "$ft/out/p2.png" 0 "$ft/A.mp4" 25
+    run poster A.mp4 -t 4.1 -o "$ft/out/p3.jpg"
+    expect_ok "poster -t 4.1 -o .jpg"
+    expect_stdout_path "poster .jpg" "$ft/out/p3.jpg"
+    assert_eq "poster .jpg: codec, size" "mjpeg,320,240" \
+        "$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height -of csv=p=0 "$ft/out/p3.jpg")"
+    assert_is_frame "poster -t 4.1 .jpg" "$ft/out/p3.jpg" 0 "$ft/A.mp4" 41
+    echo "poster saved frame 25 and frame 41 as a .png and a .jpg"
+
+    }
+    fin_s12() {
+    # README: "`-t` is required. `-o` ends in `.png` or `.jpg`." "A time past
+    # the end of the file is an error".
+    run poster A.mp4 -t 1 -o "$ft/out/ok.png"
+    expect_ok "control: poster -t 1"
+    for bad in p.bmp p.jpeg p.mp4 p; do
+        run poster A.mp4 -t 1 -o "$ft/out/$bad"
+        expect_refused "poster with -o $bad"
+        assert_absent "poster -o $bad" "$ft/out/$bad"
+    done
+    run poster A.mp4 -t 6.5 -o "$ft/out/late.png"
+    expect_refused "poster -t 6.5 on a 6 s file"
+    assert_absent "poster -t 6.5" "$ft/out/late.png"
+    run poster A.mp4 -o "$ft/out/notime.png"
+    expect_refused "poster without -t"
+    assert_absent "poster without -t" "$ft/out/notime.png"
+    echo "poster refused the wrong endings, a late time and a missing -t"
+
+    # ---- join -------------------------------------------------------------
+    }
+    fin_s13() {
+    # README: "`--crossfade` applies at every join; without it each join is a
+    # plain cut." "The two scenes overlap for that long, so the film is that
+    # much shorter than its scenes added together." A is 6 s and B is 4 s.
+    run join A.mp4 B.mp4 -o "$ft/out/j1.mp4"
+    expect_ok "join A B"
+    assert_near "join, plain cut: length (6 + 4)" 10 "$(v_dur "$ft/out/j1.mp4")" 0.15
+    assert_is_frame "join: frame 10 is still A's" "$ft/out/j1.mp4" 10 "$ft/A.mp4" 10
+    run join A.mp4 B.mp4 -o "$ft/out/j2.mp4" --crossfade 0.5
+    expect_ok "join --crossfade 0.5"
+    assert_near "join with one crossfade: length (6 + 4 - 0.5)" 9.5 "$(v_dur "$ft/out/j2.mp4")" 0.15
+    run join A.mp4 B.mp4 A.mp4 -o "$ft/out/j3.mp4" --crossfade 0.5
+    expect_ok "join of three, --crossfade 0.5"
+    assert_near "join of three with a crossfade at each join: length (16 - 2 x 0.5)" 15 "$(v_dur "$ft/out/j3.mp4")" 0.15
+    run join A.mp4 B.mp4 A.mp4 -o "$ft/out/j4.mp4"
+    expect_ok "join of three, plain cuts"
+    assert_near "join of three with plain cuts: length (6 + 4 + 6)" 16 "$(v_dur "$ft/out/j4.mp4")" 0.15
+    echo "lengths: plain cuts add up; each crossfade takes its overlap off"
+
+    }
+    fin_s14() {
+    # README: "The film's picture size and frame rate are the first clip's ...
+    # Every other clip is scaled to the film's size and brought to its frame
+    # rate. A clip whose shape differs from the film's, wider or taller, is
+    # refused rather than stretched." "`join` takes two or more videos."
+    run join B.mp4 A.mp4 -o "$ft/out/j5.mp4"
+    expect_ok "join B A"
+    assert_eq "join: size is the first clip's" 320x240 "$(v_size "$ft/out/j5.mp4")"
+    assert_eq "join: frame rate is the first clip's (B is 15 a second)" 15.00 "$(v_rate "$ft/out/j5.mp4")"
+    run join A.mp4 B.mp4 -o "$ft/out/j6.mp4"
+    expect_ok "control: join A B"
+    assert_eq "join: frame rate is the first clip's (A is 10 a second)" 10.00 "$(v_rate "$ft/out/j6.mp4")"
+    for other in W.mp4 T.mp4; do
+        run join A.mp4 "$other" -o "$ft/out/j7.mp4"
+        expect_refused "join A with $other, a different shape"
+        assert_absent "join with $other" "$ft/out/j7.mp4"
+    done
+    run join A.mp4 -o "$ft/out/j8.mp4"
+    expect_refused "join of one video"
+    assert_absent "join of one video" "$ft/out/j8.mp4"
+    echo "join took the first clip's size and rate, and refused wider and taller clips"
+
+    # ---- card -------------------------------------------------------------
+    }
+    fin_s15() {
+    # README: "`card` takes `-d` for its length, which is required." "Its size
+    # and frame rate come from `--like FILE`; `-s` and `-r` set them by hand and
+    # win over `--like`. With none of them it is 1600x1000 at 30."
+    run card -o "$ft/out/c1.mp4" -d 2 --like B.mp4
+    expect_ok "card -d 2 --like B.mp4"
+    assert_eq "card --like: size is the clip's" 320x240 "$(v_size "$ft/out/c1.mp4")"
+    assert_eq "card --like: rate is the clip's" 15.00 "$(v_rate "$ft/out/c1.mp4")"
+    assert_len "card -d 2" "$ft/out/c1.mp4" 30 15
+    run card -o "$ft/out/c2.mp4" -d 1 --like B.mp4 -s 200x100 -r 12
+    expect_ok "card --like with -s and -r"
+    assert_eq "card: -s wins over --like" 200x100 "$(v_size "$ft/out/c2.mp4")"
+    assert_eq "card: -r wins over --like" 12.00 "$(v_rate "$ft/out/c2.mp4")"
+    run card -o "$ft/out/c3.mp4" -d 1
+    expect_ok "card -d 1"
+    assert_eq "card with none of them: size" 1600x1000 "$(v_size "$ft/out/c3.mp4")"
+    assert_eq "card with none of them: rate" 30.00 "$(v_rate "$ft/out/c3.mp4")"
+    run card -o "$ft/out/c4.mp4"
+    expect_refused "card without -d"
+    assert_absent "card without -d" "$ft/out/c4.mp4"
+    echo "card took its shape from --like, -s and -r, and the defaults"
+
+    }
+    fin_s16() {
+    # README: "`background #202830` sets the colour ... Without it the background
+    # is `#101418`." "On a card, the text is the card's title: bold, near the
+    # top when the card has a picture and in the middle when it has none. Its
+    # height is 7% of the frame's. It is white on a dark background and
+    # near-black on a light one."
+    card k1.mp4 -d 1
+    assert_colour "card with no --background: colour of the frame" "$ft/out/k1.mp4" 5 0.05 0.05 16 20 24 8
+    assert_colour "card with no --background: colour of the middle" "$ft/out/k1.mp4" 5 0.5 0.5 16 20 24 8
+    card k2.mp4 -d 1 --background '#204060'
+    assert_colour "card --background #204060" "$ft/out/k2.mp4" 5 0.05 0.05 32 64 96 8
+    card k3.mp4 -d 1 --text 'Saving'
+    set -- $(px minmax "$ft/out/k3.mp4" 5 topband)
+    [ "$2" -lt 60 ] || fail "card title on a dark card, no picture: the top stays plain
+    expected: brightest pixel in the top band under 60
+    actual:   $2"
+    set -- $(px minmax "$ft/out/k3.mp4" 5 centre)
+    [ "$2" -ge 200 ] || fail "card title on a dark card: white text in the middle
+    expected: brightest pixel in the middle band at least 200
+    actual:   $2"
+    bb=$(px bbox "$ft/out/k3.mp4" 5 '#101418')
+    [ "$bb" != none ] || fail "card --text: expected text on the card, found nothing"
+    assert_between "card title, no picture: vertical centre of the text is the middle" 0.4 0.6 \
+        "$(echo "$bb" | awk '{ print ($2 + $4) / 2 }')"
+    h_default=$(echo "$bb" | awk '{ print $4 - $2 }')
+    card k4.mp4 -d 1 --text 'Saving' --text-size 14
+    bb2=$(px bbox "$ft/out/k4.mp4" 5 '#101418')
+    assert_between "card --text-size 14 is twice the height of the default 7" 1.6 2.5 \
+        "$(awk -v a="$h_default" -v b="$(echo "$bb2" | awk '{ print $4 - $2 }')" 'BEGIN { print b / a }')"
+    card k5.mp4 -d 1 --text 'Saving' --background '#f0f0f0'
+    set -- $(px minmax "$ft/out/k5.mp4" 5 centre)
+    [ "$1" -le 70 ] || fail "card title on a light card: near-black text
+    expected: darkest pixel in the middle band at most 70
+    actual:   $1"
+    card k6.mp4 -d 1 small.png --text 'Saving'
+    set -- $(px minmax "$ft/out/k6.mp4" 5 topband)
+    [ "$2" -ge 200 ] || fail "card title with a picture: text near the top
+    expected: brightest pixel in the top band at least 200
+    actual:   $2"
+    echo "background, title colour, title place and title size are as README says"
+
+    }
+    fin_s17() {
+    # README: "A file name after the seconds puts that picture on the card ...
+    # It is scaled to fit and centred, never stretched and never enlarged. A
+    # see-through picture shows the background through it."
+    card m1.mp4 -d 1 small.png
+    bb=$(px bbox "$ft/out/m1.mp4" 5 '#101418')
+    [ "$bb" != none ] || fail "card with small.png: nothing but background on the card"
+    set -- $bb
+    assert_near "small 100x80 picture on 320x240: left edge (110/320)" 0.344 "$1" 0.05
+    assert_near "small picture: top edge (80/240)" 0.333 "$2" 0.05
+    assert_near "small picture: right edge (210/320)" 0.656 "$3" 0.05
+    assert_near "small picture: bottom edge (160/240)" 0.667 "$4" 0.05
+    card m2.mp4 -d 1 wide.png
+    set -- $(px bbox "$ft/out/m2.mp4" 5 '#101418')
+    assert_near "wide 800x400 picture: left edge (fits the width)" 0 "$1" 0.05
+    assert_near "wide picture: right edge" 1 "$3" 0.05
+    assert_near "wide picture: top edge (scaled, not stretched, to 320x160)" 0.167 "$2" 0.05
+    assert_near "wide picture: bottom edge" 0.833 "$4" 0.05
+    card m3.mp4 -d 1 half.png
+    assert_colour "see-through picture: the opaque half is red" "$ft/out/m3.mp4" 5 0.42 0.5 255 0 0 70
+    assert_colour "see-through picture: the clear half shows the background" "$ft/out/m3.mp4" 5 0.578 0.5 16 20 24 8
+    echo "the picture was fitted, centred and left see-through where it is"
+
+    }
+    fin_s18() {
+    # README: "An animated picture (`.gif`, or an animated `.png`) plays at its
+    # own speed and starts again when it ends, until the card is over." The
+    # pictures are one second long, ten frames, a different colour in each.
+    for pic in spin.gif spin.png; do
+        card an.mp4 -d 3 "$pic"
+        assert_len "card $pic -d 3" "$ft/out/an.mp4" 30 10
+        moving=$(px changed "$ft/out/an.mp4" 2 "$ft/out/an.mp4" 5 centre)
+        again=$(px changed "$ft/out/an.mp4" 5 "$ft/out/an.mp4" 15 centre)
+        again2=$(px changed "$ft/out/an.mp4" 5 "$ft/out/an.mp4" 25 centre)
+        late=$(px changed "$ft/out/an.mp4" 22 "$ft/out/an.mp4" 25 centre)
+        assert_between "$pic: the picture animates (pixels that differ, frame 2 against 5)" 1000 100000 "$moving"
+        assert_between "$pic: it starts again after its own second (frame 5 against 15)" 0 500 "$again"
+        assert_between "$pic: and again (frame 5 against 25)" 0 500 "$again2"
+        assert_between "$pic: it is still animating past its own length (frame 22 against 25)" 1000 100000 "$late"
+    done
+    echo ".gif and animated .png played, looped and kept playing to the end of the card"
+
+    }
+    fin_s19() {
+    # README: "Text too wide for the frame at its size is refused. Nothing is
+    # shrunk without you asking."
+    run card -o "$ft/out/w1.mp4" -d 1 -s 320x240 --text 'Short'
+    expect_ok "control: card --text Short"
+    run card -o "$ft/out/w2.mp4" -d 1 -s 320x240 --text 'This title is far too wide to ever fit across so small a picture'
+    expect_refused "card with a title far wider than 320 pixels"
+    assert_absent "card with too wide a title" "$ft/out/w2.mp4"
+    echo "a too-wide title was refused, not shrunk"
+
+    # ---- caption ----------------------------------------------------------
+    }
+    fin_s20() {
+    # README: "A text shows from its `from` up to its `to` and not on the frame at
+    # `to`" and "`caption` never cuts the video." "On a clip, the text sits on a
+    # dark band across the bottom of the picture". Frames are compared with the
+    # input's; only the bottom strip is looked at.
+    run caption A.mp4 -o "$ft/out/n1.mp4" --text 'Opening a file' --from 1 --to 3
+    expect_ok "caption --from 1 --to 3"
+    assert_len "caption keeps the whole video" "$ft/out/n1.mp4" 60 10
+    text_off "caption, before the window" "$ft/out/n1.mp4" 5 "$ft/A.mp4" 5
+    text_off "caption, just before the window" "$ft/out/n1.mp4" 9 "$ft/A.mp4" 9
+    text_on  "caption, first frame of the window" "$ft/out/n1.mp4" 10 "$ft/A.mp4" 10
+    text_on  "caption, inside the window" "$ft/out/n1.mp4" 20 "$ft/A.mp4" 20
+    text_on  "caption, last frame of the window" "$ft/out/n1.mp4" 29 "$ft/A.mp4" 29
+    text_off "caption, on the frame at --to" "$ft/out/n1.mp4" 30 "$ft/A.mp4" 30
+    text_off "caption, after the window" "$ft/out/n1.mp4" 50 "$ft/A.mp4" 50
+    # "Left out, the text stays for the whole scene."
+    run caption A.mp4 -o "$ft/out/n2.mp4" --text 'Always here'
+    expect_ok "caption with no --from or --to"
+    text_on "caption with no times, first frame" "$ft/out/n2.mp4" 0 "$ft/A.mp4" 0
+    text_on "caption with no times, last frame" "$ft/out/n2.mp4" 59 "$ft/A.mp4" 59
+    # "`size 4` sets another height, as a percentage of the frame's."
+    run caption A.mp4 -o "$ft/out/n3.mp4" --text 'Big' --text-size 12
+    expect_ok "caption --text-size 12"
+    small=$(px whitened "$ft/out/n2.mp4" 20 "$ft/A.mp4" 20 bottom)
+    big=$(px whitened "$ft/out/n3.mp4" 20 "$ft/A.mp4" 20 bottom)
+    awk -v s="$small" -v b="$big" 'BEGIN { exit !(b > 1.3 * s) }' \
+        || fail "caption --text-size 12 should cover more of the frame than the default 5
+    expected: more than 1.3 x $small newly white pixels in the bottom strip
+    actual:   $big"
+    # Two texts, each with its own window; back to back is allowed.
+    run caption A.mp4 -o "$ft/out/n4.mp4" --text one --from 1 --to 3 --text two --from 3 --to 5
+    expect_ok "caption with back-to-back texts"
+    text_on  "back to back: last frame of the first text" "$ft/out/n4.mp4" 29 "$ft/A.mp4" 29
+    text_on  "back to back: first frame of the second text" "$ft/out/n4.mp4" 30 "$ft/A.mp4" 30
+    text_off "back to back: after the second" "$ft/out/n4.mp4" 50 "$ft/A.mp4" 50
+    echo "text showed on frames 10 to 29 only, and back-to-back texts were accepted"
+
+    }
+    fin_s21() {
+    # README: "A `--from`, `--to` or `--text-size` belongs to the `--text` before
+    # it, and one given before the first `--text` is refused: `caption` never
+    # cuts the video." "two whose times overlap are refused".
+    run caption A.mp4 -o "$ft/out/r0.mp4" --text one --from 1 --to 3
+    expect_ok "control: caption with one text"
+    for args in "--from 1 --text one" "--to 3 --text one" "--text-size 8 --text one"; do
+        run caption A.mp4 -o "$ft/out/r1.mp4" $args
+        expect_refused "caption $args"
+        assert_absent "caption $args" "$ft/out/r1.mp4"
+    done
+    run caption A.mp4 -o "$ft/out/r2.mp4" --text one --from 1 --to 4 --text two --from 3 --to 5
+    expect_refused "caption with texts overlapping between 3 and 4"
+    assert_absent "caption with overlapping texts" "$ft/out/r2.mp4"
+    run caption A.mp4 -o "$ft/out/r3.mp4" --text one --text two --from 2 --to 3
+    expect_refused "caption with a whole-video text and another beside it"
+    assert_absent "caption with a whole-video text and another" "$ft/out/r3.mp4"
+    run caption A.mp4 -o "$ft/out/r4.mp4" --text 'This is far too wide to fit across a small frame at any ordinary size at all'
+    expect_refused "caption with text wider than the frame"
+    assert_absent "caption with too wide a text" "$ft/out/r4.mp4"
+    echo "a stray --from and overlapping texts were refused"
+
+    # ---- fades ------------------------------------------------------------
+    }
+    fin_s22() {
+    # README: "`fade-in 1` — the scene starts black and the picture arrives over
+    # a second. `fade-out 1` — the picture goes to black over the scene's last
+    # second. `fade-at 12` — the picture goes to black just before that moment
+    # and comes back just after. Nothing is cut and the scene keeps its length."
+    run trim A.mp4 -o "$ft/out/d1.mp4" --fade-in 1 --fade-out 1 --fade-at 3
+    expect_ok "trim with --fade-in 1 --fade-out 1 --fade-at 3"
+    assert_len "trim with only fades cuts nothing" "$ft/out/d1.mp4" 60 10
+    assert_dark   "fade-in: the first frame" "$ft/out/d1.mp4" 0 "$ft/A.mp4" 0
+    assert_bright "fade-in: arrived after a second" "$ft/out/d1.mp4" 12 "$ft/A.mp4" 12
+    assert_bright "before the fade-at" "$ft/out/d1.mp4" 20 "$ft/A.mp4" 20
+    assert_dark   "fade-at 3: the frame at 3" "$ft/out/d1.mp4" 30 "$ft/A.mp4" 30
+    assert_bright "after the fade-at" "$ft/out/d1.mp4" 40 "$ft/A.mp4" 40
+    assert_bright "before the fade-out" "$ft/out/d1.mp4" 45 "$ft/A.mp4" 45
+    assert_dark   "fade-out: the last frame" "$ft/out/d1.mp4" 59 "$ft/A.mp4" 59
+    printf 'clip A.mp4 fade-in 1 fade-out 1 fade-at 3\n' > "$ft/d2.txt"
+    run edit d2.txt -o "$ft/out/d2.mp4"
+    expect_ok "edit: clip with fade-in, fade-out and fade-at"
+    assert_len "edit clip with only fades" "$ft/out/d2.mp4" 60 10
+    assert_dark   "edit fade-in: first frame" "$ft/out/d2.mp4" 0 "$ft/A.mp4" 0
+    assert_bright "edit fade-in: arrived" "$ft/out/d2.mp4" 12 "$ft/A.mp4" 12
+    assert_dark   "edit fade-at 3: the frame at 3" "$ft/out/d2.mp4" 30 "$ft/A.mp4" 30
+    assert_bright "edit, between the fades" "$ft/out/d2.mp4" 45 "$ft/A.mp4" 45
+    assert_dark   "edit fade-out: last frame" "$ft/out/d2.mp4" 59 "$ft/A.mp4" 59
+    # "Each half takes `fade-length` seconds, half a second unless the line
+    # says otherwise": a longer fade is still dark further from the moment.
+    run trim A.mp4 -o "$ft/out/d3.mp4" --fade-at 3 --fade-length 1
+    expect_ok "trim --fade-at 3 --fade-length 1"
+    assert_dark "fade-length 1: the frame at 3" "$ft/out/d3.mp4" 30 "$ft/A.mp4" 30
+    assert_bright "fade-length 1: well before" "$ft/out/d3.mp4" 15 "$ft/A.mp4" 15
+    assert_bright "fade-length 1: well after" "$ft/out/d3.mp4" 45 "$ft/A.mp4" 45
+    run caption A.mp4 -o "$ft/out/d4.mp4" --text hi --fade-in 1 --fade-out 1
+    expect_ok "caption --fade-in 1 --fade-out 1"
+    assert_dark "caption --fade-in: first frame" "$ft/out/d4.mp4" 0 "$ft/A.mp4" 0
+    assert_dark "caption --fade-out: last frame" "$ft/out/d4.mp4" 59 "$ft/A.mp4" 59
+    echo "the three fades darkened the frames named and left every length alone"
+
+    # ---- edit -------------------------------------------------------------
+    }
+    fin_s23() {
+    # README: the example script shape. "Each line is one scene, played in the
+    # order written. A blank line, or a line starting with `#`, is ignored. A
+    # `#` anywhere else is an ordinary character." "A file named in a script is
+    # looked for from the folder you run demoreel in." The scenes, in the film:
+    #   0.0-3.0  clip A from 1 to 3.9 (30 frames), fade-in, one text
+    #   3.0-5.0  card 2 with a title (which has a # in it)
+    #   5.0-8.0  clip C from 2 to 4.9
+    #   7.5-10.4 card 2.9 with spin.png, crossfade 0.5 into the clip, fade-out
+    cat > "$ft/film.txt" <<'SCRIPT'
+# the opening
+clip A.mp4 from 1 to 3.9 fade-in 0.5
+  text "Opening a file" from 1.5 to 2.5
+
+card 2
+  text "Saving # 2"
+
+# a clip that goes still, then a card with a picture
+clip C.mp4 from 2 to 4.9
+
+card 2.9 spin.png crossfade 0.5 fade-out 0.5
+  text "The saved file"
+SCRIPT
+    : > "$ft/log/ffmpeg.calls"
+    FIN_PATH="$ft/shim:$PATH" run edit film.txt -o "$ft/out/E1.mp4"
+    expect_ok "edit film.txt"
+    expect_stdout_path "edit" "$ft/out/E1.mp4"
+    assert_finished "$ft/out/E1.mp4" "edit"
+    assert_near "edit: length (3 + 2 + 3 + 2.9 - 0.5)" 10.4 "$(v_dur "$ft/out/E1.mp4")" 0.15
+    assert_eq "edit: size is the first clip's" 320x240 "$(v_size "$ft/out/E1.mp4")"
+    assert_eq "edit: rate is the first clip's" 10.00 "$(v_rate "$ft/out/E1.mp4")"
+    # README: "`edit` encodes once however many scenes the film has."
+    encodes=$(grep -c '264' "$ft/log/ffmpeg.calls" || true)
+    assert_eq "edit: number of ffmpeg runs that encode H.264 (four scenes)" 1 "$encodes"
+    # README: "the plan goes to stderr" - each scene, and where it ends.
+    [ "$(grep -c . "$fe")" -ge 4 ] || fail "edit: the plan on stderr should list each of the 4 scenes
+    expected: at least 4 lines on stderr
+    actual:   $(grep -c . "$fe") lines: $(cat "$fe")"
+    grep -q '10\.4' "$fe" || fail "edit: the plan should say the film ends at 10.4
+    expected: '10.4' on stderr
+    actual:   $(cat "$fe")"
+    # The scenes, in order (a frame from inside each).
+    assert_is_frame "edit scene 1 (clip A from 1): frame 20 is A's frame 30" "$ft/out/E1.mp4" 20 "$ft/A.mp4" 30
+    text_on  "edit scene 1: its text, 1.5 to 2.5 in the clip, on screen at 0.5 of the film" "$ft/out/E1.mp4" 10 "$ft/A.mp4" 20
+    text_off "edit scene 1: its text is gone at the clip's 2.5" "$ft/out/E1.mp4" 16 "$ft/A.mp4" 26
+    set -- $(px minmax "$ft/out/E1.mp4" 32 topband)
+    [ "$2" -lt 60 ] || fail "edit scene 2 (a card): the top of the card should be plain background
+    actual: brightest pixel in the top band $2"
+    set -- $(px minmax "$ft/out/E1.mp4" 32 centre)
+    [ "$2" -ge 200 ] || fail "edit scene 2: the card's title (with a # in it) should be white in the middle
+    actual: brightest pixel in the middle band $2"
+    assert_is_frame "edit scene 3 (clip C from 2): frame 55 is C's frame 25" "$ft/out/E1.mp4" 55 "$ft/C.mp4" 25 0 29
+    assert_colour "edit scene 4 (card): the card's own corner is the default background" "$ft/out/E1.mp4" 90 0.02 0.02 16 20 24 10
+    bb=$(px bbox "$ft/out/E1.mp4" 90 '#101418')
+    [ "$bb" != none ] || fail "edit scene 4: expected spin.png and a title on the card, found only background"
+    # From a file and from standard input are the same film.
+    run edit - -o "$ft/out/E2.mp4" < "$ft/film.txt"
+    expect_ok "edit - (script on standard input)"
+    expect_stdout_path "edit -" "$ft/out/E2.mp4"
+    assert_eq "edit from stdin: frames, as from the file" "$(v_frames "$ft/out/E1.mp4")" "$(v_frames "$ft/out/E2.mp4")"
+    assert_near "edit from stdin: length, as from the file" "$(v_dur "$ft/out/E1.mp4")" "$(v_dur "$ft/out/E2.mp4")" 0.02
+    # A line is split as a shell splits it; inside double quotes \" is a quote.
+    printf 'card 1\n  text "say \\"hi\\""\n' > "$ft/q.txt"
+    run edit q.txt -o "$ft/out/E3.mp4" -s 320x240 -r 10
+    expect_ok "edit: a text with \\\" inside double quotes"
+    set -- $(px minmax "$ft/out/E3.mp4" 5 centre)
+    [ "$2" -ge 200 ] || fail "edit: the quoted text should be on the card; brightest middle pixel $2"
+    echo "edit made the four scenes in order in one encode, from a file and from stdin"
+
+    }
+    fin_s24() {
+    # README: "The film's picture size and frame rate are the first clip's. `-s`
+    # and `-r` set them by hand. A film with no clip in it, cards only, is
+    # 1600x1000 at 30 unless you say." "A clip whose shape differs from the
+    # film's, wider or taller, is refused rather than stretched."
+    printf 'clip B.mp4\nclip A.mp4\n' > "$ft/g1.txt"
+    run edit g1.txt -o "$ft/out/G1.mp4"
+    expect_ok "edit: clip B then clip A"
+    assert_eq "edit: size (the first clip's)" 320x240 "$(v_size "$ft/out/G1.mp4")"
+    assert_eq "edit: rate (the first clip's, 15)" 15.00 "$(v_rate "$ft/out/G1.mp4")"
+    assert_near "edit: length (4 + 6)" 10 "$(v_dur "$ft/out/G1.mp4")" 0.15
+    run edit g1.txt -o "$ft/out/G2.mp4" -s 160x120 -r 5
+    expect_ok "edit -s 160x120 -r 5"
+    assert_eq "edit -s: size" 160x120 "$(v_size "$ft/out/G2.mp4")"
+    assert_eq "edit -r: rate" 5.00 "$(v_rate "$ft/out/G2.mp4")"
+    printf 'card 1\n' > "$ft/g2.txt"
+    run edit g2.txt -o "$ft/out/G3.mp4"
+    expect_ok "edit: cards only"
+    assert_eq "edit, cards only: size" 1600x1000 "$(v_size "$ft/out/G3.mp4")"
+    assert_eq "edit, cards only: rate" 30.00 "$(v_rate "$ft/out/G3.mp4")"
+    printf 'clip A.mp4\nclip W.mp4\n' > "$ft/g3.txt"
+    run edit g3.txt -o "$ft/out/G4.mp4"
+    expect_refused "edit with a wider second clip"
+    grep -qiE 'line[^0-9]{0,3}2([^0-9.]|$)' "$fe" || fail "edit with a wider second clip: the message should name line 2
+    actual: $(cat "$fe")"
+    assert_absent "edit with a wider second clip" "$ft/out/G4.mp4"
+    echo "size and rate followed the first clip, -s and -r, and the cards-only default"
+
+    }
+    fin_s25() {
+    # README: "Everything is checked before anything is made. A mistake in the
+    # last line of a script stops the run at once, and the message names the
+    # line."
+    base='clip A.mp4 from 1 to 3
+  text "One" from 1 to 2
+
+# a comment
+card 1
+'
+    printf '%s' "$base" > "$ft/h0.txt"
+    run edit h0.txt -o "$ft/out/H0.mp4"
+    expect_ok "control: the script without its bad last line"
+    n=0
+    # A time past the end (line 6); a word the language does not have (line 6);
+    # a text too wide for the frame, on line 7 under the card on line 6.
+    for tail in 'clip A.mp4 from 2 to 99' 'clip A.mp4 blur 3' \
+                'card 1
+  text "This title is far too wide to ever fit across so small a picture"'; do
+        n=$((n + 1))
+        printf '%s%s\n' "$base" "$tail" > "$ft/h$n.txt"
+        want=6; [ $n -eq 3 ] && want=7
+        : > "$ft/log/ffmpeg.calls"
+        before=$(snap)
+        FIN_PATH="$ft/shim:$PATH" run edit "h$n.txt" -o "$ft/out/H$n.mp4"
+        expect_refused "edit with a bad last line ($tail)"
+        grep -qiE "line[^0-9]{0,3}$want([^0-9.]|\$)" "$fe" || fail "edit with a bad last line: the message should name line $want
+    expected: 'line $want' on stderr
+    actual:   $(cat "$fe")"
+        assert_eq "edit with a bad last line: ffmpeg runs that encode (nothing is made first)" 0 "$(grep -c '264' "$ft/log/ffmpeg.calls" || true)"
+        assert_absent "edit with a bad last line" "$ft/out/H$n.mp4"
+        assert_eq "edit with a bad last line left the folder as it was" "$before" "$(snap)"
+    done
+    echo "three bad last lines were named by line number and stopped the run before any encode"
+
+    }
+    fin_s26() {
+    # README: "`crossfade 0.5` — fade from the scene before into this one, over
+    # half a second, where a plain cut would otherwise be. The two scenes
+    # overlap for that long, so the film is that much shorter than its scenes
+    # added together."
+    printf 'clip A.mp4 from 0 to 2.9\nclip B.mp4 from 0 to 2 crossfade 0.5\n' > "$ft/x1.txt"
+    run edit x1.txt -o "$ft/out/X1.mp4"
+    expect_ok "edit with a crossfade"
+    assert_near "edit crossfade: length (3 + 2.07 - 0.5)" 4.5 "$(v_dur "$ft/out/X1.mp4")" 0.2
+    printf 'clip A.mp4 from 0 to 2.9\nclip B.mp4 from 0 to 2\n' > "$ft/x2.txt"
+    run edit x2.txt -o "$ft/out/X2.mp4"
+    expect_ok "edit without a crossfade"
+    assert_near "edit plain cut: length (3 + 2.07)" 5.0 "$(v_dur "$ft/out/X2.mp4")" 0.2
+    awk -v c="$(v_dur "$ft/out/X1.mp4")" -v p="$(v_dur "$ft/out/X2.mp4")" \
+        'BEGIN { d = p - c; exit !(d > 0.35 && d < 0.65) }' \
+        || fail "edit: a crossfade 0.5 should make the film 0.5 s shorter than plain cuts
+    expected: difference between 0.35 and 0.65
+    actual:   plain $(v_dur "$ft/out/X2.mp4") crossfade $(v_dur "$ft/out/X1.mp4")"
+    echo "the crossfade took its overlap off the film"
+
+    }
+    fin_s27() {
+    # README: the shortcuts "take the script's words as options and do exactly
+    # what the script would."
+    run trim A.mp4 -o "$ft/out/S1.mp4" --from 1 --to 3.9
+    expect_ok "trim --from 1 --to 3.9"
+    printf 'clip A.mp4 from 1 to 3.9\n' > "$ft/s1.txt"
+    run edit s1.txt -o "$ft/out/S2.mp4"
+    expect_ok "edit: clip A.mp4 from 1 to 3.9"
+    assert_eq "trim and one-line script: frames" "$(v_frames "$ft/out/S1.mp4")" "$(v_frames "$ft/out/S2.mp4")"
+    assert_near "trim and one-line script: length" "$(v_dur "$ft/out/S1.mp4")" "$(v_dur "$ft/out/S2.mp4")" 0.02
+    assert_eq "trim and one-line script: frames is what the times say" 30 "$(v_frames "$ft/out/S1.mp4")"
+    d=$(px diff "$ft/out/S1.mp4" 10 "$ft/out/S2.mp4" 10)
+    assert_between "trim and one-line script: the same picture at frame 10 (difference)" 0 3 "$d"
+    run join A.mp4 B.mp4 -o "$ft/out/S3.mp4" --crossfade 0.5
+    expect_ok "join --crossfade 0.5"
+    printf 'clip A.mp4\nclip B.mp4 crossfade 0.5\n' > "$ft/s2.txt"
+    run edit s2.txt -o "$ft/out/S4.mp4"
+    expect_ok "edit: two clips with a crossfade"
+    assert_near "join and its script: length" "$(v_dur "$ft/out/S3.mp4")" "$(v_dur "$ft/out/S4.mp4")" 0.05
+    run card -o "$ft/out/S5.mp4" -d 2 --like B.mp4 --text 'Saving a file'
+    expect_ok "card --like B.mp4 --text"
+    printf 'card 2\n  text "Saving a file"\n' > "$ft/s3.txt"
+    run edit s3.txt -o "$ft/out/S6.mp4" -s 320x240 -r 15
+    expect_ok "edit: card 2 with a text"
+    assert_eq "card and its script: frames" "$(v_frames "$ft/out/S5.mp4")" "$(v_frames "$ft/out/S6.mp4")"
+    assert_eq "card and its script: size" "$(v_size "$ft/out/S5.mp4")" "$(v_size "$ft/out/S6.mp4")"
+    echo "trim, join and card matched the scripts that say the same"
+
+    # ---- check ------------------------------------------------------------
+    }
+    fin_s28() {
+    # README: "`demoreel check` draws a line of text to find out, and reports
+    # the finishing commands and their text on lines of their own. Those lines
+    # never change its exit status, which still says only whether the default
+    # backend can record." The shim makes drawing text impossible while
+    # recording still works.
+    run check
+    rc_plain=$rc; cp "$fo" "$ft/log/check.out"; cat "$fe" >> "$ft/log/check.out"
+    : > "$ft/log/ffmpeg.calls"
+    SHIM_MODE=nodraw FIN_PATH="$ft/shim:$PATH" run check
+    rc_nodraw=$rc; cp "$fo" "$ft/log/check.nodraw"; cat "$fe" >> "$ft/log/check.nodraw"
+    finl=$(grep -iE 'edit|trim|caption|join|card|motion|poster|finishing' "$ft/log/check.out" || true)
+    [ -n "$finl" ] || fail "check: expected a line about the finishing commands (edit, trim, ...)
+    actual output: $(cat "$ft/log/check.out")"
+    txtl=$(grep -i 'text' "$ft/log/check.out" || true)
+    [ -n "$txtl" ] || fail "check: expected a line about drawing text
+    actual output: $(cat "$ft/log/check.out")"
+    grep -q 'record' "$ft/log/check.out" || fail "check: the line about recording is gone
+    actual output: $(cat "$ft/log/check.out")"
+    txtl2=$(grep -i 'text' "$ft/log/check.nodraw" || true)
+    [ -n "$txtl2" ] && [ "$txtl2" != "$txtl" ] || fail "check with no way to draw text: its text line should say so
+    with text:    $txtl
+    without text: $txtl2"
+    assert_eq "check: exit status with no way to draw text is the one it has with it" "$rc_plain" "$rc_nodraw"
+    echo "check reported the finishing commands and their text; the exit status stayed $rc_plain"
+    }
+    fin_step "trim keeps the frames from --from to --to, the last one included" fin_s1
+    fin_step "every video a command writes is silent H.264, yuv420p, index first" fin_s2
+    fin_step "-o may not be an input, and must end in .mp4" fin_s3
+    fin_step "a time past the end is an error; the file's own length is not" fin_s4
+    fin_step "a failed command leaves nothing at -o, and a file already there as it was" fin_s5
+    fin_step "motion prints the report README shows" fin_s6
+    fin_step "motion's last change and still lines agree with where the clip goes still" fin_s7
+    fin_step "motion --json is the same report as one JSON object" fin_s8
+    fin_step "motion writes no file and changes nothing" fin_s9
+    fin_step "a --to set to motion's last change ends the clip on the last new picture" fin_s10
+    fin_step "poster saves the frame on screen at -t, as .png or .jpg" fin_s11
+    fin_step "poster refuses other endings and a time past the end" fin_s12
+    fin_step "join adds the lengths, less the overlap at each crossfade" fin_s13
+    fin_step "join gives the first clip's size and rate, and refuses another shape" fin_s14
+    fin_step "card: size, rate and length come from -d, --like, -s and -r" fin_s15
+    fin_step "card: background colour, and text in the middle or near the top" fin_s16
+    fin_step "card: a picture is scaled to fit, centred, never enlarged, never stretched" fin_s17
+    fin_step "card: an animated picture plays at its own speed and starts again" fin_s18
+    fin_step "card: text too wide for the frame is refused" fin_s19
+    fin_step "caption shows text only inside its from/to window" fin_s20
+    fin_step "caption refuses a --from before any --text, and texts that overlap" fin_s21
+    fin_step "fade-in, fade-out and fade-at change the brightness where README says" fin_s22
+    fin_step "edit makes the film in order, from a file or from standard input" fin_s23
+    fin_step "edit's film size and rate: the first clip's, or -s and -r, or 1600x1000 at 30" fin_s24
+    fin_step "edit checks every line before it makes anything, and names the bad one" fin_s25
+    fin_step "edit: crossfade on a scene overlaps it with the one before" fin_s26
+    fin_step "a shortcut and the script it stands for agree" fin_s27
+    fin_step "check reports the finishing commands and their text, without changing its exit status" fin_s28
+    [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
+}
+
+if $FINISHING_ONLY; then
+    for prog in ffmpeg ffprobe python3; do
+        command -v "$prog" >/dev/null || { echo "missing: $prog" >&2; exit 1; }
+    done
+    tmp=$(mktemp -d)
+    trap 'rm -rf "$tmp"' EXIT
+    finishing_checks
+    printf '\n=== finishing checks passed ===\n'
+    exit 0
+fi
 
 step "gate wiring"
 # Runs in BOTH modes, and before the --docs exit on purpose: this is the check
@@ -156,6 +1384,9 @@ step "documented flags exist"
 # and a commit that breaks it necessarily touches code, which is exactly the
 # push a documentation-only check would never see.
 help=$(./demoreel record --help; ./demoreel shot --help; ./demoreel stop --help;
+      for sub in edit trim caption join card motion poster; do
+          ./demoreel "$sub" --help
+      done
       ./demoreel --help)
 undocumented=0
 for flag in $(grep -oE '`-{1,2}[a-z-]+`' README.md | tr -d '`' | sort -u); do
@@ -1561,6 +2792,8 @@ for shell in bash zsh fish; do
 done
 kill "$fake_run" 2>/dev/null
 [ "$completion_bad" -eq 0 ] || exit 1
+
+finishing_checks
 
 step "default output name"
 # -o is optional; without it the file is named from the app and a timestamp.

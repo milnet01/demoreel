@@ -8,7 +8,9 @@ Working. The whole tool is one executable file, `demoreel` — Python 3, standar
 library only, no build step, no dependency manifest. Runtime dependencies are
 `xauth`, `ffmpeg` and `xdotool` on both backends; `Xvfb` for the default one;
 `cage`, `Xwayland` and `wlr-randr` for `--gpu`, and `wf-recorder` for
-`record --gpu`. All are checked at startup against what the run will use.
+`record --gpu`. All are checked at startup against what the run will use. The
+finishing commands need `ffmpeg` and `ffprobe` alone, and `fc-match` to find a
+bold font for text.
 
 `ROADMAP.md` is generated from the roadmap store. Do not hand-edit it — use the
 roadmap verbs, or the next write reverts your edit.
@@ -21,7 +23,9 @@ check that every flag `README.md` documents is one the tool accepts, and a
 smoke recording that samples a frame and fails if the app never reached the
 picture. It is the same script CI runs, and it runs before a push. Add a check
 there, never to the workflow. `./ci.sh --docs` is the documentation-only
-subset, which a documentation-only push selects.
+subset, which a documentation-only push selects. `./ci.sh --finishing` runs
+only the finishing commands' checks, which need no display; it is for working
+on them, and the full gate runs them too.
 
 The full gate ends by running itself again in a local `ubuntu:24.04` image
 built from the same package list the workflow installs (`./ci.sh
@@ -58,6 +62,11 @@ exists. Recording the real screen catches private windows and catches KWin's
 Magnifier lens, which the user cannot turn off because it is what makes the
 screen readable.
 
+It also finishes a recording: `edit` makes a film from a plain-text script of
+scenes, `trim`, `caption`, `join` and `card` are one-scene shortcuts over the
+same renderer, and `motion` and `poster` read a video without changing it.
+These work on files. They start no display and take no run name.
+
 ## Non-negotiable requirements
 
 Any change that breaks one of these is wrong, even if it makes the tool simpler:
@@ -93,10 +102,19 @@ Any change that breaks one of these is wrong, even if it makes the tool simpler:
 ## Scope ceiling
 
 The ceiling is what the tool *does*, not how long it is. Permanently out of
-scope: audio, webcam, overlays, captions, cursor highlighting, editing/trimming,
-a GUI, a daemon, a config file format, plugins, per-app profiles, and recording
-the real screen. Anything needing more than "record this app doing these few
-things" wants OBS instead.
+scope: audio, webcam, cursor highlighting, a GUI, a daemon, a config file
+format, plugins, per-app profiles, and recording the real screen. Anything
+needing more than "record this app doing these few things, and make that
+recording fit to publish" wants OBS and a video editor instead.
+
+**Editing stops at finishing a recording**, and `README.md` § What it will
+never do holds the list: cut the ends off, measure, take a frame, play scenes
+one after another, show a picture on a card, put one line of text on or
+between scenes, and fade. No layers, no two pictures on screen at once, no
+transition other than a fade, no zoom, no moving text, no change of speed, and
+nothing removed from a video automatically. An `edit` script is a list of
+scenes for one film. It is not a config file: it holds no settings for
+demoreel and is read only when named.
 
 **Do not report or reason about the line count.** Judge a change by whether it
 earns its place against the list above, and say nothing about length.
@@ -154,7 +172,9 @@ something behaves unexpectedly:
   `out=$(demoreel record ...)` collects whatever the app printed otherwise.
   `subprocess.Popen` inherits the parent's stdout unless told not to, so the
   way to reintroduce the bug is to drop the `stdout=` argument, not to add
-  anything.
+  anything. The finishing commands keep the rule: the path alone, and their
+  plan on stderr. `motion` writes no file, so its report is what it prints on
+  stdout.
 - **`--settle` and the blank check are the same test**, `display_is_blank`, in
   two roles: a gate before recording and an assertion during and after it. That
   is deliberate — one definition of "nothing is on this display" — and it means
@@ -306,6 +326,52 @@ are load-bearing and none is obvious:
 to software rendering here (`Failed to initialize glamor`,
 `amdgpu_query_info(ACCEL_WORKING) failed`), so it is not an alternative to
 `cage` — it can be removed if it is not wanted for anything else.
+
+## The finishing commands
+
+`README.md` § Finishing a recording is their contract. One renderer,
+`make_film`, turns a list of scenes into one ffmpeg run; `edit` reads the
+scenes from a script and each shortcut builds them from its options. Add a
+behaviour to the renderer, never to one shortcut, or the two ways of asking
+stop agreeing.
+
+- **Every stream in the filter graph must end.** An input that never ends is
+  buffered without limit by whatever is waiting for it. An animated `.png` read
+  with `-ignore_loop 0`, sitting behind another scene in a `concat`, took
+  ffmpeg to 14 GB in six minutes on this machine (2026-09-30). So each scene is
+  cut with `trim=end_frame`, a card's picture is read once and repeated by the
+  `loop` filter, which makes a frame only when one is wanted, the output has
+  its own `-t`, and `memory_cap` limits that ffmpeg's memory. Never loop a
+  picture at the demuxer (`-ignore_loop 0`, `-loop 1`, `-stream_loop`), and do
+  not remove any of them: each covers a mistake in the others.
+- **Try a new graph under a memory limit first.** `( ulimit -v 6000000;
+  timeout 40 ./demoreel edit ... )` fails a runaway in seconds with "Cannot
+  allocate memory". Other sessions share this machine's memory.
+- **`concat` hands on a microsecond timebase, and `xfade` refuses inputs whose
+  timebases differ.** The `fps` after each `concat` puts the film's back. A
+  film with a cut followed by a crossfade fails to start without it.
+- **A cut is snapped to the clip's own frames.** The frame on screen at `to`
+  is kept, which is what lets `motion`'s `last change` be used as a `to`. The
+  seek starts half a frame early and the read ends half a frame late, so
+  neither edge turns on how a float rounds. Do not replace that with `-ss` and
+  `-t` at the times as given: the last frame is then kept or lost by rounding.
+- **A text shows up to its `to` and not on it**, so captions can sit back to
+  back. A clip's `to` is inclusive and a text's is not; both are in README.
+- **The bold font is passed as a file.** drawtext's `font` option takes a
+  fontconfig pattern and ignores the weight in it: `Sans:bold` drew the regular
+  face, measured by width. `text_font` asks `fc-match` for the file.
+- **Text is measured by drawing it.** `text_size` draws the line on a black
+  strip and reads ffmpeg's `bbox`. The refusal of a too-wide line rests on it,
+  and so does `demoreel check`'s text line.
+- **"The picture changed" has two thresholds, and that is measured, not
+  untidy.** `motion` uses `MOTION_NEW_FRAME` (640) and the `--gpu` note uses
+  `NOTE_NEW_FRAME` (256). At 256 x264's sharpening after a change counts as new
+  frames, so a stuttering video reports as smooth to `motion`. At 640 a faint
+  drifting gradient reads as stutter to the note, and `ci.sh`'s stutter step
+  fails. Do not merge them: the measurements are beside the constants.
+- **The film is written beside `-o` and moved into place when whole**, which
+  is what makes "a failure leaves nothing at `-o`" true. Do not write to `-o`
+  directly.
 
 ## Wayland-only apps: the limit of this design
 
