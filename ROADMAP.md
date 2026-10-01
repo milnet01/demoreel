@@ -178,6 +178,17 @@ simplest case, and a gate proves it still records.
   Kind: doc-fix.
   Source: review-contract-2026-10-01 versioning-overrides loop 12.
 
+- 💭 [DEMO-0140] **Grow demoreel into a full video editing suite, after the queued work.**
+  The user decided this on 2026-10-01: no rush, and every item already
+  queued is finished first. Starting it means changing the scope lines
+  that rule an editor out today: CLAUDE.md § Scope ceiling and README.md
+  § What it will never do. Under the user's global CLAUDE.md rule 14 those
+  are a change of direction, and the gate runs before anything is built.
+  No spec, no design, no order yet.
+  **Layman:** demoreel will one day become a complete video editor, but only after everything already planned is done.
+  Kind: feature.
+  Source: user-decision-2026-10-01.
+
 ## Standing chores
 
 Recurring work with no finished state. It is checked on a schedule and never
@@ -3067,7 +3078,7 @@ Polish and Ukrainian. Claude drafts each one, and it stays marked as a draft
 until a native speaker confirms it. stdout is never translated: it carries the
 path, and scripts read it.
 
-- 📋 [DEMO-0060] **Write the translation spec, and gate it before anything is built.**
+- ✅ [DEMO-0060] **Write the translation spec, and gate it before anything is built.**
   This is a real design choice, hard to undo once catalogs exist, and it
   touches every message, the parser, the gate and the docs. It meets the
   spec triggers, so it goes through `write-spec` and `review-contract`.
@@ -3097,6 +3108,9 @@ path, and scripts read it.
   Three further choices were the user's: a changed English message fails
   the gate until every catalog has it; draft state is per language; the
   man page is left to DEMO-0064.
+  Shipped (2026-10-01): spec
+  docs/specs/DEMO-0060-translation-catalogs.md accepted after two
+  review-contract loops. Its tests are built by DEMO-0061 and DEMO-0062.
   **Layman:** Decide on paper how translations will work before writing any code for them.
   Kind: doc.
   Source: user-request-2026-09-25.
