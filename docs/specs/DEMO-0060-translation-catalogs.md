@@ -1,6 +1,6 @@
 # DEMO-0060 — Translate demoreel's messages from `.po` catalogs it reads itself
 
-**Status:** spec draft (2026-10-01).
+**Status:** accepted (2026-10-01).
 **Kind:** implement.
 **Source:** ROADMAP DEMO-0060 (user-request-2026-09-25).
 **Blocker for:** DEMO-0061, DEMO-0062, DEMO-0063, DEMO-0064, DEMO-0065, DEMO-0067.
@@ -159,8 +159,11 @@ characters U+202A–U+202E and U+2066–U+2069. demoreel inserts its own isolate
 and writes one English note, once per run:
 
 ```
-demoreel: po/de.po could not be read (line 212: unknown escape \x), so messages are in English.
+demoreel: po/de.po could not be read (line 212: unknown escape sequence), so messages are in English.
 ```
+
+The note names the file, the line and the kind of error, never the catalog's
+own bytes, which could be the control characters it is refusing.
 
 ### 4.4 Choosing the language
 
@@ -180,23 +183,26 @@ def chosen_languages(env):
         if w.split("_")[0].split(".")[0].split("@")[0] == "en":
             break                             # English asked for: stop here
         codes += expansions(w)                # ll_CC.cs@mod -> ll_CC@mod, ll@mod, ll_CC, ll
-                                              # (gettext._expand_lang's order, codesets dropped)
+                                              # (codesets dropped; not gettext._expand_lang,
+                                              # which normalises 'de' to 'de_DE.ISO8859-1')
     return list(dict.fromkeys(codes))
 ```
 
-Then, only if the list is not empty **and stderr's encoding is UTF-8**, each
+Then, only if the list is not empty **and both stdout's and stderr's encodings
+are UTF-8** (`--help` is on stdout), each
 code that has a `po/<code>.po` is loaded in order. A message is looked up in
 the first loaded catalog; one that catalog lacks, or has only as `fuzzy` or
 with an empty `msgstr`, is looked up in the next; English is the last
-fallback. With an empty list, or a non-UTF-8 stderr, no file under `po/` is
+fallback. With an empty list, or a non-UTF-8 stdout or stderr, no file under `po/` is
 opened at all.
 
 Loading builds a `.mo` image in memory from the parsed entries (fuzzy entries
 and empty translations left out — `GNUTranslations` returns a stored `""`
 rather than falling back) and hands it to `gettext.GNUTranslations(io.BytesIO(image))`,
-chaining the catalogs with `add_fallback()`. That reuses the standard
-library's plural evaluation and fallback rules through public API rather than
-reimplementing them.
+one object per catalog. That reuses the standard library's plural evaluation
+through public API. The catalogs are not chained with `add_fallback()`: the
+lookup walks them in order itself, because § 4.5's marks and § 4.9's draft
+line both need to know which catalog supplied each message.
 
 ### 4.5 The code-side API
 
@@ -239,8 +245,11 @@ and `demoreel::memory_cap()` among others.
 **`tr` and `trn` are never called at import time.** The language is chosen in
 `main()`, and a module-level call would run before that. `EXAMPLES` and
 `RECORD_EXAMPLES` become lists of `(comment, command)` pairs, and the text is
-assembled inside `build_parser()`. Before `main()` chooses, `tr` returns
-English, so `ci.sh`'s import of `demoreel` is unaffected.
+assembled inside `build_parser()`. `main()` calls
+`use_languages(chosen_languages(os.environ))`; `use_languages(codes)` loads
+those catalogs (§ 4.4) and is what the gate's tests and the window (§ 4.10)
+call too. Until it is called, `tr` returns English, so `ci.sh`'s import of
+`demoreel` is unaffected.
 
 **No code compares, splits or strips a translated string.** A caller that needs
 a reason in a structured form gets it from an exception or a return value. The
@@ -259,15 +268,18 @@ up at call time (§ 2 consequence 3).
 `ARGPARSE_MESSAGES` is a tuple in `demoreel` of the argparse msgids a demoreel
 user can reach — `usage: `, `options`, `positional arguments`,
 `show this help message and exit`, `show program's version number and exit`,
-the missing, unrecognised and invalid-choice errors — chosen from those present
-in Python 3.12 (the gate's Ubuntu 24.04 leg) and 3.13 (this machine). They are
-extracted into the template like demoreel's own. An argparse string not listed
-prints in English.
+the missing, unrecognised and invalid-choice errors — holding only strings
+identical in every Python the gate runs, today 3.12 (the Ubuntu 24.04 leg) and
+3.13 (this machine). They are extracted into the template like demoreel's own.
+An argparse string not listed prints in English.
 
-argparse fills its own strings with `%` against a dict, which does no attribute
-lookup. Their placeholders (`%(prog)s`, `%s`) take § 4.5's runtime check in the
-replacement functions, as well as the gate's: a translation adding a
-`%(name)s` or a bare `%` would raise inside argparse. argparse's substituted
+argparse formats with `%` against a dict, which does no attribute lookup, and
+it does so to its own strings and to every `help=`, `description=` and epilog
+text. So every msgid argparse formats takes a second rule beside § 4.5's, at
+runtime and at the gate: its translation holds `%` only as `%%` or in a
+`%(name)s` or `%s` its English holds. A bare `%` ("50 %") raises `TypeError` in
+`--help`, measured on Python 3.13, and an added `%(default)s` prints
+argparse's internal value. argparse's substituted
 values get no isolation marks, since argparse, not `tr`, fills them; DEMO-0063's
 manual check covers how they read.
 
@@ -308,7 +320,7 @@ New steps:
 | `translation: the template matches the source` | `po/demoreel.pot` equals a fresh extraction |
 | `translation: the language is chosen as gettext chooses it` | `chosen_languages` and the fallback chain, against § 5's table |
 | `translation: every catalog is complete` | every extracted msgid, in every catalog, has a non-empty, non-fuzzy `msgstr` — every form, `nplurals` of them, for a plural |
-| `translation: placeholders and code tokens match` | each translation's placeholders obey § 4.5's rule, and its multiset of code tokens (§ 4.5) equals the English one's |
+| `translation: placeholders and code tokens match` | each translation's placeholders obey § 4.5's rule and, for a msgid argparse formats, § 4.6's `%` rule, and its multiset of code tokens (§ 4.5) equals the English one's |
 | `translation: every catalog reads` | each catalog parses under § 4.3, its `Language:` matches its filename, and it is not refused |
 | `translation: confirmed means unchanged` | a catalog marked `confirmed <digest>` has that digest (§ 4.9) |
 | `translation: argparse still has our strings` | each `ARGPARSE_MESSAGES` msgid occurs in the running Python's `argparse` source |
@@ -428,13 +440,14 @@ the same template.
 
 - **INV-8** — A catalog entry naming `{output.__class__}`, `{output[0]}`,
   `{output!r}` or `{unknown}`, alone or beside a valid `{output}`, never
-  reaches the terminal, and nor does an argparse translation adding `%(x)s` or
-  a bare `%`: the run prints the English message and completes with the same
+  reaches the terminal, and nor does a translation of a msgid argparse formats
+  (§ 4.6) adding `%(x)s` or a bare `%`: the run prints the English message and completes with the same
   exit status as under `LC_ALL=C`.
   *Test:* `ci.sh` step `translation: a bad catalog costs only the language` —
   a copy whose `po/zz.po` carries each of those in a message a failing run
-  prints, and in the `usage: ` entry with `demoreel --bogus`; stderr holds the
-  English message and no `class`, and `--bogus` exits as under `LC_ALL=C`.
+  prints, in the `usage: ` entry with `demoreel --bogus`, and as `50 %` in one
+  `help=` entry with `demoreel --help`; stderr holds the English message and no
+  `class`, and both argparse runs exit as under `LC_ALL=C`.
   *Breaks when:* filling uses `str.format` or `format_map`, the runtime
   placeholder check is removed, or the stray-brace rule is.
 
@@ -442,7 +455,7 @@ the same template.
   *Test:* `ci.sh` step `translation: a bad catalog costs only the language` —
   run the committed `demoreel` from a working directory holding a valid
   pseudo-locale `po/zz.po`,
-  with `LANGUAGE=zz LANG=de_DE.UTF-8` and `TEXTDOMAINDIR` pointing at that
+  with `LANGUAGE=zz LANG=de_DE.UTF-8` (§ 7's environment) and `TEXTDOMAINDIR` pointing at that
   directory; every message is English.
   *Breaks when:* the lookup uses a relative path, the working directory, or an
   environment variable.
@@ -457,11 +470,11 @@ the same template.
   one hostile catalog per case, each in a copy's `po/zz.po`.
   *Breaks when:* the reader skips the bad entry and keeps the rest, or raises.
 
-- **INV-11** — With a translated locale chosen but stderr's encoding not
-  UTF-8, every message is English and no catalog is opened.
+- **INV-11** — With a translated locale chosen but stdout's or stderr's
+  encoding not UTF-8, every message is English and no catalog is opened.
   *Test:* `ci.sh` step `translation: a bad catalog costs only the language` —
-  `PYTHONIOENCODING=latin-1 LANGUAGE=zz LANG=de_DE.UTF-8` with an
-  unparseable `zz.po`; no `could not be read`.
+  `PYTHONIOENCODING=latin-1 LANGUAGE=zz LANG=de_DE.UTF-8` (§ 7's environment)
+  with an unparseable `zz.po`; no `could not be read`.
   *Breaks when:* the encoding check is dropped, and a translated message
   raises `UnicodeEncodeError` on a Latin-1 terminal.
 
@@ -528,12 +541,13 @@ the same template.
   supplies it (INV-4).
 - **A translation's placeholders are wrong at runtime** — English for that
   message (INV-8).
-- **stderr is not UTF-8** — English (INV-11).
+- **stdout or stderr is not UTF-8** — English (INV-11).
 - **`po/` cannot be listed or read (permissions)** — as if absent: English, no
   note. A missing directory is not an error.
 - **A new Python rewords an argparse string** — that string prints in English;
-  the gate fails on the machine running that Python (INV-13), and
-  `ARGPARSE_MESSAGES` is updated.
+  the gate fails on the machine running that Python (INV-13), and the string
+  is removed from `ARGPARSE_MESSAGES`, not reworded, so the older Python's run
+  stays green.
 - **`ci.sh`'s `LC_ALL=C` changes another program's output** — `LC_ALL=C` makes
   `sort` and friends byte-ordered and messages from `ffmpeg`, `Xvfb` and the
   rest English. Every step that compares such output is re-run once after the
@@ -562,9 +576,12 @@ forms filled, `X-Demoreel-Review: draft`. It is never committed — a committed
 LANG=de_DE.UTF-8 …`.
 An `he.po` built the same way tests INV-12.
 
+**Every run that expects a translation could happen — INV-8, INV-9, INV-10 and INV-11's
+included — uses that environment**, so that only what the run is testing can
+make it English.
+
 **Hostile catalogs** (INV-8, INV-10) are small hand-written files in the step,
-one per case, in the same kind of temporary copy, run in the pseudo-locale's
-environment so that only the catalog's content can make the run English.
+one per case, in the same kind of temporary copy.
 
 | Invariant | Step |
 |---|---|
@@ -591,9 +608,9 @@ without bidi, with a screenshot of each, is DEMO-0063's.
 - **Compiled `.mo` files with `gettext.translation()`** — adds a build step
   and a second copy of each catalog to keep in step. Rejected by the user.
 - **JSON catalogs** — no translation tool opens them. Rejected by the user.
-- **Our own lookup table and plural evaluator** — reimplements what
+- **Our own per-catalog table and plural evaluator** — reimplements what
   `GNUTranslations` already does through public API; building its input in
-  memory costs a short function.
+  memory costs a short function. Only the walk across catalogs is ours (§ 4.4).
 - **Also searching `/usr/share/locale`** (DEMO-0083 named it) — that directory
   holds compiled `.mo` files by convention, and a second search path is a
   second thing to defend. A package keeps `po/` beside the script instead.
