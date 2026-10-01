@@ -3125,6 +3125,19 @@ path, and scripts read it.
 
   Depends on the translation spec, and on the error rewrite in 0.3.0
   landing first.
+  Progress (2026-10-01): code and gate steps committed in 74ad54f,
+  English output verified byte-identical, every invariant
+  mutation-checked. Left: demoreel.1 ENVIRONMENT entry (LANGUAGE,
+  LC_ALL, LC_MESSAGES, LANG); CHANGELOG entry; full ./ci.sh green;
+  measure catalog parse time (spec section 13) and record it here; then
+  flip this. The user also asked, 2026-10-01: a plain-English front
+  section near the top of README.md (what it does, who it is for, how
+  to try it), keeping the contract sections below; fix the stale
+  README Security line that calls -a typed text the one still open
+  (--steps closed it); a short Languages section saying no catalog
+  ships yet. Then send drop-in About-page text to the
+  ants-projects-hub-website session (rule 18a), matching the README.
+  DEMO-0062 adds INV-5, INV-7 and the digest half of INV-16.
   **Layman:** Make every message translatable, without changing anything for English users.
   Kind: implement.
   Source: user-request-2026-09-25.
