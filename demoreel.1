@@ -427,6 +427,42 @@ A failed run prints no path.
 .TP
 .B 2
 The command line was not understood.
+.SH ENVIRONMENT
+Messages on standard error, and the text of
+.BR \-\-help ,
+follow the language these variables ask for.
+No translation ships yet, so every message is in English.
+.TP
+.BR LC_ALL ", " LC_MESSAGES ", " LANG
+The first of these set to a non-empty value names the locale.
+If none is, messages are in English, whatever
+.B LANGUAGE
+says.
+A locale of
+.B C
+or
+.B POSIX
+gives English, whatever
+.B LANGUAGE
+says, so
+.B LC_ALL=C
+always gives English.
+.TP
+.B LANGUAGE
+A list of languages separated by colons, best first.
+Each message comes from the first language in the list that translates it,
+and English is the last resort.
+An English entry in the list stops the search there.
+If it is unset, the locale's own language is used.
+.PP
+Messages are translated only when standard output and standard error both
+take UTF\-8.
+Nothing a script reads changes with the language: the paths on standard
+output,
+.BR motion 's
+report and
+.B \-\-version
+read the same in every locale.
 .SH FILES
 Run files live in
 .IR $XDG_RUNTIME_DIR/demoreel\-UID ,

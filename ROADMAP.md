@@ -3115,7 +3115,7 @@ path, and scripts read it.
   Kind: doc.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0061] **Build the translation mechanism with English as the source language.**
+- ✅ [DEMO-0061] **Build the translation mechanism with English as the source language.**
   Wrap every user-facing string -- `die()`, `note()`, argparse help and
   the examples -- as the spec says. Ship English only at this step.
 
@@ -3138,6 +3138,14 @@ path, and scripts read it.
   ships yet. Then send drop-in About-page text to the
   ants-projects-hub-website session (rule 18a), matching the README.
   DEMO-0062 adds INV-5, INV-7 and the digest half of INV-16.
+  Resolved (2026-10-01): full ./ci.sh green, Ubuntu 24.04 image
+  included; every baseline step still present, plus the eight
+  translation steps. demoreel.1 ENVIRONMENT, README front section,
+  Languages section and Security fix landed; a cold read by the Pressless
+  session found five errors, all fixed. Catalog parse time (spec section
+  13): load_catalog on a full pseudo catalog of 261 messages took
+  3.65 ms median over 50 runs (min 3.55, max 4.24), Python 3.13.15,
+  2026-10-01. Refute by re-timing load_catalog on a pseudo_copy catalog.
   **Layman:** Make every message translatable, without changing anything for English users.
   Kind: implement.
   Source: user-request-2026-09-25.
@@ -3219,6 +3227,12 @@ path, and scripts read it.
   the system locale directory, never from the working directory or a path
   taken from the environment. Add catalogs to SECURITY.md's trust
   boundaries.
+  Progress (2026-10-01): the defences shipped with DEMO-0061 --
+  plain named substitution, catalogs read only from po/ beside the
+  script, refused catalogs cost only their language, SECURITY.md lists
+  the boundary, and the gate covers each with hostile catalogs. The
+  catalog gate that rejects a placeholder the English lacks is
+  DEMO-0062's.
   **Layman:** A bad or tampered translation file must not be able to leak data or crash demoreel.
   Kind: security.
   Source: user-request-2026-09-25.

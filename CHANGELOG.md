@@ -12,6 +12,16 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+### Added
+
+- **Messages can be translated, and English output is unchanged** (DEMO-0061)
+  Every message on standard error and the text of `--help` now goes
+  through a translation step that follows `LANGUAGE`, `LC_ALL`,
+  `LC_MESSAGES` and `LANG`. No translation ships yet, so everything is
+  still English. Standard output, `motion`'s report and `--version` never
+  change with the language, and `LC_ALL=C` always gives English. A
+  translation file is treated as untrusted text (DEMO-0083).
+
 ### Changed
 
 - **The 1.0 rule says which condition holds the version back** (DEMO-0139)

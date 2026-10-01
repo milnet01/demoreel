@@ -14,13 +14,30 @@ demoreel record -o kcalc.mp4 -d 3 -s 800x500 -r 15 --settle 10 --cursor \
 ffmpeg -i kcalc.mp4 -c:v libwebp_anim -q:v 80 -loop 0 readme-demo.webp
 ```
 
-You give it an app. It gives you back a video file of that app, or one picture
-of it, and nothing else — no other windows, no notifications, no magnifier lens
-sliding around.
+## In plain words
 
-You can run it yourself at a terminal. It is also built to be driven by Claude
-Code, so you can ask for a demo video and get one without touching a recording
-tool yourself.
+**What it does.** You name an app. demoreel opens it out of sight, records
+it, and gives you back a video file of that app, or one picture of it. Nothing
+else from your screen gets in: no other windows, no notifications, no
+magnifier lens sliding around. It can then trim the video, join clips and add
+a line of text.
+
+**Who it is for.** Anyone who needs a short video of a Linux desktop app — for
+a project page, an app store listing or a bug report — without setting up a
+screen recorder. You can run it yourself at a terminal. It is also built to be
+driven by Claude Code, so you can ask for a demo video and get one without
+touching a recording tool yourself.
+
+**How to try it.** [Install](#install) it, then run these two lines:
+
+```sh
+demoreel check
+demoreel record -o demo.mp4 -d 10 -- kate
+```
+
+The first says whether your machine can record. The second records Kate, a
+text editor, for ten seconds into `demo.mp4`. Swap `kate` for any app you
+have. [Quick start](#quick-start) goes further.
 
 ## What you get
 
@@ -1049,6 +1066,18 @@ Neither the hook nor the workflow matches against that glob itself. Both pipe
 the changed paths into `./ci.sh --docs-mode` and run whatever comes back, so the
 decision has one home as well as its value.
 
+## Languages
+
+demoreel's messages are in English, and no translation ships yet. They are
+built to be translated: once one ships, messages on standard error and the
+text of `--help` follow your language settings — the `LANGUAGE`, `LC_ALL`,
+`LC_MESSAGES` and `LANG` variables. The manual page's ENVIRONMENT section says
+how they are read.
+
+What a script reads never changes with the language: the paths on standard
+output, `motion`'s report and `--version`. `LC_ALL=C` gives English whatever
+the other settings say.
+
 ## Versioning
 
 `demoreel --version` reports the version. It goes before the subcommand, not
@@ -1067,9 +1096,7 @@ release has its own section, and changes not yet released sit under
 demoreel runs as you, gains no privilege and opens no network listener. The
 private display is behind a one-off cookie and the run-state directory is
 refused unless you own it. [SECURITY.md](SECURITY.md) names every boundary,
-including the one still open — text you script with `-a` is visible to other
-users of the machine while the run lasts — and says how to report anything not
-listed there.
+and says how to report anything not listed there.
 
 ## Roadmap
 
