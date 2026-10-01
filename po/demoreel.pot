@@ -1,0 +1,973 @@
+# demoreel's messages: the template every catalog starts from.
+# Made by ./ci.sh --pot from the source. Do not edit it by hand.
+msgid ""
+msgstr ""
+"Project-Id-Version: demoreel\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: \n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"X-Demoreel-Review: draft\n"
+
+msgid "ended by {signal} before it finished, so there is nothing to hand back."
+msgstr ""
+
+#. argparse formats this text with %
+msgid "usage: "
+msgstr ""
+
+#. argparse formats this text with %
+msgid "options"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "positional arguments"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "show this help message and exit"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "show program's version number and exit"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "the following arguments are required: %s"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "unrecognized arguments: %s"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "invalid choice: %(value)r (choose from %(choices)s)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "This translation is a draft and has not yet been checked by a native speaker."
+msgstr ""
+
+msgid ""
+"could not use {path}: {reason}.\n"
+"  demoreel keeps its run files there. Point XDG_RUNTIME_DIR at a directory you can write to."
+msgstr ""
+
+msgid ""
+"{path} is not a directory you own, so demoreel will not use it.\n"
+"  On a shared machine another user can create that name first.\n"
+"  Remove it, or point XDG_RUNTIME_DIR at a directory you own."
+msgstr ""
+
+msgid ""
+"a recording named {name} is already running.\n"
+"  Use --name to tell this run apart from it."
+msgstr ""
+
+msgid ""
+"a recording named {name} is already running (pid {pid}).\n"
+"  Use --name to tell this run apart from it."
+msgstr ""
+
+msgid "Xvfb did not start, so there is no private display to record."
+msgstr ""
+
+msgid "It said: {text}"
+msgstr ""
+
+msgid "`demoreel check` tests this start on its own."
+msgstr ""
+
+msgid "could not write the display's auth cookie, so the display cannot be made private."
+msgstr ""
+
+msgid "xauth said: {text}"
+msgstr ""
+
+msgid "`demoreel check` tests this on its own."
+msgstr ""
+
+msgid "the display did not lock: a client without its auth cookie could still connect, or none could."
+msgstr ""
+
+msgid "the GPU display did not start, so there is nothing to record on."
+msgstr ""
+
+msgid "The end of its log:"
+msgstr ""
+
+msgid "`demoreel check` says whether --gpu has what it needs."
+msgstr ""
+
+msgid "the GPU display did not lock: a client without its auth cookie could still connect, or none could."
+msgstr ""
+
+msgid "the private display {display} stopped answering: `xdotool {command}` did not return within {seconds}s."
+msgstr ""
+
+msgid ""
+"the app resized its window to {size} at {place}, so it no longer fills the {frame} frame and part of the video is cropped or empty.\n"
+"  Record at the app's own size with -s {size}."
+msgstr ""
+
+msgid ""
+"the app exited immediately (status 0) without opening a window.\n"
+"  The likely cause is a single-instance app: it finds a copy already\n"
+"  running on your real desktop, hands the request over to it and exits\n"
+"  successfully. If a copy is running, close it and try again.\n"
+"  If not, the command may simply have finished without needing a\n"
+"  window — in which case there is nothing to record."
+msgstr ""
+
+msgid ""
+"the app exited with status {status} before opening a window.\n"
+"  Its own output, above or in --app-log, says why. To see it on its own, run: {command}"
+msgstr ""
+
+msgid "cannot read the step {step}: {reason}."
+msgstr ""
+
+msgid "unknown action {action}. The steps are: {steps}."
+msgstr ""
+
+msgid "cannot read the step {step}: write it like {example}."
+msgstr ""
+
+msgid "could not read the steps file {path}: {reason}."
+msgstr ""
+
+msgid "ffmpeg could not start recording."
+msgstr ""
+
+msgid "`demoreel check` tests the programs and the encoder it needs."
+msgstr ""
+
+msgid "wf-recorder could not start recording."
+msgstr ""
+
+msgid ""
+"could not finish the video: turning the recording into {name} failed.\n"
+"  What was recorded is kept in {part}, and {log} says why."
+msgstr ""
+
+msgid "the display did not give up a frame within {seconds}s; it has stopped answering"
+msgstr ""
+
+msgid "ffmpeg exited {status} with no frame"
+msgstr ""
+
+msgid "reading a frame of {path} took over {seconds}s"
+msgstr ""
+
+msgid "no frame of {path} could be read"
+msgstr ""
+
+msgid "this is a Flatpak target and the command is missing: {flags}"
+msgstr ""
+
+msgid ""
+"A missing one can send it to your real compositor instead, leaving this\n"
+"recording empty. README.md says what each flag is for."
+msgstr ""
+
+msgid ""
+"openSUSE's own ffmpeg leaves it out. Install ffmpeg from the Packman repository,\n"
+"  which has it."
+msgstr ""
+
+msgid "Fedora's ffmpeg-free leaves it out. Enable RPM Fusion, then:"
+msgstr ""
+
+msgid "Install a build of ffmpeg that includes libx264."
+msgstr ""
+
+msgid "Install with: {command}"
+msgstr ""
+
+msgid "missing required program(s): {programs}"
+msgstr ""
+
+msgid "this ffmpeg cannot encode H.264 with libx264, which every recording uses."
+msgstr ""
+
+msgid "--cursor is not available with record --gpu: that backend records the compositor's picture, which never has the pointer in it."
+msgstr ""
+
+msgid "give the steps with -a or with --steps, not both."
+msgstr ""
+
+msgid "give the app to run after `--`, e.g. {example}"
+msgstr ""
+
+msgid "--size takes a width and a height in pixels, like 1600x1000, not {size}."
+msgstr ""
+
+msgid ""
+"--size needs even numbers for a video, since H.264 cannot encode an odd width or height.\n"
+"  Try {size}."
+msgstr ""
+
+msgid ""
+"the app log {path} is a symbolic link another user made, so demoreel\n"
+"  will not write through it: it could point at a file of yours.\n"
+"  Choose another path, or remove the link if it is not meant to be there."
+msgstr ""
+
+msgid ""
+"the output {path} is a symbolic link another user made, so demoreel\n"
+"  will not write through it: it could point at a file of yours.\n"
+"  Choose another path, or remove the link if it is not meant to be there."
+msgstr ""
+
+msgid ""
+"could not run {command}: {reason}.\n"
+"  Check that the command after `--` is installed and spelled as you would type it."
+msgstr ""
+
+msgid ""
+"no window appeared within {seconds}s; taking the picture anyway.\n"
+"  If the app is slow to start, give it longer with --startup-timeout."
+msgstr ""
+
+msgid ""
+"no window appeared within {seconds}s; recording anyway.\n"
+"  If the app is slow to start, give it longer with --startup-timeout."
+msgstr ""
+
+msgid ""
+"It had not drawn yet. A GPU app can spend seconds on a black\n"
+"    screen while it starts: --settle waits for the first picture."
+msgstr ""
+
+msgid ""
+"It needs the GPU, and Xvfb has none. An OpenGL or Vulkan app\n"
+"    cannot render on it at all: record it with --gpu instead."
+msgstr ""
+
+msgid "The app ran but drew nothing here. Two causes account for most of it:"
+msgstr ""
+
+msgid ""
+"It rendered somewhere else. A Flatpak needs --nosocket=wayland on\n"
+"    its command line; see README.md."
+msgstr ""
+
+msgid "--settle could not sample the display, so it cannot tell when the app has drawn."
+msgstr ""
+
+msgid ""
+"nothing was drawn within {seconds}s; recording anyway.\n"
+"  If the app takes longer to show its first picture, raise --settle."
+msgstr ""
+
+msgid "the recorder stopped early; see {log}"
+msgstr ""
+
+msgid "recording, {seconds}s left"
+msgstr ""
+
+msgid "recording for {time} (Ctrl+C to finish)"
+msgstr ""
+
+msgid "the app closed; ending the recording."
+msgstr ""
+
+msgid ""
+"no video was written to {output}: the recorder produced nothing.\n"
+"  Its log, {log}, says why."
+msgstr ""
+
+msgid "the video cannot be played: {output}"
+msgstr ""
+
+msgid "The recorder most likely stopped before it finished the file. See {log}"
+msgstr ""
+
+msgid "the virtual display was blank halfway, so at least half of it is a flat colour: {output}"
+msgstr ""
+
+msgid "the virtual display was blank at the end, so it ends on a flat colour: {output}"
+msgstr ""
+
+msgid ""
+"could not sample the virtual display to check {output} is not blank,\n"
+"  so this run cannot vouch for it."
+msgstr ""
+
+msgid ""
+"could not read {output} back to check it is not blank,\n"
+"  so this run cannot vouch for it."
+msgstr ""
+
+msgid ""
+"the video is a flat colour halfway, though the private screen was not: {output}\n"
+"  The recorder captured something other than the screen. See {log}"
+msgstr ""
+
+msgid ""
+"the video is a flat colour at the end, though the private screen was not: {output}\n"
+"  The recorder captured something other than the screen. See {log}"
+msgstr ""
+
+msgid ""
+"only {share} of the frames in the middle of {output} changed from the one before.\n"
+"  If the app was moving the whole time, it drew that few new frames itself: the video has every frame it drew."
+msgstr ""
+
+msgid "reading it back took over {seconds}s."
+msgstr ""
+
+msgid "ffprobe could not read it."
+msgstr ""
+
+msgid "{seconds}s of video, {size}"
+msgstr ""
+
+msgid "recording {display} to {output} (until stopped)"
+msgstr ""
+
+msgid "recording {display} to {output} ({seconds}s)"
+msgstr ""
+
+msgid "could not take the picture."
+msgstr ""
+
+msgid "could not read back {output} to check it is not blank."
+msgstr ""
+
+msgid "the picture is one flat colour: {output}"
+msgstr ""
+
+msgid ""
+"nothing was drawn within {seconds}s; taking the picture anyway.\n"
+"  If the app takes longer to show its first picture, raise --settle."
+msgstr ""
+
+msgid "could not take the picture: the display did not answer within {seconds}s."
+msgstr ""
+
+msgid "Its display log is kept in {folder}"
+msgstr ""
+
+msgid "record and shot"
+msgstr ""
+
+msgid "missing {programs}"
+msgstr ""
+
+msgid "this ffmpeg has no libx264, which every recording uses."
+msgstr ""
+
+msgid "no graphics render node in /dev/dri, so there is no GPU for it to use."
+msgstr ""
+
+msgid "{name}: NOT READY"
+msgstr ""
+
+msgid "{name}: ready"
+msgstr ""
+
+msgid "edit, trim, caption, join, card, motion and poster"
+msgstr ""
+
+msgid "text on a card or a caption"
+msgstr ""
+
+msgid "a private display did not start: {reason}"
+msgstr ""
+
+msgid "no recording named {name} is running."
+msgstr ""
+
+msgid "Running now: {names}."
+msgstr ""
+
+msgid "no recording is running, so there is nothing to stop."
+msgstr ""
+
+msgid ""
+"{count} recording is running: {names}.\n"
+"  Name the one to stop, e.g. {example}"
+msgid_plural ""
+"{count} recordings are running: {names}.\n"
+"  Name the one to stop, e.g. {example}"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid ""
+"the recording failed after it was stopped, so there is no video to hand back.\n"
+"  Its own error message says why."
+msgstr ""
+
+msgid "the recording ended before it started recording, so there is no video to stop."
+msgstr ""
+
+msgid "{option} belongs to a --text, and none comes before it. caption never cuts the video; use trim."
+msgstr ""
+
+msgid "{where}: there is no font file {path}"
+msgstr ""
+
+msgid "{where}: a font is found by its name with fc-match, which gave no answer here. Give the font's file instead: font /path/to/font.ttf"
+msgstr ""
+
+msgid ""
+"{where}: this machine has no font named {font}; the nearest it offers is {nearest}.\n"
+"  `fc-list : family` lists the names it has."
+msgstr ""
+
+msgid "{where}: the font file {path} has a character in its path that ffmpeg's filters cannot carry. Copy it to a plainer path."
+msgstr ""
+
+msgid "{where}: {word} takes a number of seconds, not {value}."
+msgstr ""
+
+msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
+msgstr ""
+
+msgid "{where}: {word} needs a value after it."
+msgstr ""
+
+msgid "line {number}"
+msgstr ""
+
+msgid "{where} cannot be read: {reason}."
+msgstr ""
+
+msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
+msgstr ""
+
+msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
+msgstr ""
+
+msgid "{where}: clip needs a video file after it."
+msgstr ""
+
+msgid "{where}: card needs its length in seconds: card 3"
+msgstr ""
+
+msgid "{where}: a line starts with clip, card or text, not {word}."
+msgstr ""
+
+msgid "the script has no scenes in it. A scene is a line starting with clip or card."
+msgstr ""
+
+msgid "{where}: there is no file {path}"
+msgstr ""
+
+msgid "{where}: reading {path} took over {seconds}s."
+msgstr ""
+
+msgid "{where}: {path} is not a video or picture ffmpeg can read."
+msgstr ""
+
+msgid "{where}: could not count the frames of {path}."
+msgstr ""
+
+msgid ""
+"{where}: {path} is too big an animation to hold in memory and play again and again ({count} frame of {size}).\n"
+"  Turn it into a video and use it as a clip instead."
+msgid_plural ""
+"{where}: {path} is too big an animation to hold in memory and play again and again ({count} frames of {size}).\n"
+"  Turn it into a video and use it as a clip instead."
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "drawing a line of text took over {seconds}s."
+msgstr ""
+
+msgid "this machine cannot draw text on a video: ffmpeg needs its drawtext filter and a font."
+msgstr ""
+
+msgid "{where}: a text is one line of words, and this one is empty."
+msgstr ""
+
+msgid "{where}: a text is one line of words, and this one is more than one line."
+msgstr ""
+
+msgid "{where}: the text {words} is asked to show from {start} to {end}, which is not inside its scene ({scene_start} to {scene_end})."
+msgstr ""
+
+msgid "{where}: a text's size is a percentage of the frame's height, between 0 and 50, not {size}."
+msgstr ""
+
+msgid "{where}: a text's {word} is a colour written #RRGGBB, like #FFD040, not {value}."
+msgstr ""
+
+msgid "{where}: a text's band is on or off, not {value}."
+msgstr ""
+
+msgid "{where}: a text sits at {places} or {last}, not at {value}."
+msgstr ""
+
+msgid "{where}: the text {words} fades for {fades} seconds, and shows for only {seconds}."
+msgstr ""
+
+msgid ""
+"{where}: a band that fades with its text needs a newer ffmpeg than this one: its text filter has no `boxw`.\n"
+"  Give the text `band off`, or take its fade away."
+msgstr ""
+
+msgid ""
+"{where}: the text {words} is {wide} pixels wide at size {size}, and the frame has room for {room}.\n"
+"  Shorten it, or give it a smaller size: about {fits} would fit."
+msgstr ""
+
+msgid "{where}: the texts {first} and {second} would be on screen at the same time. Only one shows at a time."
+msgstr ""
+
+msgid "{where}: a card needs a length above zero."
+msgstr ""
+
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, not {value}."
+msgstr ""
+
+msgid "{where}: {path} has no length ffmpeg can tell."
+msgstr ""
+
+msgid "{where}: {path} is {size}, a different shape from the film's {film}, and demoreel will not stretch it."
+msgstr ""
+
+msgid "{where}: `{word} {value}` is past the end of {path}, which is {seconds} seconds long."
+msgstr ""
+
+msgid "{where}: `from` must come before `to`, and both inside {path} ({seconds} seconds long)."
+msgstr ""
+
+msgid "{where}: `fade-at {moment}` needs {seconds} seconds of the scene on each side, and the scene runs from {start} to {end}."
+msgstr ""
+
+msgid "{where}: its fades come to {fades} seconds, and the scene is only {seconds} long."
+msgstr ""
+
+msgid "{where}: its texts leave no room for the picture between them. Give them a smaller size."
+msgstr ""
+
+msgid ""
+"a video's width and height must be even, since H.264 cannot encode an odd one, and this film would be {size}.\n"
+"  Set the size with -s {even}."
+msgstr ""
+
+msgid "--framerate takes a number above zero, not {rate}."
+msgstr ""
+
+msgid "-o must end in {ending}, and {name} does not."
+msgstr ""
+
+msgid "-o must end in {ending} or {other}, and {name} does not."
+msgstr ""
+
+msgid "-o is {output}, which is also a file this command reads. demoreel never writes over its own input."
+msgstr ""
+
+msgid "this ffmpeg cannot encode H.264 with libx264, which every video uses."
+msgstr ""
+
+msgid "{where}: a crossfade fades from the scene before, and this is the first scene."
+msgstr ""
+
+msgid "{where}: a scene takes a crossfade or a fade-in, not both."
+msgstr ""
+
+msgid "{where}: a crossfade of {seconds} seconds does not fit: the two scenes overlap for that long, and one of them is shorter."
+msgstr ""
+
+msgid "text"
+msgstr ""
+
+msgid "scene {number}: {kind} {name}, {start} to {end}"
+msgstr ""
+
+msgid "making {output}, {seconds} seconds at {size}"
+msgstr ""
+
+msgid "ffmpeg could not make the film."
+msgstr ""
+
+msgid "ffmpeg did not finish making the film in the time allowed for its length, so it was stopped."
+msgstr ""
+
+msgid "could not read the script {path}: {reason}."
+msgstr ""
+
+msgid "trim needs something to do: --from, --to, or a fade."
+msgstr ""
+
+msgid "join takes two or more videos; one on its own is already whole."
+msgstr ""
+
+msgid "the card"
+msgstr ""
+
+msgid "--from and --to must be inside {path}, which is {seconds} seconds long, with --from before --to."
+msgstr ""
+
+msgid "reading {path} took too long for its length, so it was stopped."
+msgstr ""
+
+msgid "could not read the frames of {path}."
+msgstr ""
+
+msgid "-t {time} is not inside {path}, which is {seconds} seconds long."
+msgstr ""
+
+msgid "could not take the frame at {time} from {path}."
+msgstr ""
+
+msgid "taking the frame took over {seconds}s."
+msgstr ""
+
+msgid "needs ffmpeg first"
+msgstr ""
+
+msgid "this ffmpeg has no libx264, which every video uses."
+msgstr ""
+
+msgid "ffmpeg drew nothing for a line of text: no font was found."
+msgstr ""
+
+#. argparse formats this text with %
+msgid "can this machine record? If not, it says what to install"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "record Kate for 20 seconds"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "one picture instead of a video"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "cut the end off a recording, where `demoreel motion demo.mp4` says to"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "make a film from a script of scenes: clips, cards, text and fades"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "record until you say stop, then stop it from any terminal"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "show the app being used: these steps run while it records"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "an app that needs the graphics card (OpenGL, Vulkan)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "a Flatpak app, which needs three flags on its own command line"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "examples:"
+msgstr ""
+
+#. argparse formats this text with %
+msgid ""
+"Record a GUI app on a private virtual display, so nothing of your real desktop\n"
+"is in frame."
+msgstr ""
+
+#. argparse formats this text with %
+msgid "more examples:"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "record an app and write a video file"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "video file to write (default: ./<app>-<timestamp>.mp4)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "seconds to record; 0 means until `demoreel stop` (default: 30)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "virtual display size, even numbers (default: 1600x1000)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "frames per second (default: 30)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "name for this run, so `demoreel stop` can find it (default: default)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "scripted step, repeatable and run in order: {steps}"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "read the scripted steps from FILE, one per line, or from standard input for -; keeps typed text out of the process list. Not with -a"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "keep the app's own output in PATH; otherwise it goes to this terminal's stderr. Useful when the app prints whether it drew the real thing, which no recording check here can tell"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "wait up to SECONDS for the app to draw its first frame before recording starts, instead of filming its startup black screen (default: 0, don't wait)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "for an app that needs the graphics card (OpenGL, Vulkan): record it on a headless compositor instead of Xvfb, which has no GPU. Needs cage, Xwayland, wlr-randr and wf-recorder; not with --cursor"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "show the mouse pointer; off by default, since with no actions it just sits in the corner"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "how long to wait for the app's window (default: 20)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "-- followed by the command that starts the app"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "take one picture of an app and write a PNG"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "picture file to write (default: ./<app>-<timestamp>.png)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "virtual display size (default: 1600x1000)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "scripted step run before the picture, repeatable: {steps}"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "read the scripted steps from FILE, one per line, or from standard input for -. Not with -a"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "keep the app's own output in PATH; otherwise it goes to this terminal's stderr"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "wait up to SECONDS for the app to draw before the steps and the picture (default: 10)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "for an app that needs the graphics card: use a headless compositor instead of Xvfb. Needs cage, Xwayland and wlr-randr"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "show the mouse pointer in the picture"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "test whether this machine can record, without recording"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "Report what each backend needs and whether it is installed, start a private display to prove it works, and name the install command for anything missing. Exits non-zero if the default backend cannot record."
+msgstr ""
+
+#. argparse formats this text with %
+msgid "end a running recording early"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "which run to stop (default: the only one running)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "video file to write, ending in .mp4"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "start black; the picture arrives over SECONDS"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "go to black over the last SECONDS"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "make a film from a script of scenes"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "make a film from a script of scenes."
+msgstr ""
+
+#. argparse formats this text with %
+msgid "the script file, or - for standard input"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "the film's picture size, like 1280x800 (default: the first clip's)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "the film's frames per second (default: the first clip's)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "cut the start and the end off a video"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "cut the start and the end off a video."
+msgstr ""
+
+#. argparse formats this text with %
+msgid "the video to cut"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "where the kept part starts (default: the start)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "the last moment kept (default: the end)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "fade to black and back around this moment; repeatable"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "how long each half of a --fade-at takes (default: {seconds})"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "put text over part of a video"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "put text over part of a video."
+msgstr ""
+
+#. argparse formats this text with %
+msgid "the video to put text on"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "one line of text; repeatable"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "for the --text before it: when it appears"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "for the --text before it: when it goes"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "for the --text before it: its height, as a percentage of the frame's"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "put videos end to end"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "put videos end to end."
+msgstr ""
+
+#. argparse formats this text with %
+msgid "two or more videos, in order"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "fade from each video into the next over SECONDS (default: a plain cut)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "make a clip from a picture, or from text"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "make a clip from a picture, or from text."
+msgstr ""
+
+#. argparse formats this text with %
+msgid "a picture to show; a .gif or an animated .png plays"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "how many seconds the card lasts"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "one line of text"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "the text's height, as a percentage of the frame's (default: {size})"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "the background colour (default: {colour})"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "take the size and frame rate from this video"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "the picture size, like 1280x800 (default: 1600x1000)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "report how smooth a video is and where it stands still"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "report how smooth a video is and where it stands still."
+msgstr ""
+
+#. argparse formats this text with %
+msgid "the video to look at"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "look from here (default: the start)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "look up to here (default: the end)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "report a stretch with no change longer than this (default: 1)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "print the report as one JSON object"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a picture"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a picture."
+msgstr ""
+
+#. argparse formats this text with %
+msgid "picture file to write, ending in .png or .jpg"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "the video to take the frame from"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "which moment to save"
+msgstr ""

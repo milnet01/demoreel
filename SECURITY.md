@@ -71,6 +71,20 @@ absent from demoreel's command line (DEMO-0025). Use `--steps` for a password
 or a token, from a file only you can read; a shell line that pipes the steps
 in holds them itself.
 
+**Translation catalogs.** A message demoreel shows may come from a `.po` file
+in the `po/` folder beside the script, written by a translator a reviewer may
+not be able to read. So a catalog is treated as untrusted text, and the
+defences are in [the translation spec](docs/specs/DEMO-0060-translation-catalogs.md)
+§ 4.7. demoreel reads catalogs only from that folder, never from the working
+directory or a path named by the environment. A message is filled by plain
+substitution, which cannot reach an attribute or an index, and a translation
+whose placeholders differ from the English is not used. A catalog holding a
+control character, a text-direction character, a charset other than UTF-8,
+syntax outside the subset demoreel reads, or more than 1 MiB is refused whole.
+A refused catalog costs its language and one English note, never the run, and
+under `LC_ALL=C` no catalog is opened at all. The gate covers each of these
+with hostile catalogs (DEMO-0083).
+
 **The video and the logs demoreel writes.** Whatever the app draws is in the
 video, and `--app-log` keeps whatever the app printed. Both are ordinary files
 with the caller's umask. Check what is in them before publishing one; demoreel

@@ -16,6 +16,126 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# Every step below matches demoreel's English messages, so every step runs in
+# English whatever the developer's locale (docs/specs/DEMO-0060 § 4.8). A step
+# that tests a translation removes this for its own runs, with `env -u LC_ALL`.
+export LC_ALL=C
+unset LANGUAGE
+
+# The translation template: every message demoreel can show, extracted from
+# the source with ast (DEMO-0060 § 4.8). The first argument of each tr() and
+# tr_help() call, the first two of each trn(), every entry of ARGPARSE_MESSAGES,
+# and each comment in EXAMPLES and RECORD_EXAMPLES (read with tr_listed). An
+# argument that is not a string literal fails: a message the extractor cannot
+# see is one no catalog can carry. A message argparse formats again with `%`
+# says so in an extracted comment, which the catalog checks read.
+pot_text() {
+    python3 - <<'POTPY'
+import ast, pathlib, re, sys
+tree = ast.parse(pathlib.Path("demoreel").read_text(encoding="utf-8"))
+found, bad = {}, []
+def add(line, msgid, plural, formatted):
+    key = (msgid, plural)
+    first, was = found.get(key, (line, False))
+    found[key] = (min(first, line), was or formatted)
+for node in ast.walk(tree):
+    names = {t.id for t in getattr(node, "targets", []) if isinstance(t, ast.Name)}
+    if isinstance(node, ast.Assign) and names & {"ARGPARSE_MESSAGES", "EXAMPLES",
+                                                 "RECORD_EXAMPLES"}:
+        for item in node.value.elts:
+            item = item.elts[0] if isinstance(item, ast.Tuple) else item
+            if not (isinstance(item, ast.Constant) and isinstance(item.value, str)):
+                bad.append(item.lineno)
+                continue
+            add(item.lineno, item.value, None, True)
+    if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+            and node.func.id in ("tr", "trn", "tr_help")):
+        continue
+    wanted = 2 if node.func.id == "trn" else 1
+    args = node.args[:wanted]
+    if len(args) < wanted or not all(isinstance(a, ast.Constant) and isinstance(a.value, str)
+                                     for a in args):
+        bad.append(node.lineno)
+        continue
+    add(node.lineno, args[0].value, args[1].value if wanted == 2 else None,
+        node.func.id == "tr_help")
+for line in bad:
+    print(f"demoreel line {line}: a translated message must be a string literal, "
+          "or no catalog can carry it", file=sys.stderr)
+if bad or not found:
+    sys.exit(1)
+def q(text):
+    text = (text.replace("\\", "\\\\").replace('"', '\\"').replace("\t", "\\t")
+            .replace("\n", "\\n"))
+    parts = re.findall(r".*?\\n|.+$", text)
+    return f'"{text}"' if len(parts) < 2 else '""\n' + "\n".join(f'"{p}"' for p in parts)
+out = ["# demoreel's messages: the template every catalog starts from.",
+       "# Made by ./ci.sh --pot from the source. Do not edit it by hand.",
+       'msgid ""', 'msgstr ""', '"Project-Id-Version: demoreel\\n"',
+       '"Content-Type: text/plain; charset=UTF-8\\n"',
+       '"Content-Transfer-Encoding: 8bit\\n"', '"Language: \\n"',
+       '"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\\n"',
+       '"X-Demoreel-Review: draft\\n"']
+for (msgid, plural), (_, formatted) in sorted(found.items(), key=lambda kv: kv[1][0]):
+    out.append("")
+    if formatted:
+        out.append("#. argparse formats this text with %")
+    out.append(f"msgid {q(msgid)}")
+    if plural is None:
+        out.append('msgstr ""')
+    else:
+        out += [f"msgid_plural {q(plural)}", 'msgstr[0] ""', 'msgstr[1] ""']
+print("\n".join(out))
+POTPY
+}
+
+if [ "${1:-}" = "--pot" ]; then
+    mkdir -p po
+    pot_text > po/demoreel.pot.tmp
+    mv po/demoreel.pot.tmp po/demoreel.pot
+    echo "wrote po/demoreel.pot"
+    exit 0
+fi
+
+# A temporary copy of demoreel beside a catalog of its own, built from the
+# template (DEMO-0060 § 7): every msgstr is its English wrapped in ⟦ ⟧, with
+# placeholders and code tokens untouched. A copy, because a catalog committed
+# beside the real script would be a shipped language.
+# Usage: pseudo_copy DIR CODE [REVIEW] -> DIR/demoreel and DIR/po/CODE.po
+pseudo_copy() {
+    mkdir -p "$1/po"
+    cp demoreel "$1/demoreel"
+    python3 - "$1/po/$2.po" "$2" "${3:-draft}" <<'PSEUDOPY'
+import importlib.machinery, importlib.util, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+path, code, review = sys.argv[1:]
+def q(text):
+    return '"' + (text.replace("\\", "\\\\").replace('"', '\\"').replace("\t", "\\t")
+                  .replace("\n", "\\n")) + '"'
+out = ['msgid ""', 'msgstr ""', q("Content-Type: text/plain; charset=UTF-8\n"),
+       q(f"Language: {code}\n"), q("Plural-Forms: nplurals=2; plural=n != 1;\n"),
+       q(f"X-Demoreel-Review: {review}\n")]
+with open("po/demoreel.pot", encoding="utf-8") as template:
+    entries = d.read_po(template.read())
+for e in entries:
+    if not e["msgid"]:
+        continue
+    out += ["", f"msgid {q(e['msgid'])}"]
+    if e["plural"] is None:
+        out.append(f"msgstr {q('⟦' + e['msgid'] + '⟧')}")
+    else:
+        out += [f"msgid_plural {q(e['plural'])}", f"msgstr[0] {q('⟦' + e['msgid'] + '⟧')}",
+                f"msgstr[1] {q('⟦' + e['plural'] + '⟧')}"]
+with open(path, "w", encoding="utf-8") as catalog:
+    catalog.write("\n".join(out) + "\n")
+PSEUDOPY
+}
+# The environment a translated run gets: the gate's LC_ALL removed, so that
+# only what a run is testing can make it English (DEMO-0060 § 7).
+PSEUDO_ENV=(env -u LC_ALL -u LC_MESSAGES LANGUAGE=zz LANG=de_DE.UTF-8)
+
 # The one definition of what counts as documentation here. The machine-wide
 # pre-push hook reads it with `./ci.sh --docs-glob` and does its own matching.
 # The GitHub workflow does not: it pipes the changed paths into
@@ -2060,15 +2180,23 @@ step "every --help example parses"
 # own parser, with every -a step read the way a run reads it. This also covers
 # the check above, which takes its list of accepted flags from the same help
 # text: a flag an example uses cannot be one the parser has dropped.
-python3 - <<'EXAMPLESPY'
-import importlib.machinery, importlib.util, shlex, subprocess, sys
+#
+# DEMO-0060 INV-17: the pages are printed again by a copy under the
+# pseudo-locale, and every example must come out byte for byte the same. A
+# command put inside a translated message would be translated with it.
+ex_tmp=$(mktemp -d)
+pseudo_copy "$ex_tmp" zz
+PSEUDO_COPY="$ex_tmp/demoreel" python3 - <<'EXAMPLESPY'
+import importlib.machinery, importlib.util, os, shlex, subprocess, sys
 loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
 demoreel = importlib.util.module_from_spec(
     importlib.util.spec_from_loader("demoreel", loader))
 loader.exec_module(demoreel)
-bad = 0
-for page in (["--help"], ["record", "--help"]):
-    text = subprocess.run(["./demoreel", *page], capture_output=True,
+pseudo = {k: v for k, v in os.environ.items() if k not in ("LC_ALL", "LC_MESSAGES")}
+pseudo.update(LANGUAGE="zz", LANG="de_DE.UTF-8")
+
+def examples_on(script, page, env=None):
+    text = subprocess.run([script, *page], capture_output=True, env=env,
                           text=True, check=True).stdout
     examples, lines = [], iter(text.splitlines())
     for line in lines:
@@ -2078,6 +2206,20 @@ for page in (["--help"], ["record", "--help"]):
         while line.endswith("\\"):
             line = line[:-1] + " " + next(lines).strip()
         examples.append(line)
+    return text, examples
+
+bad = 0
+for page in (["--help"], ["record", "--help"]):
+    text, examples = examples_on("./demoreel", page)
+    translated, again = examples_on(os.environ["PSEUDO_COPY"], page, pseudo)
+    if "\u27e6" not in translated:
+        print(f"demoreel {' '.join(page)} was not translated under the "
+              "pseudo-locale, so INV-17 compared nothing", file=sys.stderr)
+        bad += 1
+    elif again != examples:
+        print(f"demoreel {' '.join(page)}: an example differs under the "
+              f"pseudo-locale:\n  {examples}\n  {again}", file=sys.stderr)
+        bad += 1
     if not examples:
         print(f"demoreel {' '.join(page)} shows no examples", file=sys.stderr)
         bad += 1
@@ -2101,7 +2243,8 @@ for page in (["--help"], ["record", "--help"]):
     print(f"demoreel {' '.join(page)}: {len(examples)} examples")
 sys.exit(1 if bad else 0)
 EXAMPLESPY
-echo "every example --help shows is one demoreel accepts"
+rm -rf "$ex_tmp"
+echo "every example --help shows is one demoreel accepts, in every language"
 
 step "README's install lines are the ones demoreel check prints"
 # DEMO-0058. The package names have one home, PACKAGES in demoreel, which
@@ -3479,6 +3622,451 @@ kill "$fake_run" 2>/dev/null
 [ "$completion_bad" -eq 0 ] || exit 1
 
 finishing_checks
+
+# The translation checks (docs/specs/DEMO-0060-translation-catalogs.md § 4.8).
+# No catalog ships yet, so they run against copies of demoreel beside catalogs
+# built here: the pseudo-locale wraps every message in ⟦ ⟧, and the hostile
+# ones are written by hand. The checks that read shipped catalogs (complete,
+# placeholders, digests) are DEMO-0062's.
+step "translation: the template matches the source"
+# INV-6. A message added or reworded without `./ci.sh --pot` leaves the
+# template behind, and every catalog starts from the template.
+pot_text > "$tmp/demoreel.pot"
+cmp -s "$tmp/demoreel.pot" po/demoreel.pot || {
+    echo "po/demoreel.pot is not what the source extracts: run ./ci.sh --pot" >&2
+    diff po/demoreel.pot "$tmp/demoreel.pot" | head -20 >&2 || true
+    exit 1; }
+echo "po/demoreel.pot holds every message the source has"
+
+step "translation: nothing translated at import time"
+# INV-15. The language is chosen in main(), so a message translated at import
+# is always English -- and passes every check that runs in English. A default
+# argument and a decorator run at import too, so they count as outside.
+python3 - <<'IMPORTPY'
+import ast, pathlib, sys
+NAMES = ("tr", "trn", "tr_help", "tr_listed")
+tree = ast.parse(pathlib.Path("demoreel").read_text(encoding="utf-8"))
+calls, outside = [], []
+def walk(node, inside):
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+        args = node.args
+        for part in [*args.defaults, *[d for d in args.kw_defaults if d],
+                     *getattr(node, "decorator_list", [])]:
+            walk(part, inside)
+        body = node.body if isinstance(node.body, list) else [node.body]
+        for part in body:
+            walk(part, True)
+        return
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) \
+            and node.func.id in NAMES:
+        calls.append(node.lineno)
+        if not inside:
+            outside.append(node.lineno)
+    for child in ast.iter_child_nodes(node):
+        walk(child, inside)
+walk(tree, False)
+for line in outside:
+    print(f"demoreel line {line}: a message translated at import time", file=sys.stderr)
+if len(calls) < 100:
+    sys.exit(f"found only {len(calls)} translated messages, so this check saw "
+             "less of the source than it should")
+sys.exit(1 if outside else 0)
+IMPORTPY
+echo "every translated message is translated inside a function"
+
+step "translation: argparse still has our strings"
+# INV-13's first half. ARGPARSE_MESSAGES are argparse's own msgids. One this
+# Python has reworded is never looked up, and nothing else would say so: the
+# fix is to remove it from the list, not to reword it (DEMO-0060 § 6). This
+# runs in the Ubuntu leg too, which is how both Pythons are held to it.
+python3 - <<'ARGPY'
+import argparse, importlib.machinery, importlib.util, inspect, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+source = inspect.getsource(argparse)
+missing = [m for m in d.ARGPARSE_MESSAGES
+           if f"_({m!r}" not in source and f"ngettext({m!r}" not in source]
+for m in missing:
+    print(f"this Python's argparse has no {m!r}", file=sys.stderr)
+sys.exit(1 if missing else 0)
+ARGPY
+echo "argparse $(python3 -c 'import sys; print(sys.version.split()[0])') has every string demoreel translates"
+
+step "translation: the language is chosen as gettext chooses it"
+# INV-3, each row of the spec's table, and INV-4, the fallback from one
+# catalog to the next and then to English.
+mkdir -p "$tmp/tr/chain/po"
+cp demoreel "$tmp/tr/chain/demoreel"
+python3 - "$tmp/tr/chain" <<'CHAINPY'
+import importlib.machinery, importlib.util, pathlib, sys
+here = pathlib.Path(sys.argv[1])
+loader = importlib.machinery.SourceFileLoader("demoreel", str(here / "demoreel"))
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+bad = 0
+for env, want in (
+        ({"LANGUAGE": "de:fr", "LANG": "es_ES.UTF-8"}, ["de", "fr"]),
+        ({"LC_ALL": "C", "LANGUAGE": "de"}, []),
+        ({"LANG": "pt_BR.UTF-8"}, ["pt_BR", "pt"]),
+        ({"LC_MESSAGES": "zh_TW.UTF-8", "LANG": "de_DE.UTF-8"}, ["zh_TW", "zh"]),
+        ({"LC_ALL": "he_IL.UTF-8", "LC_MESSAGES": "de_DE.UTF-8"}, ["he_IL", "he"]),
+        ({"LANGUAGE": "en:de", "LANG": "de_DE.UTF-8"}, []),
+        ({"LANG": "sr_RS.UTF-8@latin"}, ["sr_RS@latin", "sr@latin", "sr_RS", "sr"]),
+        ({}, [])):
+    got = d.chosen_languages(env)
+    if got != want:
+        print(f"chosen_languages({env}) gave {got}, not {want}", file=sys.stderr)
+        bad += 1
+missing = "trim needs something to do: --from, --to, or a fade."
+fuzzy = "join takes two or more videos; one on its own is already whole."
+empty = "no recording is running, so there is nothing to stop."
+kept = "the app closed; ending the recording."
+neither = "give the steps with -a or with --steps, not both."
+def catalog(code, entries):
+    head = ('msgid ""\nmsgstr ""\n"Content-Type: text/plain; charset=UTF-8\\n"\n'
+            f'"Language: {code}\\n"\n"Plural-Forms: nplurals=2; plural=n != 1;\\n"\n')
+    (here / "po" / f"{code}.po").write_text(head + "".join(entries), encoding="utf-8")
+catalog("zz", [f'\n#, fuzzy\nmsgid "{fuzzy}"\nmsgstr "zz"\n',
+               f'\nmsgid "{empty}"\nmsgstr ""\n', f'\nmsgid "{kept}"\nmsgstr "from zz"\n'])
+catalog("yy", [f'\nmsgid "{m}"\nmsgstr "from yy"\n' for m in (missing, fuzzy, empty, kept)])
+d.use_languages(["zz", "yy"])
+for msgid, want in ((missing, "from yy"), (fuzzy, "from yy"), (empty, "from yy"),
+                    (kept, "from zz"), (neither, neither)):
+    if d.tr(msgid) != want:
+        print(f"{msgid!r} came out as {d.tr(msgid)!r}, not {want!r}", file=sys.stderr)
+        bad += 1
+sys.exit(1 if bad else 0)
+CHAINPY
+echo "every row of the language table, and the fallback from catalog to catalog to English"
+
+step "translation: placeholders and code tokens match"
+# INV-12: in a right-to-left language each value and each code token is held
+# in an isolate, so a path or a flag reads left to right inside the sentence.
+# The marks go outside a token, never inside it. Checked in bytes; how a
+# terminal draws them is DEMO-0063's. DEMO-0062 adds INV-7's half, over the
+# shipped catalogs.
+pseudo_copy "$tmp/tr/rtl" he
+pseudo_copy "$tmp/tr/rtl" zz
+python3 - "$tmp/tr/rtl" <<'RTLPY'
+import importlib.machinery, importlib.util, pathlib, sys
+here = pathlib.Path(sys.argv[1])
+loader = importlib.machinery.SourceFileLoader("demoreel", str(here / "demoreel"))
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+FSI, PDI = "⁨", "⁩"
+own = ("-o is {output}, which is also a file this command reads. demoreel never "
+       "writes over its own input.")
+cases = [
+    ((own,), {"output": "/tmp/x.mp4"},
+     f"⟦{FSI}-o{PDI} is {FSI}/tmp/x.mp4{PDI}, which is also a file this command "
+     "reads. demoreel never writes over its own input.⟧"),
+    (("trim needs something to do: --from, --to, or a fade.",), {},
+     f"⟦trim needs something to do: {FSI}--from{PDI}, {FSI}--to{PDI}, or a fade.⟧"),
+    (("the private display {display} stopped answering: `xdotool {command}` did "
+      "not return within {seconds}s.",), {"display": ":5", "command": "key", "seconds": "10"},
+     f"⟦the private display {FSI}:5{PDI} stopped answering: {FSI}`xdotool key`{PDI} "
+     f"did not return within {FSI}10{PDI}s.⟧"),
+]
+bad = 0
+d.use_languages(["he"])
+for args, values, want in cases:
+    got = d.tr(*args, **values)
+    if got != want:
+        print(f"in he:\n  got  {got!r}\n  want {want!r}", file=sys.stderr)
+        bad += 1
+for codes in (["zz"], []):
+    d.use_languages(codes)
+    for args, values, _ in cases:
+        got = d.tr(*args, **values)
+        if FSI in got or PDI in got or (codes and "⟦" not in got):
+            print(f"in {codes or 'English'}: {got!r}", file=sys.stderr)
+            bad += 1
+sys.exit(1 if bad else 0)
+RTLPY
+echo "right-to-left messages isolate each value and each code token, and no other language does"
+
+step "translation: stdout and exit status do not move"
+# INV-2: whatever the language, a caller reads the same stdout and the same
+# exit status -- the paths, motion's report, --version. INV-14: under the
+# pseudo-locale every message demoreel writes, and every option's help, is
+# translated whole, so a message left out of tr() shows up here. One
+# successful and one failing run of each command, under LC_ALL=C and then
+# under the pseudo-locale, from the same copy.
+tr_out="$tmp/tr/out"
+pseudo_copy "$tr_out" zz
+ffmpeg -nostdin -loglevel error -f lavfi -i testsrc=s=320x200:r=30:d=2 \
+    -pix_fmt yuv420p "$tr_out/clip.mp4"
+printf 'card 1\ntext "Hello"\nclip clip.mp4 to 1\n' > "$tr_out/film.txt"
+python3 - "$tr_out" <<'MOVEPY'
+import json, os, pathlib, re, subprocess, sys
+here = pathlib.Path(sys.argv[1])
+script = str(here / "demoreel")
+plain = {k: v for k, v in os.environ.items() if k not in ("LC_ALL", "LC_MESSAGES")}
+english = {**plain, "LC_ALL": "C"}
+pseudo = {**plain, "LANGUAGE": "zz", "LANG": "de_DE.UTF-8"}
+state = (pathlib.Path(os.environ.get("XDG_RUNTIME_DIR") or "/tmp")
+         / f"demoreel-{os.getuid()}" / "gatetr.json")
+bad, checked = [], 0
+
+def run(argv, env):
+    return subprocess.run([script, *argv], cwd=here, env=env, capture_output=True,
+                          text=True, timeout=180)
+
+def whole(stderr, argv):
+    """Each message demoreel wrote must be one translation, ⟦ to ⟧."""
+    global checked
+    messages = []
+    for line in stderr.splitlines():
+        if line.startswith("demoreel: "):
+            messages.append(line[len("demoreel: "):])
+        elif line.startswith("  ") and messages:
+            messages[-1] += "\n" + line
+    for message in messages:
+        if message.startswith("error: "):
+            continue  # argparse's own error line; INV-13 is checked below
+        checked += 1
+        if not (message.startswith("⟦") and message.endswith("⟧")):
+            bad.append(f"{argv}: a message not translated whole: {message!r}")
+
+RUNS = [
+    ["record", "-n", "gatetr", "-d", "1", "-s", "320x240", "-o", "rec.mp4", "--", "xclock"],
+    ["shot", "-s", "320x240", "-o", "shot.png", "--", "xclock"],
+    ["trim", "clip.mp4", "-o", "trim.mp4", "--to", "1"],
+    ["caption", "clip.mp4", "-o", "cap.mp4", "--text", "Hi", "--to", "1"],
+    ["join", "clip.mp4", "clip.mp4", "-o", "join.mp4"],
+    ["card", "-d", "1", "--text", "Hi", "-o", "card.mp4", "--like", "clip.mp4"],
+    ["edit", "film.txt", "-o", "film.mp4"],
+    ["poster", "clip.mp4", "-o", "poster.png", "-t", "1"],
+    ["motion", "clip.mp4"],
+    ["motion", "clip.mp4", "--json"],
+    ["--version"],
+    ["record", "-n", "gatetr", "-s", "301x200", "--", "xclock"],
+    ["shot", "-s", "320x240"],
+    ["stop", "gatetr-nobody"],
+    ["trim", "clip.mp4", "-o", "trim2.mp4"],
+    ["caption", "clip.mp4", "-o", "clip.mp4", "--text", "Hi"],
+    ["join", "clip.mp4", "-o", "join2.mp4"],
+    ["card", "-d", "0", "-o", "card2.mp4"],
+    ["edit", "nofile.txt", "-o", "film2.mp4"],
+    ["poster", "clip.mp4", "-o", "poster2.png", "-t", "9"],
+    ["motion", "clip.mp4", "--from", "9"],
+]
+for argv in RUNS:
+    seen = []
+    for env in (english, pseudo):
+        r = run(argv, env)
+        fields = None
+        if argv[0] == "record" and r.returncode == 0:
+            entry = json.loads(state.read_text())
+            fields = (entry.get("output"), entry.get("result"))
+        seen.append((r.returncode, r.stdout, fields))
+        if env is pseudo:
+            whole(r.stderr, argv)
+    if seen[0] != seen[1]:
+        bad.append(f"{argv}: C gave {seen[0]!r:.300}, the pseudo-locale {seen[1]!r:.300}")
+# stop prints a path too: a -d 0 run, stopped by name, in each language.
+for env in (english, pseudo):
+    rec = subprocess.Popen([script, "record", "-n", "gatetr", "-d", "0", "-s", "320x240",
+                            "-o", "stopped.mp4", "--", "xclock"], cwd=here, env=env,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+    r = run(["stop", "gatetr"], env)
+    rec.communicate(timeout=60)
+    if (r.returncode, r.stdout) != (0, f"{here / 'stopped.mp4'}\n"):
+        bad.append(f"stop under {env.get('LANGUAGE', 'C')}: {r.returncode} {r.stdout!r}")
+    if env is pseudo:
+        whole(r.stderr, ["stop"])
+
+def help_entries(text):
+    """The help text of each entry under the options and positional headings."""
+    entries, current, reading = [], None, False
+    for line in text.splitlines():
+        if line and not line.startswith(" "):
+            reading = line.endswith("⟧:")  # a translated section heading
+            current = None
+            continue
+        entry = re.match(r"^( {2}| {4})(\S.*?)(?: {2,}(.*))?$", line)
+        if not reading:
+            continue
+        if entry:
+            current = [entry[3]] if entry[3] else []
+            entries.append(current)
+        elif current is not None and line.strip():
+            current.append(line.strip())
+    return [" ".join(parts) for parts in entries if parts]
+
+pages = [[], ["record"], ["shot"], ["check"], ["stop"], ["edit"], ["trim"], ["caption"],
+         ["join"], ["card"], ["motion"], ["poster"]]
+for page in pages:
+    r = run([*page, "--help"], pseudo)
+    found = help_entries(r.stdout)
+    if r.returncode or not found or "⟦usage: ⟧" not in r.stdout:
+        bad.append(f"{page} --help under the pseudo-locale: status {r.returncode}, "
+                   f"{len(found)} entries, usage translated: {'⟦usage: ⟧' in r.stdout}")
+    for text in found:
+        checked += 1
+        if not (text.startswith("⟦") and text.endswith("⟧")):
+            bad.append(f"{page} --help: an entry not translated whole: {text!r}")
+# INV-13's second half: argparse's own error and usage, through the hook.
+r_c, r_z = run(["--bogus"], english), run(["--bogus"], pseudo)
+if r_c.returncode != r_z.returncode or "⟦usage: ⟧" not in r_z.stderr \
+        or not re.search(r"⟦(the following arguments|unrecognized arguments)", r_z.stderr):
+    bad.append(f"--bogus: C {r_c.returncode}, pseudo {r_z.returncode}: {r_z.stderr!r:.300}")
+for line in bad:
+    print(line, file=sys.stderr)
+print(f"{len(RUNS) + 2} commands compared under both locales; "
+      f"{checked} messages and help entries checked whole")
+sys.exit(1 if bad or checked < 100 else 0)
+MOVEPY
+
+step "translation: confirmed means unchanged"
+# INV-16's runtime half: --help says a draft is a draft, and says nothing for a
+# confirmed catalog or in English. DEMO-0062 adds the digest check.
+pseudo_copy "$tmp/tr/draft" zz
+pseudo_copy "$tmp/tr/confirmed" zz "confirmed 0123456789abcdef"
+draft_line="This translation is a draft and has not yet been checked by a native speaker."
+help_draft=$("${PSEUDO_ENV[@]}" "$tmp/tr/draft/demoreel" --help)
+help_confirmed=$("${PSEUDO_ENV[@]}" "$tmp/tr/confirmed/demoreel" --help)
+help_english=$("$tmp/tr/draft/demoreel" --help)
+[[ $help_draft == *$'\n'"⟦$draft_line⟧" ]] || {
+    echo "--help from a draft catalog does not end with the draft line" >&2; exit 1; }
+[[ $help_confirmed == *"⟦"* && $help_confirmed != *"$draft_line"* ]] || {
+    echo "--help from a confirmed catalog says it is a draft, or was not translated" >&2
+    exit 1; }
+[[ $help_english != *"$draft_line"* ]] || {
+    echo "--help in English says a translation is a draft" >&2; exit 1; }
+echo "a draft says so at the end of --help; a confirmed catalog and English do not"
+
+step "translation: a bad catalog costs only the language"
+# INV-1, INV-8, INV-9, INV-10 and INV-11. A catalog is text from someone a
+# reviewer cannot check, so a broken or hostile one may cost its language and
+# never the run. Each refusal is believed only beside a control: the same run
+# with a good catalog shows translated text, so "English" means refused, not
+# never loaded.
+pseudo_copy "$tmp/tr/bad" zz
+cp "$tmp/tr/bad/po/zz.po" "$tmp/tr/good.po"
+python3 - "$tmp/tr" <<'BADPY'
+import os, pathlib, subprocess, sys
+top = pathlib.Path(sys.argv[1])
+here = top / "bad"
+good = (top / "good.po").read_text(encoding="utf-8")
+plain = {k: v for k, v in os.environ.items() if k not in ("LC_ALL", "LC_MESSAGES")}
+english = {**plain, "LC_ALL": "C"}
+pseudo = {**plain, "LANGUAGE": "zz", "LANG": "de_DE.UTF-8"}
+NOTHING = ["trim", "x.mp4", "-o", "y.mp4"]
+NOTHING_MSG = "trim needs something to do: --from, --to, or a fade."
+OWN = ["trim", "clip.mp4", "-o", "clip.mp4", "--to", "1"]
+OWN_MSG = ("-o is {output}, which is also a file this command reads. demoreel never "
+           "writes over its own input.")
+bad = []
+
+def run(catalog, argv, env=pseudo, script=here / "demoreel", cwd=here):
+    if isinstance(catalog, str):
+        catalog = catalog.encode("utf-8")
+    (here / "po" / "zz.po").write_bytes(catalog)
+    return subprocess.run([str(script), *argv], cwd=cwd, env=env, capture_output=True,
+                          timeout=60)
+
+def swap(msgid, msgstr):
+    old = 'msgstr "⟦' + msgid + '⟧"'
+    assert good.count(old) == 1, msgid
+    return good.replace(old, "msgstr " + msgstr)
+
+def expect(what, r, rc, english_text, note=None):
+    err = r.stderr.decode("utf-8", "replace")
+    problems = []
+    if r.returncode != rc:
+        problems.append(f"status {r.returncode}, not {rc}")
+    if english_text not in err or "⟦" in err:
+        problems.append("the message is not the English one")
+    notes = err.count("could not be read")
+    if note is None and notes:
+        problems.append("a catalog was opened")
+    if note is not None and (notes != 1 or "po/zz.po" not in err
+                             or (note and "line " not in err)):
+        problems.append("not exactly one note naming the file and line")
+    if "class" in err:
+        problems.append("a template reached an attribute")
+    if problems:
+        bad.append(f"{what}: {'; '.join(problems)}\n    {err!r:.400}")
+
+rc_nothing = run(good, NOTHING, english).returncode
+rc_own = run(good, OWN, english).returncode
+for argv, msg in ((NOTHING, NOTHING_MSG), (OWN, "-o is ")):
+    r = run(good, argv)
+    if "⟦" + msg[:20] not in r.stderr.decode("utf-8", "replace"):
+        bad.append(f"control: a good catalog did not translate {argv}")
+
+# INV-1: C, and English first in LANGUAGE, open nothing under po/.
+broken = "msgid\n"
+if "could not be read" not in run(broken, NOTHING).stderr.decode():
+    bad.append("control: the unreadable catalog was not reported under the pseudo-locale")
+expect("LC_ALL=C LANGUAGE=zz", run(broken, NOTHING, {**english, "LANGUAGE": "zz"}),
+       rc_nothing, NOTHING_MSG)
+expect("LANGUAGE=en:zz", run(broken, NOTHING, {**plain, "LANG": "en_GB.UTF-8",
+                                                "LANGUAGE": "en:zz"}),
+       rc_nothing, NOTHING_MSG)
+# INV-11: a terminal that cannot show the translation gets English.
+expect("PYTHONIOENCODING=latin-1", run(broken, NOTHING, {**pseudo,
+                                                          "PYTHONIOENCODING": "latin-1"}),
+       rc_nothing, NOTHING_MSG)
+# INV-10: refused whole, with one note.
+hostile = {
+    "an ESC": swap(NOTHING_MSG, '"\x1b[31mred"'),
+    "another C0 control": swap(NOTHING_MSG, '"\x01"'),
+    "a C1 control": swap(NOTHING_MSG, '"\u009b31m"'),
+    "a bidi override": swap(NOTHING_MSG, '"‮evil"'),
+    "an unknown escape": swap(NOTHING_MSG, '"\\x41"'),
+    "msgctxt": good.replace(f'msgid "{NOTHING_MSG}"', f'msgctxt "x"\nmsgid "{NOTHING_MSG}"'),
+    "a Latin-1 charset": good.replace("charset=UTF-8", "charset=ISO-8859-1"),
+    "a plural expression that raises": good.replace("plural=n != 1;", "plural=n%0;"),
+    "a plural expression out of range": good.replace("plural=n != 1;", "plural=n+5;"),
+}
+for what, text in hostile.items():
+    assert text != good, what
+    expect(what, run(text, NOTHING), rc_nothing, NOTHING_MSG, note=True)
+expect("more than 1 MiB", run(good + "#" * (1024 * 1024) + "\n", NOTHING), rc_nothing,
+       NOTHING_MSG, note=False)
+# INV-8: a template reaching past plain substitution is not used -- refused
+# by the check on each translation, and, behind it, filled by a substitution
+# that cannot reach an attribute, an index or a conversion. Each defence is
+# held on its own: through a catalog, the check hides the fill.
+import importlib.machinery, importlib.util
+loader = importlib.machinery.SourceFileLoader("demoreel", str(here / "demoreel"))
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+for template in ("{output.__class__}", "{output[0]}", "{output!r}", "{output:>9}"):
+    for marks in (False, True):
+        if d._fill(template, {"output": "/x"}, marks) != template:
+            bad.append(f"the fill reached past plain substitution in {template!r}")
+for template in ("{output.__class__}", "{output[0]}", "{output!r}", "{unknown}",
+                 "⟦{output}⟧ {output.__class__}"):
+    expect(f"the template {template}", run(swap(OWN_MSG, f'"{template}"'), OWN), rc_own,
+           "which is also a file this command reads")
+r_c = run(good, ["--bogus"], english)
+r = run(swap("usage: ", '"%(x)s usage: "'), ["--bogus"])
+if r.returncode != r_c.returncode or b"usage: demoreel" not in r.stderr or b"%(x)" in r.stderr:
+    bad.append(f"argparse %(x)s: {r.returncode} {r.stderr!r:.300}")
+r = run(swap("end a running recording early", '"50 % ⟦end a running recording early⟧"'),
+        ["--help"])
+out = r.stdout.decode("utf-8", "replace")
+if r.returncode != 0 or "  end a running recording early" not in out.replace(
+        "  stop", "") and "end a running recording early" not in out \
+        or "50 %" in out or "⟦record an app" not in out:
+    bad.append(f"a bare % in help: {r.returncode} {out!r:.400}")
+# INV-9: a catalog in the working directory, or named by TEXTDOMAINDIR, is
+# never read -- only po/ beside the script.
+cwd = top / "cwd"
+(cwd / "po").mkdir(parents=True, exist_ok=True)
+(cwd / "po" / "zz.po").write_text(good, encoding="utf-8")
+r = run(good, NOTHING, {**pseudo, "TEXTDOMAINDIR": str(cwd / "po")},
+        script=pathlib.Path("demoreel").resolve(), cwd=cwd)
+expect("a catalog in the working directory", r, rc_nothing, NOTHING_MSG)
+for line in bad:
+    print(line, file=sys.stderr)
+sys.exit(1 if bad else 0)
+BADPY
+echo "a broken or hostile catalog costs its language, never the run"
 
 step "default output name"
 # -o is optional; without it the file is named from the app and a timestamp.

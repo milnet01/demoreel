@@ -162,8 +162,10 @@ and writes one English note, once per run:
 demoreel: po/de.po could not be read (line 212: unknown escape sequence), so messages are in English.
 ```
 
-The note names the file, the line and the kind of error, never the catalog's
-own bytes, which could be the control characters it is refusing.
+The note names the file, the line where there is one, and the kind of error,
+never the catalog's own bytes, which could be the control characters it is
+refusing. A file over 1 MiB is refused before it is read, so its note names no
+line.
 
 ### 4.4 Choosing the language
 
@@ -209,10 +211,15 @@ line both need to know which catalog supplied each message.
 ```python
 def tr(msgid: str, **values: str) -> str: ...
 def trn(singular: str, plural: str, count: int, **values: str) -> str: ...
+def tr_help(msgid: str, **values: str) -> str: ...
+def tr_listed(msgid: str) -> str: ...
 ```
 
 `tr` looks the message up (§ 4.4) and fills it. `trn` picks the plural form
-for `count` and fills it; `count` is also available as `{count}`.
+for `count` and fills it; `count` is also available as `{count}`. `tr_help` is
+`tr` for text handed to argparse, and adds § 4.6's `%` rule. `tr_listed` is
+`tr_help` for a message held in a table the extraction reads by name
+(`EXAMPLES`, `RECORD_EXAMPLES`), where no call can name it as a literal.
 
 **Filling is plain named substitution.** A placeholder is `{name}` with `name`
 matching `[a-z_][a-z0-9_]*`. Each is replaced by `str(values[name])`. Nothing
@@ -251,8 +258,10 @@ those catalogs (§ 4.4) and is what the gate's tests and the window (§ 4.10)
 call too. Until it is called, `tr` returns English, so `ci.sh`'s import of
 `demoreel` is unaffected.
 
-**No code compares, splits or strips a translated string.** A caller that needs
-a reason in a structured form gets it from an exception or a return value. The
+**No code compares, splits or strips a translated string to read a meaning
+out of it.** A caller that needs a reason in a structured form gets it from an
+exception or a return value. Splitting one into lines, to print each with the
+`demoreel: ` prefix, is layout and is allowed. The
 `removeprefix("demoreel: ")` in `demoreel::display_problem()` is safe, since
 the prefix is never translated; the split in `demoreel::finishing_problems()`
 is replaced.
@@ -271,13 +280,16 @@ user can reach — `usage: `, `options`, `positional arguments`,
 the missing, unrecognised and invalid-choice errors — holding only strings
 identical in every Python the gate runs, today 3.12 (the Ubuntu 24.04 leg) and
 3.13 (this machine). They are extracted into the template like demoreel's own.
+The hook is installed only when a catalog is loaded, so an English run's
+argparse is untouched.
 An argparse string not listed prints in English.
 
 argparse formats with `%` against a dict, which does no attribute lookup, and
 it does so to its own strings and to every `help=`, `description=` and epilog
 text. So every msgid argparse formats takes a second rule beside § 4.5's, at
 runtime and at the gate: its translation holds `%` only as `%%` or in a
-`%(name)s` or `%s` its English holds. A bare `%` ("50 %") raises `TypeError` in
+`%(name)s` or `%s` its English holds. `tr_help` and `tr_listed` apply it to
+demoreel's own text, and the hook to argparse's. A bare `%` ("50 %") raises `TypeError` in
 `--help`, measured on Python 3.13, and an added `%(default)s` prints
 argparse's internal value. argparse's substituted
 values get no isolation marks, since argparse, not `tr`, fills them; DEMO-0063's
@@ -309,9 +321,12 @@ The catalog steps need no display, and run in the full gate. A change to
 so it runs the full gate.
 
 **Extraction** walks `demoreel` with `ast` and collects the first argument (and
-for `trn` the second) of every `tr` and `trn` call, plus `ARGPARSE_MESSAGES`.
+for `trn` the second) of every `tr`, `tr_help` and `trn` call, every entry of
+`ARGPARSE_MESSAGES`, and each comment in `EXAMPLES` and `RECORD_EXAMPLES`.
 An argument that is not a string literal fails the gate — a message the
-extractor cannot see is a message no catalog can carry.
+extractor cannot see is a message no catalog can carry. A msgid argparse
+formats carries the extracted comment `#. argparse formats this text with %`
+in the template, which is how the catalog checks find § 4.6's rule.
 
 New steps:
 
@@ -346,8 +361,11 @@ afterwards makes it wrong, and the gate fails until the field says `draft`
 again or a new confirmation writes a new digest. How a native speaker
 confirms is DEMO-0067's.
 
-**Where it shows:** when a draft catalog supplied any message of a run's
-`--help`, the help ends with one line, itself a translated msgid:
+**Where it shows:** when a draft catalog supplied any message in a run that
+prints `--help`, the help ends with one line, itself a translated msgid.
+Catalogs are complete (INV-5), so in a shipped tree that is the help itself;
+only a hand-edited install, falling back from one catalog to the next, can
+tell the two apart. The user chose the simpler rule on 2026-10-01.
 
 ```
 This translation is a draft and has not yet been checked by a native speaker.
@@ -464,8 +482,8 @@ the same template.
   and tab, a C1 control, a bidi control, a non-UTF-8 charset, more than 1 MiB,
   an unknown escape, `msgctxt`, or a `Plural-Forms:` expression that raises
   (`n%0`) or leaves the range (§ 4.3), is refused whole: every message is English,
-  stderr gains exactly one `could not be read` note naming the file and line,
-  and the exit status is unchanged.
+  stderr gains exactly one `could not be read` note naming the file, and the
+  line for every case but the size, and the exit status is unchanged.
   *Test:* `ci.sh` step `translation: a bad catalog costs only the language` —
   one hostile catalog per case, each in a copy's `po/zz.po`.
   *Breaks when:* the reader skips the bad entry and keeps the rest, or raises.
@@ -508,7 +526,8 @@ the same template.
   *Breaks when:* a message is written without `tr`. Partial: only the
   messages those runs reach are checked.
 
-- **INV-15** — `tr` and `trn` are called only inside function bodies.
+- **INV-15** — `tr`, `trn`, `tr_help` and `tr_listed` are called only inside
+  function bodies.
   *Test:* `ci.sh` step `translation: nothing translated at import time` → an
   `ast` walk finds no module-level call.
   *Breaks when:* a message constant is written as `X = tr("...")`.

@@ -220,6 +220,21 @@ something behaves unexpectedly:
   one app needs no WM. So `xdotool windowactivate` is skipped; the only window
   already has focus. An app whose dialogs need stacking or positioning may
   misbehave; the answer would be a minimal WM, not more code here.
+- **Every message goes through `tr`, `trn` or `tr_help`, and never at import
+  time.** The language is chosen in `main()`, so a message translated at
+  import is always English, and passes every check that runs in English. The
+  gate refuses one (DEMO-0060 INV-15). A message is one or more whole
+  sentences; never join translated fragments, because word order differs
+  between languages. A command line, a flag name, a path and stdout are never
+  translated.
+- **No code reads a meaning out of a translated string.** Where a caller needs
+  a reason, it gets one from an exception or a return value: `TextUnavailable`
+  is how `demoreel check` learns why text cannot be drawn. Splitting a message
+  into lines to print each with the prefix is layout, and is fine.
+- **`ci.sh` runs under `LC_ALL=C`**, so its English matches pass whatever the
+  developer's locale. A step that tests a translation removes it for its own
+  runs, with `env -u LC_ALL`, or it passes without testing anything. A changed
+  English message also needs `./ci.sh --pot`, or the template step fails.
 
 ## Flatpak targets need three extra flags
 
