@@ -3091,6 +3091,12 @@ path, and scripts read it.
   no translation tool opens. So demoreel carries a small .po reader, and
   translators can use Poedit or Weblate. Nothing drafted yet; next is
   write-spec DEMO-0060.
+  Spec written and gated (2026-10-01):
+  docs/specs/DEMO-0060-translation-catalogs.md, accepted. review-contract
+  ran two loops (15 then 8 findings, all fixed; cap reached, calm).
+  Three further choices were the user's: a changed English message fails
+  the gate until every catalog has it; draft state is per language; the
+  man page is left to DEMO-0064.
   **Layman:** Decide on paper how translations will work before writing any code for them.
   Kind: doc.
   Source: user-request-2026-09-25.
