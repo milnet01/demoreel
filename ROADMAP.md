@@ -185,6 +185,10 @@ simplest case, and a gate proves it still records.
   § What it will never do. Under the user's global CLAUDE.md rule 14 those
   are a change of direction, and the gate runs before anything is built.
   No spec, no design, no order yet.
+  Broken out (2026-10-02, user request): DEMO-0141 to DEMO-0162, in
+  section 2.0.0 — A full video editor. The user asked for the editor to
+  be as user friendly as possible; DEMO-0142's spec makes that its first
+  design goal, and DEMO-0143 and DEMO-0162 carry it.
   **Layman:** demoreel will one day become a complete video editor, but only after everything already planned is done.
   Kind: feature.
   Source: user-decision-2026-10-01.
@@ -3794,3 +3798,144 @@ covers both display backends and the Flatpak invocation.
   **Layman:** The automatic checks spend about two minutes making test recordings one after another; running some side by side could cut that.
   Kind: perf.
   Source: claude-config-request-2026-09-28.
+
+## 2.0.0 — A full video editor
+
+Starts only after everything above is done (DEMO-0140, the user's decision of
+2026-10-01). The first two items change direction and run through the review
+gate before anything below them is built. The order of the rest is a first
+guess, for the spec to settle.
+
+- 📋 [DEMO-0141] **Lift the editing limits from the scope ceiling in CLAUDE.md and README, through the review gate.**
+  README.md § What it will never do and CLAUDE.md § Scope ceiling rule out
+  layers, transitions other than a fade, zoom, moving text, speed changes
+  and automatic removal. Each line lifted is a change of direction, so the
+  gate runs on both files first. Recording stays on a private display.
+  **Layman:** Change the rules that say demoreel will never be a real editor, and have that change checked before anything is built.
+  Kind: doc.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0142] **Write the editor spec, and gate it before anything is built.**
+  Ease of use is the first design goal: the user asked on 2026-10-02 for
+  the editor to be as user friendly as possible. The spec also settles
+  whether demoreel stays one standard-library file, what a saved project
+  looks like, the timeline model (tracks, clips, positions), and whether
+  editing lives in the 0.6.0 window, the command line, or both. It orders
+  the items below.
+  **Layman:** Write down exactly how the editor will work, and have it checked, before writing any of it.
+  Kind: doc.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0143] **Make the editor easy for a first-time user.**
+  Plain words instead of editing jargon, sensible defaults so most edits
+  need no settings, a guided first edit, large clear controls, and every
+  change undoable. Measured by the hands-on test below, not by opinion.
+  **Layman:** Someone who has never edited a video can make a good one without reading a manual.
+  Kind: ux.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0144] **Save an edit as a project file and open it again.**
+  **Layman:** Stop half-way through an edit and carry on later where you left off.
+  Kind: feature.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0145] **Bring in any video or picture, not only demoreel's own recordings.**
+  Clips of differing size, frame rate and format are fitted to the
+  project's frame.
+  **Layman:** Use video clips and pictures from anywhere, whatever their size or speed.
+  Kind: feature.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0146] **Show a timeline: tracks, clips, a playhead, split, trim and ripple delete.**
+  Builds on the 0.6.0 window (DEMO-0087).
+  **Layman:** See the whole film laid out in a row, and cut, shorten and rearrange it by hand.
+  Kind: feature.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0147] **Preview the edit as it plays, and scrub through it.**
+  **Layman:** Watch the edit straight away, and drag through it to find a moment, without exporting first.
+  Kind: feature.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0148] **Undo and redo every edit.**
+  **Layman:** Take back a mistake, or bring back what you took back.
+  Kind: feature.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0149] **Layer video: picture-in-picture, overlays and opacity.**
+  **Layman:** Put one video or picture on top of another, such as a small window in the corner.
+  Kind: feature.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0150] **Add transitions beyond a fade: dissolves, wipes and slides.**
+  **Layman:** Choose how one scene changes into the next.
+  Kind: feature.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0151] **Zoom, pan, crop and rotate a clip.**
+  **Layman:** Move in close on part of the picture, follow it across the screen, or cut off the edges.
+  Kind: feature.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0152] **Change a clip's speed: slow motion, speed-up and freeze frame.**
+  **Layman:** Make part of a video play slower or faster, or hold one moment still.
+  Kind: feature.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0153] **Titles and text that move, with more than one line and a choice of style.**
+  **Layman:** Add headings and captions that slide in, in the font, size and colour you pick.
+  Kind: feature.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0154] **Animate any setting over time with keyframes.**
+  **Layman:** Make a zoom, a position or a fade change smoothly from one moment to another.
+  Kind: feature.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0155] **Correct colour: brightness, contrast, saturation and looks.**
+  **Layman:** Make a clip lighter, richer or warmer, or give the whole film one look.
+  Kind: feature.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0156] **Edit sound: music and voice tracks, volume, fades and mute.**
+  Needs the 0.7.0 sound items first (DEMO-0104, DEMO-0106).
+  **Layman:** Add music or a voice-over and set how loud each part is.
+  Kind: feature.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0157] **Cut out still and idle stretches automatically, for the user to approve.**
+  Builds on `motion`. Nothing is removed until the user agrees.
+  **Layman:** Find the boring parts where nothing moves, and offer to cut them out.
+  Kind: feature.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0158] **Export presets: web video, GIF, WebM, and a choice of size and frame rate.**
+  **Layman:** Save the finished film in the right shape for where it is going, in one step.
+  Kind: feature.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0159] **Make the editor fully usable by keyboard, screen reader and magnifier.**
+  A timeline is the hardest part to make accessible, so this is designed
+  in from the spec, not added at the end. Extends DEMO-0090.
+  **Layman:** Everyone can edit, including people who cannot use a mouse or see the screen well.
+  Kind: accessibility.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0160] **Translate the editor's own words.**
+  Through the same catalogs, as docs/specs/DEMO-0060 § 4.10 already
+  provides for the window.
+  **Layman:** The editor speaks the same languages as the rest of demoreel.
+  Kind: feature.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0161] **Test the editor by recording it with demoreel, and on long projects.**
+  **Layman:** Prove the editor works by filming it in use, and check it stays quick on a long film.
+  Kind: test.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0162] **Watch a first-time user make a short film, and fix what stops them.**
+  Give them a few clips and one task, say nothing, and note every place
+  they hesitate or ask. Each one becomes a fix, then the test repeats.
+  **Layman:** Someone new tries the editor while we watch, and everything they get stuck on is fixed.
+  Kind: ux.
+  Source: user-request-2026-10-02.
