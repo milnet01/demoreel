@@ -37,6 +37,9 @@ language (DEMO-0096); delete a language's section once it is confirmed.
 - **he** — gender-neutral forms; a flag after a prefix letter is written
   "ב־ --name" with a space that is not needed (a flag directly after the
   maqaf is recognised); the singular plural form says "one" in words.
+  Konsole lays each message out left to right, since the line starts with
+  `demoreel: `; judge whether the Hebrew still reads naturally there
+  (docs/media/DEMO-0063-hebrew-konsole.png).
 - **ja** — です/ます; film 映像 against video 動画; the three cause lines
   open in plain form.
 - **zh_CN** — "用法： " keeps a space after the full-width colon; band 底条.

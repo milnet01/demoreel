@@ -3196,7 +3196,7 @@ path, and scripts read it.
   Kind: test.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0063] **Keep paths, flags and commands readable inside Hebrew and Arabic messages.**
+- ✅ [DEMO-0063] **Keep paths, flags and commands readable inside Hebrew and Arabic messages.**
   A right-to-left sentence containing a path such as `/tmp/demo.mp4` or a
   command such as `demoreel stop mydemo` can render with its parts
   reordered. The reader then copies something that is not the command.
@@ -3205,9 +3205,17 @@ path, and scripts read it.
   the spec decides. Check by eye in Konsole, which does bidi, and in one
   terminal that does not. A screenshot of each goes in the item when it
   closes.
+  Shipped (2026-10-02): checked by eye with the he draft catalog, taken
+  with demoreel shot. In Konsole (bidi) and xterm (no bidi) every flag,
+  run name, size and path stays whole and copyable, and the isolation
+  marks show no stray glyphs. xterm prints the Hebrew words letter-reversed,
+  a limit of that terminal that demoreel cannot change. Whether Konsole's
+  left-to-right line layout reads naturally is for the native reviewer,
+  noted in docs/translation-review-notes.md.
   **Layman:** Right-to-left languages show file names and commands the right way round.
   Kind: ux.
   Source: user-request-2026-09-25.
+  Evidence: docs/media/DEMO-0063-hebrew-konsole.png, docs/media/DEMO-0063-hebrew-xterm.png
 
 - ✅ [DEMO-0064] **Draft translations for the languages named in the request.**
   Simplified Chinese, Traditional Chinese, Japanese, Hebrew, Afrikaans,
