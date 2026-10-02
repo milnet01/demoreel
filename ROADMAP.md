@@ -252,6 +252,20 @@ closes, so it sits outside every version heading.
   Kind: chore.
   Source: DEMO-0163-2026-10-02.
 
+- 📋 [DEMO-0169] **The Ubuntu leg's smoke length check fails when other sessions load the machine.**
+  Measured 2026-10-02. The smoke step wants a `-d 5` video of 5.0 to
+  5.5 s. Inside the parity container (taskset to 4 cores) with host
+  load 13 to 20, two pushes failed it at 9.33 s and 7.45 s while the
+  host leg passed. Re-run by hand at load 20: three runs each of the
+  code before and after DEMO-0121 gave 5.35, 5.81, 5.23 and 5.31, 5.23,
+  5.65 s, so the cause is load, not the change. Workaround used: push
+  when the 1- and 5-minute load averages are both under 5. To decide:
+  whether the gate should check the load first and say so, or measure
+  the countdown in a way load cannot stretch.
+  **Layman:** The final check before a push can fail just because the computer is busy with other work, not because anything is wrong.
+  Kind: investigate.
+  Source: in-session-2026-10-02.
+
 ## 0.1.1 — Before the first tag
 
 Nothing here breaks a documented surface, so all of it lands in a PATCH.
