@@ -3527,6 +3527,16 @@ system looks for them.
   Kind: security.
   Source: user-request-2026-09-25.
 
+- 📋 [DEMO-0163] **Ship a copy of demoreel with Ants Terminal, in a form agreed with its maintainer.**
+  The user asked on 2026-10-02, since making a video is now a Claude Code
+  skill. The form (a plugin, a bundled file, an MCP verb) is being worked
+  out with the Ants Terminal session. demoreel's side: it stays one file
+  with po/ beside it (DEMO-0071), and the copy is pinned to a release tag
+  so both projects know which version ships.
+  **Layman:** Anyone who installs Ants Terminal gets demoreel too, so Claude Code can make videos there with no extra setup.
+  Kind: package.
+  Source: user-request-2026-10-02.
+
 ## 0.6.0 — A window for people who want one
 
 demoreel can be used from the command line or from a graphical window. Requested
