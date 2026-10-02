@@ -3258,13 +3258,19 @@ path, and scripts read it.
   Kind: doc.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0067] **Say which translations are drafts, and how a native speaker confirms one.**
+- ✅ [DEMO-0067] **Say which translations are drafts, and how a native speaker confirms one.**
   A reader should know when a language is a draft. Mark it in the catalog
   and in `--help`, and list the state of every language in one place.
 
   Write down how a confirmation happens: what a reviewer reads, how they
   say it is right or send fixes, and what changes when they do. Chasing
   reviewers is a standing chore, not part of this version.
+  Shipped (2026-10-02): the catalog header and --help mark a draft
+  (DEMO-0061). README § Languages lists every language and its state,
+  and a new gate step fails when the list and po/ disagree (red on a
+  wrong state, a missing row and an extra row). CONTRIBUTING.md §
+  Confirming a language says what a reviewer reads, how they send fixes,
+  and what changes when a language is confirmed.
   **Layman:** Be honest about which translations are machine drafts, and make it easy for a fluent speaker to approve one.
   Kind: doc.
   Source: user-request-2026-09-25.
@@ -3295,7 +3301,7 @@ path, and scripts read it.
   Kind: security.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0097] **Invite readers to improve the translations, in README and a new CONTRIBUTING.md.**
+- ✅ [DEMO-0097] **Invite readers to improve the translations, in README and a new CONTRIBUTING.md.**
   Requested 2026-09-25. Only once the translations are built: an invitation
   to a language that does not exist yet asks for work on nothing.
 
@@ -3310,6 +3316,11 @@ path, and scripts read it.
   routes as they appear.
 
   Depends on both translation batches and on DEMO-0067.
+  Shipped (2026-10-02) with DEMO-0067: README § Languages invites native
+  speakers beside the list, and the new CONTRIBUTING.md says where the
+  catalogs live, how to send an issue or a pull request, what a
+  translation must keep, and how confirmation works. Each command in it
+  was run as written.
   **Layman:** Once the languages exist, the project page and a contributor guide ask fluent speakers to suggest better wording.
   Kind: doc.
   Source: user-request-2026-09-25.

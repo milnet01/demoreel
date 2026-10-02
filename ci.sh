@@ -2418,8 +2418,36 @@ else
     echo "demoreel.1 names every option, command and step (no groff to render it)"
 fi
 
+step "README's language list matches po/"
+# DEMO-0067: one place says which languages exist and which are drafts. A
+# catalog added, removed or confirmed without the list following would make
+# that place wrong, so the list is checked against each catalog's header.
+python3 - <<'LANGLISTPY'
+import pathlib, re, sys
+text = pathlib.Path("README.md").read_text(encoding="utf-8")
+section = re.search(r"^## Languages\n(.*?)(?=^## )", text, re.M | re.S)
+rows = re.findall(r"^\|[^|\n]+\| `([A-Za-z_@]+)` \| (draft|confirmed) \|$",
+                  section[1] if section else "", re.M)
+listed = dict(rows)
+actual = {}
+for path in sorted(pathlib.Path("po").glob("*.po")):
+    header = path.read_text(encoding="utf-8").split("\n\n", 1)[0]
+    confirmed = re.search(r'"X-Demoreel-Review: confirmed [0-9a-f]{16}\\n"', header)
+    actual[path.stem] = "confirmed" if confirmed else "draft"
+bad = [f"po/{code}.po is {state}, but README lists it as {listed.get(code, 'missing')}"
+       for code, state in actual.items() if listed.get(code) != state]
+bad += [f"README lists {code}, but po/{code}.po does not exist"
+        for code in listed if code not in actual]
+if len(rows) != len(listed):
+    bad.append("README lists a language more than once")
+for line in bad:
+    print(line, file=sys.stderr)
+sys.exit(1 if bad else 0)
+LANGLISTPY
+echo "every catalog in po/ is in README's language list, in the state its header says"
+
 step "documents are readable"
-for f in README.md CLAUDE.md ROADMAP.md CHANGELOG.md SECURITY.md \
+for f in README.md CLAUDE.md ROADMAP.md CHANGELOG.md SECURITY.md CONTRIBUTING.md \
          docs/standards/README.md docs/standards/versioning-overrides.md; do
     [ -s "$f" ] || { echo "missing or empty: $f" >&2; exit 1; }
     python3 -c "import sys; open(sys.argv[1], encoding='utf-8').read()" "$f"

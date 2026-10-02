@@ -1079,6 +1079,31 @@ What a script reads never changes with the language: the paths on standard
 output, `motion`'s report and `--version`. `LC_ALL=C` gives English whatever
 the other settings say.
 
+A draft was written without a native speaker. If you speak one of these
+languages, please help:
+[CONTRIBUTING.md](CONTRIBUTING.md) says how to suggest a better wording and
+how a language becomes confirmed. The gate fails if this list and `po/`
+disagree.
+
+| Language | Code | State |
+|---|---|---|
+| Afrikaans | `af` | draft |
+| Arabic — العربية | `ar` | draft |
+| Chinese, Simplified — 简体中文 | `zh_CN` | draft |
+| Chinese, Traditional — 繁體中文 | `zh_TW` | draft |
+| Dutch — Nederlands | `nl` | draft |
+| French — Français | `fr` | draft |
+| German — Deutsch | `de` | draft |
+| Hebrew — עברית | `he` | draft |
+| Italian — Italiano | `it` | draft |
+| Japanese — 日本語 | `ja` | draft |
+| Korean — 한국어 | `ko` | draft |
+| Polish — Polski | `pl` | draft |
+| Portuguese, Brazil — Português do Brasil | `pt_BR` | draft |
+| Russian — Русский | `ru` | draft |
+| Spanish — Español | `es` | draft |
+| Ukrainian — Українська | `uk` | draft |
+
 ## Versioning
 
 `demoreel --version` reports the version. It goes before the subcommand, not
