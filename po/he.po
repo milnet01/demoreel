@@ -1,0 +1,1053 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: demoreel\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: he\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Demoreel-Review: draft\n"
+
+msgid "ended by {signal} before it finished, so there is nothing to hand back."
+msgstr "הופסק על ידי {signal} לפני שהסתיים, ולכן אין מה להחזיר."
+
+#. argparse formats this text with %
+msgid "usage: "
+msgstr "שימוש: "
+
+#. argparse formats this text with %
+msgid "options"
+msgstr "אפשרויות"
+
+#. argparse formats this text with %
+msgid "positional arguments"
+msgstr "ארגומנטים לפי מיקום"
+
+#. argparse formats this text with %
+msgid "show this help message and exit"
+msgstr "הצגת הודעת העזרה הזאת ויציאה"
+
+#. argparse formats this text with %
+msgid "show program's version number and exit"
+msgstr "הצגת מספר הגרסה של התוכנית ויציאה"
+
+#. argparse formats this text with %
+msgid "the following arguments are required: %s"
+msgstr "חסרים הארגומנטים הנדרשים האלה: %s"
+
+#. argparse formats this text with %
+msgid "unrecognized arguments: %s"
+msgstr "ארגומנטים לא מוכרים: %s"
+
+#. argparse formats this text with %
+msgid "invalid choice: %(value)r (choose from %(choices)s)"
+msgstr "בחירה לא תקינה: %(value)r (יש לבחור מתוך %(choices)s)"
+
+#. argparse formats this text with %
+msgid "This translation is a draft and has not yet been checked by a native speaker."
+msgstr "תרגום זה הוא טיוטה, ודובר עברית שפת אם עדיין לא בדק אותו."
+
+msgid ""
+"could not use {path}: {reason}.\n"
+"  demoreel keeps its run files there. Point XDG_RUNTIME_DIR at a directory you can write to."
+msgstr ""
+"לא ניתן להשתמש ב־{path}: {reason}.\n"
+"  שם demoreel שומר את קובצי ההרצה שלו. יש להפנות את XDG_RUNTIME_DIR לתיקייה שיש לך הרשאת כתיבה בה."
+
+msgid ""
+"{path} is not a directory you own, so demoreel will not use it.\n"
+"  On a shared machine another user can create that name first.\n"
+"  Remove it, or point XDG_RUNTIME_DIR at a directory you own."
+msgstr ""
+"{path} אינה תיקייה בבעלותך, ולכן demoreel לא ישתמש בה.\n"
+"  במחשב משותף משתמש אחר יכול ליצור את השם הזה לפניך.\n"
+"  יש להסיר אותה, או להפנות את XDG_RUNTIME_DIR לתיקייה בבעלותך."
+
+msgid ""
+"a recording named {name} is already running.\n"
+"  Use --name to tell this run apart from it."
+msgstr ""
+"הקלטה בשם {name} כבר פועלת.\n"
+"  אפשר להשתמש ב־ --name כדי להבדיל בין ההרצה הזאת לבינה."
+
+msgid ""
+"a recording named {name} is already running (pid {pid}).\n"
+"  Use --name to tell this run apart from it."
+msgstr ""
+"הקלטה בשם {name} כבר פועלת (pid {pid}).\n"
+"  אפשר להשתמש ב־ --name כדי להבדיל בין ההרצה הזאת לבינה."
+
+msgid "Xvfb did not start, so there is no private display to record."
+msgstr "Xvfb לא הופעל, ולכן אין תצוגה פרטית להקליט."
+
+msgid "It said: {text}"
+msgstr "הוא אמר: {text}"
+
+msgid "`demoreel check` tests this start on its own."
+msgstr "הפקודה `demoreel check` בודקת את ההפעלה הזאת בנפרד."
+
+msgid "could not write the display's auth cookie, so the display cannot be made private."
+msgstr "לא ניתן לכתוב את עוגיית האימות של התצוגה, ולכן אי אפשר להפוך את התצוגה לפרטית."
+
+msgid "xauth said: {text}"
+msgstr "xauth אמר: {text}"
+
+msgid "`demoreel check` tests this on its own."
+msgstr "הפקודה `demoreel check` בודקת זאת בנפרד."
+
+msgid "the display did not lock: a client without its auth cookie could still connect, or none could."
+msgstr "התצוגה לא ננעלה: לקוח בלי עוגיית האימות עדיין יכול היה להתחבר, או שאף לקוח לא יכול היה."
+
+msgid "the GPU display did not start, so there is nothing to record on."
+msgstr "תצוגת ה־GPU לא הופעלה, ולכן אין על מה להקליט."
+
+msgid "The end of its log:"
+msgstr "סוף היומן שלה:"
+
+msgid "`demoreel check` says whether --gpu has what it needs."
+msgstr "הפקודה `demoreel check` מראה אם יש ל־ --gpu את כל מה שהוא צריך."
+
+msgid "the GPU display did not lock: a client without its auth cookie could still connect, or none could."
+msgstr "תצוגת ה־GPU לא ננעלה: לקוח בלי עוגיית האימות עדיין יכול היה להתחבר, או שאף לקוח לא יכול היה."
+
+msgid "the private display {display} stopped answering: `xdotool {command}` did not return within {seconds}s."
+msgstr "התצוגה הפרטית {display} הפסיקה להגיב: `xdotool {command}` לא חזר בתוך {seconds} שניות."
+
+msgid ""
+"the app resized its window to {size} at {place}, so it no longer fills the {frame} frame and part of the video is cropped or empty.\n"
+"  Record at the app's own size with -s {size}."
+msgstr ""
+"היישום שינה את גודל החלון שלו ל־{size} ב־{place}, ולכן הוא כבר לא ממלא את הפריים בגודל {frame} וחלק מהסרטון חתוך או ריק.\n"
+"  יש להקליט בגודל של היישום עצמו עם -s {size}."
+
+msgid ""
+"the app exited immediately (status 0) without opening a window.\n"
+"  The likely cause is a single-instance app: it finds a copy already\n"
+"  running on your real desktop, hands the request over to it and exits\n"
+"  successfully. If a copy is running, close it and try again.\n"
+"  If not, the command may simply have finished without needing a\n"
+"  window — in which case there is nothing to record."
+msgstr ""
+"היישום יצא מיד (מצב 0) בלי לפתוח חלון.\n"
+"  הסיבה הסבירה היא יישום שרץ במופע יחיד: הוא מוצא עותק שכבר\n"
+"  פועל על שולחן העבודה האמיתי שלך, מעביר אליו את הבקשה ויוצא\n"
+"  בהצלחה. אם עותק כזה פועל, יש לסגור אותו ולנסות שוב.\n"
+"  אם לא, ייתכן שהפקודה פשוט הסתיימה בלי שהיה לה צורך\n"
+"  בחלון — ובמקרה כזה אין מה להקליט."
+
+msgid ""
+"the app exited with status {status} before opening a window.\n"
+"  Its own output, above or in --app-log, says why. To see it on its own, run: {command}"
+msgstr ""
+"היישום יצא עם מצב {status} לפני שפתח חלון.\n"
+"  הפלט שלו, למעלה או ב־ --app-log, מסביר למה. כדי לראות אותו בנפרד, יש להריץ: {command}"
+
+msgid "cannot read the step {step}: {reason}."
+msgstr "לא ניתן לקרוא את הצעד {step}: {reason}."
+
+msgid "unknown action {action}. The steps are: {steps}."
+msgstr "פעולה לא מוכרת {action}. הצעדים הם: {steps}."
+
+msgid "cannot read the step {step}: write it like {example}."
+msgstr "לא ניתן לקרוא את הצעד {step}: יש לכתוב אותו כך: {example}."
+
+msgid "could not read the steps file {path}: {reason}."
+msgstr "לא ניתן לקרוא את קובץ הצעדים {path}: {reason}."
+
+msgid "ffmpeg could not start recording."
+msgstr "ffmpeg לא הצליח להתחיל להקליט."
+
+msgid "`demoreel check` tests the programs and the encoder it needs."
+msgstr "הפקודה `demoreel check` בודקת את התוכניות ואת המקודד שהוא צריך."
+
+msgid "wf-recorder could not start recording."
+msgstr "wf-recorder לא הצליח להתחיל להקליט."
+
+msgid ""
+"could not finish the video: turning the recording into {name} failed.\n"
+"  What was recorded is kept in {part}, and {log} says why."
+msgstr ""
+"לא ניתן להשלים את הסרטון: הפיכת ההקלטה ל־{name} נכשלה.\n"
+"  מה שהוקלט נשמר ב־{part}, ו־{log} מסביר למה."
+
+msgid "the display did not give up a frame within {seconds}s; it has stopped answering"
+msgstr "התצוגה לא מסרה פריים בתוך {seconds} שניות; היא הפסיקה להגיב"
+
+msgid "ffmpeg exited {status} with no frame"
+msgstr "ffmpeg יצא עם {status} בלי פריים"
+
+msgid "reading a frame of {path} took over {seconds}s"
+msgstr "קריאת פריים מתוך {path} ארכה יותר מ־{seconds} שניות"
+
+msgid "no frame of {path} could be read"
+msgstr "לא ניתן היה לקרוא אף פריים מתוך {path}"
+
+msgid "this is a Flatpak target and the command is missing: {flags}"
+msgstr "היעד הוא Flatpak, ובפקודה חסרים: {flags}"
+
+msgid ""
+"A missing one can send it to your real compositor instead, leaving this\n"
+"recording empty. README.md says what each flag is for."
+msgstr ""
+"דגל חסר עלול לשלוח אותו לשרת התצוגה האמיתי שלך במקום, ואז\n"
+"ההקלטה הזאת תהיה ריקה. ב־README.md כתוב למה משמש כל דגל."
+
+msgid ""
+"openSUSE's own ffmpeg leaves it out. Install ffmpeg from the Packman repository,\n"
+"  which has it."
+msgstr ""
+"ה־ffmpeg של openSUSE עצמה לא כולל אותו. יש להתקין ffmpeg ממאגר Packman,\n"
+"  שבו הוא כלול."
+
+msgid "Fedora's ffmpeg-free leaves it out. Enable RPM Fusion, then:"
+msgstr "ffmpeg-free של Fedora לא כולל אותו. יש להפעיל את RPM Fusion, ואז:"
+
+msgid "Install a build of ffmpeg that includes libx264."
+msgstr "יש להתקין גרסה של ffmpeg שכוללת את libx264."
+
+msgid "Install with: {command}"
+msgstr "להתקנה: {command}"
+
+msgid "missing required program(s): {programs}"
+msgstr "חסרות תוכניות נדרשות: {programs}"
+
+msgid "this ffmpeg cannot encode H.264 with libx264, which every recording uses."
+msgstr "ה־ffmpeg הזה לא יכול לקודד H.264 עם libx264, שבו משתמשת כל הקלטה."
+
+msgid "--cursor is not available with record --gpu: that backend records the compositor's picture, which never has the pointer in it."
+msgstr "--cursor אינו זמין עם record --gpu: המנגנון הזה מקליט את התמונה של שרת התצוגה, ובה סמן העכבר אף פעם לא מופיע."
+
+msgid "give the steps with -a or with --steps, not both."
+msgstr "יש לתת את הצעדים עם -a או עם --steps, לא עם שניהם."
+
+msgid "give the app to run after `--`, e.g. {example}"
+msgstr "יש לציין את היישום להרצה אחרי `--`, למשל {example}"
+
+msgid "--size takes a width and a height in pixels, like 1600x1000, not {size}."
+msgstr "--size מקבל רוחב וגובה בפיקסלים, כמו 1600x1000, ולא {size}."
+
+msgid ""
+"--size needs even numbers for a video, since H.264 cannot encode an odd width or height.\n"
+"  Try {size}."
+msgstr ""
+"--size צריך מספרים זוגיים לסרטון, כי H.264 לא יכול לקודד רוחב או גובה אי־זוגיים.\n"
+"  כדאי לנסות {size}."
+
+msgid ""
+"the app log {path} is a symbolic link another user made, so demoreel\n"
+"  will not write through it: it could point at a file of yours.\n"
+"  Choose another path, or remove the link if it is not meant to be there."
+msgstr ""
+"יומן היישום {path} הוא קישור סמלי שמשתמש אחר יצר, ולכן demoreel\n"
+"  לא יכתוב דרכו: הוא עלול להצביע על קובץ שלך.\n"
+"  יש לבחור נתיב אחר, או להסיר את הקישור אם הוא לא אמור להיות שם."
+
+msgid ""
+"the output {path} is a symbolic link another user made, so demoreel\n"
+"  will not write through it: it could point at a file of yours.\n"
+"  Choose another path, or remove the link if it is not meant to be there."
+msgstr ""
+"קובץ הפלט {path} הוא קישור סמלי שמשתמש אחר יצר, ולכן demoreel\n"
+"  לא יכתוב דרכו: הוא עלול להצביע על קובץ שלך.\n"
+"  יש לבחור נתיב אחר, או להסיר את הקישור אם הוא לא אמור להיות שם."
+
+msgid ""
+"could not run {command}: {reason}.\n"
+"  Check that the command after `--` is installed and spelled as you would type it."
+msgstr ""
+"לא ניתן להריץ את {command}: {reason}.\n"
+"  יש לוודא שהפקודה שאחרי `--` מותקנת ושאויתה כפי שהיית מקליד אותה."
+
+msgid ""
+"no window appeared within {seconds}s; taking the picture anyway.\n"
+"  If the app is slow to start, give it longer with --startup-timeout."
+msgstr ""
+"לא הופיע חלון בתוך {seconds} שניות; התמונה תצולם בכל זאת.\n"
+"  אם היישום עולה לאט, אפשר לתת לו יותר זמן עם --startup-timeout."
+
+msgid ""
+"no window appeared within {seconds}s; recording anyway.\n"
+"  If the app is slow to start, give it longer with --startup-timeout."
+msgstr ""
+"לא הופיע חלון בתוך {seconds} שניות; ההקלטה מתחילה בכל זאת.\n"
+"  אם היישום עולה לאט, אפשר לתת לו יותר זמן עם --startup-timeout."
+
+msgid ""
+"It had not drawn yet. A GPU app can spend seconds on a black\n"
+"    screen while it starts: --settle waits for the first picture."
+msgstr ""
+"הוא עוד לא צייר. יישום GPU יכול להישאר שניות על מסך\n"
+"    שחור בזמן שהוא עולה: --settle מחכה לתמונה הראשונה."
+
+msgid ""
+"It needs the GPU, and Xvfb has none. An OpenGL or Vulkan app\n"
+"    cannot render on it at all: record it with --gpu instead."
+msgstr ""
+"הוא צריך GPU, ול־Xvfb אין. יישום OpenGL או Vulkan\n"
+"    לא יכול לצייר עליו בכלל: יש להקליט אותו עם --gpu במקום."
+
+msgid "The app ran but drew nothing here. Two causes account for most of it:"
+msgstr "היישום רץ אבל לא צייר כאן כלום. שתי סיבות מסבירות את רוב המקרים:"
+
+msgid ""
+"It rendered somewhere else. A Flatpak needs --nosocket=wayland on\n"
+"    its command line; see README.md."
+msgstr ""
+"הוא צייר במקום אחר. יישום Flatpak צריך את --nosocket=wayland\n"
+"    בשורת הפקודה שלו; פרטים ב־README.md."
+
+msgid "--settle could not sample the display, so it cannot tell when the app has drawn."
+msgstr "--settle לא הצליח לדגום את התצוגה, ולכן הוא לא יכול לדעת מתי היישום צייר."
+
+msgid ""
+"nothing was drawn within {seconds}s; recording anyway.\n"
+"  If the app takes longer to show its first picture, raise --settle."
+msgstr ""
+"שום דבר לא צויר בתוך {seconds} שניות; ההקלטה מתחילה בכל זאת.\n"
+"  אם ליישום לוקח יותר זמן להציג את התמונה הראשונה שלו, אפשר להגדיל את --settle."
+
+msgid "the recorder stopped early; see {log}"
+msgstr "המקליט נעצר מוקדם; פרטים ב־{log}"
+
+msgid "recording, {seconds}s left"
+msgstr "מקליט, נותרו {seconds} שניות"
+
+msgid "recording for {time} (Ctrl+C to finish)"
+msgstr "מקליט כבר {time} (Ctrl+C לסיום)"
+
+msgid "the app closed; ending the recording."
+msgstr "היישום נסגר; ההקלטה מסתיימת."
+
+msgid ""
+"no video was written to {output}: the recorder produced nothing.\n"
+"  Its log, {log}, says why."
+msgstr ""
+"שום סרטון לא נכתב ל־{output}: המקליט לא הפיק כלום.\n"
+"  היומן שלו, {log}, מסביר למה."
+
+msgid "the video cannot be played: {output}"
+msgstr "לא ניתן לנגן את הסרטון: {output}"
+
+msgid "The recorder most likely stopped before it finished the file. See {log}"
+msgstr "סביר שהמקליט נעצר לפני שסיים את הקובץ. פרטים ב־{log}"
+
+msgid "the virtual display was blank halfway, so at least half of it is a flat colour: {output}"
+msgstr "התצוגה הווירטואלית הייתה ריקה באמצע, ולכן לפחות חצי מהסרטון הוא צבע אחיד: {output}"
+
+msgid "the virtual display was blank at the end, so it ends on a flat colour: {output}"
+msgstr "התצוגה הווירטואלית הייתה ריקה בסוף, ולכן הסרטון מסתיים בצבע אחיד: {output}"
+
+msgid ""
+"could not sample the virtual display to check {output} is not blank,\n"
+"  so this run cannot vouch for it."
+msgstr ""
+"לא ניתן לדגום את התצוגה הווירטואלית כדי לוודא ש־{output} אינו ריק,\n"
+"  ולכן ההרצה הזאת לא יכולה לערוב לו."
+
+msgid ""
+"could not read {output} back to check it is not blank,\n"
+"  so this run cannot vouch for it."
+msgstr ""
+"לא ניתן לקרוא שוב את {output} כדי לוודא שהוא אינו ריק,\n"
+"  ולכן ההרצה הזאת לא יכולה לערוב לו."
+
+msgid ""
+"the video is a flat colour halfway, though the private screen was not: {output}\n"
+"  The recorder captured something other than the screen. See {log}"
+msgstr ""
+"הסרטון הוא צבע אחיד באמצע, אף שהמסך הפרטי לא היה כזה: {output}\n"
+"  המקליט לכד משהו אחר ולא את המסך. פרטים ב־{log}"
+
+msgid ""
+"the video is a flat colour at the end, though the private screen was not: {output}\n"
+"  The recorder captured something other than the screen. See {log}"
+msgstr ""
+"הסרטון הוא צבע אחיד בסוף, אף שהמסך הפרטי לא היה כזה: {output}\n"
+"  המקליט לכד משהו אחר ולא את המסך. פרטים ב־{log}"
+
+msgid ""
+"only {share} of the frames in the middle of {output} changed from the one before.\n"
+"  If the app was moving the whole time, it drew that few new frames itself: the video has every frame it drew."
+msgstr ""
+"רק {share} מהפריימים באמצע {output} השתנו לעומת הפריים שלפניהם.\n"
+"  אם היישום זז כל הזמן, הוא עצמו צייר כל כך מעט פריימים חדשים: הסרטון מכיל כל פריים שהוא צייר."
+
+msgid "reading it back took over {seconds}s."
+msgstr "הקריאה החוזרת ארכה יותר מ־{seconds} שניות."
+
+msgid "ffprobe could not read it."
+msgstr "ffprobe לא הצליח לקרוא אותו."
+
+msgid "{seconds}s of video, {size}"
+msgstr "{seconds} שניות של וידאו, {size}"
+
+msgid "recording {display} to {output} (until stopped)"
+msgstr "מקליט את {display} אל {output} (עד לעצירה)"
+
+msgid "recording {display} to {output} ({seconds}s)"
+msgstr "מקליט את {display} אל {output} ({seconds} שניות)"
+
+msgid "could not take the picture."
+msgstr "לא ניתן לצלם את התמונה."
+
+msgid "could not read back {output} to check it is not blank."
+msgstr "לא ניתן לקרוא שוב את {output} כדי לוודא שהיא אינה ריקה."
+
+msgid "the picture is one flat colour: {output}"
+msgstr "התמונה היא צבע אחיד אחד: {output}"
+
+msgid ""
+"nothing was drawn within {seconds}s; taking the picture anyway.\n"
+"  If the app takes longer to show its first picture, raise --settle."
+msgstr ""
+"שום דבר לא צויר בתוך {seconds} שניות; התמונה תצולם בכל זאת.\n"
+"  אם ליישום לוקח יותר זמן להציג את התמונה הראשונה שלו, אפשר להגדיל את --settle."
+
+msgid "could not take the picture: the display did not answer within {seconds}s."
+msgstr "לא ניתן לצלם את התמונה: התצוגה לא הגיבה בתוך {seconds} שניות."
+
+msgid "Its display log is kept in {folder}"
+msgstr "יומן התצוגה שלה נשמר ב־{folder}"
+
+msgid "record and shot"
+msgstr "record ו־shot"
+
+msgid "missing {programs}"
+msgstr "חסרים: {programs}"
+
+msgid "this ffmpeg has no libx264, which every recording uses."
+msgstr "ל־ffmpeg הזה אין libx264, שבו משתמשת כל הקלטה."
+
+msgid "no graphics render node in /dev/dri, so there is no GPU for it to use."
+msgstr "אין צומת רינדור גרפי ב־/dev/dri, ולכן אין GPU שאפשר להשתמש בו."
+
+msgid "{name}: NOT READY"
+msgstr "{name}: לא מוכן"
+
+msgid "{name}: ready"
+msgstr "{name}: מוכן"
+
+msgid "edit, trim, caption, join, card, motion and poster"
+msgstr "edit, trim, caption, join, card, motion ו־poster"
+
+msgid "text on a card or a caption"
+msgstr "טקסט על כרטיס או בכיתוב"
+
+msgid "a private display did not start: {reason}"
+msgstr "תצוגה פרטית לא הופעלה: {reason}"
+
+msgid "no recording named {name} is running."
+msgstr "לא פועלת הקלטה בשם {name}."
+
+msgid "Running now: {names}."
+msgstr "פועלות כעת: {names}."
+
+msgid "no recording is running, so there is nothing to stop."
+msgstr "אין הקלטה פועלת, ולכן אין מה לעצור."
+
+msgid ""
+"{count} recording is running: {names}.\n"
+"  Name the one to stop, e.g. {example}"
+msgid_plural ""
+"{count} recordings are running: {names}.\n"
+"  Name the one to stop, e.g. {example}"
+msgstr[0] ""
+"הקלטה אחת פועלת: {names}.\n"
+"  יש לציין את ההקלטה שיש לעצור, למשל {example}"
+msgstr[1] ""
+"{count} הקלטות פועלות: {names}.\n"
+"  יש לציין את ההקלטה שיש לעצור, למשל {example}"
+
+msgid ""
+"the recording failed after it was stopped, so there is no video to hand back.\n"
+"  Its own error message says why."
+msgstr ""
+"ההקלטה נכשלה אחרי שנעצרה, ולכן אין סרטון להחזיר.\n"
+"  הודעת השגיאה שלה מסבירה למה."
+
+msgid "the recording ended before it started recording, so there is no video to stop."
+msgstr "ההקלטה הסתיימה לפני שהתחילה להקליט, ולכן אין סרטון לעצור."
+
+msgid "{option} belongs to a --text, and none comes before it. caption never cuts the video; use trim."
+msgstr "{option} שייך ל־ --text, ואין אחד כזה לפניו. caption אף פעם לא חותך את הסרטון; יש להשתמש ב־trim."
+
+msgid "{where}: there is no font file {path}"
+msgstr "{where}: אין קובץ גופן {path}"
+
+msgid "{where}: a font is found by its name with fc-match, which gave no answer here. Give the font's file instead: font /path/to/font.ttf"
+msgstr "{where}: גופן נמצא לפי שמו בעזרת fc-match, שלא נתן כאן תשובה. יש לתת במקום זאת את קובץ הגופן: font /path/to/font.ttf"
+
+msgid ""
+"{where}: this machine has no font named {font}; the nearest it offers is {nearest}.\n"
+"  `fc-list : family` lists the names it has."
+msgstr ""
+"{where}: במחשב הזה אין גופן בשם {font}; הקרוב ביותר שהוא מציע הוא {nearest}.\n"
+"  הפקודה `fc-list : family` מציגה את השמות שיש בו."
+
+msgid "{where}: the font file {path} has a character in its path that ffmpeg's filters cannot carry. Copy it to a plainer path."
+msgstr "{where}: בנתיב של קובץ הגופן {path} יש תו שהמסננים של ffmpeg לא יכולים להעביר. יש להעתיק אותו לנתיב פשוט יותר."
+
+msgid "{where}: {word} takes a number of seconds, not {value}."
+msgstr "{where}: {word} מקבל מספר שניות, ולא {value}."
+
+msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
+msgstr "{where}: שורת {kind} לא מקבלת את {word}. היא מקבלת: {words}."
+
+msgid "{where}: {word} needs a value after it."
+msgstr "{where}: אחרי {word} צריך לבוא ערך."
+
+msgid "line {number}"
+msgstr "שורה {number}"
+
+msgid "{where} cannot be read: {reason}."
+msgstr "לא ניתן לקרוא את {where}: {reason}."
+
+msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
+msgstr "{where}: טקסט שייך לסצנה שמעליו, ואין סצנה לפני הטקסט הזה."
+
+msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
+msgstr "{where}: אחרי text צריכות לבוא המילים, במירכאות: text \"שמירת קובץ\""
+
+msgid "{where}: clip needs a video file after it."
+msgstr "{where}: אחרי clip צריך לבוא קובץ וידאו."
+
+msgid "{where}: card needs its length in seconds: card 3"
+msgstr "{where}: אחרי card צריך לבוא האורך בשניות: card 3"
+
+msgid "{where}: a line starts with clip, card or text, not {word}."
+msgstr "{where}: שורה מתחילה ב־clip, card או text, ולא ב־{word}."
+
+msgid "the script has no scenes in it. A scene is a line starting with clip or card."
+msgstr "אין סצנות בתסריט. סצנה היא שורה שמתחילה ב־clip או ב־card."
+
+msgid "{where}: there is no file {path}"
+msgstr "{where}: אין קובץ {path}"
+
+msgid "{where}: reading {path} took over {seconds}s."
+msgstr "{where}: קריאת {path} ארכה יותר מ־{seconds} שניות."
+
+msgid "{where}: {path} is not a video or picture ffmpeg can read."
+msgstr "{where}: {path} אינו סרטון או תמונה ש־ffmpeg יכול לקרוא."
+
+msgid "{where}: could not count the frames of {path}."
+msgstr "{where}: לא ניתן לספור את הפריימים של {path}."
+
+msgid ""
+"{where}: {path} is too big an animation to hold in memory and play again and again ({count} frame of {size}).\n"
+"  Turn it into a video and use it as a clip instead."
+msgid_plural ""
+"{where}: {path} is too big an animation to hold in memory and play again and again ({count} frames of {size}).\n"
+"  Turn it into a video and use it as a clip instead."
+msgstr[0] ""
+"{where}: {path} היא הנפשה גדולה מכדי להחזיק בזיכרון ולנגן שוב ושוב (פריים אחד בגודל {size}).\n"
+"  יש להפוך אותה לסרטון ולהשתמש בה כקטע במקום."
+msgstr[1] ""
+"{where}: {path} היא הנפשה גדולה מכדי להחזיק בזיכרון ולנגן שוב ושוב ({count} פריימים בגודל {size}).\n"
+"  יש להפוך אותה לסרטון ולהשתמש בה כקטע במקום."
+
+msgid "drawing a line of text took over {seconds}s."
+msgstr "ציור שורת טקסט ארך יותר מ־{seconds} שניות."
+
+msgid "this machine cannot draw text on a video: ffmpeg needs its drawtext filter and a font."
+msgstr "המחשב הזה לא יכול לצייר טקסט על סרטון: ffmpeg צריך את מסנן ה־drawtext שלו וגופן."
+
+msgid "{where}: a text is one line of words, and this one is empty."
+msgstr "{where}: טקסט הוא שורה אחת של מילים, והטקסט הזה ריק."
+
+msgid "{where}: a text is one line of words, and this one is more than one line."
+msgstr "{where}: טקסט הוא שורה אחת של מילים, והטקסט הזה ארוך משורה אחת."
+
+msgid "{where}: the text {words} is asked to show from {start} to {end}, which is not inside its scene ({scene_start} to {scene_end})."
+msgstr "{where}: הטקסט {words} אמור להופיע מ־{start} עד {end}, וזה לא בתוך הסצנה שלו ({scene_start} עד {scene_end})."
+
+msgid "{where}: a text's size is a percentage of the frame's height, between 0 and 50, not {size}."
+msgstr "{where}: גודל של טקסט הוא אחוז מגובה הפריים, בין 0 ל־50, ולא {size}."
+
+msgid "{where}: a text's {word} is a colour written #RRGGBB, like #FFD040, not {value}."
+msgstr "{where}: ה־{word} של טקסט הוא צבע שנכתב #RRGGBB, כמו #FFD040, ולא {value}."
+
+msgid "{where}: a text's band is on or off, not {value}."
+msgstr "{where}: הרצועה של טקסט היא on או off, ולא {value}."
+
+msgid "{where}: a text sits at {places} or {last}, not at {value}."
+msgstr "{where}: טקסט ממוקם ב־{places} או ב־{last}, ולא ב־{value}."
+
+msgid "{where}: the text {words} fades for {fades} seconds, and shows for only {seconds}."
+msgstr "{where}: הטקסט {words} מתעמעם במשך {fades} שניות, ומוצג רק {seconds} שניות."
+
+msgid ""
+"{where}: a band that fades with its text needs a newer ffmpeg than this one: its text filter has no `boxw`.\n"
+"  Give the text `band off`, or take its fade away."
+msgstr ""
+"{where}: רצועה שמתעמעמת יחד עם הטקסט שלה צריכה ffmpeg חדש יותר מזה: למסנן הטקסט שלו אין `boxw`.\n"
+"  יש לתת לטקסט `band off`, או להסיר את העמעום שלו."
+
+msgid ""
+"{where}: the text {words} is {wide} pixels wide at size {size}, and the frame has room for {room}.\n"
+"  Shorten it, or give it a smaller size: about {fits} would fit."
+msgstr ""
+"{where}: רוחב הטקסט {words} הוא {wide} פיקסלים בגודל {size}, ובפריים יש מקום ל־{room}.\n"
+"  יש לקצר אותו, או לתת לו גודל קטן יותר: בערך {fits} ייכנס."
+
+msgid "{where}: the texts {first} and {second} would be on screen at the same time. Only one shows at a time."
+msgstr "{where}: הטקסטים {first} ו־{second} היו מופיעים על המסך באותו זמן. רק אחד מוצג בכל פעם."
+
+msgid "{where}: a card needs a length above zero."
+msgstr "{where}: לכרטיס צריך להיות אורך גדול מאפס."
+
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, not {value}."
+msgstr "{where}: רקע הוא צבע שנכתב #RRGGBB, כמו {example}, ולא {value}."
+
+msgid "{where}: {path} has no length ffmpeg can tell."
+msgstr "{where}: ל־{path} אין אורך ש־ffmpeg יכול לזהות."
+
+msgid "{where}: {path} is {size}, a different shape from the film's {film}, and demoreel will not stretch it."
+msgstr "{where}: הגודל של {path} הוא {size}, צורה שונה מ־{film} של הסרט, ו־demoreel לא ימתח אותו."
+
+msgid "{where}: `{word} {value}` is past the end of {path}, which is {seconds} seconds long."
+msgstr "{where}: `{word} {value}` נמצא אחרי הסוף של {path}, שאורכו {seconds} שניות."
+
+msgid "{where}: `from` must come before `to`, and both inside {path} ({seconds} seconds long)."
+msgstr "{where}: `from` חייב לבוא לפני `to`, ושניהם בתוך {path} (באורך {seconds} שניות)."
+
+msgid "{where}: `fade-at {moment}` needs {seconds} seconds of the scene on each side, and the scene runs from {start} to {end}."
+msgstr "{where}: `fade-at {moment}` צריך {seconds} שניות של הסצנה מכל צד, והסצנה נמשכת מ־{start} עד {end}."
+
+msgid "{where}: its fades come to {fades} seconds, and the scene is only {seconds} long."
+msgstr "{where}: העמעומים שלה מגיעים ל־{fades} שניות, והסצנה ארוכה רק {seconds} שניות."
+
+msgid "{where}: its texts leave no room for the picture between them. Give them a smaller size."
+msgstr "{where}: הטקסטים שלה לא משאירים ביניהם מקום לתמונה. יש לתת להם גודל קטן יותר."
+
+msgid ""
+"a video's width and height must be even, since H.264 cannot encode an odd one, and this film would be {size}.\n"
+"  Set the size with -s {even}."
+msgstr ""
+"הרוחב והגובה של סרטון חייבים להיות זוגיים, כי H.264 לא יכול לקודד מספר אי־זוגי, והסרט הזה היה בגודל {size}.\n"
+"  יש לקבוע את הגודל עם -s {even}."
+
+msgid "--framerate takes a number above zero, not {rate}."
+msgstr "--framerate מקבל מספר גדול מאפס, ולא {rate}."
+
+msgid "-o must end in {ending}, and {name} does not."
+msgstr "-o חייב להסתיים ב־{ending}, ו־{name} לא מסתיים כך."
+
+msgid "-o must end in {ending} or {other}, and {name} does not."
+msgstr "-o חייב להסתיים ב־{ending} או ב־{other}, ו־{name} לא מסתיים כך."
+
+msgid "-o is {output}, which is also a file this command reads. demoreel never writes over its own input."
+msgstr "-o הוא {output}, שהוא גם קובץ שהפקודה הזאת קוראת. demoreel אף פעם לא כותב על הקלט שלו."
+
+msgid "this ffmpeg cannot encode H.264 with libx264, which every video uses."
+msgstr "ה־ffmpeg הזה לא יכול לקודד H.264 עם libx264, שבו משתמש כל סרטון."
+
+msgid "{where}: a crossfade fades from the scene before, and this is the first scene."
+msgstr "{where}: crossfade מתעמעם מהסצנה הקודמת, וזו הסצנה הראשונה."
+
+msgid "{where}: a scene takes a crossfade or a fade-in, not both."
+msgstr "{where}: סצנה מקבלת crossfade או fade-in, לא את שניהם."
+
+msgid "{where}: a crossfade of {seconds} seconds does not fit: the two scenes overlap for that long, and one of them is shorter."
+msgstr "{where}: crossfade של {seconds} שניות לא נכנס: שתי הסצנות חופפות למשך הזמן הזה, ואחת מהן קצרה יותר."
+
+msgid "text"
+msgstr "טקסט"
+
+msgid "scene {number}: {kind} {name}, {start} to {end}"
+msgstr "סצנה {number}: {kind} {name}, {start} עד {end}"
+
+msgid "making {output}, {seconds} seconds at {size}"
+msgstr "יוצר את {output}, {seconds} שניות בגודל {size}"
+
+msgid "ffmpeg could not make the film."
+msgstr "ffmpeg לא הצליח ליצור את הסרט."
+
+msgid "ffmpeg did not finish making the film in the time allowed for its length, so it was stopped."
+msgstr "ffmpeg לא סיים ליצור את הסרט בזמן שהוקצב לאורכו, ולכן הוא נעצר."
+
+msgid "could not read the script {path}: {reason}."
+msgstr "לא ניתן לקרוא את התסריט {path}: {reason}."
+
+msgid "trim needs something to do: --from, --to, or a fade."
+msgstr "ל־trim צריך לתת משהו לעשות: --from, --to, או עמעום."
+
+msgid "join takes two or more videos; one on its own is already whole."
+msgstr "join מקבל שני סרטונים או יותר; סרטון אחד לבדו כבר שלם."
+
+msgid "the card"
+msgstr "הכרטיס"
+
+msgid "--from and --to must be inside {path}, which is {seconds} seconds long, with --from before --to."
+msgstr "--from ו־ --to חייבים להיות בתוך {path}, שאורכו {seconds} שניות, ו־ --from לפני --to."
+
+msgid "reading {path} took too long for its length, so it was stopped."
+msgstr "קריאת {path} ארכה יותר מדי ביחס לאורכו, ולכן היא נעצרה."
+
+msgid "could not read the frames of {path}."
+msgstr "לא ניתן לקרוא את הפריימים של {path}."
+
+msgid "-t {time} is not inside {path}, which is {seconds} seconds long."
+msgstr "-t {time} אינו בתוך {path}, שאורכו {seconds} שניות."
+
+msgid "could not take the frame at {time} from {path}."
+msgstr "לא ניתן לקחת את הפריים ב־{time} מתוך {path}."
+
+msgid "taking the frame took over {seconds}s."
+msgstr "לקיחת הפריים ארכה יותר מ־{seconds} שניות."
+
+msgid "needs ffmpeg first"
+msgstr "צריך קודם את ffmpeg"
+
+msgid "this ffmpeg has no libx264, which every video uses."
+msgstr "ל־ffmpeg הזה אין libx264, שבו משתמש כל סרטון."
+
+msgid "ffmpeg drew nothing for a line of text: no font was found."
+msgstr "ffmpeg לא צייר כלום עבור שורת טקסט: לא נמצא גופן."
+
+#. argparse formats this text with %
+msgid "can this machine record? If not, it says what to install"
+msgstr "האם המחשב הזה יכול להקליט? אם לא, הפקודה אומרת מה להתקין"
+
+#. argparse formats this text with %
+msgid "record Kate for 20 seconds"
+msgstr "הקלטת Kate למשך 20 שניות"
+
+#. argparse formats this text with %
+msgid "one picture instead of a video"
+msgstr "תמונה אחת במקום סרטון"
+
+#. argparse formats this text with %
+msgid "cut the end off a recording, where `demoreel motion demo.mp4` says to"
+msgstr "חיתוך הסוף של הקלטה, במקום ש־`demoreel motion demo.mp4` מציין"
+
+#. argparse formats this text with %
+msgid "make a film from a script of scenes: clips, cards, text and fades"
+msgstr "יצירת סרט מתסריט של סצנות: קטעים, כרטיסים, טקסט ועמעומים"
+
+#. argparse formats this text with %
+msgid "record until you say stop, then stop it from any terminal"
+msgstr "הקלטה עד שאומרים לעצור, ואז עצירה מכל מסוף"
+
+#. argparse formats this text with %
+msgid "show the app being used: these steps run while it records"
+msgstr "הצגת היישום בשימוש: הצעדים האלה רצים בזמן ההקלטה"
+
+#. argparse formats this text with %
+msgid "an app that needs the graphics card (OpenGL, Vulkan)"
+msgstr "יישום שצריך את כרטיס המסך (OpenGL, Vulkan)"
+
+#. argparse formats this text with %
+msgid "a Flatpak app, which needs three flags on its own command line"
+msgstr "יישום Flatpak, שצריך שלושה דגלים בשורת הפקודה שלו"
+
+#. argparse formats this text with %
+msgid "examples:"
+msgstr "דוגמאות:"
+
+#. argparse formats this text with %
+msgid ""
+"Record a GUI app on a private virtual display, so nothing of your real desktop\n"
+"is in frame."
+msgstr ""
+"הקלטת יישום גרפי על תצוגה וירטואלית פרטית, כך ששום דבר משולחן העבודה האמיתי\n"
+"שלך לא נכנס לתמונה."
+
+#. argparse formats this text with %
+msgid "more examples:"
+msgstr "דוגמאות נוספות:"
+
+#. argparse formats this text with %
+msgid "record an app and write a video file"
+msgstr "הקלטת יישום וכתיבת קובץ וידאו"
+
+#. argparse formats this text with %
+msgid "video file to write (default: ./<app>-<timestamp>.mp4)"
+msgstr "קובץ הווידאו לכתיבה (ברירת מחדל: ./<app>-<timestamp>.mp4)"
+
+#. argparse formats this text with %
+msgid "seconds to record; 0 means until `demoreel stop` (default: 30)"
+msgstr "כמה שניות להקליט; 0 פירושו עד `demoreel stop` (ברירת מחדל: 30)"
+
+#. argparse formats this text with %
+msgid "virtual display size, even numbers (default: 1600x1000)"
+msgstr "גודל התצוגה הווירטואלית, במספרים זוגיים (ברירת מחדל: 1600x1000)"
+
+#. argparse formats this text with %
+msgid "frames per second (default: 30)"
+msgstr "פריימים לשנייה (ברירת מחדל: 30)"
+
+#. argparse formats this text with %
+msgid "name for this run, so `demoreel stop` can find it (default: default)"
+msgstr "שם להרצה הזאת, כדי ש־`demoreel stop` יוכל למצוא אותה (ברירת מחדל: default)"
+
+#. argparse formats this text with %
+msgid "scripted step, repeatable and run in order: {steps}"
+msgstr "צעד מתוסרט, אפשר לחזור עליו, והצעדים רצים לפי הסדר: {steps}"
+
+#. argparse formats this text with %
+msgid "read the scripted steps from FILE, one per line, or from standard input for -; keeps typed text out of the process list. Not with -a"
+msgstr "קריאת הצעדים המתוסרטים מתוך FILE, אחד בכל שורה, או מהקלט התקני עבור -; כך טקסט מוקלד לא מופיע ברשימת התהליכים. לא יחד עם -a"
+
+#. argparse formats this text with %
+msgid "keep the app's own output in PATH; otherwise it goes to this terminal's stderr. Useful when the app prints whether it drew the real thing, which no recording check here can tell"
+msgstr "שמירת הפלט של היישום עצמו ב־PATH; אחרת הוא נשלח ל־stderr של המסוף הזה. שימושי כשהיישום מדפיס אם צייר את הדבר האמיתי, משהו שאף בדיקת הקלטה כאן לא יכולה לדעת"
+
+#. argparse formats this text with %
+msgid "wait up to SECONDS for the app to draw its first frame before recording starts, instead of filming its startup black screen (default: 0, don't wait)"
+msgstr "המתנה של עד SECONDS שניות לכך שהיישום יצייר את הפריים הראשון שלו לפני שההקלטה מתחילה, במקום לצלם את המסך השחור של העלייה שלו (ברירת מחדל: 0, בלי המתנה)"
+
+#. argparse formats this text with %
+msgid "for an app that needs the graphics card (OpenGL, Vulkan): record it on a headless compositor instead of Xvfb, which has no GPU. Needs cage, Xwayland, wlr-randr and wf-recorder; not with --cursor"
+msgstr "ליישום שצריך את כרטיס המסך (OpenGL, Vulkan): הקלטה שלו על שרת תצוגה ללא מסך במקום Xvfb, שאין לו GPU. דורש cage, Xwayland, wlr-randr ו־wf-recorder; לא יחד עם --cursor"
+
+#. argparse formats this text with %
+msgid "show the mouse pointer; off by default, since with no actions it just sits in the corner"
+msgstr "הצגת סמן העכבר; כבוי כברירת מחדל, כי בלי פעולות הוא סתם יושב בפינה"
+
+#. argparse formats this text with %
+msgid "how long to wait for the app's window (default: 20)"
+msgstr "כמה זמן לחכות לחלון של היישום (ברירת מחדל: 20)"
+
+#. argparse formats this text with %
+msgid "-- followed by the command that starts the app"
+msgstr "-- ואחריו הפקודה שמפעילה את היישום"
+
+#. argparse formats this text with %
+msgid "take one picture of an app and write a PNG"
+msgstr "צילום תמונה אחת של יישום וכתיבת קובץ PNG"
+
+#. argparse formats this text with %
+msgid "picture file to write (default: ./<app>-<timestamp>.png)"
+msgstr "קובץ התמונה לכתיבה (ברירת מחדל: ./<app>-<timestamp>.png)"
+
+#. argparse formats this text with %
+msgid "virtual display size (default: 1600x1000)"
+msgstr "גודל התצוגה הווירטואלית (ברירת מחדל: 1600x1000)"
+
+#. argparse formats this text with %
+msgid "scripted step run before the picture, repeatable: {steps}"
+msgstr "צעד מתוסרט שרץ לפני הצילום, אפשר לחזור עליו: {steps}"
+
+#. argparse formats this text with %
+msgid "read the scripted steps from FILE, one per line, or from standard input for -. Not with -a"
+msgstr "קריאת הצעדים המתוסרטים מתוך FILE, אחד בכל שורה, או מהקלט התקני עבור -. לא יחד עם -a"
+
+#. argparse formats this text with %
+msgid "keep the app's own output in PATH; otherwise it goes to this terminal's stderr"
+msgstr "שמירת הפלט של היישום עצמו ב־PATH; אחרת הוא נשלח ל־stderr של המסוף הזה"
+
+#. argparse formats this text with %
+msgid "wait up to SECONDS for the app to draw before the steps and the picture (default: 10)"
+msgstr "המתנה של עד SECONDS שניות לכך שהיישום יצייר, לפני הצעדים והצילום (ברירת מחדל: 10)"
+
+#. argparse formats this text with %
+msgid "for an app that needs the graphics card: use a headless compositor instead of Xvfb. Needs cage, Xwayland and wlr-randr"
+msgstr "ליישום שצריך את כרטיס המסך: שימוש בשרת תצוגה ללא מסך במקום Xvfb. דורש cage, Xwayland ו־wlr-randr"
+
+#. argparse formats this text with %
+msgid "show the mouse pointer in the picture"
+msgstr "הצגת סמן העכבר בתמונה"
+
+#. argparse formats this text with %
+msgid "test whether this machine can record, without recording"
+msgstr "בדיקה אם המחשב הזה יכול להקליט, בלי להקליט"
+
+#. argparse formats this text with %
+msgid "Report what each backend needs and whether it is installed, start a private display to prove it works, and name the install command for anything missing. Exits non-zero if the default backend cannot record."
+msgstr "דיווח על מה שכל מנגנון צריך ואם הוא מותקן, הפעלת תצוגה פרטית כדי להוכיח שהיא עובדת, וציון פקודת ההתקנה לכל מה שחסר. יוצא עם קוד שאינו אפס אם מנגנון ברירת המחדל לא יכול להקליט."
+
+#. argparse formats this text with %
+msgid "end a running recording early"
+msgstr "סיום מוקדם של הקלטה פועלת"
+
+#. argparse formats this text with %
+msgid "which run to stop (default: the only one running)"
+msgstr "איזו הרצה לעצור (ברירת מחדל: היחידה שפועלת)"
+
+#. argparse formats this text with %
+msgid "video file to write, ending in .mp4"
+msgstr "קובץ הווידאו לכתיבה, עם הסיומת .mp4"
+
+#. argparse formats this text with %
+msgid "start black; the picture arrives over SECONDS"
+msgstr "התחלה בשחור; התמונה מופיעה במשך SECONDS שניות"
+
+#. argparse formats this text with %
+msgid "go to black over the last SECONDS"
+msgstr "מעבר לשחור במשך SECONDS השניות האחרונות"
+
+#. argparse formats this text with %
+msgid "make a film from a script of scenes"
+msgstr "יצירת סרט מתסריט של סצנות"
+
+#. argparse formats this text with %
+msgid "make a film from a script of scenes."
+msgstr "יצירת סרט מתסריט של סצנות."
+
+#. argparse formats this text with %
+msgid "the script file, or - for standard input"
+msgstr "קובץ התסריט, או - עבור הקלט התקני"
+
+#. argparse formats this text with %
+msgid "the film's picture size, like 1280x800 (default: the first clip's)"
+msgstr "גודל התמונה של הסרט, כמו 1280x800 (ברירת מחדל: של הקטע הראשון)"
+
+#. argparse formats this text with %
+msgid "the film's frames per second (default: the first clip's)"
+msgstr "הפריימים לשנייה של הסרט (ברירת מחדל: של הקטע הראשון)"
+
+#. argparse formats this text with %
+msgid "cut the start and the end off a video"
+msgstr "חיתוך ההתחלה והסוף של סרטון"
+
+#. argparse formats this text with %
+msgid "cut the start and the end off a video."
+msgstr "חיתוך ההתחלה והסוף של סרטון."
+
+#. argparse formats this text with %
+msgid "the video to cut"
+msgstr "הסרטון לחיתוך"
+
+#. argparse formats this text with %
+msgid "where the kept part starts (default: the start)"
+msgstr "איפה מתחיל החלק שנשמר (ברירת מחדל: ההתחלה)"
+
+#. argparse formats this text with %
+msgid "the last moment kept (default: the end)"
+msgstr "הרגע האחרון שנשמר (ברירת מחדל: הסוף)"
+
+#. argparse formats this text with %
+msgid "fade to black and back around this moment; repeatable"
+msgstr "עמעום לשחור וחזרה סביב הרגע הזה; אפשר לחזור עליו"
+
+#. argparse formats this text with %
+msgid "how long each half of a --fade-at takes (default: {seconds})"
+msgstr "כמה זמן נמשך כל חצי של --fade-at (ברירת מחדל: {seconds})"
+
+#. argparse formats this text with %
+msgid "put text over part of a video"
+msgstr "הוספת טקסט על חלק מסרטון"
+
+#. argparse formats this text with %
+msgid "put text over part of a video."
+msgstr "הוספת טקסט על חלק מסרטון."
+
+#. argparse formats this text with %
+msgid "the video to put text on"
+msgstr "הסרטון שעליו יתווסף הטקסט"
+
+#. argparse formats this text with %
+msgid "one line of text; repeatable"
+msgstr "שורת טקסט אחת; אפשר לחזור עליה"
+
+#. argparse formats this text with %
+msgid "for the --text before it: when it appears"
+msgstr "עבור ה־ --text שלפניו: מתי הוא מופיע"
+
+#. argparse formats this text with %
+msgid "for the --text before it: when it goes"
+msgstr "עבור ה־ --text שלפניו: מתי הוא נעלם"
+
+#. argparse formats this text with %
+msgid "for the --text before it: its height, as a percentage of the frame's"
+msgstr "עבור ה־ --text שלפניו: הגובה שלו, כאחוז מגובה הפריים"
+
+#. argparse formats this text with %
+msgid "put videos end to end"
+msgstr "חיבור סרטונים זה אחרי זה"
+
+#. argparse formats this text with %
+msgid "put videos end to end."
+msgstr "חיבור סרטונים זה אחרי זה."
+
+#. argparse formats this text with %
+msgid "two or more videos, in order"
+msgstr "שני סרטונים או יותר, לפי הסדר"
+
+#. argparse formats this text with %
+msgid "fade from each video into the next over SECONDS (default: a plain cut)"
+msgstr "מעבר הדרגתי מכל סרטון לבא אחריו במשך SECONDS שניות (ברירת מחדל: חיתוך פשוט)"
+
+#. argparse formats this text with %
+msgid "make a clip from a picture, or from text"
+msgstr "יצירת קטע מתמונה, או מטקסט"
+
+#. argparse formats this text with %
+msgid "make a clip from a picture, or from text."
+msgstr "יצירת קטע מתמונה, או מטקסט."
+
+#. argparse formats this text with %
+msgid "a picture to show; a .gif or an animated .png plays"
+msgstr "תמונה להצגה; קובץ .gif או .png מונפש מתנגן"
+
+#. argparse formats this text with %
+msgid "how many seconds the card lasts"
+msgstr "כמה שניות הכרטיס נמשך"
+
+#. argparse formats this text with %
+msgid "one line of text"
+msgstr "שורת טקסט אחת"
+
+#. argparse formats this text with %
+msgid "the text's height, as a percentage of the frame's (default: {size})"
+msgstr "גובה הטקסט, כאחוז מגובה הפריים (ברירת מחדל: {size})"
+
+#. argparse formats this text with %
+msgid "the background colour (default: {colour})"
+msgstr "צבע הרקע (ברירת מחדל: {colour})"
+
+#. argparse formats this text with %
+msgid "take the size and frame rate from this video"
+msgstr "לקיחת הגודל וקצב הפריימים מהסרטון הזה"
+
+#. argparse formats this text with %
+msgid "the picture size, like 1280x800 (default: 1600x1000)"
+msgstr "גודל התמונה, כמו 1280x800 (ברירת מחדל: 1600x1000)"
+
+#. argparse formats this text with %
+msgid "report how smooth a video is and where it stands still"
+msgstr "דיווח על מידת החלקות של סרטון ועל המקומות שבהם הוא עומד במקום"
+
+#. argparse formats this text with %
+msgid "report how smooth a video is and where it stands still."
+msgstr "דיווח על מידת החלקות של סרטון ועל המקומות שבהם הוא עומד במקום."
+
+#. argparse formats this text with %
+msgid "the video to look at"
+msgstr "הסרטון לבדיקה"
+
+#. argparse formats this text with %
+msgid "look from here (default: the start)"
+msgstr "בדיקה מכאן (ברירת מחדל: ההתחלה)"
+
+#. argparse formats this text with %
+msgid "look up to here (default: the end)"
+msgstr "בדיקה עד כאן (ברירת מחדל: הסוף)"
+
+#. argparse formats this text with %
+msgid "report a stretch with no change longer than this (default: 1)"
+msgstr "דיווח על קטע ללא שינוי שארוך מזה (ברירת מחדל: 1)"
+
+#. argparse formats this text with %
+msgid "print the report as one JSON object"
+msgstr "הדפסת הדוח כאובייקט JSON אחד"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a picture"
+msgstr "שמירת פריים אחד מסרטון כתמונה"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a picture."
+msgstr "שמירת פריים אחד מסרטון כתמונה."
+
+#. argparse formats this text with %
+msgid "picture file to write, ending in .png or .jpg"
+msgstr "קובץ התמונה לכתיבה, עם הסיומת .png או .jpg"
+
+#. argparse formats this text with %
+msgid "the video to take the frame from"
+msgstr "הסרטון שממנו יילקח הפריים"
+
+#. argparse formats this text with %
+msgid "which moment to save"
+msgstr "איזה רגע לשמור"
+

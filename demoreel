@@ -134,8 +134,11 @@ def note(msg):
 
 PLACEHOLDER_RE = re.compile(r"\{([a-z_][a-z0-9_]*)\}")
 # A backticked span, a long flag with any =value, or a short flag on its own.
+# Only ASCII joins onto a flag: Chinese and Japanese write a flag straight
+# against their own letters and punctuation, and it is still its own word.
 CODE_TOKEN_RE = re.compile(
-    r"`[^`\n]*`|(?<![\w-])(?:--[a-z][a-z0-9-]*(?:=[^\s`,;)]*)?|-[A-Za-z](?![\w-]))")
+    r"`[^`\n]*`|(?<![A-Za-z0-9_-])"
+    r"(?:--[a-z][a-z0-9-]*(?:=[^\s`,;)\x80-\U0010ffff]*)?|-[A-Za-z](?![A-Za-z0-9_-]))")
 PERCENT_RE = re.compile(r"%%|%\([a-z_]+\)[a-z]|%[a-z]")
 RTL_LANGUAGES = ("ar", "fa", "he", "ps", "ur", "yi")
 FIRST_STRONG_ISOLATE, POP_DIRECTIONAL_ISOLATE = "\u2068", "\u2069"

@@ -3981,6 +3981,25 @@ for codes in (["zz"], []):
 sys.exit(1 if bad else 0)
 RTLPY
 echo "right-to-left messages isolate each value and each code token, and no other language does"
+# Chinese and Japanese write a flag straight against their own letters and
+# punctuation. It is still a code token there, and its =value ends at the
+# first character that is not ASCII.
+python3 - <<'CJKPY'
+import importlib.machinery, importlib.util, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+bad = 0
+for text, want in (("使用--name参数", ["--name"]), ("使用-o指定", ["-o"]),
+                   ("--nosocket=wayland；参见", ["--nosocket=wayland"]),
+                   ("ב־--name", ["--name"]), ("e-mail --gpu, -d 3", ["--gpu", "-d"])):
+    got = d.CODE_TOKEN_RE.findall(text)
+    if got != want:
+        print(f"code tokens in {text!r}: {got}, not {want}", file=sys.stderr)
+        bad += 1
+sys.exit(1 if bad else 0)
+CJKPY
+echo "a flag written against Chinese, Japanese or Hebrew letters is still a code token"
 # INV-7, over the catalogs. A run already falls back to English for a bad
 # placeholder; the gate makes it a failure, so the language never loses the
 # message. A renamed placeholder, a translated flag and a bare % in text

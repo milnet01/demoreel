@@ -3209,12 +3209,19 @@ path, and scripts read it.
   Kind: ux.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0064] **Draft translations for the languages named in the request.**
+- ✅ [DEMO-0064] **Draft translations for the languages named in the request.**
   Simplified Chinese, Traditional Chinese, Japanese, Hebrew, Afrikaans,
   Spanish, Brazilian Portuguese, Italian, French and German. Every
   message, --help and the man page.
 
   Each is marked as a draft until a native speaker confirms it.
+  Shipped (2026-10-02): draft catalogs for af, de, es, fr, he, it, ja,
+  pt_BR, zh_CN and zh_TW, covering every message and --help. All pass the
+  DEMO-0062 checks, and a recording in each prints the same path as in
+  English. The man page moved to DEMO-0168, by the user's choice. What
+  each translator was unsure of is in docs/translation-review-notes.md,
+  for DEMO-0096. CODE_TOKEN_RE now treats a flag against CJK text as a
+  flag.
   **Layman:** First batch of translations: Chinese, Japanese, Hebrew, Afrikaans, Spanish, Portuguese, Italian, French and German.
   Kind: feature.
   Source: user-request-2026-09-25.
@@ -3495,6 +3502,25 @@ path, and scripts read it.
   **Layman:** The note that warns about a stuttering --gpu video over-counts new frames, so it may stay silent on a video that really stutters.
   Kind: investigate.
   Source: DEMO-0125-finding-2026-09-30.
+
+- 📋 [DEMO-0166] **Translate argparse's own `error:` prefix.**
+  argparse prints `%(prog)s: error: %(message)s\n`, which is not in
+  ARGPARSE_MESSAGES, so every language shows `demoreel: error:` in English
+  before the translated rest. Adding it is a new template entry for every
+  catalog, and the stdout step's check that skips `error: ` lines has to
+  follow. Confirm the string is the same in Python 3.12 and 3.13 first.
+  **Layman:** The word "error" at the start of a mistyped command is still English in every language.
+  Kind: feature.
+  Source: DEMO-0064-finding-2026-10-02.
+
+- 📋 [DEMO-0167] **Tell translators what each placeholder holds.**
+  Several DEMO-0064 drafts guessed what `{word}`, `{share}`, `{time}` and
+  `{kind}` hold, and built gender or articles on the guess. A comment
+  beside the call (`# translators: ...`) extracted into the template as
+  `#.` would answer it. docs/translation-review-notes.md lists the cases.
+  **Layman:** Translators get a short note saying what goes into each blank, so the grammar around it comes out right.
+  Kind: doc.
+  Source: DEMO-0064-finding-2026-10-02.
 
 ## 0.5.0 — Installs like any other program
 
@@ -3856,6 +3882,16 @@ covers both display backends and the Flatpak invocation.
   **Layman:** The automatic checks spend about two minutes making test recordings one after another; running some side by side could cut that.
   Kind: perf.
   Source: claude-config-request-2026-09-28.
+
+- 📋 [DEMO-0168] **Translate the manual page, once its English has settled near 1.0.**
+  Split from DEMO-0064, which translated the messages and --help. The
+  user chose on 2026-10-02 to translate the manual page later: until it
+  settles, every change would need ten more edits. Decide the layout
+  (man/<code>/demoreel.1, where a package installs it) and how the gate
+  checks each copy against the English.
+  **Layman:** `man demoreel` will be translated too, but only near 1.0, so each change to the manual doesn't need ten more edits.
+  Kind: doc.
+  Source: user-decision-2026-10-02.
 
 ## 2.0.0 — A full video editor
 

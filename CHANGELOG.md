@@ -14,6 +14,15 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **Draft translations in ten languages** (DEMO-0064)
+  Messages and `--help` now come in German, French, Spanish, Italian,
+  Brazilian Portuguese, Afrikaans, Hebrew, Japanese, and Simplified and
+  Traditional Chinese. Each is a draft until a native speaker checks it,
+  and `--help` says so on its last line. A command-line flag written
+  straight against Chinese or Japanese text is now recognised as a flag,
+  so the checks hold a translation to keep it. The manual page
+  stays in English for now.
+
 - **The checks refuse a translation that is incomplete or would print wrongly** (DEMO-0062)
   Before any change is accepted, every translation file must read cleanly,
   hold every message, keep each `{placeholder}` and command-line flag of
@@ -25,8 +34,7 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 - **Messages can be translated, and English output is unchanged** (DEMO-0061)
   Every message on standard error and the text of `--help` now goes
   through a translation step that follows `LANGUAGE`, `LC_ALL`,
-  `LC_MESSAGES` and `LANG`. No translation ships yet, so everything is
-  still English. Standard output, `motion`'s report and `--version` never
+  `LC_MESSAGES` and `LANG`. Standard output, `motion`'s report and `--version` never
   change with the language, and `LC_ALL=C` always gives English. A
   translation file is treated as untrusted text (DEMO-0083).
 

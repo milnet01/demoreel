@@ -1,0 +1,1046 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: demoreel\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: zh_CN\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Demoreel-Review: draft\n"
+
+msgid "ended by {signal} before it finished, so there is nothing to hand back."
+msgstr "在完成之前被 {signal} 终止，因此没有可交付的内容。"
+
+#. argparse formats this text with %
+msgid "usage: "
+msgstr "用法： "
+
+#. argparse formats this text with %
+msgid "options"
+msgstr "选项"
+
+#. argparse formats this text with %
+msgid "positional arguments"
+msgstr "位置参数"
+
+#. argparse formats this text with %
+msgid "show this help message and exit"
+msgstr "显示此帮助信息并退出"
+
+#. argparse formats this text with %
+msgid "show program's version number and exit"
+msgstr "显示程序的版本号并退出"
+
+#. argparse formats this text with %
+msgid "the following arguments are required: %s"
+msgstr "缺少以下必需参数：%s"
+
+#. argparse formats this text with %
+msgid "unrecognized arguments: %s"
+msgstr "无法识别的参数：%s"
+
+#. argparse formats this text with %
+msgid "invalid choice: %(value)r (choose from %(choices)s)"
+msgstr "无效的选择：%(value)r（可选值：%(choices)s）"
+
+#. argparse formats this text with %
+msgid "This translation is a draft and has not yet been checked by a native speaker."
+msgstr "此翻译为草稿，尚未经过母语人士审校。"
+
+msgid ""
+"could not use {path}: {reason}.\n"
+"  demoreel keeps its run files there. Point XDG_RUNTIME_DIR at a directory you can write to."
+msgstr ""
+"无法使用 {path}：{reason}。\n"
+"  demoreel 在那里保存运行文件。请将 XDG_RUNTIME_DIR 指向一个您可以写入的目录。"
+
+msgid ""
+"{path} is not a directory you own, so demoreel will not use it.\n"
+"  On a shared machine another user can create that name first.\n"
+"  Remove it, or point XDG_RUNTIME_DIR at a directory you own."
+msgstr ""
+"{path} 不是属于您的目录，因此 demoreel 不会使用它。\n"
+"  在多人共用的计算机上，其他用户可能抢先创建同名目录。\n"
+"  请删除它，或将 XDG_RUNTIME_DIR 指向一个属于您的目录。"
+
+msgid ""
+"a recording named {name} is already running.\n"
+"  Use --name to tell this run apart from it."
+msgstr ""
+"名为 {name} 的录制已在运行。\n"
+"  请用 --name 为本次运行另起一个名字以示区分。"
+
+msgid ""
+"a recording named {name} is already running (pid {pid}).\n"
+"  Use --name to tell this run apart from it."
+msgstr ""
+"名为 {name} 的录制已在运行（pid {pid}）。\n"
+"  请用 --name 为本次运行另起一个名字以示区分。"
+
+msgid "Xvfb did not start, so there is no private display to record."
+msgstr "Xvfb 未能启动，因此没有可供录制的私有显示屏。"
+
+msgid "It said: {text}"
+msgstr "它的输出：{text}"
+
+msgid "`demoreel check` tests this start on its own."
+msgstr "`demoreel check` 会单独测试这一启动步骤。"
+
+msgid "could not write the display's auth cookie, so the display cannot be made private."
+msgstr "无法写入显示屏的认证 cookie，因此无法将该显示屏设为私有。"
+
+msgid "xauth said: {text}"
+msgstr "xauth 的输出：{text}"
+
+msgid "`demoreel check` tests this on its own."
+msgstr "`demoreel check` 会单独测试这一项。"
+
+msgid "the display did not lock: a client without its auth cookie could still connect, or none could."
+msgstr "显示屏未能锁定：没有认证 cookie 的客户端仍能连接，或者所有客户端都无法连接。"
+
+msgid "the GPU display did not start, so there is nothing to record on."
+msgstr "GPU 显示屏未能启动，因此无处可录。"
+
+msgid "The end of its log:"
+msgstr "其日志的末尾："
+
+msgid "`demoreel check` says whether --gpu has what it needs."
+msgstr "`demoreel check` 会告诉您 --gpu 所需的条件是否齐备。"
+
+msgid "the GPU display did not lock: a client without its auth cookie could still connect, or none could."
+msgstr "GPU 显示屏未能锁定：没有认证 cookie 的客户端仍能连接，或者所有客户端都无法连接。"
+
+msgid "the private display {display} stopped answering: `xdotool {command}` did not return within {seconds}s."
+msgstr "私有显示屏 {display} 已停止响应：`xdotool {command}` 未在 {seconds} 秒内返回。"
+
+msgid ""
+"the app resized its window to {size} at {place}, so it no longer fills the {frame} frame and part of the video is cropped or empty.\n"
+"  Record at the app's own size with -s {size}."
+msgstr ""
+"应用在 {place} 将窗口大小改为 {size}，因此窗口不再填满 {frame} 的画面，视频的一部分被裁掉或是空白。\n"
+"  请用 -s {size} 按应用自身的大小录制。"
+
+msgid ""
+"the app exited immediately (status 0) without opening a window.\n"
+"  The likely cause is a single-instance app: it finds a copy already\n"
+"  running on your real desktop, hands the request over to it and exits\n"
+"  successfully. If a copy is running, close it and try again.\n"
+"  If not, the command may simply have finished without needing a\n"
+"  window — in which case there is nothing to record."
+msgstr ""
+"应用立即退出（状态 0），没有打开任何窗口。\n"
+"  最可能的原因是这是一个单实例应用：它发现您的真实桌面上\n"
+"  已有一个副本在运行，于是把请求交给那个副本，然后\n"
+"  正常退出。如果确有副本在运行，请关闭它后重试。\n"
+"  如果没有，那么该命令可能本来就不需要窗口，\n"
+"  直接运行完毕了——这种情况下没有可录制的内容。"
+
+msgid ""
+"the app exited with status {status} before opening a window.\n"
+"  Its own output, above or in --app-log, says why. To see it on its own, run: {command}"
+msgstr ""
+"应用在打开窗口之前以状态 {status} 退出。\n"
+"  原因见它自己的输出（在上方或 --app-log 中）。要单独查看，请运行：{command}"
+
+msgid "cannot read the step {step}: {reason}."
+msgstr "无法读取步骤 {step}：{reason}。"
+
+msgid "unknown action {action}. The steps are: {steps}."
+msgstr "未知的操作 {action}。可用的步骤有：{steps}。"
+
+msgid "cannot read the step {step}: write it like {example}."
+msgstr "无法读取步骤 {step}：请按 {example} 的格式书写。"
+
+msgid "could not read the steps file {path}: {reason}."
+msgstr "无法读取步骤文件 {path}：{reason}。"
+
+msgid "ffmpeg could not start recording."
+msgstr "ffmpeg 无法开始录制。"
+
+msgid "`demoreel check` tests the programs and the encoder it needs."
+msgstr "`demoreel check` 会测试所需的程序和编码器。"
+
+msgid "wf-recorder could not start recording."
+msgstr "wf-recorder 无法开始录制。"
+
+msgid ""
+"could not finish the video: turning the recording into {name} failed.\n"
+"  What was recorded is kept in {part}, and {log} says why."
+msgstr ""
+"无法完成视频：将录制内容转换为 {name} 失败。\n"
+"  已录制的内容保存在 {part} 中，原因见 {log}。"
+
+msgid "the display did not give up a frame within {seconds}s; it has stopped answering"
+msgstr "显示屏未在 {seconds} 秒内给出一帧画面；它已停止响应"
+
+msgid "ffmpeg exited {status} with no frame"
+msgstr "ffmpeg 以状态 {status} 退出，没有得到画面"
+
+msgid "reading a frame of {path} took over {seconds}s"
+msgstr "读取 {path} 的一帧画面用时超过 {seconds} 秒"
+
+msgid "no frame of {path} could be read"
+msgstr "无法读取 {path} 的任何一帧画面"
+
+msgid "this is a Flatpak target and the command is missing: {flags}"
+msgstr "这是一个 Flatpak 应用，而命令中缺少：{flags}"
+
+msgid ""
+"A missing one can send it to your real compositor instead, leaving this\n"
+"recording empty. README.md says what each flag is for."
+msgstr ""
+"缺少任何一个，都可能让应用转而显示在您真实的合成器上，使这次\n"
+"录制一片空白。README.md 说明了每个参数的作用。"
+
+msgid ""
+"openSUSE's own ffmpeg leaves it out. Install ffmpeg from the Packman repository,\n"
+"  which has it."
+msgstr ""
+"openSUSE 自带的 ffmpeg 不包含它。请从 Packman 软件源安装 ffmpeg，\n"
+"  那里的版本包含它。"
+
+msgid "Fedora's ffmpeg-free leaves it out. Enable RPM Fusion, then:"
+msgstr "Fedora 的 ffmpeg-free 不包含它。请启用 RPM Fusion，然后运行："
+
+msgid "Install a build of ffmpeg that includes libx264."
+msgstr "请安装一个包含 libx264 的 ffmpeg 版本。"
+
+msgid "Install with: {command}"
+msgstr "安装命令：{command}"
+
+msgid "missing required program(s): {programs}"
+msgstr "缺少必需的程序：{programs}"
+
+msgid "this ffmpeg cannot encode H.264 with libx264, which every recording uses."
+msgstr "此 ffmpeg 无法用 libx264 编码 H.264，而每次录制都要用到它。"
+
+msgid "--cursor is not available with record --gpu: that backend records the compositor's picture, which never has the pointer in it."
+msgstr "--cursor 不能与 record --gpu 一起使用：该后端录制的是合成器的画面，其中从不包含鼠标指针。"
+
+msgid "give the steps with -a or with --steps, not both."
+msgstr "请用 -a 或 --steps 之一给出步骤，不要同时使用。"
+
+msgid "give the app to run after `--`, e.g. {example}"
+msgstr "请在 `--` 之后给出要运行的应用，例如 {example}"
+
+msgid "--size takes a width and a height in pixels, like 1600x1000, not {size}."
+msgstr "--size 需要以像素为单位的宽和高，例如 1600x1000，而不是 {size}。"
+
+msgid ""
+"--size needs even numbers for a video, since H.264 cannot encode an odd width or height.\n"
+"  Try {size}."
+msgstr ""
+"视频的 --size 必须是偶数，因为 H.264 无法编码奇数的宽度或高度。\n"
+"  试试 {size}。"
+
+msgid ""
+"the app log {path} is a symbolic link another user made, so demoreel\n"
+"  will not write through it: it could point at a file of yours.\n"
+"  Choose another path, or remove the link if it is not meant to be there."
+msgstr ""
+"应用日志 {path} 是其他用户创建的符号链接，因此 demoreel\n"
+"  不会通过它写入：它可能指向您的某个文件。\n"
+"  请换一个路径；如果这个链接本不该存在，请删除它。"
+
+msgid ""
+"the output {path} is a symbolic link another user made, so demoreel\n"
+"  will not write through it: it could point at a file of yours.\n"
+"  Choose another path, or remove the link if it is not meant to be there."
+msgstr ""
+"输出文件 {path} 是其他用户创建的符号链接，因此 demoreel\n"
+"  不会通过它写入：它可能指向您的某个文件。\n"
+"  请换一个路径；如果这个链接本不该存在，请删除它。"
+
+msgid ""
+"could not run {command}: {reason}.\n"
+"  Check that the command after `--` is installed and spelled as you would type it."
+msgstr ""
+"无法运行 {command}：{reason}。\n"
+"  请检查 `--` 之后的命令是否已安装，拼写是否与您平时输入的一致。"
+
+msgid ""
+"no window appeared within {seconds}s; taking the picture anyway.\n"
+"  If the app is slow to start, give it longer with --startup-timeout."
+msgstr ""
+"{seconds} 秒内没有出现窗口；仍然截取画面。\n"
+"  如果应用启动较慢，请用 --startup-timeout 给它更多时间。"
+
+msgid ""
+"no window appeared within {seconds}s; recording anyway.\n"
+"  If the app is slow to start, give it longer with --startup-timeout."
+msgstr ""
+"{seconds} 秒内没有出现窗口；仍然开始录制。\n"
+"  如果应用启动较慢，请用 --startup-timeout 给它更多时间。"
+
+msgid ""
+"It had not drawn yet. A GPU app can spend seconds on a black\n"
+"    screen while it starts: --settle waits for the first picture."
+msgstr ""
+"它还没有开始绘制。GPU 应用启动时可能会黑屏好几秒：\n"
+"    --settle 会等待第一幅画面出现。"
+
+msgid ""
+"It needs the GPU, and Xvfb has none. An OpenGL or Vulkan app\n"
+"    cannot render on it at all: record it with --gpu instead."
+msgstr ""
+"它需要 GPU，而 Xvfb 没有 GPU。OpenGL 或 Vulkan 应用\n"
+"    根本无法在上面渲染：请改用 --gpu 录制。"
+
+msgid "The app ran but drew nothing here. Two causes account for most of it:"
+msgstr "应用运行了，但在这里什么也没画出来。大多数情况是以下两个原因之一："
+
+msgid ""
+"It rendered somewhere else. A Flatpak needs --nosocket=wayland on\n"
+"    its command line; see README.md."
+msgstr ""
+"它渲染到了别处。Flatpak 应用需要在命令行上加上\n"
+"    --nosocket=wayland 参数；参见 README.md。"
+
+msgid "--settle could not sample the display, so it cannot tell when the app has drawn."
+msgstr "--settle 无法对显示屏取样，因此无法判断应用何时完成绘制。"
+
+msgid ""
+"nothing was drawn within {seconds}s; recording anyway.\n"
+"  If the app takes longer to show its first picture, raise --settle."
+msgstr ""
+"{seconds} 秒内没有绘制任何内容；仍然开始录制。\n"
+"  如果应用需要更长时间才能显示第一幅画面，请调大 --settle。"
+
+msgid "the recorder stopped early; see {log}"
+msgstr "录制程序提前停止了；参见 {log}"
+
+msgid "recording, {seconds}s left"
+msgstr "正在录制，还剩 {seconds} 秒"
+
+msgid "recording for {time} (Ctrl+C to finish)"
+msgstr "已录制 {time}（按 Ctrl+C 结束）"
+
+msgid "the app closed; ending the recording."
+msgstr "应用已关闭；正在结束录制。"
+
+msgid ""
+"no video was written to {output}: the recorder produced nothing.\n"
+"  Its log, {log}, says why."
+msgstr ""
+"没有视频写入 {output}：录制程序什么也没有生成。\n"
+"  原因见它的日志 {log}。"
+
+msgid "the video cannot be played: {output}"
+msgstr "视频无法播放：{output}"
+
+msgid "The recorder most likely stopped before it finished the file. See {log}"
+msgstr "录制程序很可能在写完文件之前就停止了。参见 {log}"
+
+msgid "the virtual display was blank halfway, so at least half of it is a flat colour: {output}"
+msgstr "录到一半时虚拟显示屏是空白的，因此视频至少有一半是纯色：{output}"
+
+msgid "the virtual display was blank at the end, so it ends on a flat colour: {output}"
+msgstr "结束时虚拟显示屏是空白的，因此视频以纯色结尾：{output}"
+
+msgid ""
+"could not sample the virtual display to check {output} is not blank,\n"
+"  so this run cannot vouch for it."
+msgstr ""
+"无法对虚拟显示屏取样来确认 {output} 不是空白，\n"
+"  因此本次运行无法保证它的内容。"
+
+msgid ""
+"could not read {output} back to check it is not blank,\n"
+"  so this run cannot vouch for it."
+msgstr ""
+"无法回读 {output} 来确认它不是空白，\n"
+"  因此本次运行无法保证它的内容。"
+
+msgid ""
+"the video is a flat colour halfway, though the private screen was not: {output}\n"
+"  The recorder captured something other than the screen. See {log}"
+msgstr ""
+"视频在中途是纯色，而私有屏幕并不是：{output}\n"
+"  录制程序录下的不是这块屏幕。参见 {log}"
+
+msgid ""
+"the video is a flat colour at the end, though the private screen was not: {output}\n"
+"  The recorder captured something other than the screen. See {log}"
+msgstr ""
+"视频在结尾是纯色，而私有屏幕并不是：{output}\n"
+"  录制程序录下的不是这块屏幕。参见 {log}"
+
+msgid ""
+"only {share} of the frames in the middle of {output} changed from the one before.\n"
+"  If the app was moving the whole time, it drew that few new frames itself: the video has every frame it drew."
+msgstr ""
+"{output} 中间部分的帧只有 {share} 与前一帧不同。\n"
+"  如果应用一直在动，那就是它自己只画了这么少的新帧：视频包含了它画出的每一帧。"
+
+msgid "reading it back took over {seconds}s."
+msgstr "回读用时超过 {seconds} 秒。"
+
+msgid "ffprobe could not read it."
+msgstr "ffprobe 无法读取它。"
+
+msgid "{seconds}s of video, {size}"
+msgstr "{seconds} 秒视频，{size}"
+
+msgid "recording {display} to {output} (until stopped)"
+msgstr "正在将 {display} 录制到 {output}（直到停止）"
+
+msgid "recording {display} to {output} ({seconds}s)"
+msgstr "正在将 {display} 录制到 {output}（{seconds} 秒）"
+
+msgid "could not take the picture."
+msgstr "无法截取画面。"
+
+msgid "could not read back {output} to check it is not blank."
+msgstr "无法回读 {output} 来确认它不是空白。"
+
+msgid "the picture is one flat colour: {output}"
+msgstr "画面是一片纯色：{output}"
+
+msgid ""
+"nothing was drawn within {seconds}s; taking the picture anyway.\n"
+"  If the app takes longer to show its first picture, raise --settle."
+msgstr ""
+"{seconds} 秒内没有绘制任何内容；仍然截取画面。\n"
+"  如果应用需要更长时间才能显示第一幅画面，请调大 --settle。"
+
+msgid "could not take the picture: the display did not answer within {seconds}s."
+msgstr "无法截取画面：显示屏未在 {seconds} 秒内响应。"
+
+msgid "Its display log is kept in {folder}"
+msgstr "它的显示屏日志保存在 {folder}"
+
+msgid "record and shot"
+msgstr "record 和 shot"
+
+msgid "missing {programs}"
+msgstr "缺少 {programs}"
+
+msgid "this ffmpeg has no libx264, which every recording uses."
+msgstr "此 ffmpeg 没有 libx264，而每次录制都要用到它。"
+
+msgid "no graphics render node in /dev/dri, so there is no GPU for it to use."
+msgstr "/dev/dri 中没有图形渲染节点，因此没有可供使用的 GPU。"
+
+msgid "{name}: NOT READY"
+msgstr "{name}：未就绪"
+
+msgid "{name}: ready"
+msgstr "{name}：就绪"
+
+msgid "edit, trim, caption, join, card, motion and poster"
+msgstr "edit、trim、caption、join、card、motion 和 poster"
+
+msgid "text on a card or a caption"
+msgstr "卡片或字幕上的文字"
+
+msgid "a private display did not start: {reason}"
+msgstr "私有显示屏未能启动：{reason}"
+
+msgid "no recording named {name} is running."
+msgstr "没有名为 {name} 的录制正在运行。"
+
+msgid "Running now: {names}."
+msgstr "正在运行：{names}。"
+
+msgid "no recording is running, so there is nothing to stop."
+msgstr "没有正在运行的录制，因此无需停止。"
+
+msgid ""
+"{count} recording is running: {names}.\n"
+"  Name the one to stop, e.g. {example}"
+msgid_plural ""
+"{count} recordings are running: {names}.\n"
+"  Name the one to stop, e.g. {example}"
+msgstr[0] ""
+"有 {count} 个录制正在运行：{names}。\n"
+"  请指明要停止哪一个，例如 {example}"
+
+msgid ""
+"the recording failed after it was stopped, so there is no video to hand back.\n"
+"  Its own error message says why."
+msgstr ""
+"录制在停止后失败了，因此没有可交付的视频。\n"
+"  原因见它自己的错误信息。"
+
+msgid "the recording ended before it started recording, so there is no video to stop."
+msgstr "录制在真正开始之前就结束了，因此没有可停止的视频。"
+
+msgid "{option} belongs to a --text, and none comes before it. caption never cuts the video; use trim."
+msgstr "{option} 必须跟在某个 --text 之后，但它前面没有。caption 从不剪切视频；请使用 trim。"
+
+msgid "{where}: there is no font file {path}"
+msgstr "{where}：字体文件 {path} 不存在"
+
+msgid "{where}: a font is found by its name with fc-match, which gave no answer here. Give the font's file instead: font /path/to/font.ttf"
+msgstr "{where}：字体是通过 fc-match 按名称查找的，而它在这里没有给出结果。请改为给出字体文件：font /path/to/font.ttf"
+
+msgid ""
+"{where}: this machine has no font named {font}; the nearest it offers is {nearest}.\n"
+"  `fc-list : family` lists the names it has."
+msgstr ""
+"{where}：本机没有名为 {font} 的字体；最接近的是 {nearest}。\n"
+"  `fc-list : family` 会列出本机已有的字体名称。"
+
+msgid "{where}: the font file {path} has a character in its path that ffmpeg's filters cannot carry. Copy it to a plainer path."
+msgstr "{where}：字体文件 {path} 的路径中有 ffmpeg 滤镜无法处理的字符。请把它复制到一个更简单的路径。"
+
+msgid "{where}: {word} takes a number of seconds, not {value}."
+msgstr "{where}：{word} 需要一个秒数，而不是 {value}。"
+
+msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
+msgstr "{where}：{kind} 行不接受 {word}。它接受：{words}。"
+
+msgid "{where}: {word} needs a value after it."
+msgstr "{where}：{word} 后面需要一个值。"
+
+msgid "line {number}"
+msgstr "第 {number} 行"
+
+msgid "{where} cannot be read: {reason}."
+msgstr "无法读取 {where}：{reason}。"
+
+msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
+msgstr "{where}：文字属于它上方的场景，但这一行之前没有场景。"
+
+msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
+msgstr "{where}：text 需要用引号括起来的文字：text \"Saving a file\""
+
+msgid "{where}: clip needs a video file after it."
+msgstr "{where}：clip 后面需要一个视频文件。"
+
+msgid "{where}: card needs its length in seconds: card 3"
+msgstr "{where}：card 需要以秒为单位的时长：card 3"
+
+msgid "{where}: a line starts with clip, card or text, not {word}."
+msgstr "{where}：每一行应以 clip、card 或 text 开头，而不是 {word}。"
+
+msgid "the script has no scenes in it. A scene is a line starting with clip or card."
+msgstr "脚本中没有任何场景。场景是以 clip 或 card 开头的行。"
+
+msgid "{where}: there is no file {path}"
+msgstr "{where}：文件 {path} 不存在"
+
+msgid "{where}: reading {path} took over {seconds}s."
+msgstr "{where}：读取 {path} 用时超过 {seconds} 秒。"
+
+msgid "{where}: {path} is not a video or picture ffmpeg can read."
+msgstr "{where}：{path} 不是 ffmpeg 能读取的视频或图片。"
+
+msgid "{where}: could not count the frames of {path}."
+msgstr "{where}：无法统计 {path} 的帧数。"
+
+msgid ""
+"{where}: {path} is too big an animation to hold in memory and play again and again ({count} frame of {size}).\n"
+"  Turn it into a video and use it as a clip instead."
+msgid_plural ""
+"{where}: {path} is too big an animation to hold in memory and play again and again ({count} frames of {size}).\n"
+"  Turn it into a video and use it as a clip instead."
+msgstr[0] ""
+"{where}：{path} 这个动画太大，无法放在内存中反复播放（{count} 帧，每帧 {size}）。\n"
+"  请先把它转成视频，再作为片段使用。"
+
+msgid "drawing a line of text took over {seconds}s."
+msgstr "绘制一行文字用时超过 {seconds} 秒。"
+
+msgid "this machine cannot draw text on a video: ffmpeg needs its drawtext filter and a font."
+msgstr "本机无法在视频上绘制文字：ffmpeg 需要 drawtext 滤镜和一种字体。"
+
+msgid "{where}: a text is one line of words, and this one is empty."
+msgstr "{where}：文字应为一行内容，而这一条是空的。"
+
+msgid "{where}: a text is one line of words, and this one is more than one line."
+msgstr "{where}：文字应为一行内容，而这一条超过了一行。"
+
+msgid "{where}: the text {words} is asked to show from {start} to {end}, which is not inside its scene ({scene_start} to {scene_end})."
+msgstr "{where}：文字 {words} 被要求从 {start} 显示到 {end}，但这不在其场景范围内（{scene_start} 到 {scene_end}）。"
+
+msgid "{where}: a text's size is a percentage of the frame's height, between 0 and 50, not {size}."
+msgstr "{where}：文字大小是占画面高度的百分比，应在 0 到 50 之间，而不是 {size}。"
+
+msgid "{where}: a text's {word} is a colour written #RRGGBB, like #FFD040, not {value}."
+msgstr "{where}：文字的 {word} 是一种颜色，写作 #RRGGBB，例如 #FFD040，而不是 {value}。"
+
+msgid "{where}: a text's band is on or off, not {value}."
+msgstr "{where}：文字的底条只能是 on 或 off，而不是 {value}。"
+
+msgid "{where}: a text sits at {places} or {last}, not at {value}."
+msgstr "{where}：文字的位置可以是 {places} 或 {last}，而不是 {value}。"
+
+msgid "{where}: the text {words} fades for {fades} seconds, and shows for only {seconds}."
+msgstr "{where}：文字 {words} 的淡入淡出共 {fades} 秒，而它只显示 {seconds} 秒。"
+
+msgid ""
+"{where}: a band that fades with its text needs a newer ffmpeg than this one: its text filter has no `boxw`.\n"
+"  Give the text `band off`, or take its fade away."
+msgstr ""
+"{where}：底条随文字一起淡入淡出需要更新版本的 ffmpeg：此版本的文字滤镜没有 `boxw`。\n"
+"  请给文字加上 `band off`，或去掉它的淡入淡出。"
+
+msgid ""
+"{where}: the text {words} is {wide} pixels wide at size {size}, and the frame has room for {room}.\n"
+"  Shorten it, or give it a smaller size: about {fits} would fit."
+msgstr ""
+"{where}：文字 {words} 在大小 {size} 下宽 {wide} 像素，而画面只容得下 {room}。\n"
+"  请缩短文字，或用更小的大小：约 {fits} 可以放下。"
+
+msgid "{where}: the texts {first} and {second} would be on screen at the same time. Only one shows at a time."
+msgstr "{where}：文字 {first} 和 {second} 会同时出现在屏幕上。同一时间只能显示一条。"
+
+msgid "{where}: a card needs a length above zero."
+msgstr "{where}：卡片的时长必须大于零。"
+
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, not {value}."
+msgstr "{where}：背景是一种颜色，写作 #RRGGBB，例如 {example}，而不是 {value}。"
+
+msgid "{where}: {path} has no length ffmpeg can tell."
+msgstr "{where}：ffmpeg 无法判断 {path} 的时长。"
+
+msgid "{where}: {path} is {size}, a different shape from the film's {film}, and demoreel will not stretch it."
+msgstr "{where}：{path} 的尺寸是 {size}，与影片的 {film} 比例不同，demoreel 不会拉伸它。"
+
+msgid "{where}: `{word} {value}` is past the end of {path}, which is {seconds} seconds long."
+msgstr "{where}：`{word} {value}` 超出了 {path} 的结尾，该文件长 {seconds} 秒。"
+
+msgid "{where}: `from` must come before `to`, and both inside {path} ({seconds} seconds long)."
+msgstr "{where}：`from` 必须在 `to` 之前，且两者都在 {path} 之内（长 {seconds} 秒）。"
+
+msgid "{where}: `fade-at {moment}` needs {seconds} seconds of the scene on each side, and the scene runs from {start} to {end}."
+msgstr "{where}：`fade-at {moment}` 需要前后各有 {seconds} 秒的场景，而该场景从 {start} 到 {end}。"
+
+msgid "{where}: its fades come to {fades} seconds, and the scene is only {seconds} long."
+msgstr "{where}：它的淡入淡出共 {fades} 秒，而场景只有 {seconds} 秒长。"
+
+msgid "{where}: its texts leave no room for the picture between them. Give them a smaller size."
+msgstr "{where}：它的文字之间没有给画面留下空间。请把文字调小。"
+
+msgid ""
+"a video's width and height must be even, since H.264 cannot encode an odd one, and this film would be {size}.\n"
+"  Set the size with -s {even}."
+msgstr ""
+"视频的宽度和高度必须是偶数，因为 H.264 无法编码奇数尺寸，而这部影片将是 {size}。\n"
+"  请用 -s {even} 设置尺寸。"
+
+msgid "--framerate takes a number above zero, not {rate}."
+msgstr "--framerate 需要一个大于零的数，而不是 {rate}。"
+
+msgid "-o must end in {ending}, and {name} does not."
+msgstr "-o 必须以 {ending} 结尾，而 {name} 不是。"
+
+msgid "-o must end in {ending} or {other}, and {name} does not."
+msgstr "-o 必须以 {ending} 或 {other} 结尾，而 {name} 不是。"
+
+msgid "-o is {output}, which is also a file this command reads. demoreel never writes over its own input."
+msgstr "-o 是 {output}，而这也是本命令要读取的文件。demoreel 从不覆盖自己的输入文件。"
+
+msgid "this ffmpeg cannot encode H.264 with libx264, which every video uses."
+msgstr "此 ffmpeg 无法用 libx264 编码 H.264，而每个视频都要用到它。"
+
+msgid "{where}: a crossfade fades from the scene before, and this is the first scene."
+msgstr "{where}：交叉淡化是从前一个场景过渡过来的，而这是第一个场景。"
+
+msgid "{where}: a scene takes a crossfade or a fade-in, not both."
+msgstr "{where}：一个场景只能使用交叉淡化或淡入之一，不能同时使用。"
+
+msgid "{where}: a crossfade of {seconds} seconds does not fit: the two scenes overlap for that long, and one of them is shorter."
+msgstr "{where}：{seconds} 秒的交叉淡化放不下：两个场景要重叠这么长时间，而其中一个比这更短。"
+
+msgid "text"
+msgstr "文字"
+
+msgid "scene {number}: {kind} {name}, {start} to {end}"
+msgstr "场景 {number}：{kind} {name}，{start} 到 {end}"
+
+msgid "making {output}, {seconds} seconds at {size}"
+msgstr "正在制作 {output}，{seconds} 秒，{size}"
+
+msgid "ffmpeg could not make the film."
+msgstr "ffmpeg 无法制作影片。"
+
+msgid "ffmpeg did not finish making the film in the time allowed for its length, so it was stopped."
+msgstr "ffmpeg 未能在按影片时长给定的时间内完成制作，因此已被停止。"
+
+msgid "could not read the script {path}: {reason}."
+msgstr "无法读取脚本 {path}：{reason}。"
+
+msgid "trim needs something to do: --from, --to, or a fade."
+msgstr "trim 需要有事可做：--from、--to 或淡入淡出。"
+
+msgid "join takes two or more videos; one on its own is already whole."
+msgstr "join 需要两个或更多视频；只有一个视频时它本身就已完整。"
+
+msgid "the card"
+msgstr "卡片"
+
+msgid "--from and --to must be inside {path}, which is {seconds} seconds long, with --from before --to."
+msgstr "--from 和 --to 必须在 {path} 之内（长 {seconds} 秒），且 --from 在 --to 之前。"
+
+msgid "reading {path} took too long for its length, so it was stopped."
+msgstr "读取 {path} 所用时间相对其时长过长，因此已被停止。"
+
+msgid "could not read the frames of {path}."
+msgstr "无法读取 {path} 的帧。"
+
+msgid "-t {time} is not inside {path}, which is {seconds} seconds long."
+msgstr "-t {time} 不在 {path} 之内，该文件长 {seconds} 秒。"
+
+msgid "could not take the frame at {time} from {path}."
+msgstr "无法从 {path} 中取出 {time} 处的帧。"
+
+msgid "taking the frame took over {seconds}s."
+msgstr "取帧用时超过 {seconds} 秒。"
+
+msgid "needs ffmpeg first"
+msgstr "需要先安装 ffmpeg"
+
+msgid "this ffmpeg has no libx264, which every video uses."
+msgstr "此 ffmpeg 没有 libx264，而每个视频都要用到它。"
+
+msgid "ffmpeg drew nothing for a line of text: no font was found."
+msgstr "ffmpeg 没有为一行文字绘制出任何内容：找不到字体。"
+
+#. argparse formats this text with %
+msgid "can this machine record? If not, it says what to install"
+msgstr "本机能否录制？如果不能，会告诉您需要安装什么"
+
+#. argparse formats this text with %
+msgid "record Kate for 20 seconds"
+msgstr "录制 Kate 20 秒"
+
+#. argparse formats this text with %
+msgid "one picture instead of a video"
+msgstr "截取一张图片而不是录制视频"
+
+#. argparse formats this text with %
+msgid "cut the end off a recording, where `demoreel motion demo.mp4` says to"
+msgstr "按 `demoreel motion demo.mp4` 给出的位置剪掉录制的结尾"
+
+#. argparse formats this text with %
+msgid "make a film from a script of scenes: clips, cards, text and fades"
+msgstr "根据场景脚本制作影片：片段、卡片、文字和淡入淡出"
+
+#. argparse formats this text with %
+msgid "record until you say stop, then stop it from any terminal"
+msgstr "一直录制到您喊停为止，可从任意终端停止"
+
+#. argparse formats this text with %
+msgid "show the app being used: these steps run while it records"
+msgstr "展示应用的使用过程：这些步骤会在录制期间执行"
+
+#. argparse formats this text with %
+msgid "an app that needs the graphics card (OpenGL, Vulkan)"
+msgstr "需要显卡的应用（OpenGL、Vulkan）"
+
+#. argparse formats this text with %
+msgid "a Flatpak app, which needs three flags on its own command line"
+msgstr "Flatpak 应用，需要在其自身的命令行上加三个参数"
+
+#. argparse formats this text with %
+msgid "examples:"
+msgstr "示例："
+
+#. argparse formats this text with %
+msgid ""
+"Record a GUI app on a private virtual display, so nothing of your real desktop\n"
+"is in frame."
+msgstr ""
+"在私有的虚拟显示屏上录制图形界面应用，这样您真实桌面上的任何内容\n"
+"都不会入镜。"
+
+#. argparse formats this text with %
+msgid "more examples:"
+msgstr "更多示例："
+
+#. argparse formats this text with %
+msgid "record an app and write a video file"
+msgstr "录制应用并写入视频文件"
+
+#. argparse formats this text with %
+msgid "video file to write (default: ./<app>-<timestamp>.mp4)"
+msgstr "要写入的视频文件（默认：./<app>-<timestamp>.mp4）"
+
+#. argparse formats this text with %
+msgid "seconds to record; 0 means until `demoreel stop` (default: 30)"
+msgstr "录制秒数；0 表示一直录制到 `demoreel stop`（默认：30）"
+
+#. argparse formats this text with %
+msgid "virtual display size, even numbers (default: 1600x1000)"
+msgstr "虚拟显示屏大小，须为偶数（默认：1600x1000）"
+
+#. argparse formats this text with %
+msgid "frames per second (default: 30)"
+msgstr "每秒帧数（默认：30）"
+
+#. argparse formats this text with %
+msgid "name for this run, so `demoreel stop` can find it (default: default)"
+msgstr "本次运行的名称，供 `demoreel stop` 找到它（默认：default）"
+
+#. argparse formats this text with %
+msgid "scripted step, repeatable and run in order: {steps}"
+msgstr "脚本步骤，可重复使用并按顺序执行：{steps}"
+
+#. argparse formats this text with %
+msgid "read the scripted steps from FILE, one per line, or from standard input for -; keeps typed text out of the process list. Not with -a"
+msgstr "从 FILE 读取脚本步骤，每行一个；FILE 为 - 时从标准输入读取。这样输入的文字不会出现在进程列表中。不能与 -a 同用"
+
+#. argparse formats this text with %
+msgid "keep the app's own output in PATH; otherwise it goes to this terminal's stderr. Useful when the app prints whether it drew the real thing, which no recording check here can tell"
+msgstr "将应用自身的输出保存到 PATH；否则输出到本终端的 stderr。当应用会打印它是否真正绘制了内容时很有用，这是此处任何录制检查都无法判断的"
+
+#. argparse formats this text with %
+msgid "wait up to SECONDS for the app to draw its first frame before recording starts, instead of filming its startup black screen (default: 0, don't wait)"
+msgstr "开始录制前最多等待 SECONDS 秒，让应用画出第一帧，而不是录下它启动时的黑屏（默认：0，不等待）"
+
+#. argparse formats this text with %
+msgid "for an app that needs the graphics card (OpenGL, Vulkan): record it on a headless compositor instead of Xvfb, which has no GPU. Needs cage, Xwayland, wlr-randr and wf-recorder; not with --cursor"
+msgstr "用于需要显卡的应用（OpenGL、Vulkan）：在无头合成器上录制，而不是在没有 GPU 的 Xvfb 上。需要 cage、Xwayland、wlr-randr 和 wf-recorder；不能与 --cursor 同用"
+
+#. argparse formats this text with %
+msgid "show the mouse pointer; off by default, since with no actions it just sits in the corner"
+msgstr "显示鼠标指针；默认关闭，因为没有操作时它只会停在角落里"
+
+#. argparse formats this text with %
+msgid "how long to wait for the app's window (default: 20)"
+msgstr "等待应用窗口出现的时长（默认：20）"
+
+#. argparse formats this text with %
+msgid "-- followed by the command that starts the app"
+msgstr "-- 后接启动应用的命令"
+
+#. argparse formats this text with %
+msgid "take one picture of an app and write a PNG"
+msgstr "为应用截取一张图片并写入 PNG 文件"
+
+#. argparse formats this text with %
+msgid "picture file to write (default: ./<app>-<timestamp>.png)"
+msgstr "要写入的图片文件（默认：./<app>-<timestamp>.png）"
+
+#. argparse formats this text with %
+msgid "virtual display size (default: 1600x1000)"
+msgstr "虚拟显示屏大小（默认：1600x1000）"
+
+#. argparse formats this text with %
+msgid "scripted step run before the picture, repeatable: {steps}"
+msgstr "截图前执行的脚本步骤，可重复使用：{steps}"
+
+#. argparse formats this text with %
+msgid "read the scripted steps from FILE, one per line, or from standard input for -. Not with -a"
+msgstr "从 FILE 读取脚本步骤，每行一个；FILE 为 - 时从标准输入读取。不能与 -a 同用"
+
+#. argparse formats this text with %
+msgid "keep the app's own output in PATH; otherwise it goes to this terminal's stderr"
+msgstr "将应用自身的输出保存到 PATH；否则输出到本终端的 stderr"
+
+#. argparse formats this text with %
+msgid "wait up to SECONDS for the app to draw before the steps and the picture (default: 10)"
+msgstr "在执行步骤和截图之前，最多等待 SECONDS 秒让应用完成绘制（默认：10）"
+
+#. argparse formats this text with %
+msgid "for an app that needs the graphics card: use a headless compositor instead of Xvfb. Needs cage, Xwayland and wlr-randr"
+msgstr "用于需要显卡的应用：使用无头合成器而不是 Xvfb。需要 cage、Xwayland 和 wlr-randr"
+
+#. argparse formats this text with %
+msgid "show the mouse pointer in the picture"
+msgstr "在图片中显示鼠标指针"
+
+#. argparse formats this text with %
+msgid "test whether this machine can record, without recording"
+msgstr "测试本机能否录制，但不实际录制"
+
+#. argparse formats this text with %
+msgid "Report what each backend needs and whether it is installed, start a private display to prove it works, and name the install command for anything missing. Exits non-zero if the default backend cannot record."
+msgstr "报告每个后端需要什么以及是否已安装，启动一个私有显示屏来证明其可用，并为缺少的组件给出安装命令。如果默认后端无法录制，则以非零状态退出。"
+
+#. argparse formats this text with %
+msgid "end a running recording early"
+msgstr "提前结束正在进行的录制"
+
+#. argparse formats this text with %
+msgid "which run to stop (default: the only one running)"
+msgstr "要停止哪一次运行（默认：唯一正在运行的那个）"
+
+#. argparse formats this text with %
+msgid "video file to write, ending in .mp4"
+msgstr "要写入的视频文件，以 .mp4 结尾"
+
+#. argparse formats this text with %
+msgid "start black; the picture arrives over SECONDS"
+msgstr "从黑屏开始；画面在 SECONDS 秒内逐渐出现"
+
+#. argparse formats this text with %
+msgid "go to black over the last SECONDS"
+msgstr "在最后 SECONDS 秒内逐渐变黑"
+
+#. argparse formats this text with %
+msgid "make a film from a script of scenes"
+msgstr "根据场景脚本制作影片"
+
+#. argparse formats this text with %
+msgid "make a film from a script of scenes."
+msgstr "根据场景脚本制作影片。"
+
+#. argparse formats this text with %
+msgid "the script file, or - for standard input"
+msgstr "脚本文件，或用 - 表示标准输入"
+
+#. argparse formats this text with %
+msgid "the film's picture size, like 1280x800 (default: the first clip's)"
+msgstr "影片的画面大小，例如 1280x800（默认：与第一个片段相同）"
+
+#. argparse formats this text with %
+msgid "the film's frames per second (default: the first clip's)"
+msgstr "影片的每秒帧数（默认：与第一个片段相同）"
+
+#. argparse formats this text with %
+msgid "cut the start and the end off a video"
+msgstr "剪掉视频的开头和结尾"
+
+#. argparse formats this text with %
+msgid "cut the start and the end off a video."
+msgstr "剪掉视频的开头和结尾。"
+
+#. argparse formats this text with %
+msgid "the video to cut"
+msgstr "要剪切的视频"
+
+#. argparse formats this text with %
+msgid "where the kept part starts (default: the start)"
+msgstr "保留部分的起点（默认：开头）"
+
+#. argparse formats this text with %
+msgid "the last moment kept (default: the end)"
+msgstr "保留的最后时刻（默认：结尾）"
+
+#. argparse formats this text with %
+msgid "fade to black and back around this moment; repeatable"
+msgstr "在此时刻前后淡出到黑屏再淡入；可重复使用"
+
+#. argparse formats this text with %
+msgid "how long each half of a --fade-at takes (default: {seconds})"
+msgstr "每次 --fade-at 的前后两半各持续多久（默认：{seconds}）"
+
+#. argparse formats this text with %
+msgid "put text over part of a video"
+msgstr "在视频的一部分上叠加文字"
+
+#. argparse formats this text with %
+msgid "put text over part of a video."
+msgstr "在视频的一部分上叠加文字。"
+
+#. argparse formats this text with %
+msgid "the video to put text on"
+msgstr "要叠加文字的视频"
+
+#. argparse formats this text with %
+msgid "one line of text; repeatable"
+msgstr "一行文字；可重复使用"
+
+#. argparse formats this text with %
+msgid "for the --text before it: when it appears"
+msgstr "作用于前面的 --text：何时出现"
+
+#. argparse formats this text with %
+msgid "for the --text before it: when it goes"
+msgstr "作用于前面的 --text：何时消失"
+
+#. argparse formats this text with %
+msgid "for the --text before it: its height, as a percentage of the frame's"
+msgstr "作用于前面的 --text：文字高度，以占画面高度的百分比表示"
+
+#. argparse formats this text with %
+msgid "put videos end to end"
+msgstr "将视频首尾相接"
+
+#. argparse formats this text with %
+msgid "put videos end to end."
+msgstr "将视频首尾相接。"
+
+#. argparse formats this text with %
+msgid "two or more videos, in order"
+msgstr "两个或更多视频，按顺序排列"
+
+#. argparse formats this text with %
+msgid "fade from each video into the next over SECONDS (default: a plain cut)"
+msgstr "在 SECONDS 秒内从每个视频淡化过渡到下一个（默认：直接切换）"
+
+#. argparse formats this text with %
+msgid "make a clip from a picture, or from text"
+msgstr "用图片或文字制作片段"
+
+#. argparse formats this text with %
+msgid "make a clip from a picture, or from text."
+msgstr "用图片或文字制作片段。"
+
+#. argparse formats this text with %
+msgid "a picture to show; a .gif or an animated .png plays"
+msgstr "要显示的图片；.gif 或动画 .png 会播放"
+
+#. argparse formats this text with %
+msgid "how many seconds the card lasts"
+msgstr "卡片持续的秒数"
+
+#. argparse formats this text with %
+msgid "one line of text"
+msgstr "一行文字"
+
+#. argparse formats this text with %
+msgid "the text's height, as a percentage of the frame's (default: {size})"
+msgstr "文字高度，以占画面高度的百分比表示（默认：{size}）"
+
+#. argparse formats this text with %
+msgid "the background colour (default: {colour})"
+msgstr "背景颜色（默认：{colour}）"
+
+#. argparse formats this text with %
+msgid "take the size and frame rate from this video"
+msgstr "使用此视频的大小和帧率"
+
+#. argparse formats this text with %
+msgid "the picture size, like 1280x800 (default: 1600x1000)"
+msgstr "画面大小，例如 1280x800（默认：1600x1000）"
+
+#. argparse formats this text with %
+msgid "report how smooth a video is and where it stands still"
+msgstr "报告视频的流畅程度以及画面静止的位置"
+
+#. argparse formats this text with %
+msgid "report how smooth a video is and where it stands still."
+msgstr "报告视频的流畅程度以及画面静止的位置。"
+
+#. argparse formats this text with %
+msgid "the video to look at"
+msgstr "要查看的视频"
+
+#. argparse formats this text with %
+msgid "look from here (default: the start)"
+msgstr "从此处开始查看（默认：开头）"
+
+#. argparse formats this text with %
+msgid "look up to here (default: the end)"
+msgstr "查看到此处为止（默认：结尾）"
+
+#. argparse formats this text with %
+msgid "report a stretch with no change longer than this (default: 1)"
+msgstr "报告无变化时长超过此值的片段（默认：1）"
+
+#. argparse formats this text with %
+msgid "print the report as one JSON object"
+msgstr "以单个 JSON 对象输出报告"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a picture"
+msgstr "将视频的一帧保存为图片"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a picture."
+msgstr "将视频的一帧保存为图片。"
+
+#. argparse formats this text with %
+msgid "picture file to write, ending in .png or .jpg"
+msgstr "要写入的图片文件，以 .png 或 .jpg 结尾"
+
+#. argparse formats this text with %
+msgid "the video to take the frame from"
+msgstr "要从中取帧的视频"
+
+#. argparse formats this text with %
+msgid "which moment to save"
+msgstr "要保存哪个时刻"

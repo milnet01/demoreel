@@ -1,0 +1,1046 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: demoreel\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ja\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Demoreel-Review: draft\n"
+
+msgid "ended by {signal} before it finished, so there is nothing to hand back."
+msgstr "完了する前に {signal} で終了したため、渡せるものはありません。"
+
+#. argparse formats this text with %
+msgid "usage: "
+msgstr "使い方: "
+
+#. argparse formats this text with %
+msgid "options"
+msgstr "オプション"
+
+#. argparse formats this text with %
+msgid "positional arguments"
+msgstr "位置引数"
+
+#. argparse formats this text with %
+msgid "show this help message and exit"
+msgstr "このヘルプを表示して終了します"
+
+#. argparse formats this text with %
+msgid "show program's version number and exit"
+msgstr "プログラムのバージョンを表示して終了します"
+
+#. argparse formats this text with %
+msgid "the following arguments are required: %s"
+msgstr "次の引数が必要です: %s"
+
+#. argparse formats this text with %
+msgid "unrecognized arguments: %s"
+msgstr "認識できない引数です: %s"
+
+#. argparse formats this text with %
+msgid "invalid choice: %(value)r (choose from %(choices)s)"
+msgstr "無効な選択肢です: %(value)r (%(choices)s から選んでください)"
+
+#. argparse formats this text with %
+msgid "This translation is a draft and has not yet been checked by a native speaker."
+msgstr "この翻訳は下書きで、まだネイティブスピーカーによる確認を受けていません。"
+
+msgid ""
+"could not use {path}: {reason}.\n"
+"  demoreel keeps its run files there. Point XDG_RUNTIME_DIR at a directory you can write to."
+msgstr ""
+"{path} を使えませんでした: {reason}。\n"
+"  demoreel は実行用のファイルをそこに置きます。XDG_RUNTIME_DIR を書き込み可能なディレクトリに設定してください。"
+
+msgid ""
+"{path} is not a directory you own, so demoreel will not use it.\n"
+"  On a shared machine another user can create that name first.\n"
+"  Remove it, or point XDG_RUNTIME_DIR at a directory you own."
+msgstr ""
+"{path} はあなたが所有するディレクトリではないため、demoreel は使用しません。\n"
+"  共有のマシンでは、別のユーザーが先にその名前を作成できてしまいます。\n"
+"  それを削除するか、XDG_RUNTIME_DIR をあなたが所有するディレクトリに設定してください。"
+
+msgid ""
+"a recording named {name} is already running.\n"
+"  Use --name to tell this run apart from it."
+msgstr ""
+"{name} という名前の録画がすでに実行中です。\n"
+"  --name を使って、この実行と区別してください。"
+
+msgid ""
+"a recording named {name} is already running (pid {pid}).\n"
+"  Use --name to tell this run apart from it."
+msgstr ""
+"{name} という名前の録画がすでに実行中です (pid {pid})。\n"
+"  --name を使って、この実行と区別してください。"
+
+msgid "Xvfb did not start, so there is no private display to record."
+msgstr "Xvfb が起動しなかったため、録画する非公開ディスプレイがありません。"
+
+msgid "It said: {text}"
+msgstr "出力内容: {text}"
+
+msgid "`demoreel check` tests this start on its own."
+msgstr "`demoreel check` でこの起動だけを単独でテストできます。"
+
+msgid "could not write the display's auth cookie, so the display cannot be made private."
+msgstr "ディスプレイの認証クッキーを書き込めなかったため、ディスプレイを非公開にできません。"
+
+msgid "xauth said: {text}"
+msgstr "xauth の出力: {text}"
+
+msgid "`demoreel check` tests this on its own."
+msgstr "`demoreel check` でこれを単独でテストできます。"
+
+msgid "the display did not lock: a client without its auth cookie could still connect, or none could."
+msgstr "ディスプレイがロックされませんでした。認証クッキーのないクライアントがまだ接続できたか、どのクライアントも接続できませんでした。"
+
+msgid "the GPU display did not start, so there is nothing to record on."
+msgstr "GPU ディスプレイが起動しなかったため、録画する場所がありません。"
+
+msgid "The end of its log:"
+msgstr "ログの末尾:"
+
+msgid "`demoreel check` says whether --gpu has what it needs."
+msgstr "`demoreel check` で --gpu に必要なものがそろっているかを確認できます。"
+
+msgid "the GPU display did not lock: a client without its auth cookie could still connect, or none could."
+msgstr "GPU ディスプレイがロックされませんでした。認証クッキーのないクライアントがまだ接続できたか、どのクライアントも接続できませんでした。"
+
+msgid "the private display {display} stopped answering: `xdotool {command}` did not return within {seconds}s."
+msgstr "非公開ディスプレイ {display} が応答しなくなりました。`xdotool {command}` が {seconds}秒以内に戻りませんでした。"
+
+msgid ""
+"the app resized its window to {size} at {place}, so it no longer fills the {frame} frame and part of the video is cropped or empty.\n"
+"  Record at the app's own size with -s {size}."
+msgstr ""
+"アプリが {place} の時点でウィンドウを {size} に変更したため、{frame} のフレームを埋めなくなり、動画の一部が切れているか空になっています。\n"
+"  -s {size} でアプリ自身のサイズで録画してください。"
+
+msgid ""
+"the app exited immediately (status 0) without opening a window.\n"
+"  The likely cause is a single-instance app: it finds a copy already\n"
+"  running on your real desktop, hands the request over to it and exits\n"
+"  successfully. If a copy is running, close it and try again.\n"
+"  If not, the command may simply have finished without needing a\n"
+"  window — in which case there is nothing to record."
+msgstr ""
+"アプリはウィンドウを開かずにすぐ終了しました (ステータス 0)。\n"
+"  よくある原因は、多重起動しないアプリです。実際のデスクトップで\n"
+"  すでに動いているアプリを見つけると、そちらに処理を渡して\n"
+"  正常に終了します。動いているなら、それを閉じてやり直してください。\n"
+"  そうでなければ、コマンドはウィンドウを必要とせずに単に\n"
+"  終わっただけかもしれません。その場合、録画するものはありません。"
+
+msgid ""
+"the app exited with status {status} before opening a window.\n"
+"  Its own output, above or in --app-log, says why. To see it on its own, run: {command}"
+msgstr ""
+"アプリはウィンドウを開く前にステータス {status} で終了しました。\n"
+"  理由は、上に表示されたアプリ自身の出力か --app-log にあります。単独で確認するには次を実行してください: {command}"
+
+msgid "cannot read the step {step}: {reason}."
+msgstr "ステップ {step} を読み取れません: {reason}。"
+
+msgid "unknown action {action}. The steps are: {steps}."
+msgstr "不明な操作 {action} です。使えるステップは次のとおりです: {steps}。"
+
+msgid "cannot read the step {step}: write it like {example}."
+msgstr "ステップ {step} を読み取れません。{example} のように書いてください。"
+
+msgid "could not read the steps file {path}: {reason}."
+msgstr "ステップファイル {path} を読み取れませんでした: {reason}。"
+
+msgid "ffmpeg could not start recording."
+msgstr "ffmpeg が録画を開始できませんでした。"
+
+msgid "`demoreel check` tests the programs and the encoder it needs."
+msgstr "`demoreel check` で必要なプログラムとエンコーダーをテストできます。"
+
+msgid "wf-recorder could not start recording."
+msgstr "wf-recorder が録画を開始できませんでした。"
+
+msgid ""
+"could not finish the video: turning the recording into {name} failed.\n"
+"  What was recorded is kept in {part}, and {log} says why."
+msgstr ""
+"動画を仕上げられませんでした。録画を {name} に変換できませんでした。\n"
+"  録画された内容は {part} に残してあり、理由は {log} にあります。"
+
+msgid "the display did not give up a frame within {seconds}s; it has stopped answering"
+msgstr "ディスプレイが {seconds}秒以内にフレームを返しませんでした。応答しなくなっています"
+
+msgid "ffmpeg exited {status} with no frame"
+msgstr "ffmpeg がフレームなしで終了しました ({status})"
+
+msgid "reading a frame of {path} took over {seconds}s"
+msgstr "{path} のフレームの読み取りに {seconds}秒以上かかりました"
+
+msgid "no frame of {path} could be read"
+msgstr "{path} のフレームを読み取れませんでした"
+
+msgid "this is a Flatpak target and the command is missing: {flags}"
+msgstr "これは Flatpak のアプリですが、コマンドに次が足りません: {flags}"
+
+msgid ""
+"A missing one can send it to your real compositor instead, leaving this\n"
+"recording empty. README.md says what each flag is for."
+msgstr ""
+"足りないと、アプリが実際のコンポジターに表示されてしまい、この録画は\n"
+"空になることがあります。各フラグの役割は README.md にあります。"
+
+msgid ""
+"openSUSE's own ffmpeg leaves it out. Install ffmpeg from the Packman repository,\n"
+"  which has it."
+msgstr ""
+"openSUSE 標準の ffmpeg には含まれていません。それを含む Packman リポジトリから\n"
+"  ffmpeg をインストールしてください。"
+
+msgid "Fedora's ffmpeg-free leaves it out. Enable RPM Fusion, then:"
+msgstr "Fedora の ffmpeg-free には含まれていません。RPM Fusion を有効にしてから次を実行してください:"
+
+msgid "Install a build of ffmpeg that includes libx264."
+msgstr "libx264 を含む ffmpeg をインストールしてください。"
+
+msgid "Install with: {command}"
+msgstr "インストール方法: {command}"
+
+msgid "missing required program(s): {programs}"
+msgstr "必要なプログラムがありません: {programs}"
+
+msgid "this ffmpeg cannot encode H.264 with libx264, which every recording uses."
+msgstr "この ffmpeg は libx264 で H.264 をエンコードできません。すべての録画でこれを使います。"
+
+msgid "--cursor is not available with record --gpu: that backend records the compositor's picture, which never has the pointer in it."
+msgstr "--cursor は record --gpu では使えません。このバックエンドはコンポジターの画面を録画し、そこにマウスポインターは写りません。"
+
+msgid "give the steps with -a or with --steps, not both."
+msgstr "ステップは -a か --steps のどちらか一方で指定してください。両方は使えません。"
+
+msgid "give the app to run after `--`, e.g. {example}"
+msgstr "実行するアプリは `--` の後に指定してください。例: {example}"
+
+msgid "--size takes a width and a height in pixels, like 1600x1000, not {size}."
+msgstr "--size には 1600x1000 のようにピクセル単位の幅と高さを指定します。{size} は使えません。"
+
+msgid ""
+"--size needs even numbers for a video, since H.264 cannot encode an odd width or height.\n"
+"  Try {size}."
+msgstr ""
+"H.264 は奇数の幅や高さをエンコードできないため、--size には偶数が必要です。\n"
+"  {size} を試してください。"
+
+msgid ""
+"the app log {path} is a symbolic link another user made, so demoreel\n"
+"  will not write through it: it could point at a file of yours.\n"
+"  Choose another path, or remove the link if it is not meant to be there."
+msgstr ""
+"アプリのログ {path} は別のユーザーが作ったシンボリックリンクなので、demoreel は\n"
+"  それを通して書き込みません。あなたのファイルを指しているかもしれないためです。\n"
+"  別のパスを選ぶか、意図しないリンクなら削除してください。"
+
+msgid ""
+"the output {path} is a symbolic link another user made, so demoreel\n"
+"  will not write through it: it could point at a file of yours.\n"
+"  Choose another path, or remove the link if it is not meant to be there."
+msgstr ""
+"出力先 {path} は別のユーザーが作ったシンボリックリンクなので、demoreel は\n"
+"  それを通して書き込みません。あなたのファイルを指しているかもしれないためです。\n"
+"  別のパスを選ぶか、意図しないリンクなら削除してください。"
+
+msgid ""
+"could not run {command}: {reason}.\n"
+"  Check that the command after `--` is installed and spelled as you would type it."
+msgstr ""
+"{command} を実行できませんでした: {reason}。\n"
+"  `--` の後のコマンドがインストールされていて、普段入力するとおりに書かれているか確認してください。"
+
+msgid ""
+"no window appeared within {seconds}s; taking the picture anyway.\n"
+"  If the app is slow to start, give it longer with --startup-timeout."
+msgstr ""
+"{seconds}秒以内にウィンドウが現れませんでした。このまま画像を撮ります。\n"
+"  アプリの起動が遅い場合は、--startup-timeout で待ち時間を延ばしてください。"
+
+msgid ""
+"no window appeared within {seconds}s; recording anyway.\n"
+"  If the app is slow to start, give it longer with --startup-timeout."
+msgstr ""
+"{seconds}秒以内にウィンドウが現れませんでした。このまま録画します。\n"
+"  アプリの起動が遅い場合は、--startup-timeout で待ち時間を延ばしてください。"
+
+msgid ""
+"It had not drawn yet. A GPU app can spend seconds on a black\n"
+"    screen while it starts: --settle waits for the first picture."
+msgstr ""
+"まだ描画していなかった。GPU を使うアプリは起動中、数秒間\n"
+"    黒い画面のままのことがあります。--settle で最初の画面を待てます。"
+
+msgid ""
+"It needs the GPU, and Xvfb has none. An OpenGL or Vulkan app\n"
+"    cannot render on it at all: record it with --gpu instead."
+msgstr ""
+"GPU が必要なのに、Xvfb には GPU がない。OpenGL や Vulkan のアプリは\n"
+"    そこではまったく描画できません。代わりに --gpu で録画してください。"
+
+msgid "The app ran but drew nothing here. Two causes account for most of it:"
+msgstr "アプリは動きましたが、ここには何も描画しませんでした。原因はほとんどの場合、次の 2 つです:"
+
+msgid ""
+"It rendered somewhere else. A Flatpak needs --nosocket=wayland on\n"
+"    its command line; see README.md."
+msgstr ""
+"別の場所に描画した。Flatpak ではコマンドラインに\n"
+"    --nosocket=wayland が必要です。README.md を参照してください。"
+
+msgid "--settle could not sample the display, so it cannot tell when the app has drawn."
+msgstr "--settle がディスプレイを調べられなかったため、アプリが描画したかどうかを判断できません。"
+
+msgid ""
+"nothing was drawn within {seconds}s; recording anyway.\n"
+"  If the app takes longer to show its first picture, raise --settle."
+msgstr ""
+"{seconds}秒以内に何も描画されませんでした。このまま録画します。\n"
+"  アプリが最初の画面を表示するのにもっと時間がかかる場合は、--settle を増やしてください。"
+
+msgid "the recorder stopped early; see {log}"
+msgstr "録画プログラムが途中で止まりました。{log} を参照してください"
+
+msgid "recording, {seconds}s left"
+msgstr "録画中、残り {seconds}秒"
+
+msgid "recording for {time} (Ctrl+C to finish)"
+msgstr "録画中 {time} (Ctrl+C で終了)"
+
+msgid "the app closed; ending the recording."
+msgstr "アプリが閉じたので、録画を終了します。"
+
+msgid ""
+"no video was written to {output}: the recorder produced nothing.\n"
+"  Its log, {log}, says why."
+msgstr ""
+"{output} に動画が書き込まれませんでした。録画プログラムが何も出力しませんでした。\n"
+"  理由はログ {log} にあります。"
+
+msgid "the video cannot be played: {output}"
+msgstr "動画を再生できません: {output}"
+
+msgid "The recorder most likely stopped before it finished the file. See {log}"
+msgstr "録画プログラムがファイルを書き終える前に止まった可能性が高いです。{log} を参照してください"
+
+msgid "the virtual display was blank halfway, so at least half of it is a flat colour: {output}"
+msgstr "仮想ディスプレイが途中の時点で空だったため、動画の少なくとも半分は単色です: {output}"
+
+msgid "the virtual display was blank at the end, so it ends on a flat colour: {output}"
+msgstr "仮想ディスプレイが最後に空だったため、動画は単色で終わっています: {output}"
+
+msgid ""
+"could not sample the virtual display to check {output} is not blank,\n"
+"  so this run cannot vouch for it."
+msgstr ""
+"{output} が空でないことを確かめるために仮想ディスプレイを調べられなかったため、\n"
+"  この実行ではその内容を保証できません。"
+
+msgid ""
+"could not read {output} back to check it is not blank,\n"
+"  so this run cannot vouch for it."
+msgstr ""
+"{output} が空でないことを確かめるために読み戻せなかったため、\n"
+"  この実行ではその内容を保証できません。"
+
+msgid ""
+"the video is a flat colour halfway, though the private screen was not: {output}\n"
+"  The recorder captured something other than the screen. See {log}"
+msgstr ""
+"非公開の画面は空ではなかったのに、動画は途中の時点で単色です: {output}\n"
+"  録画プログラムが画面以外のものを録画しました。{log} を参照してください"
+
+msgid ""
+"the video is a flat colour at the end, though the private screen was not: {output}\n"
+"  The recorder captured something other than the screen. See {log}"
+msgstr ""
+"非公開の画面は空ではなかったのに、動画は最後が単色です: {output}\n"
+"  録画プログラムが画面以外のものを録画しました。{log} を参照してください"
+
+msgid ""
+"only {share} of the frames in the middle of {output} changed from the one before.\n"
+"  If the app was moving the whole time, it drew that few new frames itself: the video has every frame it drew."
+msgstr ""
+"{output} の中ほどのフレームのうち、前のフレームから変化したのは {share} だけです。\n"
+"  アプリがずっと動いていたなら、アプリ自身がそれだけしか新しいフレームを描画しなかったということです。動画には描画されたすべてのフレームが入っています。"
+
+msgid "reading it back took over {seconds}s."
+msgstr "読み戻しに {seconds}秒以上かかりました。"
+
+msgid "ffprobe could not read it."
+msgstr "ffprobe が読み取れませんでした。"
+
+msgid "{seconds}s of video, {size}"
+msgstr "{seconds}秒の動画、{size}"
+
+msgid "recording {display} to {output} (until stopped)"
+msgstr "{display} を {output} に録画中 (停止するまで)"
+
+msgid "recording {display} to {output} ({seconds}s)"
+msgstr "{display} を {output} に録画中 ({seconds}秒)"
+
+msgid "could not take the picture."
+msgstr "画像を撮れませんでした。"
+
+msgid "could not read back {output} to check it is not blank."
+msgstr "{output} が空でないことを確かめるために読み戻せませんでした。"
+
+msgid "the picture is one flat colour: {output}"
+msgstr "画像が単色です: {output}"
+
+msgid ""
+"nothing was drawn within {seconds}s; taking the picture anyway.\n"
+"  If the app takes longer to show its first picture, raise --settle."
+msgstr ""
+"{seconds}秒以内に何も描画されませんでした。このまま画像を撮ります。\n"
+"  アプリが最初の画面を表示するのにもっと時間がかかる場合は、--settle を増やしてください。"
+
+msgid "could not take the picture: the display did not answer within {seconds}s."
+msgstr "画像を撮れませんでした。ディスプレイが {seconds}秒以内に応答しませんでした。"
+
+msgid "Its display log is kept in {folder}"
+msgstr "ディスプレイのログは {folder} に残してあります"
+
+msgid "record and shot"
+msgstr "record と shot"
+
+msgid "missing {programs}"
+msgstr "{programs} がありません"
+
+msgid "this ffmpeg has no libx264, which every recording uses."
+msgstr "この ffmpeg には libx264 がありません。すべての録画でこれを使います。"
+
+msgid "no graphics render node in /dev/dri, so there is no GPU for it to use."
+msgstr "/dev/dri にグラフィックスのレンダーノードがないため、使える GPU がありません。"
+
+msgid "{name}: NOT READY"
+msgstr "{name}: 準備できていません"
+
+msgid "{name}: ready"
+msgstr "{name}: 準備完了"
+
+msgid "edit, trim, caption, join, card, motion and poster"
+msgstr "edit、trim、caption、join、card、motion、poster"
+
+msgid "text on a card or a caption"
+msgstr "カードや字幕のテキスト"
+
+msgid "a private display did not start: {reason}"
+msgstr "非公開ディスプレイが起動しませんでした: {reason}"
+
+msgid "no recording named {name} is running."
+msgstr "{name} という名前の録画は実行されていません。"
+
+msgid "Running now: {names}."
+msgstr "実行中: {names}。"
+
+msgid "no recording is running, so there is nothing to stop."
+msgstr "実行中の録画がないため、停止するものはありません。"
+
+msgid ""
+"{count} recording is running: {names}.\n"
+"  Name the one to stop, e.g. {example}"
+msgid_plural ""
+"{count} recordings are running: {names}.\n"
+"  Name the one to stop, e.g. {example}"
+msgstr[0] ""
+"{count} 件の録画が実行中です: {names}。\n"
+"  停止するものを名前で指定してください。例: {example}"
+
+msgid ""
+"the recording failed after it was stopped, so there is no video to hand back.\n"
+"  Its own error message says why."
+msgstr ""
+"録画は停止後に失敗したため、渡せる動画はありません。\n"
+"  理由は録画自身のエラーメッセージにあります。"
+
+msgid "the recording ended before it started recording, so there is no video to stop."
+msgstr "録画が始まる前に終了したため、停止する動画はありません。"
+
+msgid "{option} belongs to a --text, and none comes before it. caption never cuts the video; use trim."
+msgstr "{option} は --text に付けるものですが、その前にそれがありません。caption は動画を切りません。切るには trim を使ってください。"
+
+msgid "{where}: there is no font file {path}"
+msgstr "{where}: フォントファイル {path} がありません"
+
+msgid "{where}: a font is found by its name with fc-match, which gave no answer here. Give the font's file instead: font /path/to/font.ttf"
+msgstr "{where}: フォントは fc-match で名前から探しますが、ここでは答えが返りませんでした。代わりにフォントのファイルを指定してください: font /path/to/font.ttf"
+
+msgid ""
+"{where}: this machine has no font named {font}; the nearest it offers is {nearest}.\n"
+"  `fc-list : family` lists the names it has."
+msgstr ""
+"{where}: このマシンには {font} という名前のフォントがありません。いちばん近いのは {nearest} です。\n"
+"  `fc-list : family` で使えるフォント名を一覧できます。"
+
+msgid "{where}: the font file {path} has a character in its path that ffmpeg's filters cannot carry. Copy it to a plainer path."
+msgstr "{where}: フォントファイル {path} のパスに、ffmpeg のフィルターで扱えない文字があります。もっと単純なパスにコピーしてください。"
+
+msgid "{where}: {word} takes a number of seconds, not {value}."
+msgstr "{where}: {word} には秒数を指定します。{value} は使えません。"
+
+msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
+msgstr "{where}: {word} は {kind} の行には使えません。使えるのは次のとおりです: {words}。"
+
+msgid "{where}: {word} needs a value after it."
+msgstr "{where}: {word} の後に値が必要です。"
+
+msgid "line {number}"
+msgstr "{number} 行目"
+
+msgid "{where} cannot be read: {reason}."
+msgstr "{where} を読み取れません: {reason}。"
+
+msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
+msgstr "{where}: text はその上にあるシーンに付くものですが、この行より前にシーンがありません。"
+
+msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
+msgstr "{where}: text には引用符で囲んだ文字が必要です: text \"Saving a file\""
+
+msgid "{where}: clip needs a video file after it."
+msgstr "{where}: clip の後に動画ファイルが必要です。"
+
+msgid "{where}: card needs its length in seconds: card 3"
+msgstr "{where}: card には秒単位の長さが必要です: card 3"
+
+msgid "{where}: a line starts with clip, card or text, not {word}."
+msgstr "{where}: 行は clip、card、text のどれかで始めます。{word} では始められません。"
+
+msgid "the script has no scenes in it. A scene is a line starting with clip or card."
+msgstr "スクリプトにシーンがありません。シーンとは clip か card で始まる行のことです。"
+
+msgid "{where}: there is no file {path}"
+msgstr "{where}: ファイル {path} がありません"
+
+msgid "{where}: reading {path} took over {seconds}s."
+msgstr "{where}: {path} の読み取りに {seconds}秒以上かかりました。"
+
+msgid "{where}: {path} is not a video or picture ffmpeg can read."
+msgstr "{where}: {path} は ffmpeg が読める動画や画像ではありません。"
+
+msgid "{where}: could not count the frames of {path}."
+msgstr "{where}: {path} のフレーム数を数えられませんでした。"
+
+msgid ""
+"{where}: {path} is too big an animation to hold in memory and play again and again ({count} frame of {size}).\n"
+"  Turn it into a video and use it as a clip instead."
+msgid_plural ""
+"{where}: {path} is too big an animation to hold in memory and play again and again ({count} frames of {size}).\n"
+"  Turn it into a video and use it as a clip instead."
+msgstr[0] ""
+"{where}: {path} はメモリーに置いて繰り返し再生するには大きすぎるアニメーションです ({size} のフレームが {count} 枚)。\n"
+"  動画に変換して、代わりに clip として使ってください。"
+
+msgid "drawing a line of text took over {seconds}s."
+msgstr "1 行のテキストの描画に {seconds}秒以上かかりました。"
+
+msgid "this machine cannot draw text on a video: ffmpeg needs its drawtext filter and a font."
+msgstr "このマシンでは動画にテキストを描画できません。ffmpeg の drawtext フィルターとフォントが必要です。"
+
+msgid "{where}: a text is one line of words, and this one is empty."
+msgstr "{where}: text は 1 行の文字ですが、これは空です。"
+
+msgid "{where}: a text is one line of words, and this one is more than one line."
+msgstr "{where}: text は 1 行の文字ですが、これは 2 行以上あります。"
+
+msgid "{where}: the text {words} is asked to show from {start} to {end}, which is not inside its scene ({scene_start} to {scene_end})."
+msgstr "{where}: テキスト {words} は {start} から {end} まで表示するよう指定されていますが、これはシーンの範囲 ({scene_start} から {scene_end}) に収まっていません。"
+
+msgid "{where}: a text's size is a percentage of the frame's height, between 0 and 50, not {size}."
+msgstr "{where}: テキストのサイズはフレームの高さに対する割合 (パーセント) で、0 から 50 の間です。{size} は使えません。"
+
+msgid "{where}: a text's {word} is a colour written #RRGGBB, like #FFD040, not {value}."
+msgstr "{where}: テキストの {word} は #FFD040 のように #RRGGBB 形式の色で指定します。{value} は使えません。"
+
+msgid "{where}: a text's band is on or off, not {value}."
+msgstr "{where}: テキストの band は on か off です。{value} は使えません。"
+
+msgid "{where}: a text sits at {places} or {last}, not at {value}."
+msgstr "{where}: テキストの位置は {places} か {last} です。{value} は使えません。"
+
+msgid "{where}: the text {words} fades for {fades} seconds, and shows for only {seconds}."
+msgstr "{where}: テキスト {words} のフェードは {fades} 秒ですが、表示は {seconds} 秒しかありません。"
+
+msgid ""
+"{where}: a band that fades with its text needs a newer ffmpeg than this one: its text filter has no `boxw`.\n"
+"  Give the text `band off`, or take its fade away."
+msgstr ""
+"{where}: テキストと一緒にフェードする帯には、これより新しい ffmpeg が必要です。このテキストフィルターには `boxw` がありません。\n"
+"  テキストに `band off` を指定するか、フェードを外してください。"
+
+msgid ""
+"{where}: the text {words} is {wide} pixels wide at size {size}, and the frame has room for {room}.\n"
+"  Shorten it, or give it a smaller size: about {fits} would fit."
+msgstr ""
+"{where}: テキスト {words} はサイズ {size} で幅 {wide} ピクセルですが、フレームの余裕は {room} です。\n"
+"  短くするか、サイズを小さくしてください。{fits} 程度なら収まります。"
+
+msgid "{where}: the texts {first} and {second} would be on screen at the same time. Only one shows at a time."
+msgstr "{where}: テキスト {first} と {second} が同時に画面に出てしまいます。一度に表示できるのは 1 つだけです。"
+
+msgid "{where}: a card needs a length above zero."
+msgstr "{where}: card の長さは 0 より大きくしてください。"
+
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, not {value}."
+msgstr "{where}: 背景は {example} のように #RRGGBB 形式の色で指定します。{value} は使えません。"
+
+msgid "{where}: {path} has no length ffmpeg can tell."
+msgstr "{where}: {path} の長さを ffmpeg が判断できません。"
+
+msgid "{where}: {path} is {size}, a different shape from the film's {film}, and demoreel will not stretch it."
+msgstr "{where}: {path} は {size} で、映像の {film} とは縦横の形が違います。demoreel は引き伸ばしません。"
+
+msgid "{where}: `{word} {value}` is past the end of {path}, which is {seconds} seconds long."
+msgstr "{where}: `{word} {value}` は {path} の終わりを過ぎています。長さは {seconds} 秒です。"
+
+msgid "{where}: `from` must come before `to`, and both inside {path} ({seconds} seconds long)."
+msgstr "{where}: `from` は `to` より前で、どちらも {path} (長さ {seconds} 秒) の範囲内にしてください。"
+
+msgid "{where}: `fade-at {moment}` needs {seconds} seconds of the scene on each side, and the scene runs from {start} to {end}."
+msgstr "{where}: `fade-at {moment}` には前後それぞれに {seconds} 秒のシーンが必要ですが、シーンは {start} から {end} までです。"
+
+msgid "{where}: its fades come to {fades} seconds, and the scene is only {seconds} long."
+msgstr "{where}: フェードの合計が {fades} 秒ですが、シーンは {seconds} 秒しかありません。"
+
+msgid "{where}: its texts leave no room for the picture between them. Give them a smaller size."
+msgstr "{where}: テキストの間に映像の入る余地がありません。テキストのサイズを小さくしてください。"
+
+msgid ""
+"a video's width and height must be even, since H.264 cannot encode an odd one, and this film would be {size}.\n"
+"  Set the size with -s {even}."
+msgstr ""
+"H.264 は奇数をエンコードできないため、動画の幅と高さは偶数でなければなりませんが、この映像は {size} になります。\n"
+"  -s {even} でサイズを指定してください。"
+
+msgid "--framerate takes a number above zero, not {rate}."
+msgstr "--framerate には 0 より大きい数を指定します。{rate} は使えません。"
+
+msgid "-o must end in {ending}, and {name} does not."
+msgstr "-o は {ending} で終わる必要がありますが、{name} はそうなっていません。"
+
+msgid "-o must end in {ending} or {other}, and {name} does not."
+msgstr "-o は {ending} か {other} で終わる必要がありますが、{name} はそうなっていません。"
+
+msgid "-o is {output}, which is also a file this command reads. demoreel never writes over its own input."
+msgstr "-o の {output} は、このコマンドが読み込むファイルでもあります。demoreel は自分の入力を上書きしません。"
+
+msgid "this ffmpeg cannot encode H.264 with libx264, which every video uses."
+msgstr "この ffmpeg は libx264 で H.264 をエンコードできません。すべての動画でこれを使います。"
+
+msgid "{where}: a crossfade fades from the scene before, and this is the first scene."
+msgstr "{where}: クロスフェードは前のシーンから切り替わるものですが、これは最初のシーンです。"
+
+msgid "{where}: a scene takes a crossfade or a fade-in, not both."
+msgstr "{where}: シーンにはクロスフェードかフェードインのどちらか一方だけを付けられます。"
+
+msgid "{where}: a crossfade of {seconds} seconds does not fit: the two scenes overlap for that long, and one of them is shorter."
+msgstr "{where}: {seconds} 秒のクロスフェードは収まりません。2 つのシーンがその長さだけ重なりますが、どちらかがそれより短いためです。"
+
+msgid "text"
+msgstr "テキスト"
+
+msgid "scene {number}: {kind} {name}, {start} to {end}"
+msgstr "シーン {number}: {kind} {name}、{start} から {end}"
+
+msgid "making {output}, {seconds} seconds at {size}"
+msgstr "{output} を作成中、{seconds} 秒、{size}"
+
+msgid "ffmpeg could not make the film."
+msgstr "ffmpeg が映像を作成できませんでした。"
+
+msgid "ffmpeg did not finish making the film in the time allowed for its length, so it was stopped."
+msgstr "ffmpeg が映像の長さに見合った時間内に作成を終えなかったため、停止しました。"
+
+msgid "could not read the script {path}: {reason}."
+msgstr "スクリプト {path} を読み取れませんでした: {reason}。"
+
+msgid "trim needs something to do: --from, --to, or a fade."
+msgstr "trim には何をするかの指定が必要です: --from、--to、またはフェード。"
+
+msgid "join takes two or more videos; one on its own is already whole."
+msgstr "join には 2 つ以上の動画が必要です。1 つだけならそれで完成しています。"
+
+msgid "the card"
+msgstr "カード"
+
+msgid "--from and --to must be inside {path}, which is {seconds} seconds long, with --from before --to."
+msgstr "--from と --to は {path} (長さ {seconds} 秒) の範囲内で、--from を --to より前にしてください。"
+
+msgid "reading {path} took too long for its length, so it was stopped."
+msgstr "{path} の読み取りが長さに比べて時間がかかりすぎたため、停止しました。"
+
+msgid "could not read the frames of {path}."
+msgstr "{path} のフレームを読み取れませんでした。"
+
+msgid "-t {time} is not inside {path}, which is {seconds} seconds long."
+msgstr "-t {time} は {path} (長さ {seconds} 秒) の範囲内にありません。"
+
+msgid "could not take the frame at {time} from {path}."
+msgstr "{path} から {time} のフレームを取り出せませんでした。"
+
+msgid "taking the frame took over {seconds}s."
+msgstr "フレームの取り出しに {seconds}秒以上かかりました。"
+
+msgid "needs ffmpeg first"
+msgstr "先に ffmpeg が必要です"
+
+msgid "this ffmpeg has no libx264, which every video uses."
+msgstr "この ffmpeg には libx264 がありません。すべての動画でこれを使います。"
+
+msgid "ffmpeg drew nothing for a line of text: no font was found."
+msgstr "ffmpeg がテキストの行を何も描画しませんでした。フォントが見つかりませんでした。"
+
+#. argparse formats this text with %
+msgid "can this machine record? If not, it says what to install"
+msgstr "このマシンで録画できるか確認し、できなければ何をインストールすればよいかを示します"
+
+#. argparse formats this text with %
+msgid "record Kate for 20 seconds"
+msgstr "Kate を 20 秒間録画します"
+
+#. argparse formats this text with %
+msgid "one picture instead of a video"
+msgstr "動画の代わりに画像を 1 枚撮ります"
+
+#. argparse formats this text with %
+msgid "cut the end off a recording, where `demoreel motion demo.mp4` says to"
+msgstr "`demoreel motion demo.mp4` が示す位置で、録画の終わりを切り落とします"
+
+#. argparse formats this text with %
+msgid "make a film from a script of scenes: clips, cards, text and fades"
+msgstr "シーンのスクリプトから映像を作ります: クリップ、カード、テキスト、フェード"
+
+#. argparse formats this text with %
+msgid "record until you say stop, then stop it from any terminal"
+msgstr "止めるまで録画し、どの端末からでも停止できます"
+
+#. argparse formats this text with %
+msgid "show the app being used: these steps run while it records"
+msgstr "アプリを操作する様子を見せます: 録画中にこれらのステップを実行します"
+
+#. argparse formats this text with %
+msgid "an app that needs the graphics card (OpenGL, Vulkan)"
+msgstr "グラフィックカードが必要なアプリ (OpenGL、Vulkan)"
+
+#. argparse formats this text with %
+msgid "a Flatpak app, which needs three flags on its own command line"
+msgstr "Flatpak アプリ。そのコマンドラインに 3 つのフラグが必要です"
+
+#. argparse formats this text with %
+msgid "examples:"
+msgstr "例:"
+
+#. argparse formats this text with %
+msgid ""
+"Record a GUI app on a private virtual display, so nothing of your real desktop\n"
+"is in frame."
+msgstr ""
+"GUI アプリを非公開の仮想ディスプレイで録画するので、実際のデスクトップは\n"
+"何も映りません。"
+
+#. argparse formats this text with %
+msgid "more examples:"
+msgstr "その他の例:"
+
+#. argparse formats this text with %
+msgid "record an app and write a video file"
+msgstr "アプリを録画して動画ファイルを書き出します"
+
+#. argparse formats this text with %
+msgid "video file to write (default: ./<app>-<timestamp>.mp4)"
+msgstr "書き出す動画ファイル (既定値: ./<app>-<timestamp>.mp4)"
+
+#. argparse formats this text with %
+msgid "seconds to record; 0 means until `demoreel stop` (default: 30)"
+msgstr "録画する秒数。0 なら `demoreel stop` まで (既定値: 30)"
+
+#. argparse formats this text with %
+msgid "virtual display size, even numbers (default: 1600x1000)"
+msgstr "仮想ディスプレイのサイズ、偶数で指定 (既定値: 1600x1000)"
+
+#. argparse formats this text with %
+msgid "frames per second (default: 30)"
+msgstr "1 秒あたりのフレーム数 (既定値: 30)"
+
+#. argparse formats this text with %
+msgid "name for this run, so `demoreel stop` can find it (default: default)"
+msgstr "この実行の名前。`demoreel stop` が見つけるために使います (既定値: default)"
+
+#. argparse formats this text with %
+msgid "scripted step, repeatable and run in order: {steps}"
+msgstr "スクリプトのステップ。繰り返し指定でき、順番に実行します: {steps}"
+
+#. argparse formats this text with %
+msgid "read the scripted steps from FILE, one per line, or from standard input for -; keeps typed text out of the process list. Not with -a"
+msgstr "スクリプトのステップを FILE から 1 行に 1 つずつ読みます。- なら標準入力から読みます。入力する文字がプロセス一覧に出ません。-a とは併用できません"
+
+#. argparse formats this text with %
+msgid "keep the app's own output in PATH; otherwise it goes to this terminal's stderr. Useful when the app prints whether it drew the real thing, which no recording check here can tell"
+msgstr "アプリ自身の出力を PATH に保存します。指定しなければこの端末の stderr に出ます。アプリが本来の画面を描画できたかを出力する場合に便利です。それはここの録画チェックでは判断できません"
+
+#. argparse formats this text with %
+msgid "wait up to SECONDS for the app to draw its first frame before recording starts, instead of filming its startup black screen (default: 0, don't wait)"
+msgstr "起動時の黒い画面を撮る代わりに、録画開始前にアプリが最初のフレームを描画するまで最大 SECONDS 秒待ちます (既定値: 0、待たない)"
+
+#. argparse formats this text with %
+msgid "for an app that needs the graphics card (OpenGL, Vulkan): record it on a headless compositor instead of Xvfb, which has no GPU. Needs cage, Xwayland, wlr-randr and wf-recorder; not with --cursor"
+msgstr "グラフィックカードが必要なアプリ (OpenGL、Vulkan) 向け: GPU のない Xvfb の代わりに、ヘッドレスのコンポジターで録画します。cage、Xwayland、wlr-randr、wf-recorder が必要です。--cursor とは併用できません"
+
+#. argparse formats this text with %
+msgid "show the mouse pointer; off by default, since with no actions it just sits in the corner"
+msgstr "マウスポインターを表示します。操作がなければ隅にあるだけなので、既定では表示しません"
+
+#. argparse formats this text with %
+msgid "how long to wait for the app's window (default: 20)"
+msgstr "アプリのウィンドウを待つ時間 (既定値: 20)"
+
+#. argparse formats this text with %
+msgid "-- followed by the command that starts the app"
+msgstr "-- の後にアプリを起動するコマンドを続けます"
+
+#. argparse formats this text with %
+msgid "take one picture of an app and write a PNG"
+msgstr "アプリの画像を 1 枚撮って PNG を書き出します"
+
+#. argparse formats this text with %
+msgid "picture file to write (default: ./<app>-<timestamp>.png)"
+msgstr "書き出す画像ファイル (既定値: ./<app>-<timestamp>.png)"
+
+#. argparse formats this text with %
+msgid "virtual display size (default: 1600x1000)"
+msgstr "仮想ディスプレイのサイズ (既定値: 1600x1000)"
+
+#. argparse formats this text with %
+msgid "scripted step run before the picture, repeatable: {steps}"
+msgstr "画像を撮る前に実行するスクリプトのステップ。繰り返し指定できます: {steps}"
+
+#. argparse formats this text with %
+msgid "read the scripted steps from FILE, one per line, or from standard input for -. Not with -a"
+msgstr "スクリプトのステップを FILE から 1 行に 1 つずつ読みます。- なら標準入力から読みます。-a とは併用できません"
+
+#. argparse formats this text with %
+msgid "keep the app's own output in PATH; otherwise it goes to this terminal's stderr"
+msgstr "アプリ自身の出力を PATH に保存します。指定しなければこの端末の stderr に出ます"
+
+#. argparse formats this text with %
+msgid "wait up to SECONDS for the app to draw before the steps and the picture (default: 10)"
+msgstr "ステップと撮影の前に、アプリが描画するまで最大 SECONDS 秒待ちます (既定値: 10)"
+
+#. argparse formats this text with %
+msgid "for an app that needs the graphics card: use a headless compositor instead of Xvfb. Needs cage, Xwayland and wlr-randr"
+msgstr "グラフィックカードが必要なアプリ向け: Xvfb の代わりにヘッドレスのコンポジターを使います。cage、Xwayland、wlr-randr が必要です"
+
+#. argparse formats this text with %
+msgid "show the mouse pointer in the picture"
+msgstr "画像にマウスポインターを表示します"
+
+#. argparse formats this text with %
+msgid "test whether this machine can record, without recording"
+msgstr "録画せずに、このマシンで録画できるかをテストします"
+
+#. argparse formats this text with %
+msgid "Report what each backend needs and whether it is installed, start a private display to prove it works, and name the install command for anything missing. Exits non-zero if the default backend cannot record."
+msgstr "各バックエンドに必要なものとそれがインストールされているかを報告し、動作を確かめるために非公開ディスプレイを起動し、足りないものがあればインストールするコマンドを示します。既定のバックエンドで録画できない場合は 0 以外で終了します。"
+
+#. argparse formats this text with %
+msgid "end a running recording early"
+msgstr "実行中の録画を早めに終了します"
+
+#. argparse formats this text with %
+msgid "which run to stop (default: the only one running)"
+msgstr "停止する実行 (既定値: 実行中の唯一のもの)"
+
+#. argparse formats this text with %
+msgid "video file to write, ending in .mp4"
+msgstr "書き出す動画ファイル。.mp4 で終わる名前"
+
+#. argparse formats this text with %
+msgid "start black; the picture arrives over SECONDS"
+msgstr "黒から始めて、SECONDS 秒かけて映像を表示します"
+
+#. argparse formats this text with %
+msgid "go to black over the last SECONDS"
+msgstr "最後の SECONDS 秒で黒に変えていきます"
+
+#. argparse formats this text with %
+msgid "make a film from a script of scenes"
+msgstr "シーンのスクリプトから映像を作ります"
+
+#. argparse formats this text with %
+msgid "make a film from a script of scenes."
+msgstr "シーンのスクリプトから映像を作ります。"
+
+#. argparse formats this text with %
+msgid "the script file, or - for standard input"
+msgstr "スクリプトファイル。- なら標準入力"
+
+#. argparse formats this text with %
+msgid "the film's picture size, like 1280x800 (default: the first clip's)"
+msgstr "映像の画面サイズ。1280x800 のように指定 (既定値: 最初のクリップのサイズ)"
+
+#. argparse formats this text with %
+msgid "the film's frames per second (default: the first clip's)"
+msgstr "映像の 1 秒あたりのフレーム数 (既定値: 最初のクリップの値)"
+
+#. argparse formats this text with %
+msgid "cut the start and the end off a video"
+msgstr "動画の始めと終わりを切り落とします"
+
+#. argparse formats this text with %
+msgid "cut the start and the end off a video."
+msgstr "動画の始めと終わりを切り落とします。"
+
+#. argparse formats this text with %
+msgid "the video to cut"
+msgstr "切る動画"
+
+#. argparse formats this text with %
+msgid "where the kept part starts (default: the start)"
+msgstr "残す部分の始まり (既定値: 先頭)"
+
+#. argparse formats this text with %
+msgid "the last moment kept (default: the end)"
+msgstr "残す最後の時点 (既定値: 末尾)"
+
+#. argparse formats this text with %
+msgid "fade to black and back around this moment; repeatable"
+msgstr "この時点の前後で黒にフェードして戻ります。繰り返し指定できます"
+
+#. argparse formats this text with %
+msgid "how long each half of a --fade-at takes (default: {seconds})"
+msgstr "--fade-at の前半と後半それぞれの長さ (既定値: {seconds})"
+
+#. argparse formats this text with %
+msgid "put text over part of a video"
+msgstr "動画の一部にテキストを重ねます"
+
+#. argparse formats this text with %
+msgid "put text over part of a video."
+msgstr "動画の一部にテキストを重ねます。"
+
+#. argparse formats this text with %
+msgid "the video to put text on"
+msgstr "テキストを重ねる動画"
+
+#. argparse formats this text with %
+msgid "one line of text; repeatable"
+msgstr "1 行のテキスト。繰り返し指定できます"
+
+#. argparse formats this text with %
+msgid "for the --text before it: when it appears"
+msgstr "直前の --text について: 表示を始める時点"
+
+#. argparse formats this text with %
+msgid "for the --text before it: when it goes"
+msgstr "直前の --text について: 表示を終える時点"
+
+#. argparse formats this text with %
+msgid "for the --text before it: its height, as a percentage of the frame's"
+msgstr "直前の --text について: 文字の高さ。フレームの高さに対する割合 (パーセント)"
+
+#. argparse formats this text with %
+msgid "put videos end to end"
+msgstr "動画を順につなげます"
+
+#. argparse formats this text with %
+msgid "put videos end to end."
+msgstr "動画を順につなげます。"
+
+#. argparse formats this text with %
+msgid "two or more videos, in order"
+msgstr "2 つ以上の動画、つなげる順に"
+
+#. argparse formats this text with %
+msgid "fade from each video into the next over SECONDS (default: a plain cut)"
+msgstr "SECONDS 秒かけて各動画から次の動画へフェードします (既定値: そのまま切り替え)"
+
+#. argparse formats this text with %
+msgid "make a clip from a picture, or from text"
+msgstr "画像やテキストからクリップを作ります"
+
+#. argparse formats this text with %
+msgid "make a clip from a picture, or from text."
+msgstr "画像やテキストからクリップを作ります。"
+
+#. argparse formats this text with %
+msgid "a picture to show; a .gif or an animated .png plays"
+msgstr "表示する画像。.gif やアニメーション .png は再生されます"
+
+#. argparse formats this text with %
+msgid "how many seconds the card lasts"
+msgstr "カードを表示する秒数"
+
+#. argparse formats this text with %
+msgid "one line of text"
+msgstr "1 行のテキスト"
+
+#. argparse formats this text with %
+msgid "the text's height, as a percentage of the frame's (default: {size})"
+msgstr "文字の高さ。フレームの高さに対する割合 (パーセント) (既定値: {size})"
+
+#. argparse formats this text with %
+msgid "the background colour (default: {colour})"
+msgstr "背景の色 (既定値: {colour})"
+
+#. argparse formats this text with %
+msgid "take the size and frame rate from this video"
+msgstr "サイズとフレームレートをこの動画から取ります"
+
+#. argparse formats this text with %
+msgid "the picture size, like 1280x800 (default: 1600x1000)"
+msgstr "画面サイズ。1280x800 のように指定 (既定値: 1600x1000)"
+
+#. argparse formats this text with %
+msgid "report how smooth a video is and where it stands still"
+msgstr "動画がどれだけ滑らかか、どこで止まっているかを報告します"
+
+#. argparse formats this text with %
+msgid "report how smooth a video is and where it stands still."
+msgstr "動画がどれだけ滑らかか、どこで止まっているかを報告します。"
+
+#. argparse formats this text with %
+msgid "the video to look at"
+msgstr "調べる動画"
+
+#. argparse formats this text with %
+msgid "look from here (default: the start)"
+msgstr "ここから調べます (既定値: 先頭)"
+
+#. argparse formats this text with %
+msgid "look up to here (default: the end)"
+msgstr "ここまで調べます (既定値: 末尾)"
+
+#. argparse formats this text with %
+msgid "report a stretch with no change longer than this (default: 1)"
+msgstr "変化のない区間がこれより長ければ報告します (既定値: 1)"
+
+#. argparse formats this text with %
+msgid "print the report as one JSON object"
+msgstr "報告を 1 つの JSON オブジェクトとして出力します"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a picture"
+msgstr "動画の 1 フレームを画像として保存します"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a picture."
+msgstr "動画の 1 フレームを画像として保存します。"
+
+#. argparse formats this text with %
+msgid "picture file to write, ending in .png or .jpg"
+msgstr "書き出す画像ファイル。.png か .jpg で終わる名前"
+
+#. argparse formats this text with %
+msgid "the video to take the frame from"
+msgstr "フレームを取り出す動画"
+
+#. argparse formats this text with %
+msgid "which moment to save"
+msgstr "保存する時点"

@@ -1068,11 +1068,12 @@ decision has one home as well as its value.
 
 ## Languages
 
-demoreel's messages are in English, and no translation ships yet. They are
-built to be translated: once one ships, messages on standard error and the
-text of `--help` follow your language settings — the `LANGUAGE`, `LC_ALL`,
-`LC_MESSAGES` and `LANG` variables. The manual page's ENVIRONMENT section says
-how they are read.
+Messages on standard error and the text of `--help` follow your language
+settings — the `LANGUAGE`, `LC_ALL`, `LC_MESSAGES` and `LANG` variables. The
+manual page's ENVIRONMENT section says how they are read. The translations
+are in [`po/`](po/), and a language without one is shown in English. Each is a
+draft until a native speaker has checked it, and `--help` says so on its last
+line. The manual page itself is in English.
 
 What a script reads never changes with the language: the paths on standard
 output, `motion`'s report and `--version`. `LC_ALL=C` gives English whatever
