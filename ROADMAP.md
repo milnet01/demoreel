@@ -3248,7 +3248,7 @@ path, and scripts read it.
   Kind: feature.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0066] **Write a translated quick-start page for each language.**
+- ✅ [DEMO-0066] **Write a translated quick-start page for each language.**
   One short page per language: install, record, stop. Linked from the top
   of README by language name. The full README stays English. It changes
   often and is where the detail lives.
@@ -3267,6 +3267,13 @@ path, and scripts read it.
   run it today, so run it by hand once (kate may be missing, so use any
   installed app). Draft the pages with one agent per language. Each takes
   its terms from its own po/<code>.po, so a page and its catalog agree.
+  Shipped (2026-10-02): docs/quickstart/<code>.md for all 16 catalogs,
+  linked from README's top; gate step "each language's quick-start page
+  has README's commands" in the docs gate, proven to catch a changed
+  command, a missing link and a page without a catalog. README's quick
+  start run by hand with kcalc (kate was open on the desktop, so it
+  handed over and exited, as README warns): all four forms gave a video,
+  and stop printed the path.
   **Layman:** Each language gets a short getting-started page; the full README stays in English.
   Kind: doc.
   Source: user-request-2026-09-25.

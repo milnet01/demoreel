@@ -14,6 +14,12 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **A short install-and-first-recording page in each of the sixteen languages** (DEMO-0066)
+  Linked by language name at the top of README. Each page is README's
+  install steps and quick start, translated in the words its catalog
+  uses; the full README stays English. The checks fail if a page's
+  commands differ from README's, or a language lacks its page.
+
 - **README lists every language and whether it is still a draft; CONTRIBUTING.md says how to improve one** (DEMO-0067)
   Native speakers are invited to suggest better wording, by issue or pull
   request, and CONTRIBUTING.md explains how a language becomes confirmed.

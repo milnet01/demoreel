@@ -2,6 +2,24 @@
 
 **Record a video of an app running, without filming your desktop.**
 
+Install and first recording in your language:
+[Afrikaans](docs/quickstart/af.md) ·
+[العربية](docs/quickstart/ar.md) ·
+[简体中文](docs/quickstart/zh_CN.md) ·
+[繁體中文](docs/quickstart/zh_TW.md) ·
+[Nederlands](docs/quickstart/nl.md) ·
+[Français](docs/quickstart/fr.md) ·
+[Deutsch](docs/quickstart/de.md) ·
+[עברית](docs/quickstart/he.md) ·
+[Italiano](docs/quickstart/it.md) ·
+[日本語](docs/quickstart/ja.md) ·
+[한국어](docs/quickstart/ko.md) ·
+[Polski](docs/quickstart/pl.md) ·
+[Português do Brasil](docs/quickstart/pt_BR.md) ·
+[Русский](docs/quickstart/ru.md) ·
+[Español](docs/quickstart/es.md) ·
+[Українська](docs/quickstart/uk.md)
+
 ![KCalc, driven by demoreel: a click on its display, then 1234*5678 and Return, then /2 and Return](docs/media/readme-demo.webp)
 
 Made by demoreel itself, with scripted steps, then turned into this looping
@@ -1074,6 +1092,10 @@ manual page's ENVIRONMENT section says how they are read. The translations
 are in [`po/`](po/), and a language without one is shown in English. Each is a
 draft until a native speaker has checked it, and `--help` says so on its last
 line. The manual page itself is in English.
+
+Each language also has a short page, linked at the top of this file: § Install
+and § Quick start, translated. Its commands are the ones here, and the gate
+fails if they differ. The rest of this README is in English only.
 
 What a script reads never changes with the language: the paths on standard
 output, `motion`'s report and `--version`. `LC_ALL=C` gives English whatever

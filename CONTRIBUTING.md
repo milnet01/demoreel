@@ -20,6 +20,12 @@ message appears in it as the English (`msgid`) followed by its translation
 (`msgstr`). Any text editor opens it, and so do translation tools such as
 Poedit.
 
+Each language also has a quick-start page,
+`docs/quickstart/<code>.md`: README's install steps and first recording,
+translated. Its words are the catalog's. In its code blocks only the lines
+starting with `#` are translated; the commands must stay exactly as README
+has them, or the checks fail.
+
 [`docs/translation-review-notes.md`](docs/translation-review-notes.md) lists
 what the drafter of each language was unsure of. Start there.
 

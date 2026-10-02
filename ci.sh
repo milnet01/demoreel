@@ -2446,6 +2446,50 @@ sys.exit(1 if bad else 0)
 LANGLISTPY
 echo "every catalog in po/ is in README's language list, in the state its header says"
 
+step "each language's quick-start page has README's commands"
+# DEMO-0066. docs/quickstart/<code>.md is README from § Install up to § Taking
+# a picture, translated. Only its prose and the `#` lines inside its sh blocks
+# are translated, so with those lines removed its blocks equal README's, and
+# running README's quick start proves every page. One page per catalog, each
+# linked from README's top by the name README § Languages gives it.
+python3 - <<'QUICKSTARTPY'
+import pathlib, re, sys
+def blocks(text):
+    return [[line for line in block.split("\n") if not line.lstrip().startswith("#")]
+            for block in re.findall(r"^```sh\n(.*?)^```$", text, re.M | re.S)]
+readme = pathlib.Path("README.md").read_text(encoding="utf-8")
+part = re.search(r"^## Install\n(.*?)^## Taking a picture\n", readme, re.M | re.S)
+want = blocks(part[1]) if part else []
+if not want:
+    sys.exit("README has no sh blocks from § Install to § Taking a picture, "
+             "so it was not read right")
+top = readme.split("\n## ", 1)[0]
+languages = re.search(r"^## Languages\n(.*?)(?=^## )", readme, re.M | re.S)
+names = {code: name.split(" — ")[-1] for name, code in re.findall(
+    r"^\| ([^|\n]+?) \| `([A-Za-z_@]+)` \| (?:draft|confirmed) \|$",
+    languages[1] if languages else "", re.M)}
+catalogs = {p.stem for p in pathlib.Path("po").glob("*.po")}
+pages = {p.stem: p for p in pathlib.Path("docs/quickstart").glob("*.md")}
+bad = [f"po/{code}.po has no page at docs/quickstart/{code}.md"
+       for code in sorted(catalogs - pages.keys())]
+bad += [f"docs/quickstart/{code}.md has no catalog at po/{code}.po"
+        for code in sorted(pages.keys() - catalogs)]
+for code in sorted(catalogs & pages.keys()):
+    got = blocks(pages[code].read_text(encoding="utf-8"))
+    if got != want:
+        n = next((i for i, (g, w) in enumerate(zip(got, want)) if g != w),
+                 min(len(got), len(want)))
+        bad.append(f"docs/quickstart/{code}.md: sh block {n + 1} differs from "
+                   f"README's, beyond its # lines ({len(got)} blocks, README has {len(want)})")
+    link = f"[{names.get(code, '?')}](docs/quickstart/{code}.md)"
+    if link not in top:
+        bad.append(f"README's top, above its first heading, lacks the link {link}")
+for line in bad:
+    print(line, file=sys.stderr)
+sys.exit(1 if bad else 0)
+QUICKSTARTPY
+echo "every catalog has a quick-start page, linked from README, with README's commands"
+
 step "documents are readable"
 for f in README.md CLAUDE.md ROADMAP.md CHANGELOG.md SECURITY.md CONTRIBUTING.md \
          docs/standards/README.md docs/standards/versioning-overrides.md; do
