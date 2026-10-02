@@ -14,6 +14,14 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **The checks refuse a translation that is incomplete or would print wrongly** (DEMO-0062)
+  Before any change is accepted, every translation file must read cleanly,
+  hold every message, keep each `{placeholder}` and command-line flag of
+  the English, and, if marked confirmed, be unchanged since. Each language
+  must also print the same file path on standard output as English.
+  `./ci.sh --catalog-digest po/<code>.po` prints the fingerprint a
+  confirmation records.
+
 - **Messages can be translated, and English output is unchanged** (DEMO-0061)
   Every message on standard error and the text of `--help` now goes
   through a translation step that follows `LANGUAGE`, `LC_ALL`,

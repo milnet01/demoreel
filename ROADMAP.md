@@ -193,6 +193,19 @@ simplest case, and a gate proves it still records.
   Kind: feature.
   Source: user-decision-2026-10-01.
 
+- 📋 [DEMO-0165] **A stop issued straight after launching a run once missed it, on a busy machine.**
+  The gate step `stop ends a run started with -d 0` failed once at about
+  12:56 on 2026-10-02: `no recording named 'gatestop' is running`. It
+  passed on the run before and the run after. Measured afterwards:
+  registration takes about 0.2s against STOP_GRACE's 1.0s. Twenty tries
+  with all 12 CPUs saturated gave no failure, and the disks were idle when
+  checked. The Ants Terminal test suite and a Chrome recording were running
+  at the time. Cause unproven. If it recurs, capture `iostat` and `uptime`
+  at that moment before changing STOP_GRACE.
+  **Layman:** Once, the automatic checks asked a recording to stop so quickly that it was not found; it has not happened again.
+  Kind: investigate.
+  Source: in-session-2026-10-02.
+
 ## Standing chores
 
 Recurring work with no finished state. It is checked on a schedule and never
@@ -229,6 +242,15 @@ closes, so it sits outside every version heading.
   **Layman:** Two version numbers are written down in CI and will go stale unless someone bumps them.
   Kind: chore.
   Source: user-request-2026-09-07.
+
+- 📋 [DEMO-0164] **At each release, send Ants Terminal the tag, the script's sha256 and the po/ files.**
+  Ants Terminal bundles demoreel pinned by tag and hash (DEMO-0163) and
+  takes the files from the git tag. Send the tag, `sha256sum demoreel` at
+  that tag, and each po/*.po with its hash, to the Ants Terminal session
+  (slug ants-terminal). Through 1.0.0 at least, per the user.
+  **Layman:** Every new demoreel version is passed to Ants Terminal, so its bundled copy keeps up.
+  Kind: chore.
+  Source: DEMO-0163-2026-10-02.
 
 ## 0.1.1 — Before the first tag
 
@@ -3154,7 +3176,7 @@ path, and scripts read it.
   Kind: implement.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0062] **Gate every catalog for missing messages and broken placeholders.**
+- ✅ [DEMO-0062] **Gate every catalog for missing messages and broken placeholders.**
   Every message must exist in every catalog, and each translation must
   carry the same placeholders as the English: `{output}` renamed or
   dropped is a crash, or a path that silently disappears.
@@ -3162,6 +3184,14 @@ path, and scripts read it.
   Also run a recording under each locale and check that stdout is still
   the bare path. That is the contract a translation could most easily
   break.
+  Shipped (2026-10-02). ci.sh gains `every catalog reads` and `every
+  catalog is complete`. INV-7 joins the placeholders step and the digest
+  joins the confirmed step, with `./ci.sh --catalog-digest`. A recording
+  and a failing command now run in each committed language. Every check
+  runs over po/*.po. Each is also proven on a pseudo catalog and on
+  broken copies of it, which must fail for the stated reason, because no
+  catalog is committed yet. Breaking the checker (fuzzy, digest, code
+  tokens) turned the gate red each time.
   **Layman:** The automatic checks fail if any language is missing a message or would print garbled text.
   Kind: test.
   Source: user-request-2026-09-25.
@@ -3527,12 +3557,26 @@ system looks for them.
   Kind: security.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0163] **Ship a copy of demoreel with Ants Terminal, in a form agreed with its maintainer.**
+- ✅ [DEMO-0163] **Ship a copy of demoreel with Ants Terminal, in a form agreed with its maintainer.**
   The user asked on 2026-10-02, since making a video is now a Claude Code
   skill. The form (a plugin, a bundled file, an MCP verb) is being worked
   out with the Ants Terminal session. demoreel's side: it stays one file
   with po/ beside it (DEMO-0071), and the copy is pinned to a release tag
   so both projects know which version ships.
+  Decided (2026-10-02). Ants Terminal bundles the normal, full demoreel,
+  outside PATH under libexec/ants-terminal/, called by absolute path,
+  pinned by release tag and sha256. Not a stripped copy: the user ruled
+  that a small file ships whole, and demoreel is about half a percent of
+  the terminal's size. It follows every release through 1.0.0, with po/
+  beside it from 0.4.0. Its system tools are optional there, and it is
+  left out of the Flatpak. First pin: v0.3.1. Left to do: send the tag,
+  hash and new files at each release.
+  Shipped (2026-10-02): Ants Terminal commit e6e2782c (ANTS-5617)
+  vendors demoreel v0.3.1 at third_party/demoreel/, checks its sha256 at
+  configure, installs it at <libexecdir>/ants-terminal/demoreel (/usr/lib
+  on Arch) with po/ beside it once there is one, and tests --version in
+  ctest. Its test record run exited 0 and printed only the path. Each
+  release's hand-over is a standing chore.
   **Layman:** Anyone who installs Ants Terminal gets demoreel too, so Claude Code can make videos there with no extra setup.
   Kind: package.
   Source: user-request-2026-10-02.

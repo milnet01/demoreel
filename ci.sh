@@ -136,6 +136,119 @@ PSEUDOPY
 # only what a run is testing can make it English (DEMO-0060 § 7).
 PSEUDO_ENV=(env -u LC_ALL -u LC_MESSAGES LANGUAGE=zz LANG=de_DE.UTF-8)
 
+# The catalog checks (DEMO-0060 § 4.8), each over the catalogs it is given:
+#   python3 -c "$CATALOG_PY" CHECK TEMPLATE CATALOG...
+# CHECK is reads, complete, placeholders, digest or print-digest. Each reads a
+# catalog with demoreel's own reader and judges it with demoreel's own rules,
+# so the gate and a run cannot disagree about what a catalog may hold.
+CATALOG_PY=$(cat <<'CATALOGPY'
+import hashlib, importlib.machinery, importlib.util, pathlib, re, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+check, template, *paths = sys.argv[1:]
+if check not in ("reads", "complete", "placeholders", "digest", "print-digest"):
+    sys.exit(f"no catalog check called {check!r}")
+FORMATTED = "#. argparse formats this text with %"
+pot = pathlib.Path(template).read_text(encoding="utf-8").split("\n")
+# Every message, and whether argparse formats it again with % (§ 4.6).
+wanted = {(e["msgid"], e["plural"]): pot[e["line"] - 2] == FORMATTED
+          for e in d.read_po("\n".join(pot)) if e["msgid"]}
+if len(wanted) < 100:
+    sys.exit(f"the template holds only {len(wanted)} messages, so it was not read right")
+
+def digest(entries):
+    """§ 4.9: the first 16 hex digits of the SHA-256 of the translations."""
+    h = hashlib.sha256()
+    for e in sorted((e for e in entries if e["msgid"] and not e["fuzzy"]),
+                    key=lambda e: (e["msgid"], e["plural"] or "")):
+        h.update(b"\0".join([e["msgid"].encode(), (e["plural"] or "").encode(),
+                             *(form.encode() for form in e["forms"])]) + b"\n")
+    return h.hexdigest()[:16]
+
+def header(entries):
+    head = next((e for e in entries if not e["msgid"]), None)
+    fields = {}
+    for line in (head["forms"][0] if head else "").splitlines():
+        name, colon, value = line.partition(":")
+        if colon:
+            fields[name.strip().lower()] = value.strip()
+    return fields
+
+problems = []
+for path in map(pathlib.Path, paths):
+    def say(text):
+        problems.append(f"{path}: {text}")
+    if check == "reads":
+        # § 4.3, and the Language: header against the file name -- exactly
+        # what a run would refuse. A name that is not a code is never read.
+        if not d.CODE_RE.fullmatch(path.stem):
+            say("its name is not a language code, so no run ever reads it")
+            continue
+        try:
+            d.load_catalog(path, path.stem)
+        except (OSError, d.CatalogError) as exc:
+            say(f"a run refuses it ({exc})")
+        continue
+    try:
+        entries = d.read_po(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, d.CatalogError) as exc:
+        say(f"it cannot be read ({exc})")
+        continue
+    fields = header(entries)
+    found = {(e["msgid"], e["plural"]): e for e in entries if e["msgid"]}
+    if check == "print-digest":
+        print(digest(entries))
+    elif check == "digest":
+        # INV-16: confirmed means unchanged since the confirmation.
+        confirmed = re.fullmatch(r"confirmed ([0-9a-f]{16})",
+                                 fields.get("x-demoreel-review", ""))
+        if confirmed and confirmed[1] != digest(entries):
+            say(f"it is marked confirmed {confirmed[1]}, but its translations now "
+                f"give {digest(entries)}: it was edited after it was confirmed")
+    elif check == "complete":
+        # INV-5: every message, every form, not fuzzy, not empty.
+        nplurals = re.search(r"nplurals\s*=\s*([0-9]+)", fields.get("plural-forms", ""))
+        if not nplurals:
+            say("it has no Plural-Forms, so its plural messages cannot be counted")
+            continue
+        for msgid, plural in wanted:
+            e, name = found.get((msgid, plural)), repr(msgid[:70])
+            if e is None:
+                say(f"no entry for {name}")
+            elif e["fuzzy"]:
+                say(f"{name} is fuzzy")
+            elif (len(e["forms"]) != (1 if plural is None else int(nplurals[1]))
+                    or not all(e["forms"])):
+                say(f"{name} is not translated in every form")
+    else:
+        # INV-7: a run's own rule for placeholders and %, and the same code
+        # tokens as the English. A plural form may match either English form.
+        for (msgid, plural), formatted in wanted.items():
+            e, name = found.get((msgid, plural)), repr(msgid[:70])
+            if e is None or e["fuzzy"]:
+                continue
+            english = msgid if plural is None else msgid + plural
+            tokens = [sorted(d.CODE_TOKEN_RE.findall(t)) for t in (msgid, plural or msgid)]
+            for form in filter(None, e["forms"]):
+                if not d._usable(form, english, plural is not None, formatted):
+                    say(f"{name}: its placeholders, or its %, are not the English "
+                        f"ones: {form!r:.120}")
+                if sorted(d.CODE_TOKEN_RE.findall(form)) not in tokens:
+                    say(f"{name}: its code tokens are not the English ones: {form!r:.120}")
+for line in problems:
+    print(line, file=sys.stderr)
+sys.exit(1 if problems else 0)
+CATALOGPY
+)
+
+# Print a catalog's digest, for recording a confirmation (DEMO-0060 § 4.9).
+if [ "${1:-}" = "--catalog-digest" ]; then
+    [ $# -eq 2 ] || { echo "usage: ./ci.sh --catalog-digest po/<code>.po" >&2; exit 2; }
+    case $2 in /*) catalog=$2 ;; *) catalog=$OLDPWD/$2 ;; esac
+    exec python3 -c "$CATALOG_PY" print-digest po/demoreel.pot "$catalog"
+fi
+
 # The one definition of what counts as documentation here. The machine-wide
 # pre-push hook reads it with `./ci.sh --docs-glob` and does its own matching.
 # The GitHub workflow does not: it pipes the changed paths into
@@ -2364,13 +2477,15 @@ echo "demoreel parses"
 step "every recording in this gate names its run"
 # DEMO-0114. A run left at the default name collides with any other session
 # recording under it, and the gate then fails for a reason that is not ours.
-# Continuation lines are joined, so a -n on the next line still counts.
+# Continuation lines are joined, so a -n on the next line still counts. Any
+# path to the script counts, quoted or not: "$OLDPWD/demoreel" once slipped
+# past a check that knew only ./demoreel, and collided with another session.
 python3 - <<'EOF'
 import re, sys
 text = re.sub(r"\\\n", " ", open("ci.sh").read())
 bad = [line.strip() for line in text.splitlines()
        # Split in two so this line does not match itself.
-       if re.search(r"\./demoreel" r" record\b(?! --help)", line)
+       if re.search(r'/demoreel"?' r" record\b(?! --help)", line)
        and not line.lstrip().startswith("#")
        and not re.search(r" (-n|--name) ", line)]
 for line in bad:
@@ -3626,8 +3741,57 @@ finishing_checks
 # The translation checks (docs/specs/DEMO-0060-translation-catalogs.md § 4.8).
 # No catalog ships yet, so they run against copies of demoreel beside catalogs
 # built here: the pseudo-locale wraps every message in ⟦ ⟧, and the hostile
-# ones are written by hand. The checks that read shipped catalogs (complete,
-# placeholders, digests) are DEMO-0062's.
+# ones are written by hand. The checks over shipped catalogs run on po/*.po,
+# and each is also run on a pseudo catalog and on broken copies of it, so it
+# is seen to fail, for the right reason, while po/ holds none.
+shopt -s nullglob
+committed=(po/*.po)
+shopt -u nullglob
+cat_base="$tmp/tr/cat/po/zz.po"  # built by the first catalog step
+
+# catalog_check CHECK CATALOG...: one of $CATALOG_PY's checks.
+catalog_check() { python3 -c "$CATALOG_PY" "$1" po/demoreel.pot "${@:2}"; }
+
+# mutant SRC CASE OLD NEW: SRC with OLD replaced, exactly once, written as
+# CASE/zz.po (the name a catalog for zz must have). Prints its path.
+mutant() {
+    mkdir -p "$tmp/tr/cat/$2"
+    python3 - "$1" "$tmp/tr/cat/$2/zz.po" "$3" "$4" <<'MUTANTPY'
+import sys
+src, dst, old, new = sys.argv[1:]
+text = open(src, encoding="utf-8").read()
+if text.count(old) != 1:
+    sys.exit(f"mutant: {old!r} is in {src} {text.count(old)} times, not once")
+open(dst, "w", encoding="utf-8").write(text.replace(old, new))
+MUTANTPY
+    printf '%s\n' "$tmp/tr/cat/$2/zz.po"
+}
+
+# refused CHECK SRC CASE OLD NEW WHY: CHECK must fail on that mutant of SRC,
+# and say WHY -- a failure for another reason would hide a check that is dead.
+refused() {
+    local file err
+    file=$(mutant "$2" "$3" "$4" "$5")
+    if err=$(catalog_check "$1" "$file" 2>&1); then
+        echo "the $1 check passed a catalog with $3" >&2
+        exit 1
+    fi
+    [[ $err == *"$6"* ]] || {
+        echo "the $1 check failed a catalog with $3, but not for that reason:" >&2
+        echo "$err" >&2
+        exit 1; }
+}
+
+# shipped CHECK: run CHECK over the committed catalogs, and say what it saw.
+shipped() {
+    if [ ${#committed[@]} -eq 0 ]; then
+        echo "no catalog is committed yet, so only the built ones were checked"
+    else
+        catalog_check "$1" "${committed[@]}"
+        echo "${#committed[@]} committed catalogs checked: ${committed[*]}"
+    fi
+}
+
 step "translation: the template matches the source"
 # INV-6. A message added or reworded without `./ci.sh --pot` leaves the
 # template behind, and every catalog starts from the template.
@@ -3693,6 +3857,39 @@ sys.exit(1 if missing else 0)
 ARGPY
 echo "argparse $(python3 -c 'import sys; print(sys.version.split()[0])') has every string demoreel translates"
 
+step "translation: every catalog reads"
+# A catalog a run refuses costs its whole language, with only a note on
+# stderr to say so. The gate refuses it first: § 4.3's grammar, a charset,
+# Language: matching the file name, and a name that is a language code.
+pseudo_copy "$tmp/tr/cat" zz
+catalog_check reads "$cat_base"
+refused reads "$cat_base" "another Language" '"Language: zz\n"' '"Language: yy\n"' \
+    "its Language is not zz"
+refused reads "$cat_base" "an unknown escape" 'msgstr "⟦usage: ⟧"' 'msgstr "⟦usage: \q⟧"' \
+    "unknown escape"
+mkdir -p "$tmp/tr/cat/name"
+cp "$cat_base" "$tmp/tr/cat/name/z-z.po"
+if catalog_check reads "$tmp/tr/cat/name/z-z.po" 2>/dev/null; then
+    echo "the reads check passed a catalog whose name is not a language code" >&2
+    exit 1
+fi
+shipped reads
+
+step "translation: every catalog is complete"
+# INV-5. A message a catalog lacks prints in English in the middle of
+# translated text; the user chose a failing gate over that (§ 3).
+catalog_check complete "$cat_base"
+refused complete "$cat_base" "a missing message" 'msgid "usage: "' 'msgid "usage was: "' \
+    "no entry for 'usage: '"
+refused complete "$cat_base" "a fuzzy message" 'msgid "options"' $'#, fuzzy\nmsgid "options"' \
+    "'options' is fuzzy"
+refused complete "$cat_base" "an empty translation" 'msgstr "⟦positional arguments⟧"' \
+    'msgstr ""' "'positional arguments' is not translated in every form"
+refused complete "$cat_base" "a plural form missing" \
+    'msgstr[1] "⟦{count} recordings are running: {names}.\n  Name the one to stop, e.g. {example}⟧"' \
+    '' "'{count} recording is running: {names}."
+shipped complete
+
 step "translation: the language is chosen as gettext chooses it"
 # INV-3, each row of the spec's table, and INV-4, the fallback from one
 # catalog to the next and then to English.
@@ -3744,8 +3941,7 @@ step "translation: placeholders and code tokens match"
 # INV-12: in a right-to-left language each value and each code token is held
 # in an isolate, so a path or a flag reads left to right inside the sentence.
 # The marks go outside a token, never inside it. Checked in bytes; how a
-# terminal draws them is DEMO-0063's. DEMO-0062 adds INV-7's half, over the
-# shipped catalogs.
+# terminal draws them is DEMO-0063's. INV-7 follows.
 pseudo_copy "$tmp/tr/rtl" he
 pseudo_copy "$tmp/tr/rtl" zz
 python3 - "$tmp/tr/rtl" <<'RTLPY'
@@ -3785,6 +3981,23 @@ for codes in (["zz"], []):
 sys.exit(1 if bad else 0)
 RTLPY
 echo "right-to-left messages isolate each value and each code token, and no other language does"
+# INV-7, over the catalogs. A run already falls back to English for a bad
+# placeholder; the gate makes it a failure, so the language never loses the
+# message. A renamed placeholder, a translated flag and a bare % in text
+# argparse formats are each refused; a plural form leaving out {count} is not.
+catalog_check placeholders "$cat_base"
+refused placeholders "$cat_base" "a renamed placeholder" \
+    '"⟦the video cannot be played: {output}⟧"' '"⟦the video cannot be played: {ouput}⟧"' \
+    "its placeholders, or its %, are not the English ones"
+refused placeholders "$cat_base" "a translated flag" \
+    '"⟦`demoreel check` says whether --gpu has what it needs.⟧"' \
+    '"⟦`demoreel check` says whether --grafik has what it needs.⟧"' \
+    "its code tokens are not the English ones"
+refused placeholders "$cat_base" "a bare % in help" '"⟦show this help message and exit⟧"' \
+    '"⟦50 % show this help message and exit⟧"' "its placeholders, or its %, are not"
+catalog_check placeholders "$(mutant "$cat_base" "a plural without count" \
+    'msgstr[0] "⟦{count} recording' 'msgstr[0] "⟦one recording')"
+shipped placeholders
 
 step "translation: stdout and exit status do not move"
 # INV-2: whatever the language, a caller reads the same stdout and the same
@@ -3918,10 +4131,57 @@ print(f"{len(RUNS) + 2} commands compared under both locales; "
       f"{checked} messages and help entries checked whole")
 sys.exit(1 if bad or checked < 100 else 0)
 MOVEPY
+# INV-2 again, in each committed language as a user would choose it: a
+# recording still prints the bare path, and a failing command the same
+# status. The failing command's message must differ from the English one,
+# which is what shows the catalog was used at all. Run on the pseudo copy
+# first, so the check is seen to work while po/ holds no catalog.
+# same_stdout SCRIPT CODE...
+same_stdout() {
+    python3 - "$tr_out" "$@" <<'LANGPY'
+import os, subprocess, sys
+here, script, *codes = sys.argv[1:]
+plain = {k: v for k, v in os.environ.items() if k not in ("LC_ALL", "LC_MESSAGES")}
+RECORD = ["record", "-n", "gatelang", "-d", "1", "-s", "320x240", "-o", "lang.mp4",
+          "--", "xclock"]
+FAIL = ["trim", "clip.mp4", "-o", "lang-trim.mp4"]
+def run(argv, env):
+    return subprocess.run([script, *argv], cwd=here, env=env, capture_output=True,
+                          text=True, timeout=120)
+english = {**plain, "LC_ALL": "C"}
+c_rec, c_fail = run(RECORD, english), run(FAIL, english)
+bad = []
+if c_rec.returncode or not c_rec.stdout.endswith("lang.mp4\n") or not c_fail.returncode:
+    bad.append(f"under C: record {c_rec.returncode} {c_rec.stdout!r}, trim {c_fail.returncode}")
+for code in codes:
+    env = {**plain, "LANGUAGE": code, "LANG": "de_DE.UTF-8"}
+    rec, fail = run(RECORD, env), run(FAIL, env)
+    for what, a, b in (("record", c_rec, rec), ("a failing trim", c_fail, fail)):
+        if (a.returncode, a.stdout) != (b.returncode, b.stdout):
+            bad.append(f"{code}: {what} gave {b.returncode} {b.stdout!r:.200}, "
+                       f"not {a.returncode} {a.stdout!r:.200}")
+    if fail.stderr == c_fail.stderr or "could not be read" in rec.stderr + fail.stderr:
+        bad.append(f"{code}: its catalog was not used: {fail.stderr!r:.300}")
+for line in bad:
+    print(line, file=sys.stderr)
+sys.exit(1 if bad else 0)
+LANGPY
+}
+same_stdout "$tr_out/demoreel" zz
+if [ ${#committed[@]} -eq 0 ]; then
+    echo "no catalog is committed yet, so only the pseudo-locale was recorded in"
+else
+    codes=()
+    for catalog in "${committed[@]}"; do
+        codes+=("$(basename "$catalog" .po)")
+    done
+    same_stdout "$PWD/demoreel" "${codes[@]}"
+    echo "a recording and a failing command compared in: ${codes[*]}"
+fi
 
 step "translation: confirmed means unchanged"
 # INV-16's runtime half: --help says a draft is a draft, and says nothing for a
-# confirmed catalog or in English. DEMO-0062 adds the digest check.
+# confirmed catalog or in English. The digest follows.
 pseudo_copy "$tmp/tr/draft" zz
 pseudo_copy "$tmp/tr/confirmed" zz "confirmed 0123456789abcdef"
 draft_line="This translation is a draft and has not yet been checked by a native speaker."
@@ -3936,6 +4196,18 @@ help_english=$("$tmp/tr/draft/demoreel" --help)
 [[ $help_english != *"$draft_line"* ]] || {
     echo "--help in English says a translation is a draft" >&2; exit 1; }
 echo "a draft says so at the end of --help; a confirmed catalog and English do not"
+# INV-16's digest: a catalog marked confirmed holds the translations that
+# were confirmed. One edited afterwards fails until it says draft again or is
+# confirmed anew. --catalog-digest is what a confirmation records.
+cat_digest=$(./ci.sh --catalog-digest "$cat_base")
+[[ $cat_digest =~ ^[0-9a-f]{16}$ ]] || {
+    echo "--catalog-digest printed $cat_digest, not 16 hex digits" >&2; exit 1; }
+cat_confirmed=$(mutant "$cat_base" confirmed '"X-Demoreel-Review: draft\n"' \
+    "\"X-Demoreel-Review: confirmed $cat_digest\\n\"")
+catalog_check digest "$cat_base" "$cat_confirmed"
+refused digest "$cat_confirmed" "a translation edited after confirming" \
+    'msgstr "⟦options⟧"' 'msgstr "⟦choices⟧"' "it was edited after it was confirmed"
+shipped digest
 
 step "translation: a bad catalog costs only the language"
 # INV-1, INV-8, INV-9, INV-10 and INV-11. A catalog is text from someone a
@@ -4070,7 +4342,7 @@ echo "a broken or hostile catalog costs its language, never the run"
 
 step "default output name"
 # -o is optional; without it the file is named from the app and a timestamp.
-( cd "$tmp" && "$OLDPWD/demoreel" record -d 3 -s 640x480 -- xclock >/dev/null )
+( cd "$tmp" && "$OLDPWD/demoreel" record -n gatedefault -d 3 -s 640x480 -- xclock >/dev/null )
 ls "$tmp"/xclock-*.mp4 >/dev/null
 
 step "the same gate on GitHub's Ubuntu"
