@@ -3367,7 +3367,7 @@ path, and scripts read it.
   Kind: test.
   Source: adopt-project-2026-09-28.
 
-- 📋 [DEMO-0121] **Put the frame size back once when an app resizes its own window.**
+- ✅ [DEMO-0121] **Put the frame size back once when an app resizes its own window.**
   DEMO-0108 measured this as safe for Vestige (it redrew at the new size,
   letterboxed) and found no drift on DOOM_Ants. Design to decide:
   re-apply ONCE where window_off_frame fires, re-check after
@@ -3383,6 +3383,15 @@ path, and scripts read it.
   renderer 0 only. Worth trying renderer 1 or 2 when this is built.
   Serves S1 (README, Signs it is working): the video shows the app
   filling the frame.
+  Shipped (2026-10-02): record only. At the halfway check, a window off
+  the frame is sized back once (fill_frame) and re-checked; held, the
+  run says how far in it was put back and that the part before may be
+  cropped; not held, or found again at the end, the old warning. A -d 0
+  run has no halfway check. shot keeps the warning only: user's choice
+  2026-10-02, since retaking one picture is cheap and a redraw wait
+  would be a guessed delay. Gate step proven red on the old code; the
+  keeps-shrinking xterm still gets the warning. Not measured on Vestige
+  or DOOM_Ants renderer 1/2 (needs those sessions' launch commands).
   **Layman:** When an app changes its own window size mid-recording, demoreel could quietly put it back instead of only warning.
   Kind: enhancement.
   Source: DEMO-0108-finding-2026-09-28.

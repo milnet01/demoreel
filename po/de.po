@@ -120,6 +120,13 @@ msgstr ""
 "  Nehmen Sie in der eigenen Größe der App auf, mit -s {size}."
 
 msgid ""
+"the app resized its window {seconds}s into the video, and demoreel put it back to fill the {frame} frame.\n"
+"  The video before then may be cropped or have an empty band."
+msgstr ""
+"die App hat ihr Fenster nach {seconds}s des Videos geändert, und demoreel hat es zurückgesetzt, damit es das Bild ({frame}) ausfüllt.\n"
+"  Das Video davor kann abgeschnitten sein oder einen leeren Streifen haben."
+
+msgid ""
 "the app exited immediately (status 0) without opening a window.\n"
 "  The likely cause is a single-instance app: it finds a copy already\n"
 "  running on your real desktop, hands the request over to it and exits\n"

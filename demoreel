@@ -1706,12 +1706,17 @@ def place_window(env, app, a, width, height, picture):
                 "  If the app is slow to start, give it longer with --startup-timeout.",
                 seconds=a.startup_timeout))
     else:
-        # No window manager runs here, so no windowactivate: the only
-        # window already has focus.
-        xdotool(env, "windowmove", window, 0, 0)
-        xdotool(env, "windowsize", window, width, height)
-        wait_for_size(env, window, width * height)
+        fill_frame(env, window, width, height)
     return window
+
+
+def fill_frame(env, window, width, height):
+    """Move the window to the corner and size it to the frame."""
+    # No window manager runs here, so no windowactivate: the only
+    # window already has focus.
+    xdotool(env, "windowmove", window, 0, 0)
+    xdotool(env, "windowsize", window, width, height)
+    wait_for_size(env, window, width * height)
 
 
 def blank_causes(gpu):
@@ -1740,6 +1745,7 @@ class Checks:
     moments, so the skips that decided whether a sample was taken carry over.
     None means the end of the video.
     moved: how the window stopped filling the frame, said once.
+    put_back: whether the window was sized to the frame again mid-run.
     """
 
     def __init__(self):
@@ -1747,6 +1753,7 @@ class Checks:
         self.unsampled = None
         self.sampled = []
         self.moved = None
+        self.put_back = False
 
     def failed(self):
         return self.blank is not None or self.unsampled is not None
@@ -1760,11 +1767,28 @@ class Checks:
         except SampleError as exc:
             self.unsampled = str(exc)
 
-    def look_at_window(self, env, window, width, height):
-        if self.moved is None and window is not None:
-            self.moved = window_off_frame(env, window, width, height)
-            if self.moved:
-                note(self.moved)
+    def look_at_window(self, env, window, width, height, at=None):
+        """Warn once if the window no longer fills the frame. `at` is how far
+        into the video this is, or None once recording has ended. While it is
+        recording the size is put back, once (DEMO-0121): an app that takes
+        its own size again is warned about, so a resize fight cannot loop."""
+        if self.moved is not None or window is None:
+            return
+        moved = window_off_frame(env, window, width, height)
+        if moved and at is not None and not self.put_back:
+            self.put_back = True
+            fill_frame(env, window, width, height)
+            moved = window_off_frame(env, window, width, height)
+            if moved is None:
+                note(tr("the app resized its window {seconds}s into the video, "
+                        "and demoreel put it back to fill the {frame} frame.\n"
+                        "  The video before then may be cropped or have an "
+                        "empty band.", seconds=f"{at:.1f}",
+                        frame=f"{width}x{height}"))
+                return
+        self.moved = moved
+        if moved:
+            note(moved)
 
 
 def settle(a, env, display, width, height):
@@ -1815,7 +1839,8 @@ def run_countdown(a, env, app, window, display, recorder, width, height,
             if halfway and now >= halfway:
                 halfway = None
                 if app.poll() is None:
-                    checks.look_at_window(env, window, width, height)
+                    checks.look_at_window(env, window, width, height,
+                                          now - started)
                     checks.sample("halfway", now - started, env, display,
                                   width, height)
                     if checks.failed():

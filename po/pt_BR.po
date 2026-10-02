@@ -120,6 +120,13 @@ msgstr ""
 "  Grave no tamanho do próprio aplicativo com -s {size}."
 
 msgid ""
+"the app resized its window {seconds}s into the video, and demoreel put it back to fill the {frame} frame.\n"
+"  The video before then may be cropped or have an empty band."
+msgstr ""
+"o aplicativo redimensionou a janela aos {seconds}s do vídeo, e o demoreel a devolveu ao tamanho do quadro de {frame}.\n"
+"  O vídeo antes desse ponto pode estar cortado ou ter uma faixa vazia."
+
+msgid ""
 "the app exited immediately (status 0) without opening a window.\n"
 "  The likely cause is a single-instance app: it finds a copy already\n"
 "  running on your real desktop, hands the request over to it and exits\n"

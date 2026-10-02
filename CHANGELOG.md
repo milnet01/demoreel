@@ -56,6 +56,12 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Changed
 
+- **An app that changes its own window size mid-recording is put back to fill the frame** (DEMO-0121)
+  The halfway check sizes the window to the frame again, once, and says
+  how far into the video that was. An app that takes its own size again
+  still gets the warning naming the size to record at. Still pictures
+  only warn, as before.
+
 - **The 1.0 rule says which condition holds the version back** (DEMO-0139)
   1.0 waits only on a demoreel video being used on another project's
   README, store listing or release page. The display-path checks bind

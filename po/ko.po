@@ -120,6 +120,13 @@ msgstr ""
 "  -s {size}(으)로 앱 자체 크기에 맞춰 녹화하십시오."
 
 msgid ""
+"the app resized its window {seconds}s into the video, and demoreel put it back to fill the {frame} frame.\n"
+"  The video before then may be cropped or have an empty band."
+msgstr ""
+"앱이 동영상 {seconds}초 지점에서 창 크기를 바꾸어, demoreel이 {frame} 프레임을 채우도록 되돌렸습니다.\n"
+"  그 이전의 동영상은 잘리거나 빈 띠가 있을 수 있습니다."
+
+msgid ""
 "the app exited immediately (status 0) without opening a window.\n"
 "  The likely cause is a single-instance app: it finds a copy already\n"
 "  running on your real desktop, hands the request over to it and exits\n"

@@ -2848,6 +2848,23 @@ if ! grep -q 'resized its window to 300x200' "$tmp/resized.err"; then
 fi
 echo "the self-resized window was reported, with the size to record at"
 
+step "an app that resizes itself once is put back to the frame size"
+# DEMO-0121. Seen at halfway, the size is put back once while recording. This
+# xterm shrinks itself once and then keeps the size it is given, as Vestige
+# did, so the run says it was put back and gives no warning at the end. The
+# xterm above, which keeps shrinking itself, still gets the warning.
+# shellcheck disable=SC2016  # $WINDOWID belongs to xterm's shell, not to us
+./demoreel record -n gate -o "$tmp/putback.mp4" -d 4 -s 640x480 -- xterm -e sh -c \
+    'sleep 1; xdotool windowsize "$WINDOWID" 300 200; exec sleep 60' \
+    >/dev/null 2>"$tmp/putback.err"
+if ! grep -q 'demoreel put it back to fill the 640x480 frame' "$tmp/putback.err" \
+   || grep -q 'resized its window to' "$tmp/putback.err"; then
+    echo "a window that resized itself once was not put back:" >&2
+    cat "$tmp/putback.err" >&2
+    exit 1
+fi
+echo "the window was put back to the frame size, and nothing more was said"
+
 step "the stutter measure tells a stuttering video from a smooth one"
 # DEMO-0109. On --gpu a busy 3D app records as runs of repeated frames, and
 # changed_share is what notices. Two made-up videos pin it without a card: a

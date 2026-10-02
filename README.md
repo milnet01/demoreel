@@ -870,10 +870,15 @@ window sits behind it.
 waiting, and records anyway, so you get the app at its own size
 rather than filling the frame. Nothing is lost but the sizing.
 
-**An app that sets its own size after demoreel has sized it is warned about,
-not stopped.** demoreel sizes the window once, before recording. An app that
-then picks another size records cropped, or with an empty band beside it. The
-warning names the size the app chose; record again with `-s` set to it.
+**An app that sets its own size after demoreel has sized it is put back once,
+then warned about, never stopped.** demoreel sizes the window before
+recording. An app that then picks another size records cropped, or with an
+empty band beside it. If the halfway check finds this, demoreel sizes the
+window to the frame again and says how far into the video that was; the part
+before it may still be cropped. An app that takes its own size again, or a
+change found only at the end, gets the warning: it names the size the app
+chose, so record again with `-s` set to it. A `-d 0` run has no halfway check,
+and `demoreel shot` only warns.
 
 ## Constraints already verified on this machine
 

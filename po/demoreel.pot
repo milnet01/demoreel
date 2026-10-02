@@ -252,6 +252,11 @@ msgid ""
 "    its command line; see README.md."
 msgstr ""
 
+msgid ""
+"the app resized its window {seconds}s into the video, and demoreel put it back to fill the {frame} frame.\n"
+"  The video before then may be cropped or have an empty band."
+msgstr ""
+
 msgid "--settle could not sample the display, so it cannot tell when the app has drawn."
 msgstr ""
 

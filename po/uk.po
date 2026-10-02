@@ -120,6 +120,13 @@ msgstr ""
 "  Записуйте у власному розмірі програми за допомогою -s {size}."
 
 msgid ""
+"the app resized its window {seconds}s into the video, and demoreel put it back to fill the {frame} frame.\n"
+"  The video before then may be cropped or have an empty band."
+msgstr ""
+"програма змінила розмір свого вікна на {seconds} с відео, і demoreel повернув його, щоб воно заповнювало кадр {frame}.\n"
+"  До цієї миті відео може бути обрізане або мати порожню смугу."
+
+msgid ""
 "the app exited immediately (status 0) without opening a window.\n"
 "  The likely cause is a single-instance app: it finds a copy already\n"
 "  running on your real desktop, hands the request over to it and exits\n"

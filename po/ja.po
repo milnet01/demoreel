@@ -120,6 +120,13 @@ msgstr ""
 "  -s {size} でアプリ自身のサイズで録画してください。"
 
 msgid ""
+"the app resized its window {seconds}s into the video, and demoreel put it back to fill the {frame} frame.\n"
+"  The video before then may be cropped or have an empty band."
+msgstr ""
+"アプリが動画の {seconds}秒の時点でウィンドウの大きさを変えたため、demoreel が {frame} のフレームを埋める大きさに戻しました。\n"
+"  それより前の動画は、切れているか空の帯がある場合があります。"
+
+msgid ""
 "the app exited immediately (status 0) without opening a window.\n"
 "  The likely cause is a single-instance app: it finds a copy already\n"
 "  running on your real desktop, hands the request over to it and exits\n"
