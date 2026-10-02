@@ -14,6 +14,10 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **Translators are told what each unclear blank in a message holds** (DEMO-0167)
+  The translation template carries a short note above those messages,
+  so the grammar around a blank can be right the first time.
+
 - **A short install-and-first-recording page in each of the sixteen languages** (DEMO-0066)
   Linked by language name at the top of README. Each page is README's
   install steps and quick start, translated in the words its catalog

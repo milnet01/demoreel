@@ -28,16 +28,29 @@ unset LANGUAGE
 # and each comment in EXAMPLES and RECORD_EXAMPLES (read with tr_listed). An
 # argument that is not a string literal fails: a message the extractor cannot
 # see is one no catalog can carry. A message argparse formats again with `%`
-# says so in an extracted comment, which the catalog checks read.
+# says so in an extracted comment, which the catalog checks read. A
+# `# translators:` comment on the lines just above a call is extracted beside
+# its message (DEMO-0167); one anywhere else fails, rather than being lost.
 pot_text() {
     python3 - <<'POTPY'
 import ast, pathlib, re, sys
-tree = ast.parse(pathlib.Path("demoreel").read_text(encoding="utf-8"))
-found, bad = {}, []
-def add(line, msgid, plural, formatted):
+source = pathlib.Path("demoreel").read_text(encoding="utf-8")
+tree = ast.parse(source)
+lines = source.splitlines()
+found, bad, used = {}, [], set()
+def add(line, msgid, plural, formatted, note=None):
     key = (msgid, plural)
-    first, was = found.get(key, (line, False))
-    found[key] = (min(first, line), was or formatted)
+    first, was, had = found.get(key, (line, False, None))
+    found[key] = (min(first, line), was or formatted, had or note)
+def note_above(lineno):
+    """The `# translators:` comment directly above line `lineno`, if any."""
+    at, block = lineno - 2, []
+    while at >= 0 and lines[at].strip().startswith("#"):
+        block.insert(0, lines[at].strip().lstrip("#").strip())
+        at -= 1
+    if block and block[0].startswith("translators:"):
+        used.add(at + 2)
+        return " ".join(block)
 for node in ast.walk(tree):
     names = {t.id for t in getattr(node, "targets", []) if isinstance(t, ast.Name)}
     if isinstance(node, ast.Assign) and names & {"ARGPARSE_MESSAGES", "EXAMPLES",
@@ -58,11 +71,16 @@ for node in ast.walk(tree):
         bad.append(node.lineno)
         continue
     add(node.lineno, args[0].value, args[1].value if wanted == 2 else None,
-        node.func.id == "tr_help")
+        node.func.id == "tr_help", note_above(node.lineno))
 for line in bad:
     print(f"demoreel line {line}: a translated message must be a string literal, "
           "or no catalog can carry it", file=sys.stderr)
-if bad or not found:
+stray = [n + 1 for n, text in enumerate(lines)
+         if text.strip().startswith("# translators:") and n + 1 not in used]
+for line in stray:
+    print(f"demoreel line {line}: a `# translators:` comment must sit directly "
+          "above the tr() call it explains", file=sys.stderr)
+if bad or stray or not found:
     sys.exit(1)
 def q(text):
     text = (text.replace("\\", "\\\\").replace('"', '\\"').replace("\t", "\\t")
@@ -76,8 +94,11 @@ out = ["# demoreel's messages: the template every catalog starts from.",
        '"Content-Transfer-Encoding: 8bit\\n"', '"Language: \\n"',
        '"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\\n"',
        '"X-Demoreel-Review: draft\\n"']
-for (msgid, plural), (_, formatted) in sorted(found.items(), key=lambda kv: kv[1][0]):
+for (msgid, plural), (_, formatted, note) in sorted(found.items(),
+                                                    key=lambda kv: kv[1][0]):
     out.append("")
+    if note:
+        out.append(f"#. {note}")
     if formatted:
         out.append("#. argparse formats this text with %")
     out.append(f"msgid {q(msgid)}")

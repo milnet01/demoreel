@@ -14,7 +14,8 @@ language (DEMO-0096); delete a language's section once it is confirmed.
   is a colour" holds an option name such as `colour` or `outline`; `{share}`
   in the stutter note is a percentage; `{time}` in "recording for {time}"
   is the time elapsed so far. Grammar built on a wrong guess (gender, an
-  article) needs fixing.
+  article) needs fixing. `po/demoreel.pot` now says what each of these
+  holds, in a `#. translators:` line above the message (DEMO-0167).
 - **argparse's own `error:`** prefix was added after the drafts
   (DEMO-0166), as a single word per language. Check it reads as a
   command-line error label.

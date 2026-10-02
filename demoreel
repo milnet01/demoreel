@@ -1854,6 +1854,7 @@ def run_countdown(a, env, app, window, display, recorder, width, height,
                             seconds=math.ceil(deadline - now)))
             else:
                 seconds = int(now - started)
+                # translators: {time} is the time recorded so far, minutes:seconds, such as 1:05.
                 progress(tr("recording for {time} (Ctrl+C to finish)",
                             time=f"{seconds // 60}:{seconds % 60:02d}"))
             if app.poll() is not None:
@@ -1924,6 +1925,7 @@ def vouch_for(a, output, logpath, width, height, checks):
                        output=output, log=logpath))
         share = changed_share(output, a.framerate)
         if share is not None and share < CHANGED_NOTE_BELOW:
+            # translators: {share} is a percentage, such as 48%; {output} is the video's path.
             note(tr("only {share} of the frames in the middle of {output} "
                     "changed from the one before.\n  If the app was moving the "
                     "whole time, it drew that few new frames itself: the video "
@@ -2475,6 +2477,8 @@ def script_number(word, where, what):
     except ValueError:
         value = -1.0
     if value < 0 or not math.isfinite(value):
+        # translators: {word} is an edit-script word, such as from or fade-in, and stays
+        # in English; {value} is what was written after it, in quotes.
         die(tr("{where}: {word} takes a number of seconds, not {value}.",
                where=where, word=what, value=repr(word)))
     return value
@@ -2487,10 +2491,13 @@ def script_words(target, words, kind, where):
     for at in range(0, len(words), 2):
         word = words[at]
         if word not in SCENE_WORDS[kind]:
+            # translators: {word} is the word written, in quotes; {kind} is clip, card or
+            # text; {words} lists the words that line takes. All stay in English.
             die(tr("{where}: {word} is not something a {kind} line takes. "
                    "It takes: {words}.", where=where, word=repr(word), kind=kind,
                    words=", ".join(SCENE_WORDS[kind])))
         if at + 1 >= len(words):
+            # translators: {word} is an edit-script word, in quotes, and stays in English.
             die(tr("{where}: {word} needs a value after it.", where=where,
                    word=repr(word)))
         value = words[at + 1]
@@ -2556,6 +2563,7 @@ def parse_script(text):
             script_words(scene, rest, "card", where)
             scenes.append(scene)
         else:
+            # translators: {word} is the first word of the line, in quotes.
             die(tr("{where}: a line starts with clip, card or text, not "
                    "{word}.", where=where, word=repr(verb)) + f"\n  {line}")
     if not scenes:
@@ -2730,6 +2738,8 @@ def check_texts(scene, length, width, height, workdir):
                    size=f"{size:g}"))
         for what in ("colour", "outline", "shadow"):
             if what in text and not COLOUR_RE.fullmatch(text[what]):
+                # translators: {word} is colour, outline or shadow: an edit-script word, which
+                # stays in English.
                 die(tr("{where}: a text's {word} is a colour written #RRGGBB, "
                        "like #FFD040, not {value}.", where=where, word=what,
                        value=repr(text[what])))
@@ -2816,6 +2826,8 @@ def check_scene(scene, width, height, rate, workdir):
                    film=f"{width}x{height}"))
         for what, value in (("from", scene.start), ("to", scene.end)):
             if value is not None and value > whole + TIME_SLACK:
+                # translators: `{word} {value}` is what was written, such as `to 12`; {word} is
+                # from or to and stays in English.
                 die(tr("{where}: `{word} {value}` is past the end of "
                        "{path}, which is {seconds} seconds long.", where=where,
                        word=what, value=f"{value:g}", path=scene.path,
@@ -3087,6 +3099,8 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=()):
                 film = f"[f{number}]"
             total = begins + length
             name = scene.path.name if scene.path else tr("text")
+            # translators: {kind} is clip or card, in English; {name} is a file name, or the
+            # translation of "text".
             note(tr("scene {number}: {kind} {name}, {start} to {end}",
                     number=number + 1, kind=scene.kind, name=name,
                     start=f"{begins:.3f}", end=f"{total:.3f}"))

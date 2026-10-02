@@ -3572,11 +3572,18 @@ path, and scripts read it.
   Kind: feature.
   Source: DEMO-0064-finding-2026-10-02.
 
-- 📋 [DEMO-0167] **Tell translators what each placeholder holds.**
+- ✅ [DEMO-0167] **Tell translators what each placeholder holds.**
   Several DEMO-0064 drafts guessed what `{word}`, `{share}`, `{time}` and
   `{kind}` hold, and built gender or articles on the guess. A comment
   beside the call (`# translators: ...`) extracted into the template as
   `#.` would answer it. docs/translation-review-notes.md lists the cases.
+  Shipped (2026-10-02): nine `# translators:` comments in demoreel, for
+  every message whose {word}, {share}, {time} or {kind} was guessed,
+  each read from the code. pot_text extracts one into the template as a
+  `#.` line and fails on a stray one (proven in a scratch copy).
+  Catalogs unchanged: the existing drafters have
+  docs/translation-review-notes.md, and CONTRIBUTING.md points at the
+  template's notes.
   **Layman:** Translators get a short note saying what goes into each blank, so the grammar around it comes out right.
   Kind: doc.
   Source: DEMO-0064-finding-2026-10-02.

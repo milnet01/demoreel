@@ -328,6 +328,9 @@ An argument that is not a string literal fails the gate — a message the
 extractor cannot see is a message no catalog can carry. A msgid argparse
 formats carries the extracted comment `#. argparse formats this text with %`
 in the template, which is how the catalog checks find § 4.6's rule.
+A `# translators:` comment directly above a call is extracted as a `#.` line
+before that message, above the argparse comment; one anywhere else fails the
+gate (DEMO-0167).
 
 New steps:
 

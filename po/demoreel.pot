@@ -275,6 +275,7 @@ msgstr ""
 msgid "recording, {seconds}s left"
 msgstr ""
 
+#. translators: {time} is the time recorded so far, minutes:seconds, such as 1:05.
 msgid "recording for {time} (Ctrl+C to finish)"
 msgstr ""
 
@@ -318,6 +319,7 @@ msgid ""
 "  The recorder captured something other than the screen. See {log}"
 msgstr ""
 
+#. translators: {share} is a percentage, such as 48%; {output} is the video's path.
 msgid ""
 "only {share} of the frames in the middle of {output} changed from the one before.\n"
 "  If the app was moving the whole time, it drew that few new frames itself: the video has every frame it drew."
@@ -428,12 +430,15 @@ msgstr ""
 msgid "{where}: the font file {path} has a character in its path that ffmpeg's filters cannot carry. Copy it to a plainer path."
 msgstr ""
 
+#. translators: {word} is an edit-script word, such as from or fade-in, and stays in English; {value} is what was written after it, in quotes.
 msgid "{where}: {word} takes a number of seconds, not {value}."
 msgstr ""
 
+#. translators: {word} is the word written, in quotes; {kind} is clip, card or text; {words} lists the words that line takes. All stay in English.
 msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
 msgstr ""
 
+#. translators: {word} is an edit-script word, in quotes, and stays in English.
 msgid "{where}: {word} needs a value after it."
 msgstr ""
 
@@ -455,6 +460,7 @@ msgstr ""
 msgid "{where}: card needs its length in seconds: card 3"
 msgstr ""
 
+#. translators: {word} is the first word of the line, in quotes.
 msgid "{where}: a line starts with clip, card or text, not {word}."
 msgstr ""
 
@@ -500,6 +506,7 @@ msgstr ""
 msgid "{where}: a text's size is a percentage of the frame's height, between 0 and 50, not {size}."
 msgstr ""
 
+#. translators: {word} is colour, outline or shadow: an edit-script word, which stays in English.
 msgid "{where}: a text's {word} is a colour written #RRGGBB, like #FFD040, not {value}."
 msgstr ""
 
@@ -537,6 +544,7 @@ msgstr ""
 msgid "{where}: {path} is {size}, a different shape from the film's {film}, and demoreel will not stretch it."
 msgstr ""
 
+#. translators: `{word} {value}` is what was written, such as `to 12`; {word} is from or to and stays in English.
 msgid "{where}: `{word} {value}` is past the end of {path}, which is {seconds} seconds long."
 msgstr ""
 
@@ -584,6 +592,7 @@ msgstr ""
 msgid "text"
 msgstr ""
 
+#. translators: {kind} is clip or card, in English; {name} is a file name, or the translation of "text".
 msgid "scene {number}: {kind} {name}, {start} to {end}"
 msgstr ""
 
