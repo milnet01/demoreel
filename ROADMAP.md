@@ -239,6 +239,11 @@ closes, so it sits outside every version heading.
   Checked (2026-09-19): ruff moved 0.16.6 -> 0.16.8, its latest release,
   in ci.sh and in the machine's pipx install together. actions/checkout is
   still v7.0.1, its latest. The item stays open as the standing chore.
+  Checked (2026-10-02): ruff moved 0.16.8 -> 0.16.10, its latest
+  release, in ci.sh and in the machine's pipx install together; `ruff
+  check . demoreel` clean with it, and the parity image rebuilt for the
+  new pin. actions/checkout is still v7.0.1, its latest. The item stays
+  open as the standing chore.
   **Layman:** Two version numbers are written down in CI and will go stale unless someone bumps them.
   Kind: chore.
   Source: user-request-2026-09-07.
