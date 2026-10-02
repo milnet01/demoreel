@@ -3571,6 +3571,22 @@ path, and scripts read it.
   and decide whether the note needs a second test or a better fixture.
   DEMO-0109 holds the note's original calibration.
   Serves S1 (README, Signs it is working).
+  Measured (2026-10-02), real --gpu recordings, 800x600 at 30, 8 s,
+  middle window as changed_share takes it. xterm printing a line at a
+  set rate (true rate a little lower: each line starts a python3): about
+  4/s gave 44 at 256, 31 at 640, expected about 31; about 6.5/s gave 98
+  and 53, expected about 53; about 11.5/s gave 175 (73%) and 93 (39%),
+  expected about 92. vkcube gave 240 and 240 of 240. So on a real
+  recording 256 over-counts about 1.9 times, and a video with only 39%
+  new frames reads 73%: the note stays silent. 640 counts right, and a
+  smooth GPU app still scores 100% there. DECISION FOR THE USER: the fix
+  is the note using 640, which CLAUDE.md's "do not merge them" forbids,
+  because ci.sh's smooth fixture (a faint drifting gradient) then scores
+  39%. Recommendation: let the note use 640 and replace that fixture
+  with a smooth one that has edges (a moving test pattern scores 60 of
+  60 at both, per the comment beside the constants), since a missed
+  stutter is the dangerous way to be wrong and the note never fails a
+  run. Needs the CLAUDE.md trap rewritten in the same commit.
   **Layman:** The note that warns about a stuttering --gpu video over-counts new frames, so it may stay silent on a video that really stutters.
   Kind: investigate.
   Source: DEMO-0125-finding-2026-09-30.
