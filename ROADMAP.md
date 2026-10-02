@@ -3249,7 +3249,7 @@ path, and scripts read it.
   Kind: doc.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0083] **Treat translation catalogs as untrusted templates.**
+- ✅ [DEMO-0083] **Treat translation catalogs as untrusted templates.**
   A translated message is a format template. With Python's str.format, a
   template can reach attributes and indexes -- `{output.__class__}` and
   beyond -- so a malicious or careless catalog entry can print internals
@@ -3267,6 +3267,10 @@ path, and scripts read it.
   the boundary, and the gate covers each with hostile catalogs. The
   catalog gate that rejects a placeholder the English lacks is
   DEMO-0062's.
+  Shipped (2026-10-02): the last defence, a gate that rejects any
+  placeholder the English lacks, came with DEMO-0062. The system locale
+  directory named above was dropped by DEMO-0060 § 8: catalogs are read
+  only from po/ beside the script.
   **Layman:** A bad or tampered translation file must not be able to leak data or crash demoreel.
   Kind: security.
   Source: user-request-2026-09-25.
