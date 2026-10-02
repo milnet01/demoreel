@@ -267,6 +267,17 @@ closes, so it sits outside every version heading.
   when the 1- and 5-minute load averages are both under 5. To decide:
   whether the gate should check the load first and say so, or measure
   the countdown in a way load cannot stretch.
+  Reading of the code (2026-10-02), not yet measured: start_ffmpeg
+  returns on ffmpeg's first progress report, and record() starts the
+  countdown there. x11grab stamps frames with wall-clock time, so the
+  video runs from the first captured frame to the stop; a first report
+  delayed by load puts that delay into the video. That fits 4.3 s extra
+  at load 20 on 4 cores. If true, it is a product defect, not only a
+  gate one: on a busy machine `-d 5` gives a longer video. Not measured,
+  because measuring means loading the shared machine on purpose.
+  Candidate fixes for the user to weigh: count the countdown from the
+  first frame's own timestamp, or cap the output with -t at the duration
+  (which would cut the countdown's last moments instead).
   **Layman:** The final check before a push can fail just because the computer is busy with other work, not because anything is wrong.
   Kind: investigate.
   Source: in-session-2026-10-02.
@@ -3637,6 +3648,10 @@ system looks for them.
   release, message the Ants Projects Hub website project
   (session_message). Its demoreel download button stays on "Download
   source" until then.
+  Note (2026-10-02): install po/ beside the script that
+  /usr/bin/demoreel resolves to, or every language falls back to English
+  with no error. docs/specs/DEMO-0060 § 4.2 allows no other catalog
+  location (see DEMO-0071).
   **Layman:** Install demoreel on openSUSE with zypper, dependencies included.
   Kind: package.
   Source: user-request-2026-09-25.
@@ -3647,6 +3662,10 @@ system looks for them.
   Recommends the `--gpu` pair where the distro carries it.
   Follow-up (2026-09-28): see DEMO-0068 - tell the website project when
   a package is attached to a release.
+  Note (2026-10-02): install po/ beside the script that
+  /usr/bin/demoreel resolves to, or every language falls back to English
+  with no error. docs/specs/DEMO-0060 § 4.2 allows no other catalog
+  location (see DEMO-0071).
   **Layman:** Install demoreel on Debian or Ubuntu with apt, dependencies included.
   Kind: package.
   Source: user-request-2026-09-25.
@@ -3656,15 +3675,26 @@ system looks for them.
   dependency split as the other packages.
   Follow-up (2026-09-28): see DEMO-0068 - tell the website project when
   a package is attached to a release.
+  Note (2026-10-02): install po/ beside the script that
+  /usr/bin/demoreel resolves to, or every language falls back to English
+  with no error. docs/specs/DEMO-0060 § 4.2 allows no other catalog
+  location (see DEMO-0071).
   **Layman:** Install demoreel on Fedora (dnf) or Arch (from the AUR).
   Kind: package.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0071] **Let the tool find its translations whether installed or run from a checkout.**
+- ✅ [DEMO-0071] **Let the tool find its translations whether installed or run from a checkout.**
   A package puts catalogs under /usr/share/locale. A checkout keeps them
   beside the script. The tool finds them from its own resolved path first,
   then the system location. The caller's working directory is never used,
   which the any-project requirement in CLAUDE.md demands.
+  Closed (2026-10-02): already true under docs/specs/DEMO-0060 § 4.2's
+  one rule, catalogs in po/ beside the script's resolved path. The spec
+  rejected also searching /usr/share/locale (the user's decision), so
+  this item's "then the system location" is superseded; a package
+  installs po/ beside the script instead. Checked: via
+  ~/.local/bin/demoreel from /mnt/Emulators, which has no po/,
+  LANGUAGE=fr printed French.
   **Layman:** Translations work the same whether demoreel was installed from a package or run from its folder.
   Kind: implement.
   Source: user-request-2026-09-25.
