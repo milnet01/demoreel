@@ -277,7 +277,8 @@ up at call time (§ 2 consequence 3).
 `ARGPARSE_MESSAGES` is a tuple in `demoreel` of the argparse msgids a demoreel
 user can reach — `usage: `, `options`, `positional arguments`,
 `show this help message and exit`, `show program's version number and exit`,
-the missing, unrecognised and invalid-choice errors — holding only strings
+the missing, unrecognised and invalid-choice errors, and the
+`%(prog)s: error: %(message)s\n` line they are printed in — holding only strings
 identical in every Python the gate runs, today 3.12 (the Ubuntu 24.04 leg) and
 3.13 (this machine). They are extracted into the template like demoreel's own.
 The hook is installed only when a catalog is loaded, so an English run's

@@ -56,6 +56,9 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Changed
 
+- **The word "error" before a mistyped command's message is now in your language** (DEMO-0166)
+  It was the last English word in a translated run's error line.
+
 - **An app that changes its own window size mid-recording is put back to fill the frame** (DEMO-0121)
   The halfway check sizes the window to the frame again, once, and says
   how far into the video that was. An app that takes its own size again

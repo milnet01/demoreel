@@ -3556,12 +3556,18 @@ path, and scripts read it.
   Kind: investigate.
   Source: DEMO-0125-finding-2026-09-30.
 
-- 📋 [DEMO-0166] **Translate argparse's own `error:` prefix.**
+- ✅ [DEMO-0166] **Translate argparse's own `error:` prefix.**
   argparse prints `%(prog)s: error: %(message)s\n`, which is not in
   ARGPARSE_MESSAGES, so every language shows `demoreel: error:` in English
   before the translated rest. Adding it is a new template entry for every
   catalog, and the stdout step's check that skips `error: ` lines has to
   follow. Confirm the string is the same in Python 3.12 and 3.13 first.
+  Shipped (2026-10-02): "%(prog)s: error: %(message)s\n" added to
+  ARGPARSE_MESSAGES, identical in Python 3.12.3 (the Ubuntu image) and
+  3.13.15. Translated in all 16 catalogs as one word each. The gate's
+  whole-message check no longer skips error lines: it requires the
+  translated line under the pseudo-locale, and a new `trim clip.mp4` run
+  triggers one; proven red on the old demoreel, green on the new.
   **Layman:** The word "error" at the start of a mistyped command is still English in every language.
   Kind: feature.
   Source: DEMO-0064-finding-2026-10-02.

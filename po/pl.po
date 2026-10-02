@@ -43,6 +43,10 @@ msgid "invalid choice: %(value)r (choose from %(choices)s)"
 msgstr "nieprawidłowy wybór: %(value)r (do wyboru: %(choices)s)"
 
 #. argparse formats this text with %
+msgid "%(prog)s: error: %(message)s\n"
+msgstr "%(prog)s: błąd: %(message)s\n"
+
+#. argparse formats this text with %
 msgid "This translation is a draft and has not yet been checked by a native speaker."
 msgstr "To tłumaczenie jest wersją roboczą i nie zostało jeszcze sprawdzone przez rodzimego użytkownika języka."
 

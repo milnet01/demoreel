@@ -4139,13 +4139,16 @@ def whole(stderr, argv):
     global checked
     messages = []
     for line in stderr.splitlines():
-        if line.startswith("demoreel: "):
-            messages.append(line[len("demoreel: "):])
+        # argparse's error line is translated whole, prog and all (DEMO-0166),
+        # and its closing ⟧ lands on a line of its own after the newline.
+        prefix = re.match(r"demoreel(?: [a-z]+)?: ", line)
+        if re.match(r"⟦demoreel(?: [a-z]+)?: error: ", line):
+            checked += 1
+        elif prefix:
+            messages.append(line[prefix.end():])
         elif line.startswith("  ") and messages:
             messages[-1] += "\n" + line
     for message in messages:
-        if message.startswith("error: "):
-            continue  # argparse's own error line; INV-13 is checked below
         checked += 1
         if not (message.startswith("⟦") and message.endswith("⟧")):
             bad.append(f"{argv}: a message not translated whole: {message!r}")
@@ -4172,6 +4175,7 @@ RUNS = [
     ["edit", "nofile.txt", "-o", "film2.mp4"],
     ["poster", "clip.mp4", "-o", "poster2.png", "-t", "9"],
     ["motion", "clip.mp4", "--from", "9"],
+    ["trim", "clip.mp4"],
 ]
 for argv in RUNS:
     seen = []

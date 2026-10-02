@@ -163,6 +163,7 @@ ARGPARSE_MESSAGES = (
     "the following arguments are required: %s",
     "unrecognized arguments: %s",
     "invalid choice: %(value)r (choose from %(choices)s)",
+    "%(prog)s: error: %(message)s\n",
 )
 
 # The chosen catalogs, best first: (code, translations, messages, draft).

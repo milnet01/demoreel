@@ -15,8 +15,9 @@ language (DEMO-0096); delete a language's section once it is confirmed.
   in the stutter note is a percentage; `{time}` in "recording for {time}"
   is the time elapsed so far. Grammar built on a wrong guess (gender, an
   article) needs fixing.
-- **argparse's own `error:`** prefix stays English in every language; it is
-  not in the template yet.
+- **argparse's own `error:`** prefix was added after the drafts
+  (DEMO-0166), as a single word per language. Check it reads as a
+  command-line error label.
 
 ## Per language
 
