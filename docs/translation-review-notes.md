@@ -44,3 +44,19 @@ language (DEMO-0096); delete a language's section once it is confirmed.
   open in plain form.
 - **zh_CN** — "用法： " keeps a space after the full-width colon; band 底条.
 - **zh_TW** — Taiwan terms (影片, 視窗, 影格, 算繪); band 底色帶.
+
+Drafted in DEMO-0065, 2026-10-02:
+
+- **ru** — backend "способ записи"/"режим"; "{seconds} с" for seconds;
+  "приложение, допускающее один экземпляр" is long.
+- **uk** — "{seconds} с"; fade-in "поява з чорного"; "the recording ended
+  before it started recording" says the *run* ended, to avoid repeating
+  "запис".
+- **pl** — "{seconds} s"; help lines in the third person; "{where} cannot
+  be read" reordered so `{where}` need not inflect; gender-neutral
+  "wpisał(a)byś".
+- **nl** — "u"; "run" kept as is; "plain cut" as "een harde overgang".
+- **ko** — -습니다/-십시오; particles after a placeholder written both
+  ways, 을(를); film 영상 against video 동영상 is a thin difference.
+- **ar** — Modern Standard Arabic; the forms for one and for two drop
+  `{count}`; "a flat colour" as لون واحد مُسطَّح.

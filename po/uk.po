@@ -1,0 +1,1058 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: demoreel\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: uk\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Demoreel-Review: draft\n"
+
+msgid "ended by {signal} before it finished, so there is nothing to hand back."
+msgstr "зупинено сигналом {signal} до завершення, тому немає що повернути."
+
+#. argparse formats this text with %
+msgid "usage: "
+msgstr "використання: "
+
+#. argparse formats this text with %
+msgid "options"
+msgstr "параметри"
+
+#. argparse formats this text with %
+msgid "positional arguments"
+msgstr "позиційні аргументи"
+
+#. argparse formats this text with %
+msgid "show this help message and exit"
+msgstr "показати цю довідку й вийти"
+
+#. argparse formats this text with %
+msgid "show program's version number and exit"
+msgstr "показати номер версії програми й вийти"
+
+#. argparse formats this text with %
+msgid "the following arguments are required: %s"
+msgstr "потрібні такі аргументи: %s"
+
+#. argparse formats this text with %
+msgid "unrecognized arguments: %s"
+msgstr "невідомі аргументи: %s"
+
+#. argparse formats this text with %
+msgid "invalid choice: %(value)r (choose from %(choices)s)"
+msgstr "недопустимий вибір: %(value)r (виберіть із %(choices)s)"
+
+#. argparse formats this text with %
+msgid "This translation is a draft and has not yet been checked by a native speaker."
+msgstr "Цей переклад — чернетка, і його ще не перевірив носій мови."
+
+msgid ""
+"could not use {path}: {reason}.\n"
+"  demoreel keeps its run files there. Point XDG_RUNTIME_DIR at a directory you can write to."
+msgstr ""
+"не вдалося використати {path}: {reason}.\n"
+"  demoreel зберігає там свої робочі файли. Вкажіть у XDG_RUNTIME_DIR каталог, до якого ви можете писати."
+
+msgid ""
+"{path} is not a directory you own, so demoreel will not use it.\n"
+"  On a shared machine another user can create that name first.\n"
+"  Remove it, or point XDG_RUNTIME_DIR at a directory you own."
+msgstr ""
+"{path} — не ваш каталог, тому demoreel не буде ним користуватися.\n"
+"  На спільному комп'ютері інший користувач може створити цю назву раніше.\n"
+"  Вилучіть його або вкажіть у XDG_RUNTIME_DIR каталог, який належить вам."
+
+msgid ""
+"a recording named {name} is already running.\n"
+"  Use --name to tell this run apart from it."
+msgstr ""
+"запис із назвою {name} уже триває.\n"
+"  Скористайтеся --name, щоб відрізнити від нього цей запуск."
+
+msgid ""
+"a recording named {name} is already running (pid {pid}).\n"
+"  Use --name to tell this run apart from it."
+msgstr ""
+"запис із назвою {name} уже триває (pid {pid}).\n"
+"  Скористайтеся --name, щоб відрізнити від нього цей запуск."
+
+msgid "Xvfb did not start, so there is no private display to record."
+msgstr "Xvfb не запустився, тому немає приватного екрана для запису."
+
+msgid "It said: {text}"
+msgstr "Повідомлення: {text}"
+
+msgid "`demoreel check` tests this start on its own."
+msgstr "`demoreel check` перевіряє цей запуск окремо."
+
+msgid "could not write the display's auth cookie, so the display cannot be made private."
+msgstr "не вдалося записати cookie автентифікації екрана, тому екран не можна зробити приватним."
+
+msgid "xauth said: {text}"
+msgstr "Повідомлення xauth: {text}"
+
+msgid "`demoreel check` tests this on its own."
+msgstr "`demoreel check` перевіряє це окремо."
+
+msgid "the display did not lock: a client without its auth cookie could still connect, or none could."
+msgstr "екран не замкнувся: клієнт без cookie автентифікації все ще міг під'єднатися, або не міг під'єднатися жоден."
+
+msgid "the GPU display did not start, so there is nothing to record on."
+msgstr "екран із GPU не запустився, тому немає на чому записувати."
+
+msgid "The end of its log:"
+msgstr "Кінець його журналу:"
+
+msgid "`demoreel check` says whether --gpu has what it needs."
+msgstr "`demoreel check` покаже, чи є все потрібне для --gpu."
+
+msgid "the GPU display did not lock: a client without its auth cookie could still connect, or none could."
+msgstr "екран із GPU не замкнувся: клієнт без cookie автентифікації все ще міг під'єднатися, або не міг під'єднатися жоден."
+
+msgid "the private display {display} stopped answering: `xdotool {command}` did not return within {seconds}s."
+msgstr "приватний екран {display} перестав відповідати: `xdotool {command}` не завершився за {seconds} с."
+
+msgid ""
+"the app resized its window to {size} at {place}, so it no longer fills the {frame} frame and part of the video is cropped or empty.\n"
+"  Record at the app's own size with -s {size}."
+msgstr ""
+"програма змінила розмір свого вікна на {size} на позиції {place}, тож воно більше не заповнює кадр {frame}, і частина відео обрізана або порожня.\n"
+"  Записуйте у власному розмірі програми за допомогою -s {size}."
+
+msgid ""
+"the app exited immediately (status 0) without opening a window.\n"
+"  The likely cause is a single-instance app: it finds a copy already\n"
+"  running on your real desktop, hands the request over to it and exits\n"
+"  successfully. If a copy is running, close it and try again.\n"
+"  If not, the command may simply have finished without needing a\n"
+"  window — in which case there is nothing to record."
+msgstr ""
+"програма одразу завершилася (стан 0), не відкривши вікна.\n"
+"  Імовірна причина — програма, що дозволяє лише один екземпляр: вона\n"
+"  знаходить копію, яка вже працює на вашій справжній стільниці, передає\n"
+"  їй запит і успішно завершується. Якщо копія працює, закрийте її й\n"
+"  спробуйте знову. Якщо ні, команда, можливо, просто виконалася без\n"
+"  вікна — і тоді записувати нічого."
+
+msgid ""
+"the app exited with status {status} before opening a window.\n"
+"  Its own output, above or in --app-log, says why. To see it on its own, run: {command}"
+msgstr ""
+"програма завершилася зі станом {status}, перш ніж відкрила вікно.\n"
+"  Причину видно в її власному виводі вище або в --app-log. Щоб побачити його окремо, виконайте: {command}"
+
+msgid "cannot read the step {step}: {reason}."
+msgstr "не вдається прочитати крок {step}: {reason}."
+
+msgid "unknown action {action}. The steps are: {steps}."
+msgstr "невідома дія {action}. Можливі кроки: {steps}."
+
+msgid "cannot read the step {step}: write it like {example}."
+msgstr "не вдається прочитати крок {step}: запишіть його так: {example}."
+
+msgid "could not read the steps file {path}: {reason}."
+msgstr "не вдалося прочитати файл кроків {path}: {reason}."
+
+msgid "ffmpeg could not start recording."
+msgstr "ffmpeg не зміг почати запис."
+
+msgid "`demoreel check` tests the programs and the encoder it needs."
+msgstr "`demoreel check` перевіряє потрібні програми й кодувальник."
+
+msgid "wf-recorder could not start recording."
+msgstr "wf-recorder не зміг почати запис."
+
+msgid ""
+"could not finish the video: turning the recording into {name} failed.\n"
+"  What was recorded is kept in {part}, and {log} says why."
+msgstr ""
+"не вдалося завершити відео: перетворити запис на {name} не вийшло.\n"
+"  Записане збережено в {part}, а причину описано в {log}."
+
+msgid "the display did not give up a frame within {seconds}s; it has stopped answering"
+msgstr "екран не віддав кадр за {seconds} с; він перестав відповідати"
+
+msgid "ffmpeg exited {status} with no frame"
+msgstr "ffmpeg завершився зі станом {status}, не давши кадру"
+
+msgid "reading a frame of {path} took over {seconds}s"
+msgstr "читання кадру з {path} тривало понад {seconds} с"
+
+msgid "no frame of {path} could be read"
+msgstr "не вдалося прочитати жодного кадру з {path}"
+
+msgid "this is a Flatpak target and the command is missing: {flags}"
+msgstr "це програма Flatpak, а в команді бракує: {flags}"
+
+msgid ""
+"A missing one can send it to your real compositor instead, leaving this\n"
+"recording empty. README.md says what each flag is for."
+msgstr ""
+"Без будь-якого з них програма може потрапити до вашого справжнього\n"
+"композитора, і запис буде порожнім. README.md пояснює, для чого кожен прапорець."
+
+msgid ""
+"openSUSE's own ffmpeg leaves it out. Install ffmpeg from the Packman repository,\n"
+"  which has it."
+msgstr ""
+"Власний ffmpeg openSUSE його не містить. Встановіть ffmpeg зі сховища Packman,\n"
+"  де він є."
+
+msgid "Fedora's ffmpeg-free leaves it out. Enable RPM Fusion, then:"
+msgstr "ffmpeg-free у Fedora його не містить. Увімкніть RPM Fusion, а потім:"
+
+msgid "Install a build of ffmpeg that includes libx264."
+msgstr "Встановіть збірку ffmpeg, яка містить libx264."
+
+msgid "Install with: {command}"
+msgstr "Встановити можна так: {command}"
+
+msgid "missing required program(s): {programs}"
+msgstr "бракує потрібних програм: {programs}"
+
+msgid "this ffmpeg cannot encode H.264 with libx264, which every recording uses."
+msgstr "цей ffmpeg не вміє кодувати H.264 за допомогою libx264, який потрібен для кожного запису."
+
+msgid "--cursor is not available with record --gpu: that backend records the compositor's picture, which never has the pointer in it."
+msgstr "--cursor недоступний із record --gpu: цей спосіб записує зображення композитора, на якому вказівника ніколи немає."
+
+msgid "give the steps with -a or with --steps, not both."
+msgstr "задайте кроки через -a або через --steps, але не обома способами."
+
+msgid "give the app to run after `--`, e.g. {example}"
+msgstr "вкажіть програму для запуску після `--`, наприклад {example}"
+
+msgid "--size takes a width and a height in pixels, like 1600x1000, not {size}."
+msgstr "--size приймає ширину й висоту в пікселях, наприклад 1600x1000, а не {size}."
+
+msgid ""
+"--size needs even numbers for a video, since H.264 cannot encode an odd width or height.\n"
+"  Try {size}."
+msgstr ""
+"для відео --size потребує парних чисел, бо H.264 не кодує непарну ширину чи висоту.\n"
+"  Спробуйте {size}."
+
+msgid ""
+"the app log {path} is a symbolic link another user made, so demoreel\n"
+"  will not write through it: it could point at a file of yours.\n"
+"  Choose another path, or remove the link if it is not meant to be there."
+msgstr ""
+"журнал програми {path} — символічне посилання, створене іншим користувачем,\n"
+"  тому demoreel не писатиме через нього: воно може вказувати на ваш файл.\n"
+"  Виберіть інший шлях або вилучіть посилання, якщо його там не має бути."
+
+msgid ""
+"the output {path} is a symbolic link another user made, so demoreel\n"
+"  will not write through it: it could point at a file of yours.\n"
+"  Choose another path, or remove the link if it is not meant to be there."
+msgstr ""
+"вихідний файл {path} — символічне посилання, створене іншим користувачем,\n"
+"  тому demoreel не писатиме через нього: воно може вказувати на ваш файл.\n"
+"  Виберіть інший шлях або вилучіть посилання, якщо його там не має бути."
+
+msgid ""
+"could not run {command}: {reason}.\n"
+"  Check that the command after `--` is installed and spelled as you would type it."
+msgstr ""
+"не вдалося виконати {command}: {reason}.\n"
+"  Перевірте, що команду після `--` встановлено і написано так, як ви її вводите."
+
+msgid ""
+"no window appeared within {seconds}s; taking the picture anyway.\n"
+"  If the app is slow to start, give it longer with --startup-timeout."
+msgstr ""
+"за {seconds} с не з'явилося жодного вікна; знімок буде зроблено все одно.\n"
+"  Якщо програма запускається повільно, дайте їй більше часу через --startup-timeout."
+
+msgid ""
+"no window appeared within {seconds}s; recording anyway.\n"
+"  If the app is slow to start, give it longer with --startup-timeout."
+msgstr ""
+"за {seconds} с не з'явилося жодного вікна; запис триває все одно.\n"
+"  Якщо програма запускається повільно, дайте їй більше часу через --startup-timeout."
+
+msgid ""
+"It had not drawn yet. A GPU app can spend seconds on a black\n"
+"    screen while it starts: --settle waits for the first picture."
+msgstr ""
+"Вона ще не встигла нічого намалювати. Програма для GPU може кілька\n"
+"    секунд показувати чорний екран під час запуску: --settle чекає на перше зображення."
+
+msgid ""
+"It needs the GPU, and Xvfb has none. An OpenGL or Vulkan app\n"
+"    cannot render on it at all: record it with --gpu instead."
+msgstr ""
+"Їй потрібен GPU, а в Xvfb його немає. Програма OpenGL чи Vulkan\n"
+"    взагалі не може на ньому малювати: записуйте її з --gpu."
+
+msgid "The app ran but drew nothing here. Two causes account for most of it:"
+msgstr "Програма запустилася, але нічого тут не намалювала. Найчастіше причин дві:"
+
+msgid ""
+"It rendered somewhere else. A Flatpak needs --nosocket=wayland on\n"
+"    its command line; see README.md."
+msgstr ""
+"Вона малювала деінде. Програмі Flatpak потрібен --nosocket=wayland\n"
+"    у її командному рядку; див. README.md."
+
+msgid "--settle could not sample the display, so it cannot tell when the app has drawn."
+msgstr "--settle не зміг узяти зразок екрана, тому не може визначити, коли програма щось намалювала."
+
+msgid ""
+"nothing was drawn within {seconds}s; recording anyway.\n"
+"  If the app takes longer to show its first picture, raise --settle."
+msgstr ""
+"за {seconds} с нічого не намальовано; запис триває все одно.\n"
+"  Якщо програмі потрібно більше часу на перше зображення, збільште --settle."
+
+msgid "the recorder stopped early; see {log}"
+msgstr "засіб запису зупинився передчасно; див. {log}"
+
+msgid "recording, {seconds}s left"
+msgstr "запис, залишилося {seconds} с"
+
+msgid "recording for {time} (Ctrl+C to finish)"
+msgstr "запис протягом {time} (Ctrl+C, щоб завершити)"
+
+msgid "the app closed; ending the recording."
+msgstr "програму закрито; запис завершується."
+
+msgid ""
+"no video was written to {output}: the recorder produced nothing.\n"
+"  Its log, {log}, says why."
+msgstr ""
+"до {output} не записано жодного відео: засіб запису нічого не створив.\n"
+"  Причину описано в його журналі, {log}."
+
+msgid "the video cannot be played: {output}"
+msgstr "відео неможливо відтворити: {output}"
+
+msgid "The recorder most likely stopped before it finished the file. See {log}"
+msgstr "Найімовірніше, засіб запису зупинився, не дописавши файл. Див. {log}"
+
+msgid "the virtual display was blank halfway, so at least half of it is a flat colour: {output}"
+msgstr "на половині запису віртуальний екран був порожнім, тож щонайменше половина відео — суцільний колір: {output}"
+
+msgid "the virtual display was blank at the end, so it ends on a flat colour: {output}"
+msgstr "наприкінці віртуальний екран був порожнім, тож відео закінчується суцільним кольором: {output}"
+
+msgid ""
+"could not sample the virtual display to check {output} is not blank,\n"
+"  so this run cannot vouch for it."
+msgstr ""
+"не вдалося взяти зразок віртуального екрана, щоб перевірити, що {output} не порожній,\n"
+"  тому цей запуск не може за нього поручитися."
+
+msgid ""
+"could not read {output} back to check it is not blank,\n"
+"  so this run cannot vouch for it."
+msgstr ""
+"не вдалося прочитати {output}, щоб перевірити, що він не порожній,\n"
+"  тому цей запуск не може за нього поручитися."
+
+msgid ""
+"the video is a flat colour halfway, though the private screen was not: {output}\n"
+"  The recorder captured something other than the screen. See {log}"
+msgstr ""
+"на половині відео — суцільний колір, хоча приватний екран таким не був: {output}\n"
+"  Засіб запису захопив щось інше, а не екран. Див. {log}"
+
+msgid ""
+"the video is a flat colour at the end, though the private screen was not: {output}\n"
+"  The recorder captured something other than the screen. See {log}"
+msgstr ""
+"наприкінці відео — суцільний колір, хоча приватний екран таким не був: {output}\n"
+"  Засіб запису захопив щось інше, а не екран. Див. {log}"
+
+msgid ""
+"only {share} of the frames in the middle of {output} changed from the one before.\n"
+"  If the app was moving the whole time, it drew that few new frames itself: the video has every frame it drew."
+msgstr ""
+"лише {share} кадрів у середині {output} відрізнялися від попереднього.\n"
+"  Якщо в програмі весь час щось рухалося, то вона сама намалювала так мало нових кадрів: у відео є кожен намальований нею кадр."
+
+msgid "reading it back took over {seconds}s."
+msgstr "повторне читання тривало понад {seconds} с."
+
+msgid "ffprobe could not read it."
+msgstr "ffprobe не зміг його прочитати."
+
+msgid "{seconds}s of video, {size}"
+msgstr "{seconds} с відео, {size}"
+
+msgid "recording {display} to {output} (until stopped)"
+msgstr "запис {display} до {output} (до зупинки)"
+
+msgid "recording {display} to {output} ({seconds}s)"
+msgstr "запис {display} до {output} ({seconds} с)"
+
+msgid "could not take the picture."
+msgstr "не вдалося зробити знімок."
+
+msgid "could not read back {output} to check it is not blank."
+msgstr "не вдалося прочитати {output}, щоб перевірити, що він не порожній."
+
+msgid "the picture is one flat colour: {output}"
+msgstr "знімок — один суцільний колір: {output}"
+
+msgid ""
+"nothing was drawn within {seconds}s; taking the picture anyway.\n"
+"  If the app takes longer to show its first picture, raise --settle."
+msgstr ""
+"за {seconds} с нічого не намальовано; знімок буде зроблено все одно.\n"
+"  Якщо програмі потрібно більше часу на перше зображення, збільште --settle."
+
+msgid "could not take the picture: the display did not answer within {seconds}s."
+msgstr "не вдалося зробити знімок: екран не відповів за {seconds} с."
+
+msgid "Its display log is kept in {folder}"
+msgstr "Журнал його екрана збережено в {folder}"
+
+msgid "record and shot"
+msgstr "record і shot"
+
+msgid "missing {programs}"
+msgstr "бракує {programs}"
+
+msgid "this ffmpeg has no libx264, which every recording uses."
+msgstr "у цьому ffmpeg немає libx264, який потрібен для кожного запису."
+
+msgid "no graphics render node in /dev/dri, so there is no GPU for it to use."
+msgstr "у /dev/dri немає графічного вузла рендерингу, тому немає GPU, яким можна скористатися."
+
+msgid "{name}: NOT READY"
+msgstr "{name}: НЕ ГОТОВО"
+
+msgid "{name}: ready"
+msgstr "{name}: готово"
+
+msgid "edit, trim, caption, join, card, motion and poster"
+msgstr "edit, trim, caption, join, card, motion і poster"
+
+msgid "text on a card or a caption"
+msgstr "текст на картці або підпис"
+
+msgid "a private display did not start: {reason}"
+msgstr "приватний екран не запустився: {reason}"
+
+msgid "no recording named {name} is running."
+msgstr "запис із назвою {name} не виконується."
+
+msgid "Running now: {names}."
+msgstr "Зараз виконуються: {names}."
+
+msgid "no recording is running, so there is nothing to stop."
+msgstr "жоден запис не виконується, тож зупиняти нічого."
+
+msgid ""
+"{count} recording is running: {names}.\n"
+"  Name the one to stop, e.g. {example}"
+msgid_plural ""
+"{count} recordings are running: {names}.\n"
+"  Name the one to stop, e.g. {example}"
+msgstr[0] ""
+"виконується {count} запис: {names}.\n"
+"  Вкажіть, який зупинити, наприклад {example}"
+msgstr[1] ""
+"виконуються {count} записи: {names}.\n"
+"  Вкажіть, який зупинити, наприклад {example}"
+msgstr[2] ""
+"виконується {count} записів: {names}.\n"
+"  Вкажіть, який зупинити, наприклад {example}"
+
+msgid ""
+"the recording failed after it was stopped, so there is no video to hand back.\n"
+"  Its own error message says why."
+msgstr ""
+"запис зазнав невдачі після зупинки, тому немає відео, яке можна повернути.\n"
+"  Причину описано в його власному повідомленні про помилку."
+
+msgid "the recording ended before it started recording, so there is no video to stop."
+msgstr "запуск завершився ще до початку запису, тому немає відео, яке можна зупинити."
+
+msgid "{option} belongs to a --text, and none comes before it. caption never cuts the video; use trim."
+msgstr "{option} належить до --text, але перед ним немає жодного. caption ніколи не обрізає відео; скористайтеся trim."
+
+msgid "{where}: there is no font file {path}"
+msgstr "{where}: немає файлу шрифту {path}"
+
+msgid "{where}: a font is found by its name with fc-match, which gave no answer here. Give the font's file instead: font /path/to/font.ttf"
+msgstr "{where}: шрифт шукається за назвою через fc-match, а він тут нічого не відповів. Натомість вкажіть файл шрифту: font /path/to/font.ttf"
+
+msgid ""
+"{where}: this machine has no font named {font}; the nearest it offers is {nearest}.\n"
+"  `fc-list : family` lists the names it has."
+msgstr ""
+"{where}: на цьому комп'ютері немає шрифту з назвою {font}; найближчий, який він пропонує, — {nearest}.\n"
+"  `fc-list : family` показує наявні назви."
+
+msgid "{where}: the font file {path} has a character in its path that ffmpeg's filters cannot carry. Copy it to a plainer path."
+msgstr "{where}: шлях до файлу шрифту {path} містить символ, який фільтри ffmpeg не можуть передати. Скопіюйте файл за простішим шляхом."
+
+msgid "{where}: {word} takes a number of seconds, not {value}."
+msgstr "{where}: {word} приймає кількість секунд, а не {value}."
+
+msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
+msgstr "{where}: {word} не підходить для рядка {kind}. Він приймає: {words}."
+
+msgid "{where}: {word} needs a value after it."
+msgstr "{where}: після {word} потрібне значення."
+
+msgid "line {number}"
+msgstr "рядок {number}"
+
+msgid "{where} cannot be read: {reason}."
+msgstr "{where} не вдається прочитати: {reason}."
+
+msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
+msgstr "{where}: текст належить до сцени над ним, але перед цим рядком немає жодної сцени."
+
+msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
+msgstr "{where}: text потребує слів у лапках: text \"Збереження файлу\""
+
+msgid "{where}: clip needs a video file after it."
+msgstr "{where}: після clip потрібен відеофайл."
+
+msgid "{where}: card needs its length in seconds: card 3"
+msgstr "{where}: card потребує тривалості в секундах: card 3"
+
+msgid "{where}: a line starts with clip, card or text, not {word}."
+msgstr "{where}: рядок починається з clip, card або text, а не з {word}."
+
+msgid "the script has no scenes in it. A scene is a line starting with clip or card."
+msgstr "у сценарії немає сцен. Сцена — це рядок, що починається з clip або card."
+
+msgid "{where}: there is no file {path}"
+msgstr "{where}: немає файлу {path}"
+
+msgid "{where}: reading {path} took over {seconds}s."
+msgstr "{where}: читання {path} тривало понад {seconds} с."
+
+msgid "{where}: {path} is not a video or picture ffmpeg can read."
+msgstr "{where}: {path} — не відео й не зображення, яке може прочитати ffmpeg."
+
+msgid "{where}: could not count the frames of {path}."
+msgstr "{where}: не вдалося порахувати кадри в {path}."
+
+msgid ""
+"{where}: {path} is too big an animation to hold in memory and play again and again ({count} frame of {size}).\n"
+"  Turn it into a video and use it as a clip instead."
+msgid_plural ""
+"{where}: {path} is too big an animation to hold in memory and play again and again ({count} frames of {size}).\n"
+"  Turn it into a video and use it as a clip instead."
+msgstr[0] ""
+"{where}: {path} — надто велика анімація, щоб тримати її в пам'яті й відтворювати знову і знову ({count} кадр розміром {size}).\n"
+"  Перетворіть її на відео й використайте як кліп."
+msgstr[1] ""
+"{where}: {path} — надто велика анімація, щоб тримати її в пам'яті й відтворювати знову і знову ({count} кадри розміром {size}).\n"
+"  Перетворіть її на відео й використайте як кліп."
+msgstr[2] ""
+"{where}: {path} — надто велика анімація, щоб тримати її в пам'яті й відтворювати знову і знову ({count} кадрів розміром {size}).\n"
+"  Перетворіть її на відео й використайте як кліп."
+
+msgid "drawing a line of text took over {seconds}s."
+msgstr "малювання рядка тексту тривало понад {seconds} с."
+
+msgid "this machine cannot draw text on a video: ffmpeg needs its drawtext filter and a font."
+msgstr "цей комп'ютер не може малювати текст на відео: ffmpeg потрібні фільтр drawtext і шрифт."
+
+msgid "{where}: a text is one line of words, and this one is empty."
+msgstr "{where}: текст — це один рядок слів, а цей порожній."
+
+msgid "{where}: a text is one line of words, and this one is more than one line."
+msgstr "{where}: текст — це один рядок слів, а цей займає більше одного рядка."
+
+msgid "{where}: the text {words} is asked to show from {start} to {end}, which is not inside its scene ({scene_start} to {scene_end})."
+msgstr "{where}: текст {words} має показуватися з {start} до {end}, а це не в межах його сцени ({scene_start}–{scene_end})."
+
+msgid "{where}: a text's size is a percentage of the frame's height, between 0 and 50, not {size}."
+msgstr "{where}: розмір тексту — це відсоток від висоти кадру, від 0 до 50, а не {size}."
+
+msgid "{where}: a text's {word} is a colour written #RRGGBB, like #FFD040, not {value}."
+msgstr "{where}: {word} тексту — це колір у вигляді #RRGGBB, наприклад #FFD040, а не {value}."
+
+msgid "{where}: a text's band is on or off, not {value}."
+msgstr "{where}: band тексту може бути on або off, а не {value}."
+
+msgid "{where}: a text sits at {places} or {last}, not at {value}."
+msgstr "{where}: текст може розташовуватися в {places} або {last}, а не в {value}."
+
+msgid "{where}: the text {words} fades for {fades} seconds, and shows for only {seconds}."
+msgstr "{where}: текст {words} проявляється й згасає {fades} с, а показується лише {seconds} с."
+
+msgid ""
+"{where}: a band that fades with its text needs a newer ffmpeg than this one: its text filter has no `boxw`.\n"
+"  Give the text `band off`, or take its fade away."
+msgstr ""
+"{where}: смузі, що згасає разом із текстом, потрібен новіший ffmpeg, ніж цей: у його текстовому фільтрі немає `boxw`.\n"
+"  Задайте текстові `band off` або приберіть згасання."
+
+msgid ""
+"{where}: the text {words} is {wide} pixels wide at size {size}, and the frame has room for {room}.\n"
+"  Shorten it, or give it a smaller size: about {fits} would fit."
+msgstr ""
+"{where}: текст {words} має ширину {wide} пікселів за розміру {size}, а в кадрі є місце для {room}.\n"
+"  Скоротіть його або зменште розмір: поміститься приблизно {fits}."
+
+msgid "{where}: the texts {first} and {second} would be on screen at the same time. Only one shows at a time."
+msgstr "{where}: тексти {first} і {second} були б на екрані одночасно. Водночас показується лише один."
+
+msgid "{where}: a card needs a length above zero."
+msgstr "{where}: тривалість картки має бути більшою за нуль."
+
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, not {value}."
+msgstr "{where}: тло — це колір у вигляді #RRGGBB, наприклад {example}, а не {value}."
+
+msgid "{where}: {path} has no length ffmpeg can tell."
+msgstr "{where}: ffmpeg не може визначити тривалість {path}."
+
+msgid "{where}: {path} is {size}, a different shape from the film's {film}, and demoreel will not stretch it."
+msgstr "{where}: {path} має розмір {size}, що відрізняється за формою від розміру фільму {film}, а demoreel не розтягуватиме його."
+
+msgid "{where}: `{word} {value}` is past the end of {path}, which is {seconds} seconds long."
+msgstr "{where}: `{word} {value}` виходить за кінець {path}, який триває {seconds} с."
+
+msgid "{where}: `from` must come before `to`, and both inside {path} ({seconds} seconds long)."
+msgstr "{where}: `from` має бути раніше за `to`, і обидва — в межах {path} (тривалість {seconds} с)."
+
+msgid "{where}: `fade-at {moment}` needs {seconds} seconds of the scene on each side, and the scene runs from {start} to {end}."
+msgstr "{where}: `fade-at {moment}` потребує {seconds} с сцени з кожного боку, а сцена триває з {start} до {end}."
+
+msgid "{where}: its fades come to {fades} seconds, and the scene is only {seconds} long."
+msgstr "{where}: її переходи разом тривають {fades} с, а сцена триває лише {seconds} с."
+
+msgid "{where}: its texts leave no room for the picture between them. Give them a smaller size."
+msgstr "{where}: її тексти не залишають місця для зображення між собою. Зменште їхній розмір."
+
+msgid ""
+"a video's width and height must be even, since H.264 cannot encode an odd one, and this film would be {size}.\n"
+"  Set the size with -s {even}."
+msgstr ""
+"ширина й висота відео мають бути парними, бо H.264 не кодує непарні, а цей фільм мав би розмір {size}.\n"
+"  Задайте розмір через -s {even}."
+
+msgid "--framerate takes a number above zero, not {rate}."
+msgstr "--framerate приймає число, більше за нуль, а не {rate}."
+
+msgid "-o must end in {ending}, and {name} does not."
+msgstr "-o має закінчуватися на {ending}, а {name} так не закінчується."
+
+msgid "-o must end in {ending} or {other}, and {name} does not."
+msgstr "-o має закінчуватися на {ending} або {other}, а {name} так не закінчується."
+
+msgid "-o is {output}, which is also a file this command reads. demoreel never writes over its own input."
+msgstr "-o — це {output}, а цей файл команда також читає. demoreel ніколи не перезаписує власні вхідні файли."
+
+msgid "this ffmpeg cannot encode H.264 with libx264, which every video uses."
+msgstr "цей ffmpeg не вміє кодувати H.264 за допомогою libx264, який потрібен для кожного відео."
+
+msgid "{where}: a crossfade fades from the scene before, and this is the first scene."
+msgstr "{where}: плавний перехід іде від попередньої сцени, а це перша сцена."
+
+msgid "{where}: a scene takes a crossfade or a fade-in, not both."
+msgstr "{where}: сцена може мати плавний перехід або появу з чорного, але не обидва."
+
+msgid "{where}: a crossfade of {seconds} seconds does not fit: the two scenes overlap for that long, and one of them is shorter."
+msgstr "{where}: плавний перехід тривалістю {seconds} с не вміщується: дві сцени перекриваються стільки часу, а одна з них коротша."
+
+msgid "text"
+msgstr "текст"
+
+msgid "scene {number}: {kind} {name}, {start} to {end}"
+msgstr "сцена {number}: {kind} {name}, з {start} до {end}"
+
+msgid "making {output}, {seconds} seconds at {size}"
+msgstr "створення {output}, {seconds} с, розмір {size}"
+
+msgid "ffmpeg could not make the film."
+msgstr "ffmpeg не зміг створити фільм."
+
+msgid "ffmpeg did not finish making the film in the time allowed for its length, so it was stopped."
+msgstr "ffmpeg не встиг створити фільм за час, відведений на його тривалість, тому його зупинено."
+
+msgid "could not read the script {path}: {reason}."
+msgstr "не вдалося прочитати сценарій {path}: {reason}."
+
+msgid "trim needs something to do: --from, --to, or a fade."
+msgstr "trim потребує завдання: --from, --to або затемнення."
+
+msgid "join takes two or more videos; one on its own is already whole."
+msgstr "join приймає два або більше відео; одне відео й так ціле."
+
+msgid "the card"
+msgstr "картка"
+
+msgid "--from and --to must be inside {path}, which is {seconds} seconds long, with --from before --to."
+msgstr "--from і --to мають бути в межах {path}, який триває {seconds} с, причому --from — раніше за --to."
+
+msgid "reading {path} took too long for its length, so it was stopped."
+msgstr "читання {path} тривало задовго для його тривалості, тому його зупинено."
+
+msgid "could not read the frames of {path}."
+msgstr "не вдалося прочитати кадри з {path}."
+
+msgid "-t {time} is not inside {path}, which is {seconds} seconds long."
+msgstr "-t {time} не в межах {path}, який триває {seconds} с."
+
+msgid "could not take the frame at {time} from {path}."
+msgstr "не вдалося взяти кадр на позиції {time} з {path}."
+
+msgid "taking the frame took over {seconds}s."
+msgstr "отримання кадру тривало понад {seconds} с."
+
+msgid "needs ffmpeg first"
+msgstr "спочатку потрібен ffmpeg"
+
+msgid "this ffmpeg has no libx264, which every video uses."
+msgstr "у цьому ffmpeg немає libx264, який потрібен для кожного відео."
+
+msgid "ffmpeg drew nothing for a line of text: no font was found."
+msgstr "ffmpeg нічого не намалював для рядка тексту: не знайдено шрифту."
+
+#. argparse formats this text with %
+msgid "can this machine record? If not, it says what to install"
+msgstr "чи може цей комп'ютер записувати? Якщо ні, буде сказано, що встановити"
+
+#. argparse formats this text with %
+msgid "record Kate for 20 seconds"
+msgstr "записати Kate протягом 20 секунд"
+
+#. argparse formats this text with %
+msgid "one picture instead of a video"
+msgstr "один знімок замість відео"
+
+#. argparse formats this text with %
+msgid "cut the end off a recording, where `demoreel motion demo.mp4` says to"
+msgstr "обрізати кінець запису там, де вказує `demoreel motion demo.mp4`"
+
+#. argparse formats this text with %
+msgid "make a film from a script of scenes: clips, cards, text and fades"
+msgstr "створити фільм зі сценарію сцен: кліпи, картки, текст і переходи"
+
+#. argparse formats this text with %
+msgid "record until you say stop, then stop it from any terminal"
+msgstr "записувати, доки ви не скажете зупинитися, а потім зупинити з будь-якого термінала"
+
+#. argparse formats this text with %
+msgid "show the app being used: these steps run while it records"
+msgstr "показати роботу з програмою: ці кроки виконуються під час запису"
+
+#. argparse formats this text with %
+msgid "an app that needs the graphics card (OpenGL, Vulkan)"
+msgstr "програма, якій потрібна відеокарта (OpenGL, Vulkan)"
+
+#. argparse formats this text with %
+msgid "a Flatpak app, which needs three flags on its own command line"
+msgstr "програма Flatpak, якій потрібні три прапорці в її власному командному рядку"
+
+#. argparse formats this text with %
+msgid "examples:"
+msgstr "приклади:"
+
+#. argparse formats this text with %
+msgid ""
+"Record a GUI app on a private virtual display, so nothing of your real desktop\n"
+"is in frame."
+msgstr ""
+"Записує графічну програму на приватному віртуальному екрані, тож нічого з вашої\n"
+"справжньої стільниці не потрапляє в кадр."
+
+#. argparse formats this text with %
+msgid "more examples:"
+msgstr "інші приклади:"
+
+#. argparse formats this text with %
+msgid "record an app and write a video file"
+msgstr "записати програму й створити відеофайл"
+
+#. argparse formats this text with %
+msgid "video file to write (default: ./<app>-<timestamp>.mp4)"
+msgstr "відеофайл для запису (типово: ./<app>-<timestamp>.mp4)"
+
+#. argparse formats this text with %
+msgid "seconds to record; 0 means until `demoreel stop` (default: 30)"
+msgstr "скільки секунд записувати; 0 означає до `demoreel stop` (типово: 30)"
+
+#. argparse formats this text with %
+msgid "virtual display size, even numbers (default: 1600x1000)"
+msgstr "розмір віртуального екрана, парні числа (типово: 1600x1000)"
+
+#. argparse formats this text with %
+msgid "frames per second (default: 30)"
+msgstr "кадрів за секунду (типово: 30)"
+
+#. argparse formats this text with %
+msgid "name for this run, so `demoreel stop` can find it (default: default)"
+msgstr "назва цього запуску, щоб `demoreel stop` міг його знайти (типово: default)"
+
+#. argparse formats this text with %
+msgid "scripted step, repeatable and run in order: {steps}"
+msgstr "крок сценарію; можна повторювати, виконуються по черзі: {steps}"
+
+#. argparse formats this text with %
+msgid "read the scripted steps from FILE, one per line, or from standard input for -; keeps typed text out of the process list. Not with -a"
+msgstr "прочитати кроки сценарію з FILE, по одному на рядок, або зі стандартного введення для -; так набраний текст не потрапляє до списку процесів. Не разом із -a"
+
+#. argparse formats this text with %
+msgid "keep the app's own output in PATH; otherwise it goes to this terminal's stderr. Useful when the app prints whether it drew the real thing, which no recording check here can tell"
+msgstr "зберігати власний вивід програми в PATH; інакше він іде в stderr цього термінала. Корисно, коли програма повідомляє, чи намалювала вона справжнє зображення, — жодна перевірка запису тут цього не визначить"
+
+#. argparse formats this text with %
+msgid "wait up to SECONDS for the app to draw its first frame before recording starts, instead of filming its startup black screen (default: 0, don't wait)"
+msgstr "чекати до SECONDS, доки програма намалює перший кадр, перш ніж почати запис, замість знімати її чорний екран запуску (типово: 0, не чекати)"
+
+#. argparse formats this text with %
+msgid "for an app that needs the graphics card (OpenGL, Vulkan): record it on a headless compositor instead of Xvfb, which has no GPU. Needs cage, Xwayland, wlr-randr and wf-recorder; not with --cursor"
+msgstr "для програми, якій потрібна відеокарта (OpenGL, Vulkan): записувати її на композиторі без монітора замість Xvfb, у якому немає GPU. Потрібні cage, Xwayland, wlr-randr і wf-recorder; не разом із --cursor"
+
+#. argparse formats this text with %
+msgid "show the mouse pointer; off by default, since with no actions it just sits in the corner"
+msgstr "показувати вказівник миші; типово вимкнено, бо без дій він просто стоїть у куті"
+
+#. argparse formats this text with %
+msgid "how long to wait for the app's window (default: 20)"
+msgstr "скільки чекати на вікно програми (типово: 20)"
+
+#. argparse formats this text with %
+msgid "-- followed by the command that starts the app"
+msgstr "-- і після нього команда, яка запускає програму"
+
+#. argparse formats this text with %
+msgid "take one picture of an app and write a PNG"
+msgstr "зробити один знімок програми й записати PNG"
+
+#. argparse formats this text with %
+msgid "picture file to write (default: ./<app>-<timestamp>.png)"
+msgstr "файл знімка для запису (типово: ./<app>-<timestamp>.png)"
+
+#. argparse formats this text with %
+msgid "virtual display size (default: 1600x1000)"
+msgstr "розмір віртуального екрана (типово: 1600x1000)"
+
+#. argparse formats this text with %
+msgid "scripted step run before the picture, repeatable: {steps}"
+msgstr "крок сценарію перед знімком; можна повторювати: {steps}"
+
+#. argparse formats this text with %
+msgid "read the scripted steps from FILE, one per line, or from standard input for -. Not with -a"
+msgstr "прочитати кроки сценарію з FILE, по одному на рядок, або зі стандартного введення для -. Не разом із -a"
+
+#. argparse formats this text with %
+msgid "keep the app's own output in PATH; otherwise it goes to this terminal's stderr"
+msgstr "зберігати власний вивід програми в PATH; інакше він іде в stderr цього термінала"
+
+#. argparse formats this text with %
+msgid "wait up to SECONDS for the app to draw before the steps and the picture (default: 10)"
+msgstr "чекати до SECONDS, доки програма щось намалює, перед кроками і знімком (типово: 10)"
+
+#. argparse formats this text with %
+msgid "for an app that needs the graphics card: use a headless compositor instead of Xvfb. Needs cage, Xwayland and wlr-randr"
+msgstr "для програми, якій потрібна відеокарта: використати композитор без монітора замість Xvfb. Потрібні cage, Xwayland і wlr-randr"
+
+#. argparse formats this text with %
+msgid "show the mouse pointer in the picture"
+msgstr "показати вказівник миші на знімку"
+
+#. argparse formats this text with %
+msgid "test whether this machine can record, without recording"
+msgstr "перевірити, чи може цей комп'ютер записувати, нічого не записуючи"
+
+#. argparse formats this text with %
+msgid "Report what each backend needs and whether it is installed, start a private display to prove it works, and name the install command for anything missing. Exits non-zero if the default backend cannot record."
+msgstr "Повідомляє, що потрібно кожному способу запису і чи це встановлено, запускає приватний екран, щоб довести, що все працює, і називає команду встановлення для всього, чого бракує. Завершується з ненульовим кодом, якщо типовий спосіб не може записувати."
+
+#. argparse formats this text with %
+msgid "end a running recording early"
+msgstr "достроково завершити поточний запис"
+
+#. argparse formats this text with %
+msgid "which run to stop (default: the only one running)"
+msgstr "який запуск зупинити (типово: єдиний, що виконується)"
+
+#. argparse formats this text with %
+msgid "video file to write, ending in .mp4"
+msgstr "відеофайл для запису, із закінченням .mp4"
+
+#. argparse formats this text with %
+msgid "start black; the picture arrives over SECONDS"
+msgstr "почати з чорного; зображення з'являється протягом SECONDS"
+
+#. argparse formats this text with %
+msgid "go to black over the last SECONDS"
+msgstr "перейти до чорного протягом останніх SECONDS"
+
+#. argparse formats this text with %
+msgid "make a film from a script of scenes"
+msgstr "створити фільм зі сценарію сцен"
+
+#. argparse formats this text with %
+msgid "make a film from a script of scenes."
+msgstr "створити фільм зі сценарію сцен."
+
+#. argparse formats this text with %
+msgid "the script file, or - for standard input"
+msgstr "файл сценарію або - для стандартного введення"
+
+#. argparse formats this text with %
+msgid "the film's picture size, like 1280x800 (default: the first clip's)"
+msgstr "розмір зображення фільму, наприклад 1280x800 (типово: як у першого кліпу)"
+
+#. argparse formats this text with %
+msgid "the film's frames per second (default: the first clip's)"
+msgstr "кадрів за секунду у фільмі (типово: як у першого кліпу)"
+
+#. argparse formats this text with %
+msgid "cut the start and the end off a video"
+msgstr "обрізати початок і кінець відео"
+
+#. argparse formats this text with %
+msgid "cut the start and the end off a video."
+msgstr "обрізати початок і кінець відео."
+
+#. argparse formats this text with %
+msgid "the video to cut"
+msgstr "відео, яке треба обрізати"
+
+#. argparse formats this text with %
+msgid "where the kept part starts (default: the start)"
+msgstr "де починається частина, яку буде збережено (типово: початок)"
+
+#. argparse formats this text with %
+msgid "the last moment kept (default: the end)"
+msgstr "останній момент, який буде збережено (типово: кінець)"
+
+#. argparse formats this text with %
+msgid "fade to black and back around this moment; repeatable"
+msgstr "затемнення до чорного й назад навколо цього моменту; можна повторювати"
+
+#. argparse formats this text with %
+msgid "how long each half of a --fade-at takes (default: {seconds})"
+msgstr "скільки триває кожна половина --fade-at (типово: {seconds})"
+
+#. argparse formats this text with %
+msgid "put text over part of a video"
+msgstr "накласти текст на частину відео"
+
+#. argparse formats this text with %
+msgid "put text over part of a video."
+msgstr "накласти текст на частину відео."
+
+#. argparse formats this text with %
+msgid "the video to put text on"
+msgstr "відео, на яке треба накласти текст"
+
+#. argparse formats this text with %
+msgid "one line of text; repeatable"
+msgstr "один рядок тексту; можна повторювати"
+
+#. argparse formats this text with %
+msgid "for the --text before it: when it appears"
+msgstr "для попереднього --text: коли він з'являється"
+
+#. argparse formats this text with %
+msgid "for the --text before it: when it goes"
+msgstr "для попереднього --text: коли він зникає"
+
+#. argparse formats this text with %
+msgid "for the --text before it: its height, as a percentage of the frame's"
+msgstr "для попереднього --text: його висота у відсотках від висоти кадру"
+
+#. argparse formats this text with %
+msgid "put videos end to end"
+msgstr "з'єднати відео одне за одним"
+
+#. argparse formats this text with %
+msgid "put videos end to end."
+msgstr "з'єднати відео одне за одним."
+
+#. argparse formats this text with %
+msgid "two or more videos, in order"
+msgstr "два або більше відео, по порядку"
+
+#. argparse formats this text with %
+msgid "fade from each video into the next over SECONDS (default: a plain cut)"
+msgstr "плавно переходити від кожного відео до наступного протягом SECONDS (типово: звичайна склейка)"
+
+#. argparse formats this text with %
+msgid "make a clip from a picture, or from text"
+msgstr "створити кліп із зображення або з тексту"
+
+#. argparse formats this text with %
+msgid "make a clip from a picture, or from text."
+msgstr "створити кліп із зображення або з тексту."
+
+#. argparse formats this text with %
+msgid "a picture to show; a .gif or an animated .png plays"
+msgstr "зображення для показу; .gif або анімований .png відтворюється"
+
+#. argparse formats this text with %
+msgid "how many seconds the card lasts"
+msgstr "скільки секунд триває картка"
+
+#. argparse formats this text with %
+msgid "one line of text"
+msgstr "один рядок тексту"
+
+#. argparse formats this text with %
+msgid "the text's height, as a percentage of the frame's (default: {size})"
+msgstr "висота тексту у відсотках від висоти кадру (типово: {size})"
+
+#. argparse formats this text with %
+msgid "the background colour (default: {colour})"
+msgstr "колір тла (типово: {colour})"
+
+#. argparse formats this text with %
+msgid "take the size and frame rate from this video"
+msgstr "узяти розмір і частоту кадрів із цього відео"
+
+#. argparse formats this text with %
+msgid "the picture size, like 1280x800 (default: 1600x1000)"
+msgstr "розмір зображення, наприклад 1280x800 (типово: 1600x1000)"
+
+#. argparse formats this text with %
+msgid "report how smooth a video is and where it stands still"
+msgstr "повідомити, наскільки плавне відео і де воно стоїть на місці"
+
+#. argparse formats this text with %
+msgid "report how smooth a video is and where it stands still."
+msgstr "повідомити, наскільки плавне відео і де воно стоїть на місці."
+
+#. argparse formats this text with %
+msgid "the video to look at"
+msgstr "відео, яке треба переглянути"
+
+#. argparse formats this text with %
+msgid "look from here (default: the start)"
+msgstr "переглядати звідси (типово: з початку)"
+
+#. argparse formats this text with %
+msgid "look up to here (default: the end)"
+msgstr "переглядати досюди (типово: до кінця)"
+
+#. argparse formats this text with %
+msgid "report a stretch with no change longer than this (default: 1)"
+msgstr "повідомляти про відрізок без змін, довший за цей (типово: 1)"
+
+#. argparse formats this text with %
+msgid "print the report as one JSON object"
+msgstr "вивести звіт як один об'єкт JSON"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a picture"
+msgstr "зберегти один кадр відео як зображення"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a picture."
+msgstr "зберегти один кадр відео як зображення."
+
+#. argparse formats this text with %
+msgid "picture file to write, ending in .png or .jpg"
+msgstr "файл зображення для запису, із закінченням .png або .jpg"
+
+#. argparse formats this text with %
+msgid "the video to take the frame from"
+msgstr "відео, з якого треба взяти кадр"
+
+#. argparse formats this text with %
+msgid "which moment to save"
+msgstr "який момент зберегти"

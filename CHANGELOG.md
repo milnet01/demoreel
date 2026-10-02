@@ -14,6 +14,10 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **Draft translations in Russian, Ukrainian, Polish, Dutch, Korean and Arabic** (DEMO-0065)
+  Each is a draft until a native speaker checks it, like the first batch.
+  Arabic is the second right-to-left language beside Hebrew.
+
 - **Draft translations in ten languages** (DEMO-0064)
   Messages and `--help` now come in German, French, Spanish, Italian,
   Brazilian Portuguese, Afrikaans, Hebrew, Japanese, and Simplified and

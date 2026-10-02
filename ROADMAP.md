@@ -3234,11 +3234,16 @@ path, and scripts read it.
   Kind: feature.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0065] **Draft translations for Russian, Korean, Arabic, Dutch, Polish and Ukrainian.**
+- ✅ [DEMO-0065] **Draft translations for Russian, Korean, Arabic, Dutch, Polish and Ukrainian.**
   Suggested on 2026-09-25 and accepted: large Linux developer communities,
   and Arabic is a second right-to-left check beside Hebrew.
 
   Same scope and draft marking as the first batch.
+  Shipped (2026-10-02): draft catalogs for ru, uk, pl, nl, ko and ar,
+  covering every message and --help, drafted the same way as DEMO-0064.
+  All pass the catalog checks, and the gate compares a recording in each.
+  Arabic gets the isolation marks as Hebrew does. The open questions are
+  in docs/translation-review-notes.md.
   **Layman:** Second batch of translations, chosen for large Linux developer communities.
   Kind: feature.
   Source: user-request-2026-09-25.

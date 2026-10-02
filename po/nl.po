@@ -1,0 +1,1052 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: demoreel\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: nl\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Demoreel-Review: draft\n"
+
+msgid "ended by {signal} before it finished, so there is nothing to hand back."
+msgstr "beëindigd door {signal} voordat het klaar was, dus er is niets terug te geven."
+
+#. argparse formats this text with %
+msgid "usage: "
+msgstr "gebruik: "
+
+#. argparse formats this text with %
+msgid "options"
+msgstr "opties"
+
+#. argparse formats this text with %
+msgid "positional arguments"
+msgstr "positionele argumenten"
+
+#. argparse formats this text with %
+msgid "show this help message and exit"
+msgstr "deze hulptekst tonen en afsluiten"
+
+#. argparse formats this text with %
+msgid "show program's version number and exit"
+msgstr "versienummer van het programma tonen en afsluiten"
+
+#. argparse formats this text with %
+msgid "the following arguments are required: %s"
+msgstr "de volgende argumenten zijn vereist: %s"
+
+#. argparse formats this text with %
+msgid "unrecognized arguments: %s"
+msgstr "onbekende argumenten: %s"
+
+#. argparse formats this text with %
+msgid "invalid choice: %(value)r (choose from %(choices)s)"
+msgstr "ongeldige keuze: %(value)r (kies uit %(choices)s)"
+
+#. argparse formats this text with %
+msgid "This translation is a draft and has not yet been checked by a native speaker."
+msgstr "Deze vertaling is een concept en is nog niet door een moedertaalspreker nagekeken."
+
+msgid ""
+"could not use {path}: {reason}.\n"
+"  demoreel keeps its run files there. Point XDG_RUNTIME_DIR at a directory you can write to."
+msgstr ""
+"kon {path} niet gebruiken: {reason}.\n"
+"  demoreel bewaart daar zijn werkbestanden. Laat XDG_RUNTIME_DIR wijzen naar een map waarin u kunt schrijven."
+
+msgid ""
+"{path} is not a directory you own, so demoreel will not use it.\n"
+"  On a shared machine another user can create that name first.\n"
+"  Remove it, or point XDG_RUNTIME_DIR at a directory you own."
+msgstr ""
+"{path} is geen map die van u is, dus demoreel gebruikt hem niet.\n"
+"  Op een gedeelde computer kan een andere gebruiker die naam als eerste aanmaken.\n"
+"  Verwijder hem, of laat XDG_RUNTIME_DIR wijzen naar een map die van u is."
+
+msgid ""
+"a recording named {name} is already running.\n"
+"  Use --name to tell this run apart from it."
+msgstr ""
+"er loopt al een opname met de naam {name}.\n"
+"  Gebruik --name om deze run ervan te onderscheiden."
+
+msgid ""
+"a recording named {name} is already running (pid {pid}).\n"
+"  Use --name to tell this run apart from it."
+msgstr ""
+"er loopt al een opname met de naam {name} (pid {pid}).\n"
+"  Gebruik --name om deze run ervan te onderscheiden."
+
+msgid "Xvfb did not start, so there is no private display to record."
+msgstr "Xvfb is niet gestart, dus er is geen privéscherm om op te nemen."
+
+msgid "It said: {text}"
+msgstr "Melding: {text}"
+
+msgid "`demoreel check` tests this start on its own."
+msgstr "`demoreel check` test deze start apart."
+
+msgid "could not write the display's auth cookie, so the display cannot be made private."
+msgstr "kon het auth-cookie van het scherm niet schrijven, dus het scherm kan niet privé worden gemaakt."
+
+msgid "xauth said: {text}"
+msgstr "xauth meldde: {text}"
+
+msgid "`demoreel check` tests this on its own."
+msgstr "`demoreel check` test dit apart."
+
+msgid "the display did not lock: a client without its auth cookie could still connect, or none could."
+msgstr "het scherm is niet vergrendeld: een client zonder het auth-cookie kon nog steeds verbinden, of geen enkele client kon dat."
+
+msgid "the GPU display did not start, so there is nothing to record on."
+msgstr "het GPU-scherm is niet gestart, dus er is niets om op op te nemen."
+
+msgid "The end of its log:"
+msgstr "Het einde van zijn logboek:"
+
+msgid "`demoreel check` says whether --gpu has what it needs."
+msgstr "`demoreel check` vertelt of --gpu heeft wat het nodig heeft."
+
+msgid "the GPU display did not lock: a client without its auth cookie could still connect, or none could."
+msgstr "het GPU-scherm is niet vergrendeld: een client zonder het auth-cookie kon nog steeds verbinden, of geen enkele client kon dat."
+
+msgid "the private display {display} stopped answering: `xdotool {command}` did not return within {seconds}s."
+msgstr "het privéscherm {display} reageert niet meer: `xdotool {command}` kwam niet binnen {seconds}s terug."
+
+msgid ""
+"the app resized its window to {size} at {place}, so it no longer fills the {frame} frame and part of the video is cropped or empty.\n"
+"  Record at the app's own size with -s {size}."
+msgstr ""
+"de app heeft zijn venster bij {place} veranderd naar {size}, dus het vult het beeld van {frame} niet meer en een deel van de video is afgesneden of leeg.\n"
+"  Neem op in de eigen grootte van de app, met -s {size}."
+
+msgid ""
+"the app exited immediately (status 0) without opening a window.\n"
+"  The likely cause is a single-instance app: it finds a copy already\n"
+"  running on your real desktop, hands the request over to it and exits\n"
+"  successfully. If a copy is running, close it and try again.\n"
+"  If not, the command may simply have finished without needing a\n"
+"  window — in which case there is nothing to record."
+msgstr ""
+"de app sloot meteen af (status 0) zonder een venster te openen.\n"
+"  Waarschijnlijk is het een app die maar één keer tegelijk kan draaien: hij vindt een kopie\n"
+"  die al op uw echte bureaublad draait, geeft het verzoek daaraan door en sluit\n"
+"  zonder fout af. Als er een kopie draait, sluit die dan en probeer het opnieuw.\n"
+"  Zo niet, dan is de opdracht misschien gewoon klaar zonder dat er een\n"
+"  venster nodig was. In dat geval is er niets om op te nemen."
+
+msgid ""
+"the app exited with status {status} before opening a window.\n"
+"  Its own output, above or in --app-log, says why. To see it on its own, run: {command}"
+msgstr ""
+"de app sloot af met status {status} voordat er een venster openging.\n"
+"  Zijn eigen uitvoer, hierboven of in --app-log, vertelt waarom. Om die apart te zien, voert u uit: {command}"
+
+msgid "cannot read the step {step}: {reason}."
+msgstr "kan de stap {step} niet lezen: {reason}."
+
+msgid "unknown action {action}. The steps are: {steps}."
+msgstr "onbekende actie {action}. De stappen zijn: {steps}."
+
+msgid "cannot read the step {step}: write it like {example}."
+msgstr "kan de stap {step} niet lezen: schrijf hem zoals {example}."
+
+msgid "could not read the steps file {path}: {reason}."
+msgstr "kon het stappenbestand {path} niet lezen: {reason}."
+
+msgid "ffmpeg could not start recording."
+msgstr "ffmpeg kon de opname niet starten."
+
+msgid "`demoreel check` tests the programs and the encoder it needs."
+msgstr "`demoreel check` test de programma's en de encoder die het nodig heeft."
+
+msgid "wf-recorder could not start recording."
+msgstr "wf-recorder kon de opname niet starten."
+
+msgid ""
+"could not finish the video: turning the recording into {name} failed.\n"
+"  What was recorded is kept in {part}, and {log} says why."
+msgstr ""
+"kon de video niet afmaken: het omzetten van de opname naar {name} is mislukt.\n"
+"  Wat er is opgenomen, staat nog in {part}, en {log} vertelt waarom."
+
+msgid "the display did not give up a frame within {seconds}s; it has stopped answering"
+msgstr "het scherm gaf binnen {seconds}s geen beeld; het reageert niet meer"
+
+msgid "ffmpeg exited {status} with no frame"
+msgstr "ffmpeg sloot af met {status} zonder beeld"
+
+msgid "reading a frame of {path} took over {seconds}s"
+msgstr "het lezen van een beeld uit {path} duurde langer dan {seconds}s"
+
+msgid "no frame of {path} could be read"
+msgstr "er kon geen beeld uit {path} worden gelezen"
+
+msgid "this is a Flatpak target and the command is missing: {flags}"
+msgstr "dit is een Flatpak-doel en de opdracht mist: {flags}"
+
+msgid ""
+"A missing one can send it to your real compositor instead, leaving this\n"
+"recording empty. README.md says what each flag is for."
+msgstr ""
+"Als er een ontbreekt, kan de app op uw echte compositor terechtkomen, en blijft deze\n"
+"opname leeg. README.md vertelt waar elke optie voor dient."
+
+msgid ""
+"openSUSE's own ffmpeg leaves it out. Install ffmpeg from the Packman repository,\n"
+"  which has it."
+msgstr ""
+"De eigen ffmpeg van openSUSE laat het weg. Installeer ffmpeg uit de Packman-repository,\n"
+"  die het wel heeft."
+
+msgid "Fedora's ffmpeg-free leaves it out. Enable RPM Fusion, then:"
+msgstr "De ffmpeg-free van Fedora laat het weg. Schakel RPM Fusion in, en dan:"
+
+msgid "Install a build of ffmpeg that includes libx264."
+msgstr "Installeer een versie van ffmpeg die libx264 bevat."
+
+msgid "Install with: {command}"
+msgstr "Installeren met: {command}"
+
+msgid "missing required program(s): {programs}"
+msgstr "ontbrekende programma's: {programs}"
+
+msgid "this ffmpeg cannot encode H.264 with libx264, which every recording uses."
+msgstr "deze ffmpeg kan H.264 niet coderen met libx264, en dat gebruikt elke opname."
+
+msgid "--cursor is not available with record --gpu: that backend records the compositor's picture, which never has the pointer in it."
+msgstr "--cursor is niet beschikbaar met record --gpu: die backend neemt het beeld van de compositor op, en daarin staat de muisaanwijzer nooit."
+
+msgid "give the steps with -a or with --steps, not both."
+msgstr "geef de stappen met -a of met --steps, niet met allebei."
+
+msgid "give the app to run after `--`, e.g. {example}"
+msgstr "geef na `--` de app die moet draaien, bijv. {example}"
+
+msgid "--size takes a width and a height in pixels, like 1600x1000, not {size}."
+msgstr "--size verwacht een breedte en een hoogte in pixels, zoals 1600x1000, niet {size}."
+
+msgid ""
+"--size needs even numbers for a video, since H.264 cannot encode an odd width or height.\n"
+"  Try {size}."
+msgstr ""
+"--size heeft voor een video even getallen nodig, omdat H.264 geen oneven breedte of hoogte kan coderen.\n"
+"  Probeer {size}."
+
+msgid ""
+"the app log {path} is a symbolic link another user made, so demoreel\n"
+"  will not write through it: it could point at a file of yours.\n"
+"  Choose another path, or remove the link if it is not meant to be there."
+msgstr ""
+"het app-logboek {path} is een symbolische koppeling die een andere gebruiker heeft gemaakt, dus\n"
+"  demoreel schrijft er niet doorheen: hij kan naar een bestand van u wijzen.\n"
+"  Kies een ander pad, of verwijder de koppeling als die daar niet hoort."
+
+msgid ""
+"the output {path} is a symbolic link another user made, so demoreel\n"
+"  will not write through it: it could point at a file of yours.\n"
+"  Choose another path, or remove the link if it is not meant to be there."
+msgstr ""
+"de uitvoer {path} is een symbolische koppeling die een andere gebruiker heeft gemaakt, dus\n"
+"  demoreel schrijft er niet doorheen: hij kan naar een bestand van u wijzen.\n"
+"  Kies een ander pad, of verwijder de koppeling als die daar niet hoort."
+
+msgid ""
+"could not run {command}: {reason}.\n"
+"  Check that the command after `--` is installed and spelled as you would type it."
+msgstr ""
+"kon {command} niet uitvoeren: {reason}.\n"
+"  Controleer of de opdracht na `--` is geïnstalleerd en gespeld is zoals u hem zou typen."
+
+msgid ""
+"no window appeared within {seconds}s; taking the picture anyway.\n"
+"  If the app is slow to start, give it longer with --startup-timeout."
+msgstr ""
+"binnen {seconds}s is er geen venster verschenen; de afbeelding wordt toch gemaakt.\n"
+"  Als de app traag start, geef hem dan meer tijd met --startup-timeout."
+
+msgid ""
+"no window appeared within {seconds}s; recording anyway.\n"
+"  If the app is slow to start, give it longer with --startup-timeout."
+msgstr ""
+"binnen {seconds}s is er geen venster verschenen; er wordt toch opgenomen.\n"
+"  Als de app traag start, geef hem dan meer tijd met --startup-timeout."
+
+msgid ""
+"It had not drawn yet. A GPU app can spend seconds on a black\n"
+"    screen while it starts: --settle waits for the first picture."
+msgstr ""
+"Hij had nog niets getekend. Een GPU-app kan bij het starten seconden lang een zwart\n"
+"    scherm tonen: --settle wacht op het eerste beeld."
+
+msgid ""
+"It needs the GPU, and Xvfb has none. An OpenGL or Vulkan app\n"
+"    cannot render on it at all: record it with --gpu instead."
+msgstr ""
+"Hij heeft de GPU nodig, en Xvfb heeft er geen. Een OpenGL- of Vulkan-app\n"
+"    kan er helemaal niet op tekenen: neem hem in plaats daarvan op met --gpu."
+
+msgid "The app ran but drew nothing here. Two causes account for most of it:"
+msgstr "De app draaide, maar tekende hier niets. Meestal komt dat door een van twee oorzaken:"
+
+msgid ""
+"It rendered somewhere else. A Flatpak needs --nosocket=wayland on\n"
+"    its command line; see README.md."
+msgstr ""
+"Hij tekende ergens anders. Een Flatpak heeft --nosocket=wayland nodig op\n"
+"    zijn opdrachtregel; zie README.md."
+
+msgid "--settle could not sample the display, so it cannot tell when the app has drawn."
+msgstr "--settle kon het scherm niet bemonsteren, dus het kan niet zien wanneer de app heeft getekend."
+
+msgid ""
+"nothing was drawn within {seconds}s; recording anyway.\n"
+"  If the app takes longer to show its first picture, raise --settle."
+msgstr ""
+"binnen {seconds}s is er niets getekend; er wordt toch opgenomen.\n"
+"  Als de app er langer over doet om zijn eerste beeld te tonen, verhoog dan --settle."
+
+msgid "the recorder stopped early; see {log}"
+msgstr "de recorder stopte te vroeg; zie {log}"
+
+msgid "recording, {seconds}s left"
+msgstr "bezig met opnemen, nog {seconds}s"
+
+msgid "recording for {time} (Ctrl+C to finish)"
+msgstr "opname gedurende {time} (Ctrl+C om te stoppen)"
+
+msgid "the app closed; ending the recording."
+msgstr "de app is gesloten; de opname wordt beëindigd."
+
+msgid ""
+"no video was written to {output}: the recorder produced nothing.\n"
+"  Its log, {log}, says why."
+msgstr ""
+"er is geen video naar {output} geschreven: de recorder heeft niets gemaakt.\n"
+"  Zijn logboek, {log}, vertelt waarom."
+
+msgid "the video cannot be played: {output}"
+msgstr "de video kan niet worden afgespeeld: {output}"
+
+msgid "The recorder most likely stopped before it finished the file. See {log}"
+msgstr "De recorder is waarschijnlijk gestopt voordat hij het bestand af had. Zie {log}"
+
+msgid "the virtual display was blank halfway, so at least half of it is a flat colour: {output}"
+msgstr "het virtuele scherm was halverwege leeg, dus minstens de helft ervan is één effen kleur: {output}"
+
+msgid "the virtual display was blank at the end, so it ends on a flat colour: {output}"
+msgstr "het virtuele scherm was aan het eind leeg, dus het eindigt op één effen kleur: {output}"
+
+msgid ""
+"could not sample the virtual display to check {output} is not blank,\n"
+"  so this run cannot vouch for it."
+msgstr ""
+"kon het virtuele scherm niet bemonsteren om te controleren dat {output} niet leeg is,\n"
+"  dus deze run kan er niet voor instaan."
+
+msgid ""
+"could not read {output} back to check it is not blank,\n"
+"  so this run cannot vouch for it."
+msgstr ""
+"kon {output} niet teruglezen om te controleren dat het niet leeg is,\n"
+"  dus deze run kan er niet voor instaan."
+
+msgid ""
+"the video is a flat colour halfway, though the private screen was not: {output}\n"
+"  The recorder captured something other than the screen. See {log}"
+msgstr ""
+"de video is halverwege één effen kleur, hoewel het privéscherm dat niet was: {output}\n"
+"  De recorder heeft iets anders opgenomen dan het scherm. Zie {log}"
+
+msgid ""
+"the video is a flat colour at the end, though the private screen was not: {output}\n"
+"  The recorder captured something other than the screen. See {log}"
+msgstr ""
+"de video is aan het eind één effen kleur, hoewel het privéscherm dat niet was: {output}\n"
+"  De recorder heeft iets anders opgenomen dan het scherm. Zie {log}"
+
+msgid ""
+"only {share} of the frames in the middle of {output} changed from the one before.\n"
+"  If the app was moving the whole time, it drew that few new frames itself: the video has every frame it drew."
+msgstr ""
+"slechts {share} van de beelden in het midden van {output} verschilde van het vorige.\n"
+"  Als de app de hele tijd bewoog, tekende hij zelf zo weinig nieuwe beelden: de video bevat elk beeld dat hij tekende."
+
+msgid "reading it back took over {seconds}s."
+msgstr "het teruglezen duurde langer dan {seconds}s."
+
+msgid "ffprobe could not read it."
+msgstr "ffprobe kon het niet lezen."
+
+msgid "{seconds}s of video, {size}"
+msgstr "{seconds}s video, {size}"
+
+msgid "recording {display} to {output} (until stopped)"
+msgstr "opname van {display} naar {output} (tot het wordt gestopt)"
+
+msgid "recording {display} to {output} ({seconds}s)"
+msgstr "opname van {display} naar {output} ({seconds}s)"
+
+msgid "could not take the picture."
+msgstr "kon de afbeelding niet maken."
+
+msgid "could not read back {output} to check it is not blank."
+msgstr "kon {output} niet teruglezen om te controleren dat het niet leeg is."
+
+msgid "the picture is one flat colour: {output}"
+msgstr "de afbeelding is één effen kleur: {output}"
+
+msgid ""
+"nothing was drawn within {seconds}s; taking the picture anyway.\n"
+"  If the app takes longer to show its first picture, raise --settle."
+msgstr ""
+"binnen {seconds}s is er niets getekend; de afbeelding wordt toch gemaakt.\n"
+"  Als de app er langer over doet om zijn eerste beeld te tonen, verhoog dan --settle."
+
+msgid "could not take the picture: the display did not answer within {seconds}s."
+msgstr "kon de afbeelding niet maken: het scherm reageerde niet binnen {seconds}s."
+
+msgid "Its display log is kept in {folder}"
+msgstr "Het logboek van zijn scherm staat in {folder}"
+
+msgid "record and shot"
+msgstr "record en shot"
+
+msgid "missing {programs}"
+msgstr "ontbreekt: {programs}"
+
+msgid "this ffmpeg has no libx264, which every recording uses."
+msgstr "deze ffmpeg heeft geen libx264, en dat gebruikt elke opname."
+
+msgid "no graphics render node in /dev/dri, so there is no GPU for it to use."
+msgstr "geen grafische render-node in /dev/dri, dus er is geen GPU om te gebruiken."
+
+msgid "{name}: NOT READY"
+msgstr "{name}: NIET GEREED"
+
+msgid "{name}: ready"
+msgstr "{name}: gereed"
+
+msgid "edit, trim, caption, join, card, motion and poster"
+msgstr "edit, trim, caption, join, card, motion en poster"
+
+msgid "text on a card or a caption"
+msgstr "tekst op een kaart of als ondertitel"
+
+msgid "a private display did not start: {reason}"
+msgstr "een privéscherm is niet gestart: {reason}"
+
+msgid "no recording named {name} is running."
+msgstr "er loopt geen opname met de naam {name}."
+
+msgid "Running now: {names}."
+msgstr "Nu bezig: {names}."
+
+msgid "no recording is running, so there is nothing to stop."
+msgstr "er loopt geen opname, dus er is niets om te stoppen."
+
+msgid ""
+"{count} recording is running: {names}.\n"
+"  Name the one to stop, e.g. {example}"
+msgid_plural ""
+"{count} recordings are running: {names}.\n"
+"  Name the one to stop, e.g. {example}"
+msgstr[0] ""
+"er loopt {count} opname: {names}.\n"
+"  Noem degene die moet stoppen, bijv. {example}"
+msgstr[1] ""
+"er lopen {count} opnamen: {names}.\n"
+"  Noem degene die moet stoppen, bijv. {example}"
+
+msgid ""
+"the recording failed after it was stopped, so there is no video to hand back.\n"
+"  Its own error message says why."
+msgstr ""
+"de opname mislukte nadat hij was gestopt, dus er is geen video terug te geven.\n"
+"  Zijn eigen foutmelding vertelt waarom."
+
+msgid "the recording ended before it started recording, so there is no video to stop."
+msgstr "de opname eindigde voordat het opnemen begon, dus er is geen video om te stoppen."
+
+msgid "{option} belongs to a --text, and none comes before it. caption never cuts the video; use trim."
+msgstr "{option} hoort bij een --text, en er staat er geen voor. caption knipt de video nooit; gebruik trim."
+
+msgid "{where}: there is no font file {path}"
+msgstr "{where}: er is geen lettertypebestand {path}"
+
+msgid "{where}: a font is found by its name with fc-match, which gave no answer here. Give the font's file instead: font /path/to/font.ttf"
+msgstr "{where}: een lettertype wordt op naam gezocht met fc-match, en dat gaf hier geen antwoord. Geef in plaats daarvan het bestand van het lettertype op: font /path/to/font.ttf"
+
+msgid ""
+"{where}: this machine has no font named {font}; the nearest it offers is {nearest}.\n"
+"  `fc-list : family` lists the names it has."
+msgstr ""
+"{where}: deze computer heeft geen lettertype met de naam {font}; het dichtstbijzijnde dat hij heeft is {nearest}.\n"
+"  `fc-list : family` toont de namen die hij heeft."
+
+msgid "{where}: the font file {path} has a character in its path that ffmpeg's filters cannot carry. Copy it to a plainer path."
+msgstr "{where}: het pad van het lettertypebestand {path} bevat een teken dat de filters van ffmpeg niet aankunnen. Kopieer het naar een eenvoudiger pad."
+
+msgid "{where}: {word} takes a number of seconds, not {value}."
+msgstr "{where}: {word} verwacht een aantal seconden, niet {value}."
+
+msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
+msgstr "{where}: {word} hoort niet in een {kind}-regel. Mogelijk zijn: {words}."
+
+msgid "{where}: {word} needs a value after it."
+msgstr "{where}: na {word} moet een waarde komen."
+
+msgid "line {number}"
+msgstr "regel {number}"
+
+msgid "{where} cannot be read: {reason}."
+msgstr "{where} kan niet worden gelezen: {reason}."
+
+msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
+msgstr "{where}: een tekst hoort bij de scène erboven, en er komt geen scène voor deze."
+
+msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
+msgstr "{where}: text heeft zijn woorden nodig, tussen aanhalingstekens: text \"Een bestand opslaan\""
+
+msgid "{where}: clip needs a video file after it."
+msgstr "{where}: na clip moet een videobestand komen."
+
+msgid "{where}: card needs its length in seconds: card 3"
+msgstr "{where}: card heeft zijn lengte in seconden nodig: card 3"
+
+msgid "{where}: a line starts with clip, card or text, not {word}."
+msgstr "{where}: een regel begint met clip, card of text, niet met {word}."
+
+msgid "the script has no scenes in it. A scene is a line starting with clip or card."
+msgstr "het script bevat geen scènes. Een scène is een regel die begint met clip of card."
+
+msgid "{where}: there is no file {path}"
+msgstr "{where}: er is geen bestand {path}"
+
+msgid "{where}: reading {path} took over {seconds}s."
+msgstr "{where}: het lezen van {path} duurde langer dan {seconds}s."
+
+msgid "{where}: {path} is not a video or picture ffmpeg can read."
+msgstr "{where}: {path} is geen video of afbeelding die ffmpeg kan lezen."
+
+msgid "{where}: could not count the frames of {path}."
+msgstr "{where}: kon de beelden van {path} niet tellen."
+
+msgid ""
+"{where}: {path} is too big an animation to hold in memory and play again and again ({count} frame of {size}).\n"
+"  Turn it into a video and use it as a clip instead."
+msgid_plural ""
+"{where}: {path} is too big an animation to hold in memory and play again and again ({count} frames of {size}).\n"
+"  Turn it into a video and use it as a clip instead."
+msgstr[0] ""
+"{where}: {path} is een te grote animatie om in het geheugen te houden en steeds opnieuw af te spelen ({count} beeld van {size}).\n"
+"  Maak er een video van en gebruik die als clip."
+msgstr[1] ""
+"{where}: {path} is een te grote animatie om in het geheugen te houden en steeds opnieuw af te spelen ({count} beelden van {size}).\n"
+"  Maak er een video van en gebruik die als clip."
+
+msgid "drawing a line of text took over {seconds}s."
+msgstr "het tekenen van een regel tekst duurde langer dan {seconds}s."
+
+msgid "this machine cannot draw text on a video: ffmpeg needs its drawtext filter and a font."
+msgstr "deze computer kan geen tekst op een video tekenen: ffmpeg heeft zijn drawtext-filter en een lettertype nodig."
+
+msgid "{where}: a text is one line of words, and this one is empty."
+msgstr "{where}: een tekst is één regel woorden, en deze is leeg."
+
+msgid "{where}: a text is one line of words, and this one is more than one line."
+msgstr "{where}: een tekst is één regel woorden, en deze is meer dan één regel."
+
+msgid "{where}: the text {words} is asked to show from {start} to {end}, which is not inside its scene ({scene_start} to {scene_end})."
+msgstr "{where}: de tekst {words} moet te zien zijn van {start} tot {end}, en dat valt niet binnen zijn scène ({scene_start} tot {scene_end})."
+
+msgid "{where}: a text's size is a percentage of the frame's height, between 0 and 50, not {size}."
+msgstr "{where}: de grootte van een tekst is een percentage van de hoogte van het beeld, tussen 0 en 50, niet {size}."
+
+msgid "{where}: a text's {word} is a colour written #RRGGBB, like #FFD040, not {value}."
+msgstr "{where}: de {word} van een tekst is een kleur geschreven als #RRGGBB, zoals #FFD040, niet {value}."
+
+msgid "{where}: a text's band is on or off, not {value}."
+msgstr "{where}: de band van een tekst is on of off, niet {value}."
+
+msgid "{where}: a text sits at {places} or {last}, not at {value}."
+msgstr "{where}: een tekst staat op {places} of {last}, niet op {value}."
+
+msgid "{where}: the text {words} fades for {fades} seconds, and shows for only {seconds}."
+msgstr "{where}: de tekst {words} vervaagt gedurende {fades} seconden, en is maar {seconds} lang te zien."
+
+msgid ""
+"{where}: a band that fades with its text needs a newer ffmpeg than this one: its text filter has no `boxw`.\n"
+"  Give the text `band off`, or take its fade away."
+msgstr ""
+"{where}: een band die met zijn tekst vervaagt, heeft een nieuwere ffmpeg nodig dan deze: zijn tekstfilter heeft geen `boxw`.\n"
+"  Geef de tekst `band off`, of haal de vervaging weg."
+
+msgid ""
+"{where}: the text {words} is {wide} pixels wide at size {size}, and the frame has room for {room}.\n"
+"  Shorten it, or give it a smaller size: about {fits} would fit."
+msgstr ""
+"{where}: de tekst {words} is {wide} pixels breed bij grootte {size}, en het beeld heeft ruimte voor {room}.\n"
+"  Maak hem korter, of geef hem een kleinere grootte: ongeveer {fits} zou passen."
+
+msgid "{where}: the texts {first} and {second} would be on screen at the same time. Only one shows at a time."
+msgstr "{where}: de teksten {first} en {second} zouden tegelijk in beeld zijn. Er is er maar één tegelijk te zien."
+
+msgid "{where}: a card needs a length above zero."
+msgstr "{where}: een kaart heeft een lengte boven nul nodig."
+
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, not {value}."
+msgstr "{where}: een achtergrond is een kleur geschreven als #RRGGBB, zoals {example}, niet {value}."
+
+msgid "{where}: {path} has no length ffmpeg can tell."
+msgstr "{where}: ffmpeg kan de lengte van {path} niet bepalen."
+
+msgid "{where}: {path} is {size}, a different shape from the film's {film}, and demoreel will not stretch it."
+msgstr "{where}: {path} is {size}, een andere vorm dan die van de film ({film}), en demoreel rekt het niet uit."
+
+msgid "{where}: `{word} {value}` is past the end of {path}, which is {seconds} seconds long."
+msgstr "{where}: `{word} {value}` ligt voorbij het einde van {path}, dat {seconds} seconden duurt."
+
+msgid "{where}: `from` must come before `to`, and both inside {path} ({seconds} seconds long)."
+msgstr "{where}: `from` moet voor `to` komen, en beide binnen {path} ({seconds} seconden lang)."
+
+msgid "{where}: `fade-at {moment}` needs {seconds} seconds of the scene on each side, and the scene runs from {start} to {end}."
+msgstr "{where}: `fade-at {moment}` heeft aan elke kant {seconds} seconden van de scène nodig, en de scène loopt van {start} tot {end}."
+
+msgid "{where}: its fades come to {fades} seconds, and the scene is only {seconds} long."
+msgstr "{where}: de vervagingen duren samen {fades} seconden, en de scène is maar {seconds} lang."
+
+msgid "{where}: its texts leave no room for the picture between them. Give them a smaller size."
+msgstr "{where}: de teksten laten geen ruimte over voor het beeld ertussen. Geef ze een kleinere grootte."
+
+msgid ""
+"a video's width and height must be even, since H.264 cannot encode an odd one, and this film would be {size}.\n"
+"  Set the size with -s {even}."
+msgstr ""
+"de breedte en hoogte van een video moeten even zijn, omdat H.264 geen oneven waarde kan coderen, en deze film zou {size} worden.\n"
+"  Stel de grootte in met -s {even}."
+
+msgid "--framerate takes a number above zero, not {rate}."
+msgstr "--framerate verwacht een getal boven nul, niet {rate}."
+
+msgid "-o must end in {ending}, and {name} does not."
+msgstr "-o moet eindigen op {ending}, en {name} doet dat niet."
+
+msgid "-o must end in {ending} or {other}, and {name} does not."
+msgstr "-o moet eindigen op {ending} of {other}, en {name} doet dat niet."
+
+msgid "-o is {output}, which is also a file this command reads. demoreel never writes over its own input."
+msgstr "-o is {output}, en dat is ook een bestand dat deze opdracht leest. demoreel schrijft nooit over zijn eigen invoer heen."
+
+msgid "this ffmpeg cannot encode H.264 with libx264, which every video uses."
+msgstr "deze ffmpeg kan H.264 niet coderen met libx264, en dat gebruikt elke video."
+
+msgid "{where}: a crossfade fades from the scene before, and this is the first scene."
+msgstr "{where}: een crossfade gaat over vanuit de scène ervoor, en dit is de eerste scène."
+
+msgid "{where}: a scene takes a crossfade or a fade-in, not both."
+msgstr "{where}: een scène krijgt een crossfade of een fade-in, niet allebei."
+
+msgid "{where}: a crossfade of {seconds} seconds does not fit: the two scenes overlap for that long, and one of them is shorter."
+msgstr "{where}: een crossfade van {seconds} seconden past niet: de twee scènes overlappen zo lang, en een ervan is korter."
+
+msgid "text"
+msgstr "tekst"
+
+msgid "scene {number}: {kind} {name}, {start} to {end}"
+msgstr "scène {number}: {kind} {name}, {start} tot {end}"
+
+msgid "making {output}, {seconds} seconds at {size}"
+msgstr "{output} wordt gemaakt, {seconds} seconden bij {size}"
+
+msgid "ffmpeg could not make the film."
+msgstr "ffmpeg kon de film niet maken."
+
+msgid "ffmpeg did not finish making the film in the time allowed for its length, so it was stopped."
+msgstr "ffmpeg was niet klaar met de film binnen de tijd die voor zijn lengte staat, dus hij is gestopt."
+
+msgid "could not read the script {path}: {reason}."
+msgstr "kon het script {path} niet lezen: {reason}."
+
+msgid "trim needs something to do: --from, --to, or a fade."
+msgstr "trim moet iets te doen hebben: --from, --to of een vervaging."
+
+msgid "join takes two or more videos; one on its own is already whole."
+msgstr "join neemt twee of meer video's; één op zichzelf is al compleet."
+
+msgid "the card"
+msgstr "de kaart"
+
+msgid "--from and --to must be inside {path}, which is {seconds} seconds long, with --from before --to."
+msgstr "--from en --to moeten binnen {path} liggen, dat {seconds} seconden duurt, met --from voor --to."
+
+msgid "reading {path} took too long for its length, so it was stopped."
+msgstr "het lezen van {path} duurde te lang voor zijn lengte, dus het is gestopt."
+
+msgid "could not read the frames of {path}."
+msgstr "kon de beelden van {path} niet lezen."
+
+msgid "-t {time} is not inside {path}, which is {seconds} seconds long."
+msgstr "-t {time} ligt niet binnen {path}, dat {seconds} seconden duurt."
+
+msgid "could not take the frame at {time} from {path}."
+msgstr "kon het beeld op {time} niet uit {path} halen."
+
+msgid "taking the frame took over {seconds}s."
+msgstr "het nemen van het beeld duurde langer dan {seconds}s."
+
+msgid "needs ffmpeg first"
+msgstr "heeft eerst ffmpeg nodig"
+
+msgid "this ffmpeg has no libx264, which every video uses."
+msgstr "deze ffmpeg heeft geen libx264, en dat gebruikt elke video."
+
+msgid "ffmpeg drew nothing for a line of text: no font was found."
+msgstr "ffmpeg tekende niets voor een regel tekst: er is geen lettertype gevonden."
+
+#. argparse formats this text with %
+msgid "can this machine record? If not, it says what to install"
+msgstr "kan deze computer opnemen? Zo niet, dan zegt hij wat u moet installeren"
+
+#. argparse formats this text with %
+msgid "record Kate for 20 seconds"
+msgstr "Kate 20 seconden lang opnemen"
+
+#. argparse formats this text with %
+msgid "one picture instead of a video"
+msgstr "één afbeelding in plaats van een video"
+
+#. argparse formats this text with %
+msgid "cut the end off a recording, where `demoreel motion demo.mp4` says to"
+msgstr "het einde van een opname afknippen, waar `demoreel motion demo.mp4` dat aangeeft"
+
+#. argparse formats this text with %
+msgid "make a film from a script of scenes: clips, cards, text and fades"
+msgstr "een film maken uit een script met scènes: clips, kaarten, tekst en vervagingen"
+
+#. argparse formats this text with %
+msgid "record until you say stop, then stop it from any terminal"
+msgstr "opnemen tot u stop zegt, en dan stoppen vanuit elke terminal"
+
+#. argparse formats this text with %
+msgid "show the app being used: these steps run while it records"
+msgstr "laten zien hoe de app wordt gebruikt: deze stappen lopen tijdens de opname"
+
+#. argparse formats this text with %
+msgid "an app that needs the graphics card (OpenGL, Vulkan)"
+msgstr "een app die de grafische kaart nodig heeft (OpenGL, Vulkan)"
+
+#. argparse formats this text with %
+msgid "a Flatpak app, which needs three flags on its own command line"
+msgstr "een Flatpak-app, die drie opties op zijn eigen opdrachtregel nodig heeft"
+
+#. argparse formats this text with %
+msgid "examples:"
+msgstr "voorbeelden:"
+
+#. argparse formats this text with %
+msgid ""
+"Record a GUI app on a private virtual display, so nothing of your real desktop\n"
+"is in frame."
+msgstr ""
+"Een grafische app opnemen op een privé virtueel scherm, zodat niets van uw echte bureaublad\n"
+"in beeld komt."
+
+#. argparse formats this text with %
+msgid "more examples:"
+msgstr "meer voorbeelden:"
+
+#. argparse formats this text with %
+msgid "record an app and write a video file"
+msgstr "een app opnemen en een videobestand schrijven"
+
+#. argparse formats this text with %
+msgid "video file to write (default: ./<app>-<timestamp>.mp4)"
+msgstr "te schrijven videobestand (standaard: ./<app>-<timestamp>.mp4)"
+
+#. argparse formats this text with %
+msgid "seconds to record; 0 means until `demoreel stop` (default: 30)"
+msgstr "aantal seconden opnemen; 0 betekent tot `demoreel stop` (standaard: 30)"
+
+#. argparse formats this text with %
+msgid "virtual display size, even numbers (default: 1600x1000)"
+msgstr "grootte van het virtuele scherm, even getallen (standaard: 1600x1000)"
+
+#. argparse formats this text with %
+msgid "frames per second (default: 30)"
+msgstr "beelden per seconde (standaard: 30)"
+
+#. argparse formats this text with %
+msgid "name for this run, so `demoreel stop` can find it (default: default)"
+msgstr "naam voor deze run, zodat `demoreel stop` hem kan vinden (standaard: default)"
+
+#. argparse formats this text with %
+msgid "scripted step, repeatable and run in order: {steps}"
+msgstr "stap in het script, herhaalbaar en in volgorde uitgevoerd: {steps}"
+
+#. argparse formats this text with %
+msgid "read the scripted steps from FILE, one per line, or from standard input for -; keeps typed text out of the process list. Not with -a"
+msgstr "de stappen uit FILE lezen, één per regel, of van standaardinvoer bij -; zo blijft getypte tekst uit de proceslijst. Niet samen met -a"
+
+#. argparse formats this text with %
+msgid "keep the app's own output in PATH; otherwise it goes to this terminal's stderr. Useful when the app prints whether it drew the real thing, which no recording check here can tell"
+msgstr "de eigen uitvoer van de app in PATH bewaren; anders gaat die naar stderr van deze terminal. Handig als de app meldt of hij het echte beeld tekende, wat geen enkele controle hier kan zien"
+
+#. argparse formats this text with %
+msgid "wait up to SECONDS for the app to draw its first frame before recording starts, instead of filming its startup black screen (default: 0, don't wait)"
+msgstr "tot SECONDS seconden wachten tot de app zijn eerste beeld tekent voordat de opname begint, in plaats van zijn zwarte opstartscherm te filmen (standaard: 0, niet wachten)"
+
+#. argparse formats this text with %
+msgid "for an app that needs the graphics card (OpenGL, Vulkan): record it on a headless compositor instead of Xvfb, which has no GPU. Needs cage, Xwayland, wlr-randr and wf-recorder; not with --cursor"
+msgstr "voor een app die de grafische kaart nodig heeft (OpenGL, Vulkan): neem hem op met een headless compositor in plaats van Xvfb, dat geen GPU heeft. Heeft cage, Xwayland, wlr-randr en wf-recorder nodig; niet samen met --cursor"
+
+#. argparse formats this text with %
+msgid "show the mouse pointer; off by default, since with no actions it just sits in the corner"
+msgstr "de muisaanwijzer tonen; standaard uit, omdat hij zonder acties alleen maar in de hoek staat"
+
+#. argparse formats this text with %
+msgid "how long to wait for the app's window (default: 20)"
+msgstr "hoe lang er op het venster van de app wordt gewacht (standaard: 20)"
+
+#. argparse formats this text with %
+msgid "-- followed by the command that starts the app"
+msgstr "-- gevolgd door de opdracht die de app start"
+
+#. argparse formats this text with %
+msgid "take one picture of an app and write a PNG"
+msgstr "één afbeelding van een app maken en een PNG schrijven"
+
+#. argparse formats this text with %
+msgid "picture file to write (default: ./<app>-<timestamp>.png)"
+msgstr "te schrijven afbeeldingsbestand (standaard: ./<app>-<timestamp>.png)"
+
+#. argparse formats this text with %
+msgid "virtual display size (default: 1600x1000)"
+msgstr "grootte van het virtuele scherm (standaard: 1600x1000)"
+
+#. argparse formats this text with %
+msgid "scripted step run before the picture, repeatable: {steps}"
+msgstr "stap in het script die vóór de afbeelding loopt, herhaalbaar: {steps}"
+
+#. argparse formats this text with %
+msgid "read the scripted steps from FILE, one per line, or from standard input for -. Not with -a"
+msgstr "de stappen uit FILE lezen, één per regel, of van standaardinvoer bij -. Niet samen met -a"
+
+#. argparse formats this text with %
+msgid "keep the app's own output in PATH; otherwise it goes to this terminal's stderr"
+msgstr "de eigen uitvoer van de app in PATH bewaren; anders gaat die naar stderr van deze terminal"
+
+#. argparse formats this text with %
+msgid "wait up to SECONDS for the app to draw before the steps and the picture (default: 10)"
+msgstr "tot SECONDS seconden wachten tot de app tekent, vóór de stappen en de afbeelding (standaard: 10)"
+
+#. argparse formats this text with %
+msgid "for an app that needs the graphics card: use a headless compositor instead of Xvfb. Needs cage, Xwayland and wlr-randr"
+msgstr "voor een app die de grafische kaart nodig heeft: gebruik een headless compositor in plaats van Xvfb. Heeft cage, Xwayland en wlr-randr nodig"
+
+#. argparse formats this text with %
+msgid "show the mouse pointer in the picture"
+msgstr "de muisaanwijzer in de afbeelding tonen"
+
+#. argparse formats this text with %
+msgid "test whether this machine can record, without recording"
+msgstr "testen of deze computer kan opnemen, zonder op te nemen"
+
+#. argparse formats this text with %
+msgid "Report what each backend needs and whether it is installed, start a private display to prove it works, and name the install command for anything missing. Exits non-zero if the default backend cannot record."
+msgstr "Meldt wat elke backend nodig heeft en of het geïnstalleerd is, start een privéscherm om te bewijzen dat het werkt, en noemt de installatieopdracht voor alles wat ontbreekt. Sluit af met een andere waarde dan nul als de standaardbackend niet kan opnemen."
+
+#. argparse formats this text with %
+msgid "end a running recording early"
+msgstr "een lopende opname vroeg beëindigen"
+
+#. argparse formats this text with %
+msgid "which run to stop (default: the only one running)"
+msgstr "welke run moet stoppen (standaard: de enige die loopt)"
+
+#. argparse formats this text with %
+msgid "video file to write, ending in .mp4"
+msgstr "te schrijven videobestand, eindigend op .mp4"
+
+#. argparse formats this text with %
+msgid "start black; the picture arrives over SECONDS"
+msgstr "zwart beginnen; het beeld komt op in SECONDS seconden"
+
+#. argparse formats this text with %
+msgid "go to black over the last SECONDS"
+msgstr "naar zwart gaan in de laatste SECONDS seconden"
+
+#. argparse formats this text with %
+msgid "make a film from a script of scenes"
+msgstr "een film maken uit een script met scènes"
+
+#. argparse formats this text with %
+msgid "make a film from a script of scenes."
+msgstr "een film maken uit een script met scènes."
+
+#. argparse formats this text with %
+msgid "the script file, or - for standard input"
+msgstr "het scriptbestand, of - voor standaardinvoer"
+
+#. argparse formats this text with %
+msgid "the film's picture size, like 1280x800 (default: the first clip's)"
+msgstr "de beeldgrootte van de film, zoals 1280x800 (standaard: die van de eerste clip)"
+
+#. argparse formats this text with %
+msgid "the film's frames per second (default: the first clip's)"
+msgstr "beelden per seconde van de film (standaard: die van de eerste clip)"
+
+#. argparse formats this text with %
+msgid "cut the start and the end off a video"
+msgstr "het begin en het einde van een video afknippen"
+
+#. argparse formats this text with %
+msgid "cut the start and the end off a video."
+msgstr "het begin en het einde van een video afknippen."
+
+#. argparse formats this text with %
+msgid "the video to cut"
+msgstr "de video om te knippen"
+
+#. argparse formats this text with %
+msgid "where the kept part starts (default: the start)"
+msgstr "waar het bewaarde deel begint (standaard: het begin)"
+
+#. argparse formats this text with %
+msgid "the last moment kept (default: the end)"
+msgstr "het laatste moment dat bewaard blijft (standaard: het einde)"
+
+#. argparse formats this text with %
+msgid "fade to black and back around this moment; repeatable"
+msgstr "rond dit moment naar zwart en terug vervagen; herhaalbaar"
+
+#. argparse formats this text with %
+msgid "how long each half of a --fade-at takes (default: {seconds})"
+msgstr "hoe lang elke helft van een --fade-at duurt (standaard: {seconds})"
+
+#. argparse formats this text with %
+msgid "put text over part of a video"
+msgstr "tekst over een deel van een video zetten"
+
+#. argparse formats this text with %
+msgid "put text over part of a video."
+msgstr "tekst over een deel van een video zetten."
+
+#. argparse formats this text with %
+msgid "the video to put text on"
+msgstr "de video om tekst op te zetten"
+
+#. argparse formats this text with %
+msgid "one line of text; repeatable"
+msgstr "één regel tekst; herhaalbaar"
+
+#. argparse formats this text with %
+msgid "for the --text before it: when it appears"
+msgstr "voor de --text ervoor: wanneer hij verschijnt"
+
+#. argparse formats this text with %
+msgid "for the --text before it: when it goes"
+msgstr "voor de --text ervoor: wanneer hij verdwijnt"
+
+#. argparse formats this text with %
+msgid "for the --text before it: its height, as a percentage of the frame's"
+msgstr "voor de --text ervoor: zijn hoogte, als percentage van die van het beeld"
+
+#. argparse formats this text with %
+msgid "put videos end to end"
+msgstr "video's achter elkaar zetten"
+
+#. argparse formats this text with %
+msgid "put videos end to end."
+msgstr "video's achter elkaar zetten."
+
+#. argparse formats this text with %
+msgid "two or more videos, in order"
+msgstr "twee of meer video's, op volgorde"
+
+#. argparse formats this text with %
+msgid "fade from each video into the next over SECONDS (default: a plain cut)"
+msgstr "elke video in SECONDS seconden laten overvloeien in de volgende (standaard: een harde overgang)"
+
+#. argparse formats this text with %
+msgid "make a clip from a picture, or from text"
+msgstr "een clip maken van een afbeelding, of van tekst"
+
+#. argparse formats this text with %
+msgid "make a clip from a picture, or from text."
+msgstr "een clip maken van een afbeelding, of van tekst."
+
+#. argparse formats this text with %
+msgid "a picture to show; a .gif or an animated .png plays"
+msgstr "een afbeelding om te tonen; een .gif of een geanimeerde .png wordt afgespeeld"
+
+#. argparse formats this text with %
+msgid "how many seconds the card lasts"
+msgstr "hoeveel seconden de kaart duurt"
+
+#. argparse formats this text with %
+msgid "one line of text"
+msgstr "één regel tekst"
+
+#. argparse formats this text with %
+msgid "the text's height, as a percentage of the frame's (default: {size})"
+msgstr "de hoogte van de tekst, als percentage van die van het beeld (standaard: {size})"
+
+#. argparse formats this text with %
+msgid "the background colour (default: {colour})"
+msgstr "de achtergrondkleur (standaard: {colour})"
+
+#. argparse formats this text with %
+msgid "take the size and frame rate from this video"
+msgstr "de grootte en beeldsnelheid van deze video overnemen"
+
+#. argparse formats this text with %
+msgid "the picture size, like 1280x800 (default: 1600x1000)"
+msgstr "de beeldgrootte, zoals 1280x800 (standaard: 1600x1000)"
+
+#. argparse formats this text with %
+msgid "report how smooth a video is and where it stands still"
+msgstr "melden hoe vloeiend een video is en waar hij stilstaat"
+
+#. argparse formats this text with %
+msgid "report how smooth a video is and where it stands still."
+msgstr "melden hoe vloeiend een video is en waar hij stilstaat."
+
+#. argparse formats this text with %
+msgid "the video to look at"
+msgstr "de video om te bekijken"
+
+#. argparse formats this text with %
+msgid "look from here (default: the start)"
+msgstr "vanaf hier kijken (standaard: het begin)"
+
+#. argparse formats this text with %
+msgid "look up to here (default: the end)"
+msgstr "tot hier kijken (standaard: het einde)"
+
+#. argparse formats this text with %
+msgid "report a stretch with no change longer than this (default: 1)"
+msgstr "een stuk zonder verandering melden als het langer duurt dan dit (standaard: 1)"
+
+#. argparse formats this text with %
+msgid "print the report as one JSON object"
+msgstr "het rapport als één JSON-object afdrukken"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a picture"
+msgstr "één beeld van een video als afbeelding opslaan"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a picture."
+msgstr "één beeld van een video als afbeelding opslaan."
+
+#. argparse formats this text with %
+msgid "picture file to write, ending in .png or .jpg"
+msgstr "te schrijven afbeeldingsbestand, eindigend op .png of .jpg"
+
+#. argparse formats this text with %
+msgid "the video to take the frame from"
+msgstr "de video om het beeld uit te halen"
+
+#. argparse formats this text with %
+msgid "which moment to save"
+msgstr "welk moment opgeslagen wordt"
