@@ -3254,6 +3254,19 @@ path, and scripts read it.
   often and is where the detail lives.
 
   Each page's commands are run, not read, like README's quick start.
+  Design chosen (2026-10-02), not yet built. One page per catalog at
+  docs/quickstart/<code>.md: a translated title and one-line description,
+  then every sh block of README between "## Install" and "## Taking a
+  picture", in order, with only `#` comment lines and the prose
+  translated, ending with links to README.md (English) and CONTRIBUTING.md.
+  A new gate step, in the docs gate, checks three things. Each page's
+  blocks, with comment lines removed, equal README's. Every po/*.po has a
+  page and every page has a catalog. README's top links each page by its
+  language name, beside the bold tagline. Since the commands are byte-equal,
+  running README's quick start once proves every page; the gate does not
+  run it today, so run it by hand once (kate may be missing, so use any
+  installed app). Draft the pages with one agent per language. Each takes
+  its terms from its own po/<code>.po, so a page and its catalog agree.
   **Layman:** Each language gets a short getting-started page; the full README stays in English.
   Kind: doc.
   Source: user-request-2026-09-25.
