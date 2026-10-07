@@ -314,6 +314,11 @@ closes, so it sits outside every version heading.
   libavcodec62 libavdevice62 libavfilter11 libavformat62 libavutil60
   libswresample6 libswscale9 from Packman still offers 1699.6.pm.35
   and still removes Plasma, MAME, Flatpak and more. Cancelled.
+  Checked 2026-10-07 (third session): after a refresh, the same
+  64-bit dry run still offers Packman 1699.6.pm.35, which conflicts with
+  openSUSE's ffmpeg-8-mini-libs 8.1.2-6.1. Its only working solution now
+  lists 214 deinstallations, among them kwin6, plasma6-session, Flatpak
+  and Wine. Cancelled; nothing installed or removed.
   **Layman:** A system update swapped in a video tool that cannot make demoreel's videos, so recording is down on this machine until the usual one can go back.
   Kind: chore.
   Source: in-session-2026-10-07.
