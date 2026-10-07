@@ -202,6 +202,15 @@ simplest case, and a gate proves it still records.
   checked. The Ants Terminal test suite and a Chrome recording were running
   at the time. Cause unproven. If it recurs, capture `iostat` and `uptime`
   at that moment before changing STOP_GRACE.
+  Measured 2026-10-07 at load 21-22 on 12 CPUs: a record run takes
+  0.20-0.40s from launch to the point where it registers (timed as a run
+  refused at the libx264 check, which sits just before it). About half of
+  that is has_libx264(), which runs `ffmpeg -hide_banner -encoders` inside
+  prepare(), before claim_name and write_state: 0.10-0.19s per call at that
+  load. So a miss needs the run's start to be several times slower again,
+  which fits memory pressure evicting ffmpeg's libraries. Still unproven.
+  If it recurs, one fix that does not touch STOP_GRACE is to register
+  before the ffmpeg check.
   **Layman:** Once, the automatic checks asked a recording to stop so quickly that it was not found; it has not happened again.
   Kind: investigate.
   Source: in-session-2026-10-02.
