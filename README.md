@@ -921,16 +921,18 @@ Checked by running them, not assumed. This section is for maintainers.
   captured 643 frames, all different. `x11grab` on the X side captured 588, of
   which 156 differed from the one before. The app was drawing about 54 frames a
   second throughout.
-- **No one threshold for "the picture changed" serves both `motion` and the
-  `--gpu` note.** x264 improves a picture over the frames after it changes.
-  Measured 2026-09-30 on patterns with a known number of new frames, encoded
-  as the recorder encodes, counting any 8x8 block that moved by more than the
-  threshold: 9 new frames in 90 scored 44 at 256 and 9 at 640, and 36 in 360
-  scored 167 and 36. A gradient drifting a little each frame, new in all 360,
-  scored 360 at 256 and 145 at 640. A moving pattern with edges scored 60 of 60
-  at both. So `motion` uses 640, where a stuttering video cannot pass as
-  smooth, and the `--gpu` note keeps 256, where that gradient does not read as
-  stutter.
+- **"The picture changed" is one test, for `motion` and the `--gpu` note
+  alike, set where a stuttering video cannot pass as smooth.** x264 improves a
+  picture over the frames after it changes. Measured 2026-09-30 on patterns
+  with a known number of new frames, encoded as the recorder encodes, counting
+  any 8x8 block that moved by more than the threshold: 9 new frames in 90
+  scored 44 at 256 and 9 at 640, and 36 in 360 scored 167 and 36. On real
+  `--gpu` recordings (2026-10-02) an app drawing about 39% new frames scored
+  73% at 256, so the note stayed silent, and 39% at 640. The cost of 640: a
+  gradient drifting a little each frame, new in all 360, scored 145, so a
+  video of such faint movement can be noted when it is smooth. A moving
+  pattern with edges scored 60 of 60 at both. The note never fails a run, so
+  a wrong note costs less than a missed stutter.
 - **An input that never ends fills the memory.** While the finishing commands
   were built, an animated `.png` read with ffmpeg's own looping, behind
   another scene, took ffmpeg to 14 GB in six minutes. Every stream in a film is

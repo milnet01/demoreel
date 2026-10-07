@@ -278,9 +278,33 @@ closes, so it sits outside every version heading.
   Candidate fixes for the user to weigh: count the countdown from the
   first frame's own timestamp, or cap the output with -t at the duration
   (which would cut the countdown's last moments instead).
+  Decided (user, 2026-10-07): measure the cause first, under load made
+  on purpose inside a container held to a couple of cores; then start
+  the countdown from the first frame's own timestamp. Then 0.4.0.
   **Layman:** The final check before a push can fail just because the computer is busy with other work, not because anything is wrong.
   Kind: investigate.
   Source: in-session-2026-10-02.
+
+- 📋 [DEMO-0170] **Put Packman's ffmpeg back once it fits Tumbleweed again.**
+  Found 2026-10-07. That day at 14:40 an update replaced Packman's
+  ffmpeg-8 and its 64- and 32-bit libraries with openSUSE's 8.1.2-6.1,
+  which has no libx264. `demoreel check` says NOT READY for every
+  command, and a recording fails at once with the Packman message, so
+  nothing fails silently. The host gate cannot pass, so no push.
+  Why it cannot go back yet: openSUSE's rebuilt packages (audaspace,
+  pipewire-spa-plugins, wine) now require versioned symbols such as
+  `libavcodec.so.62(LIBAVCODEC_62)` that Packman's 8.1.2-1699.6.pm.35
+  lacks. A dry run of `zypper install --from packman
+  --allow-vendor-change ffmpeg-8 libavcodec62 ...` wanted to remove
+  about 40 packages, Plasma and MAME among them; it was cancelled.
+  User's choice (2026-10-07): wait for Packman, no stand-in ffmpeg.
+  To do: re-run that dry run, 64-bit names only; when it removes
+  nothing, install, then `demoreel check` and push the queued work.
+  Meanwhile the Ubuntu image's ffmpeg has x264, so the gate's Ubuntu
+  leg still runs on its own.
+  **Layman:** A system update swapped in a video tool that cannot make demoreel's videos, so recording is down on this machine until the usual one can go back.
+  Kind: chore.
+  Source: in-session-2026-10-07.
 
 ## 0.1.1 — Before the first tag
 
@@ -3569,7 +3593,7 @@ path, and scripts read it.
   Kind: test.
   Source: recommendation-2026-09-08.
 
-- 📋 [DEMO-0134] **The `--gpu` note's frame test counts the encoder's sharpening as new frames.**
+- ✅ [DEMO-0134] **The `--gpu` note's frame test counts the encoder's sharpening as new frames.**
   Found while building `motion` (DEMO-0125). `changed_share` counts a
   frame as new at a threshold of 256. Measured 2026-09-30 on a pattern
   with 36 new frames in 360, encoded as the recorder encodes: it counted
@@ -3598,6 +3622,14 @@ path, and scripts read it.
   60 at both, per the comment beside the constants), since a missed
   stutter is the dangerous way to be wrong and the note never fails a
   run. Needs the CLAUDE.md trap rewritten in the same commit.
+  Decided (user, 2026-10-07): the note uses 640, ci.sh's smooth fixture
+  is replaced with a smooth one that has edges, and the CLAUDE.md
+  thresholds trap is rewritten in the same commit. Then 0.4.0.
+  Resolved (2026-10-07): one test, NEW_FRAME (640), for motion and the
+  note; ci.sh's stutter fixtures moved to testsrc2 (measured in the
+  Ubuntu image: testsrc smooth 39% at 640, testsrc2 100%, its 3 fps
+  copy 10%). Ubuntu-image gate passed; the host leg and the --gpu
+  recording step could not run (DEMO-0170).
   **Layman:** The note that warns about a stuttering --gpu video over-counts new frames, so it may stay silent on a video that really stutters.
   Kind: investigate.
   Source: DEMO-0125-finding-2026-09-30.

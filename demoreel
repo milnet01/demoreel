@@ -902,30 +902,28 @@ def window_off_frame(env, window, width, height):
 
 
 # A --gpu video whose frames changed less often than this is noted. Measured
-# with changed_share on 2026-09-26: Vestige's fly-through 48%, vkcube 96%
-# (DEMO-0109).
+# with changed_share on real --gpu recordings on 2026-10-02 (DEMO-0134):
+# vkcube 100%; an xterm printing about 11.5 lines a second, which is about
+# 39% new frames, 39%.
 CHANGED_NOTE_BELOW = 0.7
 CHANGED_WINDOW = 10
-# "The picture changed", twice, because one threshold cannot serve both uses.
-# The filter compares each frame with the last NEW one, not the one before,
-# and counts it new when any 8x8 block moved by more than the threshold.
+# "The picture changed", for `motion` and for the note above. The filter
+# compares each frame with the last NEW one, not the one before, and counts it
+# new when any 8x8 block moved by more than 640.
 #
-# For the note above: 256. The filter's defaults count near-repeats as
-# repeats, which scored a smooth test pattern 50%; at 256 it scores 100%, a
-# 3 fps pattern stored at 30 scores 12%, and a still one 0%.
-NOTE_NEW_FRAME = "mpdecimate=hi=256:lo=256:frac=0"
-# For `motion`: 640. At 256 x264's own sharpening of a picture, over the
-# frames after it changes, counts as new frames. Measured 2026-09-30 on
-# patterns with a known number of new frames, encoded as the recorder
-# encodes: 9 in 90 scored 44 at 256 and 9 at 640; 36 in 360 scored 167 and
-# 36; 12 in 120 at 1280x800 scored 31 and 12. That is the dangerous way to be
-# wrong here: a stuttering video reports as smooth. What 640 costs is faint,
-# slow movement: a gradient drifting a little each frame scored 360 of 360 at
-# 256 and 145 at 640, noticed only as it adds up. Movement with edges in it
-# is unaffected: a moving pattern scored 60 of 60 at both, and a real
-# recording 282 and 244 of 646. The note keeps 256 because it only ever asks
-# "fewer than 70%?", and 640 would answer yes for that gradient.
-MOTION_NEW_FRAME = "mpdecimate=hi=640:lo=640:frac=0"
+# Below 640, x264's own sharpening of a picture, over the frames after it
+# changes, counts as new frames. Measured 2026-09-30 on patterns with a known
+# number of new frames, encoded as the recorder encodes: 9 in 90 scored 44 at
+# 256 and 9 at 640; 36 in 360 scored 167 and 36; 12 in 120 at 1280x800 scored
+# 31 and 12. On the real recordings above, 256 scored that xterm 73%, so the
+# note stayed silent on a video that stutters. That is the dangerous way to be
+# wrong here. What 640 costs is faint, slow movement: a gradient drifting a
+# little each frame scored 360 of 360 at 256 and 145 at 640, noticed only as
+# it adds up, so such a video can be noted when it is smooth. The note never
+# fails a run, which is why that is the side to err on. Movement with edges in
+# it is unaffected: a moving pattern scored 60 of 60 at both, and a real
+# recording 282 and 244 of 646.
+NEW_FRAME = "mpdecimate=hi=640:lo=640:frac=0"
 
 
 def changed_share(output, framerate):
@@ -950,7 +948,7 @@ def changed_share(output, framerate):
         count = subprocess.run(
             ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
              "-ss", f"{(duration - window) / 2:.3f}", "-t", f"{window:.3f}",
-             "-i", str(output), "-vf", NOTE_NEW_FRAME,
+             "-i", str(output), "-vf", NEW_FRAME,
              "-f", "null", "-",
              "-progress", "pipe:1", "-nostats"],
             capture_output=True, text=True, timeout=6 * CALL_TIMEOUT, check=True)
@@ -3201,8 +3199,8 @@ def cmd_card(a):
 def cmd_motion(a):
     """Report how often a video's picture changes, and where it stands still.
 
-    Read-only, and its report is what goes to stdout. "New" is
-    MOTION_NEW_FRAME, whose comment says why it is not the --gpu note's test.
+    Read-only, and its report is what goes to stdout. "New" is NEW_FRAME,
+    the --gpu note's test as well, whose comment holds its measurements.
     A new frame is one that differs from the last new frame, not from the
     frame before it: a slow drift is noticed once it has added up.
     """
@@ -3220,7 +3218,7 @@ def cmd_motion(a):
             ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "info",
              "-ss", f"{start:.6f}", "-t", f"{end - start:.6f}",
              "-i", str(Path(a.input).expanduser()),
-             "-vf", f"showinfo=checksum=0,{MOTION_NEW_FRAME},"
+             "-vf", f"showinfo=checksum=0,{NEW_FRAME},"
                     "showinfo=checksum=0",
              "-an", "-f", "null", "-"],
             capture_output=True, text=True, timeout=60 + 10 * (end - start),

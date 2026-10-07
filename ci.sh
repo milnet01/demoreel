@@ -2891,10 +2891,13 @@ step "the stutter measure tells a stuttering video from a smooth one"
 # changed_share is what notices. Two made-up videos pin it without a card: a
 # moving pattern made at 3 frames a second and stored at 30, and the same
 # pattern at a full 30. The note's own threshold decides both, so this checks
-# the measure and the line together rather than restating either.
-ffmpeg -v error -f lavfi -i testsrc=size=320x240:rate=3 -t 12 -r 30 \
+# the measure and the line together rather than restating either. testsrc2,
+# not testsrc: testsrc's smooth movement is a faint gradient, which the test
+# notices only as it adds up (DEMO-0134), and scores 39% where testsrc2's
+# shapes with edges score 100%.
+ffmpeg -v error -f lavfi -i testsrc2=size=320x240:rate=3 -t 12 -r 30 \
     -c:v libx264 -pix_fmt yuv420p -y "$tmp/stutter.mp4"
-ffmpeg -v error -f lavfi -i testsrc=size=320x240:rate=30 -t 12 \
+ffmpeg -v error -f lavfi -i testsrc2=size=320x240:rate=30 -t 12 \
     -c:v libx264 -pix_fmt yuv420p -y "$tmp/smooth.mp4"
 python3 - "$tmp/stutter.mp4" "$tmp/smooth.mp4" <<'CHANGEDPY'
 import importlib.machinery, importlib.util, sys

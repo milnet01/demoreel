@@ -395,12 +395,15 @@ stop agreeing.
 - **Text is measured by drawing it.** `text_size` draws the line on a black
   strip and reads ffmpeg's `bbox`. The refusal of a too-wide line rests on it,
   and so does `demoreel check`'s text line.
-- **"The picture changed" has two thresholds, and that is measured, not
-  untidy.** `motion` uses `MOTION_NEW_FRAME` (640) and the `--gpu` note uses
-  `NOTE_NEW_FRAME` (256). At 256 x264's sharpening after a change counts as new
-  frames, so a stuttering video reports as smooth to `motion`. At 640 a faint
-  drifting gradient reads as stutter to the note, and `ci.sh`'s stutter step
-  fails. Do not merge them: the measurements are beside the constants.
+- **"The picture changed" is one test, `NEW_FRAME` (640), for `motion` and
+  the `--gpu` note.** Below 640 x264's sharpening after a change counts as new
+  frames, so a stuttering video reports as smooth: on real `--gpu` recordings
+  256 scored 39% new frames as 73%, and the note stayed silent (DEMO-0134). At
+  640 a faint drifting gradient scores low, so the note can fire on a smooth
+  video. That is the accepted side: the note never fails a run. So `ci.sh`'s
+  stutter fixtures are `testsrc2`, whose movement has edges; `testsrc` moves a
+  gradient and scores 39%. Do not lower the threshold for the note alone, and
+  do not go back to `testsrc`. The measurements are beside the constant.
 - **The film is written beside `-o` and moved into place when whole**, which
   is what makes "a failure leaves nothing at `-o`" true. Do not write to `-o`
   directly.

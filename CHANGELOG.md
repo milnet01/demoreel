@@ -74,6 +74,13 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   README, store listing or release page. The display-path checks bind
   the gate, which a 1.0 release passes like any other.
 
+### Fixed
+
+- **The --gpu stutter note no longer stays silent on a video that stutters** (DEMO-0134)
+  It counted the encoder's sharpening as new frames, so a video
+  with 39% new frames read as 73% and was not noted. It now uses the
+  same test as `motion`, which counts them right.
+
 ### Security
 
 - **`record` and `shot` take `--steps FILE`, or `--steps -` for standard input, so typed text stays out of the process list** (DEMO-0025)
