@@ -302,6 +302,10 @@ closes, so it sits outside every version heading.
   nothing, install, then `demoreel check` and push the queued work.
   Meanwhile the Ubuntu image's ffmpeg has x264, so the gate's Ubuntu
   leg still runs on its own.
+  Checked 2026-10-07 (later session): 64-bit-only dry run of ffmpeg-8
+  libavcodec62 libavdevice62 libavfilter11 libavformat62 libavutil60
+  libswresample6 libswscale9 from Packman still offers 1699.6.pm.35
+  and still removes Plasma, MAME, Flatpak and more. Cancelled.
   **Layman:** A system update swapped in a video tool that cannot make demoreel's videos, so recording is down on this machine until the usual one can go back.
   Kind: chore.
   Source: in-session-2026-10-07.
