@@ -1134,9 +1134,15 @@ ENCODER = [
 
 def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor):
     """Record the display. env matters: the GPU backend's Xwayland wants an
-    auth cookie, and ffmpeg is as much a client of that display as xdotool."""
+    auth cookie, and ffmpeg is as much a client of that display as xdotool.
+
+    Returns the process, its log, and how many seconds before this returns
+    the video's first frame was grabbed."""
+    # level+info marks each log line with its level: the info lines carry the
+    # first frame's time, and the failure message below leaves them out.
+    # -nostats, or the status line fills the log twenty times a second.
     cmd = [
-        "ffmpeg", "-hide_banner", "-loglevel", "warning",
+        "ffmpeg", "-hide_banner", "-loglevel", "level+info", "-nostats",
         "-progress", "pipe:1", "-stats_period", "0.05",
         "-f", "x11grab", "-framerate", str(framerate),
         "-draw_mouse", "1" if cursor else "0",
@@ -1146,6 +1152,7 @@ def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor
     # Deliberate: the handle is owned by the ffmpeg process and closed in
     # record()'s finally block, so it must outlive this statement.
     log = open(logfile, "wb")  # noqa: SIM115
+    spawned = time.time()
     # Its own session, so a terminal's Ctrl+C or hang-up cannot end it before
     # stop_recorder does: a SIGHUP killed it with no index written, and the
     # run printed the path of a file nothing could play (DEMO-0115).
@@ -1154,23 +1161,33 @@ def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor
                             start_new_session=True)
     # Return when ffmpeg is actually capturing, not after a guessed interval.
     # The first progress report is that signal: it arrives once the input is
-    # open and frames are flowing. The duration is counted from here, so a
-    # blind sleep in its place was recorded into every video (DEMO-0012).
-    # The frame count in those reports is no use as the signal -- it counts
-    # ENCODED frames and sits at 0 for most of a second while x264 fills its
-    # look-ahead.
+    # open and frames are flowing. A blind sleep in its place was recorded
+    # into every video (DEMO-0012). The frame count in those reports is no
+    # use as the signal -- it counts ENCODED frames and sits at 0 for most of
+    # a second while x264 fills its look-ahead.
     ready = select.select([proc.stdout], [], [], DISPLAY_READY_TIMEOUT)[0]
     if not ready or not proc.stdout.readline():
         proc.kill()
         proc.wait()
         log.close()
-        tail = Path(logfile).read_text(errors="replace").strip()
+        tail = "\n".join(
+            line for line in Path(logfile).read_text(errors="replace").splitlines()
+            if not line.startswith("[info]")).strip()
         die(tr("ffmpeg could not start recording.")
             + ("\n  " + tr("It said: {text}", text=tail) if tail else "")
             + "\n  " + tr("`demoreel check` tests the programs and the encoder it needs."))
+    # The video runs from the first frame grabbed, and the report comes later:
+    # 0.15s on an idle machine, 0.4s with two cores loaded, every bit of it
+    # added to the video when the countdown started here (DEMO-0169). x11grab
+    # stamps frames with the wall clock, and ffmpeg names the first one's time
+    # as "start:" when it opens the display, before any report. A time
+    # outside this call cannot be that frame, so it is not trusted.
+    now = time.time()
+    found = re.search(rb"start: (\d+\.\d+)", Path(logfile).read_bytes())
+    lag = now - float(found[1]) if found and spawned <= float(found[1]) <= now else 0.0
     # Keep draining the reports, or ffmpeg blocks once the pipe fills.
     threading.Thread(target=proc.stdout.read, daemon=True).start()
-    return proc, log
+    return proc, log, lag
 
 
 def partial_video(output):
@@ -1191,7 +1208,9 @@ def start_wf_recorder(env, wayland, framerate, output, logfile):
 
     It prints no progress reports, so the start signal is the line announcing
     its output, printed once the encoder has its first frame. The countdown is
-    counted from there, as start_ffmpeg's is from its first report (DEMO-0012).
+    counted from there (DEMO-0012). Unlike ffmpeg it names no time for that
+    frame, so start_ffmpeg's correction for a late signal (DEMO-0169) has no
+    counterpart here.
     """
     part = partial_video(output)
     cmd = ["wf-recorder", "-D", "-y", "-r", str(framerate),
@@ -1805,8 +1824,9 @@ def settle(a, env, display, width, height):
 
 
 def start_recorder(a, env, display, wayland, width, height, output, logpath):
+    """The recorder, its log, and how long ago its first frame was taken."""
     if a.gpu:
-        return start_wf_recorder(env, wayland, a.framerate, output, logpath)
+        return (*start_wf_recorder(env, wayland, a.framerate, output, logpath), 0.0)
     return start_ffmpeg(env, display, width, height, a.framerate, output,
                         logpath, a.cursor)
 
@@ -1823,7 +1843,10 @@ def run_countdown(a, env, app, window, display, recorder, width, height,
             break
         run_action(action, env)
 
-    deadline = time.monotonic() + a.duration if a.duration else None
+    # Counted from when the steps finish, or with no steps from the first
+    # frame, which `started` is (DEMO-0169).
+    begin = time.monotonic() if a.action else started
+    deadline = begin + a.duration if a.duration else None
     # A second look, halfway through the countdown (DEMO-0008). The end
     # sample alone passes an app that draws only in the final moments,
     # which is a video mostly empty. Blank at halfway means at least half
@@ -2006,9 +2029,9 @@ def cmd_record(a):
         window = place_window(env, app, a, width, height, picture=False)
         settle(a, env, display, width, height)
 
-        recorder, log = start_recorder(a, env, display, wayland, width, height,
-                                       output, logpath)
-        started = time.monotonic()
+        recorder, log, lag = start_recorder(a, env, display, wayland, width,
+                                            height, output, logpath)
+        started = time.monotonic() - lag
         write_state(statefile, dict(state, display=display, recording=True))
         note(tr("recording {display} to {output} (until stopped)",
                 display=display, output=output) if a.duration == 0 else

@@ -76,6 +76,12 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **A recording is as long as -d asks, even on a busy machine** (DEMO-0169)
+  The countdown now starts at the video's first frame, not when ffmpeg
+  first reports back. On a loaded machine that report came late, and
+  the wait went into the video: a -d 5 recording measured up to 5.55s.
+  It now measures 5.03 to 5.16s, loaded or idle.
+
 - **The --gpu stutter note no longer stays silent on a video that stutters** (DEMO-0134)
   It counted the encoder's sharpening as new frames, so a video
   with 39% new frames read as 73% and was not noted. It now uses the

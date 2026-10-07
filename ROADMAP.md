@@ -257,7 +257,7 @@ closes, so it sits outside every version heading.
   Kind: chore.
   Source: DEMO-0163-2026-10-02.
 
-- 📋 [DEMO-0169] **The Ubuntu leg's smoke length check fails when other sessions load the machine.**
+- ✅ [DEMO-0169] **The Ubuntu leg's smoke length check fails when other sessions load the machine.**
   Measured 2026-10-02. The smoke step wants a `-d 5` video of 5.0 to
   5.5 s. Inside the parity container (taskset to 4 cores) with host
   load 13 to 20, two pushes failed it at 9.33 s and 7.45 s while the
@@ -281,6 +281,14 @@ closes, so it sits outside every version heading.
   Decided (user, 2026-10-07): measure the cause first, under load made
   on purpose inside a container held to a couple of cores; then start
   the countdown from the first frame's own timestamp. Then 0.4.0.
+  Resolved 2026-10-07. Measured in the parity image, --cpus 2, with
+  x11grab's own frame times (-copyts in a throwaway copy): the first
+  frame came 0.13-0.16s before the first report idle and 0.22-0.41s
+  under 24 busy-loops; the stop end added 0.1s or less. Loaded lengths
+  5.40-5.55s, one past the gate's 5.5. Fix: start_ffmpeg reads the
+  first frame's time from ffmpeg's "start:" line and the countdown
+  counts from it. After: 5.03-5.13s idle, 5.03-5.16s loaded. Full gate
+  passed in the image (smoke 5.10s); host leg not run, DEMO-0170.
   **Layman:** The final check before a push can fail just because the computer is busy with other work, not because anything is wrong.
   Kind: investigate.
   Source: in-session-2026-10-02.
