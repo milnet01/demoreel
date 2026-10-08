@@ -12,6 +12,10 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-08
+
+**Theme:** Speaks your language.
+
 ### Added
 
 - **Translators are told what each unclear blank in a message holds** (DEMO-0167)
