@@ -215,6 +215,46 @@ simplest case, and a gate proves it still records.
   Kind: investigate.
   Source: in-session-2026-10-02.
 
+- 🚧 [DEMO-0171] **`demoreel check` says --gpu is ready when wf-recorder's ffmpeg libraries have no libx264.**
+  Found 2026-10-08 after installing Packman's ffmpeg 9.0.1 (DEMO-0170).
+  `check` asks the ffmpeg program for libx264, and for --gpu only that
+  the programs exist. wf-recorder does not run ffmpeg: it loads
+  libavcodec itself, here openSUSE's libavcodec.so.62 (8.1.2-6.1), which
+  has no libx264. `check` said "--gpu: ready" and the gate's --gpu step
+  then failed with wf-recorder's "Failed to find the given codec:
+  libx264". Fix: ask the libavcodec wf-recorder links whether it has
+  libx264, and skip the gate's --gpu step when check says --gpu is not
+  ready.
+  Plan (2026-10-08, user-approved; no code written yet). Red already
+  seen: `demoreel check` printed "--gpu: ready" with Packman ffmpeg
+  9.0.1 installed, and the gate's --gpu step then failed.
+  Approach, proved by a throwaway python3 -I probe on this host:
+  `ldd $(which wf-recorder)` gives /lib64/libavcodec.so.62; ctypes
+  CDLL of it, avcodec_find_encoder_by_name(b"libx264") is NULL, while
+  ffmpeg's /lib64/libavcodec.so.63 returns non-NULL; a made-up encoder
+  name is NULL on both; python3 links no libavcodec.
+  1. In demoreel, beside has_libx264: linked_library(program, stem)
+     parses ldd, None if it cannot tell; has_encoder(library, encoder)
+     uses ctypes, True if it cannot tell (has_libx264's convention).
+     Add `import ctypes`. cmd_check only, --gpu backend only, when
+     wf-recorder is present: one new tr() message naming the library.
+     Not in prepare(): it would lengthen the time before a run
+     registers (DEMO-0165).
+  2. ci.sh --gpu step: also skip, printing check's reasons, when
+     `./demoreel check` reports "--gpu: NOT READY".
+  3. ci.sh test: has_encoder on ffmpeg's linked libavcodec is True for
+     libx264 and False for a made-up name; linked_library of python3
+     is None. Runs on GitHub and in the Ubuntu image.
+  4. ./ci.sh --pot, and translate the one new message in all 16
+     po/*.po catalogs (INV-5: none missing, none fuzzy).
+  Then: build wf-recorder from source into ~/.local against Packman's
+  ffmpeg 9 (user chose this over releasing with --gpu skipped), check
+  that `demoreel check` says --gpu ready, push, look at a --gpu vkcube
+  frame, then cut 0.4.0.
+  **Layman:** The readiness check could say GPU recording works when the recorder it uses cannot write the video.
+  Kind: fix.
+  Source: in-session-2026-10-08.
+
 ## Standing chores
 
 Recurring work with no finished state. It is checked on a schedule and never
@@ -3717,6 +3757,16 @@ system looks for them.
   /usr/bin/demoreel resolves to, or every language falls back to English
   with no error. docs/specs/DEMO-0060 § 4.2 allows no other catalog
   location (see DEMO-0071).
+  Design decisions for 0.5.0 (user, 2026-10-08). The packages are for
+  strangers who find demoreel on the website or GitHub. On openSUSE
+  and Fedora the package depends on the distro's ffmpeg like any
+  other dependency; when that lacks libx264, `demoreel check` already
+  names the Packman / RPM Fusion fix. Debian and Ubuntu get a .deb
+  attached to each GitHub release, not a PPA. Files first, repos
+  after: 0.5.0 ships .deb and .rpm files on the release plus the Arch
+  PKGBUILD, built and install-tested in CI; publishing to OBS, COPR
+  and the AUR follows as the user creates each account. Next step:
+  the design document, through write-spec and its review gate.
   **Layman:** Install demoreel on openSUSE with zypper, dependencies included.
   Kind: package.
   Source: user-request-2026-09-25.
@@ -3731,6 +3781,8 @@ system looks for them.
   /usr/bin/demoreel resolves to, or every language falls back to English
   with no error. docs/specs/DEMO-0060 § 4.2 allows no other catalog
   location (see DEMO-0071).
+  Decided 2026-10-08: a .deb attached to each GitHub release, not a
+  PPA. See DEMO-0068 for the whole 0.5.0 design brief.
   **Layman:** Install demoreel on Debian or Ubuntu with apt, dependencies included.
   Kind: package.
   Source: user-request-2026-09-25.
@@ -3744,6 +3796,9 @@ system looks for them.
   /usr/bin/demoreel resolves to, or every language falls back to English
   with no error. docs/specs/DEMO-0060 § 4.2 allows no other catalog
   location (see DEMO-0071).
+  Decided 2026-10-08: 0.5.0 ships the .rpm file and the Arch PKGBUILD,
+  tested in CI; COPR and AUR publishing follow once the user has
+  those accounts. See DEMO-0068.
   **Layman:** Install demoreel on Fedora (dnf) or Arch (from the AUR).
   Kind: package.
   Source: user-request-2026-09-25.
