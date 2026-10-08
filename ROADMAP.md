@@ -3773,6 +3773,14 @@ system looks for them.
   PKGBUILD, built and install-tested in CI; publishing to OBS, COPR
   and the AUR follows as the user creates each account. Next step:
   the design document, through write-spec and its review gate.
+  Finding for the design (2026-10-08, DEMO-0171): openSUSE's wf-recorder
+  loads openSUSE's libavcodec, never Packman's, unless Packman's ffmpeg
+  is the same major version. README's advice (zypper install --from
+  packman ffmpeg) took ffmpeg 9 here while wf-recorder kept .so.62, so
+  record --gpu could not write H.264. check now says so. The design
+  must say what a stranger on openSUSE does for --gpu. This machine
+  runs wf-recorder master c5de474 plus upstream PR #352 (ffmpeg 9
+  port), built into ~/.local.
   **Layman:** Install demoreel on openSUSE with zypper, dependencies included.
   Kind: package.
   Source: user-request-2026-09-25.
