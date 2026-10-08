@@ -3924,6 +3924,22 @@ system looks for them.
   Kind: package.
   Source: user-request-2026-10-02.
 
+- 📋 [DEMO-0174] **Let record --gpu work when wf-recorder's libavcodec has no libx264.**
+  Decided by the user 2026-10-08, for the DEMO-0068 packaging design.
+  openSUSE's wf-recorder links libavcodec.so.62, which has no libx264,
+  and Packman ships no .so.62 build (only .so.63, which that wf-recorder
+  cannot load). Measured: the .so.62 has ffv1, utvideo and huffyuv.
+  So when wf-recorder's libavcodec lacks libx264, record losslessly to
+  a temporary file beside -o and convert it with the ffmpeg program,
+  which check already requires to have libx264. The finished file is
+  unchanged: H.264, yuv420p, +faststart. Test-pattern cost, 10 s at
+  1280x800: ffv1 17.6 MB, converted in about 1 s; measure a real
+  recording before choosing the codec. check stops calling --gpu NOT
+  READY for this case once the fallback exists.
+  **Layman:** On openSUSE, recording a 3D app works with the distro's own packages.
+  Kind: feature.
+  Source: user-request-2026-10-08.
+
 ## 0.6.0 — A window for people who want one
 
 demoreel can be used from the command line or from a graphical window. Requested
