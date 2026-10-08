@@ -417,6 +417,22 @@ closes, so it sits outside every version heading.
   Kind: chore.
   Source: in-session-2026-10-07.
 
+- 📋 [DEMO-0173] **Trim what CLAUDE.md loads at every session start, and report the figure to claude-config.**
+  Asked by claude-config 2026-10-08 (inbox msgs 474 and 499, read and
+  acked). Keep what most sessions need in CLAUDE.md; move
+  subsystem sections (the --gpu backend, the finishing commands) to
+  .claude/rules/<topic>.md with `paths:` frontmatter, or to docs/ with
+  a one-line pointer saying when to read them. Move verbatim, never
+  drop. Leave a pointer line under each moved heading: a rules file
+  loads only on a native Read. If .gitignore has `.claude/*`, add
+  `!.claude/rules/`. Use write-doc; record rule 14 in the commit body.
+  Measure `claude -p "/context"` "Memory files" before and after, and
+  send claude-config that one line. demoreel told claude-config it
+  comes after 0.4.0; the user ordered it after the DEMO-0068 design.
+  **Layman:** Make each new session start lighter by moving rarely-needed notes out of the always-loaded instructions.
+  Kind: chore.
+  Source: claude-config-request-2026-10-08.
+
 ## 0.1.1 — Before the first tag
 
 Nothing here breaks a documented surface, so all of it lands in a PATCH.
