@@ -302,7 +302,7 @@ closes, so it sits outside every version heading.
   Kind: investigate.
   Source: in-session-2026-10-02.
 
-- 📋 [DEMO-0170] **Put Packman's ffmpeg back once it fits Tumbleweed again.**
+- ✅ [DEMO-0170] **Put Packman's ffmpeg back once it fits Tumbleweed again.**
   Found 2026-10-07. That day at 14:40 an update replaced Packman's
   ffmpeg-8 and its 64- and 32-bit libraries with openSUSE's 8.1.2-6.1,
   which has no libx264. `demoreel check` says NOT READY for every
@@ -328,6 +328,13 @@ closes, so it sits outside every version heading.
   openSUSE's ffmpeg-8-mini-libs 8.1.2-6.1. Its only working solution now
   lists 214 deinstallations, among them kwin6, plasma6-session, Flatpak
   and Wine. Cancelled; nothing installed or removed.
+  Resolved 2026-10-08: Packman dropped ffmpeg-8 and now ships ffmpeg
+  9.0.1-1699.7.pm.5, whose libraries carry new sonames (libavcodec63 and
+  so on) and sit beside openSUSE's 8.1.2 libraries. Installing it from
+  Packman removed only openSUSE's ffmpeg-8 tools package, which nothing
+  required. The user approved ffmpeg 9 over waiting for 8. After it,
+  `ffmpeg -encoders` lists libx264 and `demoreel check` reports every
+  command ready. Undo: reinstall ffmpeg-8 from the OSS repository.
   **Layman:** A system update swapped in a video tool that cannot make demoreel's videos, so recording is down on this machine until the usual one can go back.
   Kind: chore.
   Source: in-session-2026-10-07.
