@@ -9,6 +9,7 @@ end up in the video. README.md explains why that is the whole point.
 import argparse
 import codecs
 import contextlib
+import ctypes
 import fcntl
 import itertools
 import json
@@ -1572,6 +1573,35 @@ def has_libx264():
     return " libx264 " in encoders
 
 
+def linked_library(program, stem):
+    """The file `program` loads for the library named `stem` (such as
+    "libavcodec.so"), from ldd; None if it cannot tell."""
+    path = shutil.which(program)
+    if path is None:
+        return None
+    try:
+        listing = subprocess.run(["ldd", path], capture_output=True, text=True,
+                                 timeout=CALL_TIMEOUT, check=False).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    found = re.search(rf"^\s*{re.escape(stem)}\S* => (/\S+)", listing, re.MULTILINE)
+    return found[1] if found else None
+
+
+def has_encoder(library, encoder):
+    """Whether the libavcodec at `library` has `encoder`. wf-recorder loads
+    libavcodec itself rather than running ffmpeg, so the ffmpeg program having
+    libx264 says nothing about it (DEMO-0171). True if it cannot tell, as
+    has_libx264 does."""
+    try:
+        find = ctypes.CDLL(library).avcodec_find_encoder_by_name
+    except (OSError, AttributeError):
+        return True
+    find.restype = ctypes.c_void_p
+    find.argtypes = [ctypes.c_char_p]
+    return find(encoder.encode()) is not None
+
+
 def required_programs(gpu, recording):
     """What a run needs installed, for its backend and for record or shot."""
     required = ["ffmpeg", "xdotool", "xauth"] + (["ffprobe"] if recording else [])
@@ -2166,6 +2196,11 @@ def cmd_check(a):
         if "ffmpeg" not in missing and not has_libx264():
             problems.append(tr("this ffmpeg has no libx264, which every recording "
                                "uses.") + x264_advice(distro_family()))
+        library = (linked_library("wf-recorder", "libavcodec.so")
+                   if gpu and "wf-recorder" not in missing else None)
+        if library and not has_encoder(library, "libx264"):
+            problems.append(tr("wf-recorder loads {library}, which has no libx264, so "
+                               "it cannot write the video.", library=library))
         if gpu and not list(Path("/dev/dri").glob("renderD*")):
             problems.append(tr("no graphics render node in /dev/dri, so there is "
                                "no GPU for it to use."))

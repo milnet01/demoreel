@@ -215,7 +215,7 @@ simplest case, and a gate proves it still records.
   Kind: investigate.
   Source: in-session-2026-10-02.
 
-- 🚧 [DEMO-0171] **`demoreel check` says --gpu is ready when wf-recorder's ffmpeg libraries have no libx264.**
+- ✅ [DEMO-0171] **`demoreel check` says --gpu is ready when wf-recorder's ffmpeg libraries have no libx264.**
   Found 2026-10-08 after installing Packman's ffmpeg 9.0.1 (DEMO-0170).
   `check` asks the ffmpeg program for libx264, and for --gpu only that
   the programs exist. wf-recorder does not run ffmpeg: it loads
@@ -251,6 +251,12 @@ simplest case, and a gate proves it still records.
   ffmpeg 9 (user chose this over releasing with --gpu skipped), check
   that `demoreel check` says --gpu ready, push, look at a --gpu vkcube
   frame, then cut 0.4.0.
+  Resolved (2026-10-08): check now asks the libavcodec wf-recorder
+  loads (linked_library, has_encoder) and says "--gpu: NOT READY"
+  naming it; red then green on this host (.so.62). The gate's --gpu
+  step skips when check says so. New ci.sh step tests both helpers.
+  One new message, translated in all 16 catalogs. Building
+  wf-recorder against ffmpeg 9 is machine setup, not this item.
   **Layman:** The readiness check could say GPU recording works when the recorder it uses cannot write the video.
   Kind: fix.
   Source: in-session-2026-10-08.

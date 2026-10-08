@@ -82,6 +82,11 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   the wait went into the video: a -d 5 recording measured up to 5.55s.
   It now measures 5.03 to 5.16s, loaded or idle.
 
+- **`demoreel check` no longer says --gpu is ready when its recorder cannot write the video** (DEMO-0171)
+  wf-recorder loads its own ffmpeg library rather than running ffmpeg,
+  so ffmpeg having libx264 said nothing about it. check now asks that
+  library, and names it when it has no libx264.
+
 - **The --gpu stutter note no longer stays silent on a video that stutters** (DEMO-0134)
   It counted the encoder's sharpening as new frames, so a video
   with 39% new frames read as 73% and was not noted. It now uses the

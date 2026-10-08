@@ -428,6 +428,9 @@ msgstr "缺少 {programs}"
 msgid "this ffmpeg has no libx264, which every recording uses."
 msgstr "此 ffmpeg 没有 libx264，而每次录制都要用到它。"
 
+msgid "wf-recorder loads {library}, which has no libx264, so it cannot write the video."
+msgstr "wf-recorder 加载的 {library} 没有 libx264，因此无法写入视频。"
+
 msgid "no graphics render node in /dev/dri, so there is no GPU for it to use."
 msgstr "/dev/dri 中没有图形渲染节点，因此没有可供使用的 GPU。"
 

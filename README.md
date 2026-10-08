@@ -1052,7 +1052,8 @@ leaves nothing behind. The full gate runs them too.
 
 **Two of its steps only run where the machine can run them.** One records
 `--gpu -- vkcube` and needs a graphics card with `cage`, `Xwayland`,
-`wf-recorder` and `wlr-randr`; another
+`wf-recorder` and `wlr-randr`, and an ffmpeg library under `wf-recorder` that
+has libx264; another
 records a real Flatpak and needs that application installed. Both print why
 they skipped otherwise, and both skip on GitHub — so the checks GitHub runs
 still cover the ordinary backend alone. And a green step is not the same as a

@@ -428,6 +428,9 @@ msgstr "brak: {programs}"
 msgid "this ffmpeg has no libx264, which every recording uses."
 msgstr "ten ffmpeg nie ma libx264, z którego korzysta każde nagranie."
 
+msgid "wf-recorder loads {library}, which has no libx264, so it cannot write the video."
+msgstr "wf-recorder wczytuje {library}, która nie ma libx264, więc nie może zapisać wideo."
+
 msgid "no graphics render node in /dev/dri, so there is no GPU for it to use."
 msgstr "w /dev/dri nie ma węzła renderowania grafiki, więc nie ma GPU do wykorzystania."
 

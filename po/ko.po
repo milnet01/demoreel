@@ -428,6 +428,9 @@ msgstr "없음: {programs}"
 msgid "this ffmpeg has no libx264, which every recording uses."
 msgstr "이 ffmpeg에는 모든 녹화에 쓰이는 libx264가 없습니다."
 
+msgid "wf-recorder loads {library}, which has no libx264, so it cannot write the video."
+msgstr "wf-recorder가 불러오는 {library}에는 libx264가 없어서 동영상을 쓸 수 없습니다."
+
 msgid "no graphics render node in /dev/dri, so there is no GPU for it to use."
 msgstr "/dev/dri에 그래픽 렌더 노드가 없어 쓸 수 있는 GPU가 없습니다."
 

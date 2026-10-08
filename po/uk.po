@@ -428,6 +428,9 @@ msgstr "бракує {programs}"
 msgid "this ffmpeg has no libx264, which every recording uses."
 msgstr "у цьому ffmpeg немає libx264, який потрібен для кожного запису."
 
+msgid "wf-recorder loads {library}, which has no libx264, so it cannot write the video."
+msgstr "wf-recorder завантажує {library}, у якій немає libx264, тому він не може записати відео."
+
 msgid "no graphics render node in /dev/dri, so there is no GPU for it to use."
 msgstr "у /dev/dri немає графічного вузла рендерингу, тому немає GPU, яким можна скористатися."
 

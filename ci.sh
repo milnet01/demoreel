@@ -2936,6 +2936,13 @@ if [ ${#gpu_missing[@]} -gt 0 ]; then
     echo "skipped: this machine has no ${gpu_missing[*]}"
 elif ! compgen -G '/dev/dri/renderD*' >/dev/null; then
     echo "skipped: no render node under /dev/dri, so there is no card to reach"
+# DEMO-0171. The programs can all be there and still not record: wf-recorder
+# loads its own libavcodec, which may lack libx264 when ffmpeg's has it. check
+# decides that, and its exit status speaks only for the default backend.
+elif ./demoreel check >/dev/null 2>"$tmp/gpu-check.err"
+     grep -q -- '--gpu: NOT READY' "$tmp/gpu-check.err"; then
+    echo "skipped: demoreel check says --gpu is not ready:"
+    cat "$tmp/gpu-check.err"
 else
     gpu_started=$SECONDS
     ./demoreel record --gpu -n gategpu -o "$tmp/gpu.mp4" -d 3 -s 640x480 \
@@ -3389,6 +3396,31 @@ set -e
     exit 1
 }
 echo "check reports ready here, and names the install command when it is not"
+
+step "check reads the encoders of the libavcodec a program loads"
+# DEMO-0171. check said --gpu was ready because ffmpeg had libx264, while the
+# libavcodec wf-recorder loads had none. ffmpeg's own library has libx264 here,
+# since every recording above used it, so it must say yes to that and no to a
+# made-up name; python3 loads no libavcodec, so there is nothing to find.
+python3 - <<'ENCPY'
+import importlib.machinery, importlib.util, sys
+
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+demoreel = importlib.util.module_from_spec(
+    importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(demoreel)
+
+library = demoreel.linked_library("ffmpeg", "libavcodec.so")
+if library is None:
+    sys.exit("could not find the libavcodec ffmpeg loads")
+if not demoreel.has_encoder(library, "libx264"):
+    sys.exit(f"{library} reported no libx264, though ffmpeg records with it")
+if demoreel.has_encoder(library, "no-such-encoder"):
+    sys.exit(f"{library} reported an encoder that does not exist")
+if demoreel.linked_library("python3", "libavcodec.so") is not None:
+    sys.exit("found a libavcodec in python3, which loads none")
+print(f"{library}: libx264 yes, a made-up encoder no; python3 has none")
+ENCPY
 
 step "a malformed step is refused before anything starts"
 # DEMO-0055. A step with a missing or wrong argument reached float() or args[1]

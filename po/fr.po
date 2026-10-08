@@ -428,6 +428,9 @@ msgstr "manquant : {programs}"
 msgid "this ffmpeg has no libx264, which every recording uses."
 msgstr "ce ffmpeg n'a pas libx264, qu'utilise chaque enregistrement."
 
+msgid "wf-recorder loads {library}, which has no libx264, so it cannot write the video."
+msgstr "wf-recorder charge {library}, qui n'a pas libx264, il ne peut donc pas écrire la vidéo."
+
 msgid "no graphics render node in /dev/dri, so there is no GPU for it to use."
 msgstr "aucun nœud de rendu graphique dans /dev/dri : il n'y a donc pas de GPU à utiliser."
 
