@@ -96,12 +96,12 @@ file (DEMO-0084) also checks the installed one. `#!/usr/bin/env python3` stays.
 
 | Need | `.deb` | `.rpm` | `PKGBUILD` |
 |------|--------|--------|------------|
-| required | `python3, xvfb, xauth, xdotool, ffmpeg` | `Requires: /usr/bin/python3 /usr/bin/Xvfb /usr/bin/xauth /usr/bin/xdotool /usr/bin/ffmpeg` | `depends=(python xorg-server-xvfb xorg-xauth xdotool ffmpeg)` |
+| required | `python3, xvfb, xauth, xdotool, ffmpeg, fontconfig, fonts-dejavu-core` | `Requires: /usr/bin/python3 /usr/bin/Xvfb /usr/bin/xauth /usr/bin/xdotool /usr/bin/ffmpeg /usr/bin/fc-match font(dejavusans)` | `depends=(python xorg-server-xvfb xorg-xauth xdotool ffmpeg fontconfig ttf-font)` |
 | `--gpu` | `Recommends: cage, xwayland, wlr-randr, wf-recorder` | `Recommends:` the four by `/usr/bin/` path | `optdepends=` the four |
 
-**One `.rpm` serves Fedora and openSUSE** because it names files, not
-packages. Measured 2026-10-08 with a test package carrying exactly those
-`Requires:` and `Recommends:` lines: `dnf install` in `fedora:44` exited 0
+**One `.rpm` serves Fedora and openSUSE** because it names files and a
+font capability, not packages. Measured 2026-10-08 with a test package
+carrying those `Requires:` and `Recommends:` lines, less the two font ones: `dnf install` in `fedora:44` exited 0
 and installed all nine programs. `zypper install` in `opensuse/tumbleweed`
 exited 0 and installed the five required programs. The four recommended ones
 came only with `--recommends`, because the container image does not install
@@ -109,6 +109,15 @@ recommended packages by default.
 
 `ffmpeg` is the distro's. A distro whose `ffmpeg` has no `libx264` installs
 cleanly, and `demoreel check` says what to do (§ 3).
+
+**Text on a card or a caption needs `fc-match` and a font**, which the
+finishing commands ask for (`text_font`). Measured 2026-10-08 with the
+other required programs installed: `archlinux:latest` and
+`opensuse/tumbleweed` had no font, and `check` reported text NOT READY.
+Adding `ttf-font` on Arch (pacman chose `gnu-free-fonts`), and
+`font(dejavusans)` with `fontconfig` on openSUSE and on `fedora:44`, turned
+it ready. Debian and Ubuntu reported it ready with `ffmpeg` alone; the `.deb`
+names the two packages so that does not rest on `ffmpeg`'s own list.
 
 ### 4.3 The three formats
 
@@ -131,28 +140,31 @@ All live under `packaging/`, all are noarch, and all take the version from
 One `ci.sh` step builds all three from a `git archive` of `HEAD`, the same
 way the release does, then installs each in a clean container of every
 target and runs it there. Containers run under `podman`, as the parity leg
-does. The full gate runs it locally. It is skipped where the parity leg is
-not applicable — on GitHub (`GITHUB_ACTIONS`) and inside the parity
-container (`DEMOREEL_PARITY_INSIDE`) — and on a documentation-only push.
+does. The full gate runs it, except on GitHub (`GITHUB_ACTIONS`), where the
+`packages` job runs it instead, and inside the parity container
+(`DEMOREEL_PARITY_INSIDE`). A documentation-only push does not run it.
+**Called directly, `./ci.sh --packages` always runs**, and fails rather than
+skips when it cannot.
 
 | Container | Installs | With |
 |-----------|----------|------|
 | `ubuntu:24.04`, `debian:stable` | the `.deb` | `apt-get install ./…deb` |
 | `fedora:latest` | the `.rpm` | `dnf install` |
-| `opensuse/tumbleweed` | the `.rpm` | `zypper install --recommends` |
+| `opensuse/tumbleweed` | the `.rpm` | `zypper -n --no-gpg-checks install --recommends --allow-unsigned-rpm` |
 | `archlinux:latest` | the package `makepkg` built from the `PKGBUILD` | `pacman -U` |
 
 In each container, after the install: § 5's container checks, then the
 package is removed and § 5's removal check runs.
 
-The workflow gains a `packages` job that runs `./ci.sh --packages`, beside
+`ci.yml` gains a `packages` job that runs `./ci.sh --packages`, beside
 the existing `ci` job, so the gate's twenty-minute limit is not shared. Per
 `CLAUDE.md` § State, the check lives in `ci.sh`, and the job only calls it.
 
 ### 4.5 Attaching to a release
 
-A `release` job in `.github/workflows/ci.yml`, on `release: types:
-[published]`:
+A `release` job in its own workflow, `.github/workflows/release.yml`, on
+`release: types: [published]`. A trigger belongs to a whole workflow file,
+so the `ci` and `packages` jobs do not run on a release. The job:
 
 1. Checks out the release's tag.
 2. Runs `./ci.sh --packages --out <dir>`: the same build and install test,
@@ -162,7 +174,7 @@ A `release` job in `.github/workflows/ci.yml`, on `release: types:
 
 `cut-release` publishes the release with the user's token, which is what
 fires `release: published`. A release created by the workflow's own token
-fires nothing. **Only this job has `contents: write`.** The workflow's
+fires nothing. **Only this job has `contents: write`.** Both workflows'
 top-level `permissions: contents: read` stays. A failed test attaches
 nothing. Re-running the job for the same tag replaces the files
 (`--clobber`).
@@ -208,7 +220,7 @@ output to paste.
 - **INV-4** — The required programs come from the distro's own repositories.
   *Test:* in each clean container, the install exits 0 with only the image's
   default repositories enabled, and `command -v` finds `python3`, `Xvfb`,
-  `xauth`, `xdotool` and `ffmpeg` afterwards.
+  `xauth`, `xdotool`, `ffmpeg` and `fc-match` afterwards.
   *Breaks when:* a dependency is misnamed, or names a package only a
   third-party repository carries.
 
@@ -222,17 +234,20 @@ output to paste.
 
 - **INV-6** — An installed demoreel can record on a distro whose `ffmpeg`
   has `libx264`, and says how to get one where it has not.
-  *Test:* in the Debian, Ubuntu and Arch containers, `demoreel check` exits 0
-  and prints `record and shot: ready`. In the Fedora and openSUSE
-  containers it exits 1, and its output carries `x264_advice`'s line for
-  that distro.
+  *Test:* in every container, `demoreel check` prints `text on a card or a
+  caption: ready`. In the Debian, Ubuntu and Arch containers it exits 0 and
+  prints `record and shot: ready`. In the Fedora and openSUSE containers it
+  exits 1, and its output carries `x264_advice`'s line for that distro.
+  Measured 2026-10-08 with the required programs installed by hand: exactly
+  that, once a font was present.
   *Breaks when:* a required program is missing from the dependency list, or a
   file the script reads at run time is not installed.
 
 - **INV-7** — The package's version is the script's.
-  *Test:* `./ci.sh --version-lockstep` also compares the `.deb`, `.rpm` and
-  `PKGBUILD` versions with `__version__`. In each container, `demoreel
-  --version` prints `demoreel <__version__>`.
+  *Test:* `./ci.sh --version-lockstep` also fails when a file under
+  `packaging/` holds a version literal. In each container, `demoreel
+  --version` prints `demoreel <__version__>`, and the package manager reports
+  version `<__version__>-1`.
   *Breaks when:* a packaging file carries its own version and a bump misses it.
 
 - **INV-8** — Removing the package removes everything it installed.
@@ -248,8 +263,8 @@ output to paste.
 
 - **INV-10** — Trust boundary: only the `release` job can write to the
   repository, and it uploads only files that passed INV-1 to INV-9.
-  *Test:* `grep -n 'contents: write' .github/workflows/ci.yml` names one
-  line, inside the `release` job. The upload step runs after the
+  *Test:* `grep -rn 'contents: write' .github/workflows/` names one line,
+  inside `release.yml`'s `release` job. The upload step runs after the
   `./ci.sh --packages --out` step and only if it succeeded.
   *Breaks when:* `contents: write` moves to the workflow level or another
   job, or the upload runs on failure.
@@ -263,9 +278,9 @@ output to paste.
   incompatibility, which is the point. A floating tag is chosen over a pinned
   one for that reason.
 - **No network, or a mirror is down.** The install fails and the step fails.
-  It is not skipped: a skipped package test is not a pass. Locally, without
-  `podman`, the step is skipped and the gate's last line says so, as the
-  parity leg does.
+  It is not skipped: a skipped package test is not a pass. Without `podman`,
+  the full gate skips the step and its last line says so, as the parity leg
+  does; a direct `./ci.sh --packages` fails.
 - **The GitHub runner lacks `podman`.** The `packages` and `release` jobs
   install it first. Whether the runner image already carries it is
   unverified.
@@ -291,7 +306,7 @@ All in `ci.sh`, in the `--packages` step, run inside each container of
   every container.
 - INV-9 — the `release` job, which runs `--packages --out`. The gate runs the
   same `makepkg --verifysource` against a locally made tarball.
-- INV-10 — a `ci.sh` grep of the workflow file, in the full gate.
+- INV-10 — a `ci.sh` grep of the workflow files, in the full gate.
 
 Each check must be seen failing once against a deliberately broken package
 before it is trusted: a copy instead of the symlink (INV-2), a mangled

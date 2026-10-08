@@ -3829,6 +3829,14 @@ system looks for them.
   must say what a stranger on openSUSE does for --gpu. This machine
   runs wf-recorder master c5de474 plus upstream PR #352 (ffmpeg 9
   port), built into ~/.local.
+  Progress (2026-10-08): spec drafted at
+  docs/specs/DEMO-0068-linux-packages.md (covers DEMO-0069 and
+  DEMO-0070 too). Two more user decisions the same day: openSUSE
+  record --gpu records losslessly then converts (filed as DEMO-0174);
+  release files are built by a GitHub job when a release is published.
+  review-contract loop 1 is done (5 verified, 5 fixed); loop 2, the
+  cap for a spec, is owed before anything is built. Then set Status to
+  accepted.
   **Layman:** Install demoreel on openSUSE with zypper, dependencies included.
   Kind: package.
   Source: user-request-2026-09-25.
