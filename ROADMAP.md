@@ -261,6 +261,38 @@ simplest case, and a gate proves it still records.
   Kind: fix.
   Source: in-session-2026-10-08.
 
+- 📋 [DEMO-0172] **Check every draft translation with Gemini in Chrome and fix what it finds.**
+  User 2026-10-08: use Gemini in Chrome through the Claude extension,
+  as the Groundwork project did; its method was asked for the same day.
+  Decided by the user the same day: corrections go into po/*.po and
+  every catalog stays `draft`. Only a native speaker makes one
+  `confirmed` (docs/specs/DEMO-0060 § 4.9; DEMO-0096 stays open).
+  Order: after the 0.5.0 packaging design (DEMO-0068).
+  Each fix keeps placeholders and code tokens as the English has them;
+  the gate's placeholder and code-token checks refuse anything else.
+  Method, from Groundwork (2026-10-08), which ran it on its own
+  catalogs. One prompt per language, the whole catalog, no chunks.
+  Each line is "code | English | draft"; plural forms get their own
+  labelled lines. The prompt sets per-language rules (register,
+  punctuation) plus shared ones: keep {placeholders} and code tokens
+  exactly. It asks for ONLY the changed lines, as "code: new text".
+  A local apply step writes nothing if any line changes its
+  placeholders, fails to parse, or names an unknown code. For
+  right-to-left languages it restores the direction marks Gemini
+  drops. Then the full gate, and one commit per language.
+  Chrome: clipboard paste failed. Put the prompt in a JS variable,
+  compare its SHA-256 with the file's, insert it with
+  document.execCommand('insertText') and press Return. Choose
+  "3.1 Pro" (Flash-Lite barely checks). Wait outside the page, since
+  page-JS waits over about 30 s time out. Read the last
+  model-response. Reject a reply showing "Another model was used for
+  this response", an empty one, or "Sorry, something went wrong".
+  Two failures stop the day. Groundwork's apply script reads Qt .ts
+  files, so demoreel needs its own for gettext .po.
+  **Layman:** A second AI reads each language's messages and points out mistakes, so the drafts are better while they wait for native speakers.
+  Kind: ux.
+  Source: user-request-2026-10-08.
+
 ## Standing chores
 
 Recurring work with no finished state. It is checked on a schedule and never
