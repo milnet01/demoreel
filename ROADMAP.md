@@ -289,6 +289,26 @@ simplest case, and a gate proves it still records.
   this response", an empty one, or "Sorry, something went wrong".
   Two failures stop the day. Groundwork's apply script reads Qt .ts
   files, so demoreel needs its own for gettext .po.
+  Progress (2026-10-10): tooling ready, nothing sent yet. Scratch
+  tool /mnt/Emulators/claude-scratch/demoreel-gemini/pogem.py (outside
+  the repo): `parts CODE` writes CODE.partN prompts beside it;
+  `apply CODE REPLYFILE` writes nothing unless every line passes
+  demoreel's own read_po, _usable and CODE_TOKEN_RE, keeps each
+  message's edge spaces, and reads the file back. Tested 2026-10-10: a
+  dropped placeholder, an unknown code and an unparseable line each
+  wrote nothing; a valid plural change passed the gate's reads,
+  complete and placeholders checks.
+  Method changes found 2026-10-10. The model menu no longer offers
+  "3.1 Pro": it is Auto plus Low, Medium or High; High ("extra
+  thorough") was chosen. The box keeps only about 31,800 characters, so
+  a whole catalog (about 46,000) is cut off silently; send each part in
+  its own new chat. Clipboard paste and a localhost fetch both failed,
+  and a local web server was refused by the session's safety check.
+  What works: put the part's text into a page variable through the
+  JavaScript tool, compare its SHA-256 with the file's
+  (sha256sum CODE.partN), then document.execCommand('insertText') into
+  `rich-textarea .ql-editor` and press Return. fr.part1 matched its hash
+  and was inserted, then cleared unsent.
   **Layman:** A second AI reads each language's messages and points out mistakes, so the drafts are better while they wait for native speakers.
   Kind: ux.
   Source: user-request-2026-10-08.
