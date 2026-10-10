@@ -4338,6 +4338,19 @@ before packaging. The full editor stays 2.0.0.
   Kind: marketing.
   Source: peer-website-session-2026-10-10.
 
+- 📋 [DEMO-0188] **Add a `drag X1 Y1 X2 Y2` step: press, move smoothly, release.**
+  album-builder, 2026-10-10: its signature actions are dragging songs into
+  order and dragging pane dividers, and the steps (wait, move, click, type,
+  key, hold) cannot drag. It filmed at 2560x1440 to show a column it could
+  not widen. Wanted: press at X1 Y1, move to X2 Y2 in small steps over
+  about 0.5 to 1 s so it reads smoothly with --cursor, release. One more
+  verb beside ACTION_EXAMPLES' others, run through xdotool like them; a
+  recording action, so it needs no scope lift (unlike the rest of 0.8.0).
+  The duration may be an optional fifth number.
+  **Layman:** A recording can show something being dragged, like a song moved into order or a pane widened.
+  Kind: feature.
+  Source: peer-album-builder-2026-10-10.
+
 ## 1.0.0 — Every documented path tested
 
 The exit condition in docs/standards/versioning-overrides.md: the gate
