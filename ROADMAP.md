@@ -320,6 +320,8 @@ simplest case, and a gate proves it still records.
   naming "Auth-Cookie" is blocked from the JavaScript tool's output, so
   read the reply with get_page_text. The full gate was red on --gpu for
   a system reason; DEMO-0176 fixes check so that step skips.
+  User decision (2026-10-10): finish German and Afrikaans, then stop.
+  The other 14 languages wait until after 1.0.0.
   **Layman:** A second AI reads each language's messages and points out mistakes, so the drafts are better while they wait for native speakers.
   Kind: ux.
   Source: user-request-2026-10-08.
@@ -4138,6 +4140,23 @@ Decided by the user on 2026-09-25: audio becomes an opt-in, and every run gets a
   would fit it. Rewrite both to allow an opt-in, keep the silent
   default, and gate each document (CLAUDE.md rule 14). Nothing below
   this item is built before it lands.
+  User decision (2026-10-10): sound joins 1.0.0, both the app's own
+  sound and a music track added to a film (DEMO-0177 filed). The work is
+  next, after the German and Afrikaans Gemini checks; it goes ahead of
+  the packaging work. The website session's DOOM Ants trailer waits on
+  it.
+  User, 2026-10-10: the "no sound" rule was never the intent. It came
+  from the first outline (commit 5b13983, 2026-08-07), and the user
+  likely accepted a recommendation without reading it. demoreel's
+  purpose is to record trailers and videos of the user's apps, and
+  some of those need their sound. Write the rewrite from that purpose:
+  sound belongs in the video when the app makes it. Do not frame it as
+  a reluctant opt-in. Correct docs/history/claude-md.md § Audio in the
+  same change.
+  User, 2026-10-10 (later): sound is the caller's choice for each film:
+  no sound, the app's own sound, a music track over it, or both. Only
+  what Claude Code needs to make app videos goes into 1.0.0; trailer
+  effects stay in 2.0.0.
   **Layman:** Change the rule book so recording sound is allowed, before any sound code is written.
   Kind: doc.
   Source: user-request-2026-09-25.
@@ -4165,6 +4184,98 @@ Decided by the user on 2026-09-25: audio becomes an opt-in, and every run gets a
   **Layman:** Optionally put the app's sound into the video, for trailers.
   Kind: feature.
   Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0177] **Add a music track to a finished film, mixed with the app's own sound when it has one.**
+  User, 2026-10-10, relayed by the website session and confirmed by
+  the user in this session: demoreel should be a one-stop shop, so
+  music needs no second tool. Record app sound only for apps that make
+  sound (DOOM Ants first); for the rest, sound is added afterwards.
+  Shape (an edit-script line, a flag on the shortcuts, volume, fade,
+  loop or cut to length) is decided in the design DEMO-0104 gates.
+  Depends on DEMO-0104 landing first.
+  Slipcase trailer's music, 2026-10-10: looped to the film's length,
+  fade in over 1.5 s, fade out over 3 s. A useful default shape.
+  User, 2026-10-10: music and app sound are independent choices; a film
+  may have either, both mixed, or neither.
+  **Layman:** Put music under a trailer without needing a second program.
+  Kind: feature.
+  Source: user-request-2026-10-10.
+
+## 0.8.0 — Trailers
+
+The effects a real trailer needed, from the website session's Slipcase trailer
+(2026-10-10). The user moved them into 1.0.0 the same day, after sound and
+before packaging. The full editor stays 2.0.0.
+
+- 📋 [DEMO-0182] **Lift the editing limits trailers need from the scope ceiling in CLAUDE.md and README, through the review gate.**
+  README § What it will never do rules out transitions other than a
+  fade, zoom, moving text, speed changes and two pictures on screen.
+  Lift exactly what this release builds, and leave the rest for
+  DEMO-0141 (2.0.0). Gate both documents (CLAUDE.md rule 14). Nothing
+  else in this section is built before it lands.
+  **Layman:** Change the rule book so trailer effects are allowed, before any of them is built.
+  Kind: doc.
+  Source: user-request-2026-10-10.
+
+- 📋 [DEMO-0183] **Show a clip in a smaller window with rounded corners and a soft shadow, over a background.**
+  Slipcase trailer: a rounded-corner mask with alphamerge and a soft
+  drop shadow. The trailer-sized part of DEMO-0149, which stays in
+  2.0.0 for general layers and opacity.
+  **Layman:** The app appears as a neat floating window in the trailer instead of filling the whole frame.
+  Kind: feature.
+  Source: peer-website-session-2026-10-10.
+
+- 📋 [DEMO-0184] **Push in slowly on a scene, or zoom smoothly towards a point between two times.**
+  Slipcase trailer: scale with eval=frame for the push-in; zoompan
+  after a 2x upscale, so it does not jitter, with smoothstep easing.
+  The trailer-sized part of DEMO-0151; crop and rotate stay in 2.0.0.
+  **Layman:** The camera can drift closer, or glide in on the part of the app that matters.
+  Kind: feature.
+  Source: peer-website-session-2026-10-10.
+
+- 📋 [DEMO-0185] **Reveal a logo: the picture grows slightly and fades in as it appears.**
+  Slipcase trailer: an SVG drawn with rsvg-convert, scaled from 0.82 to
+  1.0 with ease-out while fading in. The trailer-sized part of
+  DEMO-0154; general keyframes stay in 2.0.0. An end card is this plus
+  DEMO-0153's lines, all supplied by the caller.
+  **Layman:** A trailer can open or close on the app's logo arriving smoothly.
+  Kind: feature.
+  Source: peer-website-session-2026-10-10.
+
+- 📋 [DEMO-0150] **Add transitions beyond a fade: dissolves, wipes and slides.**
+  Wanted by a real trailer (website session, Slipcase, 2026-10-10):
+  xfade slideleft, slideup, wipeleft, circleopen, smoothleft, zoomin and
+  fadeblack, one per join. Builder for reference:
+  /mnt/Games/Trailers/tools/trailer.py (scratch, outside any repo).
+  **Layman:** Choose how one scene changes into the next.
+  Kind: feature.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0152] **Change a clip's speed: slow motion, speed-up and freeze frame.**
+  Wanted by the Slipcase trailer (2026-10-10): speed a clip up (setpts)
+  and hold its last frame to fill the scene (tpad stop_mode=clone).
+  **Layman:** Make part of a video play slower or faster, or hold one moment still.
+  Kind: feature.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0153] **Titles and text that move, with more than one line and a choice of style.**
+  Wanted by the Slipcase trailer (2026-10-10): lines that slide up and
+  fade in with ease-out, staggered line by line, several per card, each
+  with its own colour, size and font. An end card is this plus a logo:
+  the caller supplies its lines (links and so on), demoreel holds no
+  per-app content.
+  **Layman:** Add headings and captions that slide in, in the font, size and colour you pick.
+  Kind: feature.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0178] **A moving background behind a scene: a slow gradient in chosen colours, darkened, with a vignette.**
+  From the Slipcase trailer (website session, 2026-10-10): ffmpeg's
+  gradients source in the site's colours, darkened with
+  colorchannelmixer, plus vignette, with the app's window (DEMO-0149)
+  over it. The colours are the caller's, never per-app knowledge.
+  **Layman:** A gently moving coloured backdrop for a trailer, instead of plain black.
+  Kind: feature.
+  Source: peer-website-session-2026-10-10.
 
 ## 1.0.0 — Every documented path tested
 
@@ -4322,6 +4433,11 @@ guess, for the spec to settle.
   layers, transitions other than a fade, zoom, moving text, speed changes
   and automatic removal. Each line lifted is a change of direction, so the
   gate runs on both files first. Recording stays on a private display.
+  User, 2026-10-10: 2.0.0 also lifts "no plugins" from the scope ceiling
+  (DEMO-0179), and the editor must be fully usable by Claude Code
+  (DEMO-0181).
+  DEMO-0182 (0.8.0) lifts the limits trailers need first; this item
+  lifts the rest.
   **Layman:** Change the rules that say demoreel will never be a real editor, and have that change checked before anything is built.
   Kind: doc.
   Source: user-request-2026-10-02.
@@ -4374,31 +4490,31 @@ guess, for the spec to settle.
   Source: user-request-2026-10-02.
 
 - 📋 [DEMO-0149] **Layer video: picture-in-picture, overlays and opacity.**
+  Wanted by the Slipcase trailer (2026-10-10): the clip in a smaller
+  window with rounded corners (mask plus alphamerge) and a soft drop
+  shadow, over a background.
+  User, 2026-10-10: the trailer's rounded window and shadow moved to
+  0.8.0 as DEMO-0183; general layers stay here.
   **Layman:** Put one video or picture on top of another, such as a small window in the corner.
   Kind: feature.
   Source: user-request-2026-10-02.
 
-- 📋 [DEMO-0150] **Add transitions beyond a fade: dissolves, wipes and slides.**
-  **Layman:** Choose how one scene changes into the next.
-  Kind: feature.
-  Source: user-request-2026-10-02.
-
 - 📋 [DEMO-0151] **Zoom, pan, crop and rotate a clip.**
+  Wanted by the Slipcase trailer (2026-10-10): a slow push-in on the
+  whole window (scale with eval=frame), and a smooth zoom towards a
+  point between two times (zoompan after a 2x upscale so it does not
+  jitter, smoothstep easing).
+  User, 2026-10-10: push-in and zoom-to-a-point moved to 0.8.0 as
+  DEMO-0184; crop and rotate stay here.
   **Layman:** Move in close on part of the picture, follow it across the screen, or cut off the edges.
   Kind: feature.
   Source: user-request-2026-10-02.
 
-- 📋 [DEMO-0152] **Change a clip's speed: slow motion, speed-up and freeze frame.**
-  **Layman:** Make part of a video play slower or faster, or hold one moment still.
-  Kind: feature.
-  Source: user-request-2026-10-02.
-
-- 📋 [DEMO-0153] **Titles and text that move, with more than one line and a choice of style.**
-  **Layman:** Add headings and captions that slide in, in the font, size and colour you pick.
-  Kind: feature.
-  Source: user-request-2026-10-02.
-
 - 📋 [DEMO-0154] **Animate any setting over time with keyframes.**
+  Wanted by the Slipcase trailer (2026-10-10): a logo reveal, the
+  picture scaled from 0.82 to 1.0 with ease-out while it fades in.
+  User, 2026-10-10: the logo reveal moved to 0.8.0 as DEMO-0185; general
+  keyframes stay here.
   **Layman:** Make a zoom, a position or a fade change smoothly from one moment to another.
   Kind: feature.
   Source: user-request-2026-10-02.
@@ -4450,3 +4566,31 @@ guess, for the spec to settle.
   **Layman:** Someone new tries the editor while we watch, and everything they get stuck on is fixed.
   Kind: ux.
   Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0179] **A plug-in system, so new effects and steps can be added to the editor without changing demoreel itself.**
+  User, 2026-10-10: plug-ins for video editing, some written by us.
+  The point is that updating a plug-in does not mean updating the
+  whole app. Needs "no plugins" lifted first (DEMO-0141). The editor
+  spec (DEMO-0142) decides what a plug-in may do and how it is
+  found, versioned and trusted.
+  **Layman:** Anyone, us included, can write an add-on that gives the editor a new effect.
+  Kind: feature.
+  Source: user-request-2026-10-10.
+
+- 📋 [DEMO-0180] **Ship the features that suit it as plug-ins, so each can be updated on its own.**
+  User, 2026-10-10. Candidates are self-contained effects such as
+  transitions (DEMO-0150) and moving backgrounds (DEMO-0178); the
+  editor spec (DEMO-0142) picks which. Depends on the plug-in system
+  (DEMO-0179).
+  **Layman:** Parts of the editor update separately, so a fix to one effect does not need a new release of everything.
+  Kind: refactor.
+  Source: user-request-2026-10-10.
+
+- 📋 [DEMO-0181] **Make every editor feature usable by Claude Code, from the command line or a script, not only through the window.**
+  User, 2026-10-10: "I would like Claude Code to be able to fully
+  use" the 2.0.0 editor. Every edit the GUI can make is reachable
+  non-interactively, plug-ins included. A design rule for the editor
+  spec (DEMO-0142), and a check in the gate.
+  **Layman:** Claude Code can make any edit a person can, so videos can be produced without anyone clicking.
+  Kind: feature.
+  Source: user-request-2026-10-10.
