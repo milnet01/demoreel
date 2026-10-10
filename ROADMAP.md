@@ -4167,6 +4167,14 @@ Decided by the user on 2026-09-25: audio becomes an opt-in, and every run gets a
   output instead, reachable only by that run's app, and discarded by
   default. Must stay concurrency-safe and be cleaned up on every exit
   path, like the private screen. Measure PipeWire and PulseAudio both.
+  User, 2026-10-10: app sound should never reach the speakers if it can
+  be avoided; where a private output cannot be made, normal sound is
+  acceptable. Probe the same day: a null sink loaded with pactl, a tone
+  played into it with PULSE_SINK, and its monitor recorded with ffmpeg
+  -f pulse (max -18.1 dB); nothing reached the speakers and the sink was
+  gone after unload-module. PulseAudio 15.0.0 on PipeWire 1.6.9 here.
+  Specified with DEMO-0106 in one design:
+  docs/specs/DEMO-0106-app-sound.md.
   **Layman:** An app being recorded can never play sound through your speakers, without any setting.
   Kind: feature.
   Source: user-request-2026-09-25.
@@ -4181,6 +4189,21 @@ Decided by the user on 2026-09-25: audio becomes an opt-in, and every run gets a
   the plainest case of a relevant video, so the record-demo skill and
   README's guidance name games first. Test with one: a tone-only
   fixture proves the track, a real game proves it is worth having.
+  User, 2026-10-10: app sound is off unless --audio is given.
+  Probes 2026-10-10 (scratch /mnt/Emulators/claude-scratch/demoreel-sound).
+  Routing: PULSE_SINK alone misses ALSA clients (aplay went to the
+  speakers); PIPEWIRE_NODE catches ALSA and pw-play; set both. Flatpak
+  passes both variables into the sandbox (GIMP --command=sh).
+  Names: pactl accepts two null sinks with the same name, so the name
+  must be unique and checked. A loader killed with SIGKILL leaves its
+  module loaded, so a sweep is needed.
+  Sync: one ffmpeg reading x11grab plus pulse put the sound about
+  0.52 s early. Its log gives each input's wallclock "start:" (gap
+  0.515 s here). A stream-copy remux with -itsoffset of that gap on
+  the audio brought a screen flash and a beep to 14 ms apart (flash
+  1.933 s, beep 1.919 s). -use_wallclock_as_timestamps with -copyts did
+  not fix it. Never launch a probe app without WAYLAND_DISPLAY set to
+  an unresolvable name: one opened on the real desktop.
   **Layman:** Optionally put the app's sound into the video, for trailers.
   Kind: feature.
   Source: user-request-2026-09-25.
@@ -4197,6 +4220,10 @@ Decided by the user on 2026-09-25: audio becomes an opt-in, and every run gets a
   fade in over 1.5 s, fade out over 3 s. A useful default shape.
   User, 2026-10-10: music and app sound are independent choices; a film
   may have either, both mixed, or neither.
+  User, 2026-10-10: music by a `music FILE` line in an edit script and a
+  --music option on join, trim, caption and card. It repeats to fill the
+  film, fades in and out, sits quieter under app sound, and volume and
+  fades can be changed.
   **Layman:** Put music under a trailer without needing a second program.
   Kind: feature.
   Source: user-request-2026-10-10.
