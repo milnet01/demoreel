@@ -63,7 +63,7 @@ msgid ""
 "  Remove it, or point XDG_RUNTIME_DIR at a directory you own."
 msgstr ""
 "{path} n'est pas un dossier qui vous appartient : demoreel ne l'utilisera donc pas.\n"
-"  Sur une machine partagée, un autre utilisateur peut créer ce nom avant vous.\n"
+"  Sur une machine partagée, un autre utilisateur peut créer un dossier de ce nom avant vous.\n"
 "  Supprimez-le, ou faites pointer XDG_RUNTIME_DIR vers un dossier qui vous appartient."
 
 msgid ""
@@ -121,7 +121,7 @@ msgid ""
 "  Record at the app's own size with -s {size}."
 msgstr ""
 "l'application a redimensionné sa fenêtre en {size} à {place} : elle ne remplit donc plus le cadre de {frame}, et une partie de la vidéo est rognée ou vide.\n"
-"  Enregistrez à la taille propre de l'application avec -s {size}."
+"  Enregistrez à la taille d'origine de l'application avec -s {size}."
 
 msgid ""
 "the app resized its window {seconds}s into the video, and demoreel put it back to fill the {frame} frame.\n"
@@ -429,7 +429,7 @@ msgid "this ffmpeg has no libx264, which every recording uses."
 msgstr "ce ffmpeg n'a pas libx264, qu'utilise chaque enregistrement."
 
 msgid "wf-recorder loads {library}, which has no libx264, so it cannot write the video."
-msgstr "wf-recorder charge {library}, qui n'a pas libx264, il ne peut donc pas écrire la vidéo."
+msgstr "wf-recorder charge {library}, qui n'a pas libx264 : il ne peut donc pas écrire la vidéo."
 
 msgid "no graphics render node in /dev/dri, so there is no GPU for it to use."
 msgstr "aucun nœud de rendu graphique dans /dev/dri : il n'y a donc pas de GPU à utiliser."
@@ -682,7 +682,7 @@ msgid "could not read the script {path}: {reason}."
 msgstr "impossible de lire le script {path} : {reason}."
 
 msgid "trim needs something to do: --from, --to, or a fade."
-msgstr "trim a besoin de quelque chose à faire : --from, --to, ou un fondu."
+msgstr "trim a besoin d'un paramètre : --from, --to ou un fondu."
 
 msgid "join takes two or more videos; one on its own is already whole."
 msgstr "join prend au moins deux vidéos ; une seule est déjà complète."
@@ -883,7 +883,7 @@ msgstr "fichier vidéo à écrire, se terminant par .mp4"
 
 #. argparse formats this text with %
 msgid "start black; the picture arrives over SECONDS"
-msgstr "commencer au noir ; l'image apparaît en SECONDS"
+msgstr "commencer par du noir ; l'image apparaît en SECONDS"
 
 #. argparse formats this text with %
 msgid "go to black over the last SECONDS"

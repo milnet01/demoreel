@@ -12,6 +12,12 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+### Changed
+
+- **Five French messages read more naturally** (DEMO-0172)
+  Checked with a second AI. The French catalog is still a draft until
+  a native speaker confirms it.
+
 ### Fixed
 
 - **`demoreel check` reports --gpu not ready when wf-recorder cannot start** (DEMO-0176)
