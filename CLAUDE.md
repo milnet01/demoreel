@@ -15,8 +15,8 @@ bold font for text.
 `ROADMAP.md` is generated from the roadmap store. Do not hand-edit it — use the
 roadmap verbs, or the next write reverts your edit.
 
-There is no spec and none is wanted; `README.md` is the design contract. The
-sections below are the parts a session is most likely to break by accident.
+`README.md` is the design contract; `docs/specs/` holds the specs written
+beside it. The sections below are the parts a session is most likely to break by accident.
 
 Verify a change by running `./ci.sh`. Among its steps: the linter, a parse, a
 check that every flag `README.md` documents is one the tool accepts, and a
@@ -266,153 +266,21 @@ README rules out.
 
 ## The `--gpu` backend
 
-demoreel starts a headless `cage` compositor (`WLR_BACKENDS=headless`, and no
-other `WLR_` setting: the pointer measurements below were taken so) and a
-full-screen, rootful `Xwayland` on it, which reaches the GPU where `Xvfb`
-cannot. It records the compositor's output with `wf-recorder`, not the X side
-with `x11grab`. Under a busy 3D app the X side's copy of the picture goes stale:
-`x11grab` got 156 new frames of 588 where `wf-recorder` got 643 of 643, over
-the same run (DEMO-0109). All four programs are installed. The details below
-are load-bearing and none is obvious:
-
-- **The order is fixed: `cage`, then resize, then `Xwayland`, then the app.**
-  `cage`'s headless output is always 1280x720 at start. `wlr-randr --output
-  HEADLESS-1 --custom-mode WxH` resizes it, but an `Xwayland` already running
-  keeps its first size. So `cage`'s one child is a step that resizes the
-  output, then `exec`s `Xwayland -displayfd N -auth F -geometry WxH -fullscreen
-  -noreset -nolisten tcp`, with `F` an empty file at that point. The app
-  starts afterwards, as on the `Xvfb` path, so pointer parking happens before
-  the app exists. `-noreset` is what keeps it parked, as on `Xvfb` (DEMO-0103):
-  without it the server resets when the parking `xdotool` leaves. Do not go
-  back to `xwfb-run`: it starts `cage` and `Xwayland` as one step, with no
-  place for the resize.
-- **The app still has to be pushed to X11 inside the compositor.** `cage`
-  speaks Wayland, so an app left to choose renders natively on it. The recorder
-  would see that window, but finding the window, sizing it, the scripted steps
-  and the blank check all work through X. `vkcube` picks `wayland` there unless
-  told otherwise. The app gets the same unresolvable `WAYLAND_DISPLAY` as on
-  the `Xvfb` path.
-- **`wf-recorder` needs `-D`, `-y`, `-r`, `-c libx264` and `-x yuv420p`.**
-  Without `-D` it asks for a frame only when the screen changes, and ignores
-  `SIGINT` while the screen is still. Without `-y` it asks before overwriting,
-  which is a prompt. It reaches `cage` through the socket name read back, never
-  the session's `WAYLAND_DISPLAY`. The finished file must match the `Xvfb`
-  path's: H.264, `yuv420p`, `+faststart`. `wf-recorder` has no muxer-flag
-  option, so if its file lacks faststart, a stream-copy remux adds it.
-- **The countdown starts when `wf-recorder` is capturing, never after a
-  guessed delay** (DEMO-0012). It prints no progress reports like `ffmpeg`'s,
-  so the signal is its own start-up output. Which line proves capture has
-  begun is for the build to confirm against the video's first frame.
-- **`record --gpu` refuses `--cursor`.** `wf-recorder` has no pointer option,
-  and with the pointer moved over the app none of a recording's 39 frames
-  showed it.
-- **Only the recording moves to the compositor.** `--settle`, the blank check
-  and `demoreel shot` still read the X side with `x11grab`. A stale-by-a-moment
-  picture answers "is anything drawn?" correctly, and one still frame shows no
-  stutter. So `shot --gpu --cursor` still draws the pointer: `x11grab` draws it
-  on this X screen (measured).
-- **DEMO-0109's stutter note stays, but its explanation must change.** Its
-  current text says `--gpu` captures a busy app only a few times a second,
-  which is the defect this backend removes. `ci.sh` detects the note by the
-  words `frames in the middle`: keep them, or change its grep in the same
-  commit.
-- **The blank check reads the X side, and the video no longer comes from
-  there.** So `record --gpu` also checks the finished file with
-  `frame_is_flat`: one frame for each display sample the run actually took,
-  from the same moment, so the app-has-exited and `-d 0` skips carry over. A
-  flat one fails the run like a blank display. Without
-  it, a recorder writing black while the X side is drawn passes every check.
-- **Both displays are behind an auth cookie, so the X-side readers take the
-  run's `env` rather than inheriting the session's** — otherwise they fail with
-  `Cannot open display`, or silently sample an empty frame. Without a cookie a
-  client with no credential can read the display, and socket permissions are no
-  substitute, because `Xvfb` also listens on an abstract socket. The cookie is
-  installed after `-displayfd` reports the number, since the cookie is keyed to
-  it: start with an empty auth file, then write the cookie. `Xvfb` is then sent
-  `SIGHUP` to re-read; do not "simplify" that ordering away. `Xwayland` re-reads
-  the changed file with no signal (measured: a client with no credential got in
-  before the cookie and was refused after). So on both backends the lock is
-  proven in force by a client *without* the cookie being refused while one with
-  it connects (`wait_until_locked`). A client holding the cookie gets in before
-  the lock as well as after, so it alone proves nothing (DEMO-0113); a dead
-  display refuses both, so the refusal alone proves nothing either.
-
-`weston` is also installed, from testing this. Its headless backend falls back
-to software rendering here (`Failed to initialize glamor`,
-`amdgpu_query_info(ACCEL_WORKING) failed`), so it is not an alternative to
-`cage` — it can be removed if it is not wanted for anything else.
+Moved to `.claude/rules/gpu-backend.md`, which loads when a session reads
+`demoreel` or `ci.sh`. Read it before changing the `--gpu` path.
 
 ## The finishing commands
 
-`README.md` § Finishing a recording is their contract. One renderer,
-`make_film`, turns a list of scenes into one ffmpeg run; `edit` reads the
-scenes from a script and each shortcut builds them from its options. Add a
-behaviour to the renderer, never to one shortcut, or the two ways of asking
-stop agreeing.
-
-- **Every stream in the filter graph must end.** An input that never ends is
-  buffered without limit by whatever is waiting for it. An animated `.png` read
-  with `-ignore_loop 0`, sitting behind another scene in a `concat`, took
-  ffmpeg to 14 GB in six minutes on this machine (2026-09-30). So each scene is
-  cut with `trim=end_frame`, a card's picture is read once and repeated by the
-  `loop` filter, which makes a frame only when one is wanted, the output has
-  its own `-t`, and `memory_cap` limits that ffmpeg's memory. Never loop a
-  picture at the demuxer (`-ignore_loop 0`, `-loop 1`, `-stream_loop`), and do
-  not remove any of them: each covers a mistake in the others.
-- **Try a new graph under a memory limit first.** `( ulimit -v 6000000;
-  timeout 40 ./demoreel edit ... )` fails a runaway in seconds with "Cannot
-  allocate memory". Other sessions share this machine's memory.
-- **`concat` hands on a microsecond timebase, and `xfade` refuses inputs whose
-  timebases differ.** The `fps` after each `concat` puts the film's back. A
-  film with a cut followed by a crossfade fails to start without it.
-- **A cut is snapped to the clip's own frames.** The frame on screen at `to`
-  is kept, which is what lets `motion`'s `last change` be used as a `to`. The
-  seek starts half a frame early and the read ends half a frame late, so
-  neither edge turns on how a float rounds. Do not replace that with `-ss` and
-  `-t` at the times as given: the last frame is then kept or lost by rounding.
-- **A time picks the frame on screen then, with a little slack, in one place.**
-  `frame_at` serves a clip's `from` and `to` and `poster -t`. `motion` prints
-  three decimals, so a frame starting at 1.33333 comes back as 1.333; without
-  `TIME_SLACK` a cut there lost frame 40 of a 30-a-second clip (DEMO-0137).
-  Do not go back to a bare `floor` or `ceil`, and do not snap in a second
-  place.
-- **A text shows up to its `to` and not on it**, so captions can sit back to
-  back. A clip's `to` is inclusive and a text's is not; both are in README.
-- **The bold font is passed as a file.** drawtext's `font` option takes a
-  fontconfig pattern and ignores the weight in it: `Sans:bold` drew the regular
-  face, measured by width. `text_font` asks `fc-match` for the file.
-- **`fc-match` never says no, so a named font is checked by family.** Asked
-  for a font the machine lacks it answers with another: `Noto Sans Mono` came
-  back as Liberation Mono. `text_font` compares the family it answers with the
-  one asked for and refuses a different one. Do not drop that comparison. A
-  hyphen in a family's name is escaped first: unescaped, fontconfig reads it
-  as the start of a size.
-- **A text's band is the text's own box, and that is how it fades.**
-  `drawbox` cannot change with time; drawtext's `boxw` box follows the text's
-  `alpha`, as do its outline and shadow (measured on ffmpeg 6.1.1 and 8.1.2).
-  An ffmpeg without `boxw` gets `drawbox`, and a fading band is refused there.
-  No ffmpeg older than 6.1.1 has been measured.
-- **Text is measured by drawing it.** `text_size` draws the line on a black
-  strip and reads ffmpeg's `bbox`. The refusal of a too-wide line rests on it,
-  and so does `demoreel check`'s text line.
-- **"The picture changed" is one test, `NEW_FRAME` (640), for `motion` and
-  the `--gpu` note.** Below 640 x264's sharpening after a change counts as new
-  frames, so a stuttering video reports as smooth: on real `--gpu` recordings
-  256 scored 39% new frames as 73%, and the note stayed silent (DEMO-0134). At
-  640 a faint drifting gradient scores low, so the note can fire on a smooth
-  video. That is the accepted side: the note never fails a run. So `ci.sh`'s
-  stutter fixtures are `testsrc2`, whose movement has edges; `testsrc` moves a
-  gradient and scores 39%. Do not lower the threshold for the note alone, and
-  do not go back to `testsrc`. The measurements are beside the constant.
-- **The film is written beside `-o` and moved into place when whole**, which
-  is what makes "a failure leaves nothing at `-o`" true. Do not write to `-o`
-  directly.
+Moved to `.claude/rules/finishing-commands.md`, which loads when a session
+reads `demoreel` or `ci.sh`. Read it before changing `edit`, its shortcuts,
+`motion` or `poster`.
 
 ## Wayland-only apps: the limit of this design
 
 An app that cannot speak X11 at all will not run on `Xvfb`, and
 `--nosocket=wayland` breaks it rather than redirecting it. `--gpu` does not
-help either — that backend pushes the app to X11 for the reason above. This is
+help either — that backend pushes the app to X11, for the reason
+`.claude/rules/gpu-backend.md` gives. This is
 a real limit of the approach, not a bug to fix in the code.
 
 If one turns up, the option is `wlheadless-run`, which runs a client against a

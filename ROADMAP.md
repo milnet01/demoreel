@@ -417,7 +417,7 @@ closes, so it sits outside every version heading.
   Kind: chore.
   Source: in-session-2026-10-07.
 
-- 📋 [DEMO-0173] **Trim what CLAUDE.md loads at every session start, and report the figure to claude-config.**
+- ✅ [DEMO-0173] **Trim what CLAUDE.md loads at every session start, and report the figure to claude-config.**
   Asked by claude-config 2026-10-08 (inbox msgs 474 and 499, read and
   acked). Keep what most sessions need in CLAUDE.md; move
   subsystem sections (the --gpu backend, the finishing commands) to
@@ -429,6 +429,13 @@ closes, so it sits outside every version heading.
   Measure `claude -p "/context"` "Memory files" before and after, and
   send claude-config that one line. demoreel told claude-config it
   comes after 0.4.0; the user ordered it after the DEMO-0068 design.
+  Done (2026-10-10). The --gpu backend and finishing-command sections
+  moved word for word to .claude/rules/gpu-backend.md and
+  .claude/rules/finishing-commands.md (paths: demoreel, ci.sh), with a
+  pointer under each heading; the false "no spec and none is wanted"
+  line now names docs/specs/. claude -p "/context", Memory files:
+  19.7k before, 16.2k after; this CLAUDE.md 9.9k to 6.4k. Sent to
+  claude-config.
   **Layman:** Make each new session start lighter by moving rarely-needed notes out of the always-loaded instructions.
   Kind: chore.
   Source: claude-config-request-2026-10-08.
