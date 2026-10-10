@@ -309,6 +309,17 @@ simplest case, and a gate proves it still records.
   (sha256sum CODE.partN), then document.execCommand('insertText') into
   `rich-textarea .ql-editor` and press Return. fr.part1 matched its hash
   and was inserted, then cleared unsent.
+  Progress (2026-10-10, later): fr done in po/fr.po, uncommitted until
+  the gate is green. Gemini proposed 8; applied 5 (13, 28, 96 reworded,
+  167, 219), rejected 14 and 15 ("celle-ci" points at the session, not
+  the recording) and 156 (join reads several inputs, so the plural
+  stays). de part 1 sent and read: nothing to apply (62, 63, 65 wrongly
+  lowercased a sentence start; 74 and 136 unchanged). de part 2 not sent.
+  New gotchas: a new chat resets the model to Low, so set High each time
+  (the menu shows Auto and High both checked; that is right). A reply
+  naming "Auth-Cookie" is blocked from the JavaScript tool's output, so
+  read the reply with get_page_text. The full gate was red on --gpu for
+  a system reason; DEMO-0176 fixes check so that step skips.
   **Layman:** A second AI reads each language's messages and points out mistakes, so the drafts are better while they wait for native speakers.
   Kind: ux.
   Source: user-request-2026-10-08.
@@ -328,6 +339,28 @@ simplest case, and a gate proves it still records.
   **Layman:** Make the small picture YouTube shows for a video, in the size and file limits YouTube asks for.
   Kind: feature.
   Source: user-request-2026-10-10.
+
+- ✅ [DEMO-0176] **`demoreel check` says --gpu is ready when wf-recorder cannot even start.**
+  Found 2026-10-10. A system update installed Packman's libavcodec63
+  (9.0.2-1699.3.pm.1). openSUSE's wf-recorder 0.6.0+git4-1.8 needs
+  symbol version LIBAVCODEC_63.1, which that build lacks, so
+  `wf-recorder --version` fails at load. `demoreel check` still
+  printed `--gpu: ready`: it reads wf-recorder's linked libavcodec for
+  libx264 (DEMO-0171) but never runs wf-recorder. So ci.sh's --gpu step
+  did not skip, and the full gate failed on `record --gpu` with
+  "wf-recorder could not start recording".
+  Fix: have check run wf-recorder once (e.g. --version) and report
+  --gpu NOT READY with its stderr when it fails. A new message needs
+  all 16 catalogs.
+  Shipped 2026-10-10: start_failure runs `wf-recorder --version`; a
+  failure adds the existing "could not start recording" and "It said"
+  messages, so no new translation. ci.sh step "check says --gpu is not
+  ready when wf-recorder cannot start" fakes the loader error on a test
+  PATH: red before the fix, green after. Full gate exit 0, Ubuntu step
+  included; --gpu step now skips here on its own rule.
+  **Layman:** The readiness check can say GPU recording works when the recorder program is broken, so the failure shows up only when you try to record.
+  Kind: fix.
+  Source: in-session-2026-10-10.
 
 ## Standing chores
 

@@ -3422,6 +3422,27 @@ if demoreel.linked_library("python3", "libavcodec.so") is not None:
 print(f"{library}: libx264 yes, a made-up encoder no; python3 has none")
 ENCPY
 
+step "check says --gpu is not ready when wf-recorder cannot start"
+# DEMO-0176. A libavcodec from another repository left wf-recorder unable to
+# load, and check still said --gpu was ready: it read the library's encoders
+# but never ran the program. A wf-recorder that fails the same way, and stand-ins
+# for the rest of the backend, make the case the same on any machine.
+mkdir -p "$tmp/badwf"
+for t in ffmpeg ffprobe xdotool xauth Xvfb; do ln -s "$(command -v "$t")" "$tmp/badwf/$t"; done
+for t in cage Xwayland wlr-randr; do printf '#!/bin/sh\nexit 0\n' >"$tmp/badwf/$t"; done
+printf '#!/bin/sh\necho "wf-recorder: /lib64/libavcodec.so.63: version %s not found" >&2\nexit 127\n' \
+    "'LIBAVCODEC_63.1'" >"$tmp/badwf/wf-recorder"
+chmod +x "$tmp/badwf/"{cage,Xwayland,wlr-randr,wf-recorder}
+PATH="$tmp/badwf" "$py" ./demoreel check 2>"$tmp/check-badwf.err" || true
+grep -q -- '--gpu: NOT READY' "$tmp/check-badwf.err" \
+    && grep -q 'wf-recorder could not start recording' "$tmp/check-badwf.err" \
+    && grep -q 'LIBAVCODEC_63.1' "$tmp/check-badwf.err" || {
+    echo "check did not report a wf-recorder that cannot start:" >&2
+    cat "$tmp/check-badwf.err" >&2
+    exit 1
+}
+echo "check reports --gpu not ready, with wf-recorder's own error"
+
 step "a malformed step is refused before anything starts"
 # DEMO-0055. A step with a missing or wrong argument reached float() or args[1]
 # and ended the run with a Python traceback, mid-recording when it was a late

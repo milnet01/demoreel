@@ -12,6 +12,13 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`demoreel check` reports --gpu not ready when wf-recorder cannot start** (DEMO-0176)
+  It used to say ready when wf-recorder could not load its video
+  library, so the failure showed up only on the first `record --gpu`.
+  It now runs wf-recorder once and prints the program's own error.
+
 ## [0.4.0] - 2026-10-08
 
 **Theme:** Speaks your language.

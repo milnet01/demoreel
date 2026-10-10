@@ -1588,6 +1588,20 @@ def linked_library(program, stem):
     return found[1] if found else None
 
 
+def start_failure(program):
+    """What `program --version` printed if it failed, such as a library it
+    cannot load, or its exit status if it printed nothing; None if it ran or
+    if it cannot tell (DEMO-0176)."""
+    try:
+        done = subprocess.run([program, "--version"], capture_output=True, text=True,
+                              timeout=CALL_TIMEOUT, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if done.returncode == 0:
+        return None
+    return (done.stderr or done.stdout).strip() or f"exit {done.returncode}"
+
+
 def has_encoder(library, encoder):
     """Whether the libavcodec at `library` has `encoder`. wf-recorder loads
     libavcodec itself rather than running ffmpeg, so the ffmpeg program having
@@ -2196,6 +2210,11 @@ def cmd_check(a):
         if "ffmpeg" not in missing and not has_libx264():
             problems.append(tr("this ffmpeg has no libx264, which every recording "
                                "uses.") + x264_advice(distro_family()))
+        failure = (start_failure("wf-recorder")
+                   if gpu and "wf-recorder" not in missing else None)
+        if failure:
+            problems.append(tr("wf-recorder could not start recording.") + "\n  "
+                            + tr("It said: {text}", text=failure))
         library = (linked_library("wf-recorder", "libavcodec.so")
                    if gpu and "wf-recorder" not in missing else None)
         if library and not has_encoder(library, "libx264"):
