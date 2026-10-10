@@ -1,7 +1,7 @@
 <!-- ants-spec-format: 1 -->
 # DEMO-0106 — Record an app's own sound, and keep every app's sound off the speakers
 
-**Status:** spec draft (2026-10-10).
+**Status:** accepted (2026-10-10).
 **Kind:** feature.
 **Source:** ROADMAP DEMO-0106 (user-request-2026-09-25; decisions 2026-10-10).
 **Blocked by:** DEMO-0104 (the scope ceiling still says audio is out).
@@ -133,7 +133,10 @@ uses) prints each input's wallclock start:
 [info]   Duration: N/A, start: 1791639430.511217, bitrate: 1536 kb/s
 ```
 
-So an `--audio` run records into the part file `partial_video` names, and
+This section is the Xvfb path's. `wf-recorder` logs no start times, so
+`--gpu --audio` keeps `finish_gpu_video`'s plain copy until § 13 is settled.
+
+So an Xvfb `--audio` run records into the part file `partial_video` names, and
 finishing remuxes it with the sound shifted by the gap, the same shape as
 `finish_gpu_video`:
 
@@ -206,16 +209,16 @@ template.
 - **INV-3** — Two runs at once never share a sink, and neither records the
   other's sound.
   *Test:* ci.sh: two `--audio` runs started together, one playing a tone and
-  one silent; the silent run's track is at or below -60 dB. Isolates
-  uniqueness: two runs given one sink name both record the tone.
-  *Breaks when:* the sink name can repeat, or the exactly-one check after
-  loading is skipped.
+  one silent; the silent run's track is at or below -60 dB, and both exit 0.
+  Isolates uniqueness: with one constant name for every run, the second run
+  fails § 4.1's exactly-one check and exits non-zero.
+  *Breaks when:* the sink name can repeat.
 
 - **INV-4** — No run leaves its sink loaded: not on success, on a failed
   launch, on `demoreel stop`, on Ctrl+C, or on SIGTERM or SIGHUP. A sink
   left by a SIGKILLed run is unloaded by the next run or by `check`.
   *Test:* ci.sh: after each of those exits, and after a `shot`, `pactl list short sinks` lists
-  no sink starting `demoreel-<uid>-<pid>` for that run's pid; after a
+  no sink starting `demoreel-<uid>-<pid>-` for that run's pid; after a
   SIGKILL, it lists one until the next run, then none.
   *Breaks when:* the unload is missing from a `finally`, `launch`'s failure
   path, or the sweep.
@@ -229,8 +232,9 @@ template.
   *Breaks when:* the remux shift is missing, has the wrong sign, or reads the
   wrong input's `start:`.
 
-- **INV-6** — An `--audio` video has exactly one audio stream, AAC, 48000 Hz,
-  stereo, which ends within 0.1 s of the video stream's end.
+- **INV-6** — An `--audio` video recorded on Xvfb has exactly one audio
+  stream, AAC, 48000 Hz, stereo, which ends within 0.1 s of the video
+  stream's end. `--gpu` is outside it until § 13 is settled.
   *Test:* ci.sh: `ffprobe -show_entries stream=codec_type,codec_name,
   sample_rate,channels,start_time,duration` on the INV-2 recording, comparing
   `start_time + duration` per stream. Comparing durations alone passed the
@@ -275,8 +279,10 @@ README.
   goes there. INV-2's sink-input check fails in the gate; a real app doing it
   is outside demoreel's reach and README says so.
 - **The sound server restarts mid-run:** the sink and its monitor vanish,
-  ffmpeg's pulse input errors, and the recorder stops. The run fails as a
-  recorder that stopped early does today.
+  and ffmpeg keeps recording. Measured 2026-10-10: with the sink unloaded
+  two seconds into a 15 s run, ffmpeg exited 0 at 15 s with a full-length
+  sound track. The sound goes quiet from that moment, and the run cannot
+  tell.
 - **ffmpeg without the `pulse` device:** `prepare` refuses `--audio` and
   names the install command.
 - **A Flatpak without sound permission:** it makes no sound, the track is
@@ -286,7 +292,8 @@ README.
 
 ## 7. Tests
 
-All in `ci.sh`, in one step group after the smoke recording. They need a
+All in `ci.sh`. INV-1, INV-7 and INV-8's NOT READY half run everywhere.
+The rest are one step group after the smoke recording. They need a
 sound server; where `pactl info` fails, the group prints a skip line, as the
 `--gpu` steps do. On GitHub's runner the group therefore skips unless the
 workflow starts a sound server (§ 13).
@@ -341,7 +348,7 @@ failure.
 | INV-3 | ci.sh "two --audio runs never hear each other". Partial: same skip |
 | INV-4 | ci.sh "no run leaves a sound output behind". Partial: same skip |
 | INV-5 | ci.sh "--audio keeps sound and picture in step". Partial: same skip; Xvfb only |
-| INV-6 | ci.sh, inside INV-2's step. Partial: same skip |
+| INV-6 | ci.sh, inside INV-2's step. Partial: same skip; Xvfb only |
 | INV-7 | ci.sh "no sound server: record goes on, record --audio stops" |
 | INV-8 | ci.sh check step. Partial: the ready half skips without a sound server |
 | INV-9 | ci.sh INV-2's sink-input listing. Partial: same skip; nothing listens to the speakers |
@@ -378,6 +385,11 @@ Rows live in `../reviews/DEMO-0106-app-sound-loop-log.md`.
   starts. If it is out of step and `wf-recorder` logs no start
   times, the fallback is the Xvfb path's shape: record the monitor with
   ffmpeg beside it and shift by the two start times.
+- **`pactl`'s package on each distro.** `install_hint` leaves out any
+  program its family's `PACKAGES` table does not name, so `pactl` needs an
+  entry for every family before `--audio` ships. openSUSE's is
+  `pulseaudio-utils`, measured; the others are unverified here, and
+  DEMO-0068's container installs are where to verify them.
 - **CI coverage.** Most invariants skip on GitHub, which runs no sound
   server. Starting one in the workflow (`pipewire` and `pipewire-pulse`, or
   `pulseaudio --start`) would make them run there; whether it works in the
