@@ -630,7 +630,7 @@ msgid "{where}: its fades come to {fades} seconds, and the scene is only {second
 msgstr "{where}: ihre Blenden ergeben zusammen {fades} Sekunden, und die Szene ist nur {seconds} lang."
 
 msgid "{where}: its texts leave no room for the picture between them. Give them a smaller size."
-msgstr "{where}: ihre Texte lassen zwischen sich keinen Platz für das Bild. Geben Sie ihnen eine kleinere Größe."
+msgstr "{where}: ihre Texte lassen zwischen sich keinen Platz für das Bild. Wählen Sie eine kleinere Größe."
 
 msgid ""
 "a video's width and height must be even, since H.264 cannot encode an odd one, and this film would be {size}.\n"
@@ -682,7 +682,7 @@ msgid "could not read the script {path}: {reason}."
 msgstr "das Skript {path} konnte nicht gelesen werden: {reason}."
 
 msgid "trim needs something to do: --from, --to, or a fade."
-msgstr "trim braucht etwas zu tun: --from, --to oder eine Blende."
+msgstr "trim benötigt eine Aktion: --from, --to oder eine Blende."
 
 msgid "join takes two or more videos; one on its own is already whole."
 msgstr "join braucht zwei oder mehr Videos; eines allein ist schon vollständig."

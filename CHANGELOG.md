@@ -14,6 +14,11 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Changed
 
+- **German messages corrected after a second AI check** (DEMO-0172)
+  Two messages that copied English wording word for word now read as
+  normal German. The catalog stays a draft until a native speaker
+  confirms it.
+
 - **Five French messages read more naturally** (DEMO-0172)
   Checked with a second AI. The French catalog is still a draft until
   a native speaker confirms it.
