@@ -4175,6 +4175,8 @@ Decided by the user on 2026-09-25: audio becomes an opt-in, and every run gets a
   gone after unload-module. PulseAudio 15.0.0 on PipeWire 1.6.9 here.
   Specified with DEMO-0106 in one design:
   docs/specs/DEMO-0106-app-sound.md.
+  Built under docs/specs/DEMO-0106-app-sound.md (§ 4.1, § 4.2), accepted
+  2026-10-10.
   **Layman:** An app being recorded can never play sound through your speakers, without any setting.
   Kind: feature.
   Source: user-request-2026-09-25.
@@ -4204,6 +4206,8 @@ Decided by the user on 2026-09-25: audio becomes an opt-in, and every run gets a
   1.933 s, beep 1.919 s). -use_wallclock_as_timestamps with -copyts did
   not fix it. Never launch a probe app without WAYLAND_DISPLAY set to
   an unresolvable name: one opened on the real desktop.
+  Spec: docs/specs/DEMO-0106-app-sound.md
+  Accepted 2026-10-10 after two review-contract loops (16 verified, all fixed; capped, calm). Build order: DEMO-0104's document changes first, then this.
   **Layman:** Optionally put the app's sound into the video, for trailers.
   Kind: feature.
   Source: user-request-2026-09-25.
