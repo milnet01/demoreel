@@ -2822,6 +2822,10 @@ import json, os, subprocess, sys, time
 run, pidfile = int(sys.argv[1]), sys.argv[2]
 prefix = f"demoreel-{os.getuid()}-{run}-"
 ours, seen, wrong = None, set(), set()
+# A stream between connecting and being routed, or after it lets go, is
+# listed on PulseAudio's "no sink" index, PA_INVALID_INDEX. It plays nowhere,
+# so it is not a stream on another sink; counting it failed a push's gate.
+NO_SINK = 2**32 - 1
 
 def running(pid):
     try:
@@ -2850,7 +2854,7 @@ while running(run):
             except (ValueError, OSError):
                 continue
             seen.add(props.get("application.process.binary"))
-            if stream["sink"] != ours:
+            if stream["sink"] not in (ours, NO_SINK):
                 wrong.add((props.get("application.process.binary"), stream["sink"]))
     time.sleep(0.1)
 print(f"the app's streams came from {sorted(seen)}, on sink {ours}")
