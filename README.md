@@ -64,9 +64,9 @@ One `.mp4` file. Just the app, filling the frame. Or, with `demoreel shot`, one
 then be cut, joined to others and given a line of text — see
 [Finishing a recording](#finishing-a-recording).
 
-The video is **silent**. There is no sound and there never will be — see
-[What it will never do](#what-it-will-never-do). If you need a voiceover or
-music, that is a second step in something else.
+The video is **silent** for now. Recording an app's own sound, and adding
+music to a film, are planned; until then, sound is a second step in something
+else.
 
 ## Install
 
@@ -787,14 +787,7 @@ and a video editor.
 
 Permanently out of scope:
 
-- No audio, webcam or cursor highlighting.
-
-  **The file demoreel hands back is silent, and it will stay that way.** Worth
-  saying outright, because `-d 20` looks like it produces something you could
-  put straight on a website and it does not: a trailer with sound needs a second
-  step elsewhere. That is the accepted cost of the tool staying this size.
-  Capturing the app's own audio would mean a private sound channel per run, a
-  second recorder and a merge at the end — a coherent design, and still a no.
+- No webcam or cursor highlighting.
 
 - No editing beyond [Finishing a recording](#finishing-a-recording). demoreel
   may cut the ends off a video, measure it, take a frame from it, play scenes

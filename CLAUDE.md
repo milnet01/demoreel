@@ -102,7 +102,7 @@ Any change that breaks one of these is wrong, even if it makes the tool simpler:
 ## Scope ceiling
 
 The ceiling is what the tool *does*, not how long it is. Permanently out of
-scope: audio, webcam, cursor highlighting, a GUI, a daemon, a config file
+scope: webcam, cursor highlighting, a GUI, a daemon, a config file
 format, plugins, per-app profiles, and recording the real screen. Anything
 needing more than "record this app doing these few things, and make that
 recording fit to publish" wants OBS and a video editor instead.
@@ -119,10 +119,11 @@ demoreel and is read only when named.
 **Do not report or reason about the line count.** Judge a change by whether it
 earns its place against the list above, and say nothing about length.
 
-**Audio stays out**, and the consequence is stated in `README.md` rather than
-left implied: the file demoreel produces is silent, and a trailer with sound
-needs a second step elsewhere. The design that would have fitted is recorded
-there too, so it does not have to be re-derived to be re-declined.
+**Sound is in scope, and only ever by the caller's choice.** An app's own
+sound goes into a video only with `--audio`, and no recorded app's sound
+reaches the user's speakers: `docs/specs/DEMO-0106-app-sound.md` is the
+contract. Music added to a film is DEMO-0177. None of it is built yet, so
+today every file demoreel writes is silent.
 
 **There are two display backends and there is not a third.** `Xvfb` has no DRI,
 so a GPU app records black on it, and no flag changes that. That is what `--gpu`

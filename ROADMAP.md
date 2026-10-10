@@ -4134,7 +4134,7 @@ is a front-end to the same recording engine, not a second one.
 
 Decided by the user on 2026-09-25: audio becomes an opt-in, and every run gets a private silent sound output by default. The user then asked for sound in the videos where it is relevant, so this section is the next work after `demoreel shot` (DEMO-0100), ahead of its version number. Relevant means the app's sound is part of what the video shows: a game, a music or audio app. Everything else stays silent. The docs' "no audio, ever" is lifted through the review gate before anything is built.
 
-- 📋 [DEMO-0104] **Lift "no audio" from the scope ceiling in CLAUDE.md and README, through the review gate.**
+- ✅ [DEMO-0104] **Lift "no audio" from the scope ceiling in CLAUDE.md and README, through the review gate.**
   README's What it will never do and CLAUDE.md's scope ceiling both
   say audio is permanently out, and README records the design that
   would fit it. Rewrite both to allow an opt-in, keep the silent
@@ -4157,6 +4157,10 @@ Decided by the user on 2026-09-25: audio becomes an opt-in, and every run gets a
   no sound, the app's own sound, a music track over it, or both. Only
   what Claude Code needs to make app videos goes into 1.0.0; trailer
   effects stay in 2.0.0.
+  Shipped 2026-10-10: README § What you get and § What it will never do,
+  CLAUDE.md § Scope ceiling, and docs/history/claude-md.md § Audio
+  rewritten from the decision DEMO-0106's spec gate reviewed (rule 14's
+  another-gate exception).
   **Layman:** Change the rule book so recording sound is allowed, before any sound code is written.
   Kind: doc.
   Source: user-request-2026-09-25.

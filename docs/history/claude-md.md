@@ -23,13 +23,18 @@ session to flag the file's size as if it were a defect. It is not one.
 
 ## Audio
 
-Put to the user on 2026-08-07 and declined. It stays out of scope.
+From 2026-08-07 to 2026-10-10 audio was permanently out of scope. The rule
+came from the first outline (commit 5b13983), and was recorded as "put to the
+user and declined".
 
-The consequence is stated in `README.md` rather than left implied: the file
-demoreel produces is silent, and a trailer with sound needs a second step
-elsewhere. The design that would have fitted — a per-run null sink, a second
-`ffmpeg`, one mux — is recorded there too, so it does not have to be
-re-derived in order to be re-declined.
+On 2026-10-10 the user said it was never the intent, and had most likely been
+accepted from a recommendation without being read. demoreel exists to record
+trailers and videos of the user's apps, and some of those need their sound.
+Sound is now in scope, by the caller's choice (DEMO-0104). The design README
+once called "coherent, and still a no" — a per-run null sink, a second
+`ffmpeg`, one mux — is close to what `docs/specs/DEMO-0106-app-sound.md`
+specifies, with one `ffmpeg` and a shifting copy pass instead of a second
+recorder.
 
 ## There is no third display backend
 
