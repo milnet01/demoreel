@@ -71,6 +71,19 @@ sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
 ```
 
+**音声には** `pactl` が必要です。これがあれば、録画中のアプリの音がスピーカーから流れることはなく、`--audio` でその音を動画に入れられます。
+
+```sh
+# openSUSE
+sudo zypper install pulseaudio-utils
+# Debian と Ubuntu
+sudo apt install pulseaudio-utils
+# Fedora
+sudo dnf install pulseaudio-utils
+# Arch
+sudo pacman -S libpulse
+```
+
 ## クイックスタート
 
 `demoreel` はどのフォルダーからでも実行できます。`-o` を付けないと、動画は実行したフォルダーに、アプリ名と時刻の名前で保存されます。

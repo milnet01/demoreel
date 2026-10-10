@@ -150,6 +150,11 @@ msgid "wf-recorder could not start recording."
 msgstr ""
 
 msgid ""
+"could not put the sound in step with the picture: the recorder's log does not say when each started.\n"
+"  What was recorded is kept in {part}, and the log is {log}."
+msgstr ""
+
+msgid ""
 "could not finish the video: turning the recording into {name} failed.\n"
 "  What was recorded is kept in {part}, and {log} says why."
 msgstr ""
@@ -164,6 +169,28 @@ msgid "reading a frame of {path} took over {seconds}s"
 msgstr ""
 
 msgid "no frame of {path} could be read"
+msgstr ""
+
+msgid "pactl is not installed."
+msgstr ""
+
+msgid "pactl did not answer within {seconds}s."
+msgstr ""
+
+msgid "pactl failed: {text}"
+msgstr ""
+
+msgid "the sound server does not list exactly one output named {sink}."
+msgstr ""
+
+msgid ""
+"--audio needs a private sound output, and none could be made.\n"
+"  {reason}"
+msgstr ""
+
+msgid ""
+"no private sound output could be made, so the app's sound may play on your speakers.\n"
+"  {reason}"
 msgstr ""
 
 msgid "this is a Flatpak target and the command is missing: {flags}"
@@ -192,6 +219,9 @@ msgid "missing required program(s): {programs}"
 msgstr ""
 
 msgid "this ffmpeg cannot encode H.264 with libx264, which every recording uses."
+msgstr ""
+
+msgid "--audio needs an ffmpeg that can read from a sound server, and this one has no pulse input."
 msgstr ""
 
 msgid "--cursor is not available with record --gpu: that backend records the compositor's picture, which never has the pointer in it."
@@ -338,6 +368,9 @@ msgid "recording {display} to {output} (until stopped)"
 msgstr ""
 
 msgid "recording {display} to {output} ({seconds}s)"
+msgstr ""
+
+msgid "the sound track is silent: the app made no sound that reached demoreel."
 msgstr ""
 
 msgid "could not take the picture."
@@ -743,6 +776,10 @@ msgstr ""
 
 #. argparse formats this text with %
 msgid "show the mouse pointer; off by default, since with no actions it just sits in the corner"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "put the app's own sound in the video. Off by default; either way the app's sound never plays on your speakers. Needs pactl"
 msgstr ""
 
 #. argparse formats this text with %

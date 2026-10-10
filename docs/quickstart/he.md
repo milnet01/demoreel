@@ -78,6 +78,19 @@ sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
 ```
 
+**לקול** demoreel צריך את `pactl`. איתו הקול של אפליקציה מוקלטת לעולם לא מגיע לרמקולים שלך, ו־`--audio` יכול להכניס את הקול הזה לסרטון:
+
+```sh
+# openSUSE
+sudo zypper install pulseaudio-utils
+# Debian ו־Ubuntu
+sudo apt install pulseaudio-utils
+# Fedora
+sudo dnf install pulseaudio-utils
+# Arch
+sudo pacman -S libpulse
+```
+
 ## התחלה מהירה
 
 אפשר להריץ את `demoreel` מכל תיקייה. בלי `-o`, הסרטון נשמר בתיקייה שממנה

@@ -80,6 +80,19 @@ sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
 ```
 
+**Per il suono** demoreel ha bisogno di `pactl`. Con esso il suono di un'app registrata non arriva mai agli altoparlanti, e `--audio` può mettere quel suono nel video:
+
+```sh
+# openSUSE
+sudo zypper install pulseaudio-utils
+# Debian e Ubuntu
+sudo apt install pulseaudio-utils
+# Fedora
+sudo dnf install pulseaudio-utils
+# Arch
+sudo pacman -S libpulse
+```
+
 ## Guida rapida
 
 `demoreel` si può avviare da qualsiasi cartella. Senza `-o`, il video finisce

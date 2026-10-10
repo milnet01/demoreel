@@ -12,6 +12,19 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+### Added
+
+- **`record --audio` puts the app's own sound in the video** (DEMO-0106)
+  The sound is in step with the picture to within 40 ms. Without
+  `--audio` the video stays silent, exactly as before. Needs `pactl`;
+  `demoreel check` says whether this machine can record sound.
+
+- **A recorded app is never heard on your speakers** (DEMO-0105)
+  Every `record` and `shot` gives the app a private sound output that
+  nothing plays, so callers no longer need `PULSE_SERVER=unix:/nonexistent`.
+  Two recordings at once never hear each other. Where no private output
+  can be made, the run goes on and says the app may be heard.
+
 ### Changed
 
 - **Sound is no longer ruled out** (DEMO-0104)

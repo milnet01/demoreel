@@ -2384,7 +2384,7 @@ step "README's install lines are the ones demoreel check prints"
 # DEMO-0058. The package names have one home, PACKAGES in demoreel, which
 # `demoreel check` reads to name what is missing. README § Install shows them
 # too, so hold each of its lines to that table: per distro, the default
-# backend's packages, and the four more --gpu needs.
+# backend's packages, the four more --gpu needs, and pactl's for sound.
 python3 - <<'INSTALLPY'
 import importlib.machinery, importlib.util, sys
 loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
@@ -2396,7 +2396,7 @@ default = demoreel.required_programs(False, True)
 gpu = [p for p in demoreel.required_programs(True, True) if p not in default]
 bad = 0
 for family, (command, names) in demoreel.PACKAGES.items():
-    for programs in (default, gpu):
+    for programs in (default, gpu, ["pactl"]):
         line = " ".join([command, *dict.fromkeys(
             names[p] for p in programs if p in names)])
         if line not in readme:
@@ -2687,6 +2687,13 @@ echo "-d 5 produced ${length}s"
 assert_frame_drawn "$out" 60 "the app never reached the recording"
 echo "the app is in the frame"
 
+# DEMO-0106 INV-1: sound goes into a video only when the caller asks for it.
+audio_streams=$(ffprobe -v error -select_streams a -show_entries stream=index \
+    -of csv=p=0 "$out")
+[ -z "$audio_streams" ] || {
+    echo "a run without --audio wrote a sound track" >&2; exit 1; }
+echo "and no sound track, since --audio was not given"
+
 step "smoke: a blank recording is refused"
 # The counterpart to the step above. That one proves a good recording succeeds;
 # nothing proved a bad one fails. The behaviour is protected by
@@ -2718,6 +2725,328 @@ grep -q 'was blank at the end' "$tmp/blank.err" || {
 # Protected by the versioning overrides: the video already written stays.
 [ -s "$tmp/blank.mp4" ] || { echo "the partial video was not left on disk" >&2; exit 1; }
 echo "a blank recording exits non-zero, prints no path, and leaves its file"
+
+step "no sound server: record goes on, record --audio stops"
+# DEMO-0106 INV-7. Every run gives its app a private sound output. Where none
+# can be made, a run without --audio goes on with a note, since a run that is
+# not recording sound loses nothing but quiet; a run with --audio stops before
+# the app starts. Both sound servers are pointed at nothing, so this runs on
+# every machine, one with no pactl included.
+nosound=(env PULSE_SERVER=unix:/nonexistent PIPEWIRE_REMOTE="$tmp/no-pipewire")
+"${nosound[@]}" ./demoreel record -n gate-nosound -o "$tmp/nosound.mp4" -d 2 \
+    -s 640x480 -- xclock >/dev/null 2>"$tmp/nosound.err" || {
+    echo "a run without --audio failed for want of a sound server:" >&2
+    cat "$tmp/nosound.err" >&2; exit 1; }
+grep -q "no private sound output could be made" "$tmp/nosound.err" || {
+    echo "a run with no private sound output said nothing about it:" >&2
+    cat "$tmp/nosound.err" >&2; exit 1; }
+set +e
+"${nosound[@]}" ./demoreel record --audio -n gate-nosound -o "$tmp/nosound-audio.mp4" \
+    -d 2 -s 640x480 -- touch "$tmp/nosound-app-ran" >/dev/null 2>"$tmp/nosound-audio.err"
+nosound_status=$?
+set -e
+# Where pactl is missing, --audio is refused for that before any sound server
+# is asked, which is the same promise.
+[ "$nosound_status" -ne 0 ] && [ ! -e "$tmp/nosound-app-ran" ] \
+    && grep -Eq -- "--audio needs a private sound output|missing required program\(s\): pactl" \
+        "$tmp/nosound-audio.err" || {
+    echo "record --audio with no sound server exited $nosound_status," \
+         "app started: $([ -e "$tmp/nosound-app-ran" ] && echo yes || echo no):" >&2
+    cat "$tmp/nosound-audio.err" >&2; exit 1; }
+echo "without a sound server, record goes on with a note and record --audio stops"
+
+# The rest of DEMO-0106's checks need a sound server and the programs that
+# play into it. Where one is missing each step says so and skips, as the --gpu
+# steps do. A skip is not a pass.
+sound_missing=()
+for prog in pactl paplay aplay pw-play pacat xterm; do
+    command -v "$prog" >/dev/null || sound_missing+=("$prog")
+done
+python3 -c 'import tkinter' 2>/dev/null || sound_missing+=("python3's tkinter")
+if [ ${#sound_missing[@]} -gt 0 ]; then
+    sound_skip="this machine has no ${sound_missing[*]}"
+elif ! pactl info >/dev/null 2>&1; then
+    sound_skip="no sound server answers pactl"
+else
+    sound_skip=""
+fi
+sound_step() {
+    step "$1"
+    [ -z "$sound_skip" ] || { echo "skipped: $sound_skip"; return 1; }
+}
+sound_state="${XDG_RUNTIME_DIR:-/tmp}/demoreel-$(id -u)"
+# The sinks a demoreel process loaded and still has, one name per line.
+run_sinks() {
+    pactl list short sinks | awk -v p="demoreel-$(id -u)-$1-" 'index($2, p) == 1 {print $2}'
+}
+# Wait until the run named $1, with pid $2, is recording. The pid matters:
+# every run leaves its state file behind, so the last run's says "recording"
+# before this one has started.
+wait_recording() {
+    for _ in $(seq 1 200); do
+        python3 -c 'import json, sys
+entry = json.load(open(sys.argv[1]))
+sys.exit(not (entry["pid"] == int(sys.argv[2]) and entry["recording"]))' \
+            "$sound_state/$1.json" "$2" 2>/dev/null && return 0
+        sleep 0.1
+    done
+    echo "the run named $1 never started recording" >&2
+    return 1
+}
+# The loudest moment of a video's sound, in dB.
+loudest() {
+    ffmpeg -nostdin -hide_banner -i "$1" -map 0:a -af volumedetect -f null - 2>&1 \
+        | sed -n 's/.*max_volume: \(.*\) dB/\1/p'
+}
+# The app for the sound checks: a shell that writes its process group to a
+# file, then plays one tone through each way an app can reach the server --
+# PulseAudio, ALSA, and native PipeWire -- with silence between them.
+ffmpeg -v error -f lavfi -i "sine=frequency=880:duration=1" -ar 48000 -ac 2 \
+    -y "$tmp/tone.wav"
+cat >"$tmp/tones.sh" <<'SH'
+#!/bin/sh
+echo $$ >"$1"
+sleep 2
+paplay "$2"
+sleep 0.5
+aplay -q "$2"
+sleep 0.5
+pw-play "$2"
+sleep 60
+SH
+chmod +x "$tmp/tones.sh"
+# Watch a run's sink inputs while it lasts: every stream from the app's
+# process group must be on the run's own sink, and each player must be seen.
+cat >"$tmp/watch-sinks.py" <<'PY'
+import json, os, subprocess, sys, time
+run, pidfile = int(sys.argv[1]), sys.argv[2]
+prefix = f"demoreel-{os.getuid()}-{run}-"
+ours, seen, wrong = None, set(), set()
+
+def running(pid):
+    try:
+        return open(f"/proc/{pid}/stat").read().rsplit(")", 1)[1].split()[0] != "Z"
+    except OSError:
+        return False
+
+while running(run):
+    for line in subprocess.run(["pactl", "list", "short", "sinks"], capture_output=True,
+                               text=True).stdout.splitlines():
+        fields = line.split("\t")
+        if len(fields) > 1 and fields[1].startswith(prefix):
+            ours = int(fields[0])
+    try:
+        group = int(open(pidfile).read())
+    except (OSError, ValueError):
+        group = None
+    if group:
+        listing = subprocess.run(["pactl", "-f", "json", "list", "sink-inputs"],
+                                 capture_output=True, text=True).stdout
+        for stream in json.loads(listing or "[]"):
+            props = stream["properties"]
+            try:
+                if os.getpgid(int(props.get("application.process.id", ""))) != group:
+                    continue
+            except (ValueError, OSError):
+                continue
+            seen.add(props.get("application.process.binary"))
+            if stream["sink"] != ours:
+                wrong.add((props.get("application.process.binary"), stream["sink"]))
+    time.sleep(0.1)
+print(f"the app's streams came from {sorted(seen)}, on sink {ours}")
+if wrong:
+    sys.exit(f"streams on another sink than the run's ({ours}): {sorted(wrong)}")
+if seen != {"pacat", "aplay", "pw-cat"}:
+    sys.exit(f"expected a stream from paplay, aplay and pw-play, saw {sorted(seen)}")
+PY
+
+if sound_step "--audio records the app's sound, whichever way it plays"; then
+    # DEMO-0106 INV-2, INV-6 and INV-9. Three players, one per way to the
+    # server, so a missing variable silences one tone: without PIPEWIRE_NODE,
+    # aplay's goes to the speakers.
+    ./demoreel record --audio -n gate-sound -o "$tmp/sound.mp4" -d 8 -s 640x480 \
+        -- xterm -e "$tmp/tones.sh" "$tmp/tones.pid" "$tmp/tone.wav" >/dev/null &
+    sound_run=$!
+    gate_pids="$gate_pids $sound_run"
+    python3 "$tmp/watch-sinks.py" "$sound_run" "$tmp/tones.pid"
+    wait "$sound_run" || { echo "the --audio run failed" >&2; exit 1; }
+    python3 - "$tmp/sound.mp4" <<'PY'
+import json, re, subprocess, sys
+streams = json.loads(subprocess.run(
+    ["ffprobe", "-v", "error", "-show_entries",
+     "stream=codec_type,codec_name,sample_rate,channels,start_time,duration",
+     "-of", "json", sys.argv[1]], capture_output=True, text=True, check=True).stdout)["streams"]
+audio = [s for s in streams if s["codec_type"] == "audio"]
+video = [s for s in streams if s["codec_type"] == "video"]
+assert len(audio) == 1, f"{len(audio)} audio streams"
+a, v = audio[0], video[0]
+assert (a["codec_name"], a["sample_rate"], a["channels"]) == ("aac", "48000", 2), a
+end = {s["codec_type"]: float(s["start_time"]) + float(s["duration"]) for s in (a, v)}
+assert abs(end["audio"] - end["video"]) <= 0.1, f"sound ends at {end['audio']:.3f}s, picture at {end['video']:.3f}s"
+print(f"one AAC 48 kHz stereo track, ending {abs(end['audio'] - end['video']) * 1000:.0f} ms from the picture")
+# Each tone starts after silence, so each is an end of silence. silencedetect
+# also ends a silence at the end of the file, which is not a tone.
+log = subprocess.run(["ffmpeg", "-nostdin", "-hide_banner", "-i", sys.argv[1], "-map", "0:a",
+                      "-af", "silencedetect=n=-40dB:d=0.2", "-f", "null", "-"],
+                     capture_output=True, text=True).stderr
+tones = [float(t) for t in re.findall(r"silence_end: ([\d.]+)", log)
+         if float(t) < end["audio"] - 0.1]
+assert len(tones) == 3, f"{len(tones)} tones at {tones}, not one from each of the three players"
+print(f"three tones, at {', '.join(f'{t:.1f}s' for t in tones)}")
+PY
+    [ -z "$(run_sinks "$sound_run")" ] || {
+        echo "the --audio run left its sink loaded" >&2; exit 1; }
+    # A shot gives its app the same private output. The wait keeps the app up
+    # while it plays all three tones.
+    ./demoreel shot -o "$tmp/sound.png" -s 640x480 -a "wait 7" \
+        -- xterm -e "$tmp/tones.sh" "$tmp/shot-tones.pid" "$tmp/tone.wav" >/dev/null &
+    shot_run=$!
+    python3 "$tmp/watch-sinks.py" "$shot_run" "$tmp/shot-tones.pid"
+    wait "$shot_run" || { echo "the shot failed" >&2; exit 1; }
+    [ -z "$(run_sinks "$shot_run")" ] || { echo "the shot left its sink loaded" >&2; exit 1; }
+    echo "all three ways to play reach the run's own sink, on record and on shot"
+fi
+
+if sound_step "two --audio runs never hear each other"; then
+    # DEMO-0106 INV-3. Started together, one playing and one silent. With one
+    # name for every run's sink the second load fails its uniqueness check.
+    ./demoreel record --audio -n gate-sound-a -o "$tmp/sound-a.mp4" -d 8 -s 640x480 \
+        -- xterm -e "$tmp/tones.sh" "$tmp/tones-a.pid" "$tmp/tone.wav" >/dev/null &
+    run_a=$!
+    ./demoreel record --audio -n gate-sound-b -o "$tmp/sound-b.mp4" -d 8 -s 640x480 \
+        -- xclock >/dev/null 2>"$tmp/sound-b.err" &
+    run_b=$!
+    gate_pids="$gate_pids $run_a $run_b"
+    wait "$run_a" || { echo "the playing run failed" >&2; exit 1; }
+    wait "$run_b" || { echo "the silent run failed:" >&2; cat "$tmp/sound-b.err" >&2; exit 1; }
+    level_a=$(loudest "$tmp/sound-a.mp4")
+    level_b=$(loudest "$tmp/sound-b.mp4")
+    python3 -c 'import sys; a, b = map(float, sys.argv[1:]); sys.exit(not (a > -40 and b <= -60))' \
+        "$level_a" "$level_b" || {
+        echo "the playing run peaked at $level_a dB, the silent one at $level_b dB" >&2
+        exit 1; }
+    grep -q "the sound track is silent" "$tmp/sound-b.err" || {
+        echo "the silent run did not say its track was silent:" >&2
+        cat "$tmp/sound-b.err" >&2; exit 1; }
+    echo "the playing run peaked at $level_a dB; the silent one heard nothing ($level_b dB)"
+fi
+
+if sound_step "no run leaves a sound output behind"; then
+    # DEMO-0106 INV-4. A finished run and a shot are checked in the step
+    # above; here, a launch that fails, `stop`, Ctrl+C, SIGTERM and SIGHUP.
+    ./demoreel record -n gate-sound-fail -o "$tmp/sound-fail.mp4" -d 2 \
+        -- "$tmp/no-such-app" >/dev/null 2>&1 &
+    leak_run=$!
+    if wait "$leak_run"; then echo "a run of a missing app succeeded" >&2; exit 1; fi
+    [ -z "$(run_sinks "$leak_run")" ] || {
+        echo "a launch that failed left its sink loaded" >&2; exit 1; }
+    for how in stop INT TERM HUP; do
+        ./demoreel record -n gate-sound-end -o "$tmp/sound-end.mp4" -d 0 -s 640x480 \
+            -- xclock >/dev/null 2>&1 &
+        leak_run=$!
+        gate_pids="$gate_pids $leak_run"
+        wait_recording gate-sound-end "$leak_run"
+        if [ "$how" = stop ]; then
+            ./demoreel stop gate-sound-end >/dev/null
+        else
+            kill -"$how" "$leak_run"
+        fi
+        wait "$leak_run" || true  # how it exits is other steps' business
+        [ -z "$(run_sinks "$leak_run")" ] || {
+            echo "a run ended by $how left its sink loaded" >&2; exit 1; }
+    done
+    # SIGKILL runs no cleanup at all, so the sink stays until the next run
+    # sweeps it. The killed run's display and recorder are ended by hand.
+    ./demoreel record -n gate-sound-kill -o "$tmp/sound-killed.mp4" -d 0 -s 640x480 \
+        -- xclock >/dev/null 2>&1 &
+    leak_run=$!
+    wait_recording gate-sound-kill "$leak_run"
+    kill -KILL "$leak_run"
+    wait "$leak_run" 2>/dev/null || true
+    [ -n "$(run_sinks "$leak_run")" ] || {
+        echo "a SIGKILLed run's sink was gone at once, so nothing tests the sweep" >&2
+        exit 1; }
+    pkill -f -- "-y $tmp/sound-killed.mp4" || true
+    for xv in $(pgrep -u "$(id -u)" -x Xvfb); do
+        if tr '\0' ' ' <"/proc/$xv/cmdline" 2>/dev/null \
+           | grep -q "demoreel-$(id -u)/gate-sound-kill"; then
+            kill "$xv" || true
+        fi
+    done
+    ./demoreel shot -o "$tmp/sound-sweep.png" -s 320x240 -- xclock >/dev/null
+    [ -z "$(run_sinks "$leak_run")" ] || {
+        echo "the next run did not unload a SIGKILLed run's sink" >&2; exit 1; }
+    echo "no exit leaves a sink behind, and the next run sweeps a killed run's"
+fi
+
+if sound_step "--audio keeps sound and picture in step"; then
+    # DEMO-0106 INV-5. The app turns its window white and starts a beep at
+    # the same moment. The beep goes into a stream already open: starting a
+    # player at the flash put the player's own start-up into the gap.
+    # Without the shift the sound came out half a second early.
+    cat >"$tmp/flash.py" <<'PY'
+import math, struct, subprocess, threading, time, tkinter
+RATE, CHUNK = 48000, 480  # 10 ms of stereo 16-bit samples per write
+player = subprocess.Popen(["pacat", "--raw", "--format=s16le", f"--rate={RATE}",
+                           "--channels=2", "--latency-msec=10"], stdin=subprocess.PIPE)
+beep = b"".join(struct.pack("<hh", v, v) for v in (
+    int(12000 * math.sin(2 * math.pi * 1000 * n / RATE)) for n in range(RATE // 2)))
+silence = bytes(CHUNK * 4)
+pending = []
+
+def feed():
+    start, sent = time.monotonic(), 0
+    while True:
+        data = pending.pop(0) if pending else silence
+        player.stdin.write(data)
+        player.stdin.flush()
+        sent += len(data) // 4
+        time.sleep(max(0.0, start + sent / RATE - time.monotonic() - 0.02))
+
+threading.Thread(target=feed, daemon=True).start()
+root = tkinter.Tk()
+root.title("flash")
+root.configure(background="black")
+root.geometry("640x480")
+tkinter.Label(root, text="sound and picture in step", fg="grey", bg="black").pack()
+
+def flash():
+    root.configure(background="white")
+    root.update_idletasks()
+    pending.extend(beep[i:i + CHUNK * 4] for i in range(0, len(beep), CHUNK * 4))
+
+root.after(2000, flash)
+root.mainloop()
+PY
+    ./demoreel record --audio -n gate-sound-sync -o "$tmp/sync.mp4" -d 4 -s 640x480 \
+        -- python3 "$tmp/flash.py" >/dev/null
+    python3 - "$tmp/sync.mp4" <<'PY'
+import re, subprocess, sys
+video = sys.argv[1]
+log = subprocess.run(["ffmpeg", "-nostdin", "-hide_banner", "-i", video, "-map", "0:v",
+                      "-vf", "signalstats,metadata=print:key=lavfi.signalstats.YAVG",
+                      "-f", "null", "-"], capture_output=True, text=True).stderr
+flash = when = None
+for line in log.splitlines():
+    found = re.search(r"pts_time:([\d.]+)", line)
+    if found:
+        when = float(found[1])
+    found = re.search(r"YAVG=([\d.]+)", line)
+    if found and float(found[1]) > 128:
+        flash = when
+        break
+log = subprocess.run(["ffmpeg", "-nostdin", "-hide_banner", "-i", video, "-map", "0:a",
+                      "-af", "silencedetect=n=-40dB:d=0.1", "-f", "null", "-"],
+                     capture_output=True, text=True).stderr
+found = re.search(r"silence_end: ([\d.]+)", log)
+beep = float(found[1]) if found else None
+if flash is None or beep is None:
+    sys.exit(f"the flash was at {flash}s and the beep at {beep}s")
+print(f"the flash at {flash:.3f}s, the beep at {beep:.3f}s")
+if abs(flash - beep) > 0.040:
+    sys.exit(f"sound and picture are {abs(flash - beep) * 1000:.0f} ms apart")
+PY
+fi
 
 step "a recording blank until its second half is refused"
 # DEMO-0008. The end sample alone passed an app that drew only in the final
@@ -3396,6 +3725,24 @@ set -e
     exit 1
 }
 echo "check reports ready here, and names the install command when it is not"
+
+# DEMO-0106 INV-8. check says whether --audio can record, and like --gpu's
+# line it never changes the exit status. $nosound points both sound servers
+# at nothing (the "no sound server" step).
+"${nosound[@]}" ./demoreel check 2>"$tmp/check-nosound.err" || {
+    echo "check failed for want of a sound server:" >&2
+    cat "$tmp/check-nosound.err" >&2; exit 1; }
+grep -q -- '--audio: NOT READY' "$tmp/check-nosound.err" || {
+    echo "check did not say --audio is not ready without a sound server:" >&2
+    cat "$tmp/check-nosound.err" >&2; exit 1; }
+if [ -n "$sound_skip" ]; then
+    echo "the ready half skipped: $sound_skip"
+else
+    grep -q -- '--audio: ready' "$tmp/check.err" || {
+        echo "check did not say --audio is ready on a machine with a sound server:" >&2
+        cat "$tmp/check.err" >&2; exit 1; }
+    echo "check says --audio is ready here, and not ready without a sound server"
+fi
 
 step "check reads the encoders of the libavcodec a program loads"
 # DEMO-0171. check said --gpu was ready because ffmpeg had libx264, while the

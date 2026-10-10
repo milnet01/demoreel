@@ -92,7 +92,8 @@ _demoreel() {
             {-o+,--output=}'[video file to write]:file:_files' \
             {-d+,--duration=}'[seconds to record; 0 means until stop]:seconds:' \
             {-r+,--framerate=}'[frames per second]:fps:' \
-            {-n+,--name=}'[name for this run]:name:' ;;
+            {-n+,--name=}'[name for this run]:name:' \
+            '--audio[put the app'\''s own sound in the video]' ;;
         shot)
           _arguments -S $both \
             {-o+,--output=}'[picture file to write]:file:_files' ;;

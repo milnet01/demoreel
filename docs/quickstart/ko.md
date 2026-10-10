@@ -77,6 +77,19 @@ sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
 ```
 
+**소리를 위해** demoreel에는 `pactl`이 필요합니다. 이것이 있으면 녹화하는 앱의 소리가 스피커로 나가지 않고, `--audio`로 그 소리를 영상에 넣을 수 있습니다.
+
+```sh
+# openSUSE
+sudo zypper install pulseaudio-utils
+# Debian 및 Ubuntu
+sudo apt install pulseaudio-utils
+# Fedora
+sudo dnf install pulseaudio-utils
+# Arch
+sudo pacman -S libpulse
+```
+
 ## 빠른 시작
 
 `demoreel`은 어느 폴더에서나 실행할 수 있습니다. `-o`를 주지 않으면 동영상은

@@ -174,6 +174,13 @@ msgid "wf-recorder could not start recording."
 msgstr "wf-recorder kon nie begin opneem nie."
 
 msgid ""
+"could not put the sound in step with the picture: the recorder's log does not say when each started.\n"
+"  What was recorded is kept in {part}, and the log is {log}."
+msgstr ""
+"kon nie die klank gelyk met die beeld sit nie: die opnemer se log sê nie wanneer elkeen begin het nie.\n"
+"  Wat opgeneem is, word in {part} gehou, en die log is {log}."
+
+msgid ""
 "could not finish the video: turning the recording into {name} failed.\n"
 "  What was recorded is kept in {part}, and {log} says why."
 msgstr ""
@@ -191,6 +198,32 @@ msgstr "om 'n raam van {path} te lees, het langer as {seconds}s geduur"
 
 msgid "no frame of {path} could be read"
 msgstr "geen raam van {path} kon gelees word nie"
+
+msgid "pactl is not installed."
+msgstr "pactl is nie geïnstalleer nie."
+
+msgid "pactl did not answer within {seconds}s."
+msgstr "pactl het nie binne {seconds}s geantwoord nie."
+
+msgid "pactl failed: {text}"
+msgstr "pactl het misluk: {text}"
+
+msgid "the sound server does not list exactly one output named {sink}."
+msgstr "die klankbediener lys nie presies een uitset met die naam {sink} nie."
+
+msgid ""
+"--audio needs a private sound output, and none could be made.\n"
+"  {reason}"
+msgstr ""
+"--audio het 'n privaat klankuitset nodig, en geen kon gemaak word nie.\n"
+"  {reason}"
+
+msgid ""
+"no private sound output could be made, so the app's sound may play on your speakers.\n"
+"  {reason}"
+msgstr ""
+"geen privaat klankuitset kon gemaak word nie, so die toep se klank kan dalk op u luidsprekers speel.\n"
+"  {reason}"
 
 msgid "this is a Flatpak target and the command is missing: {flags}"
 msgstr "dit is 'n Flatpak-teiken en die opdrag kort: {flags}"
@@ -223,6 +256,9 @@ msgstr "vereiste program(me) ontbreek: {programs}"
 
 msgid "this ffmpeg cannot encode H.264 with libx264, which every recording uses."
 msgstr "hierdie ffmpeg kan nie H.264 met libx264 enkodeer nie, wat elke opname gebruik."
+
+msgid "--audio needs an ffmpeg that can read from a sound server, and this one has no pulse input."
+msgstr "--audio het 'n ffmpeg nodig wat van 'n klankbediener kan lees, en hierdie een het geen pulse-invoer nie."
 
 msgid "--cursor is not available with record --gpu: that backend records the compositor's picture, which never has the pointer in it."
 msgstr "--cursor is nie beskikbaar met record --gpu nie: daardie agterkant neem die saamsteller se beeld op, waarin die wyser nooit verskyn nie."
@@ -396,6 +432,9 @@ msgstr "neem {display} op na {output} (totdat dit gestop word)"
 
 msgid "recording {display} to {output} ({seconds}s)"
 msgstr "neem {display} op na {output} ({seconds}s)"
+
+msgid "the sound track is silent: the app made no sound that reached demoreel."
+msgstr "die klankspoor is stil: die toep het geen klank gemaak wat demoreel bereik het nie."
 
 msgid "could not take the picture."
 msgstr "kon nie die prent neem nie."
@@ -816,6 +855,10 @@ msgstr "vir 'n toep wat die grafiese kaart nodig het (OpenGL, Vulkan): neem dit 
 #. argparse formats this text with %
 msgid "show the mouse pointer; off by default, since with no actions it just sits in the corner"
 msgstr "wys die muiswyser; by verstek af, want sonder aksies sit dit net in die hoek"
+
+#. argparse formats this text with %
+msgid "put the app's own sound in the video. Off by default; either way the app's sound never plays on your speakers. Needs pactl"
+msgstr "sit die toep se eie klank in die video. By verstek af; in elk geval speel die toep se klank nooit op u luidsprekers nie. Het pactl nodig"
 
 #. argparse formats this text with %
 msgid "how long to wait for the app's window (default: 20)"

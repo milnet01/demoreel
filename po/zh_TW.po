@@ -174,6 +174,13 @@ msgid "wf-recorder could not start recording."
 msgstr "wf-recorder 無法開始錄影。"
 
 msgid ""
+"could not put the sound in step with the picture: the recorder's log does not say when each started.\n"
+"  What was recorded is kept in {part}, and the log is {log}."
+msgstr ""
+"無法讓聲音與畫面同步：錄影程式的記錄檔沒有說明兩者各自何時開始。\n"
+"  已錄下的內容保留在 {part}，記錄檔是 {log}。"
+
+msgid ""
 "could not finish the video: turning the recording into {name} failed.\n"
 "  What was recorded is kept in {part}, and {log} says why."
 msgstr ""
@@ -191,6 +198,32 @@ msgstr "讀取 {path} 的影格花了超過 {seconds}s"
 
 msgid "no frame of {path} could be read"
 msgstr "無法讀取 {path} 的任何影格"
+
+msgid "pactl is not installed."
+msgstr "未安裝 pactl。"
+
+msgid "pactl did not answer within {seconds}s."
+msgstr "pactl 在 {seconds}s 內沒有回應。"
+
+msgid "pactl failed: {text}"
+msgstr "pactl 失敗：{text}"
+
+msgid "the sound server does not list exactly one output named {sink}."
+msgstr "聲音伺服器列出的名為 {sink} 的輸出不是恰好一個。"
+
+msgid ""
+"--audio needs a private sound output, and none could be made.\n"
+"  {reason}"
+msgstr ""
+"--audio 需要一個私人聲音輸出，但無法建立。\n"
+"  {reason}"
+
+msgid ""
+"no private sound output could be made, so the app's sound may play on your speakers.\n"
+"  {reason}"
+msgstr ""
+"無法建立私人聲音輸出，因此應用程式的聲音可能會從您的喇叭播出。\n"
+"  {reason}"
 
 msgid "this is a Flatpak target and the command is missing: {flags}"
 msgstr "這是 Flatpak 目標，但指令中缺少：{flags}"
@@ -223,6 +256,9 @@ msgstr "缺少必要的程式：{programs}"
 
 msgid "this ffmpeg cannot encode H.264 with libx264, which every recording uses."
 msgstr "這個 ffmpeg 無法用 libx264 編碼 H.264，而每次錄影都需要它。"
+
+msgid "--audio needs an ffmpeg that can read from a sound server, and this one has no pulse input."
+msgstr "--audio 需要能從聲音伺服器讀取的 ffmpeg，而這個 ffmpeg 沒有 pulse 輸入。"
 
 msgid "--cursor is not available with record --gpu: that backend records the compositor's picture, which never has the pointer in it."
 msgstr "--cursor 無法與 record --gpu 一起使用：該後端錄下的是合成器的畫面，其中從來不會有滑鼠指標。"
@@ -396,6 +432,9 @@ msgstr "正在將 {display} 錄到 {output}（直到停止為止）"
 
 msgid "recording {display} to {output} ({seconds}s)"
 msgstr "正在將 {display} 錄到 {output}（{seconds}s）"
+
+msgid "the sound track is silent: the app made no sound that reached demoreel."
+msgstr "音軌是靜音的：應用程式沒有發出任何傳到 demoreel 的聲音。"
 
 msgid "could not take the picture."
 msgstr "無法拍攝畫面。"
@@ -810,6 +849,10 @@ msgstr "用於需要顯示卡的應用程式（OpenGL、Vulkan）：改在無頭
 #. argparse formats this text with %
 msgid "show the mouse pointer; off by default, since with no actions it just sits in the corner"
 msgstr "顯示滑鼠指標；預設為關閉，因為沒有任何動作時它只會停在角落"
+
+#. argparse formats this text with %
+msgid "put the app's own sound in the video. Off by default; either way the app's sound never plays on your speakers. Needs pactl"
+msgstr "將應用程式自己的聲音錄進影片。預設為關閉；無論如何，應用程式的聲音都不會從您的喇叭播出。需要 pactl"
 
 #. argparse formats this text with %
 msgid "how long to wait for the app's window (default: 20)"

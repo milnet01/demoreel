@@ -249,6 +249,15 @@ Off by default.
 Not available with
 .BR "record \-\-gpu" .
 .TP
+.B \-\-audio
+.BR record :
+put the app's own sound in the video, in step with the picture.
+Off by default.
+With it or without it, the app's sound never plays on the speakers:
+every run gives the app a private sound output.
+Needs
+.BR pactl .
+.TP
 .BI \-\-startup\-timeout " seconds"
 How long to wait for the app's window (default 20).
 .TP

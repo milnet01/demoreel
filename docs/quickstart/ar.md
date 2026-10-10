@@ -77,6 +77,19 @@ sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
 ```
 
+**للصوت** يحتاج demoreel إلى الأداة `pactl`. بها لا يصل صوت التطبيق المسجَّل إلى سماعاتك أبدًا، ويستطيع `--audio` وضع ذلك الصوت في الفيديو:
+
+```sh
+# openSUSE
+sudo zypper install pulseaudio-utils
+# Debian و Ubuntu
+sudo apt install pulseaudio-utils
+# Fedora
+sudo dnf install pulseaudio-utils
+# Arch
+sudo pacman -S libpulse
+```
+
 ## بدء سريع
 
 شغّل `demoreel` من أي مجلد. بدون `-o`، يُحفظ الفيديو في المجلد الذي تشغّله

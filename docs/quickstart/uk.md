@@ -78,6 +78,19 @@ sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
 ```
 
+**Для звуку** demoreel потрібен `pactl`. З ним звук застосунку, що записується, ніколи не потрапляє у ваші динаміки, а `--audio` може додати цей звук у відео:
+
+```sh
+# openSUSE
+sudo zypper install pulseaudio-utils
+# Debian та Ubuntu
+sudo apt install pulseaudio-utils
+# Fedora
+sudo dnf install pulseaudio-utils
+# Arch
+sudo pacman -S libpulse
+```
+
 ## Швидкий старт
 
 Запускайте `demoreel` з будь-якої теки. Без `-o` відео з'явиться в теці, з

@@ -81,6 +81,19 @@ sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
 ```
 
+**Voor geluid** heeft demoreel `pactl` nodig. Daarmee bereikt het geluid van een opgenomen app nooit uw luidsprekers, en kan `--audio` dat geluid in de video zetten:
+
+```sh
+# openSUSE
+sudo zypper install pulseaudio-utils
+# Debian en Ubuntu
+sudo apt install pulseaudio-utils
+# Fedora
+sudo dnf install pulseaudio-utils
+# Arch
+sudo pacman -S libpulse
+```
+
 ## Snel aan de slag
 
 Start `demoreel` vanuit elke map. Zonder `-o` komt de video in de map waar u

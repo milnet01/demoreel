@@ -76,7 +76,7 @@ _demoreel() {
             fi ;;
         record) words="-o --output -d --duration -s --size -r --framerate
                 -n --name -a --action --steps --app-log --settle --gpu --cursor
-                --startup-timeout -h --help --" ;;
+                --audio --startup-timeout -h --help --" ;;
         shot) words="-o --output -s --size -a --action --steps --app-log --settle
                 --gpu --cursor --startup-timeout -h --help --" ;;
         check) words="-h --help" ;;

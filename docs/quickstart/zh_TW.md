@@ -71,6 +71,19 @@ sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
 ```
 
+**聲音**需要 `pactl`。有了它，被錄製應用程式的聲音永遠不會傳到您的喇叭，`--audio` 還能把這聲音放進影片：
+
+```sh
+# openSUSE
+sudo zypper install pulseaudio-utils
+# Debian 和 Ubuntu
+sudo apt install pulseaudio-utils
+# Fedora
+sudo dnf install pulseaudio-utils
+# Arch
+sudo pacman -S libpulse
+```
+
 ## 快速入門
 
 您可以在任何資料夾中執行 `demoreel`。如果沒有加上 `-o`，影片會存放在您執行它的資料夾中，並以應用程式名稱和時間命名。

@@ -174,6 +174,13 @@ msgid "wf-recorder could not start recording."
 msgstr "o wf-recorder não conseguiu começar a gravar."
 
 msgid ""
+"could not put the sound in step with the picture: the recorder's log does not say when each started.\n"
+"  What was recorded is kept in {part}, and the log is {log}."
+msgstr ""
+"não foi possível sincronizar o som com a imagem: o registro do gravador não diz quando cada um começou.\n"
+"  O que foi gravado está guardado em {part}, e o registro é {log}."
+
+msgid ""
 "could not finish the video: turning the recording into {name} failed.\n"
 "  What was recorded is kept in {part}, and {log} says why."
 msgstr ""
@@ -191,6 +198,32 @@ msgstr "ler um quadro de {path} levou mais de {seconds}s"
 
 msgid "no frame of {path} could be read"
 msgstr "nenhum quadro de {path} pôde ser lido"
+
+msgid "pactl is not installed."
+msgstr "pactl não está instalado."
+
+msgid "pactl did not answer within {seconds}s."
+msgstr "pactl não respondeu em {seconds}s."
+
+msgid "pactl failed: {text}"
+msgstr "pactl falhou: {text}"
+
+msgid "the sound server does not list exactly one output named {sink}."
+msgstr "o servidor de som não lista exatamente uma saída chamada {sink}."
+
+msgid ""
+"--audio needs a private sound output, and none could be made.\n"
+"  {reason}"
+msgstr ""
+"--audio precisa de uma saída de som privada, e não foi possível criar nenhuma.\n"
+"  {reason}"
+
+msgid ""
+"no private sound output could be made, so the app's sound may play on your speakers.\n"
+"  {reason}"
+msgstr ""
+"não foi possível criar uma saída de som privada, então o som do aplicativo pode tocar nos seus alto-falantes.\n"
+"  {reason}"
 
 msgid "this is a Flatpak target and the command is missing: {flags}"
 msgstr "o alvo é um Flatpak e faltam no comando: {flags}"
@@ -223,6 +256,9 @@ msgstr "faltam programas necessários: {programs}"
 
 msgid "this ffmpeg cannot encode H.264 with libx264, which every recording uses."
 msgstr "este ffmpeg não consegue codificar H.264 com libx264, que toda gravação usa."
+
+msgid "--audio needs an ffmpeg that can read from a sound server, and this one has no pulse input."
+msgstr "--audio precisa de um ffmpeg que consiga ler de um servidor de som, e este não tem entrada pulse."
 
 msgid "--cursor is not available with record --gpu: that backend records the compositor's picture, which never has the pointer in it."
 msgstr "--cursor não está disponível com record --gpu: esse modo grava a imagem do compositor, que nunca mostra o ponteiro."
@@ -396,6 +432,9 @@ msgstr "gravando {display} em {output} (até ser parado)"
 
 msgid "recording {display} to {output} ({seconds}s)"
 msgstr "gravando {display} em {output} ({seconds}s)"
+
+msgid "the sound track is silent: the app made no sound that reached demoreel."
+msgstr "a faixa de som está muda: o aplicativo não fez nenhum som que chegasse ao demoreel."
 
 msgid "could not take the picture."
 msgstr "não foi possível tirar a foto."
@@ -816,6 +855,10 @@ msgstr "para um aplicativo que precisa da placa de vídeo (OpenGL, Vulkan): grav
 #. argparse formats this text with %
 msgid "show the mouse pointer; off by default, since with no actions it just sits in the corner"
 msgstr "mostra o ponteiro do mouse; desligado por padrão, já que sem ações ele só fica parado no canto"
+
+#. argparse formats this text with %
+msgid "put the app's own sound in the video. Off by default; either way the app's sound never plays on your speakers. Needs pactl"
+msgstr "coloca o próprio som do aplicativo no vídeo. Desligado por padrão; de qualquer forma, o som do aplicativo nunca toca nos seus alto-falantes. Precisa de pactl"
 
 #. argparse formats this text with %
 msgid "how long to wait for the app's window (default: 20)"

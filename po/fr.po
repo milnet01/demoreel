@@ -174,6 +174,13 @@ msgid "wf-recorder could not start recording."
 msgstr "wf-recorder n'a pas pu commencer l'enregistrement."
 
 msgid ""
+"could not put the sound in step with the picture: the recorder's log does not say when each started.\n"
+"  What was recorded is kept in {part}, and the log is {log}."
+msgstr ""
+"impossible de synchroniser le son avec l'image : le journal de l'enregistreur ne dit pas quand chacun a commencé.\n"
+"  Ce qui a été enregistré est conservé dans {part}, et le journal est {log}."
+
+msgid ""
 "could not finish the video: turning the recording into {name} failed.\n"
 "  What was recorded is kept in {part}, and {log} says why."
 msgstr ""
@@ -191,6 +198,32 @@ msgstr "la lecture d'une image de {path} a pris plus de {seconds} s"
 
 msgid "no frame of {path} could be read"
 msgstr "aucune image de {path} n'a pu être lue"
+
+msgid "pactl is not installed."
+msgstr "pactl n'est pas installé."
+
+msgid "pactl did not answer within {seconds}s."
+msgstr "pactl n'a pas répondu en {seconds} s."
+
+msgid "pactl failed: {text}"
+msgstr "pactl a échoué : {text}"
+
+msgid "the sound server does not list exactly one output named {sink}."
+msgstr "le serveur de son ne liste pas exactement une sortie nommée {sink}."
+
+msgid ""
+"--audio needs a private sound output, and none could be made.\n"
+"  {reason}"
+msgstr ""
+"--audio a besoin d'une sortie son privée, et aucune n'a pu être créée.\n"
+"  {reason}"
+
+msgid ""
+"no private sound output could be made, so the app's sound may play on your speakers.\n"
+"  {reason}"
+msgstr ""
+"aucune sortie son privée n'a pu être créée, le son de l'application risque donc de sortir sur vos haut-parleurs.\n"
+"  {reason}"
 
 msgid "this is a Flatpak target and the command is missing: {flags}"
 msgstr "il s'agit d'une cible Flatpak et il manque à la commande : {flags}"
@@ -223,6 +256,9 @@ msgstr "programme(s) requis manquant(s) : {programs}"
 
 msgid "this ffmpeg cannot encode H.264 with libx264, which every recording uses."
 msgstr "ce ffmpeg ne sait pas encoder en H.264 avec libx264, qu'utilise chaque enregistrement."
+
+msgid "--audio needs an ffmpeg that can read from a sound server, and this one has no pulse input."
+msgstr "--audio a besoin d'un ffmpeg capable de lire depuis un serveur de son, et celui-ci n'a pas d'entrée pulse."
 
 msgid "--cursor is not available with record --gpu: that backend records the compositor's picture, which never has the pointer in it."
 msgstr "--cursor n'est pas disponible avec record --gpu : ce mode enregistre l'image du compositeur, qui ne contient jamais le pointeur."
@@ -396,6 +432,9 @@ msgstr "enregistrement de {display} dans {output} (jusqu'à l'arrêt)"
 
 msgid "recording {display} to {output} ({seconds}s)"
 msgstr "enregistrement de {display} dans {output} ({seconds} s)"
+
+msgid "the sound track is silent: the app made no sound that reached demoreel."
+msgstr "la piste son est muette : l'application n'a produit aucun son qui soit parvenu à demoreel."
 
 msgid "could not take the picture."
 msgstr "impossible de prendre l'image."
@@ -816,6 +855,10 @@ msgstr "pour une application qui a besoin de la carte graphique (OpenGL, Vulkan)
 #. argparse formats this text with %
 msgid "show the mouse pointer; off by default, since with no actions it just sits in the corner"
 msgstr "afficher le pointeur de la souris ; désactivé par défaut, car sans actions il reste simplement dans le coin"
+
+#. argparse formats this text with %
+msgid "put the app's own sound in the video. Off by default; either way the app's sound never plays on your speakers. Needs pactl"
+msgstr "mettre le son propre de l'application dans la vidéo. Désactivé par défaut ; dans tous les cas, le son de l'application ne sort jamais sur vos haut-parleurs. Nécessite pactl"
 
 #. argparse formats this text with %
 msgid "how long to wait for the app's window (default: 20)"

@@ -80,6 +80,19 @@ sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
 ```
 
+**Vir klank** het demoreel `pactl` nodig. Daarmee bereik 'n opgeneemde app se klank nooit u luidsprekers nie, en kan `--audio` daardie klank in die video sit:
+
+```sh
+# openSUSE
+sudo zypper install pulseaudio-utils
+# Debian en Ubuntu
+sudo apt install pulseaudio-utils
+# Fedora
+sudo dnf install pulseaudio-utils
+# Arch
+sudo pacman -S libpulse
+```
+
 ## Vinnige begin
 
 Laat loop `demoreel` vanuit enige gids. Sonder `-o` beland die video in die

@@ -174,6 +174,13 @@ msgid "wf-recorder could not start recording."
 msgstr "wf-recorder 无法开始录制。"
 
 msgid ""
+"could not put the sound in step with the picture: the recorder's log does not say when each started.\n"
+"  What was recorded is kept in {part}, and the log is {log}."
+msgstr ""
+"无法让声音与画面同步：录制程序的日志没有说明两者各自何时开始。\n"
+"  已录制的内容保存在 {part} 中，日志是 {log}。"
+
+msgid ""
 "could not finish the video: turning the recording into {name} failed.\n"
 "  What was recorded is kept in {part}, and {log} says why."
 msgstr ""
@@ -191,6 +198,32 @@ msgstr "读取 {path} 的一帧画面用时超过 {seconds} 秒"
 
 msgid "no frame of {path} could be read"
 msgstr "无法读取 {path} 的任何一帧画面"
+
+msgid "pactl is not installed."
+msgstr "未安装 pactl。"
+
+msgid "pactl did not answer within {seconds}s."
+msgstr "pactl 未在 {seconds} 秒内响应。"
+
+msgid "pactl failed: {text}"
+msgstr "pactl 失败：{text}"
+
+msgid "the sound server does not list exactly one output named {sink}."
+msgstr "声音服务器列出的名为 {sink} 的输出不是恰好一个。"
+
+msgid ""
+"--audio needs a private sound output, and none could be made.\n"
+"  {reason}"
+msgstr ""
+"--audio 需要一个私有声音输出，但无法创建。\n"
+"  {reason}"
+
+msgid ""
+"no private sound output could be made, so the app's sound may play on your speakers.\n"
+"  {reason}"
+msgstr ""
+"无法创建私有声音输出，因此应用的声音可能会从您的扬声器播放出来。\n"
+"  {reason}"
 
 msgid "this is a Flatpak target and the command is missing: {flags}"
 msgstr "这是一个 Flatpak 应用，而命令中缺少：{flags}"
@@ -223,6 +256,9 @@ msgstr "缺少必需的程序：{programs}"
 
 msgid "this ffmpeg cannot encode H.264 with libx264, which every recording uses."
 msgstr "此 ffmpeg 无法用 libx264 编码 H.264，而每次录制都要用到它。"
+
+msgid "--audio needs an ffmpeg that can read from a sound server, and this one has no pulse input."
+msgstr "--audio 需要能从声音服务器读取的 ffmpeg，而此 ffmpeg 没有 pulse 输入。"
 
 msgid "--cursor is not available with record --gpu: that backend records the compositor's picture, which never has the pointer in it."
 msgstr "--cursor 不能与 record --gpu 一起使用：该后端录制的是合成器的画面，其中从不包含鼠标指针。"
@@ -396,6 +432,9 @@ msgstr "正在将 {display} 录制到 {output}（直到停止）"
 
 msgid "recording {display} to {output} ({seconds}s)"
 msgstr "正在将 {display} 录制到 {output}（{seconds} 秒）"
+
+msgid "the sound track is silent: the app made no sound that reached demoreel."
+msgstr "音轨是静音的：应用没有发出任何到达 demoreel 的声音。"
 
 msgid "could not take the picture."
 msgstr "无法截取画面。"
@@ -810,6 +849,10 @@ msgstr "用于需要显卡的应用（OpenGL、Vulkan）：在无头合成器上
 #. argparse formats this text with %
 msgid "show the mouse pointer; off by default, since with no actions it just sits in the corner"
 msgstr "显示鼠标指针；默认关闭，因为没有操作时它只会停在角落里"
+
+#. argparse formats this text with %
+msgid "put the app's own sound in the video. Off by default; either way the app's sound never plays on your speakers. Needs pactl"
+msgstr "将应用自身的声音录入视频。默认关闭；无论如何，应用的声音都不会从您的扬声器播放出来。需要 pactl"
 
 #. argparse formats this text with %
 msgid "how long to wait for the app's window (default: 20)"

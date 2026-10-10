@@ -137,18 +137,22 @@ This section is the Xvfb path's. `wf-recorder` logs no start times, so
 `--gpu --audio` keeps `finish_gpu_video`'s plain copy until § 13 is settled.
 
 So an Xvfb `--audio` run records into the part file `partial_video` names, and
-finishing remuxes it with the sound shifted by the gap, the same shape as
-`finish_gpu_video`:
+`finish_audio_video` remuxes it with the sound shifted by the gap and fitted
+to the picture's length (`<fit>` = the picture's duration minus the gap):
 
 ```
 ffmpeg -i <part> -itsoffset <audio_start - video_start> -i <part> \
-       -map 0:v -map 1:a -c copy -shortest -movflags +faststart -y <output>
+       -map 0:v -map 1:a -c:v copy \
+       -af apad=whole_dur=<fit>,atrim=duration=<fit> \
+       -c:a aac -b:a 192k -ar 48000 -ac 2 -movflags +faststart -y <output>
 ```
 
-`-shortest` ends the sound with the picture. Measured 2026-10-10 on the
-§ 4.4 probe: without it the shifted track ended 0.5 s after the picture
-(start 0.494 s, duration 5.021 s, picture 5.0 s); with it the track ended
-at 4.982 s, and the beep stayed at 1.919 s.
+The sound is fitted to the picture, never the picture to the sound. In a run
+the sound track ends early: ffmpeg stops reading the sound server on `q` with
+some of it still buffered. Measured 2026-10-10 on a `-d 6` run: picture 6.100 s,
+sound 5.652 s in the part file. `-c copy -shortest`, the first design, then
+cut the picture to 5.667 s. Padding with silence and trimming keeps the whole
+picture; only the sound is encoded twice.
 
 Measured 2026-10-10 on Xvfb, with the root window turned white and a beep
 started at the same instant: before the shift the beep led by 0.53 s; after
@@ -197,10 +201,11 @@ template.
   `PIPEWIRE_NODE` naming one sink that run loaded, and a tone the app plays
   through PulseAudio, ALSA or native PipeWire reaches that sink and no other.
   *Test:* ci.sh, where a sound server runs: `record --audio` an `xterm` that
-  plays one tone with `paplay`, then `aplay`, then `pw-play`; each third of
-  the track has `max_volume` above -40 dB, and during the run `pactl -f json
-  list sink-inputs` shows every stream of the app's process group on the
-  run's sink. A `shot` of the same `xterm` runs the sink-input check too.
+  plays one tone with `paplay`, then `aplay`, then `pw-play`, with silence
+  between; the track holds three tones (`silencedetect` ends of silence
+  before the file's end), and during the run `pactl -f json list
+  sink-inputs` shows every stream of the app's process group on the run's
+  sink, from all three players. A `shot` of the same `xterm` runs the sink-input check too.
   The three players isolate the two variables: dropping `PIPEWIRE_NODE`
   silences the `aplay` third only.
   *Breaks when:* either variable is missing, or the app inherits the
@@ -227,7 +232,9 @@ template.
   within 40 ms of each other. `--gpu` is outside it until § 13 is settled.
   *Test:* ci.sh: record an app that turns its window white and starts a beep
   at the same instant; the first bright frame's time and the beep's onset
-  (`silencedetect` `silence_end`) differ by at most 0.040 s. Isolates the
+  (`silencedetect` `silence_end`) differ by at most 0.040 s. The app plays
+  the beep into a sound stream it opened at start: a player started at the
+  flash put its own start-up in the gap, 56 ms measured 2026-10-10. Isolates the
   shift: without it the gap measured 0.53 s.
   *Breaks when:* the remux shift is missing, has the wrong sign, or reads the
   wrong input's `start:`.
@@ -238,7 +245,7 @@ template.
   *Test:* ci.sh: `ffprobe -show_entries stream=codec_type,codec_name,
   sample_rate,channels,start_time,duration` on the INV-2 recording, comparing
   `start_time + duration` per stream. Comparing durations alone passed the
-  § 4.4 probe without `-shortest`, whose sound overran by 0.5 s.
+  § 4.4 probe's unshifted-length sound, which overran the picture by 0.5 s.
   *Breaks when:* the encoder options change, or the shift leaves sound past
   the picture's end.
 
@@ -328,6 +335,9 @@ failure.
   sound server.
 - **`-use_wallclock_as_timestamps 1 -copyts` to align the inputs.** Measured,
   no effect on the gap.
+- **Ending the remux at the sound's end with `-shortest`, copying both
+  streams.** The design until implementation. In a real run the sound ends
+  early, so it cut the picture short (§ 4.4). Do not restore it.
 
 ## 9. Out of scope
 
@@ -369,8 +379,7 @@ failure.
 - `CHANGELOG.md`, the `po/` template and catalogs (new messages, DEMO-0060).
 - `DEMO-0068` § 4.2: an `--audio` row beside `--gpu`'s, recommending
   `pactl`'s package, never requiring it, as `--gpu`'s programs are (its
-  INV-5). openSUSE's is `pulseaudio-utils` (`rpm -qf /usr/bin/pactl`); the
-  others are not verified here.
+  INV-5). The packages are in § 13.
 
 ## 12. Cold-eyes loop log
 
@@ -385,11 +394,12 @@ Rows live in `../reviews/DEMO-0106-app-sound-loop-log.md`.
   starts. If it is out of step and `wf-recorder` logs no start
   times, the fallback is the Xvfb path's shape: record the monitor with
   ffmpeg beside it and shift by the two start times.
-- **`pactl`'s package on each distro.** `install_hint` leaves out any
-  program its family's `PACKAGES` table does not name, so `pactl` needs an
-  entry for every family before `--audio` ships. openSUSE's is
-  `pulseaudio-utils`, measured; the others are unverified here, and
-  DEMO-0068's container installs are where to verify them.
+- **`pactl`'s package on each distro — settled 2026-10-10.** openSUSE,
+  Debian, Ubuntu and Fedora ship it in `pulseaudio-utils`, Arch in
+  `libpulse`. Looked up in each distro's own index: `rpm -qf` here,
+  `apt-get download` and `dpkg -c` in `debian:stable` and `ubuntu:24.04`,
+  `dnf repoquery --whatprovides` in `fedora:44`, `pacman -F` in `archlinux`.
+  `PACKAGES` names all five.
 - **CI coverage.** Most invariants skip on GitHub, which runs no sound
   server. Starting one in the workflow (`pipewire` and `pipewire-pulse`, or
   `pulseaudio --start`) would make them run there; whether it works in the

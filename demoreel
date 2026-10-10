@@ -1131,11 +1131,17 @@ ENCODER = [
     "-threads", "4",
     "-pix_fmt", "yuv420p", "-movflags", "+faststart",
 ]
+# And the sound, for record --audio.
+AUDIO_ENCODER = ["-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2"]
 
 
-def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor):
+def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor,
+                 monitor=None):
     """Record the display. env matters: the GPU backend's Xwayland wants an
     auth cookie, and ffmpeg is as much a client of that display as xdotool.
+
+    With `monitor`, a sink's monitor, the sound is recorded too, into the part
+    file, and finish_audio_video puts it in step with the picture.
 
     Returns the process, its log, and how many seconds before this returns
     the video's first frame was grabbed."""
@@ -1145,10 +1151,16 @@ def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor
     cmd = [
         "ffmpeg", "-hide_banner", "-loglevel", "level+info", "-nostats",
         "-progress", "pipe:1", "-stats_period", "0.05",
+        # A deep queue on each input, so neither drops packets while ffmpeg
+        # reads the other.
+        *(["-thread_queue_size", "1024"] if monitor else []),
         "-f", "x11grab", "-framerate", str(framerate),
         "-draw_mouse", "1" if cursor else "0",
         "-video_size", f"{width}x{height}", "-i", f"{display}.0",
-        *ENCODER, "-y", str(output),
+        *(["-thread_queue_size", "1024", "-f", "pulse", "-i", monitor]
+          if monitor else []),
+        *ENCODER, *(AUDIO_ENCODER if monitor else []),
+        "-y", str(partial_video(output) if monitor else output),
     ]
     # Deliberate: the handle is owned by the ffmpeg process and closed in
     # record()'s finally block, so it must outlive this statement.
@@ -1171,6 +1183,7 @@ def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor
         proc.kill()
         proc.wait()
         log.close()
+        partial_video(output).unlink(missing_ok=True)
         tail = "\n".join(
             line for line in Path(logfile).read_text(errors="replace").splitlines()
             if not line.startswith("[info]")).strip()
@@ -1192,12 +1205,13 @@ def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor
 
 
 def partial_video(output):
-    """Where record --gpu's recorder writes before finish_gpu_video: beside
-    the output, on its disk, and not in the state directory, which is RAM."""
+    """Where a recording is written before it is finished -- record --gpu's,
+    and an --audio one's: beside the output, on its disk, and not in the
+    state directory, which is RAM."""
     return output.with_name(f".{output.stem}.demoreel-part.mp4")
 
 
-def start_wf_recorder(env, wayland, framerate, output, logfile):
+def start_wf_recorder(env, wayland, framerate, output, logfile, monitor=None):
     """Record cage's own output, for record --gpu (DEMO-0111).
 
     Under a busy 3D app the X side's copy of the picture goes stale, so x11grab
@@ -1205,7 +1219,9 @@ def start_wf_recorder(env, wayland, framerate, output, logfile):
     the same run (DEMO-0109). -D asks for every frame rather than only changed
     ones, without which SIGINT is also ignored while the screen is still, and
     -y stops it prompting before an overwrite. The encoder settings match
-    start_ffmpeg's, so the two backends hand back the same kind of file.
+    start_ffmpeg's, so the two backends hand back the same kind of file. With
+    `monitor` it records the sound as well; whether that track is in step is
+    not measured, as wf-recorder would not start here (DEMO-0106 § 13).
 
     It prints no progress reports, so the start signal is the line announcing
     its output, printed once the encoder has its first frame. The countdown is
@@ -1217,6 +1233,10 @@ def start_wf_recorder(env, wayland, framerate, output, logfile):
     cmd = ["wf-recorder", "-D", "-y", "-r", str(framerate),
            "-c", "libx264", "-p", "preset=veryfast", "-p", "crf=23",
            "-x", "yuv420p", "-f", str(part)]
+    if monitor:
+        # One argument: the device is optional (-a, --audio [=DEVICE]), so a
+        # separate one would be read as the next option.
+        cmd += [f"--audio={monitor}", "-C", "aac"]
     # Deliberate: closed in record()'s finally block, as start_ffmpeg's is.
     log = open(logfile, "wb")  # noqa: SIM115
     # Unbuffered, or a readline that pulls in several lines leaves the rest in
@@ -1257,13 +1277,75 @@ def finish_gpu_video(output, logfile):
     to the front. Nothing is re-encoded. The partial file is kept if the copy
     fails, and the message names it.
     """
+    finish_part(output, logfile, ["-i", str(partial_video(output)), "-c", "copy"])
+
+
+def input_starts(logfile):
+    """Each input's wallclock start in ffmpeg's log, by kind: x11grab, pulse."""
+    starts, kind = {}, None
+    for line in Path(logfile).read_text(errors="replace").splitlines():
+        opened = re.search(r"Input #\d+, (\w+), from", line)
+        if opened:
+            kind = opened[1]
+            continue
+        found = re.search(r"\bstart: (-?\d+\.\d+)", line)
+        if kind and found:
+            starts.setdefault(kind, float(found[1]))
+    return starts
+
+
+def finish_audio_video(output, logfile):
+    """Put an --audio recording's sound in step with its picture (DEMO-0106).
+
+    ffmpeg starts each stream at zero, but the pulse input opens later than
+    x11grab, so the sound came out early (measured: a beep 0.53 s before the
+    flash played with it). Each input's wallclock start is in the log, and
+    shifting the sound by the gap brought the two to 14 ms apart.
+
+    The sound is then fitted to the picture rather than the picture to the
+    sound. The pulse input stops with a third of a second or so still
+    buffered, so its track ends early, and -shortest cut that much off the
+    picture: a -d 6 run came out 5.67 s long. So the sound is padded with
+    silence to the picture's end and trimmed there, and only the sound is
+    encoded again. The picture is copied as it was recorded.
+    """
+    part = partial_video(output)
+    if not part.exists():
+        return
+    starts = input_starts(logfile)
+    length = stream_length(part, "v:0")
+    if "x11grab" not in starts or "pulse" not in starts or length is None:
+        die(tr("could not put the sound in step with the picture: the recorder's "
+               "log does not say when each started.\n  What was recorded is kept "
+               "in {part}, and the log is {log}.", part=part, log=logfile))
+    shift = starts["pulse"] - starts["x11grab"]
+    fit = f"{max(0.0, length - shift):.6f}"
+    finish_part(output, logfile, [
+        "-i", str(part), "-itsoffset", f"{shift:.6f}", "-i", str(part),
+        "-map", "0:v", "-map", "1:a", "-c:v", "copy",
+        "-af", f"apad=whole_dur={fit},atrim=duration={fit}", *AUDIO_ENCODER])
+
+
+def stream_length(path, stream):
+    """How long `stream` of the file at `path` runs, in seconds; None if
+    ffprobe cannot say."""
+    try:
+        return float(subprocess.run(
+            ["ffprobe", "-v", "error", "-select_streams", stream,
+             "-show_entries", "stream=duration", "-of", "csv=p=0", str(path)],
+            capture_output=True, text=True, timeout=CALL_TIMEOUT, check=True).stdout)
+    except (subprocess.SubprocessError, ValueError):
+        return None
+
+
+def finish_part(output, logfile, inputs):
+    """Write the part file to the output with `inputs`, then remove it."""
     part = partial_video(output)
     if not part.exists():
         return
     copy = subprocess.run(  # noqa: PLW1510 - a failed copy is handled below
         ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
-         "-i", str(part), "-c", "copy", "-movflags", "+faststart",
-         "-y", str(output)],
+         *inputs, "-movflags", "+faststart", "-y", str(output)],
         capture_output=True, timeout=6 * CALL_TIMEOUT)
     if copy.returncode != 0:
         with open(logfile, "ab") as log:
@@ -1456,6 +1538,151 @@ def end_process(proc, group=False):
             pass
 
 
+# Every record and shot gives its app a sound output of its own, a null sink
+# that nothing plays, so the app's sound never reaches the speakers; --audio
+# records that sink's monitor (DEMO-0105, DEMO-0106). The name carries the
+# run's pid, which is how a sink left by a killed run is told from a live one's.
+SINK_PREFIX = f"demoreel-{os.getuid()}-"
+# volumedetect's loudest moment at or below this is a silent track. A null
+# sink with nothing playing records digital silence, far below it.
+SILENT_DB = -60.0
+
+
+class SoundUnavailable(Exception):
+    """No private sound output could be made; the message says why."""
+
+
+def pactl(*args):
+    """Run pactl and return what it printed; SoundUnavailable if it failed.
+    It talks to PulseAudio and to PipeWire's PulseAudio server alike."""
+    if shutil.which("pactl") is None:
+        raise SoundUnavailable(tr("pactl is not installed."))
+    try:
+        done = subprocess.run(["pactl", *map(str, args)], capture_output=True,
+                              text=True, timeout=CALL_TIMEOUT, check=False)
+    except subprocess.TimeoutExpired:
+        raise SoundUnavailable(tr("pactl did not answer within {seconds}s.",
+                                  seconds=CALL_TIMEOUT)) from None
+    except OSError as exc:
+        raise SoundUnavailable(exc.strerror) from None
+    if done.returncode != 0:
+        said = (done.stderr or done.stdout).strip() or f"exit {done.returncode}"
+        raise SoundUnavailable(tr("pactl failed: {text}", text=said))
+    return done.stdout
+
+
+class Sound:
+    """A run's private sink: the name the app is sent to, and the module index
+    that unloads it. Only the run that loaded it unloads it, in its finally;
+    `stop` never does, and a sink left behind is found by name alone."""
+
+    def __init__(self, sink, index):
+        self.sink = sink
+        self.index = index
+
+    def env(self):
+        # Both. With PULSE_SINK alone, aplay's tone went through PipeWire's
+        # ALSA plugin to the speakers; PIPEWIRE_NODE catches it and pw-play
+        # (measured 2026-10-10). A Flatpak passes both into its sandbox.
+        return {"PULSE_SINK": self.sink, "PIPEWIRE_NODE": self.sink}
+
+    def unload(self):
+        """Unload the sink; a second call does nothing."""
+        if self.index is not None:
+            with contextlib.suppress(SoundUnavailable):
+                pactl("unload-module", self.index)
+            self.index = None
+
+
+def sweep_sinks():
+    """Unload every sink a dead run of this user left behind.
+
+    A run killed with SIGKILL runs no finally, and its sink stays loaded
+    (measured). Only names starting with this user's prefix are touched, and
+    only those whose pid is gone. A pid reused by another process keeps its
+    sink until that process ends: a sink nothing plays to costs nothing, and
+    unloading a live run's would cut its sound off.
+    """
+    for line in pactl("list", "short", "modules").splitlines():
+        fields = line.split("\t")
+        if len(fields) < 3 or fields[1] != "module-null-sink":
+            continue
+        found = re.search(rf"(?:^|\s)sink_name={re.escape(SINK_PREFIX)}(\d+)-",
+                          fields[2])
+        if found and not alive(int(found[1])):
+            with contextlib.suppress(SoundUnavailable):
+                pactl("unload-module", fields[0])
+
+
+def load_sink(name):
+    """Load this run's private sink and prove it is the only one of its name.
+
+    The server does not make sink names unique: two loads of one name both
+    succeeded (measured). So the name is not trusted to be free beforehand;
+    it is checked after loading, as claim_name checks a run name.
+    """
+    sweep_sinks()
+    sink = f"{SINK_PREFIX}{os.getpid()}-{secrets.token_hex(8)}"
+    label = re.sub(r"[^A-Za-z0-9._-]", "_", name)
+    sound = Sound(sink, pactl(
+        "load-module", "module-null-sink", f"sink_name={sink}",
+        f"sink_properties=device.description=demoreel-{label}").strip())
+    try:
+        names = [line.split("\t")[1]
+                 for line in pactl("list", "short", "sinks").splitlines()
+                 if "\t" in line]
+    except SoundUnavailable:
+        sound.unload()
+        raise
+    if names.count(sink) != 1:
+        sound.unload()
+        raise SoundUnavailable(tr("the sound server does not list exactly one "
+                                  "output named {sink}.", sink=sink))
+    return sound
+
+
+def private_sound(audio, name):
+    """The run's private sink, or None where none can be made.
+
+    Without --audio that is a note, and the app's sound may be heard. With it
+    the run ends here, before the app starts.
+    """
+    try:
+        return load_sink(name)
+    except SoundUnavailable as exc:
+        if audio:
+            die(tr("--audio needs a private sound output, and none could be "
+                   "made.\n  {reason}", reason=exc))
+        note(tr("no private sound output could be made, so the app's sound may "
+                "play on your speakers.\n  {reason}", reason=exc))
+        return None
+
+
+def has_pulse_input():
+    """Whether this ffmpeg can read from a sound server; True if it cannot
+    tell, as has_libx264 does."""
+    try:
+        devices = subprocess.run(["ffmpeg", "-hide_banner", "-devices"],
+                                 capture_output=True, text=True,
+                                 timeout=CALL_TIMEOUT, check=False).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return True
+    return re.search(r"^ D\S* +pulse\b", devices, re.MULTILINE) is not None
+
+
+def loudest(output):
+    """The loudest moment of the video's sound in dB; None if it cannot tell."""
+    try:
+        done = subprocess.run(
+            ["ffmpeg", "-nostdin", "-hide_banner", "-i", str(output), "-map", "0:a",
+             "-af", "volumedetect", "-f", "null", "-"],
+            capture_output=True, text=True, timeout=6 * CALL_TIMEOUT, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    found = re.search(r"max_volume: (-?[\d.]+|-inf) dB", done.stderr)
+    return float(found[1]) if found else None
+
+
 FLATPAK_FLAGS = ("--socket=x11", "--nosocket=wayland", "--filesystem=/tmp/.X11-unix")
 
 
@@ -1490,28 +1717,29 @@ def warn_if_flatpak_underflagged(command):
 # Which package gives each program, per package manager, looked up in each
 # distro's own package index on 2026-09-27 (DEMO-0051): openSUSE from rpm on
 # this machine, the rest with apt-file, dnf repoquery and pacman -F in their
-# own containers. Knowledge about distros, not about apps.
+# own containers. pactl's, for --audio, the same way on 2026-10-10
+# (DEMO-0106). Knowledge about distros, not about apps.
 PACKAGES = {
     "zypper": ("sudo zypper install", {
         "ffmpeg": "ffmpeg", "ffprobe": "ffmpeg", "xdotool": "xdotool",
         "xauth": "xauth", "Xvfb": "xorg-x11-server-Xvfb", "cage": "cage",
         "Xwayland": "xwayland", "wlr-randr": "wlr-randr",
-        "wf-recorder": "wf-recorder"}),
+        "wf-recorder": "wf-recorder", "pactl": "pulseaudio-utils"}),
     "apt": ("sudo apt install", {
         "ffmpeg": "ffmpeg", "ffprobe": "ffmpeg", "xdotool": "xdotool",
         "xauth": "xauth", "Xvfb": "xvfb", "cage": "cage",
         "Xwayland": "xwayland", "wlr-randr": "wlr-randr",
-        "wf-recorder": "wf-recorder"}),
+        "wf-recorder": "wf-recorder", "pactl": "pulseaudio-utils"}),
     "dnf": ("sudo dnf install", {
         "ffmpeg": "ffmpeg", "ffprobe": "ffmpeg", "xdotool": "xdotool",
         "xauth": "xorg-x11-xauth", "Xvfb": "xorg-x11-server-Xvfb",
         "cage": "cage", "Xwayland": "xorg-x11-server-Xwayland",
-        "wlr-randr": "wlr-randr", "wf-recorder": "wf-recorder"}),
+        "wlr-randr": "wlr-randr", "wf-recorder": "wf-recorder", "pactl": "pulseaudio-utils"}),
     "pacman": ("sudo pacman -S", {
         "ffmpeg": "ffmpeg", "ffprobe": "ffmpeg", "xdotool": "xdotool",
         "xauth": "xorg-xauth", "Xvfb": "xorg-server-xvfb", "cage": "cage",
         "Xwayland": "xorg-xwayland", "wlr-randr": "wlr-randr",
-        "wf-recorder": "wf-recorder"}),
+        "wf-recorder": "wf-recorder", "pactl": "libpulse"}),
 }
 # /etc/os-release ID or ID_LIKE -> package manager.
 DISTRO_FAMILIES = {"opensuse": "zypper", "suse": "zypper", "debian": "apt",
@@ -1637,6 +1865,13 @@ def prepare(a, suffix):
     if recording and not has_libx264():
         die(tr("this ffmpeg cannot encode H.264 with libx264, which every "
                "recording uses.") + x264_advice(distro_family()))
+    if getattr(a, "audio", False):
+        if shutil.which("pactl") is None:
+            die(tr("missing required program(s): {programs}", programs="pactl")
+                + install_hint(["pactl"]))
+        if not has_pulse_input():
+            die(tr("--audio needs an ffmpeg that can read from a sound server, "
+                   "and this one has no pulse input."))
     if recording and a.gpu and a.cursor:
         die(tr("--cursor is not available with record --gpu: that backend records "
                "the compositor's picture, which never has the pointer in it."))
@@ -1711,15 +1946,15 @@ def park_pointer(env, width, height):
     xdotool(env, "mousemove", width - 1, height - 1)
 
 
-def launch(a, command, width, height, base, displaylog, appout):
-    """Start the private display and the app on it.
+def launch(a, command, width, height, base, displaylog, appout, sound):
+    """Start the private display and the app on it, sent to `sound`'s sink.
 
     Returns (server, app, display, auth, env, wayland). server is Xvfb, or on
     --gpu the cage that holds Xwayland, and ends with end_server. wayland is
     cage's socket name on --gpu, which only the recorder uses, and None on
     Xvfb. Both backends start the app afterwards, so the pointer is parked
     before the app first sees it. Nothing is left running if the app cannot
-    be started.
+    be started, the sink included.
     """
     if a.gpu:
         server, display, auth, wayland = start_gpu_display(width, height, base,
@@ -1728,12 +1963,14 @@ def launch(a, command, width, height, base, displaylog, appout):
         server, display, auth = start_xvfb(width, height, base, displaylog)
         wayland = None
     env = dict(os.environ, DISPLAY=display, WAYLAND_DISPLAY=NO_WAYLAND,
-               XAUTHORITY=str(auth))
+               XAUTHORITY=str(auth), **(sound.env() if sound else {}))
     park_pointer(env, width, height)
     try:
         app = subprocess.Popen(command, env=env, start_new_session=True,
                                stdout=appout, stderr=subprocess.STDOUT)
     except (FileNotFoundError, PermissionError) as exc:
+        if sound:
+            sound.unload()
         end_server(server)
         auth.unlink(missing_ok=True)
         die(tr("could not run {command}: {reason}.\n"
@@ -1867,12 +2104,15 @@ def settle(a, env, display, width, height):
                 seconds=a.settle))
 
 
-def start_recorder(a, env, display, wayland, width, height, output, logpath):
+def start_recorder(a, env, display, wayland, width, height, output, logpath,
+                   sound):
     """The recorder, its log, and how long ago its first frame was taken."""
+    monitor = f"{sound.sink}.monitor" if a.audio else None
     if a.gpu:
-        return (*start_wf_recorder(env, wayland, a.framerate, output, logpath), 0.0)
+        return (*start_wf_recorder(env, wayland, a.framerate, output, logpath,
+                                   monitor), 0.0)
     return start_ffmpeg(env, display, width, height, a.framerate, output,
-                        logpath, a.cursor)
+                        logpath, a.cursor, monitor)
 
 
 def run_countdown(a, env, app, window, display, recorder, width, height,
@@ -2064,17 +2304,19 @@ def cmd_record(a):
     # every check this tool can make.
     # Deliberate: as above - closed in the finally block, not here.
     appout = open(applog, "wb") if applog else sys.stderr  # noqa: SIM115
-    server = app = recorder = log = auth = None
+    server = app = recorder = log = auth = sound = None
     checks = Checks()
     try:
         write_state(statefile, state)
+        sound = private_sound(a.audio, a.name)
         server, app, display, auth, env, wayland = launch(
-            a, command, width, height, state_dir() / a.name, displaylog, appout)
+            a, command, width, height, state_dir() / a.name, displaylog, appout,
+            sound)
         window = place_window(env, app, a, width, height, picture=False)
         settle(a, env, display, width, height)
 
         recorder, log, lag = start_recorder(a, env, display, wayland, width,
-                                            height, output, logpath)
+                                            height, output, logpath, sound)
         started = time.monotonic() - lag
         write_state(statefile, dict(state, display=display, recording=True))
         note(tr("recording {display} to {output} (until stopped)",
@@ -2096,13 +2338,22 @@ def cmd_record(a):
         if appout is not sys.stderr:
             appout.close()
         end_process(app, group=True)
+        if sound is not None:
+            sound.unload()
         end_server(server)
         if auth is not None:
             auth.unlink(missing_ok=True)
         if a.gpu:
             finish_gpu_video(output, logpath)
+        elif a.audio:
+            finish_audio_video(output, logpath)
 
     vouch_for(a, output, logpath, width, height, checks)
+    if a.audio:
+        level = loudest(output)
+        if level is not None and level <= SILENT_DB:
+            note(tr("the sound track is silent: the app made no sound that reached "
+                    "demoreel."))
     summarise(output)
     for stale in (logpath, displaylog):
         stale.unlink(missing_ok=True)  # only worth keeping when something failed
@@ -2150,11 +2401,12 @@ def cmd_shot(a):
     displaylog = rundir / "display.log"
     # Deliberate: closed in the finally block, as in cmd_record.
     appout = open(applog, "wb") if applog else sys.stderr  # noqa: SIM115
-    server = app = auth = None
+    server = app = auth = sound = None
     try:
+        sound = private_sound(False, "shot")
         server, app, display, auth, env, _ = launch(a, command, width, height,
                                                     rundir / "shot", displaylog,
-                                                    appout)
+                                                    appout, sound)
         window = place_window(env, app, a, width, height, picture=True)
         try:
             drawn = wait_until_drawn(env, display, width, height, a.settle)
@@ -2185,6 +2437,8 @@ def cmd_shot(a):
         if appout is not sys.stderr:
             appout.close()
         end_process(app, group=True)
+        if sound is not None:
+            sound.unload()
         end_server(server)
         if auth is not None:
             auth.unlink(missing_ok=True)
@@ -2232,6 +2486,11 @@ def cmd_check(a):
                 ready = False
         else:
             note(tr("{name}: ready", name=name))
+    # Like --gpu's, this line never changes the exit status (DEMO-0106 INV-8).
+    problems = audio_problems()
+    note(tr("{name}: NOT READY", name="--audio") + "\n  - " + "\n  - ".join(
+        problem.replace("\n", "\n    ") for problem in problems) if problems
+         else tr("{name}: ready", name="--audio"))
     # The finishing commands need no display, and nothing here changes the
     # exit status: that still says only whether the default backend records.
     videos, words = finishing_problems()
@@ -2243,6 +2502,22 @@ def cmd_check(a):
              else tr("{name}: ready", name=name))
     if not ready:
         sys.exit(1)
+
+
+def audio_problems():
+    """Why record --audio cannot run here; [] if it can. Sweeps leftover
+    sinks on the way, as every run does."""
+    if shutil.which("pactl") is None:
+        return [tr("missing {programs}", programs="pactl") + install_hint(["pactl"])]
+    problems = []
+    if not has_pulse_input():
+        problems.append(tr("--audio needs an ffmpeg that can read from a sound server, "
+                           "and this one has no pulse input."))
+    try:
+        sweep_sinks()
+    except SoundUnavailable as exc:
+        problems.append(str(exc))
+    return problems
 
 
 def display_problem():
@@ -3501,6 +3776,10 @@ def build_parser():
     rec.add_argument("--cursor", action="store_true",
                      help=tr_help("show the mouse pointer; off by default, since with "
                                   "no actions it just sits in the corner"))
+    rec.add_argument("--audio", action="store_true",
+                     help=tr_help("put the app's own sound in the video. Off by "
+                                  "default; either way the app's sound never plays "
+                                  "on your speakers. Needs pactl"))
     rec.add_argument("--startup-timeout", type=float, default=20, metavar="SECONDS",
                      help=tr_help("how long to wait for the app's window (default: 20)"))
     rec.add_argument("command", nargs=argparse.REMAINDER,

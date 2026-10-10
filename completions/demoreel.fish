@@ -69,6 +69,7 @@ complete -c demoreel -n '__demoreel_on record shot' -l app-log -r -F -d "keep th
 complete -c demoreel -n '__demoreel_on record shot' -l settle -x -d 'wait for the first frame'
 complete -c demoreel -n '__demoreel_on record shot' -l gpu -d 'for an app that needs the graphics card'
 complete -c demoreel -n '__demoreel_on record shot' -l cursor -d 'show the mouse pointer'
+complete -c demoreel -n '__demoreel_on record' -l audio -d "put the app's own sound in the video"
 complete -c demoreel -n '__demoreel_on record shot' -l startup-timeout -x -d "how long to wait for the app's window"
 
 complete -c demoreel -n '__demoreel_on stop' -a '(__demoreel_running)' -d 'running recording'

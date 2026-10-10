@@ -8,7 +8,9 @@ Working. The whole tool is one executable file, `demoreel` — Python 3, standar
 library only, no build step, no dependency manifest. Runtime dependencies are
 `xauth`, `ffmpeg` and `xdotool` on both backends; `Xvfb` for the default one;
 `cage`, `Xwayland` and `wlr-randr` for `--gpu`, and `wf-recorder` for
-`record --gpu`. All are checked at startup against what the run will use. The
+`record --gpu`. `pactl` is optional: without it a run's app may be heard on
+the speakers, and `record --audio` is refused. All are checked at startup
+against what the run will use. The
 finishing commands need `ffmpeg` and `ffprobe` alone, and `fc-match` to find a
 bold font for text.
 
@@ -158,6 +160,13 @@ something behaves unexpectedly:
   which it already gets.
 
 ## Traps
+
+- **The app's private sound output needs two variables, `PULSE_SINK` and
+  `PIPEWIRE_NODE`, never one.** With `PULSE_SINK` alone, an ALSA app (`aplay`)
+  goes through PipeWire's ALSA plugin to the user's speakers, and so does a
+  native PipeWire app. Measured: dropping `PIPEWIRE_NODE` sent two of the
+  gate's three tones to the real output. Do not "tidy" `Sound.env` down to
+  one. A probe that plays sound outside demoreel needs both too.
 
 - **`WAYLAND_DISPLAY` is set to a name that cannot resolve, not unset — and
   that is the whole fix, not a stylistic choice.** `wl_display_connect(NULL)`

@@ -174,6 +174,13 @@ msgid "wf-recorder could not start recording."
 msgstr "wf-recorder לא הצליח להתחיל להקליט."
 
 msgid ""
+"could not put the sound in step with the picture: the recorder's log does not say when each started.\n"
+"  What was recorded is kept in {part}, and the log is {log}."
+msgstr ""
+"לא ניתן לסנכרן את הקול עם התמונה: היומן של המקליט לא מציין מתי כל אחד מהם התחיל.\n"
+"  מה שהוקלט נשמר ב־{part}, והיומן הוא {log}."
+
+msgid ""
 "could not finish the video: turning the recording into {name} failed.\n"
 "  What was recorded is kept in {part}, and {log} says why."
 msgstr ""
@@ -191,6 +198,32 @@ msgstr "קריאת פריים מתוך {path} ארכה יותר מ־{seconds} ש
 
 msgid "no frame of {path} could be read"
 msgstr "לא ניתן היה לקרוא אף פריים מתוך {path}"
+
+msgid "pactl is not installed."
+msgstr "pactl אינו מותקן."
+
+msgid "pactl did not answer within {seconds}s."
+msgstr "pactl לא ענה בתוך {seconds} שניות."
+
+msgid "pactl failed: {text}"
+msgstr "pactl נכשל: {text}"
+
+msgid "the sound server does not list exactly one output named {sink}."
+msgstr "שרת הקול לא מציג בדיוק פלט אחד בשם {sink}."
+
+msgid ""
+"--audio needs a private sound output, and none could be made.\n"
+"  {reason}"
+msgstr ""
+"--audio צריך פלט קול פרטי, ולא ניתן היה ליצור אף אחד.\n"
+"  {reason}"
+
+msgid ""
+"no private sound output could be made, so the app's sound may play on your speakers.\n"
+"  {reason}"
+msgstr ""
+"לא ניתן היה ליצור פלט קול פרטי, ולכן הקול של היישום עלול להישמע ברמקולים שלך.\n"
+"  {reason}"
 
 msgid "this is a Flatpak target and the command is missing: {flags}"
 msgstr "היעד הוא Flatpak, ובפקודה חסרים: {flags}"
@@ -223,6 +256,9 @@ msgstr "חסרות תוכניות נדרשות: {programs}"
 
 msgid "this ffmpeg cannot encode H.264 with libx264, which every recording uses."
 msgstr "ה־ffmpeg הזה לא יכול לקודד H.264 עם libx264, שבו משתמשת כל הקלטה."
+
+msgid "--audio needs an ffmpeg that can read from a sound server, and this one has no pulse input."
+msgstr "--audio צריך ffmpeg שיכול לקרוא משרת קול, ול־ffmpeg הזה אין קלט pulse."
 
 msgid "--cursor is not available with record --gpu: that backend records the compositor's picture, which never has the pointer in it."
 msgstr "--cursor אינו זמין עם record --gpu: המנגנון הזה מקליט את התמונה של שרת התצוגה, ובה סמן העכבר אף פעם לא מופיע."
@@ -396,6 +432,9 @@ msgstr "מקליט את {display} אל {output} (עד לעצירה)"
 
 msgid "recording {display} to {output} ({seconds}s)"
 msgstr "מקליט את {display} אל {output} ({seconds} שניות)"
+
+msgid "the sound track is silent: the app made no sound that reached demoreel."
+msgstr "רצועת הקול שקטה: היישום לא השמיע שום קול שהגיע ל־demoreel."
 
 msgid "could not take the picture."
 msgstr "לא ניתן לצלם את התמונה."
@@ -816,6 +855,10 @@ msgstr "ליישום שצריך את כרטיס המסך (OpenGL, Vulkan): הק�
 #. argparse formats this text with %
 msgid "show the mouse pointer; off by default, since with no actions it just sits in the corner"
 msgstr "הצגת סמן העכבר; כבוי כברירת מחדל, כי בלי פעולות הוא סתם יושב בפינה"
+
+#. argparse formats this text with %
+msgid "put the app's own sound in the video. Off by default; either way the app's sound never plays on your speakers. Needs pactl"
+msgstr "הכנסת הקול של היישום עצמו לסרטון. כבוי כברירת מחדל; בכל מקרה הקול של היישום אף פעם לא נשמע ברמקולים שלך. דורש pactl"
 
 #. argparse formats this text with %
 msgid "how long to wait for the app's window (default: 20)"

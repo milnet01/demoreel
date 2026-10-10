@@ -64,9 +64,9 @@ One `.mp4` file. Just the app, filling the frame. Or, with `demoreel shot`, one
 then be cut, joined to others and given a line of text — see
 [Finishing a recording](#finishing-a-recording).
 
-The video is **silent** for now. Recording an app's own sound, and adding
-music to a film, are planned; until then, sound is a second step in something
-else.
+The video is **silent** unless you ask for the app's own sound with
+`--audio` — see [`--audio`](#--audio-the-apps-own-sound). Either way, the app's
+sound never plays on your speakers. Adding music to a film is planned.
 
 ## Install
 
@@ -139,6 +139,20 @@ sudo apt install cage xwayland wlr-randr wf-recorder
 sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 # Arch
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
+```
+
+**For sound**, demoreel needs `pactl`. With it, a recorded app's sound never
+reaches your speakers, and `--audio` can put that sound in the video:
+
+```sh
+# openSUSE
+sudo zypper install pulseaudio-utils
+# Debian and Ubuntu
+sudo apt install pulseaudio-utils
+# Fedora
+sudo dnf install pulseaudio-utils
+# Arch
+sudo pacman -S libpulse
 ```
 
 ## Quick start
@@ -564,7 +578,39 @@ you would only find out by watching it.
 | `--app-log` | Save what the app printed to a file. |
 | `--settle` | Wait for the app to draw something before starting to record. |
 | `--gpu` | For apps that need the graphics card. |
+| `--audio` | Put the app's own sound in the video. Off by default. `record` only. |
 | `--startup-timeout` | How long to wait for the app's window to appear. |
+
+### `--audio`: the app's own sound
+
+Every `record` and `shot` gives the app a private sound output that nothing
+plays. So a recorded app is never heard on your speakers, and two recordings
+running at once never hear each other. `--audio` records that output into the
+video, in step with the picture:
+
+```sh
+demoreel record --audio -o demo.mp4 -d 30 -- my-app
+```
+
+- **Without `--audio` the video has no sound track at all**, as before.
+- **If no private output can be made** — no `pactl`, or no sound server — a
+  run without `--audio` goes on and says the app may be heard. A run with
+  `--audio` stops before the app starts, and says why. `demoreel check` has an
+  `--audio` line that says whether it can record here.
+- **A silent track is not an error.** If the app made no sound that reached
+  demoreel, the run says so and still hands back the video.
+- **It keeps the sound away from your speakers, not from you.** Any program
+  you run can list the private output and listen to it, as it can every other
+  sound output on your desktop. demoreel adds no other access.
+- **An app that picks its sound output by name** escapes the private one,
+  and its sound goes where it chose.
+- **A Flatpak needs sound permission** in its manifest, usually
+  `--socket=pulseaudio`. Without it the app makes no sound, and the track is
+  silent.
+- **With `--gpu`, whether sound and picture stay in step is not yet
+  measured.** On the default backend they are within 40 ms.
+- **The finishing commands drop the sound for now.** `edit`, `trim`,
+  `caption`, `join` and `card` write silent videos until music lands.
 
 ### Scripted steps
 
@@ -1015,6 +1061,14 @@ length to the frame, 104 frames, using 116 MB of memory. Styled text verified
 the same day, by looking at frames and by breaking each part of the code in
 turn to see its check fail: a colour, an outline, a shadow, a named font, a
 band that fades with its text, and each of the three places.
+
+`--audio` verified on 2026-10-10 on the default backend, by recording and
+measuring: a tone from each of `paplay`, `aplay` and `pw-play` reached the
+video, and none reached the speakers; a white flash and the beep played with it
+landed within 13 ms of each other over four runs; two runs at once did not hear
+each other. Each of those checks was broken in turn to see it fail. `--gpu
+--audio` is not yet verified, because `wf-recorder` does not start on this
+machine.
 
 `--settle` is checked by the gate against a window that is one flat colour for
 four seconds and then draws: without it the blank check fails the run; with it
