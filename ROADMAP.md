@@ -3837,6 +3837,10 @@ system looks for them.
   review-contract loop 1 is done (5 verified, 5 fixed); loop 2, the
   cap for a spec, is owed before anything is built. Then set Status to
   accepted.
+  Progress (2026-10-10): review-contract loop 2, the cap for a spec,
+  done: 6 verified, 6 fixed, 1 dismissed; a calm cap. The spec is
+  accepted (2026-10-10) and ready to build. Loop 2's fixes were read by
+  no lane; implementation is their reader.
   **Layman:** Install demoreel on openSUSE with zypper, dependencies included.
   Kind: package.
   Source: user-request-2026-09-25.

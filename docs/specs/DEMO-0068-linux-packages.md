@@ -1,7 +1,7 @@
 <!-- ants-spec-format: 1 -->
 # DEMO-0068 — Ship demoreel as .deb, .rpm and Arch packages built and tested in CI
 
-**Status:** spec draft (2026-10-08).
+**Status:** accepted (2026-10-10).
 **Kind:** package.
 **Source:** ROADMAP DEMO-0068 (user-request-2026-09-25; design decisions 2026-10-08).
 **Pairs with:** DEMO-0069 and DEMO-0070 (built under this contract; no spec of their own), DEMO-0072 (the from-source install reuses § 4.1's script), DEMO-0174 (`record --gpu` on openSUSE, § 4.6).
@@ -132,8 +132,8 @@ All live under `packaging/`, all are noarch, and all take the version from
   with shebang mangling turned off so § 4.1 holds.
 - **`PKGBUILD`** — `package()` runs `install.sh`. Its `source=` is the
   release's own tarball, `demoreel-<v>.tar.gz`, attached by the same job, and
-  its `sha256sums=` is that file's hash. The job writes both into the
-  `PKGBUILD` it attaches. The tree's copy names no version or hash.
+  its `sha256sums=` is that file's hash. `./ci.sh --packages --out` writes
+  both into the `PKGBUILD` it leaves in `<dir>`. The tree's copy names no version or hash.
 
 ### 4.4 Build and install test: `./ci.sh --packages`
 
@@ -142,7 +142,7 @@ way the release does, then installs each in a clean container of every
 target and runs it there. Containers run under `podman`, as the parity leg
 does. The full gate runs it, except on GitHub (`GITHUB_ACTIONS`), where the
 `packages` job runs it instead, and inside the parity container
-(`DEMOREEL_PARITY_INSIDE`). A documentation-only push does not run it.
+(`DEMOREEL_PARITY_INSIDE`). `./ci.sh --docs` does not run it.
 **Called directly, `./ci.sh --packages` always runs**, and fails rather than
 skips when it cannot.
 
@@ -220,12 +220,13 @@ output to paste.
 - **INV-4** — The required programs come from the distro's own repositories.
   *Test:* in each clean container, the install exits 0 with only the image's
   default repositories enabled, and `command -v` finds `python3`, `Xvfb`,
-  `xauth`, `xdotool`, `ffmpeg` and `fc-match` afterwards.
+  `xauth`, `xdotool`, `ffmpeg`, `ffprobe` and `fc-match` afterwards.
   *Breaks when:* a dependency is misnamed, or names a package only a
   third-party repository carries.
 
 - **INV-5** — The `--gpu` programs are recommended, never required.
   *Test:* the openSUSE container installs once without `--recommends`, and
+  the Ubuntu container once with `--no-install-recommends`; after each,
   `command -v cage` finds nothing. Where § 4.4 installs with recommends, the
   four programs are present on every distro that packages them. The Arch
   package lists the four under `optdepends`.
@@ -251,13 +252,14 @@ output to paste.
   *Breaks when:* a packaging file carries its own version and a bump misses it.
 
 - **INV-8** — Removing the package removes everything it installed.
-  *Test:* after removal in each container, none of § 4.1's paths exists.
+  *Test:* after removal in each container, none of § 4.1's paths exists, and
+  neither does `/usr/share/demoreel/`.
   *Breaks when:* a file is created at install time but owned by no package,
   such as a byte-compiled cache.
 
 - **INV-9** — The attached `PKGBUILD` builds from the attached tarball.
-  *Test:* the `release` job runs `makepkg --verifysource` against the filled
-  `PKGBUILD` before uploading.
+  *Test:* `./ci.sh --packages --out` runs `makepkg --verifysource` against
+  the filled `PKGBUILD`, and the `release` job uploads only what it left.
   *Breaks when:* the hash is computed over a different file than the one
   uploaded, or the tarball is rebuilt after hashing.
 
@@ -300,17 +302,18 @@ All in `ci.sh`, in the `--packages` step, run inside each container of
 
 - INV-1, INV-2, INV-3, INV-4, INV-6, INV-8 — one check each, in every
   container.
-- INV-5 — the openSUSE container's no-recommends install, plus each
-  container's recommends check, plus a grep of the `PKGBUILD`.
+- INV-5 — the openSUSE and Ubuntu no-recommends installs, plus INV-5's
+  recommends check, plus a grep of the `PKGBUILD`.
 - INV-7 — `./ci.sh --version-lockstep` on the host, plus `--version` in
   every container.
-- INV-9 — the `release` job, which runs `--packages --out`. The gate runs the
+- INV-9 — `--packages --out`, which the `release` job runs. The gate runs the
   same `makepkg --verifysource` against a locally made tarball.
 - INV-10 — a `ci.sh` grep of the workflow files, in the full gate.
 
 Each check must be seen failing once against a deliberately broken package
 before it is trusted: a copy instead of the symlink (INV-2), a mangled
-shebang (INV-3), `cage` moved to the required set (INV-5).
+shebang (INV-3), `cage` moved to the required set of the `.deb` and of the
+`.rpm` (INV-5).
 
 ## 8. Alternatives considered (and rejected)
 
@@ -355,11 +358,11 @@ shebang (INV-3), `cage` moved to the required set (INV-5).
 | INV-2 | `./ci.sh --packages`, French `--help` in each container |
 | INV-3 | `./ci.sh --packages`, `cmp` in each container |
 | INV-4 | `./ci.sh --packages`, clean install with default repositories |
-| INV-5 | `./ci.sh --packages`, no-recommends install and `PKGBUILD` grep |
+| INV-5 | `./ci.sh --packages`, no-recommends installs and `PKGBUILD` grep |
 | INV-6 | `./ci.sh --packages`, `demoreel check` in each container |
 | INV-7 | `./ci.sh --version-lockstep`, and `--version` in each container |
 | INV-8 | `./ci.sh --packages`, removal check |
-| INV-9 | the `release` job's `makepkg --verifysource`; the gate's local equivalent |
+| INV-9 | `./ci.sh --packages --out`'s `makepkg --verifysource`; the gate's local equivalent |
 | INV-10 | full gate's workflow grep. **Partial:** it reads the file, not GitHub's effective permissions |
 | § 4.1 one layout | INV-1 |
 | § 4.5 files attached to every release | **nothing** — a release whose job never ran has no packages and nothing fails; the website hand-off is the only reader |
