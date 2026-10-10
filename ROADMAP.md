@@ -293,6 +293,22 @@ simplest case, and a gate proves it still records.
   Kind: ux.
   Source: user-request-2026-10-08.
 
+- 📋 [DEMO-0175] **Make a YouTube thumbnail from a recording.**
+  Asked by the user 2026-10-10. Close to `poster`, which saves one
+  frame at the recording's own size (1600x1000, 16:10, by default).
+  YouTube asks for 16:9, 1280x720 recommended, as JPG or PNG under its
+  size limit; check YouTube's current limits when this is built rather
+  than trusting these. Open: whether it carries a line of title text,
+  and how a 16:10 frame becomes 16:9 (crop or bars). Must stay inside
+  CLAUDE.md § Scope ceiling: one picture, at most one line of text.
+  Decided (user, 2026-10-10): a frame of the video plus an optional
+  single line of large title text; a 16:10 frame is fitted to 16:9 by
+  trimming the top and bottom, never with bars; built after the 0.5.0
+  packaging work.
+  **Layman:** Make the small picture YouTube shows for a video, in the size and file limits YouTube asks for.
+  Kind: feature.
+  Source: user-request-2026-10-10.
+
 ## Standing chores
 
 Recurring work with no finished state. It is checked on a schedule and never
