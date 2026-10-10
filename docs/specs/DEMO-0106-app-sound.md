@@ -14,7 +14,7 @@ the app's sound play on the speakers.
 ## 1. Goal
 
 `demoreel record --audio -- <app>` writes an `.mp4` whose sound track is the
-app's own sound, in step with the picture to within one frame. Every
+app's own sound, in step with the picture to within 40 ms. Every
 `record` and `shot` run, with or without `--audio`, gives its app a private
 sound output that nothing plays, so a recorded app never sounds on the
 user's speakers and two runs never hear each other. Without `--audio` the
@@ -70,8 +70,9 @@ else unloads the module and fails the run. A name is never chosen to be free
 in advance and then trusted; it is checked after the fact, which is the same
 property `claim_name` keeps for run names.
 
-The module index `pactl` prints is kept, and the run writes it to its state
-file beside the display, so `stop` and a later sweep can find it.
+The run keeps the module index `pactl` prints in memory, for its own
+unload. `stop` never unloads a sink: the run it stops does, in its
+`finally`. A sink left behind is found by name alone (§ 4.2).
 
 `launch` adds two variables to the app's environment:
 
@@ -113,7 +114,9 @@ second input and the audio encoder:
 The x11grab input gets `-thread_queue_size 1024` too, so neither input drops
 packets while the other is read.
 
-`--gpu --audio` adds `-a <sink>.monitor -C aac` to `start_wf_recorder`.
+`--gpu --audio` adds `--audio=<sink>.monitor -C aac` to
+`start_wf_recorder`, as one argument: `man wf-recorder` gives the device as
+optional (`-a, --audio [=DEVICE]`), so it must be attached.
 Whether that track is in step is not measured: `wf-recorder` does not start
 on this machine since the Packman update DEMO-0176 reports. § 13 holds it.
 
@@ -136,8 +139,13 @@ finishing remuxes it with the sound shifted by the gap, the same shape as
 
 ```
 ffmpeg -i <part> -itsoffset <audio_start - video_start> -i <part> \
-       -map 0:v -map 1:a -c copy -movflags +faststart -y <output>
+       -map 0:v -map 1:a -c copy -shortest -movflags +faststart -y <output>
 ```
+
+`-shortest` ends the sound with the picture. Measured 2026-10-10 on the
+§ 4.4 probe: without it the shifted track ended 0.5 s after the picture
+(start 0.494 s, duration 5.021 s, picture 5.0 s); with it the track ended
+at 4.982 s, and the beep stayed at 1.919 s.
 
 Measured 2026-10-10 on Xvfb, with the root window turned white and a beep
 started at the same instant: before the shift the beep led by 0.53 s; after
@@ -155,8 +163,10 @@ it cannot vouch for.
   that the app's sound may play on the speakers, naming the reason.
 - **With `--audio`:** the run stops before launching the app, names the
   reason, and exits non-zero. `prepare` checks for `pactl` and for an
-  ffmpeg with the `pulse` input device, and names the install command as it
-  does for other programs (`install_hint`).
+  ffmpeg with the `pulse` input device only when `--audio` is given, and
+  names the install command as it does for other programs (`install_hint`).
+  `pactl` never joins `required_programs`, which every run and `check`'s
+  readiness lines read.
 
 ### 4.6 What the run reports
 
@@ -187,8 +197,9 @@ template.
   plays one tone with `paplay`, then `aplay`, then `pw-play`; each third of
   the track has `max_volume` above -40 dB, and during the run `pactl -f json
   list sink-inputs` shows every stream of the app's process group on the
-  run's sink. The three players isolate the two variables: dropping
-  `PIPEWIRE_NODE` silences the `aplay` third only.
+  run's sink. A `shot` of the same `xterm` runs the sink-input check too.
+  The three players isolate the two variables: dropping `PIPEWIRE_NODE`
+  silences the `aplay` third only.
   *Breaks when:* either variable is missing, or the app inherits the
   session's default output.
 
@@ -203,14 +214,14 @@ template.
 - **INV-4** — No run leaves its sink loaded: not on success, on a failed
   launch, on `demoreel stop`, on Ctrl+C, or on SIGTERM or SIGHUP. A sink
   left by a SIGKILLed run is unloaded by the next run or by `check`.
-  *Test:* ci.sh: after each of those exits, `pactl list short sinks` lists
+  *Test:* ci.sh: after each of those exits, and after a `shot`, `pactl list short sinks` lists
   no sink starting `demoreel-<uid>-<pid>` for that run's pid; after a
   SIGKILL, it lists one until the next run, then none.
   *Breaks when:* the unload is missing from a `finally`, `launch`'s failure
   path, or the sweep.
 
-- **INV-5** — In an `--audio` video, sound and picture are within 40 ms of
-  each other.
+- **INV-5** — In an `--audio` video recorded on Xvfb, sound and picture are
+  within 40 ms of each other. `--gpu` is outside it until § 13 is settled.
   *Test:* ci.sh: record an app that turns its window white and starts a beep
   at the same instant; the first bright frame's time and the beep's onset
   (`silencedetect` `silence_end`) differ by at most 0.040 s. Isolates the
@@ -219,9 +230,11 @@ template.
   wrong input's `start:`.
 
 - **INV-6** — An `--audio` video has exactly one audio stream, AAC, 48000 Hz,
-  stereo, whose duration is within 0.1 s of the video stream's.
+  stereo, which ends within 0.1 s of the video stream's end.
   *Test:* ci.sh: `ffprobe -show_entries stream=codec_type,codec_name,
-  sample_rate,channels,duration` on the INV-2 recording.
+  sample_rate,channels,start_time,duration` on the INV-2 recording, comparing
+  `start_time + duration` per stream. Comparing durations alone passed the
+  § 4.4 probe without `-shortest`, whose sound overran by 0.5 s.
   *Breaks when:* the encoder options change, or the shift leaves sound past
   the picture's end.
 
@@ -288,7 +301,8 @@ workflow starts a sound server (§ 13).
 - INV-8: beside "check says whether this machine can record".
 
 Each is seen to fail first: INV-1 by adding the pulse input to every run,
-INV-2 by dropping `PIPEWIRE_NODE`, INV-3 by fixing the token, INV-4 by
+INV-2 by dropping `PIPEWIRE_NODE`, INV-3 by giving every run one constant
+sink name, INV-4 by
 removing the unload, INV-5 by removing the shift, INV-7 by ignoring the load
 failure.
 
@@ -346,9 +360,10 @@ failure.
   `PIPEWIRE_NODE`.
 - `docs/history/claude-md.md` § Audio: corrected by DEMO-0104.
 - `CHANGELOG.md`, the `po/` template and catalogs (new messages, DEMO-0060).
-- `DEMO-0068`'s package dependencies: `pactl`'s package. openSUSE's is
-  `pulseaudio-utils` (`rpm -qf /usr/bin/pactl`); the others are not verified
-  here.
+- `DEMO-0068` § 4.2: an `--audio` row beside `--gpu`'s, recommending
+  `pactl`'s package, never requiring it, as `--gpu`'s programs are (its
+  INV-5). openSUSE's is `pulseaudio-utils` (`rpm -qf /usr/bin/pactl`); the
+  others are not verified here.
 
 ## 12. Cold-eyes loop log
 
@@ -356,10 +371,11 @@ Rows live in `../reviews/DEMO-0106-app-sound-loop-log.md`.
 
 ## 13. Open questions
 
-- **`--gpu --audio` sync.** `wf-recorder -a` records the sink's monitor, but
-  whether its track is in step is not measured, because `wf-recorder` does
-  not start here (DEMO-0176). Build it; INV-5's fixture runs on `--gpu` when
-  `wf-recorder` does. If it is out of step and `wf-recorder` logs no start
+- **`--gpu --audio` sync.** `wf-recorder --audio=` records the sink's
+  monitor, but whether its track is in step is not measured, because
+  `wf-recorder` does not start here (DEMO-0176). Build it, and run INV-5's
+  fixture on `--gpu` as a measurement, not a gate, once `wf-recorder`
+  starts. If it is out of step and `wf-recorder` logs no start
   times, the fallback is the Xvfb path's shape: record the monitor with
   ffmpeg beside it and shift by the two start times.
 - **CI coverage.** Most invariants skip on GitHub, which runs no sound
