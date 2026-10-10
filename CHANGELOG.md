@@ -19,6 +19,10 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   normal German. The catalog stays a draft until a native speaker
   confirms it.
 
+- **Afrikaans messages corrected after a second AI check** (DEMO-0172)
+  Three messages now use natural Afrikaans word order and spelling.
+  The catalog stays a draft until a native speaker confirms it.
+
 - **Five French messages read more naturally** (DEMO-0172)
   Checked with a second AI. The French catalog is still a draft until
   a native speaker confirms it.

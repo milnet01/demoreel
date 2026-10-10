@@ -231,7 +231,7 @@ msgid "give the steps with -a or with --steps, not both."
 msgstr "gee die stappe met -a of met --steps, nie albei nie."
 
 msgid "give the app to run after `--`, e.g. {example}"
-msgstr "gee die toep om te laat loop ná `--`, bv. {example}"
+msgstr "gee die toep om ná `--` te laat loop, bv. {example}"
 
 msgid "--size takes a width and a height in pixels, like 1600x1000, not {size}."
 msgstr "--size neem 'n breedte en 'n hoogte in pieksels, soos 1600x1000, nie {size} nie."
@@ -358,7 +358,7 @@ msgid ""
 "could not read {output} back to check it is not blank,\n"
 "  so this run cannot vouch for it."
 msgstr ""
-"kon nie {output} terug lees om na te gaan dat dit nie leeg is nie,\n"
+"kon nie {output} teruglees om na te gaan dat dit nie leeg is nie,\n"
 "  so hierdie lopie kan nie daarvoor instaan nie."
 
 msgid ""
@@ -401,7 +401,7 @@ msgid "could not take the picture."
 msgstr "kon nie die prent neem nie."
 
 msgid "could not read back {output} to check it is not blank."
-msgstr "kon nie {output} terug lees om na te gaan dat dit nie leeg is nie."
+msgstr "kon nie {output} teruglees om na te gaan dat dit nie leeg is nie."
 
 msgid "the picture is one flat colour: {output}"
 msgstr "die prent is een egale kleur: {output}"
