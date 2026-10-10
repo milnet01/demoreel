@@ -4232,6 +4232,10 @@ Decided by the user on 2026-09-25: audio becomes an opt-in, and every run gets a
   --music option on join, trim, caption and card. It repeats to fill the
   film, fades in and out, sits quieter under app sound, and volume and
   fades can be changed.
+  From the approved Slipcase trailer (website session, 2026-10-10): the
+  user picked music from the YouTube Audio Library, and it sat low, about
+  -30 dB average, under the effects. So the music's default level is low,
+  and the music is always a file the caller supplies.
   **Layman:** Put music under a trailer without needing a second program.
   Kind: feature.
   Source: user-request-2026-10-10.
@@ -4310,6 +4314,28 @@ before packaging. The full editor stays 2.0.0.
   over it. The colours are the caller's, never per-app knowledge.
   **Layman:** A gently moving coloured backdrop for a trailer, instead of plain black.
   Kind: feature.
+  Source: peer-website-session-2026-10-10.
+
+- 📋 [DEMO-0186] **Play a sound file at a chosen moment of a film, such as a click when the pointer clicks.**
+  The user approved the Slipcase trailer (2026-10-10) and loved its click
+  sounds; two synthesized stretch sounds were rejected for a real recorded
+  one. So the caller supplies the sound files and demoreel places them;
+  it synthesizes none. Mixed with app sound and music (DEMO-0177). Needs
+  DEMO-0182's scope lift, as every 0.8.0 item does.
+  **Layman:** A trailer can have click and whoosh sounds exactly where things happen on screen.
+  Kind: feature.
+  Source: peer-website-session-2026-10-10.
+
+- 📋 [DEMO-0187] **Record footage and write notes for demoreel's own YouTube trailer.**
+  Brief: /home/ants/.local/share/claude-handoff/ants-projects-hub-website-trailers-2026-10-10.md
+  (shared, do not delete). Deliver 3 to 6 clips of 4 to 10 s at
+  1920x1080 plus notes.md (two hook lines, a tagline, a caption per clip
+  with click times, three feature lines, platforms, whether it makes
+  sound) to /mnt/Games/Trailers/incoming/demoreel/, then message the
+  ants-projects-hub-website session. Only released features, so after
+  0.7.0 and 0.8.0 ship; no rush (website session, 2026-10-10).
+  **Layman:** Short clips of demoreel at work, for the website session to cut into a trailer.
+  Kind: marketing.
   Source: peer-website-session-2026-10-10.
 
 ## 1.0.0 — Every documented path tested
