@@ -4165,7 +4165,7 @@ Decided by the user on 2026-09-25: audio becomes an opt-in, and every run gets a
   Kind: doc.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0105] **Give every run a private silent sound output, so app sounds never reach the speakers.**
+- ✅ [DEMO-0105] **Give every run a private silent sound output, so app sounds never reach the speakers.**
   Today every caller has to set PULSE_SERVER=unix:/nonexistent, or the
   app's sounds play on the user's speakers. Give each run its own sound
   output instead, reachable only by that run's app, and discarded by
@@ -4181,11 +4181,14 @@ Decided by the user on 2026-09-25: audio becomes an opt-in, and every run gets a
   docs/specs/DEMO-0106-app-sound.md.
   Built under docs/specs/DEMO-0106-app-sound.md (§ 4.1, § 4.2), accepted
   2026-10-10.
+  Shipped 2026-10-10 (bb9d966): every record and shot loads a private
+  null sink and sends the app to it with PULSE_SINK and PIPEWIRE_NODE;
+  swept after a SIGKILL. Gate ./ci.sh passed.
   **Layman:** An app being recorded can never play sound through your speakers, without any setting.
   Kind: feature.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0106] **Add `--audio`, which records the app's own sound into the video.**
+- ✅ [DEMO-0106] **Add `--audio`, which records the app's own sound into the video.**
   Built on the private sound output above: ffmpeg records its monitor
   beside the picture, into one file. Off by default; without it the
   video stays silent as today. A new flag, so MINOR under the
@@ -4212,6 +4215,10 @@ Decided by the user on 2026-09-25: audio becomes an opt-in, and every run gets a
   an unresolvable name: one opened on the real desktop.
   Spec: docs/specs/DEMO-0106-app-sound.md
   Accepted 2026-10-10 after two review-contract loops (16 verified, all fixed; capped, calm). Build order: DEMO-0104's document changes first, then this.
+  Shipped 2026-10-10 (bb9d966): record --audio, sound shifted by the
+  inputs' start gap and fitted to the picture; flash and beep 6 ms apart
+  in the gate. Spec amended at Step 8 (impl row). --gpu --audio sync
+  still unmeasured (spec § 13).
   **Layman:** Optionally put the app's sound into the video, for trailers.
   Kind: feature.
   Source: user-request-2026-09-25.
