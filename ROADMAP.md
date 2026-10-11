@@ -3919,6 +3919,12 @@ system looks for them.
   done: 6 verified, 6 fixed, 1 dismissed; a calm cap. The spec is
   accepted (2026-10-10) and ready to build. Loop 2's fixes were read by
   no lane; implementation is their reader.
+  User, 2026-10-11: the OBS account exists now (home:milnet, beside
+  ants-terminal, finbreak and perch), so publish to OBS as part of this
+  item, in its turn after 0.7.0 and 0.8.0. The spec's "files first, OBS
+  once there is an account" line needs amending, and that amendment goes
+  through review-contract before building. finbreak's packaging/obs/
+  (_service tracking a release tag) is the model to follow.
   **Layman:** Install demoreel on openSUSE with zypper, dependencies included.
   Kind: package.
   Source: user-request-2026-09-25.
