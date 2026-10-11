@@ -53,11 +53,12 @@ and changing one is a breaking change:
   Adding one is not: a caller reads the lines and keys it knows by name.
 - **The scripted action grammar** passed to `-a` or read by `--steps` — the
   verbs and their argument order, and a `--steps` file's one step per line.
-- **The `edit` script.** The line verbs `clip`, `card` and `text`, the words
-  each takes, what each word means, and what a line does with a word left out.
-  A script that made a film must go on making the same scenes, in the same
-  order, at the same lengths, with each text showing at the same times and in
-  the same place. Adding a verb or a word is not breaking.
+- **The `edit` script.** The line verbs `clip`, `card`, `text`, `music` and
+  `level`, the words each takes, what each word means, and what a line does
+  with a word left out. A script that made a film must go on making the same
+  scenes, in the same order, at the same lengths, with each text showing at
+  the same times and in the same place, and the music at the same levels and
+  fades. Adding a verb or a word is not breaking.
 - **Whether a video has a sound track.** `record` writes one only with
   `--audio`. A film from `edit` or its shortcuts has one when a clip it plays
   keeps its own sound, or when a `music` line or `--music` lays music under
@@ -104,13 +105,15 @@ makes them the exception to the line above:
 repository** — published in another project's README, store listing or
 release page, never demoreel's own. Checkable by someone else: the roadmap
 names where, with a link.
-This condition is met: DEMO-0093 names where, with links.
+This condition is met: DEMO-0093 names where, with links. MAJOR becomes 1
+when the roadmap's `1.0.0` section ships (§ Release numbers come from the
+roadmap).
 
 **The previous condition is met, and what it required still governs the gate.**
 It held MAJOR at 0 until the gate exercised both display backends and the
 Flatpak invocation; DEMO-0006 and DEMO-0007 finished that on 2026-09-20. The
 rest of this section is what those steps have to keep doing. It binds the
-gate, not the version: MAJOR waits on the condition above alone. A broken step
+gate, not the version. A broken step
 still stops a 1.0 release, because the gate runs before every push, a
 release's included.
 
@@ -141,27 +144,30 @@ alone.
 ## Release numbers come from the roadmap
 
 This replaces `versioning.md` § 2 and § 4's choice of level. Under those, a
-release that only adds features is a PATCH, so the roadmap's numbers would stop
-matching the tags.
+`0.x` release that only adds features is a PATCH, so the roadmap's numbers
+would stop matching the tags.
 
 **A release the roadmap plans ships under the number its section names.**
 Each release section in `ROADMAP.md` opens with its number, and the sections
-run in the order they ship. A planned release is a MINOR or a MAJOR.
+run in the order they ship. A section that names a PATCH holds fixes only.
 
-**A release between two planned ones is a PATCH** of the last release, such as
-`0.7.0` → `0.7.1`. It carries fixes, and nothing a roadmap release section
-holds.
+**A release the roadmap does not plan is a PATCH** of the last release, such
+as `0.7.0` → `0.7.1`, and carries fixes only. A new feature is filed into a
+release section first, and ships with it.
 
 **A number may never be lower than the change needs.** A breaking change to a
 protected surface needs a MINOR inside `0.x`, and a MAJOR from `1.0` on. The
 list above is not exhaustive, but § What is not a breaking surface bounds it.
-A PATCH therefore carries no break. Where a planned release needs a higher
-number than its section names, that section and every later one are
-renumbered before the release is cut.
+So a PATCH carries no break. A release that needs a higher number than the
+roadmap gives it, planned or not, takes the next number its level allows, and
+every release section from that number on moves up before the release is
+cut. A break that cannot wait after `0.7.0` ships as `0.8.0`, and the section
+that was `0.8.0` becomes `0.9.0`.
 
-**Nothing checks any of this.** `cut-release` takes the number it is given.
-Before a release, compare the number with the next unreleased section in
-`ROADMAP.md`.
+**Nothing compares a release's number with the roadmap.** `cut-release`
+checks the number's shape and, from `1.0` on, refuses a PATCH whose changelog
+section has an `### Added` or `### Deprecated` heading. Before a release,
+compare the number with the next unreleased section in `ROADMAP.md`.
 
 ## Cold-eyes loop log
 
@@ -182,3 +188,4 @@ Before a release, compare the number with the next unreleased section in
 | 13 | 2026-10-01 | 2, cold — genre pinned `standard`; armed by DEMO-0139 (5230748), one sentence saying the display-paths requirement binds the gate and not the version; dispatched with `neutral-lane` from outside the project, so neither lane held this project's `CLAUDE.md`, memory or a git snapshot; every lane held every question | 0 | 0 | 1 | n/a | **One verified, one fixed, none dismissed.** Neither lane found a defect in the armed sentence. **One lane found the exit condition itself ambiguous**: "published in another project's README, a store listing, or a release page" lets "another project's" govern the README alone, so a video on demoreel's own release page could be read as meeting it, and two maintainers would number the next release differently. Now "another project's README, store listing or release page, never demoreel's own". It lies outside the armed span; fixed in the run rather than filed, because filing would schedule this same edit and this same gate for later. Open questions resolved clean, none a finding: the delta in the preamble narrows `versioning.md` § 3's "not to bound the promise", which exists; `motion` prints times with `:.3f`; the project has a remote, so a release always passes the pre-push gate. |
 | 14 | 2026-10-01 | 2, cold — identical brief, packet rebuilt from disk; every lane held every question | 1 | 0 | 0 | n/a | **One verified, one fixed, none dismissed.** One lane returned no findings. **The other found the Flatpak step's prerequisite understated**: "the application installed" and "a machine … with Flathub applications installed", where `ci.sh` hard-codes `flatpak_app=org.gimp.GIMP` and skips unless GIMP is installed, so a machine set up from this document skips that path on every push. Both now name GIMP. Outside the armed span. **Orchestrator-found while re-reading the section, in scope**: the action-grammar bullet protected only what is "passed to `-a`", when DEMO-0025 (fa896bb) added `--steps` reading the same grammar from a file; a conformer could change the file's format as a PATCH. It now names `--steps` and its one step per line. Open questions not findings: `motion --json` writes `round(x, 3)`, so a time may carry fewer than three decimals, where the parenthetical says three; no conformer builds differently from an example. `die()` leaving the video and each command's single stdout line predate this run and were not asked about by it. |
 | 15 | 2026-10-01 | 2, cold — identical brief, packet rebuilt from disk; every lane held every question | 0 | 0 | 0 | n/a | **Converged: both lanes returned no findings.** Five open questions, all resolved clean and none a finding: the project has a remote (`origin`), so a release is pushed and passes the pre-push gate; `versioning.md` § 3 carries the "not to bound the promise" rule the preamble narrows; the finished-file check on `record --gpu` samples only the moments the display was sampled, so the app-exited and `-d 0` skips carry over; `motion --json`'s `round(x, 3)` and a halfway-blank run's shorter leftover video change nothing a conformer builds. No cap reached, so no share. |
+| 16 | 2026-10-11 | 2, cold — genre pinned `standard`; armed by a6dfd92, DEMO-0189's sound surface plus the user's ruling that release numbers follow the roadmap; dispatched with `neutral-lane`, so neither lane held this project's `CLAUDE.md`, memory or a git snapshot; every lane held every question | 1 | 2 | 2 | n/a | **Five verified, five fixed, none dismissed; four needed the user's decision and got it the same day.** **Both lanes found the same defect**: § Reaching 1.0 called its condition met and said MAJOR waits on it alone, while the new section ships each release under its roadmap number, whose next three are 0.8.0, 0.9.0 and 1.0.0; one conformer cut 1.0.0 next, another 0.8.0. The user chose 1.0.0 at the roadmap's `1.0.0` section; "alone" is deleted. One lane: "a planned release is a MINOR or a MAJOR" against the roadmap's own patch sections (0.1.1, 0.2.1, 0.2.2, 0.3.1); the user allowed a planned PATCH holding fixes only. The other lane: an unplanned release that must break had no number; the user chose the next number its level allows, later sections moving up. One lane: the `edit` bullet named `clip`, `card` and `text` but not `music` and `level`, which 0.7.0 added (README § Sound and music). **The Q1 came from a lane's measurement request**: "Nothing checks any of this" is false, since `cut-release`'s level floor refuses a PATCH carrying `### Added` or `### Deprecated` from 1.0 on (its SKILL.md, read); now stated, and with it the user's ruling that a new feature is filed into a section rather than shipped unplanned. Corrected by narrowing, not counted: § 2 and § 4 make a feature-only release a PATCH inside `0.x` only. Open questions resolved clean: `--version` prints two fields. |
