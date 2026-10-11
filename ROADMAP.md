@@ -322,6 +322,10 @@ simplest case, and a gate proves it still records.
   a system reason; DEMO-0176 fixes check so that step skips.
   User decision (2026-10-10): finish German and Afrikaans, then stop.
   The other 14 languages wait until after 1.0.0.
+  Open (2026-10-11): this item still sits in the 0.4.0 section, though
+  the user ruled on 2026-10-10 that the remaining languages wait until
+  after 1.0.0. Recommended: move it to the 1.1.0 section or Backlog.
+  The user's call; not yet answered.
   **Layman:** A second AI reads each language's messages and points out mistakes, so the drafts are better while they wait for native speakers.
   Kind: ux.
   Source: user-request-2026-10-08.
