@@ -4041,6 +4041,8 @@ before packaging. The full editor stays 2.0.0.
   with its own colour, size and font. An end card is this plus a logo:
   the caller supplies its lines (links and so on), demoreel holds no
   per-app content.
+  Spec: docs/specs/DEMO-0153-moving-text.md, accepted 2026-10-11 at the
+  review cap (2 loops, 10 findings fixed).
   **Layman:** Add headings and captions that slide in, in the font, size and colour you pick.
   Kind: feature.
   Source: user-request-2026-10-02.
