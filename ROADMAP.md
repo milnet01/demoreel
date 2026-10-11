@@ -1,5 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
+<!-- ants-roadmap-id-high-water: DEMO=190 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -3992,6 +3993,8 @@ before packaging. The full editor stays 2.0.0.
   Slipcase trailer: a rounded-corner mask with alphamerge and a soft
   drop shadow. The trailer-sized part of DEMO-0149, which stays in
   2.0.0 for general layers and opacity.
+  Spec: docs/specs/DEMO-0183-clip-window.md, accepted 2026-10-11 at the
+  review cap (2 loops, 8 findings fixed).
   **Layman:** The app appears as a neat floating window in the trailer instead of filling the whole frame.
   Kind: feature.
   Source: peer-website-session-2026-10-10.
@@ -4000,6 +4003,9 @@ before packaging. The full editor stays 2.0.0.
   Slipcase trailer: scale with eval=frame for the push-in; zoompan
   after a 2x upscale, so it does not jitter, with smoothstep easing.
   The trailer-sized part of DEMO-0151; crop and rotate stay in 2.0.0.
+  Builds without a spec, under DEMO-0183's layout (user, 2026-10-11):
+  it acts on layer 3, the window, of docs/specs/DEMO-0183-clip-window.md
+  § 4.4, and the shadow follows the window's size and place.
   **Layman:** The camera can drift closer, or glide in on the part of the app that matters.
   Kind: feature.
   Source: peer-website-session-2026-10-10.
@@ -4044,6 +4050,9 @@ before packaging. The full editor stays 2.0.0.
   gradients source in the site's colours, darkened with
   colorchannelmixer, plus vignette, with the app's window (DEMO-0149)
   over it. The colours are the caller's, never per-app knowledge.
+  Builds without a spec, under DEMO-0183's layout (user, 2026-10-11):
+  it replaces layer 1, the background, of docs/specs/DEMO-0183-clip-window.md
+  § 4.4, for a windowed clip and a card alike.
   **Layman:** A gently moving coloured backdrop for a trailer, instead of plain black.
   Kind: feature.
   Source: peer-website-session-2026-10-10.
