@@ -338,6 +338,13 @@ order:
 - `sound off` — leave out this clip's own sound; its span is silent.
 - `volume -6` — turn this clip's own sound down 6 dB, or up with a number
   above zero, between `-60` and `20`. A clip with no sound refuses it.
+- `speed 2` — play the clip twice as fast; `speed 0.5` plays it at half
+  speed. It is between `0.25` and `4`. The sound changes speed with the
+  picture and stays under it. `from`, `to`, `fade-at` and a text's times are
+  still counted in the clip's own file, so they need no working out.
+- `hold 2` — keep the clip's last frame on screen for two seconds after it,
+  in silence. A freeze frame in the middle of a recording is a clip of one
+  frame held: `clip demo.mp4 from 12 to 12 hold 2`.
 
 A clip's sound fades, cuts and crossfades with its picture.
 
@@ -508,7 +515,7 @@ demoreel card -o title.mp4 -d 3 --like demo.mp4 --text 'Saving a file'
 
 A text's `font`, `colour`, `outline`, `shadow`, `band`, `at` and its own fades
 are the script's alone. A shortcut sets a text's words, times and size. So are
-`normalise`, `level` lines and a clip's `volume`.
+`normalise`, `level` lines and a clip's `volume`, `speed` and `hold`.
 
 Chaining shortcuts encodes the picture once per step. For more than one step,
 write the script.

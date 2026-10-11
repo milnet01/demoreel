@@ -614,6 +614,10 @@ msgstr ""
 msgid "{where}: `from` must come before `to`, and both inside {path} ({seconds} seconds long)."
 msgstr ""
 
+#. translators: speed is an edit-script word and stays in English.
+msgid "{where}: speed is between {low} and {high}, not {value}: 2 plays the clip twice as fast, 0.5 at half speed."
+msgstr ""
+
 msgid "{where}: `fade-at {moment}` needs {seconds} seconds of the scene on each side, and the scene runs from {start} to {end}."
 msgstr ""
 

@@ -630,6 +630,9 @@ msgstr "{where}: 텍스트는 한 줄이어야 하는데, 이것은 비어 있�
 msgid "{where}: a text is one line of words, and this one is more than one line."
 msgstr "{where}: 텍스트는 한 줄이어야 하는데, 이것은 여러 줄입니다."
 
+msgid "{where}: speed is between {low} and {high}, not {value}: 2 plays the clip twice as fast, 0.5 at half speed."
+msgstr "{where}: speed는 {low}에서 {high} 사이입니다. {value}은(는) 안 됩니다. 2는 클립을 두 배 빠르게, 0.5는 절반 속도로 재생합니다."
+
 msgid "{where}: the text {words} is asked to show from {start} to {end}, which is not inside its scene ({scene_start} to {scene_end})."
 msgstr "{where}: 텍스트 {words}은(는) {start}부터 {end}까지 표시되도록 되어 있지만, 이는 장면({scene_start}부터 {scene_end}까지) 안이 아닙니다."
 

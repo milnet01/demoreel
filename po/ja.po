@@ -630,6 +630,9 @@ msgstr "{where}: text は 1 行の文字ですが、これは空です。"
 msgid "{where}: a text is one line of words, and this one is more than one line."
 msgstr "{where}: text は 1 行の文字ですが、これは 2 行以上あります。"
 
+msgid "{where}: speed is between {low} and {high}, not {value}: 2 plays the clip twice as fast, 0.5 at half speed."
+msgstr "{where}: speed は {low} から {high} の間です。{value} は使えません。2 でクリップを 2 倍速、0.5 で半分の速さで再生します。"
+
 msgid "{where}: the text {words} is asked to show from {start} to {end}, which is not inside its scene ({scene_start} to {scene_end})."
 msgstr "{where}: テキスト {words} は {start} から {end} まで表示するよう指定されていますが、これはシーンの範囲 ({scene_start} から {scene_end}) に収まっていません。"
 

@@ -14,6 +14,9 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **A clip can play faster or slower with `speed`, and keep its last frame on screen with `hold`; one held frame is a freeze frame.** (DEMO-0152)
+  Make part of a video play slower or faster, or hold one moment still.
+
 - **A crossfade can name one of ffmpeg's ready-made transitions — `crossfade 0.5 wipeleft`, `slideup`, `dissolve` and the rest — instead of a fade.** (DEMO-0150)
   Choose how one scene changes into the next.
 

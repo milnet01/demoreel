@@ -4037,12 +4037,16 @@ before packaging. The full editor stays 2.0.0.
   Kind: feature.
   Source: user-request-2026-10-02.
 
-- 📋 [DEMO-0152] **Change a clip's speed: slow motion, speed-up and freeze frame.**
+- ✅ [DEMO-0152] **Change a clip's speed: slow motion, speed-up and freeze frame.**
   Wanted by the Slipcase trailer (2026-10-10): speed a clip up (setpts)
   and hold its last frame to fill the scene (tpad stop_mode=clone).
   Builds without a spec (user, 2026-10-11). Decided then: a clip's times
   (`from`, `to`, a text's times, `fade-at`) stay counted in the clip's own
   file, as now, whatever its speed.
+  Resolved (2026-10-11): clip words `speed F` (0.25 to 4; setpts, and
+  atempo in one or two stages) and `hold S` (tpad clone, after a trim to
+  the clip's own frames). A freeze frame is `from T to T hold S`. Times
+  stay in the clip's own file, as decided. Script-only, like `volume`.
   **Layman:** Make part of a video play slower or faster, or hold one moment still.
   Kind: feature.
   Source: user-request-2026-10-02.

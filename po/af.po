@@ -636,6 +636,9 @@ msgstr "{where}: 'n teks is een reël woorde, en hierdie een is leeg."
 msgid "{where}: a text is one line of words, and this one is more than one line."
 msgstr "{where}: 'n teks is een reël woorde, en hierdie een is meer as een reël."
 
+msgid "{where}: speed is between {low} and {high}, not {value}: 2 plays the clip twice as fast, 0.5 at half speed."
+msgstr "{where}: speed is tussen {low} en {high}, nie {value} nie: 2 speel die snit twee keer so vinnig, 0.5 teen halwe spoed."
+
 msgid "{where}: the text {words} is asked to show from {start} to {end}, which is not inside its scene ({scene_start} to {scene_end})."
 msgstr "{where}: die teks {words} moet van {start} tot {end} wys, wat nie binne sy toneel ({scene_start} tot {scene_end}) val nie."
 

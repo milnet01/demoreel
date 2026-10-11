@@ -2815,7 +2815,7 @@ def frame_at(moment, step):
 
 SCENE_WORDS = {
     "clip": ("from", "to", "fade-in", "fade-out", "fade-at", "fade-length",
-             "crossfade", "sound", "volume"),
+             "crossfade", "sound", "volume", "speed", "hold"),
     "card": ("background", "fade-in", "fade-out", "crossfade"),
     "text": ("from", "to", "size", "font", "colour", "outline", "shadow",
              "fade-in", "fade-out", "band", "at"),
@@ -2871,6 +2871,8 @@ class Scene:
         self.sound = "on"       # a clip: keep its own sound
         self.volume = None      # a clip: dB on its own sound
         self.has_sound = False  # a clip: its file has a sound stream
+        self.speed = 1.0        # a clip: 2 plays it twice as fast
+        self.hold = 0.0         # a clip: seconds its last frame stays after it
 
 
 # The film's sound: every stream is made this before it is joined or mixed.
@@ -3197,6 +3199,29 @@ def text_size(textfile, fontsize, font=None, border=0):
     return (int(boxes[-1][0]), int(boxes[-1][1])) if boxes else (0, 0)
 
 
+# A clip's speed: below SPEED_LOW a slowed sound needs more than two atempo
+# stages, and above SPEED_HIGH most frames are dropped.
+SPEED_LOW = 0.25
+SPEED_HIGH = 4.0
+
+
+def scene_time(scene, moment):
+    """A moment in a clip's own file, as seconds from its scene's start. Times
+    are written in the file's time whatever the clip's speed (DEMO-0152); a
+    card's start is 0 and its speed 1."""
+    return (moment - scene.start) / scene.speed
+
+
+def tempo_filters(speed):
+    """atempo stages that play a sound `speed` times as fast. One stage takes
+    0.5 to 100, on ffmpeg 6.1.1 and 9.0.2 alike."""
+    if speed == 1:
+        return []
+    if speed < 0.5:
+        return ["atempo=0.5", f"atempo={speed / 0.5:.9g}"]
+    return [f"atempo={speed:.9g}"]
+
+
 def check_texts(scene, length, width, height, workdir):
     """Check a scene's texts and turn their times into times from its start.
 
@@ -3215,17 +3240,18 @@ def check_texts(scene, length, width, height, workdir):
                    "than one line.", where=where))
         # A time printed just short of a frame's start means that frame, so a
         # text may start that much before its scene does (DEMO-0136).
-        begin = text.get("start", scene.start) - scene.start
+        begin = scene_time(scene, text.get("start", scene.start))
         if -TIME_SLACK <= begin < 0:
             begin = 0.0
-        finish = (text["end"] - scene.start) if "end" in text else length
+        finish = scene_time(scene, text["end"]) if "end" in text else length
         if begin < 0 or finish > length + TIME_SLACK or begin >= finish:
             die(tr("{where}: the text {words} is asked to show from "
                    "{start} to {end}, which is not inside its scene "
                    "({scene_start} to {scene_end}).", where=where, words=repr(words),
-                   start=f"{begin + scene.start:g}", end=f"{finish + scene.start:g}",
+                   start=f"{text.get('start', scene.start):g}",
+                   end=f"{text.get('end', scene.start + length * scene.speed):g}",
                    scene_start=f"{scene.start:g}",
-                   scene_end=f"{scene.start + length:.3f}"))
+                   scene_end=f"{scene.start + length * scene.speed:.3f}"))
         size = text.get("size", default)
         if not 0 < size <= 50:
             die(tr("{where}: a text's size is a percentage of the frame's "
@@ -3347,15 +3373,22 @@ def check_scene(scene, width, height, rate, workdir):
         # silent for the half frame before each cut (DEMO-0177 § 4.3); trim
         # still bounds the picture.
         scene.read_sound = None if last is None else (last + 1) * step - scene.seek
+        if not SPEED_LOW <= scene.speed <= SPEED_HIGH:
+            # translators: speed is an edit-script word and stays in English.
+            die(tr("{where}: speed is between {low} and {high}, not {value}: 2 plays "
+                   "the clip twice as fast, 0.5 at half speed.", where=where,
+                   low=f"{SPEED_LOW:g}", high=f"{SPEED_HIGH:g}",
+                   value=f"{scene.speed:g}"))
+        length = length / scene.speed + scene.hold
         for moment in scene.fade_at:
-            if not (scene.start + scene.fade_length <= moment
-                    <= scene.start + length - scene.fade_length):
+            if not (scene.fade_length <= scene_time(scene, moment)
+                    <= length - scene.fade_length):
                 die(tr("{where}: `fade-at {moment}` needs "
                        "{seconds} seconds of the scene on each "
                        "side, and the scene runs from {start} to {end}.",
                        where=where, moment=f"{moment:g}",
                        seconds=f"{scene.fade_length:g}", start=f"{scene.start:.3f}",
-                       end=f"{scene.start + length:.3f}"))
+                       end=f"{scene.start + length * scene.speed:.3f}"))
     if scene.fade_in + scene.fade_out > length + 1e-6:
         die(tr("{where}: its fades come to {fades} seconds, and the scene is only "
                "{seconds} long.", where=where,
@@ -3468,7 +3501,7 @@ def fade_filters(scene, length):
     if scene.fade_in:
         filters.append(f"fade=t=in:st=0:d={scene.fade_in:.4f}")
     for moment in scene.fade_at:
-        at, half = moment - scene.start, scene.fade_length
+        at, half = scene_time(scene, moment), scene.fade_length
         filters.append(f"fade=t=out:st={at - half:.4f}:d={half:.4f}:"
                        f"enable='between(t,{at - half:.4f},{at:.4f})'")
         filters.append(f"fade=t=in:st={at:.4f}:d={half:.4f}:"
@@ -3486,7 +3519,7 @@ def sound_fades(scene, length):
     if scene.fade_in:
         filters.append(f"afade=t=in:st=0:d={scene.fade_in:.4f}")
     for moment in scene.fade_at:
-        at, half = moment - scene.start, scene.fade_length
+        at, half = scene_time(scene, moment), scene.fade_length
         filters.append(f"afade=t=out:st={at - half:.4f}:d={half:.4f}:"
                        f"enable='between(t,{at - half:.4f},{at:.4f})'")
         filters.append(f"afade=t=in:st={at:.4f}:d={half:.4f}:"
@@ -3517,7 +3550,8 @@ def scene_sound(scene, length, number, first_input):
     trim = scene.start - scene.seek
     chain = [f"atrim=start={trim:.6f}", f"asetpts=PTS-{trim:.6f}/TB",
              f"aresample={SOUND_RATE}:async=1:first_pts=0",
-             SOUND_FORMAT, f"apad=whole_dur={length:.6f}",
+             SOUND_FORMAT, *tempo_filters(scene.speed),
+             f"apad=whole_dur={length:.6f}",
              f"atrim=duration={length:.6f}"]
     if scene.volume is not None:
         chain.append(f"volume={scene.volume:.4f}dB")
@@ -3700,7 +3734,12 @@ def scene_graph(scene, length, number, first_input, width, height, rate):
     # trim bounds every scene to its own frames, whatever its input does: a
     # stream that never ends is buffered without limit by whatever waits for
     # it (see memory_cap).
-    shape = (f"fps={fps},scale={width}:{height},setsar=1,format=yuv420p,"
+    # A held clip is cut to its own frames before its last is cloned: a clip
+    # keeping its sound reads one frame past `to`, which tpad would hold.
+    hold = (f"trim=end_frame={max(1, round((length - scene.hold) * rate))},"
+            f"tpad=stop_mode=clone:stop_duration={scene.hold:.6f},"
+            if scene.hold else "")
+    shape = (f"fps={fps},scale={width}:{height},setsar=1,format=yuv420p,{hold}"
              f"trim=end_frame={max(1, round(length * rate))}")
     tail = ",".join([*text_filters(scene, width, height),
                      *fade_filters(scene, length)])
@@ -3712,7 +3751,8 @@ def scene_graph(scene, length, number, first_input, width, height, rate):
         if read is not None:
             inputs += ["-t", f"{read:.6f}"]
         inputs += ["-i", str(scene.path)]
-        return inputs, [f"[{first_input}:v]setpts=PTS-STARTPTS,{shape}{tail}{out}"]
+        pts = "PTS-STARTPTS" if scene.speed == 1 else f"(PTS-STARTPTS)/{scene.speed:.9g}"
+        return inputs, [f"[{first_input}:v]setpts={pts},{shape}{tail}{out}"]
     inputs = ["-f", "lavfi", "-i", f"color=c=0x{scene.background[1:]}:"
               f"s={width}x{height}:r={fps}:d={length:.6f}"]
     if scene.path is None:

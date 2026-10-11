@@ -427,10 +427,15 @@ Then any of
 .BI fade\-at " s"\fR,\fP
 .BI fade\-length " s"\fR,\fP
 .BI crossfade " s \fR[\fPtransition\fR]\fP"\fR,\fP
-.BR sound " " on | off
+.BR sound " " on | off\fR,\fP
+.BI volume " dB"\fR,\fP
+.BI speed " factor"
 and
-.BI volume " dB"\fR.\fP
+.BI hold " s"\fR.\fP
 A clip keeps its own sound unless told not to.
+Its times stay in its own file's time whatever its speed, and
+.B hold
+keeps its last frame on screen.
 A crossfade is a fade unless it names one of ffmpeg's ready-made
 transitions, such as
 .BR wipeleft ,

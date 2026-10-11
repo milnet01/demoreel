@@ -636,6 +636,9 @@ msgstr "{where} : un texte est une ligne de mots, et celui-ci est vide."
 msgid "{where}: a text is one line of words, and this one is more than one line."
 msgstr "{where} : un texte est une seule ligne de mots, et celui-ci en fait plus d'une."
 
+msgid "{where}: speed is between {low} and {high}, not {value}: 2 plays the clip twice as fast, 0.5 at half speed."
+msgstr "{where} : speed est compris entre {low} et {high}, et non {value} : 2 lit le clip deux fois plus vite, 0.5 à moitié de la vitesse."
+
 msgid "{where}: the text {words} is asked to show from {start} to {end}, which is not inside its scene ({scene_start} to {scene_end})."
 msgstr "{where} : le texte {words} doit s'afficher de {start} à {end}, ce qui n'est pas dans sa scène ({scene_start} à {scene_end})."
 

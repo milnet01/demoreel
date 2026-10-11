@@ -660,6 +660,9 @@ msgstr "{where}: النص سطر واحد من الكلمات، وهذا الن�
 msgid "{where}: a text is one line of words, and this one is more than one line."
 msgstr "{where}: النص سطر واحد من الكلمات، وهذا النص أكثر من سطر."
 
+msgid "{where}: speed is between {low} and {high}, not {value}: 2 plays the clip twice as fast, 0.5 at half speed."
+msgstr "{where}: قيمة speed بين {low} و{high}، لا {value}: القيمة 2 تشغّل المقطع بضعف السرعة، و0.5 بنصفها."
+
 msgid "{where}: the text {words} is asked to show from {start} to {end}, which is not inside its scene ({scene_start} to {scene_end})."
 msgstr "{where}: طُلب عرض النص {words} من {start} إلى {end}، وهذا ليس داخل مشهده ({scene_start} إلى {scene_end})."
 

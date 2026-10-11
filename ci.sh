@@ -2495,6 +2495,37 @@ CASES
     done
     echo "music shorter and far longer than its film both ended at the film's length"
     }
+    fin_s52() {
+    # DEMO-0152: speed and hold. A's frames all differ, at 10 a second. Times
+    # stay in the clip's own file whatever its speed.
+    printf 'clip A.mp4 speed 2\n' | ed_ok sp2.mp4
+    assert_near "speed 2: A's 6 s take 3" 3 "$(v_dur "$ft/out/sp2.mp4")" 0.06
+    assert_is_frame "speed 2" "$ft/out/sp2.mp4" 5 "$ft/A.mp4" 10
+    printf 'clip A.mp4 to 2 speed 0.5\n' | ed_ok sp3.mp4
+    assert_is_frame "speed 0.5" "$ft/out/sp3.mp4" 10 "$ft/A.mp4" 5
+    printf 'clip A.mp4 to 2 hold 1\n' | ed_ok sp4.mp4
+    assert_near "hold 1: 2.1 s of A and 1 s held" 3.1 "$(v_dur "$ft/out/sp4.mp4")" 0.06
+    assert_is_frame "hold 1, at its end" "$ft/out/sp4.mp4" 30 "$ft/A.mp4" 20
+    assert_finished "$ft/out/sp4.mp4" "a held clip" 1
+    printf 'clip A.mp4 from 3 to 3 hold 2\n' | ed_ok sp5.mp4
+    assert_is_frame "a freeze frame, at its end" "$ft/out/sp5.mp4" 20 "$ft/A.mp4" 30
+    # K (fin_s42): flashes and beeps at 2.0 and 4.0 s of its own time. At
+    # speed 2 from 1 they come at 0.5 and 1.5, together. The text's times are
+    # K's own, so its 4 to 5 is the scene's 1.5 to 2.
+    printf 'clip K.mp4 from 1 to 5 speed 2\ntext "late" from 4 to 5\n' | ed_ok sp6.mp4
+    set -- $(px onsets "$ft/out/sp6.mp4" 128)
+    assert_eq "speed 2: K's flashes at frames 5 and 15" "5 15" "$*"
+    beeps=$(a_onsets "$ft/out/sp6.mp4" \
+              | awk -v end="$(v_dur "$ft/out/sp6.mp4")" '$1 < end - 0.05' | tr '\n' ' ')
+    set -- $beeps
+    assert_eq "speed 2: K's two beeps (found at: $beeps)" 2 "$#"
+    assert_near "speed 2: the first beep with its flash" 0.5 "$1" 0.040
+    assert_near "speed 2: the second beep with its flash" 1.5 "$2" 0.040
+    printf 'clip A.mp4\nclip A.mp4 speed 5\n' > "$ft/sp7.txt"
+    run edit sp7.txt -o "$ft/out/sp7.mp4"
+    refused_naming_line "edit refuses speed 5" sp7.mp4 2
+    echo "speed 2 and 0.5 played A's frames at the speed asked, hold and a freeze frame kept the last frame, K's flashes and beeps moved together, and speed 5 was refused"
+    }
     fin_step "trim keeps the frames from --from to --to, the last one included" fin_s1
     fin_step "every video a command writes is H.264, yuv420p, index first, with its clips' sound" fin_s2
     fin_step "-o may not be an input, and must end in .mp4" fin_s3
@@ -2546,6 +2577,7 @@ CASES
     fin_step "edit refuses a bad music, level, sound or volume word" fin_s49
     fin_step "a shortcut's music is the script's music" fin_s50
     fin_step "music under a long and a short film both end" fin_s51
+    fin_step "a clip's speed and hold play and keep the frames asked for" fin_s52
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }
 

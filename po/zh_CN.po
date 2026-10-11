@@ -630,6 +630,9 @@ msgstr "{where}：文字应为一行内容，而这一条是空的。"
 msgid "{where}: a text is one line of words, and this one is more than one line."
 msgstr "{where}：文字应为一行内容，而这一条超过了一行。"
 
+msgid "{where}: speed is between {low} and {high}, not {value}: 2 plays the clip twice as fast, 0.5 at half speed."
+msgstr "{where}：speed 应在 {low} 到 {high} 之间，而不是 {value}：2 以两倍速播放片段，0.5 以半速播放。"
+
 msgid "{where}: the text {words} is asked to show from {start} to {end}, which is not inside its scene ({scene_start} to {scene_end})."
 msgstr "{where}：文字 {words} 被要求从 {start} 显示到 {end}，但这不在其场景范围内（{scene_start} 到 {scene_end}）。"
 

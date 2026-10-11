@@ -642,6 +642,9 @@ msgstr "{where}: текст — це один рядок слів, а цей п�
 msgid "{where}: a text is one line of words, and this one is more than one line."
 msgstr "{where}: текст — це один рядок слів, а цей займає більше одного рядка."
 
+msgid "{where}: speed is between {low} and {high}, not {value}: 2 plays the clip twice as fast, 0.5 at half speed."
+msgstr "{where}: speed — від {low} до {high}, а не {value}: 2 відтворює кліп удвічі швидше, 0.5 — удвічі повільніше."
+
 msgid "{where}: the text {words} is asked to show from {start} to {end}, which is not inside its scene ({scene_start} to {scene_end})."
 msgstr "{where}: текст {words} має показуватися з {start} до {end}, а це не в межах його сцени ({scene_start}–{scene_end})."
 
