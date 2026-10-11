@@ -1,7 +1,7 @@
 <!-- ants-spec-format: 1 -->
 # DEMO-0177 — Keep a clip's sound through the finishing commands, and put music under a film
 
-**Status:** spec draft (2026-10-11).
+**Status:** accepted (2026-10-11).
 **Kind:** feature.
 **Source:** ROADMAP DEMO-0177 (user-request-2026-10-10; decisions 2026-10-10 and 2026-10-11).
 **Pairs with:** DEMO-0106 (records the app's sound this keeps; its § 9 leaves this work here).
@@ -136,7 +136,10 @@ Each scene becomes a sound stream `[a<n>]` exactly as long as its picture,
 in 48000 Hz stereo float, beside its picture stream `[v<n>]`. The picture's
 length is the frame count `scene_graph` keeps (`trim=end_frame`) divided by
 the film's rate, which can differ from the scene's `length` by part of a
-frame; the sound takes the picture's.
+frame. So `make_film` works in that length everywhere: `begins`, `total`,
+the `xfade` offsets and the plan on stderr all add up whole frames, where
+today they add up `length`. Then a cut and a crossfade put a scene's
+picture where its sound lands, and the sound takes the same length.
 
 - **A clip with sound, `sound on`**: its first sound stream, the same span
   the picture keeps. The input's `-ss` seeks half a frame before `from`
@@ -165,7 +168,8 @@ The music stream `[m]` is built from the music file in this order:
 
 1. **Resampled** to 48000 Hz stereo float.
 2. **Set to its level.** With `normalise on`, one pass of `volumedetect`
-   over the music file, before the film is made, gives its `mean_volume`
+   over the music after step 1's resampling, before the film is made, gives
+   its `mean_volume`
    and `max_volume`; the gain is `level - mean_volume`. With `normalise off`
    the gain is `level`.
 3. **Kept off full scale.** Any level, the music line's or a `level`
@@ -181,8 +185,10 @@ The music stream `[m]` is built from the music file in this order:
    The demuxer never loops it (`-stream_loop` is banned with the rest,
    `.claude/rules/finishing-commands.md`).
 5. **Made softer or louder for each `level` line**: one `volume` filter,
-   `eval=frame`, whose gain in dB is the music line's, moved to each line's
-   for its span and slid linearly in dB across each `ramp`.
+   `eval=frame`, on top of step 2's gain. Its gain is 0 dB outside every
+   line's span and slides, and the line's level minus the music line's
+   inside its span, slid linearly in dB across each `ramp`. Each line's
+   gain is capped by step 3 on its own.
 6. **Faded** in and out by `afade`.
 
 `aloop` holds the whole music file in memory, and only runs when the file
@@ -238,11 +244,14 @@ cannot read stops the run.
   ignored.
 
 - **INV-2** — A clip's own sound stays within 40 ms of its picture through
-  a `from` cut, a `to` cut with no gap at it, a crossfade, a card before it, and a clip before it whose
-  sound is shorter than its picture.
-  *Test:* ci.sh, finishing: a generated clip with a white flash and a 3 kHz
+  a `from` cut, a `to` cut with no gap at it, a crossfade, cards before it,
+  and a clip before it whose sound is shorter than its picture.
+  *Test:* ci.sh, finishing: a clip generated at 10 frames a second, with a
+  white flash and a 3 kHz
   beep together at 2.0 s and 4.0 s, and a second clip whose sound ends
-  0.4 s before its picture. The script is a card, the short-sound clip, then
+  0.4 s before its picture. The script is three cards of 1.04 s (10 frames
+  each at the fixtures' 10 a second, so summed `length` runs 0.12 s ahead
+  of whole frames), the short-sound clip, then
   the first clip `from 1.3 to 5` with `crossfade 0.5`. Each flash's first
   bright frame and each beep's onset (`silencedetect` after a 1500 Hz
   high-pass) differ by at most 0.040 s. The prototype of § 4.3 measured 5 to
@@ -256,8 +265,9 @@ cannot read stops the run.
   with `d=0.01` finds no silence at the join, where reading only to
   `scene.read` leaves 0.05 s.
   *Breaks when:* a scene's sound is not padded to its picture's length, a
-  clip's sound is read only to `scene.read`, a card gives no silence, or a
-  crossfade joins the sound by a cut.
+  clip's sound is read only to `scene.read`, a card gives no silence, a
+  crossfade joins the sound by a cut, or the `xfade` offsets still add up
+  `length`.
 
 - **INV-3** — A film with sound has exactly one sound stream, AAC, 48000
   Hz, stereo, starting at 0 and ending within 0.1 s of the picture's end.
@@ -295,15 +305,18 @@ cannot read stops the run.
 - **INV-7** — With `normalise off`, the level is a gain on the file's own
   level, within 1 dB.
   *Test:* ci.sh, finishing: the quieter INV-6 file with `normalise off
-  level -6`; the mean over 2 to 5 s is 6 ± 1 dB below the file's own
-  `mean_volume`.
+  level -6`; the mean over 2 to 5 s is 6 ± 1 dB below the `mean_volume`
+  § 4.4 step 2 measures. Measured 2026-10-11: a mono `sine` reads 3 dB
+  lower once made stereo (-21.1 dB as it is, -24.1 dB after step 1), so
+  measuring the raw file misses by 3 dB.
   *Breaks when:* the file is normalised anyway, or the gain is ignored.
 
 - **INV-8** — Music shorter than the film repeats to its end with no gap,
   and the music fades in and out over the seconds asked, 1.5 and 3 unless
   given.
   *Test:* ci.sh, finishing: 2.5 s of music under a 9 s card; `silencedetect`
-  at -60 dB finds no silence between 0.1 s and 8.9 s; the mean over the
+  at -60 dB with `d=0.05` finds no silence between 0.1 s and 8.5 s, where
+  the fade-out leaves the music above -50 dB; the mean over the
   first 0.1 s and the last 0.1 s is at least 20 dB below the mean over 2 to
   5 s; with `fade-in 0 fade-out 0` both are within 1 dB of it.
   *Breaks when:* the music plays once and stops, the loop leaves a gap, or
@@ -383,9 +396,10 @@ need no display and no sound server, and they run on GitHub too. Every
 fixture is generated with `lavfi`, as the group's existing inputs are.
 
 - INV-1: `assert_finished` gains the number of sound streams it expects,
-  and "join --no-sound writes no sound track". `fin_s2`, which today checks
-  that `A.mp4`'s sound is dropped, checks instead that it is kept, in
-  INV-3's shape.
+  and "join --no-sound writes no sound track". Every `assert_finished` call on
+  an output made from `A.mp4` (`grep -n assert_finished ci.sh`; `fin_s2`'s
+  and `E1.mp4`'s among them) expects one sound stream, in INV-3's shape:
+  today `fin_s2` checks that `A.mp4`'s sound is dropped.
 - INV-2, INV-3: "a clip's sound stays in step through cuts, cards and
   crossfades".
 - INV-4: "a scene's fades fade its sound".
@@ -472,7 +486,8 @@ input gave one MD5, measured 2026-10-11.
   to this spec.
 - `.claude/rules/finishing-commands.md`: "Every stream in the filter graph
   must end" names the sound bounds (`atrim` after `aloop`, `anullsrc`'s
-  duration), and the `amix` `normalize=0` trap.
+  duration), the `amix` `normalize=0` trap, and that `make_film` adds up
+  scenes in whole frames.
 - `CHANGELOG.md`; the `po/` template and catalogs (new messages,
   DEMO-0060); the manual page and tab completion where they list options.
 
