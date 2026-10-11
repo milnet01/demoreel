@@ -4030,6 +4030,10 @@ before packaging. The full editor stays 2.0.0.
   Builds without a spec, under DEMO-0183's layout (user, 2026-10-11):
   it acts on layer 3, the window, of docs/specs/DEMO-0183-clip-window.md
   § 4.4, and the shadow follows the window's size and place.
+  Decided (user, 2026-10-11): push-in and zoom work on a windowed clip
+  only, not on a full-frame clip. The window grows, or the picture
+  inside it zooms toward a point; its shadow follows the window's size
+  and place.
   **Layman:** The camera can drift closer, or glide in on the part of the app that matters.
   Kind: feature.
   Source: peer-website-session-2026-10-10.
