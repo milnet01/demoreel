@@ -15,8 +15,8 @@ Two texts whose times overlap are no longer refused. Texts at the same place
 that are on screen together form a stack: one line above another in the order
 the script writes them, each keeping its place for as long as the stack
 lasts. Texts at different places show together. A text line takes
-`slide-in SECONDS`: it rises into its place and fades in over that time,
-easing out. A scene whose texts never overlap, and use no `slide-in`, makes
+`slide-in SECONDS`: over that time it rises into its place, easing out, and
+fades in. A scene whose texts never overlap, and use no `slide-in`, makes
 exactly the film it makes today.
 
 ## 2. Problem
@@ -29,7 +29,7 @@ exactly the film it makes today.
    *"Only one shows at a time."* So a heading and a subheading cannot share a
    card, and a card title cannot sit above a caption.
 3. A text appears where it stands, or fades in there (`text_filters`). The
-   Slipcase lines slid up 36 px while fading in, easing out
+   Slipcase lines slid up 36 px, easing out, while fading in
    (`trailer.py`, `Scene.text`).
 
 ## 3. Scope decisions (agreed with the user)
@@ -53,9 +53,9 @@ text "WORDS" ... [slide-in SECONDS] ...
 ```
 
 - **`slide-in SECONDS`** — from its `from`, over that many seconds, the text
-  rises `SLIDE_RISE` of its height into its place and fades in, both easing
-  out: at a share `p` of the way through, it is `(1 - p)³` of the rise below
-  its place and `p` faded in. Its band rises and fades with it.
+  rises `SLIDE_RISE` of its height into its place, easing out, and fades in
+  evenly: at a share `p` of the way through, it is `(1 - p)³` of the rise
+  below its place and `p` faded in. Its band rises and fades with it.
 - **A text takes `slide-in` or `fade-in`, not both**, as a scene takes
   `crossfade` or `fade-in`. `slide-in` and `fade-out` together may not be
   longer than the text shows, the rule `check_texts` already applies to two
@@ -69,7 +69,7 @@ text "WORDS" ... [slide-in SECONDS] ...
 
 ```
 SLIDE_RISE = 0.5    # how far a sliding text rises: a share of its height
-LINE_GAP   = 0.3    # space between two stacked lines: a share of the taller one's height
+LINE_GAP   = 0.3    # space between two stacked lines off a band: a share of the taller one's font size
 ```
 
 Both follow the Slipcase builder: a 36 px rise on lines of 64 to 92 px, and
@@ -82,8 +82,11 @@ a 30 px gap under 92 px lines (`trailer.py`, `Scene.text` and `scene_text`).
   overlaps B and B overlaps C, all three are one stack even when A and C
   never meet. Times compare as they do today: a text shows from its `from`
   up to its `to`, and not on the frame at `to`.
-- **A stack's lines run top to bottom in the order the script writes them**,
-  `LINE_GAP` apart. Each line's place is fixed for the stack's whole life,
+- **A stack's lines run top to bottom in the order the script writes them.**
+  A line's height is its band's, `round(size × CAPTION_BAND)`, on a band,
+  and its font size off one. Lines on bands touch, each band its own; lines
+  off a band are `LINE_GAP` apart. A stack's height is its lines' heights
+  and its gaps. Each line's place is fixed for the stack's whole life,
   so a line does not move when another arrives or leaves.
 - **The stack sits where one text of its height sits today**: against the
   top or bottom edge, or a margin in from it, as its lines' band says, or
@@ -94,7 +97,9 @@ a 30 px gap under 92 px lines (`trailer.py`, `Scene.text` and `scene_text`).
 - **Texts at different places may show together**, a title at the top over
   a caption at the bottom.
 - **The room a card leaves its picture, `picture_room`, takes a stack's
-  height** where it takes one text's today, at the top and at the bottom. A
+  height** where it takes one text's today, at the top and at the bottom:
+  a banded stack's height, or an unbanded stack's plus `0.3` of its last
+  line's font size, which for one line is today's `round(size × 1.3)`. A
   windowed clip (DEMO-0183) uses the same room.
 
 ### 4.3 Refusals
@@ -118,8 +123,9 @@ sliding one a `y` and an `alpha` that are expressions of `t`.
 `200+40*pow(1-clip((t-0.5)/0.6,0,1),3)`, with a band from its own `boxw`
 box, on a 640x360 frame at 10 a second, ffmpeg 9.0.2. The band's top row at
 t = 0.5, 0.6, 0.7, 0.8, 0.9 and 1.1 was 240, 223, 211, 205, 201 and 200: it
-rose with the text, easing out. The same filter ran on the 6.1.1 of
-`ci.sh`'s Ubuntu image.
+rose with the text, easing out. On the 6.1.1 of `ci.sh`'s Ubuntu image,
+with `alpha` `clip((t-0.5)/0.6,0,1)` added, it was 223, 205 and 200 at
+t = 0.6, 0.8 and 1.1, fading in as it rose.
 
 ## 5. Invariants
 
@@ -148,7 +154,8 @@ None of these clauses can run until the code exists.
 - **INV-3** — A text that shares the screen with no other is placed as it is
   today.
   *Test:* ci.sh finishing: every existing step drawing text passes
-  unchanged, the card title, caption and placement steps among them.
+  unchanged, the card title, caption and placement steps among them,
+  except the two caption steps INV-4 changes.
   *Breaks when:* a one-line stack is placed by a different rule from a text
   today.
 
@@ -161,7 +168,7 @@ None of these clauses can run until the code exists.
   another beside it" — now expect a film, the captions stacked on bands.
   *Breaks when:* any two overlapping texts are still refused.
 
-- **INV-5** — `slide-in` rises into place and fades in, easing out.
+- **INV-5** — `slide-in` rises into place, easing out, and fades in.
   *Test:* ci.sh finishing: `card 2` with `text "Rise" size 10 slide-in 1`.
   The rise is 24 px. At frame 2, `p` is 0.2, so the text sits
   `24 × 0.8³` ≈ 12 px low: the `light:40` box's top is 9 to 15 px below
@@ -174,8 +181,9 @@ None of these clauses can run until the code exists.
   starts, and the message names the line.
   *Test:* ci.sh finishing: each refused by `expect_refused`, naming its line,
   with nothing at `-o`: `slide-in 1 fade-in 1` on one text; `slide-in 1.5
-  fade-out 1` on a text shown 2 s; under `-s 320x240`, four overlapping texts
-  of size 30 at a card's middle, each 72 px high, taller than its room; and
+  fade-out 1` on a text shown 2 s; under `-s 320x240`, four overlapping texts,
+  `"A"` to `"D"`, of size 30 at a card's middle, each 72 px high: narrow
+  enough to fit across, and taller together than the room; and
   on `clip A.mp4`, `text "a" band off` with `text "b"`, both at the bottom
   over the same seconds, one off a band and one on it.
   *Breaks when:* any of them is accepted, or reaches ffmpeg.
@@ -192,8 +200,8 @@ None of these clauses can run until the code exists.
   its first line alone.
   *Test:* ci.sh finishing: `card 2 sq.png` with `text "A" at top size 8` and
   `text "B" at top size 6`, both for the whole card. At frame 10, `px find`
-  for `#00C000:60` starts below the bottom of the `light:40` pixels in the
-  top half.
+  for `#00C000:60` starts below the bottom of the `#FFFFFF:40` pixels in
+  the top half: the white card text, which the green picture cannot match.
   *Breaks when:* `picture_room` counts one text's height at the top.
 
 ## 6. Failure modes
