@@ -51,7 +51,7 @@ From this session (2026-10-11):
 - **The volume is the caller's to control, including at chosen moments.**
   Asked whether the music should sit at one low level or dip by itself under
   the app's sound, the user answered that the requestor controls it, softer
-  or louder when required. So: a level on the music line, indented `level`
+  or louder when required. So: a level on the music line, `level`
   lines that change it for a stretch of the film, and `volume` on a clip
   line. Nothing changes a level by itself.
 - **Normalising applies to the music, on or off.** By default the music is
@@ -95,8 +95,9 @@ clip FILE ... [sound on|off] [volume DB]   # two new words on a clip line
   at the film's start and end, `1.5` and `3` unless given; `0` turns one
   off. Written fades longer together than the film are refused. The default
   fades, where they do not fit, shrink in proportion until they do.
-- **An indented `level DB` line** — belongs to the music line above it, as a
-  `text` line belongs to its scene. The music sits at that level from `from`
+- **A `level DB` line** — belongs to the music line, and comes straight
+  after it or after another `level` line, as a `text` line follows its
+  scene; an indent is only for the eye. The music sits at that level from `from`
   to `to`, which are times in the finished film, as `edit`'s plan prints
   them. `from` defaults to the film's start and `to` to its end. Over the
   `ramp` seconds before `from` the music slides from its level to this one,
@@ -124,22 +125,31 @@ negative, so they get a reader of their own; every other word keeps
 | `--music-fade-out S` | the music line's `fade-out` | the same |
 | `--no-sound` | `sound off` on every clip | `trim`, `caption`, `join` |
 
-`--music-level` and the two fades without `--music` are refused. The music
+`--music-level` and the two fades without `--music` are refused. `trim`
+given only `--music` or `--no-sound` has something to do, so `cmd_trim`'s
+"needs something to do" refusal does not fire; it cuts nothing. The music
 file joins the files `finishing_output` refuses to write over.
 
 ### 4.3 A clip's own sound
 
-Each scene becomes a sound stream `[a<n>]` exactly as long as the scene, in
-48000 Hz stereo float, beside its picture stream `[v<n>]`:
+Each scene becomes a sound stream `[a<n>]` exactly as long as its picture,
+in 48000 Hz stereo float, beside its picture stream `[v<n>]`. The picture's
+length is the frame count `scene_graph` keeps (`trim=end_frame`) divided by
+the film's rate, which can differ from the scene's `length` by part of a
+frame; the sound takes the picture's.
 
 - **A clip with sound, `sound on`**: its first sound stream, the same span
   the picture keeps. The input's `-ss` seeks half a frame before `from`
   (`check_scene`), so the sound is trimmed by `start - seek` to begin at
-  `from` itself. It is then padded with silence and trimmed to the scene's
-  length (`apad=whole_dur=<length>,atrim=duration=<length>`), because a
-  recording's sound may end before its picture (DEMO-0106 § 4.4).
+  `from` itself. The input's `-t` limits the sound as well as the picture,
+  and `scene.read` stops half a frame before the last kept frame ends; so
+  for a clip with a `to` it reads to that frame's end, `(last + 1) * step -
+  seek`, and `trim=end_frame` still bounds the picture. The sound is then
+  padded with silence and trimmed to the picture's length
+  (`apad=whole_dur=<p>,atrim=duration=<p>`), because a recording's sound may
+  end before its picture (DEMO-0106 § 4.4).
 - **A clip without sound, a clip with `sound off`, and a card**: silence of
-  the scene's length (`anullsrc` with its `duration` set).
+  the picture's length (`anullsrc` with its `duration` set).
 - **`volume DB`**: a `volume` filter on the clip's stream.
 - **The picture's fades fade the sound with it**: `fade-in` and `fade-out`
   by `afade` over the same seconds, each `fade-at` by an `afade` out and an
@@ -164,7 +174,8 @@ The music stream `[m]` is built from the music file in this order:
    reached. With `normalise off` this needs the same `volumedetect` pass, so
    the pass always runs.
 4. **Repeated to fill the film**, when it is shorter: `aloop=loop=-1`
-   with `size` the file's length in samples, rounded up. Measured
+   with `size` the file's length times 48000, rounded up: samples are counted
+   after step 1's resampling. Measured
    2026-10-11: a `size` larger than the input loops what the input held,
    with no gap. Then `atrim=duration=<film length>`, which is what ends it.
    The demuxer never loops it (`-stream_loop` is banned with the rest,
@@ -203,7 +214,8 @@ is shorter than the film, so what it holds is bounded by the film's length.
 ### 4.6 What is checked before anything is made
 
 All of it, as today, naming the line or the option: a second `music` line;
-a `level` line with no music line above it; a `text` line under a `music`
+a `level` line that does not follow the music line or another `level`
+line; a `text` line under a `music`
 or `level` line; a music file that is missing or has no sound; a `level` or
 `volume` out of range or not a number; `sound` other than `on` or `off`;
 `normalise` other than `on` or `off`; a `level` line's `from` not before
@@ -217,15 +229,16 @@ cannot read stops the run.
 
 - **INV-1** — A film whose clips carry no sound, or all have `sound off`,
   and which has no music, has no sound stream.
-  *Test:* ci.sh: the existing finishing fixtures are silent, so every
-  existing `fin_step` output plus `ffprobe -select_streams a -show_entries
-  stream=index` printing nothing; and a `join --no-sound` of two clips with
-  sound, the same. Only a track added unasked fails it.
+  *Test:* ci.sh, finishing: `A.mp4` is the one finishing fixture generated
+  with sound. Every existing output made from cards and the other fixtures
+  has no sound stream (`assert_finished`, told to expect 0), and so has
+  `join --no-sound A.mp4 B.mp4`. Only a track added unasked, or `sound off`
+  ignored, fails it.
   *Breaks when:* a sound track is added to every film, or `sound off` is
   ignored.
 
 - **INV-2** — A clip's own sound stays within 40 ms of its picture through
-  a `from` cut, a crossfade, a card before it, and a clip before it whose
+  a `from` cut, a `to` cut with no gap at it, a crossfade, a card before it, and a clip before it whose
   sound is shorter than its picture.
   *Test:* ci.sh, finishing: a generated clip with a white flash and a 3 kHz
   beep together at 2.0 s and 4.0 s, and a second clip whose sound ends
@@ -234,10 +247,17 @@ cannot read stops the run.
   bright frame and each beep's onset (`silencedetect` after a 1500 Hz
   high-pass) differ by at most 0.040 s. The prototype of § 4.3 measured 5 to
   11 ms on the cut and crossfade, 2026-10-11. Isolates the joins: without
-  the padding the second clip's beeps arrive 0.4 s early, and with `concat`
-  for the crossfade 0.5 s late.
-  *Breaks when:* a scene's sound is not padded to its length, a card gives
-  no silence, or a crossfade joins the sound by a cut.
+  the padding, the last scene's beeps arrive 0.4 s early, because the short
+  clip is joined to it by a crossfade. `concat` pads a short sound itself:
+  measured 2026-10-11, a 1.6 s sound under a 2 s picture, cut to a clip
+  beeping at 2.0 and 4.0 s, gave onsets at 4.005 and 6.011 s. With `concat`
+  for the crossfade they arrive 0.5 s late. And `A.mp4 to 2` cut to
+  `A.mp4`, at the fixture's 10 frames a second: `silencedetect` at -50 dB
+  with `d=0.01` finds no silence at the join, where reading only to
+  `scene.read` leaves 0.05 s.
+  *Breaks when:* a scene's sound is not padded to its picture's length, a
+  clip's sound is read only to `scene.read`, a card gives no silence, or a
+  crossfade joins the sound by a cut.
 
 - **INV-3** — A film with sound has exactly one sound stream, AAC, 48000
   Hz, stereo, starting at 0 and ending within 0.1 s of the picture's end.
@@ -311,7 +331,8 @@ cannot read stops the run.
 - **INV-11** — Every script error in § 4.6 stops the run before ffmpeg
   makes anything, names the line or option, and leaves nothing at `-o`.
   *Test:* ci.sh, finishing, beside "edit checks every line before it makes
-  anything, and names the bad one": one script per error; each exits
+  anything, and names the bad one": one script per error, and one `join`
+  given `--music-level` without `--music`; each exits
   non-zero, its stderr names the line, and `-o` does not exist.
   *Breaks when:* an error is found only by ffmpeg, or not at all.
 
@@ -320,7 +341,8 @@ cannot read stops the run.
   *Test:* ci.sh, finishing: `join a.mp4 b.mp4 --music m.wav --music-level
   -25 --music-fade-in 1 --music-fade-out 2 --no-sound` and the matching
   `edit` script; the decoded sound of the two films has one MD5
-  (`ffmpeg -i <film> -map 0:a -f md5 -`).
+  (`ffmpeg -i <film> -map 0:a -f md5 -`). And `trim A.mp4 --music m.wav`
+  alone exits 0.
   *Breaks when:* a shortcut maps an option to the wrong word, or builds its
   scenes another way.
 
@@ -360,8 +382,10 @@ All in `ci.sh`'s finishing group, so `./ci.sh --finishing` runs them, they
 need no display and no sound server, and they run on GitHub too. Every
 fixture is generated with `lavfi`, as the group's existing inputs are.
 
-- INV-1: the added `ffprobe` check on existing outputs, and "join
-  --no-sound writes no sound track".
+- INV-1: `assert_finished` gains the number of sound streams it expects,
+  and "join --no-sound writes no sound track". `fin_s2`, which today checks
+  that `A.mp4`'s sound is dropped, checks instead that it is kept, in
+  INV-3's shape.
 - INV-2, INV-3: "a clip's sound stays in step through cuts, cards and
   crossfades".
 - INV-4: "a scene's fades fade its sound".
@@ -418,7 +442,7 @@ input gave one MD5, measured 2026-10-11.
 
 | Rule | What catches a breach |
 |------|----------------------|
-| INV-1 | ci.sh finishing: existing outputs' sound-stream check, and "join --no-sound writes no sound track" |
+| INV-1 | ci.sh finishing: `assert_finished`'s sound-stream count, and "join --no-sound writes no sound track" |
 | INV-2 | ci.sh "a clip's sound stays in step through cuts, cards and crossfades" |
 | INV-3 | ci.sh, inside INV-2's step |
 | INV-4 | ci.sh "a scene's fades fade its sound" |
@@ -429,7 +453,7 @@ input gave one MD5, measured 2026-10-11.
 | INV-9 | ci.sh "a level line changes the music for its stretch" |
 | INV-10 | ci.sh "music is kept off full scale, and a clipping film gets a note" |
 | INV-11 | ci.sh "edit refuses a bad music, level, sound or volume word". Partial: one script per listed error; an error not in § 4.6 is unchecked |
-| INV-12 | ci.sh "a shortcut's music is the script's music". Partial: `join` only; `trim`, `caption` and `card` share its option code but are not compared |
+| INV-12 | ci.sh "a shortcut's music is the script's music". Partial: `join` is compared; `trim` is run once, and `caption` and `card` share the option code but are not compared |
 | INV-13 | ci.sh "music under a long and a short film both end". Partial: the bounds cover each other, so one removed alone may pass |
 | Every message through `tr` | Partial: ci.sh `translation: nothing translated at import time` (DEMO-0060 INV-15) catches a message translated at import; a message never passed through `tr` is caught by review only |
 | Script words stay English | **nothing** — DEMO-0060 § 4.1 states it; no check reads the parser |
