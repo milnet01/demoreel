@@ -1,7 +1,7 @@
 <!-- ants-spec-format: 1 -->
 # DEMO-0153 — Several lines of text on screen at once, sliding and fading in
 
-**Status:** spec draft (2026-10-11).
+**Status:** accepted (2026-10-11).
 **Kind:** feature.
 **Source:** ROADMAP DEMO-0153 (user-request-2026-10-02; the Slipcase trailer, 2026-10-10).
 **Pairs with:** DEMO-0185 (a logo that grows as it fades in; an end card is that plus this). DEMO-0183 (its window sits in the room these texts leave).
@@ -53,7 +53,7 @@ text "WORDS" ... [slide-in SECONDS] ...
 ```
 
 - **`slide-in SECONDS`** — from its `from`, over that many seconds, the text
-  rises `SLIDE_RISE` of its height into its place, easing out, and fades in
+  rises `SLIDE_RISE` of its font size into its place, easing out, and fades in
   evenly: at a share `p` of the way through, it is `(1 - p)³` of the rise
   below its place and `p` faded in. Its band rises and fades with it.
 - **A text takes `slide-in` or `fade-in`, not both**, as a scene takes
@@ -68,7 +68,7 @@ text "WORDS" ... [slide-in SECONDS] ...
   fades (README § The shortcuts).
 
 ```
-SLIDE_RISE = 0.5    # how far a sliding text rises: a share of its height
+SLIDE_RISE = 0.5    # how far a sliding text rises: a share of its font size
 LINE_GAP   = 0.3    # space between two stacked lines off a band: a share of the taller one's font size
 ```
 
@@ -93,20 +93,23 @@ a 30 px gap under 92 px lines (`trailer.py`, `Scene.text` and `scene_text`).
   centred in the middle. So a stack of one line is placed exactly as a text
   is today.
 - **A stack's lines are all on a band or all off one.** A mixed stack is
-  refused, naming the line that differs.
+  refused, naming the first line, in script order, whose band differs from
+  the stack's first line's.
 - **Texts at different places may show together**, a title at the top over
   a caption at the bottom.
 - **The room a card leaves its picture, `picture_room`, takes a stack's
   height** where it takes one text's today, at the top and at the bottom:
   a banded stack's height, or an unbanded stack's plus `0.3` of its last
-  line's font size, which for one line is today's `round(size × 1.3)`. A
+  line's font size, beside today's margin, which for one line is today's
+  `round(size × 1.3)`. A
   windowed clip (DEMO-0183) uses the same room.
 
 ### 4.3 Refusals
 
 Each stops the run before ffmpeg starts, naming the line:
 
-- a stack taller than the frame less its `CARD_MARGIN` margins;
+- a stack taller than the frame less its `CARD_MARGIN` margins, naming the
+  first line, in script order, that does not fit;
 - `slide-in` with `fade-in`, or `slide-in` and `fade-out` longer than the
   text shows;
 - a stack mixing lines on and off a band;
@@ -155,17 +158,18 @@ None of these clauses can run until the code exists.
   today.
   *Test:* ci.sh finishing: every existing step drawing text passes
   unchanged, the card title, caption and placement steps among them,
-  except the two caption steps INV-4 changes.
+  except the two checks in `fin_s21` that INV-4 changes.
   *Breaks when:* a one-line stack is placed by a different rule from a text
   today.
 
 - **INV-4** — Texts at different places show together.
   *Test:* ci.sh finishing: `card 2` with `text "Top" at top` and `text
   "Bottom" at bottom`, both for the whole card, is made, and frame 10 has
-  `light:40` pixels in its top fifth and in its bottom fifth. The two
-  existing `caption` steps that expect a refusal — "caption with texts
-  overlapping between 3 and 4" and "caption with a whole-video text and
-  another beside it" — now expect a film, the captions stacked on bands.
+  `light:40` pixels in its top fifth and in its bottom fifth. In the
+  existing step `fin_s21`, the two checks that expect a refusal, "caption
+  with texts overlapping between 3 and 4" and "caption with a whole-video
+  text and another beside it", now expect a film, the captions stacked on
+  bands; the step's title loses "and texts that overlap".
   *Breaks when:* any two overlapping texts are still refused.
 
 - **INV-5** — `slide-in` rises into place, easing out, and fades in.
@@ -192,7 +196,10 @@ None of these clauses can run until the code exists.
   where ffmpeg has `boxw`, refused naming the line where it has not.
   *Test:* ci.sh finishing, beside the existing fading-band step, which
   branches on `boxw` in `ffmpeg -h filter=drawtext`. Partial: this machine
-  and the Ubuntu image both have `boxw`, so only the made branch runs.
+  and the Ubuntu image both have `boxw`, so only the made branch runs. In
+  it, `card 2 background #F0F0F0` with `text "Rise" size 10 band on
+  slide-in 1`: the top of the `dark:225` pixels, the band, is 9 to 15 px
+  lower at frame 2 than at frame 15, as INV-5's text is.
   *Breaks when:* a sliding band is drawn with `drawbox`, which stays still
   while the text moves.
 
@@ -221,8 +228,8 @@ All in `ci.sh`'s finishing steps, so `./ci.sh --finishing` runs them.
 
 - INV-1, INV-2: "texts on screen together are stacked in order and stay put".
 - INV-3: the existing text steps, unchanged.
-- INV-4: "texts at different places show together", and the two existing
-  caption-overlap steps, changed to expect a film.
+- INV-4: "texts at different places show together", and the two
+  caption-overlap checks in `fin_s21`, changed to expect a film.
 - INV-5: "slide-in rises into place and fades in".
 - INV-6: "edit refuses a bad stack or slide-in".
 - INV-7: the fading-band step's `boxw` branch, extended to `slide-in`.
@@ -260,7 +267,7 @@ by removing one check, INV-8 by counting one text in `picture_room`.
 | INV-1 | ci.sh "texts on screen together are stacked in order and stay put" |
 | INV-2 | the same step |
 | INV-3 | every existing text step |
-| INV-4 | ci.sh "texts at different places show together", and the two changed caption-overlap steps |
+| INV-4 | ci.sh "texts at different places show together", and the two changed checks in `fin_s21` |
 | INV-5 | ci.sh "slide-in rises into place and fades in" |
 | INV-6 | ci.sh "edit refuses a bad stack or slide-in" |
 | INV-7 | the fading-band step's `boxw` branch; partial, § 5 |
@@ -274,7 +281,8 @@ by removing one check, INV-8 by counting one text in `picture_room`.
 - `demoreel.1` — the text line's words.
 - `CHANGELOG.md` — one bullet.
 - `po/` — the template, through `./ci.sh --pot`; the overlap message goes.
-- `ci.sh` — the two caption-overlap steps change (INV-4).
+- `ci.sh` — `fin_s21`'s two caption-overlap checks and its title change
+  (INV-4).
 
 ## 12. Cold-eyes loop log
 

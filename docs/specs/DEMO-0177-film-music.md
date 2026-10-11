@@ -200,11 +200,13 @@ is shorter than the film, so what it holds is bounded by the film's length.
   stream, or there is music, or a sound effect (DEMO-0186).** Otherwise the
   ffmpeg run keeps `-an` and the file is what it is today.
 - **Mixing**: the scenes' sound, the music and each DEMO-0186 sound effect,
-  an input each, by one `amix` with `normalize=0:duration=longest`, then
-  trimmed to the film's length. `normalize=0` keeps each at the level set:
-  the default divides each input by the number of inputs. `duration=first`
-  would end the film's sound with a first input shorter than the film, as a
-  sound effect is (measured 2026-10-11: 1 s against `longest`'s 5 s).
+  an input each, by one `amix` with `normalize=0`. `normalize=0` keeps each
+  at the level set: the default divides each input by the number of inputs.
+  `make_film` mixes its two inputs today with `duration=first`, the scenes'
+  sound first; both last the whole film, so that is safe. DEMO-0186, adding
+  inputs shorter than the film, switches to `duration=longest` and trims
+  to the film's length: `duration=first` would end the film's sound with a
+  short first input (measured 2026-10-11: 1 s against `longest`'s 5 s).
   Present on ffmpeg 6.1.1, the Ubuntu image, and 9.0.2 here. Where only one
   of them is present, it is mapped alone.
 - **Encoding**: `AUDIO_ENCODER`, as `record --audio` uses, so DEMO-0106
@@ -277,8 +279,7 @@ cannot read stops the run.
   stream=codec_type,codec_name,sample_rate,channels,start_time,duration`,
   comparing `start_time + duration` per stream. The prototype: both streams
   `0.000000` to `9.233333`.
-  *Breaks when:* the encoder options change, or the sound is not trimmed to
-  the film.
+  *Breaks when:* the encoder options change.
 
 - **INV-4** — A scene's `fade-in`, `fade-out` and `fade-at` fade its sound
   with its picture.
