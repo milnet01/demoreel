@@ -112,8 +112,8 @@ picture is repeated today, and it keeps both rules of
 `.claude/rules/finishing-commands.md`: no demuxer loop, and every stream ends,
 since the chain still ends in `shape`'s `trim=end_frame`.
 
-DEMO-0178 replaces layer 1. DEMO-0184 acts on layer 3. Neither changes the
-order.
+DEMO-0178 replaces layer 1. DEMO-0184 acts on layer 3, and layer 2 follows
+the window's size and place as it changes. Neither changes the order.
 
 **Measured, as a prototype** (2026-10-11, ffmpeg 9.0.2; a 6 s `testsrc2` clip at
 1600x1000 in a `window 80` at 1920x1080, 30 a second; the sigma was half
@@ -137,11 +137,12 @@ can run until the code exists.
   its shape kept.
   *Test:* ci.sh finishing: `edit` with `clip A.mp4 window 50`. The room is
   296x216, the box 148x108, the window 144x108 at (88, 66). `px bbox` against
-  `#101418` gives about `0.275 0.275 0.725 0.725`, within 0.02. The fixture
-  isolates the fit: filling the frame gives `0 0 1 1`, and a box not centred
-  in the room moves the top edge.
-  *Breaks when:* the window is sized from the frame rather than the room, is
-  stretched to the box, or is not centred.
+  `#101418` gives `0.275 0.275 0.725 0.725`, within 0.01. The fixture
+  isolates the fit: filling the frame gives `0 0 1 1`, a window sized from
+  the frame is 160x120 with its left edge at `0.25`, and one not centred
+  moves an edge.
+  *Breaks when:* the window is sized from the frame rather than the room, or
+  is not centred.
 
 - **INV-2** — A clip of a different shape from the film's is accepted in a
   window and fitted, not stretched. Without a window it is still refused.
@@ -166,9 +167,13 @@ can run until the code exists.
   *Breaks when:* the mask is missing, or is not applied with `alphamerge`.
 
 - **INV-4** — The window casts a shadow below it.
-  *Test:* ci.sh finishing: as INV-3 with `background #c0c0c0`. `px` 4 px
-  below the middle of the window's bottom edge is at least 20 darker than
-  `px` at the frame's top-left corner, where no shadow reaches.
+  *Test:* ci.sh finishing: as INV-3 with `background #c0c0c0`, where the
+  blur's sigma is about 11 px and the drop about 5 px. Three `px` probes on
+  the window's middle column, against `px` at the frame's top-left corner,
+  where no shadow reaches. 4 px below the bottom edge is at least 20 darker
+  than 4 px above the top edge, which a shadow not dropped fails. 12 px
+  below the bottom edge, past where an unblurred shadow ends, is at least 15
+  darker than the corner. A missing shadow fails both.
   *Breaks when:* the shadow is missing, not blurred onto the frame, or not
   dropped below the window.
 
@@ -197,9 +202,8 @@ can run until the code exists.
 
 - **The clip is far smaller than the window**: it is scaled up, softly, as a
   small clip filling the frame is today. Nothing refuses it.
-- **Texts at the top and bottom leave too little room**: the window would be
-  under 2 px high. Refused with the card's message for the same case, from
-  `check_scene`.
+- **Too little room**: the window, after rounding down to even, would be
+  under 2 px high. Refused from `check_scene`, naming the line.
 - **An ffmpeg without `gblur`, `geq` or `alphamerge`**: ffmpeg fails the run,
   and `make_film` shows its last lines, as for any filter it lacks. All three
   are in this machine's ffmpeg 9.0.2 and in the 6.1.1 of `ci.sh`'s Ubuntu
@@ -219,7 +223,8 @@ All in `ci.sh`'s finishing steps, so `./ci.sh --finishing` runs them.
 
 Each new step is seen to fail first: INV-1 by scaling to the frame, INV-2 by
 leaving the shape check on, INV-3 by dropping `alphamerge`, INV-4 by dropping
-the shadow's overlay, INV-5 by removing one check.
+the shadow's overlay, its drop and its blur in turn, INV-5 by removing one
+check.
 
 ## 8. Alternatives considered (and rejected)
 
@@ -239,7 +244,6 @@ the shadow's overlay, INV-5 by removing one check.
 - A moving background — DEMO-0178.
 - A push-in on the window, or a zoom inside it — DEMO-0184.
 - `window` on a shortcut, or on a card — deferred; not yet queued.
-- Two windows on screen at once — ruled out by README § What it will never do.
 
 ## 10. What checks this
 
@@ -253,7 +257,7 @@ the shadow's overlay, INV-5 by removing one check.
 | INV-6 | ci.sh "a windowed scene ends where the plan says"; partial, § 5 |
 | INV-7 | every existing finishing step |
 | No new program | **nothing** automatic; code review. README § Finishing a recording promises it |
-| New messages translated | ci.sh's catalog steps (DEMO-0060 INV-15), and `./ci.sh --pot` |
+| New messages go through `tr` at run time | ci.sh "translation: nothing translated at import time" (DEMO-0060 INV-15), and "translation: the template matches the source", refreshed with `./ci.sh --pot` |
 
 ## 11. Cross-doc impact
 
