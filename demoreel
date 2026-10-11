@@ -2822,6 +2822,19 @@ SCENE_WORDS = {
     "music": ("level", "normalise", "fade-in", "fade-out"),
     "level": ("from", "to", "ramp"),
 }
+# The ready-made pictures a crossfade may take, after its seconds: xfade's own
+# names, those ffmpeg 6.1.1 and 9.0.2 both have, less `custom`.
+TRANSITIONS = (
+    "fade", "wipeleft", "wiperight", "wipeup", "wipedown", "slideleft",
+    "slideright", "slideup", "slidedown", "circlecrop", "rectcrop", "distance",
+    "fadeblack", "fadewhite", "radial", "smoothleft", "smoothright",
+    "smoothup", "smoothdown", "circleopen", "circleclose", "vertopen",
+    "vertclose", "horzopen", "horzclose", "dissolve", "pixelize", "diagtl",
+    "diagtr", "diagbl", "diagbr", "hlslice", "hrslice", "vuslice", "vdslice",
+    "hblur", "fadegrays", "wipetl", "wipetr", "wipebl", "wipebr", "squeezeh",
+    "squeezev", "zoomin", "fadefast", "fadeslow", "hlwind", "hrwind",
+    "vuwind", "vdwind", "coverleft", "coverright", "coverup", "coverdown",
+    "revealleft", "revealright", "revealup", "revealdown")
 # The words of a text line whose value is not a number.
 TEXT_NAMES = ("font", "colour", "outline", "shadow", "band", "at")
 TEXT_PLACES = ("top", "middle", "bottom")
@@ -2849,6 +2862,7 @@ class Scene:
         self.seconds = None     # a card: how long it lasts
         self.background = CARD_BACKGROUND
         self.fade_in = self.fade_out = self.crossfade = 0.0
+        self.transition = "fade"  # the picture a crossfade takes
         self.fade_at = []
         self.fade_length = FADE_LENGTH
         self.texts = []         # each: words, start, end, size, where
@@ -2926,8 +2940,15 @@ def script_words(target, words, kind, where):
     part."""
     names = {"from": "start", "to": "end", "fade-in": "fade_in",
              "fade-out": "fade_out", "fade-length": "fade_length"}
-    for at in range(0, len(words), 2):
+    at = 0
+    while at < len(words):
         word = words[at]
+        if word not in SCENE_WORDS[kind] and at >= 2 and words[at - 2] == "crossfade":
+            # translators: {name} is the word written after a crossfade's seconds, in
+            # quotes; {names} lists xfade's transitions. All stay in English.
+            die(tr("{where}: {name} is not a transition a crossfade takes. It "
+                   "takes: {names}.", where=where, name=repr(word),
+                   names=", ".join(TRANSITIONS)))
         if word not in SCENE_WORDS[kind]:
             # translators: {word} is the word written, in quotes; {kind} is clip, card or
             # text; {words} lists the words that line takes. All stay in English.
@@ -2939,6 +2960,10 @@ def script_words(target, words, kind, where):
             die(tr("{where}: {word} needs a value after it.", where=where,
                    word=repr(word)))
         value = words[at + 1]
+        at += 2
+        if word == "crossfade" and at < len(words) and words[at] in TRANSITIONS:
+            target.transition = words[at]
+            at += 1
         if word == "background":
             target.background = value
         elif word in ("sound", "normalise"):
@@ -3793,7 +3818,7 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
                 chains.append(scene_sound(scene, length, number, first_input))
             begins = total - scene.crossfade
             if scene.crossfade:
-                chains.append(f"{film}[v{number}]xfade=transition=fade:"
+                chains.append(f"{film}[v{number}]xfade=transition={scene.transition}:"
                               f"duration={scene.crossfade:.4f}:"
                               f"offset={begins:.4f}[f{number}]")
                 if clip_sound:

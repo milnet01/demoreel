@@ -426,11 +426,17 @@ Then any of
 .BI fade\-out " s"\fR,\fP
 .BI fade\-at " s"\fR,\fP
 .BI fade\-length " s"\fR,\fP
-.BI crossfade " s"\fR,\fP
+.BI crossfade " s \fR[\fPtransition\fR]\fP"\fR,\fP
 .BR sound " " on | off
 and
 .BI volume " dB"\fR.\fP
 A clip keeps its own sound unless told not to.
+A crossfade is a fade unless it names one of ffmpeg's ready-made
+transitions, such as
+.BR wipeleft ,
+.B slideup
+or
+.BR dissolve .
 .TP
 .BI "card " "seconds \fR[\fPpicture\fR]\fP"
 Show a plain background, with a picture on it, or text, or both.
@@ -440,7 +446,8 @@ Then any of
 .BR fade\-in ,
 .B fade\-out
 and
-.BR crossfade .
+.BR crossfade ,
+with a transition as on a clip.
 .TP
 .BI "text " "\(dqwords\(dq"
 Put one line of text on the scene above.

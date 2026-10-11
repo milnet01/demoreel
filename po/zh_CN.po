@@ -547,6 +547,9 @@ msgstr "{where}：{word} 需要一个分贝数，例如 -6，而不是 {value}�
 msgid "{where}: {word} is on or off, not {value}."
 msgstr "{where}：{word} 只能是 on 或 off，而不是 {value}。"
 
+msgid "{where}: {name} is not a transition a crossfade takes. It takes: {names}."
+msgstr "{where}：{name} 不是交叉淡化接受的转场。它接受：{names}。"
+
 msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
 msgstr "{where}：{kind} 行不接受 {word}。它接受：{words}。"
 

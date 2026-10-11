@@ -550,6 +550,9 @@ msgstr "{where}: {word} admite un número de decibelios, como -6, no {value}."
 msgid "{where}: {word} is on or off, not {value}."
 msgstr "{where}: {word} es on u off, no {value}."
 
+msgid "{where}: {name} is not a transition a crossfade takes. It takes: {names}."
+msgstr "{where}: {name} no es una transición que admita un fundido encadenado. Admite: {names}."
+
 msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
 msgstr "{where}: {word} no es algo que admita una línea {kind}. Admite: {words}."
 

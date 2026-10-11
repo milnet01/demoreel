@@ -331,6 +331,10 @@ order:
   long, so the film is that much shorter than its scenes added together. A
   scene takes a crossfade or a fade-in, not both, and the first scene takes
   no crossfade.
+- `crossfade 0.5 wipeleft` — the same overlap, drawn as one of ffmpeg's
+  ready-made transitions instead of a fade: wipes, slides, dissolves,
+  circles and more. A name demoreel does not know is refused, and the
+  message lists every name it takes.
 - `sound off` — leave out this clip's own sound; its span is silent.
 - `volume -6` — turn this clip's own sound down 6 dB, or up with a number
   above zero, between `-60` and `20`. A clip with no sound refuses it.

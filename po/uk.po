@@ -553,6 +553,9 @@ msgstr "{where}: {word} приймає кількість децибелів, н
 msgid "{where}: {word} is on or off, not {value}."
 msgstr "{where}: {word} може бути on або off, а не {value}."
 
+msgid "{where}: {name} is not a transition a crossfade takes. It takes: {names}."
+msgstr "{where}: {name} не є видом плавного переходу. Можливі види: {names}."
+
 msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
 msgstr "{where}: {word} не підходить для рядка {kind}. Він приймає: {words}."
 

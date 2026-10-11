@@ -547,6 +547,9 @@ msgstr "{where}: {word}에는 {value}이(가) 아니라 -6처럼 데시벨 숫�
 msgid "{where}: {word} is on or off, not {value}."
 msgstr "{where}: {word}은(는) on 또는 off입니다. {value}은(는) 안 됩니다."
 
+msgid "{where}: {name} is not a transition a crossfade takes. It takes: {names}."
+msgstr "{where}: {name}은(는) 크로스페이드에 쓸 수 있는 전환이 아닙니다. 쓸 수 있는 것: {names}."
+
 msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
 msgstr "{where}: {word}은(는) {kind} 줄에 쓸 수 없습니다. 쓸 수 있는 것: {words}."
 

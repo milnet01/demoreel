@@ -547,6 +547,9 @@ msgstr "{where}: {word} には -6 のようにデシベル数を指定します�
 msgid "{where}: {word} is on or off, not {value}."
 msgstr "{where}: {word} は on か off です。{value} は使えません。"
 
+msgid "{where}: {name} is not a transition a crossfade takes. It takes: {names}."
+msgstr "{where}: {name} はクロスフェードで使えるトランジションではありません。使えるのは次のとおりです: {names}。"
+
 msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
 msgstr "{where}: {word} は {kind} の行には使えません。使えるのは次のとおりです: {words}。"
 

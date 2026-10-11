@@ -4021,13 +4021,18 @@ before packaging. The full editor stays 2.0.0.
   Kind: feature.
   Source: peer-website-session-2026-10-10.
 
-- 📋 [DEMO-0150] **Add transitions beyond a fade: dissolves, wipes and slides.**
+- ✅ [DEMO-0150] **Add transitions beyond a fade: dissolves, wipes and slides.**
   Wanted by a real trailer (website session, Slipcase, 2026-10-10):
   xfade slideleft, slideup, wipeleft, circleopen, smoothleft, zoomin and
   fadeblack, one per join. Builder for reference:
   /mnt/Games/Trailers/tools/trailer.py (scratch, outside any repo).
   Builds without a spec (user, 2026-10-11): a transition name after the
   existing `crossfade` word, one of xfade's ready-made transitions.
+  Resolved (2026-10-11): `crossfade S NAME` on a clip or card line, NAME
+  one of the 58 xfade transitions ffmpeg 6.1.1 and 9.0.2 share (less
+  `custom`); an unknown name is refused with the list. The sound still
+  crossfades. `join --crossfade` keeps a plain fade: the item named the
+  script word only.
   **Layman:** Choose how one scene changes into the next.
   Kind: feature.
   Source: user-request-2026-10-02.

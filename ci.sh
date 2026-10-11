@@ -1619,6 +1619,25 @@ card 1
     expected: difference between 0.35 and 0.65
     actual:   plain $(v_dur "$ft/out/X2.mp4") crossfade $(v_dur "$ft/out/X1.mp4")"
     echo "the crossfade took its overlap off the film"
+    # DEMO-0150: a transition name after the seconds. Halfway through, a
+    # wipeleft still shows the red scene on the left and the blue one on the
+    # right, where the plain fade is the same mix on both sides.
+    for t in "fade" "wipeleft"; do
+        printf 'card 2 background #ff0000\ncard 2 background #0000ff crossfade 1 %s\n' \
+            "$t" | ed_ok "xt-$t.mp4"
+    done
+    assert_colour "crossfade 1 wipeleft halfway: the left is the scene before" \
+        "$ft/out/xt-wipeleft.mp4" 15 0.1 0.5 255 0 0 40
+    assert_colour "crossfade 1 wipeleft halfway: the right is the scene after" \
+        "$ft/out/xt-wipeleft.mp4" 15 0.9 0.5 0 0 255 40
+    assert_colour "crossfade 1 with no name halfway: a fade, the same mix on the left" \
+        "$ft/out/xt-fade.mp4" 15 0.1 0.5 128 0 128 40
+    printf 'card 2\ncard 2 crossfade 1 wipe-left\n' > "$ft/xt3.txt"
+    run edit xt3.txt -o "$ft/out/xt3.mp4"
+    refused_naming_line "edit refuses a crossfade's unknown transition" xt3.mp4 2
+    grep -q "not a transition" "$fe" || fail "an unknown transition should be named as one
+    actual:   $(cat "$fe")"
+    echo "a crossfade took a transition's name, wiped where asked, and refused a name xfade lacks"
 
     }
     fin_s27() {
@@ -2501,7 +2520,7 @@ CASES
     fin_step "edit makes the film in order, from a file or from standard input" fin_s23
     fin_step "edit's film size and rate: the first clip's, or -s and -r, or 1600x1000 at 30" fin_s24
     fin_step "edit checks every line before it makes anything, and names the bad one" fin_s25
-    fin_step "edit: crossfade on a scene overlaps it with the one before" fin_s26
+    fin_step "edit: crossfade on a scene overlaps it with the one before, by a fade or a named transition" fin_s26
     fin_step "a shortcut and the script it stands for agree" fin_s27
     fin_step "check reports the finishing commands and their text, without changing its exit status" fin_s28
     fin_step "text colour: the text is drawn in it, and white on a band without it" fin_s29

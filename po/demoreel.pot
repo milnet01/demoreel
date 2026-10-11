@@ -478,6 +478,10 @@ msgstr ""
 msgid "{where}: {word} is on or off, not {value}."
 msgstr ""
 
+#. translators: {name} is the word written after a crossfade's seconds, in quotes; {names} lists xfade's transitions. All stay in English.
+msgid "{where}: {name} is not a transition a crossfade takes. It takes: {names}."
+msgstr ""
+
 #. translators: {word} is the word written, in quotes; {kind} is clip, card or text; {words} lists the words that line takes. All stay in English.
 msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
 msgstr ""

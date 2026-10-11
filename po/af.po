@@ -550,6 +550,9 @@ msgstr "{where}: {word} neem 'n aantal desibel, soos -6, nie {value} nie."
 msgid "{where}: {word} is on or off, not {value}."
 msgstr "{where}: {word} is on of off, nie {value} nie."
 
+msgid "{where}: {name} is not a transition a crossfade takes. It takes: {names}."
+msgstr "{where}: {name} is nie 'n oorgang wat 'n oorvloeiing neem nie. Dit neem: {names}."
+
 msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
 msgstr "{where}: {word} is nie iets wat 'n {kind}-reël neem nie. Dit neem: {words}."
 

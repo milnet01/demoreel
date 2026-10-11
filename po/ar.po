@@ -562,6 +562,9 @@ msgstr "{where}: يأخذ {word} عددًا من الديسيبلات، مثل -
 msgid "{where}: {word} is on or off, not {value}."
 msgstr "{where}: قيمة {word} هي on أو off، لا {value}."
 
+msgid "{where}: {name} is not a transition a crossfade takes. It takes: {names}."
+msgstr "{where}: {name} ليس انتقالًا يأخذه التلاشي المتداخل. ما يأخذه هو: {names}."
+
 msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
 msgstr "{where}: {word} ليس مما يأخذه سطر {kind}. ما يأخذه هو: {words}."
 

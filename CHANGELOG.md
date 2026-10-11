@@ -14,6 +14,9 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **A crossfade can name one of ffmpeg's ready-made transitions — `crossfade 0.5 wipeleft`, `slideup`, `dissolve` and the rest — instead of a fade.** (DEMO-0150)
+  Choose how one scene changes into the next.
+
 - **A `drag X1 Y1 X2 Y2` step presses, slides and lets go** (DEMO-0188)
   For dragging a song into order or widening a pane. The pointer slides
   over half a second, or as many seconds as a fifth number says, and the
