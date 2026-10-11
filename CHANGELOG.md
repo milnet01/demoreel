@@ -41,16 +41,16 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   Recording an app's own sound, and adding music to a film, are planned,
   always by the caller's choice. Videos stay silent until they ship.
 
-- **German messages corrected after a second AI check** (DEMO-0172)
+- **German messages corrected after a second AI check** (part of DEMO-0172)
   Two messages that copied English wording word for word now read as
   normal German. The catalog stays a draft until a native speaker
   confirms it.
 
-- **Afrikaans messages corrected after a second AI check** (DEMO-0172)
+- **Afrikaans messages corrected after a second AI check** (part of DEMO-0172)
   Three messages now use natural Afrikaans word order and spelling.
   The catalog stays a draft until a native speaker confirms it.
 
-- **Five French messages read more naturally** (DEMO-0172)
+- **Five French messages read more naturally** (part of DEMO-0172)
   Checked with a second AI. The French catalog is still a draft until
   a native speaker confirms it.
 
