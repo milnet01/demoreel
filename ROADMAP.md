@@ -267,7 +267,7 @@ simplest case, and a gate proves it still records.
   Decided by the user the same day: corrections go into po/*.po and
   every catalog stays `draft`. Only a native speaker makes one
   `confirmed` (docs/specs/DEMO-0060 § 4.9; DEMO-0096 stays open).
-  Order: after the 0.5.0 packaging design (DEMO-0068).
+  Order: after the 0.9.0 packaging design (DEMO-0068).
   Each fix keeps placeholders and code tokens as the English has them;
   the gate's placeholder and code-token checks refuse anything else.
   Method, from Groundwork (2026-10-08), which ran it on its own
@@ -336,7 +336,7 @@ simplest case, and a gate proves it still records.
   CLAUDE.md § Scope ceiling: one picture, at most one line of text.
   Decided (user, 2026-10-10): a frame of the video plus an optional
   single line of large title text; a 16:10 frame is fitted to 16:9 by
-  trimming the top and bottom, never with bars; built after the 0.5.0
+  trimming the top and bottom, never with bars; built after the 0.9.0
   packaging work.
   **Layman:** Make the small picture YouTube shows for a video, in the size and file limits YouTube asks for.
   Kind: feature.
@@ -3883,271 +3883,6 @@ path, and scripts read it.
   Kind: doc.
   Source: DEMO-0064-finding-2026-10-02.
 
-## 0.5.0 — Installs like any other program
-
-A person installs demoreel from their distro's usual tools, and the programs it
-needs come with it. The man page, tab completion and translations land where the
-system looks for them.
-
-- 📋 [DEMO-0068] **Package demoreel for openSUSE through the Open Build Service.**
-  This machine's distro. The package declares Xvfb, xauth, ffmpeg and
-  xdotool as requirements, and cage, Xwayland, wlr-randr and wf-recorder
-  as recommended for `--gpu`. It installs the man page, completions and catalogs.
-  Follow-up (2026-09-28): when the first package is attached to a GitHub
-  release, message the Ants Projects Hub website project
-  (session_message). Its demoreel download button stays on "Download
-  source" until then.
-  Note (2026-10-02): install po/ beside the script that
-  /usr/bin/demoreel resolves to, or every language falls back to English
-  with no error. docs/specs/DEMO-0060 § 4.2 allows no other catalog
-  location (see DEMO-0071).
-  Design decisions for 0.5.0 (user, 2026-10-08). The packages are for
-  strangers who find demoreel on the website or GitHub. On openSUSE
-  and Fedora the package depends on the distro's ffmpeg like any
-  other dependency; when that lacks libx264, `demoreel check` already
-  names the Packman / RPM Fusion fix. Debian and Ubuntu get a .deb
-  attached to each GitHub release, not a PPA. Files first, repos
-  after: 0.5.0 ships .deb and .rpm files on the release plus the Arch
-  PKGBUILD, built and install-tested in CI; publishing to OBS, COPR
-  and the AUR follows as the user creates each account. Next step:
-  the design document, through write-spec and its review gate.
-  Finding for the design (2026-10-08, DEMO-0171): openSUSE's wf-recorder
-  loads openSUSE's libavcodec, never Packman's, unless Packman's ffmpeg
-  is the same major version. README's advice (zypper install --from
-  packman ffmpeg) took ffmpeg 9 here while wf-recorder kept .so.62, so
-  record --gpu could not write H.264. check now says so. The design
-  must say what a stranger on openSUSE does for --gpu. This machine
-  runs wf-recorder master c5de474 plus upstream PR #352 (ffmpeg 9
-  port), built into ~/.local.
-  Progress (2026-10-08): spec drafted at
-  docs/specs/DEMO-0068-linux-packages.md (covers DEMO-0069 and
-  DEMO-0070 too). Two more user decisions the same day: openSUSE
-  record --gpu records losslessly then converts (filed as DEMO-0174);
-  release files are built by a GitHub job when a release is published.
-  review-contract loop 1 is done (5 verified, 5 fixed); loop 2, the
-  cap for a spec, is owed before anything is built. Then set Status to
-  accepted.
-  Progress (2026-10-10): review-contract loop 2, the cap for a spec,
-  done: 6 verified, 6 fixed, 1 dismissed; a calm cap. The spec is
-  accepted (2026-10-10) and ready to build. Loop 2's fixes were read by
-  no lane; implementation is their reader.
-  User, 2026-10-11: the OBS account exists now (home:milnet, beside
-  ants-terminal, finbreak and perch), so publish to OBS as part of this
-  item, in its turn after 0.7.0 and 0.8.0. The spec's "files first, OBS
-  once there is an account" line needs amending, and that amendment goes
-  through review-contract before building. finbreak's packaging/obs/
-  (_service tracking a release tag) is the model to follow.
-  **Layman:** Install demoreel on openSUSE with zypper, dependencies included.
-  Kind: package.
-  Source: user-request-2026-09-25.
-
-- 📋 [DEMO-0069] **Package demoreel for Debian and Ubuntu.**
-  The GitHub runner is Ubuntu, so the package can be built and installed
-  there as a gate step. Requirements: xvfb, xauth, ffmpeg, xdotool.
-  Recommends the `--gpu` pair where the distro carries it.
-  Follow-up (2026-09-28): see DEMO-0068 - tell the website project when
-  a package is attached to a release.
-  Note (2026-10-02): install po/ beside the script that
-  /usr/bin/demoreel resolves to, or every language falls back to English
-  with no error. docs/specs/DEMO-0060 § 4.2 allows no other catalog
-  location (see DEMO-0071).
-  Decided 2026-10-08: a .deb attached to each GitHub release, not a
-  PPA. See DEMO-0068 for the whole 0.5.0 design brief.
-  **Layman:** Install demoreel on Debian or Ubuntu with apt, dependencies included.
-  Kind: package.
-  Source: user-request-2026-09-25.
-
-- 📋 [DEMO-0070] **Package demoreel for Fedora and Arch.**
-  Fedora through COPR, Arch as an AUR PKGBUILD. Same file layout and
-  dependency split as the other packages.
-  Follow-up (2026-09-28): see DEMO-0068 - tell the website project when
-  a package is attached to a release.
-  Note (2026-10-02): install po/ beside the script that
-  /usr/bin/demoreel resolves to, or every language falls back to English
-  with no error. docs/specs/DEMO-0060 § 4.2 allows no other catalog
-  location (see DEMO-0071).
-  Decided 2026-10-08: 0.5.0 ships the .rpm file and the Arch PKGBUILD,
-  tested in CI; COPR and AUR publishing follow once the user has
-  those accounts. See DEMO-0068.
-  **Layman:** Install demoreel on Fedora (dnf) or Arch (from the AUR).
-  Kind: package.
-  Source: user-request-2026-09-25.
-
-- ✅ [DEMO-0071] **Let the tool find its translations whether installed or run from a checkout.**
-  A package puts catalogs under /usr/share/locale. A checkout keeps them
-  beside the script. The tool finds them from its own resolved path first,
-  then the system location. The caller's working directory is never used,
-  which the any-project requirement in CLAUDE.md demands.
-  Closed (2026-10-02): already true under docs/specs/DEMO-0060 § 4.2's
-  one rule, catalogs in po/ beside the script's resolved path. The spec
-  rejected also searching /usr/share/locale (the user's decision), so
-  this item's "then the system location" is superseded; a package
-  installs po/ beside the script instead. Checked: via
-  ~/.local/bin/demoreel from /mnt/Emulators, which has no po/,
-  LANGUAGE=fr printed French.
-  **Layman:** Translations work the same whether demoreel was installed from a package or run from its folder.
-  Kind: implement.
-  Source: user-request-2026-09-25.
-
-- 📋 [DEMO-0072] **Document an install from source, and check it in a clean container per distro.**
-  For a distro with no package: which programs to install, where to put
-  the script, man page, completions and catalogs. Verified by running it
-  in a fresh container for each packaged distro, which also catches a
-  missing dependency in the package lists.
-  **Layman:** Anyone can install it by hand with a few commands, and those commands are tested.
-  Kind: doc.
-  Source: user-request-2026-09-25.
-
-- 📋 [DEMO-0084] **Let a user verify that what they installed is what was released.**
-  Once demoreel ships as packages and release files, a user needs a way to
-  check that what they got is what this repository built. Publish
-  checksums with each GitHub release, sign release tags, and add a build
-  provenance attestation from the workflow. Say in SECURITY.md how to
-  check each one.
-  **Layman:** Downloads come with a way to check they are genuine and untampered.
-  Kind: security.
-  Source: user-request-2026-09-25.
-
-- ✅ [DEMO-0163] **Ship a copy of demoreel with Ants Terminal, in a form agreed with its maintainer.**
-  The user asked on 2026-10-02, since making a video is now a Claude Code
-  skill. The form (a plugin, a bundled file, an MCP verb) is being worked
-  out with the Ants Terminal session. demoreel's side: it stays one file
-  with po/ beside it (DEMO-0071), and the copy is pinned to a release tag
-  so both projects know which version ships.
-  Decided (2026-10-02). Ants Terminal bundles the normal, full demoreel,
-  outside PATH under libexec/ants-terminal/, called by absolute path,
-  pinned by release tag and sha256. Not a stripped copy: the user ruled
-  that a small file ships whole, and demoreel is about half a percent of
-  the terminal's size. It follows every release through 1.0.0, with po/
-  beside it from 0.4.0. Its system tools are optional there, and it is
-  left out of the Flatpak. First pin: v0.3.1. Left to do: send the tag,
-  hash and new files at each release.
-  Shipped (2026-10-02): Ants Terminal commit e6e2782c (ANTS-5617)
-  vendors demoreel v0.3.1 at third_party/demoreel/, checks its sha256 at
-  configure, installs it at <libexecdir>/ants-terminal/demoreel (/usr/lib
-  on Arch) with po/ beside it once there is one, and tests --version in
-  ctest. Its test record run exited 0 and printed only the path. Each
-  release's hand-over is a standing chore.
-  **Layman:** Anyone who installs Ants Terminal gets demoreel too, so Claude Code can make videos there with no extra setup.
-  Kind: package.
-  Source: user-request-2026-10-02.
-
-- 📋 [DEMO-0174] **Let record --gpu work when wf-recorder's libavcodec has no libx264.**
-  Decided by the user 2026-10-08, for the DEMO-0068 packaging design.
-  openSUSE's wf-recorder links libavcodec.so.62, which has no libx264,
-  and Packman ships no .so.62 build (only .so.63, which that wf-recorder
-  cannot load). Measured: the .so.62 has ffv1, utvideo and huffyuv.
-  So when wf-recorder's libavcodec lacks libx264, record losslessly to
-  a temporary file beside -o and convert it with the ffmpeg program,
-  which check already requires to have libx264. The finished file is
-  unchanged: H.264, yuv420p, +faststart. Test-pattern cost, 10 s at
-  1280x800: ffv1 17.6 MB, converted in about 1 s; measure a real
-  recording before choosing the codec. check stops calling --gpu NOT
-  READY for this case once the fallback exists.
-  **Layman:** On openSUSE, recording a 3D app works with the distro's own packages.
-  Kind: feature.
-  Source: user-request-2026-10-08.
-
-## 0.6.0 — A window for people who want one
-
-demoreel can be used from the command line or from a graphical window. Requested
-2026-09-25. This reverses the scope ceiling's "no GUI", so that rule is lifted
-first, through the review gate. The command line keeps every other rule: no
-prompts, stdout carries only the path, and the same guarantees hold. The window
-is a front-end to the same recording engine, not a second one.
-
-- 📋 [DEMO-0085] **Lift "no GUI" from the scope ceiling in CLAUDE.md and README, through the review gate.**
-  CLAUDE.md's Scope ceiling and README's What it will never do both name a
-  GUI as permanently out of scope. The user asked for one on 2026-09-25.
-
-  Changing that changes what a conformer builds, so rule 14 applies to
-  both documents. README goes through `review-contract`, as the design
-  contract it is. The rest of the ceiling stays and should be restated
-  beside the change: no audio, no config file format, no plugins, no
-  per-app profiles, no recording the real screen.
-
-  Nothing else in this version starts before this lands.
-  **Layman:** Update the project's rules so a graphical window is allowed, and have that change independently reviewed.
-  Kind: doc.
-  Source: user-request-2026-09-25.
-
-- 📋 [DEMO-0086] **Write the GUI spec, and gate it before anything is built.**
-  A spec, through `write-spec` and `review-contract`. It must settle:
-  - The toolkit. Tkinter is in the standard library and keeps the tool
-    dependency-free, but looks dated and scales poorly. Qt is native on
-    this machine's KDE desktop and is a large dependency. GTK 4 is native
-    on GNOME. Weigh looks, dependency weight and accessibility.
-  - Whether the window runs the `demoreel` command as a child process or
-    imports the engine. A child process keeps one engine and needs a
-    machine-readable progress feed; importing needs the engine to raise
-    errors rather than exit.
-  - What it exposes, and what stays command-line only.
-  - How it offers a Flatpak app without becoming the per-app profile
-    registry the ceiling still rules out.
-  - Keyboard use, screen readers, large text and the magnifier.
-  - Translations, from the 0.4.0 catalogs.
-  **Layman:** Decide on paper how the window will look and work before building it.
-  Kind: doc.
-  Source: user-request-2026-09-25.
-
-- 📋 [DEMO-0087] **Build the window: pick an app, set the options, record, stop, open the result.**
-  Choose the app by command or from the installed applications. Set size,
-  length or record-until-stopped, the graphics-card mode and the pointer.
-  Press Record and see the countdown. Press Stop. Then open the video or
-  show it in its folder.
-
-  Errors show the same text the command line prints, translated the same
-  way.
-  **Layman:** A window where you choose an app, press Record, and get your video.
-  Kind: feature.
-  Source: user-request-2026-09-25.
-
-- 📋 [DEMO-0088] **Edit scripted actions in the window.**
-  A list of steps -- wait, move, click, type, key -- to add, remove,
-  reorder and edit, producing the same `-a` actions the command line
-  takes. Show the equivalent command so a person can copy it into a
-  script. Picking click coordinates on a live preview is a possible later
-  step, not part of this item.
-  **Layman:** Build the list of clicks and key presses for a demo in the window instead of typing them out.
-  Kind: feature.
-  Source: user-request-2026-09-25.
-
-- 📋 [DEMO-0089] **Run the app command from the window without a shell.**
-  The window takes a command as text, so it has to become an argument
-  list. Split it with shlex and run it as a list, never with shell=True,
-  which is how the command line already runs it. The desktop entry's
-  Exec line must quote correctly, and a file-picker path must reach the
-  command as one argument, whatever characters it contains.
-  **Layman:** Whatever you type as the app to record is run as-is, never interpreted in a way that could run something else.
-  Kind: security.
-  Source: user-request-2026-09-25.
-
-- 📋 [DEMO-0090] **Make the window fully usable by keyboard, screen reader and magnifier.**
-  Every control reachable by Tab and working with the keyboard. Every
-  control named for a screen reader. Text follows the system font size.
-  The layout holds under KWin's magnifier, which the user relies on. Check
-  with the keyboard alone, and with Orca.
-  **Layman:** People who can't use a mouse, use a screen reader, or magnify the screen can all use the window.
-  Kind: accessibility.
-  Source: user-request-2026-09-25.
-
-- 📋 [DEMO-0091] **Ship a desktop entry and icon, so the window appears in the app menu.**
-  A .desktop file and an icon, installed by the 0.5.0 packages and by the
-  install from source. The command-line tool installs as before; the menu
-  entry opens the window.
-  **Layman:** demoreel shows up in your applications menu with its own icon.
-  Kind: package.
-  Source: user-request-2026-09-25.
-
-- 📋 [DEMO-0092] **Test the window by recording it with demoreel.**
-  The gate runs the window on a private display, which demoreel already
-  provides. xdotool presses Record and Stop. The step checks that a
-  finished video exists and that a frame of the window itself is not
-  flat.
-  **Layman:** The automatic checks open the window on a private screen, press Record, and check a video comes out.
-  Kind: test.
-  Source: user-request-2026-09-25.
-
 ## 0.7.0 — Sound, when you ask for it
 
 Decided by the user on 2026-09-25: audio becomes an opt-in, and every run gets a private silent sound output by default. The user then asked for sound in the videos where it is relevant, so this section is the next work after `demoreel shot` (DEMO-0100), ahead of its version number. Relevant means the app's sound is part of what the video shows: a game, a music or audio app. Everything else stays silent. The docs' "no audio, ever" is lifted through the review gate before anything is built.
@@ -4386,6 +4121,171 @@ before packaging. The full editor stays 2.0.0.
   Kind: feature.
   Source: peer-album-builder-2026-10-10.
 
+## 0.9.0 — Installs like any other program
+
+A person installs demoreel from their distro's usual tools, and the programs it
+needs come with it. The man page, tab completion and translations land where the
+system looks for them.
+
+- 📋 [DEMO-0068] **Package demoreel for openSUSE through the Open Build Service.**
+  This machine's distro. The package declares Xvfb, xauth, ffmpeg and
+  xdotool as requirements, and cage, Xwayland, wlr-randr and wf-recorder
+  as recommended for `--gpu`. It installs the man page, completions and catalogs.
+  Follow-up (2026-09-28): when the first package is attached to a GitHub
+  release, message the Ants Projects Hub website project
+  (session_message). Its demoreel download button stays on "Download
+  source" until then.
+  Note (2026-10-02): install po/ beside the script that
+  /usr/bin/demoreel resolves to, or every language falls back to English
+  with no error. docs/specs/DEMO-0060 § 4.2 allows no other catalog
+  location (see DEMO-0071).
+  Design decisions for 0.9.0, numbered 0.5.0 until 2026-10-11 (user, 2026-10-08). The packages are for
+  strangers who find demoreel on the website or GitHub. On openSUSE
+  and Fedora the package depends on the distro's ffmpeg like any
+  other dependency; when that lacks libx264, `demoreel check` already
+  names the Packman / RPM Fusion fix. Debian and Ubuntu get a .deb
+  attached to each GitHub release, not a PPA. Files first, repos
+  after: 0.9.0 ships .deb and .rpm files on the release plus the Arch
+  PKGBUILD, built and install-tested in CI; publishing to OBS, COPR
+  and the AUR follows as the user creates each account. Next step:
+  the design document, through write-spec and its review gate.
+  Finding for the design (2026-10-08, DEMO-0171): openSUSE's wf-recorder
+  loads openSUSE's libavcodec, never Packman's, unless Packman's ffmpeg
+  is the same major version. README's advice (zypper install --from
+  packman ffmpeg) took ffmpeg 9 here while wf-recorder kept .so.62, so
+  record --gpu could not write H.264. check now says so. The design
+  must say what a stranger on openSUSE does for --gpu. This machine
+  runs wf-recorder master c5de474 plus upstream PR #352 (ffmpeg 9
+  port), built into ~/.local.
+  Progress (2026-10-08): spec drafted at
+  docs/specs/DEMO-0068-linux-packages.md (covers DEMO-0069 and
+  DEMO-0070 too). Two more user decisions the same day: openSUSE
+  record --gpu records losslessly then converts (filed as DEMO-0174);
+  release files are built by a GitHub job when a release is published.
+  review-contract loop 1 is done (5 verified, 5 fixed); loop 2, the
+  cap for a spec, is owed before anything is built. Then set Status to
+  accepted.
+  Progress (2026-10-10): review-contract loop 2, the cap for a spec,
+  done: 6 verified, 6 fixed, 1 dismissed; a calm cap. The spec is
+  accepted (2026-10-10) and ready to build. Loop 2's fixes were read by
+  no lane; implementation is their reader.
+  User, 2026-10-11: the OBS account exists now (home:milnet, beside
+  ants-terminal, finbreak and perch), so publish to OBS as part of this
+  item, in its turn after 0.7.0 and 0.8.0. The spec's "files first, OBS
+  once there is an account" line needs amending, and that amendment goes
+  through review-contract before building. finbreak's packaging/obs/
+  (_service tracking a release tag) is the model to follow.
+  **Layman:** Install demoreel on openSUSE with zypper, dependencies included.
+  Kind: package.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0069] **Package demoreel for Debian and Ubuntu.**
+  The GitHub runner is Ubuntu, so the package can be built and installed
+  there as a gate step. Requirements: xvfb, xauth, ffmpeg, xdotool.
+  Recommends the `--gpu` pair where the distro carries it.
+  Follow-up (2026-09-28): see DEMO-0068 - tell the website project when
+  a package is attached to a release.
+  Note (2026-10-02): install po/ beside the script that
+  /usr/bin/demoreel resolves to, or every language falls back to English
+  with no error. docs/specs/DEMO-0060 § 4.2 allows no other catalog
+  location (see DEMO-0071).
+  Decided 2026-10-08: a .deb attached to each GitHub release, not a
+  PPA. See DEMO-0068 for the whole 0.9.0 design brief.
+  **Layman:** Install demoreel on Debian or Ubuntu with apt, dependencies included.
+  Kind: package.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0070] **Package demoreel for Fedora and Arch.**
+  Fedora through COPR, Arch as an AUR PKGBUILD. Same file layout and
+  dependency split as the other packages.
+  Follow-up (2026-09-28): see DEMO-0068 - tell the website project when
+  a package is attached to a release.
+  Note (2026-10-02): install po/ beside the script that
+  /usr/bin/demoreel resolves to, or every language falls back to English
+  with no error. docs/specs/DEMO-0060 § 4.2 allows no other catalog
+  location (see DEMO-0071).
+  Decided 2026-10-08: 0.9.0 ships the .rpm file and the Arch PKGBUILD,
+  tested in CI; COPR and AUR publishing follow once the user has
+  those accounts. See DEMO-0068.
+  **Layman:** Install demoreel on Fedora (dnf) or Arch (from the AUR).
+  Kind: package.
+  Source: user-request-2026-09-25.
+
+- ✅ [DEMO-0071] **Let the tool find its translations whether installed or run from a checkout.**
+  A package puts catalogs under /usr/share/locale. A checkout keeps them
+  beside the script. The tool finds them from its own resolved path first,
+  then the system location. The caller's working directory is never used,
+  which the any-project requirement in CLAUDE.md demands.
+  Closed (2026-10-02): already true under docs/specs/DEMO-0060 § 4.2's
+  one rule, catalogs in po/ beside the script's resolved path. The spec
+  rejected also searching /usr/share/locale (the user's decision), so
+  this item's "then the system location" is superseded; a package
+  installs po/ beside the script instead. Checked: via
+  ~/.local/bin/demoreel from /mnt/Emulators, which has no po/,
+  LANGUAGE=fr printed French.
+  **Layman:** Translations work the same whether demoreel was installed from a package or run from its folder.
+  Kind: implement.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0072] **Document an install from source, and check it in a clean container per distro.**
+  For a distro with no package: which programs to install, where to put
+  the script, man page, completions and catalogs. Verified by running it
+  in a fresh container for each packaged distro, which also catches a
+  missing dependency in the package lists.
+  **Layman:** Anyone can install it by hand with a few commands, and those commands are tested.
+  Kind: doc.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0084] **Let a user verify that what they installed is what was released.**
+  Once demoreel ships as packages and release files, a user needs a way to
+  check that what they got is what this repository built. Publish
+  checksums with each GitHub release, sign release tags, and add a build
+  provenance attestation from the workflow. Say in SECURITY.md how to
+  check each one.
+  **Layman:** Downloads come with a way to check they are genuine and untampered.
+  Kind: security.
+  Source: user-request-2026-09-25.
+
+- ✅ [DEMO-0163] **Ship a copy of demoreel with Ants Terminal, in a form agreed with its maintainer.**
+  The user asked on 2026-10-02, since making a video is now a Claude Code
+  skill. The form (a plugin, a bundled file, an MCP verb) is being worked
+  out with the Ants Terminal session. demoreel's side: it stays one file
+  with po/ beside it (DEMO-0071), and the copy is pinned to a release tag
+  so both projects know which version ships.
+  Decided (2026-10-02). Ants Terminal bundles the normal, full demoreel,
+  outside PATH under libexec/ants-terminal/, called by absolute path,
+  pinned by release tag and sha256. Not a stripped copy: the user ruled
+  that a small file ships whole, and demoreel is about half a percent of
+  the terminal's size. It follows every release through 1.0.0, with po/
+  beside it from 0.4.0. Its system tools are optional there, and it is
+  left out of the Flatpak. First pin: v0.3.1. Left to do: send the tag,
+  hash and new files at each release.
+  Shipped (2026-10-02): Ants Terminal commit e6e2782c (ANTS-5617)
+  vendors demoreel v0.3.1 at third_party/demoreel/, checks its sha256 at
+  configure, installs it at <libexecdir>/ants-terminal/demoreel (/usr/lib
+  on Arch) with po/ beside it once there is one, and tests --version in
+  ctest. Its test record run exited 0 and printed only the path. Each
+  release's hand-over is a standing chore.
+  **Layman:** Anyone who installs Ants Terminal gets demoreel too, so Claude Code can make videos there with no extra setup.
+  Kind: package.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0174] **Let record --gpu work when wf-recorder's libavcodec has no libx264.**
+  Decided by the user 2026-10-08, for the DEMO-0068 packaging design.
+  openSUSE's wf-recorder links libavcodec.so.62, which has no libx264,
+  and Packman ships no .so.62 build (only .so.63, which that wf-recorder
+  cannot load). Measured: the .so.62 has ffv1, utvideo and huffyuv.
+  So when wf-recorder's libavcodec lacks libx264, record losslessly to
+  a temporary file beside -o and convert it with the ffmpeg program,
+  which check already requires to have libx264. The finished file is
+  unchanged: H.264, yuv420p, +faststart. Test-pattern cost, 10 s at
+  1280x800: ffv1 17.6 MB, converted in about 1 s; measure a real
+  recording before choosing the codec. check stops calling --gpu NOT
+  READY for this case once the fallback exists.
+  **Layman:** On openSUSE, recording a 3D app works with the distro's own packages.
+  Kind: feature.
+  Source: user-request-2026-10-08.
+
 ## 1.0.0 — Every documented path tested
 
 The exit condition in docs/standards/versioning-overrides.md: the gate
@@ -4530,6 +4430,106 @@ covers both display backends and the Flatpak invocation.
   Kind: doc.
   Source: user-decision-2026-10-02.
 
+## 1.1.0 — A window for people who want one
+
+demoreel can be used from the command line or from a graphical window. Requested
+2026-09-25. This reverses the scope ceiling's "no GUI", so that rule is lifted
+first, through the review gate. The command line keeps every other rule: no
+prompts, stdout carries only the path, and the same guarantees hold. The window
+is a front-end to the same recording engine, not a second one.
+
+- 📋 [DEMO-0085] **Lift "no GUI" from the scope ceiling in CLAUDE.md and README, through the review gate.**
+  CLAUDE.md's Scope ceiling and README's What it will never do both name a
+  GUI as permanently out of scope. The user asked for one on 2026-09-25.
+
+  Changing that changes what a conformer builds, so rule 14 applies to
+  both documents. README goes through `review-contract`, as the design
+  contract it is. The rest of the ceiling stays and should be restated
+  beside the change: no audio, no config file format, no plugins, no
+  per-app profiles, no recording the real screen.
+
+  Nothing else in this version starts before this lands.
+  **Layman:** Update the project's rules so a graphical window is allowed, and have that change independently reviewed.
+  Kind: doc.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0086] **Write the GUI spec, and gate it before anything is built.**
+  A spec, through `write-spec` and `review-contract`. It must settle:
+  - The toolkit. Tkinter is in the standard library and keeps the tool
+    dependency-free, but looks dated and scales poorly. Qt is native on
+    this machine's KDE desktop and is a large dependency. GTK 4 is native
+    on GNOME. Weigh looks, dependency weight and accessibility.
+  - Whether the window runs the `demoreel` command as a child process or
+    imports the engine. A child process keeps one engine and needs a
+    machine-readable progress feed; importing needs the engine to raise
+    errors rather than exit.
+  - What it exposes, and what stays command-line only.
+  - How it offers a Flatpak app without becoming the per-app profile
+    registry the ceiling still rules out.
+  - Keyboard use, screen readers, large text and the magnifier.
+  - Translations, from the 0.4.0 catalogs.
+  **Layman:** Decide on paper how the window will look and work before building it.
+  Kind: doc.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0087] **Build the window: pick an app, set the options, record, stop, open the result.**
+  Choose the app by command or from the installed applications. Set size,
+  length or record-until-stopped, the graphics-card mode and the pointer.
+  Press Record and see the countdown. Press Stop. Then open the video or
+  show it in its folder.
+
+  Errors show the same text the command line prints, translated the same
+  way.
+  **Layman:** A window where you choose an app, press Record, and get your video.
+  Kind: feature.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0088] **Edit scripted actions in the window.**
+  A list of steps -- wait, move, click, type, key -- to add, remove,
+  reorder and edit, producing the same `-a` actions the command line
+  takes. Show the equivalent command so a person can copy it into a
+  script. Picking click coordinates on a live preview is a possible later
+  step, not part of this item.
+  **Layman:** Build the list of clicks and key presses for a demo in the window instead of typing them out.
+  Kind: feature.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0089] **Run the app command from the window without a shell.**
+  The window takes a command as text, so it has to become an argument
+  list. Split it with shlex and run it as a list, never with shell=True,
+  which is how the command line already runs it. The desktop entry's
+  Exec line must quote correctly, and a file-picker path must reach the
+  command as one argument, whatever characters it contains.
+  **Layman:** Whatever you type as the app to record is run as-is, never interpreted in a way that could run something else.
+  Kind: security.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0090] **Make the window fully usable by keyboard, screen reader and magnifier.**
+  Every control reachable by Tab and working with the keyboard. Every
+  control named for a screen reader. Text follows the system font size.
+  The layout holds under KWin's magnifier, which the user relies on. Check
+  with the keyboard alone, and with Orca.
+  **Layman:** People who can't use a mouse, use a screen reader, or magnify the screen can all use the window.
+  Kind: accessibility.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0091] **Ship a desktop entry and icon, so the window appears in the app menu.**
+  A .desktop file and an icon, installed by the 0.9.0 packages and by the
+  install from source. The command-line tool installs as before; the menu
+  entry opens the window.
+  **Layman:** demoreel shows up in your applications menu with its own icon.
+  Kind: package.
+  Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0092] **Test the window by recording it with demoreel.**
+  The gate runs the window on a private display, which demoreel already
+  provides. xdotool presses Record and Stop. The step checks that a
+  finished video exists and that a frame of the window itself is not
+  flat.
+  **Layman:** The automatic checks open the window on a private screen, press Record, and check a video comes out.
+  Kind: test.
+  Source: user-request-2026-09-25.
+
 ## 2.0.0 — A full video editor
 
 Starts only after everything above is done (DEMO-0140, the user's decision of
@@ -4556,7 +4556,7 @@ guess, for the spec to settle.
   the editor to be as user friendly as possible. The spec also settles
   whether demoreel stays one standard-library file, what a saved project
   looks like, the timeline model (tracks, clips, positions), and whether
-  editing lives in the 0.6.0 window, the command line, or both. It orders
+  editing lives in the 1.1.0 window, the command line, or both. It orders
   the items below.
   **Layman:** Write down exactly how the editor will work, and have it checked, before writing any of it.
   Kind: doc.
@@ -4583,7 +4583,7 @@ guess, for the spec to settle.
   Source: user-request-2026-10-02.
 
 - 📋 [DEMO-0146] **Show a timeline: tracks, clips, a playhead, split, trim and ripple delete.**
-  Builds on the 0.6.0 window (DEMO-0087).
+  Builds on the 1.1.0 window (DEMO-0087).
   **Layman:** See the whole film laid out in a row, and cut, shorten and rearrange it by hand.
   Kind: feature.
   Source: user-request-2026-10-02.

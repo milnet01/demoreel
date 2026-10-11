@@ -2,10 +2,12 @@
 
 Deltas from `~/.claude/standards/versioning.md`. That standard supplies the
 rules; it deliberately refuses to supply the two answers below, because they
-differ per project. Everything else it settles applies unchanged, with one
-declared delta: § What is not a breaking surface narrows that standard's rule
+differ per project. Everything else it settles applies unchanged, with two
+declared deltas. § What is not a breaking surface narrows that standard's rule
 that such a list does not bound the promise. Without it any encoder tweak could
-owe a MINOR.
+owe a MINOR. § Release numbers come from the roadmap replaces how that
+standard picks a release's level, so the roadmap always shows which release is
+next.
 
 ## Breaking surfaces
 
@@ -56,6 +58,12 @@ and changing one is a breaking change:
   A script that made a film must go on making the same scenes, in the same
   order, at the same lengths, with each text showing at the same times and in
   the same place. Adding a verb or a word is not breaking.
+- **Whether a video has a sound track.** `record` writes one only with
+  `--audio`. A film from `edit` or its shortcuts has one when a clip it plays
+  keeps its own sound, or when a `music` line or `--music` lays music under
+  it; `sound off` and `--no-sound` leave a clip's sound out. Otherwise it has
+  none. A video that had no sound track must not gain one, and one that had a
+  sound track must not lose it.
 
 A surface nobody wrote down is still a surface, except for what the next
 section names. The list above makes the common cases cheap.
@@ -65,10 +73,11 @@ section names. The list above makes the common cases cheap.
 Excluded deliberately. Reliance on these is not protected, and that is what
 makes them the exception to the line above:
 
-- The encoding parameters no flag exposes — preset, CRF, pixel format — beyond
-  the video remaining H.264 that a web browser plays, silent, and in an `.mp4`
-  with its index at the front. A pixel format browsers cannot play is
-  breaking. The
+- The encoding parameters no flag exposes — preset, CRF, pixel format, the
+  sound's bit rate and sample rate — beyond the video remaining H.264 that a
+  web browser plays, its sound track, where it has one, in a format a web
+  browser plays, and the whole in an `.mp4` with its index at the front. A
+  pixel format or sound format browsers cannot play is breaking. The
   container of a `record -o` run follows the
   caller's own name, so it is theirs rather than ours to promise; the default
   name's `.mp4` is part of the shape protected above. A flag's default,
@@ -95,7 +104,7 @@ makes them the exception to the line above:
 repository** — published in another project's README, store listing or
 release page, never demoreel's own. Checkable by someone else: the roadmap
 names where, with a link.
-Nothing has yet.
+This condition is met: DEMO-0093 names where, with links.
 
 **The previous condition is met, and what it required still governs the gate.**
 It held MAJOR at 0 until the gate exercised both display backends and the
@@ -129,18 +138,30 @@ three run on a machine with a card and with that GIMP installed.
 The last two skip on GitHub, so the checks GitHub runs still record on `Xvfb`
 alone.
 
-## While the leading zero is there
+## Release numbers come from the roadmap
 
-Per the standard's zero-dot-x rule, the levels shift down one inside `0.x`, and
-this is the part most likely to be misread:
+This replaces `versioning.md` § 2 and § 4's choice of level. Under those, a
+release that only adds features is a PATCH, so the roadmap's numbers would stop
+matching the tags.
 
-| Change | Bump |
-|---|---|
-| Breaking change to any protected surface — the list is not exhaustive, but § What is not a breaking surface bounds it | MINOR, and the PATCH resets — `0.1.4` → `0.2.0` |
-| Everything else, a new capability included | PATCH — `0.1.0` → `0.1.1` |
+**A release the roadmap plans ships under the number its section names.**
+Each release section in `ROADMAP.md` opens with its number, and the sections
+run in the order they ship. A planned release is a MINOR or a MAJOR.
 
-So a new flag that breaks nothing is a PATCH, not a MINOR. The MINOR is spent
-only on a break, which is what keeps the number meaningful before `1.0`.
+**A release between two planned ones is a PATCH** of the last release, such as
+`0.7.0` → `0.7.1`. It carries fixes, and nothing a roadmap release section
+holds.
+
+**A number may never be lower than the change needs.** A breaking change to a
+protected surface needs a MINOR inside `0.x`, and a MAJOR from `1.0` on. The
+list above is not exhaustive, but § What is not a breaking surface bounds it.
+A PATCH therefore carries no break. Where a planned release needs a higher
+number than its section names, that section and every later one are
+renumbered before the release is cut.
+
+**Nothing checks any of this.** `cut-release` takes the number it is given.
+Before a release, compare the number with the next unreleased section in
+`ROADMAP.md`.
 
 ## Cold-eyes loop log
 

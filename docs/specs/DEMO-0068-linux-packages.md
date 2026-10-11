@@ -13,7 +13,7 @@ program it needs pulled in.
 
 ## 1. Goal
 
-From 0.5.0 on, every GitHub release carries a `.deb` for Debian and Ubuntu,
+From 0.9.0 on, every GitHub release carries a `.deb` for Debian and Ubuntu,
 one `.rpm` for Fedora and openSUSE, and a `PKGBUILD` for Arch. All three
 install the same files in the same places. Each file was built by the same
 `ci.sh` step the gate runs, from the tagged tree, and was installed and run
@@ -56,7 +56,7 @@ last two on 2026-10-08 while this spec was drafted.
   already names the Packman or RPM Fusion fix (`x264_advice`). The package
   does not depend on a third-party repository.
 - **Debian and Ubuntu get a `.deb` attached to each release, not a PPA.**
-- **Files first, repositories after.** 0.5.0 ships files on the release.
+- **Files first, repositories after.** 0.9.0 ships files on the release.
   Publishing to OBS, COPR and the AUR follows as the user creates each
   account.
 - **openSUSE `record --gpu`: record losslessly, then convert**, as
@@ -317,7 +317,7 @@ shebang (INV-3), `cage` moved to the required set of the `.deb` and of the
 
 ## 8. Alternatives considered (and rejected)
 
-- **A PPA, OBS, COPR or the AUR in 0.5.0.** Each needs an account the user
+- **A PPA, OBS, COPR or the AUR in 0.9.0.** Each needs an account the user
   does not have yet. Files on the release need none (§ 3).
 - **One package per distro family, named by package.** An openSUSE `.rpm`
   and a Fedora `.rpm` differ only in dependency names, and file dependencies

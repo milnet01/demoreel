@@ -16,9 +16,10 @@ else in this directory is a standard.
 - [versioning-overrides.md](versioning-overrides.md) — deltas from
   `~/.claude/standards/versioning.md`. That standard refuses to name a project's
   breaking surfaces or its road to 1.0, because both differ per project; this
-  file supplies them. It also declares one departure: it narrows the rule that a
-  breaking-surface list does not bound the promise, so that an encoder tweak no
-  flag exposes cannot owe a MINOR.
+  file supplies them. It also declares two departures. It narrows the rule that
+  a breaking-surface list does not bound the promise, so that an encoder tweak
+  no flag exposes cannot owe a MINOR. And a planned release takes the number
+  its roadmap section names, so the roadmap and the tags match.
 
 **A copy of a global standard does not belong here.** Two copies are two
 standards that will disagree, and the one nobody is looking at is the one being

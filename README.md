@@ -1251,8 +1251,8 @@ disagree.
 after it — it is a flag on demoreel itself rather than on `record`.
 [docs/standards/versioning-overrides.md](docs/standards/versioning-overrides.md)
 names the surfaces that count as breaking, what reaching 1.0 requires, and how
-the numbers move while the leading zero is there — which is not what most
-people assume. That file is the only statement of it; this one would drift.
+each release's number is chosen: it is the number the roadmap gave that
+release. That file is the only statement of it; this one would drift.
 
 [CHANGELOG.md](CHANGELOG.md) records what each release contains. Each tagged
 release has its own section, and changes not yet released sit under

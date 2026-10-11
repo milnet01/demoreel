@@ -67,7 +67,7 @@ Four things make adding one more than wrapping strings:
   checks the change. The user, 2026-10-01.
 - **The man page is not in these catalogs.** How it is translated is decided in
   DEMO-0064. The user, 2026-10-01.
-- **The window planned for 0.6.0 uses the same catalogs** (DEMO-0060's body,
+- **The window planned for 1.1.0 uses the same catalogs** (DEMO-0060's body,
   the user, 2026-09-25). Lifting "no GUI" from the scope ceiling is DEMO-0085's,
   not this spec's.
 
@@ -113,7 +113,7 @@ header equals its filename without `.po`.
 **Catalogs are found in one place: `Path(__file__).resolve().parent / "po"`.**
 `resolve()` follows the symlink `~/.local/bin/demoreel` back to the checkout.
 Nothing else is searched: not the working directory, not `/usr/share/locale`,
-not a directory named by any environment variable. A package (0.5.0) installs
+not a directory named by any environment variable. A package (0.9.0) installs
 `po/` beside the script it symlinks to, which keeps this one rule. A script
 with no `__file__` (piped to `python3 -`) has no catalogs and runs in English.
 
@@ -378,7 +378,7 @@ This translation is a draft and has not yet been checked by a native speaker.
 Nothing is added to other messages. A confirmed catalog adds nothing. The list
 of every language's state is DEMO-0067's.
 
-### 4.10 The window (0.6.0)
+### 4.10 The window (1.1.0)
 
 The catalogs carry no assumption that their reader is a terminal. DEMO-0086
 decides whether the window imports `tr` or runs `demoreel` as a child process.
@@ -709,7 +709,7 @@ without bidi, with a screenshot of each, is DEMO-0063's.
   is not a surface either.
 - **`demoreel.1`** — an ENVIRONMENT entry for the four variables.
 - **CHANGELOG.md** — under DEMO-0061 and DEMO-0062 when they land.
-- **0.5.0's packaging items** — install `po/` beside the script the command
+- **0.9.0's packaging items** — install `po/` beside the script the command
   symlinks to (§ 4.2).
 
 ## 12. Cold-eyes loop log
