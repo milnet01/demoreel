@@ -115,7 +115,7 @@ do, and nothing off it is built. Still out: a clip laid over another picture,
 except one clip's window over its background; two clips on screen together
 outside a transition; pan, crop and rotate beyond the list's zoom; animating
 a setting over time in general; and anything removed from a video
-automatically. Those are DEMO-0141's to lift, in 2.0.0. An `edit` script is a
+automatically. An `edit` script is a
 list of scenes for one film. It is not a config file: it holds no settings
 for demoreel and is read only when named.
 

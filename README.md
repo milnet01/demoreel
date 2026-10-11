@@ -902,7 +902,8 @@ Permanently out of scope:
   demoreel may do these things, and no others:
   - cut the ends off a video, measure it, and take a frame from it;
   - play scenes one after another, and change one scene into the next with a
-    fade or another transition, such as a dissolve, a wipe or a slide;
+    fade or any other transition ffmpeg has ready-made, such as a dissolve,
+    a wipe or a slide;
   - play a clip faster or slower, or hold one of its frames still;
   - push in slowly on a scene, or zoom smoothly in on one point of it, the
     view drifting towards that point as it closes in;
@@ -916,7 +917,8 @@ Permanently out of scope:
   - keep a clip's sound, lay one music track under a film at levels the
     script sets, and play a sound file at a moment the script names.
 
-  A script is a list of scenes in order and nothing more. No clip is laid over
+  A script is a list of scenes in order, with lines such as `music` that
+  apply to the whole film, and nothing more. No clip is laid over
   another picture, except one clip's window over its background. Two clips
   are on screen together only while one scene changes into the next. It does not
   pan, crop or rotate, beyond the zoom above, and nothing moves on screen
