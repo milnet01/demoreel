@@ -4243,6 +4243,13 @@ Decided by the user on 2026-09-25: audio becomes an opt-in, and every run gets a
   user picked music from the YouTube Audio Library, and it sat low, about
   -30 dB average, under the effects. So the music's default level is low,
   and the music is always a file the caller supplies.
+  User, 2026-10-11: the volume is the caller's to control, softer or
+  louder at chosen moments: a level on the music line, level lines for
+  stretches, volume on a clip. Normalising is for the music, on or off.
+  A clip's sound can be dropped (sound off, --no-sound). The shortcuts
+  take --music, --music-level, --music-fade-in and --music-fade-out.
+  Spec: docs/specs/DEMO-0177-film-music.md (accepted 2026-10-11, two
+  review loops, capped calm).
   **Layman:** Put music under a trailer without needing a second program.
   Kind: feature.
   Source: user-request-2026-10-10.
