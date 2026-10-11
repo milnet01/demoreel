@@ -261,75 +261,6 @@ simplest case, and a gate proves it still records.
   Kind: fix.
   Source: in-session-2026-10-08.
 
-- 📋 [DEMO-0172] **Check every draft translation with Gemini in Chrome and fix what it finds.**
-  User 2026-10-08: use Gemini in Chrome through the Claude extension,
-  as the Groundwork project did; its method was asked for the same day.
-  Decided by the user the same day: corrections go into po/*.po and
-  every catalog stays `draft`. Only a native speaker makes one
-  `confirmed` (docs/specs/DEMO-0060 § 4.9; DEMO-0096 stays open).
-  Order: after the 0.9.0 packaging design (DEMO-0068).
-  Each fix keeps placeholders and code tokens as the English has them;
-  the gate's placeholder and code-token checks refuse anything else.
-  Method, from Groundwork (2026-10-08), which ran it on its own
-  catalogs. One prompt per language, the whole catalog, no chunks.
-  Each line is "code | English | draft"; plural forms get their own
-  labelled lines. The prompt sets per-language rules (register,
-  punctuation) plus shared ones: keep {placeholders} and code tokens
-  exactly. It asks for ONLY the changed lines, as "code: new text".
-  A local apply step writes nothing if any line changes its
-  placeholders, fails to parse, or names an unknown code. For
-  right-to-left languages it restores the direction marks Gemini
-  drops. Then the full gate, and one commit per language.
-  Chrome: clipboard paste failed. Put the prompt in a JS variable,
-  compare its SHA-256 with the file's, insert it with
-  document.execCommand('insertText') and press Return. Choose
-  "3.1 Pro" (Flash-Lite barely checks). Wait outside the page, since
-  page-JS waits over about 30 s time out. Read the last
-  model-response. Reject a reply showing "Another model was used for
-  this response", an empty one, or "Sorry, something went wrong".
-  Two failures stop the day. Groundwork's apply script reads Qt .ts
-  files, so demoreel needs its own for gettext .po.
-  Progress (2026-10-10): tooling ready, nothing sent yet. Scratch
-  tool /mnt/Emulators/claude-scratch/demoreel-gemini/pogem.py (outside
-  the repo): `parts CODE` writes CODE.partN prompts beside it;
-  `apply CODE REPLYFILE` writes nothing unless every line passes
-  demoreel's own read_po, _usable and CODE_TOKEN_RE, keeps each
-  message's edge spaces, and reads the file back. Tested 2026-10-10: a
-  dropped placeholder, an unknown code and an unparseable line each
-  wrote nothing; a valid plural change passed the gate's reads,
-  complete and placeholders checks.
-  Method changes found 2026-10-10. The model menu no longer offers
-  "3.1 Pro": it is Auto plus Low, Medium or High; High ("extra
-  thorough") was chosen. The box keeps only about 31,800 characters, so
-  a whole catalog (about 46,000) is cut off silently; send each part in
-  its own new chat. Clipboard paste and a localhost fetch both failed,
-  and a local web server was refused by the session's safety check.
-  What works: put the part's text into a page variable through the
-  JavaScript tool, compare its SHA-256 with the file's
-  (sha256sum CODE.partN), then document.execCommand('insertText') into
-  `rich-textarea .ql-editor` and press Return. fr.part1 matched its hash
-  and was inserted, then cleared unsent.
-  Progress (2026-10-10, later): fr done in po/fr.po, uncommitted until
-  the gate is green. Gemini proposed 8; applied 5 (13, 28, 96 reworded,
-  167, 219), rejected 14 and 15 ("celle-ci" points at the session, not
-  the recording) and 156 (join reads several inputs, so the plural
-  stays). de part 1 sent and read: nothing to apply (62, 63, 65 wrongly
-  lowercased a sentence start; 74 and 136 unchanged). de part 2 not sent.
-  New gotchas: a new chat resets the model to Low, so set High each time
-  (the menu shows Auto and High both checked; that is right). A reply
-  naming "Auth-Cookie" is blocked from the JavaScript tool's output, so
-  read the reply with get_page_text. The full gate was red on --gpu for
-  a system reason; DEMO-0176 fixes check so that step skips.
-  User decision (2026-10-10): finish German and Afrikaans, then stop.
-  The other 14 languages wait until after 1.0.0.
-  Open (2026-10-11): this item still sits in the 0.4.0 section, though
-  the user ruled on 2026-10-10 that the remaining languages wait until
-  after 1.0.0. Recommended: move it to the 1.1.0 section or Backlog.
-  The user's call; not yet answered.
-  **Layman:** A second AI reads each language's messages and points out mistakes, so the drafts are better while they wait for native speakers.
-  Kind: ux.
-  Source: user-request-2026-10-08.
-
 - 📋 [DEMO-0175] **Make a YouTube thumbnail from a recording.**
   Asked by the user 2026-10-10. Close to `poster`, which saves one
   frame at the recording's own size (1600x1000, 16:10, by default).
@@ -4551,6 +4482,75 @@ is a front-end to the same recording engine, not a second one.
   **Layman:** The automatic checks open the window on a private screen, press Record, and check a video comes out.
   Kind: test.
   Source: user-request-2026-09-25.
+
+- 📋 [DEMO-0172] **Check every draft translation with Gemini in Chrome and fix what it finds.**
+  User 2026-10-08: use Gemini in Chrome through the Claude extension,
+  as the Groundwork project did; its method was asked for the same day.
+  Decided by the user the same day: corrections go into po/*.po and
+  every catalog stays `draft`. Only a native speaker makes one
+  `confirmed` (docs/specs/DEMO-0060 § 4.9; DEMO-0096 stays open).
+  Order: after the 0.9.0 packaging design (DEMO-0068).
+  Each fix keeps placeholders and code tokens as the English has them;
+  the gate's placeholder and code-token checks refuse anything else.
+  Method, from Groundwork (2026-10-08), which ran it on its own
+  catalogs. One prompt per language, the whole catalog, no chunks.
+  Each line is "code | English | draft"; plural forms get their own
+  labelled lines. The prompt sets per-language rules (register,
+  punctuation) plus shared ones: keep {placeholders} and code tokens
+  exactly. It asks for ONLY the changed lines, as "code: new text".
+  A local apply step writes nothing if any line changes its
+  placeholders, fails to parse, or names an unknown code. For
+  right-to-left languages it restores the direction marks Gemini
+  drops. Then the full gate, and one commit per language.
+  Chrome: clipboard paste failed. Put the prompt in a JS variable,
+  compare its SHA-256 with the file's, insert it with
+  document.execCommand('insertText') and press Return. Choose
+  "3.1 Pro" (Flash-Lite barely checks). Wait outside the page, since
+  page-JS waits over about 30 s time out. Read the last
+  model-response. Reject a reply showing "Another model was used for
+  this response", an empty one, or "Sorry, something went wrong".
+  Two failures stop the day. Groundwork's apply script reads Qt .ts
+  files, so demoreel needs its own for gettext .po.
+  Progress (2026-10-10): tooling ready, nothing sent yet. Scratch
+  tool /mnt/Emulators/claude-scratch/demoreel-gemini/pogem.py (outside
+  the repo): `parts CODE` writes CODE.partN prompts beside it;
+  `apply CODE REPLYFILE` writes nothing unless every line passes
+  demoreel's own read_po, _usable and CODE_TOKEN_RE, keeps each
+  message's edge spaces, and reads the file back. Tested 2026-10-10: a
+  dropped placeholder, an unknown code and an unparseable line each
+  wrote nothing; a valid plural change passed the gate's reads,
+  complete and placeholders checks.
+  Method changes found 2026-10-10. The model menu no longer offers
+  "3.1 Pro": it is Auto plus Low, Medium or High; High ("extra
+  thorough") was chosen. The box keeps only about 31,800 characters, so
+  a whole catalog (about 46,000) is cut off silently; send each part in
+  its own new chat. Clipboard paste and a localhost fetch both failed,
+  and a local web server was refused by the session's safety check.
+  What works: put the part's text into a page variable through the
+  JavaScript tool, compare its SHA-256 with the file's
+  (sha256sum CODE.partN), then document.execCommand('insertText') into
+  `rich-textarea .ql-editor` and press Return. fr.part1 matched its hash
+  and was inserted, then cleared unsent.
+  Progress (2026-10-10, later): fr done in po/fr.po, uncommitted until
+  the gate is green. Gemini proposed 8; applied 5 (13, 28, 96 reworded,
+  167, 219), rejected 14 and 15 ("celle-ci" points at the session, not
+  the recording) and 156 (join reads several inputs, so the plural
+  stays). de part 1 sent and read: nothing to apply (62, 63, 65 wrongly
+  lowercased a sentence start; 74 and 136 unchanged). de part 2 not sent.
+  New gotchas: a new chat resets the model to Low, so set High each time
+  (the menu shows Auto and High both checked; that is right). A reply
+  naming "Auth-Cookie" is blocked from the JavaScript tool's output, so
+  read the reply with get_page_text. The full gate was red on --gpu for
+  a system reason; DEMO-0176 fixes check so that step skips.
+  User decision (2026-10-10): finish German and Afrikaans, then stop.
+  The other 14 languages wait until after 1.0.0.
+  Open (2026-10-11): this item still sits in the 0.4.0 section, though
+  the user ruled on 2026-10-10 that the remaining languages wait until
+  after 1.0.0. User, 2026-10-11: moved to the 1.1.0 section.
+  The user's call; not yet answered.
+  **Layman:** A second AI reads each language's messages and points out mistakes, so the drafts are better while they wait for native speakers.
+  Kind: ux.
+  Source: user-request-2026-10-08.
 
 ## 2.0.0 — A full video editor
 
