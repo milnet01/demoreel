@@ -317,7 +317,7 @@ simplest case, and a gate proves it still records.
   Kind: doc-fix.
   Source: in-session-2026-10-11 cut-release 0.7.0.
 
-- 📋 [DEMO-0190] **versioning-overrides.md's --gpu skip list leaves out ci.sh's third skip reason.**
+- ✅ [DEMO-0190] **versioning-overrides.md's --gpu skip list leaves out ci.sh's third skip reason.**
   docs/standards/versioning-overrides.md, § Reaching 1.0, lists the --gpu
   step's prerequisites as programs and a render node. ci.sh has a third
   skip: "demoreel check says --gpu is not ready" (DEMO-0171, the case
@@ -325,6 +325,9 @@ simplest case, and a gate proves it still records.
   A reader judging a skip against the list would call that one
   unsanctioned. Found by a lane during the 2026-10-11 gate, outside the
   change it gated. A standard, so the edit runs through review-contract.
+  Shipped (2026-10-11) in 3049b72: § Reaching 1.0 now names `demoreel
+  check` not saying `--gpu: NOT READY` among the --gpu step's
+  prerequisites. No gate: it records what ci.sh already does.
   **Layman:** The rules page lists the reasons the GPU test may be skipped, and it is missing one.
   Kind: doc-fix.
   Source: review-contract-2026-10-11 versioning-overrides row 18.
