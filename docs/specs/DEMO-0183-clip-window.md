@@ -1,7 +1,7 @@
 <!-- ants-spec-format: 1 -->
 # DEMO-0183 — Show a clip in a smaller window, with rounded corners and a soft shadow, over a background
 
-**Status:** spec draft (2026-10-11).
+**Status:** accepted (2026-10-11).
 **Kind:** feature.
 **Source:** ROADMAP DEMO-0183 (peer-website-session-2026-10-10; the Slipcase trailer).
 **Pairs with:** DEMO-0178 (a moving background behind the window), DEMO-0184 (push-in and zoom); both build on the layout this spec sets.
@@ -64,8 +64,12 @@ clip FILE ... window PERCENT [background #RRGGBB] ...
   bottom takes. So a windowed clip's caption sits on its band under the
   window, never over it, and `window 100` fills the room.
 - **`background #RRGGBB`** on a clip line sets the colour round the window,
-  as it does on a card, and is `CARD_BACKGROUND` unless given. A clip line
+  as it does on a card, and is `CARD_BACKGROUND` unless given. `check_scene`
+  checks it against `COLOUR_RE` for a clip as it does for a card. A clip line
   with `background` and no `window` is refused: nothing would show it.
+- **A text with no band on a windowed clip takes its colour from
+  `background`**, as on a card: `text_filters`' `dark` test, white on a dark
+  background and near-black on a light one.
 - Both words go into `SCENE_WORDS["clip"]` and are parsed by `script_words`,
   so their errors name the line as every other word's do. `Scene` gains
   `window` (`None`, or the percentage).
@@ -116,7 +120,7 @@ DEMO-0178 replaces layer 1. DEMO-0184 acts on layer 3, and layer 2 follows
 the window's size and place as it changes. Neither changes the order.
 
 **Measured, as a prototype** (2026-10-11, ffmpeg 9.0.2; a 6 s `testsrc2` clip at
-1600x1000 in a `window 80` at 1920x1080, 30 a second; the sigma was half
+1600x1000 in a window at 1920x1080, 30 a second; the sigma was half
 `WINDOW_BLUR`): 2.86 s and 1.12 GB peak memory, against 1.56 s and 0.99 GB
 for the same clip scaled to fill the frame.
 
@@ -180,8 +184,9 @@ can run until the code exists.
 - **INV-5** — A wrong `window` or `background` word stops the run before
   ffmpeg starts, and the message names the line.
   *Test:* ci.sh finishing: each refused by `expect_refused`, naming `line 1`,
-  with nothing at `-o`: `window 10`, `window 101`, `window big`, and
-  `background #202830` on a clip with no `window`.
+  with nothing at `-o`: `window 10`, `window 101`, `window big`,
+  `window 50 background red`, and `background #202830` on a clip with no
+  `window`.
   *Breaks when:* any of them is accepted, or reaches ffmpeg.
 
 - **INV-6** — A windowed scene ends where the plan says, in a film with cuts
