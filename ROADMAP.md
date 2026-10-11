@@ -4070,7 +4070,7 @@ before packaging. The full editor stays 2.0.0.
   Kind: marketing.
   Source: peer-website-session-2026-10-10.
 
-- 📋 [DEMO-0188] **Add a `drag X1 Y1 X2 Y2` step: press, move smoothly, release.**
+- ✅ [DEMO-0188] **Add a `drag X1 Y1 X2 Y2` step: press, move smoothly, release.**
   album-builder, 2026-10-10: its signature actions are dragging songs into
   order and dragging pane dividers, and the steps (wait, move, click, type,
   key, hold) cannot drag. It filmed at 2560x1440 to show a column it could
@@ -4079,6 +4079,10 @@ before packaging. The full editor stays 2.0.0.
   verb beside ACTION_EXAMPLES' others, run through xdotool like them; a
   recording action, so it needs no scope lift (unlike the rest of 0.8.0).
   The duration may be an optional fifth number.
+  Shipped (2026-10-11) in 80c4dfa: `drag X1 Y1 X2 Y2 [SECONDS]`, 0.5 s
+  by default, 60 moves a second, release on any end. Gate step reads an
+  xterm in mouse mode. Full ./ci.sh exit 0, Ubuntu step included; --gpu
+  and Flatpak steps skipped here.
   **Layman:** A recording can show something being dragged, like a song moved into order or a pane widened.
   Kind: feature.
   Source: peer-album-builder-2026-10-10.
