@@ -3501,22 +3501,27 @@ def scene_sound(scene, length, number, first_input):
 
 
 def sound_info(path, where):
-    """(whether a file has a sound stream, its length in seconds or 0). Dies
-    if ffprobe cannot read it, naming the line or option that asked."""
+    """(whether a file has a sound stream, its length in seconds or 0). The
+    length is the sound's own, not the file's, which a longer picture sets
+    (DEMO-0191); the file's stands in where the stream gives none, as in a
+    .mkv. Dies if ffprobe cannot read it, naming the line or option that
+    asked."""
     if not Path(path).is_file():
         die(tr("{where}: there is no file {path}", where=where, path=path))
     try:
         out = subprocess.run(
             ["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries",
-             "stream=index:format=duration", "-of", "json", str(path)],
+             "stream=index,duration:format=duration", "-of", "json", str(path)],
             capture_output=True, text=True, timeout=CALL_TIMEOUT, check=False)
     except subprocess.TimeoutExpired:
         die(tr("{where}: reading {path} took over {seconds}s.", where=where,
                path=path, seconds=CALL_TIMEOUT))
     try:
         info = json.loads(out.stdout) if out.returncode == 0 else None
-        return bool(info.get("streams")), float(
-            info.get("format", {}).get("duration") or 0)
+        streams = info.get("streams") or []
+        own = streams[0].get("duration") if streams else None
+        return bool(streams), float(
+            own or info.get("format", {}).get("duration") or 0)
     except (AttributeError, TypeError, ValueError):
         lines = out.stderr.strip().splitlines()
         die(tr("{where}: {path} is not a file ffmpeg can read.", where=where,

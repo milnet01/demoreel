@@ -178,8 +178,10 @@ The music stream `[m]` is built from the music file in this order:
    reached. With `normalise off` this needs the same `volumedetect` pass, so
    the pass always runs.
 4. **Repeated to fill the film**, when it is shorter: `aloop=loop=-1`
-   with `size` the file's length times 48000, rounded up: samples are counted
-   after step 1's resampling. Measured
+   with `size` the sound's length times 48000, rounded up: samples are counted
+   after step 1's resampling. The sound's length is its first sound stream's
+   own, and the file's only where the stream gives none, as in a `.mkv`. A
+   video's picture can outlast its sound (DEMO-0191). Measured
    2026-10-11: a `size` larger than the input loops what the input held,
    with no gap. Then `atrim=duration=<film length>`, which is what ends it.
    The demuxer never loops it (`-stream_loop` is banned with the rest,
@@ -191,8 +193,8 @@ The music stream `[m]` is built from the music file in this order:
    `ramp`.
 6. **Faded** in and out by `afade`.
 
-`aloop` holds the whole music file in memory, and only runs when the file
-is shorter than the film, so what it holds is bounded by the film's length.
+`aloop` holds the music's whole sound in memory, and only runs when that
+sound is shorter than the film, so what it holds is bounded by the film's length.
 
 ### 4.5 The mix and the output
 
@@ -500,8 +502,8 @@ Rows live in `../reviews/DEMO-0177-film-music-loop-log.md`.
 
 ## 13. Resource cost
 
-- **Memory:** `aloop` holds at most the music file's decoded samples, and
-  runs only when the file is shorter than the film: 8 bytes a sample frame
+- **Memory:** `aloop` holds at most the music's decoded samples, and
+  runs only when its sound is shorter than the film: 8 bytes a sample frame
   at 48000 Hz stereo float, so about 23 MB a minute of film. `memory_cap`
   still bounds the whole ffmpeg.
 - **Time:** one `volumedetect` read of the music file before the film is

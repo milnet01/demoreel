@@ -2363,7 +2363,16 @@ E
     middle=$(a_mean "$ft/out/mr2.mp4" 2 5)
     assert_near "fade-in 0: full at the start" "$middle" "$(a_mean "$ft/out/mr2.mp4" 0 0.1)" 1
     assert_near "fade-out 0: full at the end" "$middle" "$(a_mean "$ft/out/mr2.mp4" 8.9 9)" 1
-    echo "2.5 s of music filled a 9 s film with no gap, and faded in and out unless told not to"
+    # DEMO-0191: a video whose 8 s of picture outlasts its 2.5 s of sound,
+    # under a 5 s card. Looped by the file's length, its sound stopped at 2.5 s.
+    ff -f lavfi -i "testsrc2=d=8:s=160x120" -i "$ft/short.wav" -map 0:v -map 1:a \
+       -c:v libx264 -c:a aac "$ft/mv.mp4"
+    printf 'card 5\nmusic mv.mp4 fade-in 0 fade-out 0\n' | ed_ok mr3.mp4
+    assert_finished "$ft/out/mr3.mp4" "a video's 2.5 s of sound under a 5 s card" 1
+    gaps=$(a_gaps "$ft/out/mr3.mp4" -60dB 0.05 \
+             | awk '$1 > 0.1 && $1 < 4.9' | tr '\n' ' ')
+    assert_eq "a video's music repeated by its sound's length, not its picture's" "" "$gaps"
+    echo "2.5 s of music filled a 9 s film with no gap, and faded in and out unless told not to; a video's sound repeated by its own length"
     }
     fin_s47() {
     # DEMO-0177 INV-9.

@@ -31,6 +31,11 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   automatically. None of these effects is
   built yet.
 
+### Fixed
+
+- **Music taken from a video now repeats by its sound's own length, so a video whose picture outlasts its sound no longer leaves the film's sound to stop early.** (DEMO-0191)
+  Music taken from a video file keeps repeating to the end of the film instead of stopping early.
+
 ## [0.7.0] - 2026-10-11
 
 **Theme:** Sound, when you ask for it.

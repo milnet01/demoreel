@@ -4109,7 +4109,7 @@ before packaging. The full editor stays 2.0.0.
   Kind: feature.
   Source: peer-album-builder-2026-10-10.
 
-- 📋 [DEMO-0191] **Loop music by its sound's length, not its file's, so a music video whose picture outlasts its sound does not go silent.**
+- ✅ [DEMO-0191] **Loop music by its sound's length, not its file's, so a music video whose picture outlasts its sound does not go silent.**
   Found by DEMO-0177's review gate of 2026-10-11, outside the change it
   was gating, so filed rather than fixed. `sound_info` gives the music the
   container's length (`format=duration`), and DEMO-0177 § 4.4 step 4 loops
@@ -4120,6 +4120,11 @@ before packaging. The full editor stays 2.0.0.
   `size` cuts each repeat short instead. Fix: measure the first sound
   stream's own duration, and amend § 4.4 step 4 to say so; a ci.sh step
   with such a file under a film between the two lengths.
+  Resolved (2026-10-11): `sound_info` reads the first sound stream's own
+  duration, the file's only where the stream gives none (a .mkv). Before
+  the fix the film's sound stream ended at 2.5 s rather than going
+  silent; fin_s46 now checks that case with assert_finished. DEMO-0177 §
+  4.4 step 4 amended.
   **Layman:** Music taken from a video file keeps repeating to the end of the film instead of stopping early.
   Kind: review-fix.
   Source: review-contract-2026-10-11 DEMO-0177 loop 3, both lanes.
