@@ -53,7 +53,7 @@ _demoreel() {
             local quote=${cur:0:1} verb
             [[ $quote == \' || $quote == \" ]] || quote=\'
             COMPREPLY=()
-            for verb in wait move click type key hold; do
+            for verb in wait move click type key hold drag; do
                 [[ $verb == "${cur#[\'\"]}"* ]] && COMPREPLY+=("$quote$verb ")
             done
             compopt -o nospace

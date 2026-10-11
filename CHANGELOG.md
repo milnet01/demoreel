@@ -12,6 +12,13 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+### Added
+
+- **A `drag X1 Y1 X2 Y2` step presses, slides and lets go** (DEMO-0188)
+  For dragging a song into order or widening a pane. The pointer slides
+  over half a second, or as many seconds as a fifth number says, and the
+  button is let go however the step ends, a stop included.
+
 ### Changed
 
 - **The scope ceiling now allows the effects a short trailer needs** (DEMO-0182)

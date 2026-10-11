@@ -63,7 +63,7 @@ complete -c demoreel -n '__demoreel_on record' -s r -l framerate -x -d 'frames p
 complete -c demoreel -n '__demoreel_on record' -s n -l name -x -d 'name for this run'
 complete -c demoreel -n '__demoreel_on record shot' -s s -l size -x -d 'virtual display size'
 complete -c demoreel -n '__demoreel_on record shot' -s a -l action -x \
-    -a "'wait ' 'move ' 'click ' 'type ' 'key ' 'hold '" -d 'scripted step'
+    -a "'wait ' 'move ' 'click ' 'type ' 'key ' 'hold ' 'drag '" -d 'scripted step'
 complete -c demoreel -n '__demoreel_on record shot' -l steps -r -F -d 'read the scripted steps from a file'
 complete -c demoreel -n '__demoreel_on record shot' -l app-log -r -F -d "keep the app's own output"
 complete -c demoreel -n '__demoreel_on record shot' -l settle -x -d 'wait for the first frame'

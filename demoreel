@@ -1026,7 +1026,12 @@ def wait_for_size(env, window, area, timeout=2.0):
 # Every action verb, with the example a malformed step is told to follow.
 ACTION_EXAMPLES = {"wait": "wait 2", "move": "move 400 300",
                    "click": "click 400 300", "type": "type some text",
-                   "key": "key Return", "hold": "hold w 3"}
+                   "key": "key Return", "hold": "hold w 3",
+                   "drag": "drag 200 300 600 300"}
+# How long a drag takes when its step does not say, and how many times a
+# second it moves the pointer on the way: often enough to look smooth.
+DRAG_SECONDS = 0.5
+DRAG_STEPS_PER_SECOND = 60
 
 
 def parse_step(spec):
@@ -1060,6 +1065,14 @@ def parse_step(spec):
             return verb, {"seconds": float(args[0])}
         if verb == "hold":
             return verb, {"key": args[0], "seconds": float(args[1])}
+        if verb == "drag":
+            if len(args) not in (4, 5):
+                raise IndexError
+            seconds = float(args[4]) if len(args) == 5 else DRAG_SECONDS
+            if not 0 <= seconds < math.inf:
+                raise ValueError
+            return verb, {"from": (int(args[0]), int(args[1])),
+                          "to": (int(args[2]), int(args[3])), "seconds": seconds}
         if verb == "move" or (verb == "click" and args):
             return verb, {"at": (str(int(args[0])), str(int(args[1])))}
         if verb == "key" and not args:
@@ -1086,7 +1099,7 @@ def read_steps(path):
 
 
 def run_action(spec, env):
-    """One scripted step: wait / move / click / type / key / hold."""
+    """One scripted step: wait / move / click / type / key / hold / drag."""
     step = parse_step(spec)
     if step is None:
         return
@@ -1116,6 +1129,26 @@ def run_action(spec, env):
             _stop.wait(v["seconds"])
         finally:
             xdotool(env, "keyup", v["key"])
+    elif verb == "drag":
+        (x1, y1), (x2, y2) = v["from"], v["to"]
+        xdotool(env, "mousemove", "--sync", str(x1), str(y1))
+        steps = max(1, round(v["seconds"] * DRAG_STEPS_PER_SECOND))
+        started = time.monotonic()
+        # The button comes up however the drag ends, as a held key does.
+        xdotool(env, "mousedown", "1")
+        try:
+            for i in range(1, steps + 1):
+                # Each move is timed from the start, so a slow xdotool shortens
+                # the waits rather than stretching the drag.
+                if _stop.wait(max(0, started + v["seconds"] * i / steps
+                                  - time.monotonic())):
+                    break
+                # No --sync: it waits for the pointer to move, and a short
+                # drag lands on the same pixel twice.
+                xdotool(env, "mousemove", str(round(x1 + (x2 - x1) * i / steps)),
+                        str(round(y1 + (y2 - y1) * i / steps)))
+        finally:
+            xdotool(env, "mouseup", "1")
 
 
 # How ffmpeg encodes every video demoreel writes with it: the recording on
@@ -4127,7 +4160,8 @@ def build_parser():
     rec.add_argument("-a", "--action", action="append", default=[], metavar="ACTION",
                      help=tr_help("scripted step, repeatable and run in order: "
                                   "{steps}", steps="'wait 2', 'move X Y', 'click [X Y]', "
-                                  "'type some text', 'key Return', 'hold w 3'"))
+                                  "'type some text', 'key Return', 'hold w 3', "
+                                  "'drag X1 Y1 X2 Y2'"))
     rec.add_argument("--steps", metavar="FILE",
                      help=tr_help("read the scripted steps from FILE, one per line, "
                                   "or from standard input for -; keeps typed text "
@@ -4174,7 +4208,8 @@ def build_parser():
                       metavar="ACTION",
                       help=tr_help("scripted step run before the picture, repeatable: "
                                    "{steps}", steps="'wait 2', 'move X Y', 'click [X Y]', "
-                                   "'type some text', 'key Return', 'hold w 3'"))
+                                   "'type some text', 'key Return', 'hold w 3', "
+                                   "'drag X1 Y1 X2 Y2'"))
     shot.add_argument("--steps", metavar="FILE",
                       help=tr_help("read the scripted steps from FILE, one per line, "
                                    "or from standard input for -. Not with -a"))

@@ -26,7 +26,7 @@ sys.stdout.write("".join(e["name"] + "\n" for e in d.live_runs()))' \
 # A step is one quoted word, 'click 400 300': offer the verb, and let the user
 # finish the step inside the quotes.
 _demoreel_step() {
-  local -a verbs=(wait move click type key hold)
+  local -a verbs=(wait move click type key hold drag)
   compset -P "['\"]"
   compadd -S ' ' -q -- $verbs
 }

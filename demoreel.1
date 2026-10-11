@@ -396,6 +396,16 @@ or
 .BI "hold " "key seconds"
 Hold a key down.
 It is let go however the step ends.
+.TP
+.BI "drag " "x1 y1 x2 y2" " \fR[\fPseconds\fR]\fP"
+Press the left button at
+.IR "x1 y1" ,
+slide to
+.I "x2 y2"
+over
+.I seconds
+(half a second if left out), and let go.
+The button is let go however the step ends.
 .PP
 Anything on a command line can be read by other users of the machine, so do
 not script typing a password on a shared one.

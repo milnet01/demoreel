@@ -3956,6 +3956,72 @@ if after != during:
 print(f"{during} letters while held, none after the stop")
 HOLDPY
 
+step "a drag presses, slides in steps and lets go, a stop included"
+# DEMO-0188. An xterm in button-event mouse mode writes a report for each
+# press, each move with the button down, and each release. A drag must give
+# one press, several moves heading right, and a release; a drag cut short by
+# a stop must still give the release, or the button stays down for the run.
+python3 - "$tmp" <<'DRAGPY'
+import importlib.machinery, importlib.util, os, signal, subprocess, sys, threading, time
+
+tmp = sys.argv[1]
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+demoreel = importlib.util.module_from_spec(
+    importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(demoreel)
+signal.signal(signal.SIGUSR1, demoreel._request_stop)
+
+
+def reports(path):
+    """(kind, column) for each X10 mouse report: ESC [ M, then button, x, y."""
+    data = open(path, "rb").read()
+    out = []
+    for i in range(len(data) - 5):
+        if data[i:i + 3] == b"\x1b[M":
+            button, column = data[i + 3] - 32, data[i + 4] - 32
+            kind = ("release" if button & 3 == 3 else
+                    "move" if button & 32 else "press")
+            out.append((kind, column))
+    return out
+
+
+# The name starts with "gate" so the teardown's Xvfb sweep covers it.
+displaylog = demoreel.state_dir() / "gatedrag.display.log"
+proc, display, auth = demoreel.start_xvfb(640, 240, "gatedrag", displaylog)
+env = dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth))
+mouse = f"{tmp}/drag.bin"
+app = subprocess.Popen(["xterm", "-geometry", "80x10+0+0", "-e", "sh", "-c",
+                        "printf '\\033[?1002h'; stty raw -echo; "
+                        f"cat > {mouse}"],
+                       env=env, start_new_session=True)
+try:
+    if demoreel.wait_for_window(env, app, 10) is None:
+        raise SystemExit("the xterm never showed a window")
+    time.sleep(1)
+    demoreel.run_action("drag 20 40 400 40", env)
+    time.sleep(0.5)
+    whole = reports(mouse)
+    threading.Timer(0.3, lambda: os.kill(os.getpid(), signal.SIGUSR1)).start()
+    demoreel.run_action("drag 20 80 400 80 30", env)
+    time.sleep(0.5)
+    cut = reports(mouse)[len(whole):]
+finally:
+    demoreel.end_process(app, group=True)
+    demoreel.end_server(proc)
+    auth.unlink(missing_ok=True)
+    displaylog.unlink(missing_ok=True)
+kinds = [k for k, _ in whole]
+columns = [c for k, c in whole if k == "move"]
+if kinds[:1] != ["press"] or kinds[-1:] != ["release"] or len(columns) < 5:
+    raise SystemExit(f"a drag should be a press, several moves and a release: {kinds}")
+if columns != sorted(columns) or columns[-1] - columns[0] < 30:
+    raise SystemExit(f"the moves did not slide right across the xterm: {columns}")
+if [k for k, _ in cut][-1:] != ["release"]:
+    raise SystemExit(f"a stop left the button down: {[k for k, _ in cut]}")
+print(f"press, {len(columns)} moves from column {columns[0]} to "
+      f"{columns[-1]}, release; a stopped drag still released")
+DRAGPY
+
 step "a missing program, or an ffmpeg without libx264, says what to install"
 # DEMO-0051: a missing program is named with the command that installs it on
 # this distro. DEMO-0117: the distros' own ffmpeg on openSUSE and Fedora has

@@ -691,6 +691,11 @@ the recording is going:
 - `key Return` — press a key
 - `hold w 3` — hold a key down for three seconds, for an app that moves while
   a key is held. It is let go however the step ends, a stop included.
+- `drag 200 300 600 300` — press the button at the first point, slide to the
+  second over half a second, and let go: a song dragged into order, say, or a
+  pane widened. A fifth number sets the seconds, as in
+  `drag 200 300 600 300 1`. Like a held key, the button is let go however the
+  step ends.
 
 **Typing something private? Use `--steps`, not `-a`.** Anything you put on the
 command line can be read by other people using that computer, for as long as the
