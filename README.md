@@ -904,9 +904,11 @@ Permanently out of scope:
   - play scenes one after another, and change one scene into the next with a
     fade or another transition, such as a dissolve, a wipe or a slide;
   - play a clip faster or slower, or hold one of its frames still;
-  - push in slowly on a scene, or zoom smoothly towards one point of it;
-  - show a clip in a smaller window, with rounded corners and a soft shadow,
-    over a plain or slowly moving coloured background;
+  - push in slowly on a scene, or zoom smoothly in on one point of it, the
+    view drifting towards that point as it closes in;
+  - show a clip in a smaller window, with rounded corners and a soft shadow;
+  - give a clip's window or a card a plain or slowly moving coloured
+    background;
   - show a picture, still or animated, on a card, and let it grow slightly as
     it fades in;
   - put text on or between scenes, in one line or several, styled as the
@@ -914,10 +916,11 @@ Permanently out of scope:
   - keep a clip's sound, lay one music track under a film at levels the
     script sets, and play a sound file at a moment the script names.
 
-  A script is a list of scenes in order and nothing more. It has no layers
-  beyond one clip's window over its background, and never two clips on screen
-  at once. It does not pan, crop or rotate, and nothing moves on screen except
-  in the ways listed above. Nothing is ever removed from a video automatically.
+  A script is a list of scenes in order and nothing more. No clip is laid over
+  another picture, except one clip's window over its background. Two clips
+  are on screen together only while one scene changes into the next. It does not
+  pan, crop or rotate, beyond the zoom above, and nothing moves on screen
+  except in the ways listed above. Nothing is ever removed from a video automatically.
   What is built so far is in [Finishing a recording](#finishing-a-recording).
 - No graphical interface, no background service, no config file — options go on
   the command line. An `edit` script describes one film, and a `--steps` file lists
