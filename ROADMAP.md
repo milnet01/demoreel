@@ -4063,6 +4063,10 @@ before packaging. The full editor stays 2.0.0.
   one. So the caller supplies the sound files and demoreel places them;
   it synthesizes none. Mixed with app sound and music (DEMO-0177). Needs
   DEMO-0182's scope lift, as every 0.8.0 item does.
+  Spec: docs/specs/DEMO-0177-film-music.md, amended 2026-10-11 so a sound
+  effect counts as sound and joins § 4.5's mix; no spec of its own (user,
+  2026-10-11). The words of the line that places a sound are settled in
+  the build.
   **Layman:** A trailer can have click and whoosh sounds exactly where things happen on screen.
   Kind: feature.
   Source: peer-website-session-2026-10-10.
