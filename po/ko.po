@@ -671,6 +671,12 @@ msgstr "{where}: 텍스트 {first}와(과) {second}이(가) 동시에 화면에 
 msgid "{where}: reveal brings in a card's picture, and this card has none."
 msgstr "{where}: reveal은 card의 그림을 나타나게 하는데, 이 card에는 그림이 없습니다."
 
+msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
+msgstr "{where}: 클립의 background는 창 주위 공간의 색을 정하는데, 이 클립에는 창이 없습니다."
+
+msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
+msgstr "{where}: window는 공간에서 차지하는 비율(퍼센트)로, {low}에서 {high} 사이입니다. {value}은(는) 안 됩니다."
+
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: card의 길이는 0보다 커야 합니다."
 

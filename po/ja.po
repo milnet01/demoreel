@@ -671,6 +671,12 @@ msgstr "{where}: テキスト {first} と {second} が同時に画面に出て�
 msgid "{where}: reveal brings in a card's picture, and this card has none."
 msgstr "{where}: reveal は card の画像を登場させるもので、この card には画像がありません。"
 
+msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
+msgstr "{where}: クリップの background はウィンドウの周りの色を決めるもので、このクリップにはウィンドウがありません。"
+
+msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
+msgstr "{where}: window は領域に占める割合 (パーセント) で、{low} から {high} の間です。{value} は使えません。"
+
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: card の長さは 0 より大きくしてください。"
 

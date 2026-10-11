@@ -192,8 +192,11 @@ can run until the code exists.
 - **INV-6** — A windowed scene ends where the plan says, in a film with cuts
   and a crossfade.
   *Test:* ci.sh finishing: `clip A.mp4 window 80`, then `clip B.mp4
-  crossfade 0.5`, under `ulimit -v 2000000`: made, and 9.5 s long within
-  0.15, as `join --crossfade 0.5` is. Partial, as DEMO-0177's INV-13 is: the
+  crossfade 0.5`, under `ulimit -v 3000000`: made, and 9.5 s long within
+  0.15, as `join --crossfade 0.5` is. The limit is on virtual memory, which
+  ffmpeg reserves well beyond what it uses: measured 2026-10-11, this film
+  fails under 2000000 and is made under 3000000, at a resident peak near
+  120 MB. Partial, as DEMO-0177's INV-13 is: the
   `loop` filter, the scene's `trim` and the output's `-t` each bound the
   others, so removing one alone may not fail it.
   *Breaks when:* the mask or shadow stream never ends and something waits on

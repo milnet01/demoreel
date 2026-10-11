@@ -2547,6 +2547,86 @@ CASES
     refused_naming_line "edit refuses reveal on a card with no picture" rv2.mp4 2
     echo "a revealed picture grew from 82% and faded in over the seconds asked, centred, and a card with no picture refused reveal"
     }
+    # DEMO-0183: a clip in a window. `px bbox` is the box of what differs
+    # from the background; the room at 320x240 is 296x216 at (12, 12).
+    bbox_near() {  # what file idx colour x0 y0 x1 y1 tol
+        local what=$1 tol=$9 got edge want
+        got=$(px bbox "$2" "$3" "$4")
+        set -- $got "$5" "$6" "$7" "$8"
+        for edge in left top right bottom; do
+            want=$5
+            assert_near "$what: the box's $edge edge ($got)" "$want" "$1" "$tol"
+            shift
+        done
+    }
+    fin_s54() {
+    # DEMO-0183 INV-1: window 50 of the room is a 148x108 box, and A (4:3)
+    # fills its height: 144x108 at (88, 66).
+    printf 'clip A.mp4 window 50\n' | ed_ok wn1.mp4
+    bbox_near "A in window 50" "$ft/out/wn1.mp4" 5 '#101418' 0.275 0.275 0.725 0.725 0.01
+    # INV-2: W is 640x240, so it fills the box's width, 148x55.5, rounded down
+    # to 148x54 at (86, 93). Without a window it is still refused (the join
+    # step "join A with W.mp4, a different shape").
+    printf 'clip W.mp4 window 50\n' | ed_ok wn2.mp4
+    bbox_near "W in window 50" "$ft/out/wn2.mp4" 5 '#101418' 0.269 0.388 0.731 0.613 0.02
+    echo "a window took its share of the room, centred, and a clip of another shape was fitted into it"
+    }
+    fin_s55() {
+    # DEMO-0183 INV-3 and INV-4. G is flat #808080; at 640x480 window 100 is
+    # 576x432 at (32, 24), its radius about 9 px, its shadow's sigma about 11
+    # and its drop about 5.
+    printf 'clip G.mp4 window 100\n' > "$ft/wn3.txt"
+    run edit wn3.txt -o "$ft/out/wn3.mp4" -s 640x480 -r 10
+    expect_ok "edit: G in window 100 at 640x480"
+    assert_colour "window: the box's top-left corner is background" \
+        "$ft/out/wn3.mp4" 5 0.05 0.05 16 20 24 10
+    assert_colour "window: the middle of its top edge is the clip" \
+        "$ft/out/wn3.mp4" 5 0.5 "$(awk 'BEGIN { print 27 / 480 }')" 128 128 128 10
+    printf 'clip G.mp4 window 100 background #c0c0c0\n' > "$ft/wn4.txt"
+    run edit wn4.txt -o "$ft/out/wn4.mp4" -s 640x480 -r 10
+    expect_ok "edit: G in window 100 on #c0c0c0"
+    lum() { px px "$ft/out/wn4.mp4" 5 "$1" "$2" | awk '{ print $1 }'; }
+    corner=$(lum 0.01 0.01)
+    above=$(lum 0.5 "$(awk 'BEGIN { print 20 / 480 }')")
+    below=$(lum 0.5 "$(awk 'BEGIN { print 460 / 480 }')")
+    past=$(lum 0.5 "$(awk 'BEGIN { print 468 / 480 }')")
+    assert_cmp "window: 4 px below it ($below) is darker than 4 px above ($above)" \
+        "$below" "<=" "$above - 20"
+    assert_cmp "window: 12 px below it ($past) is darker than the corner ($corner)" \
+        "$past" "<=" "$corner - 15"
+    echo "a window's corners were rounded and it cast a blurred shadow below it"
+    }
+    fin_s56() {
+    # DEMO-0183 INV-5.
+    n=0
+    while IFS= read -r words; do
+        n=$((n + 1))
+        printf 'clip A.mp4 %s\n' "$words" > "$ft/wb$n.txt"
+        : > "$ft/log/ffmpeg.calls"
+        FIN_PATH="$ft/shim:$PATH" run edit "wb$n.txt" -o "$ft/out/wb$n.mp4"
+        refused_naming_line "edit refuses clip A.mp4 $words" "wb$n.mp4" 1
+        assert_eq "edit refuses ($words): no encode started" 0 \
+            "$(grep -cw 'libx264' "$ft/log/ffmpeg.calls" || true)"
+    done <<'CASES'
+window 10
+window 101
+window big
+window 50 background red
+background #202830
+CASES
+    echo "$n bad window and clip background words were each refused before any encode"
+    }
+    fin_s57() {
+    # DEMO-0183 INV-6, partial: a windowed scene and a crossfade, 6 + 4 - 0.5.
+    # The limit is virtual memory; this film's resident peak is near 120 MB.
+    printf 'clip A.mp4 window 80\nclip B.mp4 crossfade 0.5\n' > "$ft/wn5.txt"
+    rc=0
+    ( ulimit -v 3000000; cd "$ft" && "$DR" edit wn5.txt -o "$ft/out/wn5.mp4" ) \
+        >"$fo" 2>"$fe" || rc=$?
+    expect_ok "a windowed clip then a crossfade, inside 3 GB"
+    assert_near "a windowed clip then a crossfade: length" 9.5 "$(v_dur "$ft/out/wn5.mp4")" 0.15
+    echo "a windowed scene ended where the plan says, before a crossfade"
+    }
     fin_step "trim keeps the frames from --from to --to, the last one included" fin_s1
     fin_step "every video a command writes is H.264, yuv420p, index first, with its clips' sound" fin_s2
     fin_step "-o may not be an input, and must end in .mp4" fin_s3
@@ -2600,6 +2680,10 @@ CASES
     fin_step "music under a long and a short film both end" fin_s51
     fin_step "a clip's speed and hold play and keep the frames asked for" fin_s52
     fin_step "reveal grows and fades in a card's picture" fin_s53
+    fin_step "a clip in a window is fitted into the room, any shape" fin_s54
+    fin_step "a window has rounded corners and a shadow" fin_s55
+    fin_step "edit refuses a bad window or a clip's background" fin_s56
+    fin_step "a windowed scene ends where the plan says" fin_s57
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }
 

@@ -598,14 +598,15 @@ msgstr ""
 msgid "{where}: a card needs a length above zero."
 msgstr ""
 
-msgid "{where}: a background is a colour written #RRGGBB, like {example}, not {value}."
-msgstr ""
-
 #. translators: reveal is an edit-script word and stays in English.
 msgid "{where}: reveal brings in a card's picture, and this card has none."
 msgstr ""
 
 msgid "{where}: {path} has no length ffmpeg can tell."
+msgstr ""
+
+#. translators: background and window are edit-script words and stay in English.
+msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
 msgstr ""
 
 msgid "{where}: {path} is {size}, a different shape from the film's {film}, and demoreel will not stretch it."
@@ -623,6 +624,9 @@ msgid "{where}: speed is between {low} and {high}, not {value}: 2 plays the clip
 msgstr ""
 
 msgid "{where}: `fade-at {moment}` needs {seconds} seconds of the scene on each side, and the scene runs from {start} to {end}."
+msgstr ""
+
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, not {value}."
 msgstr ""
 
 msgid "{where}: its fades come to {fades} seconds, and the scene is only {seconds} long."
@@ -677,6 +681,10 @@ msgid "music {name}: its own level, turned {change} dB"
 msgstr ""
 
 msgid "  level {level} dB from {start} to {end}"
+msgstr ""
+
+#. translators: window is an edit-script word and stays in English.
+msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
 msgstr ""
 
 msgid "-o must end in {ending}, and {name} does not."

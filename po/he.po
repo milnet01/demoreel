@@ -677,6 +677,12 @@ msgstr "{where}: הטקסטים {first} ו־{second} היו מופיעים על 
 msgid "{where}: reveal brings in a card's picture, and this card has none."
 msgstr "{where}: reveal מכניס את התמונה של כרטיס, ולכרטיס הזה אין תמונה."
 
+msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
+msgstr "{where}: background בקטע צובע את השטח סביב החלון שלו, ולקטע הזה אין חלון."
+
+msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
+msgstr "{where}: window הוא חלק מהשטח באחוזים, מ־{low} עד {high}, ולא {value}."
+
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: לכרטיס צריך להיות אורך גדול מאפס."
 

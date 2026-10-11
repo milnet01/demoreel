@@ -683,6 +683,12 @@ msgstr "{where}: teksty {first} i {second} byłyby na ekranie jednocześnie. Nar
 msgid "{where}: reveal brings in a card's picture, and this card has none."
 msgstr "{where}: reveal wprowadza obraz karty, a ta karta go nie ma."
 
+msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
+msgstr "{where}: background w klipie koloruje przestrzeń wokół jego okna, a ten klip nie ma okna."
+
+msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
+msgstr "{where}: window to część przestrzeni w procentach, od {low} do {high}, a nie {value}."
+
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: karta musi mieć długość większą od zera."
 

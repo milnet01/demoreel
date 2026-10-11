@@ -429,10 +429,16 @@ Then any of
 .BI crossfade " s \fR[\fPtransition\fR]\fP"\fR,\fP
 .BR sound " " on | off\fR,\fP
 .BI volume " dB"\fR,\fP
-.BI speed " factor"
+.BI speed " factor"\fR,\fP
+.BI hold " s"\fR,\fP
+.BI window " percent"
 and
-.BI hold " s"\fR.\fP
+.BI background " #RRGGBB"\fR.\fP
 A clip keeps its own sound unless told not to.
+.B window
+plays it in a smaller window with rounded corners and a shadow, on its
+.BR background ,
+and lets a clip of another shape from the film's in.
 Its times stay in its own file's time whatever its speed, and
 .B hold
 keeps its last frame on screen.

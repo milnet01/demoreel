@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=191 -->
+<!-- ants-roadmap-id-high-water: DEMO=192 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -332,6 +332,25 @@ simplest case, and a gate proves it still records.
   **Layman:** The rules page lists the reasons the GPU test may be skipped, and it is missing one.
   Kind: doc-fix.
   Source: review-contract-2026-10-11 versioning-overrides row 18.
+
+- 📋 [DEMO-0192] **memory_cap limits virtual memory, which a windowed trailer exceeds at 4 GB while using far less.**
+  memory_cap sets RLIMIT_AS to half the machine's memory, at least 4 GB.
+  RLIMIT_AS counts address space ffmpeg reserves, not what it uses.
+  Measured 2026-10-11 on this machine (12 threads), four 1600x1000
+  scenes with crossfades at 1600x1000: plain clips need 2-3 GB of
+  address space at a 0.83 GB resident peak; the same in windows
+  (DEMO-0183) need 4-5 GB at 1.32 GB resident. At 1920x1080 the
+  windowed film needs 4-6 GB. So on a machine with 8 GB or less, where
+  the cap is 4 GB, such a trailer fails with ffmpeg's "Could not open
+  encoder before EOF". MALLOC_ARENA_MAX=2 saved about 1 GB only.
+  Options to weigh: a cap on resident memory instead (cgroup or a
+  watchdog on RSS), a higher floor, or fewer ffmpeg threads. The cap
+  exists to stop a runaway graph (14 GB in six minutes); whatever
+  replaces it must still do that.
+  **Layman:** On a computer with little memory, a trailer with several windowed scenes may fail even though it needs little real memory.
+  Kind: investigate.
+  Source: in-session-2026-10-11 DEMO-0183 build.
+  Lanes: finishing.
 
 ## Standing chores
 
@@ -3989,12 +4008,17 @@ before packaging. The full editor stays 2.0.0.
   Kind: doc.
   Source: user-request-2026-10-10.
 
-- 📋 [DEMO-0183] **Show a clip in a smaller window with rounded corners and a soft shadow, over a background.**
+- ✅ [DEMO-0183] **Show a clip in a smaller window with rounded corners and a soft shadow, over a background.**
   Slipcase trailer: a rounded-corner mask with alphamerge and a soft
   drop shadow. The trailer-sized part of DEMO-0149, which stays in
   2.0.0 for general layers and opacity.
   Spec: docs/specs/DEMO-0183-clip-window.md, accepted 2026-10-11 at the
   review cap (2 loops, 8 findings fixed).
+  Resolved (2026-10-11): built to docs/specs/DEMO-0183-clip-window.md;
+  INV-1 to INV-7 checked by fin_s54 to fin_s57 and the existing steps,
+  each new step seen to fail on the mutations § 7 names. INV-6's memory
+  limit amended to 3000000 (measured). Memory finding filed as
+  DEMO-0192.
   **Layman:** The app appears as a neat floating window in the trailer instead of filling the whole frame.
   Kind: feature.
   Source: peer-website-session-2026-10-10.

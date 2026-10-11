@@ -345,6 +345,13 @@ order:
 - `hold 2` — keep the clip's last frame on screen for two seconds after it,
   in silence. A freeze frame in the middle of a recording is a clip of one
   frame held: `clip demo.mp4 from 12 to 12 hold 2`.
+- `window 80` — play the clip in a window instead of filling the frame: fitted
+  into 80% of the room a card leaves its picture, its shape kept, with rounded
+  corners and a soft shadow below it, centred on a plain background. It is
+  between `20` and `100`. A caption sits on its band under the window.
+- `background #202830` — the colour round a window, written `#RRGGBB`, as on
+  a card. Without it the background is `#101418`. A clip with no `window`
+  refuses it. A text with no band takes its colour from it, as on a card.
 
 A clip's sound fades, cuts and crossfades with its picture.
 
@@ -421,7 +428,8 @@ you like; the indent is only for your eyes.
 `-r` set them by hand. A film with no clip in it, cards only, is 1600x1000 at
 30 unless you say, as `record` is. Every other clip is scaled to the film's
 size and brought to its frame rate. A clip whose shape differs from the
-film's, wider or taller, is refused rather than stretched.
+film's, wider or taller, is refused rather than stretched, unless it plays in
+a `window`, where it is fitted with room round it.
 
 As it starts, `edit` prints the plan on stderr: each scene, and when it starts
 and ends in the finished film. A scene lasts its picture's whole frames, so
@@ -518,7 +526,8 @@ demoreel card -o title.mp4 -d 3 --like demo.mp4 --text 'Saving a file'
 
 A text's `font`, `colour`, `outline`, `shadow`, `band`, `at` and its own fades
 are the script's alone. A shortcut sets a text's words, times and size. So are
-`normalise`, `level` lines and a clip's `volume`, `speed` and `hold`.
+`normalise`, `level` lines and a clip's `volume`, `speed`, `hold`, `window`
+and `background`.
 
 Chaining shortcuts encodes the picture once per step. For more than one step,
 write the script.

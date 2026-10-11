@@ -683,6 +683,12 @@ msgstr "{where}: тексты {first} и {second} оказались бы на �
 msgid "{where}: reveal brings in a card's picture, and this card has none."
 msgstr "{where}: reveal показывает картинку карточки, а у этой карточки её нет."
 
+msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
+msgstr "{where}: background у клипа задаёт цвет вокруг его окна, а у этого клипа окна нет."
+
+msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
+msgstr "{where}: window — доля места в процентах, от {low} до {high}, а не {value}."
+
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: длительность карточки должна быть больше нуля."
 

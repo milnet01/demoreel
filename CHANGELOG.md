@@ -14,6 +14,9 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **A clip can play in a window with `window 80`: smaller, with rounded corners and a soft shadow, centred on a `background` colour; a clip of another shape is fitted in rather than refused.** (DEMO-0183)
+  The app appears as a neat floating window in the trailer instead of filling the whole frame.
+
 - **A card's picture can arrive with `reveal`: it fades in while growing from 82% of its size to the whole, slowing as it lands.** (DEMO-0185)
   A trailer can open or close on the app's logo arriving smoothly.
 

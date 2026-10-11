@@ -677,6 +677,12 @@ msgstr "{where}: die Texte {first} und {second} wären gleichzeitig zu sehen. Es
 msgid "{where}: reveal brings in a card's picture, and this card has none."
 msgstr "{where}: reveal blendet das Bild einer Karte ein, und diese Karte hat keines."
 
+msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
+msgstr "{where}: background färbt bei einem Clip den Raum um sein Fenster, und dieser Clip hat kein Fenster."
+
+msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
+msgstr "{where}: window ist ein Anteil des Raums in Prozent, von {low} bis {high}, nicht {value}."
+
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: eine Karte braucht eine Länge über null."
 
