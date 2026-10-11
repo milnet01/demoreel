@@ -142,10 +142,9 @@ Each scene becomes a sound stream `[a<n>]` exactly as long as the scene, in
   the scene's length (`anullsrc` with its `duration` set).
 - **`volume DB`**: a `volume` filter on the clip's stream.
 - **The picture's fades fade the sound with it**: `fade-in` and `fade-out`
-  by `afade` over the same seconds, each `fade-at` by a dip to silence and
-  back over the same two halves. `afade` has no `enable` option on the
-  ffmpeg versions measured (6.1.1 and 9.0.2), so the dips are one `volume`
-  filter whose expression is evaluated per frame (`eval=frame`).
+  by `afade` over the same seconds, each `fade-at` by an `afade` out and an
+  `afade` in over the same two halves, each switched on only for its own
+  half, as `fade_filters` does for the picture.
 - **Scenes join as their pictures do**: a cut by `concat` with `a=1`, a
   crossfade by `acrossfade` over the same seconds as the picture's `xfade`,
   which overlaps the two by that long, as `xfade` does.
