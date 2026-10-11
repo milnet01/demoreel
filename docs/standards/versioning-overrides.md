@@ -101,15 +101,16 @@ makes them the exception to the line above:
 
 ## Reaching 1.0
 
-**MAJOR stays 0 until a video demoreel recorded has been used outside this
-repository** — published in another project's README, store listing or
-release page, never demoreel's own. Checkable by someone else: the roadmap
-names where, with a link.
-This condition is met: DEMO-0093 names where, with links. MAJOR becomes 1
-when the roadmap's `1.0.0` section ships (§ Release numbers come from the
-roadmap).
+**MAJOR stays 0 until the roadmap's `1.0.0` section ships** — *Every
+documented path tested*, whose items in `ROADMAP.md` say what is left
+(§ Release numbers come from the roadmap).
 
-**The previous condition is met, and what it required still governs the gate.**
+**The condition before it is met.** It held MAJOR at 0 until a video demoreel
+recorded had been used outside this repository, published in another
+project's README, store listing or release page, never demoreel's own.
+DEMO-0093 names where, with links.
+
+**The first condition is met too, and what it required still governs the gate.**
 It held MAJOR at 0 until the gate exercised both display backends and the
 Flatpak invocation; DEMO-0006 and DEMO-0007 finished that on 2026-09-20. The
 rest of this section is what those steps have to keep doing. It binds the
@@ -149,11 +150,12 @@ would stop matching the tags.
 
 **A release the roadmap plans ships under the number its section names.**
 Each release section in `ROADMAP.md` opens with its number, and the sections
-run in the order they ship. A section that names a PATCH holds fixes only.
+run in the order they ship. A section that names a PATCH holds no new
+feature and no break.
 
 **A release the roadmap does not plan is a PATCH** of the last release, such
-as `0.7.0` → `0.7.1`, and carries fixes only. A new feature is filed into a
-release section first, and ships with it.
+as `0.7.0` → `0.7.1`, and carries no new feature and no break. A new
+feature is filed into a release section first, and ships with it.
 
 **A number may never be lower than the change needs.** A breaking change to a
 protected surface needs a MINOR inside `0.x`, and a MAJOR from `1.0` on. The
@@ -194,3 +196,4 @@ release, compare the number with the next unreleased section in `ROADMAP.md`.
 | 15 | 2026-10-01 | 2, cold — identical brief, packet rebuilt from disk; every lane held every question | 0 | 0 | 0 | n/a | **Converged: both lanes returned no findings.** Five open questions, all resolved clean and none a finding: the project has a remote (`origin`), so a release is pushed and passes the pre-push gate; `versioning.md` § 3 carries the "not to bound the promise" rule the preamble narrows; the finished-file check on `record --gpu` samples only the moments the display was sampled, so the app-exited and `-d 0` skips carry over; `motion --json`'s `round(x, 3)` and a halfway-blank run's shorter leftover video change nothing a conformer builds. No cap reached, so no share. |
 | 16 | 2026-10-11 | 2, cold — genre pinned `standard`; armed by a6dfd92, DEMO-0189's sound surface plus the user's ruling that release numbers follow the roadmap; dispatched with `neutral-lane`, so neither lane held this project's `CLAUDE.md`, memory or a git snapshot; every lane held every question | 1 | 2 | 2 | n/a | **Five verified, five fixed, none dismissed; four needed the user's decision and got it the same day.** **Both lanes found the same defect**: § Reaching 1.0 called its condition met and said MAJOR waits on it alone, while the new section ships each release under its roadmap number, whose next three are 0.8.0, 0.9.0 and 1.0.0; one conformer cut 1.0.0 next, another 0.8.0. The user chose 1.0.0 at the roadmap's `1.0.0` section; "alone" is deleted. One lane: "a planned release is a MINOR or a MAJOR" against the roadmap's own patch sections (0.1.1, 0.2.1, 0.2.2, 0.3.1); the user allowed a planned PATCH holding fixes only. The other lane: an unplanned release that must break had no number; the user chose the next number its level allows, later sections moving up. One lane: the `edit` bullet named `clip`, `card` and `text` but not `music` and `level`, which 0.7.0 added (README § Sound and music). **The Q1 came from a lane's measurement request**: "Nothing checks any of this" is false, since `cut-release`'s level floor refuses a PATCH carrying `### Added` or `### Deprecated` from 1.0 on (its SKILL.md, read); now stated, and with it the user's ruling that a new feature is filed into a section rather than shipped unplanned. Corrected by narrowing, not counted: § 2 and § 4 make a feature-only release a PATCH inside `0.x` only. Open questions resolved clean: `--version` prints two fields. |
 | 17 | 2026-10-11 | 2, cold — identical brief, packet rebuilt from disk with `cut-release`'s level-floor window and the `--version` fact added; every lane held every question | 1 | 0 | 1 | n/a | **Two verified, two fixed, none dismissed; both lanes found both, and both landed on text row 16 wrote.** Q1: the new `cut-release` sentence named its `1.0`-and-after floor and left out its `0.x` branch, which reports a MINOR with no breaking entry as one that should be a PATCH (its SKILL.md, read); a conformer cutting the roadmap's 0.8.0 would be told 0.7.1. Now stated, with that report not applying to a planned release, and the floor's "content under" qualifier restored. Q3: "every release section from that number on moves up" read two ways past the first shift, one making Installs the 1.0 release. Now each later section keeps its step from the one before it, and the example carries through `1.0.0` staying `1.0.0`, as the user's answer on row 16's date gave it. Open questions not findings: the Flatpak skip conditions and a further `--gpu` skip (DEMO-0171) predate this change and were not asked about by it. |
+| 18 | 2026-10-11 | 2, cold — identical brief, packet rebuilt from disk; every lane held every question | 0 | 1 | 1 | n/a | **Two verified, two fixed, none dismissed. Cap reached (3 for a standard); the run files its tail and exits.** One lane, Q2: the bold exit line still named the outside-use condition, met since DEMO-0093, while row 16's fix made 1.0 wait for the roadmap's `1.0.0` section, so a reader of the bold line alone cut 1.0.0 next. The bold line now names the `1.0.0` section; outside use is recorded as met, beside the display-paths condition. The other lane, Q3: row 16's "fixes only" left a change that is neither fix nor feature (an encoder tweak, a `--help` rewording) with no release to ship in; the user's answer had been "fixes only, never new features", now written as "no new feature and no break". From measurement, no finding: `ci.sh`'s steps print why they skip; `card` prints only its path. **Filed as DEMO-0190, outside the armed change**: the `--gpu` skip list omits `ci.sh`'s "demoreel check says --gpu is not ready". **Own-fix share of the final loop: 2 of 2**, both on row 16's text. Read as an unpropagated consequence rather than oscillation: each finding carried the user's decisions into a passage the first fix pass had not reached, and neither repairs a repair from row 17. Still, these two fixes are read by no lane, and the review of this document as it stands ends here. **Second share: 8 of the run's 9 verified findings (rows 16 to 18) fall inside the span a6dfd92 armed**; the `edit` script's missing `music` and `level` lines did not. |
