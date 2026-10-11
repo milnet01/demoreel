@@ -186,9 +186,9 @@ The music stream `[m]` is built from the music file in this order:
    `.claude/rules/finishing-commands.md`).
 5. **Made softer or louder for each `level` line**: one `volume` filter,
    `eval=frame`, on top of step 2's gain. Its gain is 0 dB outside every
-   line's span and slides, and the line's level minus the music line's
-   inside its span, slid linearly in dB across each `ramp`. Each line's
-   gain is capped by step 3 on its own.
+   line's span and slides, and the line's gain minus the music line's, each
+   after step 3's cap, inside its span, slid linearly in dB across each
+   `ramp`.
 6. **Faded** in and out by `afade`.
 
 `aloop` holds the whole music file in memory, and only runs when the file
@@ -200,8 +200,11 @@ is shorter than the film, so what it holds is bounded by the film's length.
   stream, or there is music, or a sound effect (DEMO-0186).** Otherwise the
   ffmpeg run keeps `-an` and the file is what it is today.
 - **Mixing**: the scenes' sound, the music and each DEMO-0186 sound effect,
-  an input each, by one `amix` with `normalize=0`. `normalize=0` keeps each
-  at the level set: the default divides each input by the number of inputs.
+  an input each, by one `amix` with `normalize=0:duration=longest`, then
+  trimmed to the film's length. `normalize=0` keeps each at the level set:
+  the default divides each input by the number of inputs. `duration=first`
+  would end the film's sound with a first input shorter than the film, as a
+  sound effect is (measured 2026-10-11: 1 s against `longest`'s 5 s).
   Present on ffmpeg 6.1.1, the Ubuntu image, and 9.0.2 here. Where only one
   of them is present, it is mapped alone.
 - **Encoding**: `AUDIO_ENCODER`, as `record --audio` uses, so DEMO-0106

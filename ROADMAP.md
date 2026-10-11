@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=190 -->
+<!-- ants-roadmap-id-high-water: DEMO=191 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -4099,6 +4099,21 @@ before packaging. The full editor stays 2.0.0.
   **Layman:** A recording can show something being dragged, like a song moved into order or a pane widened.
   Kind: feature.
   Source: peer-album-builder-2026-10-10.
+
+- 📋 [DEMO-0191] **Loop music by its sound's length, not its file's, so a music video whose picture outlasts its sound does not go silent.**
+  Found by DEMO-0177's review gate of 2026-10-11, outside the change it
+  was gating, so filed rather than fixed. `sound_info` gives the music the
+  container's length (`format=duration`), and DEMO-0177 § 4.4 step 4 loops
+  by "the file's length". Measured 2026-10-11: an .mp4 with 8 s of picture
+  and 3 s of sound reports 8.000000 for the format, 3.000000 for the sound.
+  Under a 5 s film the music is not looped and goes silent after 3 s,
+  breaking DEMO-0177 INV-8. If the sound is the longer stream, `aloop`'s
+  `size` cuts each repeat short instead. Fix: measure the first sound
+  stream's own duration, and amend § 4.4 step 4 to say so; a ci.sh step
+  with such a file under a film between the two lengths.
+  **Layman:** Music taken from a video file keeps repeating to the end of the film instead of stopping early.
+  Kind: review-fix.
+  Source: review-contract-2026-10-11 DEMO-0177 loop 3, both lanes.
 
 ## 0.9.0 — Installs like any other program
 
