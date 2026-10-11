@@ -4015,6 +4015,8 @@ before packaging. The full editor stays 2.0.0.
   1.0 with ease-out while fading in. The trailer-sized part of
   DEMO-0154; general keyframes stay in 2.0.0. An end card is this plus
   DEMO-0153's lines, all supplied by the caller.
+  Builds without a spec (user, 2026-10-11): one word on a card's picture.
+  Slipcase: scale 0.82 to 1.0 with ease-out over 0.9 s while fading in.
   **Layman:** A trailer can open or close on the app's logo arriving smoothly.
   Kind: feature.
   Source: peer-website-session-2026-10-10.
@@ -4024,6 +4026,8 @@ before packaging. The full editor stays 2.0.0.
   xfade slideleft, slideup, wipeleft, circleopen, smoothleft, zoomin and
   fadeblack, one per join. Builder for reference:
   /mnt/Games/Trailers/tools/trailer.py (scratch, outside any repo).
+  Builds without a spec (user, 2026-10-11): a transition name after the
+  existing `crossfade` word, one of xfade's ready-made transitions.
   **Layman:** Choose how one scene changes into the next.
   Kind: feature.
   Source: user-request-2026-10-02.
@@ -4031,6 +4035,9 @@ before packaging. The full editor stays 2.0.0.
 - 📋 [DEMO-0152] **Change a clip's speed: slow motion, speed-up and freeze frame.**
   Wanted by the Slipcase trailer (2026-10-10): speed a clip up (setpts)
   and hold its last frame to fill the scene (tpad stop_mode=clone).
+  Builds without a spec (user, 2026-10-11). Decided then: a clip's times
+  (`from`, `to`, a text's times, `fade-at`) stay counted in the clip's own
+  file, as now, whatever its speed.
   **Layman:** Make part of a video play slower or faster, or hold one moment still.
   Kind: feature.
   Source: user-request-2026-10-02.
