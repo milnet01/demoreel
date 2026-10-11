@@ -4223,7 +4223,7 @@ Decided by the user on 2026-09-25: audio becomes an opt-in, and every run gets a
   Kind: feature.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0177] **Add a music track to a finished film, mixed with the app's own sound when it has one.**
+- ✅ [DEMO-0177] **Add a music track to a finished film, mixed with the app's own sound when it has one.**
   User, 2026-10-10, relayed by the website session and confirmed by
   the user in this session: demoreel should be a one-stop shop, so
   music needs no second tool. Record app sound only for apps that make
@@ -4250,6 +4250,9 @@ Decided by the user on 2026-09-25: audio becomes an opt-in, and every run gets a
   take --music, --music-level, --music-fade-in and --music-fade-out.
   Spec: docs/specs/DEMO-0177-film-music.md (accepted 2026-10-11, two
   review loops, capped calm).
+  Shipped (2026-10-11) in 4e717d1: the finishing commands keep a clip's
+  sound, and a film can have one music track. Full ./ci.sh exit 0,
+  Ubuntu step included; --gpu and real-Flatpak recordings skipped.
   **Layman:** Put music under a trailer without needing a second program.
   Kind: feature.
   Source: user-request-2026-10-10.
