@@ -364,6 +364,18 @@ simplest case, and a gate proves it still records.
   Kind: fix.
   Source: in-session-2026-10-10.
 
+- 📋 [DEMO-0189] **versioning-overrides.md still promises every video stays silent, which 0.7.0 changed.**
+  docs/standards/versioning-overrides.md, § What is not a breaking
+  surface, protects "the video remaining H.264 that a web browser plays,
+  silent, and in an .mp4". Since DEMO-0177 a film keeps its clips' sound
+  by default, and `record --audio` adds sound (DEMO-0106). That break is
+  why 0.7.0 is a MINOR. Restate what is now promised about sound: when a
+  video has it, and which flag or script line decides. It is a
+  standard, so the change runs through review-contract.
+  **Layman:** The rules page about what counts as a breaking change still says videos are always silent; it needs to describe the new sound behaviour.
+  Kind: doc-fix.
+  Source: in-session-2026-10-11 cut-release 0.7.0.
+
 ## Standing chores
 
 Recurring work with no finished state. It is checked on a schedule and never
