@@ -12,6 +12,10 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-11
+
+**Theme:** Sound, when you ask for it.
+
 ### Added
 
 - **Films keep their clips' sound, and can have music** (DEMO-0177)
