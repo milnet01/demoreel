@@ -674,6 +674,9 @@ msgstr ""
 msgid "{where}: the texts {first} and {second} would be on screen at the same time. Only one shows at a time."
 msgstr "{where}: die tekste {first} en {second} sou terselfdertyd op die skerm wees. Net een wys op 'n slag."
 
+msgid "{where}: reveal brings in a card's picture, and this card has none."
+msgstr "{where}: reveal bring 'n kaart se prent in, en hierdie kaart het geen nie."
+
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: 'n kaart het 'n lengte groter as nul nodig."
 

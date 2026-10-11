@@ -698,6 +698,9 @@ msgstr ""
 msgid "{where}: the texts {first} and {second} would be on screen at the same time. Only one shows at a time."
 msgstr "{where}: سيظهر النصان {first} و{second} على الشاشة في الوقت نفسه. لا يظهر إلا نص واحد في كل مرة."
 
+msgid "{where}: reveal brings in a card's picture, and this card has none."
+msgstr "{where}: يُظهر reveal صورة البطاقة، وهذه البطاقة بلا صورة."
+
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: تحتاج البطاقة إلى مدة أكبر من الصفر."
 

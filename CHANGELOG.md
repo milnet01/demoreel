@@ -14,6 +14,9 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **A card's picture can arrive with `reveal`: it fades in while growing from 82% of its size to the whole, slowing as it lands.** (DEMO-0185)
+  A trailer can open or close on the app's logo arriving smoothly.
+
 - **A clip can play faster or slower with `speed`, and keep its last frame on screen with `hold`; one held frame is a freeze frame.** (DEMO-0152)
   Make part of a video play slower or faster, or hold one moment still.
 

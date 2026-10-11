@@ -2526,6 +2526,27 @@ CASES
     refused_naming_line "edit refuses speed 5" sp7.mp4 2
     echo "speed 2 and 0.5 played A's frames at the speed asked, hold and a freeze frame kept the last frame, K's flashes and beeps moved together, and speed 5 was refused"
     }
+    fin_s53() {
+    # DEMO-0185: a white 200x100 picture on a black 320x240 card. Revealed
+    # over 0.9 s, at 0.2 s it is 82% grown along a cubic ease-out (182 wide,
+    # even) and a fifth faded in; by 1.5 s it is whole. Measured 2026-10-11.
+    ff -f lavfi -i "color=white:s=200x100:d=0.1" -frames:v 1 "$ft/logo.png"
+    printf 'card 2 logo.png reveal 0.9 background #000000\n' | ed_ok rv1.mp4
+    for case in "2 182" "15 200"; do
+        set -- $case
+        set -- "$1" "$2" $(px find "$ft/out/rv1.mp4" "$1" light:20)
+        assert_near "reveal 0.9, frame $1: the picture's width" "$2" \
+            "$(awk -v a="$4" -v b="$6" 'BEGIN { print (b - a) * 320 }')" 4
+        assert_near "reveal 0.9, frame $1: the picture stays centred" 0.5 \
+            "$(awk -v a="$4" -v b="$6" 'BEGIN { print (a + b) / 2 }')" 0.01
+    done
+    assert_colour "reveal 0.9 at 0.2 s: still fading in" "$ft/out/rv1.mp4" 2 0.5 0.5 56 56 56 20
+    assert_colour "reveal 0.9 at 1.5 s: fully shown" "$ft/out/rv1.mp4" 15 0.5 0.5 255 255 255 12
+    printf 'card 2\ncard 2 reveal 1\n' > "$ft/rv2.txt"
+    run edit rv2.txt -o "$ft/out/rv2.mp4"
+    refused_naming_line "edit refuses reveal on a card with no picture" rv2.mp4 2
+    echo "a revealed picture grew from 82% and faded in over the seconds asked, centred, and a card with no picture refused reveal"
+    }
     fin_step "trim keeps the frames from --from to --to, the last one included" fin_s1
     fin_step "every video a command writes is H.264, yuv420p, index first, with its clips' sound" fin_s2
     fin_step "-o may not be an input, and must end in .mp4" fin_s3
@@ -2578,6 +2599,7 @@ CASES
     fin_step "a shortcut's music is the script's music" fin_s50
     fin_step "music under a long and a short film both end" fin_s51
     fin_step "a clip's speed and hold play and keep the frames asked for" fin_s52
+    fin_step "reveal grows and fades in a card's picture" fin_s53
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }
 

@@ -4010,13 +4010,18 @@ before packaging. The full editor stays 2.0.0.
   Kind: feature.
   Source: peer-website-session-2026-10-10.
 
-- 📋 [DEMO-0185] **Reveal a logo: the picture grows slightly and fades in as it appears.**
+- ✅ [DEMO-0185] **Reveal a logo: the picture grows slightly and fades in as it appears.**
   Slipcase trailer: an SVG drawn with rsvg-convert, scaled from 0.82 to
   1.0 with ease-out while fading in. The trailer-sized part of
   DEMO-0154; general keyframes stay in 2.0.0. An end card is this plus
   DEMO-0153's lines, all supplied by the caller.
   Builds without a spec (user, 2026-10-11): one word on a card's picture.
   Slipcase: scale 0.82 to 1.0 with ease-out over 0.9 s while fading in.
+  Resolved (2026-10-11): card word `reveal S`: the picture grows 0.82 to
+  1.0 on a cubic ease-out and fades in, both over S (the Slipcase
+  builder faded over 0.5 of 0.9 s; one length is simpler to state). A
+  card with no picture refuses it. SVG is not read: a caller converts to
+  PNG first, as the trailer did with rsvg-convert.
   **Layman:** A trailer can open or close on the app's logo arriving smoothly.
   Kind: feature.
   Source: peer-website-session-2026-10-10.

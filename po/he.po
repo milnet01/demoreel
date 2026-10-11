@@ -674,6 +674,9 @@ msgstr ""
 msgid "{where}: the texts {first} and {second} would be on screen at the same time. Only one shows at a time."
 msgstr "{where}: הטקסטים {first} ו־{second} היו מופיעים על המסך באותו זמן. רק אחד מוצג בכל פעם."
 
+msgid "{where}: reveal brings in a card's picture, and this card has none."
+msgstr "{where}: reveal מכניס את התמונה של כרטיס, ולכרטיס הזה אין תמונה."
+
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: לכרטיס צריך להיות אורך גדול מאפס."
 

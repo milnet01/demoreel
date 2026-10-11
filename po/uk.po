@@ -680,6 +680,9 @@ msgstr ""
 msgid "{where}: the texts {first} and {second} would be on screen at the same time. Only one shows at a time."
 msgstr "{where}: тексти {first} і {second} були б на екрані одночасно. Водночас показується лише один."
 
+msgid "{where}: reveal brings in a card's picture, and this card has none."
+msgstr "{where}: reveal показує зображення картки, а ця картка його не має."
+
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: тривалість картки має бути більшою за нуль."
 

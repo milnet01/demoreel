@@ -674,6 +674,9 @@ msgstr ""
 msgid "{where}: the texts {first} and {second} would be on screen at the same time. Only one shows at a time."
 msgstr "{where}: los textos {first} y {second} estarían en pantalla a la vez. Solo se muestra uno cada vez."
 
+msgid "{where}: reveal brings in a card's picture, and this card has none."
+msgstr "{where}: reveal hace aparecer la imagen de un rótulo, y este rótulo no tiene ninguna."
+
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: un rótulo necesita una duración mayor que cero."
 

@@ -668,6 +668,9 @@ msgstr ""
 msgid "{where}: the texts {first} and {second} would be on screen at the same time. Only one shows at a time."
 msgstr "{where}: 텍스트 {first}와(과) {second}이(가) 동시에 화면에 나오게 됩니다. 한 번에 하나만 표시됩니다."
 
+msgid "{where}: reveal brings in a card's picture, and this card has none."
+msgstr "{where}: reveal은 card의 그림을 나타나게 하는데, 이 card에는 그림이 없습니다."
+
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: card의 길이는 0보다 커야 합니다."
 

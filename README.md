@@ -364,6 +364,9 @@ picture, text, or both.
 - `background #202830` sets the colour, written `#RRGGBB`. Without it the
   background is `#101418`.
 - `fade-in`, `fade-out` and `crossfade` work as on a clip.
+- `reveal 0.9` brings the picture in over that many seconds: it fades in and
+  grows from 82% of its size to the whole, slowing as it arrives. It is for a
+  logo at the start or end of a film. A card with no picture refuses it.
 
 **`text "WORDS"`** puts one line of text on the scene above it. Indent it if
 you like; the indent is only for your eyes.

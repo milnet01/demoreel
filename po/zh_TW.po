@@ -668,6 +668,9 @@ msgstr ""
 msgid "{where}: the texts {first} and {second} would be on screen at the same time. Only one shows at a time."
 msgstr "{where}：文字 {first} 和 {second} 會同時出現在畫面上。一次只能顯示一個。"
 
+msgid "{where}: reveal brings in a card's picture, and this card has none."
+msgstr "{where}：reveal 用來讓卡片的圖片出現，而這張卡片沒有圖片。"
+
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}：卡片的長度必須大於零。"
 

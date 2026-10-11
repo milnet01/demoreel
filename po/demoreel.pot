@@ -601,6 +601,10 @@ msgstr ""
 msgid "{where}: a background is a colour written #RRGGBB, like {example}, not {value}."
 msgstr ""
 
+#. translators: reveal is an edit-script word and stays in English.
+msgid "{where}: reveal brings in a card's picture, and this card has none."
+msgstr ""
+
 msgid "{where}: {path} has no length ffmpeg can tell."
 msgstr ""
 
