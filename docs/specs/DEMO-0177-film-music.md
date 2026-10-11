@@ -17,8 +17,8 @@ step with its picture to within 40 ms, through cuts, fades and crossfades.
 A `music FILE` line, or `--music` on a shortcut, lays one music track under
 the whole film: repeated to fill it, faded in and out, set to average the
 level the caller asks for, and made softer or louder for stretches the
-script names. A film with no sound in its clips and no music is exactly what
-it is today: no sound track at all.
+script names. A film with no sound in its clips, no music and no sound
+effect (DEMO-0186) is exactly what it is today: no sound track at all.
 
 ## 2. Problem
 
@@ -197,14 +197,13 @@ is shorter than the film, so what it holds is bounded by the film's length.
 ### 4.5 The mix and the output
 
 - **The film has a sound track when any clip with `sound on` has a sound
-  stream, or there is music.** Otherwise the ffmpeg run keeps `-an` and the
-  file is what it is today.
-- **Mixing**: the scenes' sound and the music by
-  `amix=inputs=2:normalize=0:duration=first`. `normalize=0` keeps both at
-  the levels set: the default divides each input by the number of inputs.
-  Present on ffmpeg 6.1.1, the Ubuntu image, and 9.0.2 here. A film with no
-  music maps the scenes' sound alone; a film whose clips are all silent maps
-  the music alone.
+  stream, or there is music, or a sound effect (DEMO-0186).** Otherwise the
+  ffmpeg run keeps `-an` and the file is what it is today.
+- **Mixing**: the scenes' sound, the music and each DEMO-0186 sound effect,
+  an input each, by one `amix` with `normalize=0`. `normalize=0` keeps each
+  at the level set: the default divides each input by the number of inputs.
+  Present on ffmpeg 6.1.1, the Ubuntu image, and 9.0.2 here. Where only one
+  of them is present, it is mapped alone.
 - **Encoding**: `AUDIO_ENCODER`, as `record --audio` uses, so DEMO-0106
   INV-6's stream shape holds for a film too. The sound is trimmed to the
   film's length, and the output's `-t` bounds both streams.
@@ -234,7 +233,7 @@ cannot read stops the run.
 ## 5. Invariants
 
 - **INV-1** — A film whose clips carry no sound, or all have `sound off`,
-  and which has no music, has no sound stream.
+  and which has no music and no sound effect, has no sound stream.
   *Test:* ci.sh, finishing: `A.mp4` is the one finishing fixture generated
   with sound. Every existing output made from cards and the other fixtures
   has no sound stream (`assert_finished`, told to expect 0), and so has
@@ -446,8 +445,8 @@ input gave one MD5, measured 2026-10-11.
 - Music for part of a film, more than one music track, a voice-over track,
   and starting the music partway into its file — tracked by DEMO-0156, the
   editor's sound work.
-- A sound placed at a chosen moment, such as a click — tracked by
-  DEMO-0186; it mixes into the same `amix`.
+- A sound placed at a chosen moment, such as a click — DEMO-0186, built
+  under § 4.5's mix: each sound is an `amix` input, cut with `atrim`.
 - Changing a level by itself in response to other sound — rejected (§ 8).
 - `normalise`, `level` lines and a clip's `volume` on the shortcuts —
   deferred; not yet queued. The script has them.
