@@ -917,12 +917,12 @@ Permanently out of scope:
   - keep a clip's sound, lay one music track under a film at levels the
     script sets, and play a sound file at a moment the script names.
 
-  A script is a list of scenes in order, with lines such as `music` that
-  apply to the whole film, and nothing more. No clip is laid over
+  A script is a list of scenes in order, plus lines such as `music` that
+  are not scenes, and nothing more. No clip is laid over
   another picture, except one clip's window over its background. Two clips
   are on screen together only while one scene changes into the next. It does not
-  pan, crop or rotate, beyond the zoom above, and nothing moves on screen
-  except in the ways listed above. Nothing is ever removed from a video automatically.
+  pan, crop or rotate, beyond the zoom above, and nothing on screen moves
+  or changes over time except in the ways listed above. Nothing is ever removed from a video automatically.
   What is built so far is in [Finishing a recording](#finishing-a-recording).
 - No graphical interface, no background service, no config file — options go on
   the command line. An `edit` script describes one film, and a `--steps` file lists
