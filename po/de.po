@@ -542,6 +542,14 @@ msgstr "{where}: der Pfad der Schriftdatei {path} enthält ein Zeichen, das die 
 msgid "{where}: {word} takes a number of seconds, not {value}."
 msgstr "{where}: {word} erwartet eine Anzahl Sekunden, nicht {value}."
 
+#. translators: {word} is level or volume, an edit-script word, and stays in English; {value} is what was written after it, in quotes.
+msgid "{where}: {word} takes a number of decibels, like -6, not {value}."
+msgstr "{where}: {word} erwartet eine Anzahl Dezibel, wie -6, nicht {value}."
+
+#. translators: {word} is sound or normalise, an edit-script word; on and off stay in English too.
+msgid "{where}: {word} is on or off, not {value}."
+msgstr "{where}: {word} ist on oder off, nicht {value}."
+
 msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
 msgstr "{where}: {word} gehört nicht in eine {kind}-Zeile. Erlaubt sind: {words}."
 
@@ -553,6 +561,21 @@ msgstr "Zeile {number}"
 
 msgid "{where} cannot be read: {reason}."
 msgstr "{where} kann nicht gelesen werden: {reason}."
+
+msgid "{where}: a text belongs to the scene above it, and the line above is a music or level line."
+msgstr "{where}: ein Text gehört zur Szene darüber, und die Zeile darüber ist eine music- oder level-Zeile."
+
+msgid "{where}: a film has one music line, and {first} is already one."
+msgstr "{where}: ein Film hat nur eine music-Zeile, und {first} ist bereits eine."
+
+msgid "{where}: music needs a sound file after it."
+msgstr "{where}: nach music muss eine Tondatei folgen."
+
+msgid "{where}: a level line belongs to the music line, and comes straight after it or after another level line."
+msgstr "{where}: eine level-Zeile gehört zur music-Zeile und steht direkt nach ihr oder nach einer anderen level-Zeile."
+
+msgid "{where}: level needs a number of decibels after it: level -40"
+msgstr "{where}: nach level muss eine Anzahl Dezibel folgen: level -40"
 
 msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
 msgstr "{where}: ein Text gehört zur Szene darüber, und davor steht keine Szene."
@@ -566,8 +589,9 @@ msgstr "{where}: nach clip muss eine Videodatei folgen."
 msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: card braucht ihre Länge in Sekunden: card 3"
 
-msgid "{where}: a line starts with clip, card or text, not {word}."
-msgstr "{where}: eine Zeile beginnt mit clip, card oder text, nicht mit {word}."
+#. translators: {word} is the first word of the line, in quotes.
+msgid "{where}: a line starts with clip, card, text, music or level, not {word}."
+msgstr "{where}: eine Zeile beginnt mit clip, card, text, music oder level, nicht mit {word}."
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "das Skript enthält keine Szenen. Eine Szene ist eine Zeile, die mit clip oder card beginnt."
@@ -681,6 +705,46 @@ msgstr ""
 msgid "--framerate takes a number above zero, not {rate}."
 msgstr "--framerate erwartet eine Zahl über null, nicht {rate}."
 
+msgid "{where}: {path} is not a file ffmpeg can read."
+msgstr "{where}: {path} ist keine Datei, die ffmpeg lesen kann."
+
+msgid "{where}: measuring the sound of {path} took too long, so it was stopped."
+msgstr "{where}: das Messen des Tons von {path} dauerte zu lange und wurde daher gestoppt."
+
+msgid "{where}: ffmpeg could not measure the sound of {path}."
+msgstr "{where}: ffmpeg konnte den Ton von {path} nicht messen."
+
+msgid "{where}: {path} has no sound in it."
+msgstr "{where}: {path} enthält keinen Ton."
+
+#. translators: {state} is on or off, and stays in English.
+msgid "{where}: a level with normalise {state} is between {low} and {high} dB, not {value}."
+msgstr "{where}: ein level mit normalise {state} liegt zwischen {low} und {high} dB, nicht bei {value}."
+
+msgid "{where}: the music's fades come to {fades} seconds, and the film is only {seconds} long."
+msgstr "{where}: die Blenden der Musik ergeben zusammen {fades} Sekunden, und der Film ist nur {seconds} lang."
+
+msgid "{where}: a level line's from must come before its to, and both inside the film, which is {seconds} seconds long."
+msgstr "{where}: das from einer level-Zeile muss vor ihrem to stehen, und beide müssen innerhalb des Films liegen, der {seconds} Sekunden lang ist."
+
+msgid "{where}: this level line and {other} overlap, counting their ramps."
+msgstr "{where}: diese level-Zeile und {other} überlappen, ihre ramp-Übergänge mitgerechnet."
+
+msgid "{where}: {path} is silent all through."
+msgstr "{where}: {path} ist durchgehend stumm."
+
+msgid "{where}: the music at level {level} would peak above {peak} dB, so it plays at level {reached} instead."
+msgstr "{where}: die Musik würde bei level {level} über {peak} dB ausschlagen, daher spielt sie stattdessen bei level {reached}."
+
+msgid "music {name}: averages {level} dB; its own average is {mean} dB, so it is turned {change} dB"
+msgstr "music {name}: Mittelwert {level} dB; ihr eigener Mittelwert ist {mean} dB, daher wird sie um {change} dB geregelt"
+
+msgid "music {name}: its own level, turned {change} dB"
+msgstr "music {name}: ihr eigener Pegel, um {change} dB geregelt"
+
+msgid "  level {level} dB from {start} to {end}"
+msgstr "  level {level} dB von {start} bis {end}"
+
 msgid "-o must end in {ending}, and {name} does not."
 msgstr "-o muss auf {ending} enden, und {name} tut das nicht."
 
@@ -692,6 +756,12 @@ msgstr "-o ist {output}, und diese Datei liest der Befehl auch. demoreel übersc
 
 msgid "this ffmpeg cannot encode H.264 with libx264, which every video uses."
 msgstr "dieses ffmpeg kann H.264 nicht mit libx264 kodieren, was jedes Video braucht."
+
+msgid "{where}: volume changes a clip's own sound, and {path} has none."
+msgstr "{where}: volume ändert den eigenen Ton eines Clips, und {path} hat keinen."
+
+msgid "{where}: volume is between {low} and {high} dB, not {value}."
+msgstr "{where}: volume liegt zwischen {low} und {high} dB, nicht bei {value}."
 
 msgid "{where}: a crossfade fades from the scene before, and this is the first scene."
 msgstr "{where}: eine Überblendung blendet aus der vorherigen Szene über, und dies ist die erste Szene."
@@ -714,14 +784,23 @@ msgstr "{output} wird erstellt, {seconds} Sekunden in {size}"
 msgid "ffmpeg could not make the film."
 msgstr "ffmpeg konnte den Film nicht erstellen."
 
+msgid "the film's sound reaches full scale, so it may be distorted. Turn the music or a clip down to keep it clean."
+msgstr "der Ton des Films erreicht die Vollaussteuerung und kann daher verzerrt sein. Regeln Sie die Musik oder einen Clip herunter, damit er sauber bleibt."
+
 msgid "ffmpeg did not finish making the film in the time allowed for its length, so it was stopped."
 msgstr "ffmpeg hat den Film nicht in der für seine Länge erlaubten Zeit fertiggestellt und wurde daher gestoppt."
 
 msgid "could not read the script {path}: {reason}."
 msgstr "das Skript {path} konnte nicht gelesen werden: {reason}."
 
-msgid "trim needs something to do: --from, --to, or a fade."
-msgstr "trim benötigt eine Aktion: --from, --to oder eine Blende."
+msgid "{option} sets the music, and needs --music FILE as well."
+msgstr "{option} stellt die Musik ein und braucht dazu auch --music FILE."
+
+msgid "{option} takes a number of seconds, not {value}."
+msgstr "{option} erwartet eine Anzahl Sekunden, nicht {value}."
+
+msgid "trim needs something to do: --from, --to, a fade, --music or --no-sound."
+msgstr "trim benötigt eine Aktion: --from, --to, eine Blende, --music oder --no-sound."
 
 msgid "join takes two or more videos; one on its own is already whole."
 msgstr "join braucht zwei oder mehr Videos; eines allein ist schon vollständig."
@@ -931,6 +1010,26 @@ msgstr "schwarz beginnen; das Bild erscheint über SECONDS"
 #. argparse formats this text with %
 msgid "go to black over the last SECONDS"
 msgstr "über die letzten SECONDS zu Schwarz ausblenden"
+
+#. argparse formats this text with %
+msgid "lay this sound file under the film, repeated to fill it"
+msgstr "diese Tondatei unter den Film legen, wiederholt, bis er gefüllt ist"
+
+#. argparse formats this text with %
+msgid "the level the music averages, in dB (default: {level})"
+msgstr "der mittlere Pegel der Musik, in dB (Standard: {level})"
+
+#. argparse formats this text with %
+msgid "the music arrives over SECONDS (default: {seconds})"
+msgstr "die Musik wird über SECONDS eingeblendet (Standard: {seconds})"
+
+#. argparse formats this text with %
+msgid "the music goes over the last SECONDS (default: {seconds})"
+msgstr "die Musik wird über die letzten SECONDS ausgeblendet (Standard: {seconds})"
+
+#. argparse formats this text with %
+msgid "leave out the videos' own sound"
+msgstr "den eigenen Ton der Videos weglassen"
 
 #. argparse formats this text with %
 msgid "make a film from a script of scenes"

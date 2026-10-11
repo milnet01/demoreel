@@ -539,6 +539,14 @@ msgstr "{where}: フォントファイル {path} のパスに、ffmpeg のフィ
 msgid "{where}: {word} takes a number of seconds, not {value}."
 msgstr "{where}: {word} には秒数を指定します。{value} は使えません。"
 
+#. translators: {word} is level or volume, an edit-script word, and stays in English; {value} is what was written after it, in quotes.
+msgid "{where}: {word} takes a number of decibels, like -6, not {value}."
+msgstr "{where}: {word} には -6 のようにデシベル数を指定します。{value} は使えません。"
+
+#. translators: {word} is sound or normalise, an edit-script word; on and off stay in English too.
+msgid "{where}: {word} is on or off, not {value}."
+msgstr "{where}: {word} は on か off です。{value} は使えません。"
+
 msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
 msgstr "{where}: {word} は {kind} の行には使えません。使えるのは次のとおりです: {words}。"
 
@@ -550,6 +558,21 @@ msgstr "{number} 行目"
 
 msgid "{where} cannot be read: {reason}."
 msgstr "{where} を読み取れません: {reason}。"
+
+msgid "{where}: a text belongs to the scene above it, and the line above is a music or level line."
+msgstr "{where}: text はその上にあるシーンに付くものですが、上の行は music か level の行です。"
+
+msgid "{where}: a film has one music line, and {first} is already one."
+msgstr "{where}: 映像に置ける music の行は 1 つだけで、{first} がすでにそれです。"
+
+msgid "{where}: music needs a sound file after it."
+msgstr "{where}: music の後に音声ファイルが必要です。"
+
+msgid "{where}: a level line belongs to the music line, and comes straight after it or after another level line."
+msgstr "{where}: level の行は music の行に付くもので、その直後か、別の level の行の直後に置きます。"
+
+msgid "{where}: level needs a number of decibels after it: level -40"
+msgstr "{where}: level の後にデシベル数が必要です: level -40"
 
 msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
 msgstr "{where}: text はその上にあるシーンに付くものですが、この行より前にシーンがありません。"
@@ -563,8 +586,9 @@ msgstr "{where}: clip の後に動画ファイルが必要です。"
 msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: card には秒単位の長さが必要です: card 3"
 
-msgid "{where}: a line starts with clip, card or text, not {word}."
-msgstr "{where}: 行は clip、card、text のどれかで始めます。{word} では始められません。"
+#. translators: {word} is the first word of the line, in quotes.
+msgid "{where}: a line starts with clip, card, text, music or level, not {word}."
+msgstr "{where}: 行は clip、card、text、music、level のどれかで始めます。{word} では始められません。"
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "スクリプトにシーンがありません。シーンとは clip か card で始まる行のことです。"
@@ -675,6 +699,46 @@ msgstr ""
 msgid "--framerate takes a number above zero, not {rate}."
 msgstr "--framerate には 0 より大きい数を指定します。{rate} は使えません。"
 
+msgid "{where}: {path} is not a file ffmpeg can read."
+msgstr "{where}: {path} は ffmpeg が読めるファイルではありません。"
+
+msgid "{where}: measuring the sound of {path} took too long, so it was stopped."
+msgstr "{where}: {path} の音の測定に時間がかかりすぎたため、中止しました。"
+
+msgid "{where}: ffmpeg could not measure the sound of {path}."
+msgstr "{where}: ffmpeg は {path} の音を測定できませんでした。"
+
+msgid "{where}: {path} has no sound in it."
+msgstr "{where}: {path} には音声が入っていません。"
+
+#. translators: {state} is on or off, and stays in English.
+msgid "{where}: a level with normalise {state} is between {low} and {high} dB, not {value}."
+msgstr "{where}: normalise {state} のときの level は {low} から {high} dB の間です。{value} は使えません。"
+
+msgid "{where}: the music's fades come to {fades} seconds, and the film is only {seconds} long."
+msgstr "{where}: 音楽のフェードの合計が {fades} 秒ですが、映像は {seconds} 秒しかありません。"
+
+msgid "{where}: a level line's from must come before its to, and both inside the film, which is {seconds} seconds long."
+msgstr "{where}: level の行の from は to より前で、どちらも映像 (長さ {seconds} 秒) の範囲内にしてください。"
+
+msgid "{where}: this level line and {other} overlap, counting their ramps."
+msgstr "{where}: この level の行と {other} は、ramp を含めると重なります。"
+
+msgid "{where}: {path} is silent all through."
+msgstr "{where}: {path} は最初から最後まで無音です。"
+
+msgid "{where}: the music at level {level} would peak above {peak} dB, so it plays at level {reached} instead."
+msgstr "{where}: level {level} では音楽のピークが {peak} dB を超えるため、代わりに level {reached} で再生します。"
+
+msgid "music {name}: averages {level} dB; its own average is {mean} dB, so it is turned {change} dB"
+msgstr "music {name}: 平均 {level} dB。元の平均は {mean} dB なので、{change} dB 調整します"
+
+msgid "music {name}: its own level, turned {change} dB"
+msgstr "music {name}: 元の音量のまま、{change} dB 調整"
+
+msgid "  level {level} dB from {start} to {end}"
+msgstr "  level {level} dB、{start} から {end}"
+
 msgid "-o must end in {ending}, and {name} does not."
 msgstr "-o は {ending} で終わる必要がありますが、{name} はそうなっていません。"
 
@@ -686,6 +750,12 @@ msgstr "-o の {output} は、このコマンドが読み込むファイルで�
 
 msgid "this ffmpeg cannot encode H.264 with libx264, which every video uses."
 msgstr "この ffmpeg は libx264 で H.264 をエンコードできません。すべての動画でこれを使います。"
+
+msgid "{where}: volume changes a clip's own sound, and {path} has none."
+msgstr "{where}: volume はクリップ自身の音を変えるものですが、{path} には音がありません。"
+
+msgid "{where}: volume is between {low} and {high} dB, not {value}."
+msgstr "{where}: volume は {low} から {high} dB の間です。{value} は使えません。"
 
 msgid "{where}: a crossfade fades from the scene before, and this is the first scene."
 msgstr "{where}: クロスフェードは前のシーンから切り替わるものですが、これは最初のシーンです。"
@@ -708,14 +778,23 @@ msgstr "{output} を作成中、{seconds} 秒、{size}"
 msgid "ffmpeg could not make the film."
 msgstr "ffmpeg が映像を作成できませんでした。"
 
+msgid "the film's sound reaches full scale, so it may be distorted. Turn the music or a clip down to keep it clean."
+msgstr "映像の音がフルスケールに達しているため、歪むおそれがあります。歪みを避けるには、音楽かクリップの音量を下げてください。"
+
 msgid "ffmpeg did not finish making the film in the time allowed for its length, so it was stopped."
 msgstr "ffmpeg が映像の長さに見合った時間内に作成を終えなかったため、停止しました。"
 
 msgid "could not read the script {path}: {reason}."
 msgstr "スクリプト {path} を読み取れませんでした: {reason}。"
 
-msgid "trim needs something to do: --from, --to, or a fade."
-msgstr "trim には何をするかの指定が必要です: --from、--to、またはフェード。"
+msgid "{option} sets the music, and needs --music FILE as well."
+msgstr "{option} は音楽の設定なので、--music FILE も必要です。"
+
+msgid "{option} takes a number of seconds, not {value}."
+msgstr "{option} には秒数を指定します。{value} は使えません。"
+
+msgid "trim needs something to do: --from, --to, a fade, --music or --no-sound."
+msgstr "trim には何をするかの指定が必要です: --from、--to、フェード、--music、または --no-sound。"
 
 msgid "join takes two or more videos; one on its own is already whole."
 msgstr "join には 2 つ以上の動画が必要です。1 つだけならそれで完成しています。"
@@ -925,6 +1004,26 @@ msgstr "黒から始めて、SECONDS 秒かけて映像を表示します"
 #. argparse formats this text with %
 msgid "go to black over the last SECONDS"
 msgstr "最後の SECONDS 秒で黒に変えていきます"
+
+#. argparse formats this text with %
+msgid "lay this sound file under the film, repeated to fill it"
+msgstr "この音声ファイルを映像の下に敷き、映像の長さに合わせて繰り返します"
+
+#. argparse formats this text with %
+msgid "the level the music averages, in dB (default: {level})"
+msgstr "音楽の平均レベル、dB 単位 (既定値: {level})"
+
+#. argparse formats this text with %
+msgid "the music arrives over SECONDS (default: {seconds})"
+msgstr "音楽が SECONDS 秒かけてフェードインします (既定値: {seconds})"
+
+#. argparse formats this text with %
+msgid "the music goes over the last SECONDS (default: {seconds})"
+msgstr "音楽が最後の SECONDS 秒でフェードアウトします (既定値: {seconds})"
+
+#. argparse formats this text with %
+msgid "leave out the videos' own sound"
+msgstr "動画自身の音を入れません"
 
 #. argparse formats this text with %
 msgid "make a film from a script of scenes"

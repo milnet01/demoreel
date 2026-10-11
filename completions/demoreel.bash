@@ -43,7 +43,7 @@ _demoreel() {
     done
 
     case $prev in
-        -o | --output | --steps | --app-log | --like)
+        -o | --output | --steps | --app-log | --like | --music)
             compopt -o default
             COMPREPLY=()
             return ;;
@@ -61,11 +61,13 @@ _demoreel() {
         -d | --duration | -s | --size | -r | --framerate | -n | --name | \
             --settle | --startup-timeout | --from | --to | --fade-in | \
             --fade-out | --fade-at | --fade-length | --crossfade | --text | \
-            --text-size | --background | --still | -t | --time)
+            --text-size | --background | --still | -t | --time | \
+            --music-level | --music-fade-in | --music-fade-out)
             return ;;
     esac
 
     local words
+    local music="--music --music-level --music-fade-in --music-fade-out"
     case $sub in
         "")
             if [[ $cur == -* ]]; then
@@ -82,12 +84,13 @@ _demoreel() {
         check) words="-h --help" ;;
         edit) words="-o --output -s --size -r --framerate -h --help" ;;
         trim) words="-o --output --from --to --fade-in --fade-out --fade-at
-                --fade-length -h --help" ;;
+                --fade-length $music --no-sound -h --help" ;;
         caption) words="-o --output --text --from --to --text-size --fade-in
-                --fade-out -h --help" ;;
-        join) words="-o --output --crossfade --fade-in --fade-out -h --help" ;;
+                --fade-out $music --no-sound -h --help" ;;
+        join) words="-o --output --crossfade --fade-in --fade-out $music
+                --no-sound -h --help" ;;
         card) words="-o --output -d --duration --text --text-size --background
-                --like -s --size -r --framerate --fade-in --fade-out
+                --like -s --size -r --framerate --fade-in --fade-out $music
                 -h --help" ;;
         motion) words="--from --to --still --json -h --help" ;;
         poster) words="-o --output -t --time -h --help" ;;

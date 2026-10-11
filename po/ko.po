@@ -539,6 +539,14 @@ msgstr "{where}: 글꼴 파일 {path}의 경로에 ffmpeg 필터가 다룰 수 �
 msgid "{where}: {word} takes a number of seconds, not {value}."
 msgstr "{where}: {word}에는 {value}이(가) 아니라 초 단위 숫자를 주어야 합니다."
 
+#. translators: {word} is level or volume, an edit-script word, and stays in English; {value} is what was written after it, in quotes.
+msgid "{where}: {word} takes a number of decibels, like -6, not {value}."
+msgstr "{where}: {word}에는 {value}이(가) 아니라 -6처럼 데시벨 숫자를 주어야 합니다."
+
+#. translators: {word} is sound or normalise, an edit-script word; on and off stay in English too.
+msgid "{where}: {word} is on or off, not {value}."
+msgstr "{where}: {word}은(는) on 또는 off입니다. {value}은(는) 안 됩니다."
+
 msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
 msgstr "{where}: {word}은(는) {kind} 줄에 쓸 수 없습니다. 쓸 수 있는 것: {words}."
 
@@ -550,6 +558,21 @@ msgstr "{number}번째 줄"
 
 msgid "{where} cannot be read: {reason}."
 msgstr "{where}을(를) 읽을 수 없습니다: {reason}."
+
+msgid "{where}: a text belongs to the scene above it, and the line above is a music or level line."
+msgstr "{where}: 텍스트는 바로 위 장면에 속하는데, 위의 줄은 music 또는 level 줄입니다."
+
+msgid "{where}: a film has one music line, and {first} is already one."
+msgstr "{where}: 영상에는 music 줄이 하나만 있을 수 있는데, {first}이(가) 이미 그 줄입니다."
+
+msgid "{where}: music needs a sound file after it."
+msgstr "{where}: music 뒤에는 소리 파일이 와야 합니다."
+
+msgid "{where}: a level line belongs to the music line, and comes straight after it or after another level line."
+msgstr "{where}: level 줄은 music 줄에 딸린 것으로, 그 바로 뒤나 다른 level 줄 바로 뒤에 와야 합니다."
+
+msgid "{where}: level needs a number of decibels after it: level -40"
+msgstr "{where}: level 뒤에는 데시벨 숫자가 필요합니다: level -40"
 
 msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
 msgstr "{where}: 텍스트는 바로 위 장면에 속하는데, 이 줄 앞에 장면이 없습니다."
@@ -563,8 +586,9 @@ msgstr "{where}: clip 뒤에는 동영상 파일이 와야 합니다."
 msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: card에는 초 단위 길이가 필요합니다: card 3"
 
-msgid "{where}: a line starts with clip, card or text, not {word}."
-msgstr "{where}: 줄은 {word}이(가) 아니라 clip, card 또는 text로 시작해야 합니다."
+#. translators: {word} is the first word of the line, in quotes.
+msgid "{where}: a line starts with clip, card, text, music or level, not {word}."
+msgstr "{where}: 줄은 {word}이(가) 아니라 clip, card, text, music 또는 level로 시작해야 합니다."
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "스크립트에 장면이 없습니다. 장면은 clip이나 card로 시작하는 줄입니다."
@@ -675,6 +699,46 @@ msgstr ""
 msgid "--framerate takes a number above zero, not {rate}."
 msgstr "--framerate에는 {rate}이(가) 아니라 0보다 큰 숫자를 주어야 합니다."
 
+msgid "{where}: {path} is not a file ffmpeg can read."
+msgstr "{where}: {path}은(는) ffmpeg이 읽을 수 있는 파일이 아닙니다."
+
+msgid "{where}: measuring the sound of {path} took too long, so it was stopped."
+msgstr "{where}: {path}의 소리를 측정하는 데 너무 오래 걸려서 중단했습니다."
+
+msgid "{where}: ffmpeg could not measure the sound of {path}."
+msgstr "{where}: ffmpeg이 {path}의 소리를 측정할 수 없었습니다."
+
+msgid "{where}: {path} has no sound in it."
+msgstr "{where}: {path}에는 소리가 들어 있지 않습니다."
+
+#. translators: {state} is on or off, and stays in English.
+msgid "{where}: a level with normalise {state} is between {low} and {high} dB, not {value}."
+msgstr "{where}: normalise {state}일 때 level은 {low}에서 {high} dB 사이입니다. {value}은(는) 안 됩니다."
+
+msgid "{where}: the music's fades come to {fades} seconds, and the film is only {seconds} long."
+msgstr "{where}: 음악의 페이드를 합치면 {fades}초인데, 영상은 {seconds}초뿐입니다."
+
+msgid "{where}: a level line's from must come before its to, and both inside the film, which is {seconds} seconds long."
+msgstr "{where}: level 줄의 from은 to보다 앞이어야 하며, 둘 다 길이가 {seconds}초인 영상 안에 있어야 합니다."
+
+msgid "{where}: this level line and {other} overlap, counting their ramps."
+msgstr "{where}: 이 level 줄과 {other}은(는) ramp까지 치면 겹칩니다."
+
+msgid "{where}: {path} is silent all through."
+msgstr "{where}: {path}은(는) 처음부터 끝까지 무음입니다."
+
+msgid "{where}: the music at level {level} would peak above {peak} dB, so it plays at level {reached} instead."
+msgstr "{where}: level {level}에서는 음악의 최고점이 {peak} dB를 넘으므로, 대신 level {reached}로 재생합니다."
+
+msgid "music {name}: averages {level} dB; its own average is {mean} dB, so it is turned {change} dB"
+msgstr "music {name}: 평균 {level} dB. 원래 평균이 {mean} dB이므로 {change} dB 조정합니다"
+
+msgid "music {name}: its own level, turned {change} dB"
+msgstr "music {name}: 원래 음량, {change} dB 조정"
+
+msgid "  level {level} dB from {start} to {end}"
+msgstr "  level {level} dB, {start}부터 {end}까지"
+
 msgid "-o must end in {ending}, and {name} does not."
 msgstr "-o는 {ending}(으)로 끝나야 하는데, {name}은(는) 그렇지 않습니다."
 
@@ -686,6 +750,12 @@ msgstr "-o가 {output}인데, 이는 이 명령이 읽는 파일이기도 합니
 
 msgid "this ffmpeg cannot encode H.264 with libx264, which every video uses."
 msgstr "이 ffmpeg은 libx264로 H.264를 인코딩할 수 없는데, 모든 동영상에 이것이 쓰입니다."
+
+msgid "{where}: volume changes a clip's own sound, and {path} has none."
+msgstr "{where}: volume은 클립 자체의 소리를 바꾸는데, {path}에는 소리가 없습니다."
+
+msgid "{where}: volume is between {low} and {high} dB, not {value}."
+msgstr "{where}: volume은 {low}에서 {high} dB 사이입니다. {value}은(는) 안 됩니다."
 
 msgid "{where}: a crossfade fades from the scene before, and this is the first scene."
 msgstr "{where}: 크로스페이드는 앞 장면에서 넘어오는 페이드인데, 이것은 첫 번째 장면입니다."
@@ -708,14 +778,23 @@ msgstr "{output} 만드는 중, {seconds}초, {size}"
 msgid "ffmpeg could not make the film."
 msgstr "ffmpeg이 영상을 만들지 못했습니다."
 
+msgid "the film's sound reaches full scale, so it may be distorted. Turn the music or a clip down to keep it clean."
+msgstr "영상의 소리가 최대치(풀 스케일)에 도달해 왜곡될 수 있습니다. 깨끗하게 유지하려면 음악이나 클립의 음량을 낮추십시오."
+
 msgid "ffmpeg did not finish making the film in the time allowed for its length, so it was stopped."
 msgstr "ffmpeg이 영상 길이에 맞게 주어진 시간 안에 영상을 다 만들지 못해 중지했습니다."
 
 msgid "could not read the script {path}: {reason}."
 msgstr "스크립트 {path}을(를) 읽을 수 없습니다: {reason}."
 
-msgid "trim needs something to do: --from, --to, or a fade."
-msgstr "trim에 할 일을 주십시오: --from, --to 또는 페이드."
+msgid "{option} sets the music, and needs --music FILE as well."
+msgstr "{option}은(는) 음악을 설정하므로 --music FILE도 필요합니다."
+
+msgid "{option} takes a number of seconds, not {value}."
+msgstr "{option}에는 {value}이(가) 아니라 초 단위 숫자를 주어야 합니다."
+
+msgid "trim needs something to do: --from, --to, a fade, --music or --no-sound."
+msgstr "trim에 할 일을 주십시오: --from, --to, 페이드, --music 또는 --no-sound."
 
 msgid "join takes two or more videos; one on its own is already whole."
 msgstr "join은 동영상을 두 개 이상 받습니다. 하나만 있으면 이미 완성된 것입니다."
@@ -925,6 +1004,26 @@ msgstr "검은 화면에서 시작해 SECONDS초에 걸쳐 화면이 나타남"
 #. argparse formats this text with %
 msgid "go to black over the last SECONDS"
 msgstr "마지막 SECONDS초에 걸쳐 검게 사라짐"
+
+#. argparse formats this text with %
+msgid "lay this sound file under the film, repeated to fill it"
+msgstr "이 소리 파일을 영상 아래에 깔고, 영상 길이만큼 반복함"
+
+#. argparse formats this text with %
+msgid "the level the music averages, in dB (default: {level})"
+msgstr "음악의 평균 레벨, dB 단위 (기본값: {level})"
+
+#. argparse formats this text with %
+msgid "the music arrives over SECONDS (default: {seconds})"
+msgstr "음악이 SECONDS초에 걸쳐 들어옴 (기본값: {seconds})"
+
+#. argparse formats this text with %
+msgid "the music goes over the last SECONDS (default: {seconds})"
+msgstr "음악이 마지막 SECONDS초 동안 사라짐 (기본값: {seconds})"
+
+#. argparse formats this text with %
+msgid "leave out the videos' own sound"
+msgstr "동영상 자체의 소리를 뺌"
 
 #. argparse formats this text with %
 msgid "make a film from a script of scenes"

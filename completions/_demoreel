@@ -53,6 +53,13 @@ _demoreel() {
     '--fade-in=[start black]:seconds:'
     '--fade-out=[end on black]:seconds:'
   )
+  music=(
+    '--music=[lay this sound file under the film]:file:_files'
+    '--music-level=[the level the music averages]:dB:'
+    '--music-fade-in=[the music arrives over this long]:seconds:'
+    '--music-fade-out=[the music goes over this long]:seconds:'
+  )
+  nosound=('--no-sound[leave out the videos'\'' own sound]')
   _arguments -C \
     '(- :)'{-h,--help}'[show help]' \
     '(- :)--version[show the version]' \
@@ -108,25 +115,25 @@ _demoreel() {
             {-r+,--framerate=}'[the film'\''s frames per second]:fps:' \
             '1:script:_files' ;;
         trim)
-          _arguments -S $finish $video $fades \
+          _arguments -S $finish $video $fades $music $nosound \
             '--from=[where the kept part starts]:seconds:' \
             '--to=[the last moment kept]:seconds:' \
             '*--fade-at=[fade to black and back around this moment]:seconds:' \
             '--fade-length=[how long each half of a fade-at takes]:seconds:' \
             '1:video:_files' ;;
         caption)
-          _arguments -S $finish $video $fades \
+          _arguments -S $finish $video $fades $music $nosound \
             '*--text=[one line of text, repeatable]:words:' \
             '*--from=[when the text before it appears]:seconds:' \
             '*--to=[when the text before it goes]:seconds:' \
             '*--text-size=[the height of the text before it]:percent:' \
             '1:video:_files' ;;
         join)
-          _arguments -S $finish $video $fades \
+          _arguments -S $finish $video $fades $music $nosound \
             '--crossfade=[fade from each video into the next]:seconds:' \
             '*:video:_files' ;;
         card)
-          _arguments -S $finish $video $fades \
+          _arguments -S $finish $video $fades $music \
             {-d+,--duration=}'[how many seconds the card lasts]:seconds:' \
             '--text=[one line of text]:words:' \
             '--text-size=[the height of the text]:percent:' \

@@ -296,6 +296,31 @@ takes (default 0.5).
 fade from each video into the next, where a plain cut would be.
 The videos overlap for that long.
 .TP
+.BI \-\-music " file"
+.BR trim ,
+.BR caption ,
+.B join
+and
+.BR card :
+lay this sound file under the film, repeated to fill it.
+.TP
+.BI \-\-music\-level " dB"
+The level the music averages (default \-30).
+.TP
+.BI \-\-music\-fade\-in " seconds" "\fR, \fP" \-\-music\-fade\-out " seconds"
+The music's own fades (default 1.5 and 3).
+These and
+.B \-\-music\-level
+need
+.BR \-\-music .
+.TP
+.B \-\-no\-sound
+.BR trim ,
+.B caption
+and
+.BR join :
+leave out the videos' own sound.
+.TP
 .BI \-\-text " words"
 One line of text.
 .BR caption :
@@ -390,9 +415,12 @@ Then any of
 .BI fade\-in " s"\fR,\fP
 .BI fade\-out " s"\fR,\fP
 .BI fade\-at " s"\fR,\fP
-.BI fade\-length " s"
+.BI fade\-length " s"\fR,\fP
+.BI crossfade " s"\fR,\fP
+.BR sound " " on | off
 and
-.BI crossfade " s"\fR.\fP
+.BI volume " dB"\fR.\fP
+A clip keeps its own sound unless told not to.
 .TP
 .BI "card " "seconds \fR[\fPpicture\fR]\fP"
 Show a plain background, with a picture on it, or text, or both.
@@ -419,6 +447,30 @@ Then any of
 .BR band " " on | off
 and
 .BR at " " top | middle | bottom .
+.TP
+.BI "music " file
+Lay one music track under the whole film, repeated to fill it.
+At most one, anywhere among the scenes.
+Then any of
+.BI level " dB"
+(default \-30),
+.BR normalise " " on | off ,
+.BI fade\-in " s"
+and
+.BI fade\-out " s"
+(default 1.5 and 3).
+.TP
+.BI "level " dB
+Straight after the music line or another
+.BR level :
+the music's level for a stretch of the film.
+Then any of
+.BI from " s"\fR,\fP
+.BI to " s"
+and
+.BI ramp " s"
+(default 0.5).
+These times are in the finished film.
 .PP
 The whole script is checked before anything is made, and an error names its
 line.

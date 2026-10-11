@@ -2782,10 +2782,12 @@ def frame_at(moment, step):
 
 SCENE_WORDS = {
     "clip": ("from", "to", "fade-in", "fade-out", "fade-at", "fade-length",
-             "crossfade"),
+             "crossfade", "sound", "volume"),
     "card": ("background", "fade-in", "fade-out", "crossfade"),
     "text": ("from", "to", "size", "font", "colour", "outline", "shadow",
              "fade-in", "fade-out", "band", "at"),
+    "music": ("level", "normalise", "fade-in", "fade-out"),
+    "level": ("from", "to", "ramp"),
 }
 # The words of a text line whose value is not a number.
 TEXT_NAMES = ("font", "colour", "outline", "shadow", "band", "at")
@@ -2819,6 +2821,35 @@ class Scene:
         self.texts = []         # each: words, start, end, size, where
         self.info = None        # what ffprobe says of `path`
         self.frames = 1         # a card's picture: more than 1 if animated
+        self.sound = "on"       # a clip: keep its own sound
+        self.volume = None      # a clip: dB on its own sound
+        self.has_sound = False  # a clip: its file has a sound stream
+
+
+# The film's sound: every stream is made this before it is joined or mixed.
+SOUND_RATE = 48000
+SOUND_FORMAT = f"aresample={SOUND_RATE},aformat=sample_fmts=fltp:channel_layouts=stereo"
+# The music's defaults, which follow the Slipcase trailer (DEMO-0177 § 3).
+MUSIC_LEVEL = -30.0
+MUSIC_FADE_IN = 1.5
+MUSIC_FADE_OUT = 3.0
+LEVEL_RAMP = 0.5
+# No level puts the music's peak above this, and a film whose loudest moment
+# reaches FULL_SCALE gets a note that it may be distorted.
+MUSIC_PEAK = -1.0
+FULL_SCALE = -0.1
+
+
+class Music:
+    """A film's music: one file under the whole film, repeated to fill it."""
+
+    def __init__(self, path, where):
+        self.path = path
+        self.where = where
+        self.level = None       # None: MUSIC_LEVEL normalised, 0 dB as it is
+        self.normalise = "on"
+        self.fade_in = self.fade_out = None  # None: the defaults, which shrink to fit
+        self.levels = []        # each: level, start, end, ramp, where
 
 
 def script_number(word, where, what):
@@ -2834,8 +2865,32 @@ def script_number(word, where, what):
     return value
 
 
+def script_decibels(word, where, what):
+    """A level or a volume: a number of dB, which may be below zero."""
+    try:
+        value = float(word)
+    except ValueError:
+        value = math.nan
+    if not math.isfinite(value):
+        # translators: {word} is level or volume, an edit-script word, and stays in
+        # English; {value} is what was written after it, in quotes.
+        die(tr("{where}: {word} takes a number of decibels, like -6, not {value}.",
+               where=where, word=what, value=repr(word)))
+    return value
+
+
+def script_on_off(word, where, what):
+    if word not in ("on", "off"):
+        # translators: {word} is sound or normalise, an edit-script word; on and off
+        # stay in English too.
+        die(tr("{where}: {word} is on or off, not {value}.", where=where, word=what,
+               value=repr(word)))
+    return word
+
+
 def script_words(target, words, kind, where):
-    """Read `word value` pairs after a scene's or a text's first part."""
+    """Read `word value` pairs after a scene's, a text's or the music's first
+    part."""
     names = {"from": "start", "to": "end", "fade-in": "fade_in",
              "fade-out": "fade_out", "fade-length": "fade_length"}
     for at in range(0, len(words), 2):
@@ -2853,6 +2908,12 @@ def script_words(target, words, kind, where):
         value = words[at + 1]
         if word == "background":
             target.background = value
+        elif word in ("sound", "normalise"):
+            setattr(target, word, script_on_off(value, where, word))
+        elif word in ("volume", "level"):
+            setattr(target, word, script_decibels(value, where, word))
+        elif kind == "level":
+            target[names.get(word, word)] = script_number(value, where, word)
         elif word == "fade-at":
             target.fade_at.append(script_number(value, where, word))
         elif kind == "text" and word in TEXT_NAMES:
@@ -2871,8 +2932,11 @@ def parse_script(text):
     `text "WORDS" ...` line belongs to the scene above it. A line is split as
     a shell splits one, except that `#` starts a comment only at the start of
     a line: a colour is written `#101418`.
+
+    One `music FILE ...` line may stand anywhere among the scenes, with its
+    `level DB ...` lines straight after it. Returns (scenes, music or None).
     """
-    scenes = []
+    scenes, music, above = [], None, None
     for number, raw in enumerate(text.splitlines(), 1):
         line = raw.strip()
         if not line or line.startswith("#"):
@@ -2884,7 +2948,29 @@ def parse_script(text):
             die(tr("{where} cannot be read: {reason}.", where=where, reason=exc)
                 + f"\n  {line}")
         verb, rest = words[0], words[1:]
-        if verb == "text":
+        if verb == "text" and above in ("music", "level"):
+            die(tr("{where}: a text belongs to the scene above it, and the line "
+                   "above is a music or level line.", where=where))
+        if verb == "music":
+            if music is not None:
+                die(tr("{where}: a film has one music line, and {first} is already "
+                       "one.", where=where, first=music.where))
+            if not rest:
+                die(tr("{where}: music needs a sound file after it.", where=where))
+            music = Music(Path(rest[0]).expanduser(), where)
+            script_words(music, rest[1:], "music", where)
+        elif verb == "level":
+            if above not in ("music", "level"):
+                die(tr("{where}: a level line belongs to the music line, and comes "
+                       "straight after it or after another level line.", where=where))
+            if not rest:
+                die(tr("{where}: level needs a number of decibels after it: "
+                       "level -40", where=where))
+            entry = {"level": script_decibels(rest[0], where, "level"),
+                     "where": where}
+            script_words(entry, rest[1:], "level", where)
+            music.levels.append(entry)
+        elif verb == "text":
             if not scenes:
                 die(tr("{where}: a text belongs to the scene above it, and no "
                        "scene comes before this one.", where=where))
@@ -2914,12 +3000,13 @@ def parse_script(text):
             scenes.append(scene)
         else:
             # translators: {word} is the first word of the line, in quotes.
-            die(tr("{where}: a line starts with clip, card or text, not "
-                   "{word}.", where=where, word=repr(verb)) + f"\n  {line}")
+            die(tr("{where}: a line starts with clip, card, text, music or level, "
+                   "not {word}.", where=where, word=repr(verb)) + f"\n  {line}")
+        above = verb if verb != "text" else above
     if not scenes:
         die(tr("the script has no scenes in it. A scene is a line starting with "
                "clip or card."))
-    return scenes
+    return scenes, music
 
 
 def probe(path, where):
@@ -3198,6 +3285,10 @@ def check_scene(scene, width, height, rate, workdir):
         # kept, so neither edge turns on how a float rounds.
         scene.seek = max(0.0, scene.start - step / 2)
         scene.read = None if last is None else (last + 0.5) * step - scene.seek
+        # The sound is read to the last kept frame's end, or the film is
+        # silent for the half frame before each cut (DEMO-0177 § 4.3); trim
+        # still bounds the picture.
+        scene.read_sound = None if last is None else (last + 1) * step - scene.seek
         for moment in scene.fade_at:
             if not (scene.start + scene.fade_length <= moment
                     <= scene.start + length - scene.fade_length):
@@ -3330,6 +3421,215 @@ def fade_filters(scene, length):
     return filters
 
 
+def sound_fades(scene, length):
+    """fade_filters for the scene's sound: the same fades over the same
+    seconds, a fade-at's two halves each switched on for its own half."""
+    filters = []
+    if scene.fade_in:
+        filters.append(f"afade=t=in:st=0:d={scene.fade_in:.4f}")
+    for moment in scene.fade_at:
+        at, half = moment - scene.start, scene.fade_length
+        filters.append(f"afade=t=out:st={at - half:.4f}:d={half:.4f}:"
+                       f"enable='between(t,{at - half:.4f},{at:.4f})'")
+        filters.append(f"afade=t=in:st={at:.4f}:d={half:.4f}:"
+                       f"enable='gt(t,{at:.4f})*lte(t,{at + half:.4f})'")
+    if scene.fade_out:
+        filters.append(f"afade=t=out:st={length - scene.fade_out:.4f}:"
+                       f"d={scene.fade_out:.4f}")
+    return filters
+
+
+def keeps_sound(scene):
+    """Whether the film takes this scene's own sound."""
+    return scene.kind == "clip" and scene.sound == "on" and scene.has_sound
+
+
+def scene_sound(scene, length, number, first_input):
+    """The chain that turns one scene's sound into `[a<number>]`, exactly
+    `length` seconds long: the clip's own sound, or silence."""
+    if not keeps_sound(scene):
+        return (f"anullsrc=r={SOUND_RATE}:cl=stereo:d={length:.6f},{SOUND_FORMAT},"
+                f"atrim=duration={length:.6f}[a{number}]")
+    # The input seeks half a frame early (check_scene), so the sound is
+    # trimmed to begin at `from` itself. It is moved back by that much and
+    # no more: a sound stream that starts after its picture keeps the gap,
+    # which aresample fills with silence, where PTS-STARTPTS would pull it
+    # early (measured 2026-10-11: 0.48 s). A recording's sound may end before
+    # its picture (DEMO-0106), so it is padded to the picture's length.
+    trim = scene.start - scene.seek
+    chain = [f"atrim=start={trim:.6f}", f"asetpts=PTS-{trim:.6f}/TB",
+             f"aresample={SOUND_RATE}:async=1:first_pts=0",
+             SOUND_FORMAT, f"apad=whole_dur={length:.6f}",
+             f"atrim=duration={length:.6f}"]
+    if scene.volume is not None:
+        chain.append(f"volume={scene.volume:.4f}dB")
+    chain += sound_fades(scene, length)
+    return f"[{first_input}:a:0]{','.join(chain)}[a{number}]"
+
+
+def sound_info(path, where):
+    """(whether a file has a sound stream, its length in seconds or 0). Dies
+    if ffprobe cannot read it, naming the line or option that asked."""
+    if not Path(path).is_file():
+        die(tr("{where}: there is no file {path}", where=where, path=path))
+    try:
+        out = subprocess.run(
+            ["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries",
+             "stream=index:format=duration", "-of", "json", str(path)],
+            capture_output=True, text=True, timeout=CALL_TIMEOUT, check=False)
+    except subprocess.TimeoutExpired:
+        die(tr("{where}: reading {path} took over {seconds}s.", where=where,
+               path=path, seconds=CALL_TIMEOUT))
+    try:
+        info = json.loads(out.stdout) if out.returncode == 0 else None
+        return bool(info.get("streams")), float(
+            info.get("format", {}).get("duration") or 0)
+    except (AttributeError, TypeError, ValueError):
+        lines = out.stderr.strip().splitlines()
+        die(tr("{where}: {path} is not a file ffmpeg can read.", where=where,
+               path=path) + (f"\n  {lines[-1]}" if lines else ""))
+    return None  # unreachable; die() exits
+
+
+def music_loudness(music):
+    """(mean, peak) of the music in dB, measured as the film will hear it:
+    made stereo first, since a mono file reads 3 dB quieter once it is."""
+    try:
+        done = subprocess.run(
+            ["ffmpeg", "-nostdin", "-hide_banner", "-i", str(music.path), "-map",
+             "0:a:0", "-af", f"{SOUND_FORMAT},volumedetect", "-f", "null", "-"],
+            capture_output=True, text=True, timeout=60 + music.length / 5,
+            check=False)
+    except subprocess.TimeoutExpired:
+        die(tr("{where}: measuring the sound of {path} took too long, so it was "
+               "stopped.", where=music.where, path=music.path))
+    mean = re.search(r"mean_volume: (-?[\d.]+) dB", done.stderr)
+    peak = re.search(r"max_volume: (-?[\d.]+) dB", done.stderr)
+    if done.returncode or not mean or not peak:
+        lines = [ln for ln in done.stderr.splitlines() if ln.strip()]
+        die(tr("{where}: ffmpeg could not measure the sound of {path}.",
+               where=music.where, path=music.path)
+            + (f"\n  {lines[-1]}" if lines and done.returncode else ""))
+    return float(mean[1]), float(peak[1])
+
+
+def check_music(music, total):
+    """Check the music against a film `total` seconds long, measure it, and
+    set the gain each level needs. Dies naming the line or option."""
+    found, music.length = sound_info(music.path, music.where)
+    if not found:
+        die(tr("{where}: {path} has no sound in it.", where=music.where,
+               path=music.path))
+    if music.length <= 0:
+        die(tr("{where}: {path} has no length ffmpeg can tell.", where=music.where,
+               path=music.path))
+    normalised = music.normalise == "on"
+    low, high = (-60, 0) if normalised else (-60, 20)
+    if music.level is None:
+        music.level = MUSIC_LEVEL if normalised else 0.0
+    for level, where in [(music.level, music.where),
+                         *((e["level"], e["where"]) for e in music.levels)]:
+        if not low <= level <= high:
+            # translators: {state} is on or off, and stays in English.
+            die(tr("{where}: a level with normalise {state} is between {low} and "
+                   "{high} dB, not {value}.", where=where,
+                   state=music.normalise, low=low, high=high, value=f"{level:g}"))
+    written = [f for f in (music.fade_in, music.fade_out) if f is not None]
+    if sum(written) > total + 1e-6:
+        die(tr("{where}: the music's fades come to {fades} seconds, and the film "
+               "is only {seconds} long.", where=music.where,
+               fades=f"{sum(written):g}", seconds=f"{total:.3f}"))
+    # A written fade is kept; the defaults share what room is left, shrinking
+    # in proportion where they do not fit.
+    defaults = [MUSIC_FADE_IN if music.fade_in is None else 0.0,
+                MUSIC_FADE_OUT if music.fade_out is None else 0.0]
+    shrink = min(1.0, (total - sum(written)) / sum(defaults)) if sum(defaults) else 1.0
+    music.fades = tuple(given if given is not None else default * shrink
+                        for given, default in zip((music.fade_in, music.fade_out),
+                                                  defaults, strict=True))
+    spans = []
+    for entry in music.levels:
+        start, end = entry.get("start", 0.0), entry.get("end", total)
+        entry.setdefault("ramp", LEVEL_RAMP)
+        if not start < end or end > total + TIME_SLACK:
+            die(tr("{where}: a level line's from must come before its to, and both "
+                   "inside the film, which is {seconds} seconds long.",
+                   where=entry["where"], seconds=f"{total:.3f}"))
+        entry["start"], entry["end"] = start, min(end, total)
+        spans.append((max(0.0, start - entry["ramp"]),
+                      min(total, entry["end"] + entry["ramp"]), entry))
+    spans.sort(key=lambda span: span[0])
+    for (_, until, before), (since, _, after) in itertools.pairwise(spans):
+        if since < until - 1e-6:
+            die(tr("{where}: this level line and {other} overlap, counting their "
+                   "ramps.", where=after["where"], other=before["where"]))
+    mean, peak = music_loudness(music)
+    if not (math.isfinite(mean) and math.isfinite(peak)):
+        die(tr("{where}: {path} is silent all through.", where=music.where,
+               path=music.path))
+    music.mean = mean
+    for target in (music, *music.levels):
+        level = target.level if target is music else target["level"]
+        gain = level - mean if normalised else level
+        if gain > MUSIC_PEAK - peak:
+            gain = MUSIC_PEAK - peak
+            reached = gain + mean if normalised else gain
+            note(tr("{where}: the music at level {level} would peak above {peak} "
+                    "dB, so it plays at level {reached} instead.",
+                    where=target.where if target is music else target["where"],
+                    level=f"{level:g}", peak=f"{MUSIC_PEAK:g}",
+                    reached=f"{reached:.1f}"))
+        if target is music:
+            music.gain = gain
+        else:
+            target["gain"] = gain
+
+
+def music_graph(music, input_number, total):
+    """The chain that makes `[m]`: the music, set to its level, repeated to
+    fill the film, softer or louder for each level line, faded in and out."""
+    chain = [SOUND_FORMAT, f"volume={music.gain:.4f}dB"]
+    if music.length < total:
+        # Repeated by the filter, never by the demuxer: an input with no end
+        # is buffered without limit (memory_cap). size counts samples after
+        # the resampling, and a size past the input's end loops what it held.
+        chain.append(f"aloop=loop=-1:size={math.ceil(music.length * SOUND_RATE)}")
+    chain += [f"atrim=duration={total:.6f}", "asetpts=N/SR/TB"]
+    terms = []
+    for entry in music.levels:
+        change = entry["gain"] - music.gain
+        start, end, ramp = entry["start"], entry["end"], entry["ramp"]
+        if ramp:
+            terms.append(f"{change:.4f}*max(0,min(1,min((t-{start - ramp:.4f})/"
+                         f"{ramp:.4f},({end + ramp:.4f}-t)/{ramp:.4f})))")
+        else:
+            terms.append(f"{change:.4f}*between(t,{start:.4f},{end:.4f})")
+    if terms:
+        chain.append(f"volume=eval=frame:volume='pow(10,({'+'.join(terms)})/20)'")
+    fade_in, fade_out = music.fades
+    if fade_in:
+        chain.append(f"afade=t=in:st=0:d={fade_in:.4f}")
+    if fade_out:
+        chain.append(f"afade=t=out:st={total - fade_out:.4f}:d={fade_out:.4f}")
+    return f"[{input_number}:a:0]{','.join(chain)}[m]"
+
+
+def plan_music(music):
+    """The music's lines of the plan on stderr."""
+    if music.normalise == "on":
+        note(tr("music {name}: averages {level} dB; its own average is {mean} dB, "
+                "so it is turned {change} dB", name=music.path.name,
+                level=f"{music.gain + music.mean:.1f}", mean=f"{music.mean:.1f}",
+                change=f"{music.gain:+.1f}"))
+    else:
+        note(tr("music {name}: its own level, turned {change} dB",
+                name=music.path.name, change=f"{music.gain:+.1f}"))
+    for entry in music.levels:
+        note(tr("  level {level} dB from {start} to {end}",
+                level=f"{entry['level']:g}", start=f"{entry['start']:.3f}",
+                end=f"{entry['end']:.3f}"))
+
+
 def scene_graph(scene, length, number, first_input, width, height, rate):
     """(ffmpeg inputs, filter chains) that turn one scene into `[v<number>]`,
     a stream of the film's size and rate starting at time zero."""
@@ -3345,8 +3645,9 @@ def scene_graph(scene, length, number, first_input, width, height, rate):
     out = f"[v{number}]"
     if scene.kind == "clip":
         inputs = ["-ss", f"{scene.seek:.6f}"]
-        if scene.read is not None:
-            inputs += ["-t", f"{scene.read:.6f}"]
+        read = scene.read_sound if keeps_sound(scene) else scene.read
+        if read is not None:
+            inputs += ["-t", f"{read:.6f}"]
         inputs += ["-i", str(scene.path)]
         return inputs, [f"[{first_input}:v]setpts=PTS-STARTPTS,{shape}{tail}{out}"]
     inputs = ["-f", "lavfi", "-i", f"color=c=0x{scene.background[1:]}:"
@@ -3395,7 +3696,7 @@ def finishing_tools():
             + install_hint(missing))
 
 
-def make_film(scenes, raw_output, size=None, rate=None, also_read=()):
+def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None):
     """Check every scene, then encode the film once and print its path.
 
     Everything is checked before ffmpeg is started, so a mistake in the last
@@ -3407,7 +3708,8 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=()):
         die(tr("this ffmpeg cannot encode H.264 with libx264, which every video "
                "uses.") + x264_advice(distro_family()))
     output = finishing_output(
-        raw_output, [*(s.path for s in scenes if s.path), *also_read],
+        raw_output, [*(s.path for s in scenes if s.path), *also_read,
+                     *([music.path] if music else [])],
         (".mp4",))
     workdir = Path(tempfile.mkdtemp(prefix="edit-", dir=state_dir()))
     part = partial_video(output)
@@ -3415,7 +3717,19 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=()):
         width, height, rate = film_shape(scenes, size, rate)
         inputs, chains, lengths = [], [], []
         for number, scene in enumerate(scenes):
-            lengths.append(check_scene(scene, width, height, rate, workdir))
+            # A scene lasts its picture's whole frames, which trim keeps, so
+            # its sound and the scenes after it land where its picture does.
+            length = check_scene(scene, width, height, rate, workdir)
+            lengths.append(max(1, round(length * rate)) / rate)
+            if scene.kind == "clip":
+                scene.has_sound = sound_info(scene.path, scene.where)[0]
+                if scene.volume is not None and not scene.has_sound:
+                    die(tr("{where}: volume changes a clip's own sound, and {path} "
+                           "has none.", where=scene.where, path=scene.path))
+                if scene.volume is not None and not -60 <= scene.volume <= 20:
+                    die(tr("{where}: volume is between {low} and {high} dB, not "
+                           "{value}.", where=scene.where, low=-60, high=20,
+                           value=f"{scene.volume:g}"))
             if scene.crossfade:
                 if number == 0:
                     die(tr("{where}: a crossfade fades from the scene "
@@ -3429,24 +3743,33 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=()):
                            "seconds does not fit: the two scenes overlap for "
                            "that long, and one of them is shorter.",
                            where=scene.where, seconds=f"{scene.crossfade:g}"))
-        film, total = "[v0]", 0.0
+        clip_sound = any(keeps_sound(scene) for scene in scenes)
+        film, sound, total = "[v0]", "[a0]", 0.0
         for number, (scene, length) in enumerate(zip(scenes, lengths, strict=True)):
-            more, graph = scene_graph(scene, length, number,
-                                      inputs.count("-i"), width, height, rate)
+            first_input = inputs.count("-i")
+            more, graph = scene_graph(scene, length, number, first_input,
+                                      width, height, rate)
             inputs += more
             chains += graph
+            if clip_sound:
+                chains.append(scene_sound(scene, length, number, first_input))
             begins = total - scene.crossfade
             if scene.crossfade:
                 chains.append(f"{film}[v{number}]xfade=transition=fade:"
                               f"duration={scene.crossfade:.4f}:"
                               f"offset={begins:.4f}[f{number}]")
+                if clip_sound:
+                    chains.append(f"{sound}[a{number}]acrossfade="
+                                  f"d={scene.crossfade:.6f}[g{number}]")
             elif number:
                 # concat hands on a microsecond timebase, and xfade refuses two
                 # inputs whose timebases differ; fps puts the film's back.
                 chains.append(f"{film}[v{number}]concat=n=2:v=1:a=0,"
                               f"fps={rate_text(rate)}[f{number}]")
+                if clip_sound:
+                    chains.append(f"{sound}[a{number}]concat=n=2:v=0:a=1[g{number}]")
             if number:
-                film = f"[f{number}]"
+                film, sound = f"[f{number}]", f"[g{number}]"
             total = begins + length
             name = scene.path.name if scene.path else tr("text")
             # translators: {kind} is clip or card, in English; {name} is a file name, or the
@@ -3454,6 +3777,20 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=()):
             note(tr("scene {number}: {kind} {name}, {start} to {end}",
                     number=number + 1, kind=scene.kind, name=name,
                     start=f"{begins:.3f}", end=f"{total:.3f}"))
+        if music:
+            check_music(music, total)
+            chains.append(music_graph(music, inputs.count("-i"), total))
+            inputs += ["-i", str(music.path)]
+            plan_music(music)
+        if clip_sound and music:
+            # normalize=0: the default divides each input by the number of
+            # inputs, so neither would sit at the level the caller set.
+            chains.append(f"{sound}[m]amix=inputs=2:normalize=0:duration=first,"
+                          f"atrim=duration={total:.6f}[s]")
+        elif clip_sound:
+            chains.append(f"{sound}atrim=duration={total:.6f}[s]")
+        audio = (["-map", "[s]", *AUDIO_ENCODER] if clip_sound
+                 else ["-map", "[m]", *AUDIO_ENCODER] if music else ["-an"])
         note(tr("making {output}, {seconds} seconds at {size}", output=output,
                 seconds=f"{total:.3f}", size=f"{width}x{height}"))
         made = subprocess.run(  # noqa: PLW1510 - a failure is handled below
@@ -3461,7 +3798,7 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=()):
              *inputs, "-filter_complex", ";".join(chains), "-map", film,
              # The film ends at its planned length even if a stream does not.
              "-t", f"{total + 0.5 / rate:.4f}",
-             "-an", *ENCODER, "-y", str(part)],
+             *audio, *ENCODER, "-y", str(part)],
             capture_output=True, text=True, timeout=60 + 20 * total,
             preexec_fn=memory_cap)
         unreadable = None if made.returncode else video_error(part)
@@ -3469,6 +3806,10 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=()):
             lines = [ln for ln in made.stderr.splitlines() if ln.strip()]
             die(tr("ffmpeg could not make the film.") + "\n  "
                 + ("\n  ".join(lines[-4:]) or unreadable))
+        peak = loudest(part) if clip_sound or music else None
+        if peak is not None and peak >= FULL_SCALE:
+            note(tr("the film's sound reaches full scale, so it may be distorted. "
+                    "Turn the music or a clip down to keep it clean."))
         os.replace(part, output)
     except subprocess.TimeoutExpired:
         die(tr("ffmpeg did not finish making the film in the time allowed for "
@@ -3488,7 +3829,37 @@ def cmd_edit(a):
     except (OSError, UnicodeDecodeError) as exc:
         die(tr("could not read the script {path}: {reason}.", path=a.script,
                reason=getattr(exc, "strerror", None) or exc))
-    make_film(parse_script(text), a.output, a.size, a.framerate)
+    scenes, music = parse_script(text)
+    make_film(scenes, a.output, a.size, a.framerate, music=music)
+
+
+def shortcut_music(a):
+    """The music a shortcut's --music options ask for, as the script's music
+    line would say it, or None."""
+    given = [(flag, value) for flag, value in (
+        ("--music-level", a.music_level), ("--music-fade-in", a.music_fade_in),
+        ("--music-fade-out", a.music_fade_out)) if value is not None]
+    if a.music is None:
+        if given:
+            die(tr("{option} sets the music, and needs --music FILE as well.",
+                   option=given[0][0]))
+        return None
+    for flag, value in given:
+        if flag != "--music-level" and (value < 0 or not math.isfinite(value)):
+            die(tr("{option} takes a number of seconds, not {value}.", option=flag,
+                   value=f"{value:g}"))
+    music = Music(Path(a.music).expanduser(), "--music")
+    music.level, music.fade_in, music.fade_out = (
+        a.music_level, a.music_fade_in, a.music_fade_out)
+    return music
+
+
+def without_sound(scenes, a):
+    """--no-sound: `sound off` on every clip."""
+    if a.no_sound:
+        for scene in scenes:
+            scene.sound = "off"
+    return scenes
 
 
 def one_clip(path, a):
@@ -3501,19 +3872,20 @@ def one_clip(path, a):
 def cmd_trim(a):
     """One clip, with its from and to."""
     if a.start is None and a.end is None and not (
-            a.fade_in or a.fade_out or a.fade_at):
-        die(tr("trim needs something to do: --from, --to, or a fade."))
+            a.fade_in or a.fade_out or a.fade_at or a.music or a.no_sound):
+        die(tr("trim needs something to do: --from, --to, a fade, --music or "
+               "--no-sound."))
     scene = one_clip(a.input, a)
     scene.start, scene.end = a.start or 0.0, a.end
     scene.fade_at, scene.fade_length = a.fade_at, a.fade_length
-    make_film([scene], a.output)
+    make_film(without_sound([scene], a), a.output, music=shortcut_music(a))
 
 
 def cmd_caption(a):
     """One clip, whole, with its texts."""
     scene = one_clip(a.input, a)
     scene.texts = a.texts
-    make_film([scene], a.output)
+    make_film(without_sound([scene], a), a.output, music=shortcut_music(a))
 
 
 def cmd_join(a):
@@ -3527,7 +3899,7 @@ def cmd_join(a):
         scene.crossfade = a.crossfade if scenes else 0.0
         scenes.append(scene)
     scenes[0].fade_in, scenes[-1].fade_out = a.fade_in, a.fade_out
-    make_film(scenes, a.output)
+    make_film(without_sound(scenes, a), a.output, music=shortcut_music(a))
 
 
 def cmd_card(a):
@@ -3545,7 +3917,8 @@ def cmd_card(a):
         like = probe(a.like, "--like")
         size = size or f"{like['width']}x{like['height']}"
         rate = rate or like["rate"] or None
-    make_film([scene], a.output, size, rate, [a.like] if a.like else [])
+    make_film([scene], a.output, size, rate, [a.like] if a.like else [],
+              music=shortcut_music(a))
 
 
 def cmd_motion(a):
@@ -3854,6 +4227,24 @@ def build_parser():
         p.add_argument("--fade-out", type=float, default=0, metavar="SECONDS",
                        help=tr_help("go to black over the last SECONDS"))
 
+    # The music line's words, and sound off on every clip (DEMO-0177 § 4.2).
+    def sound(p, clips=True):
+        p.add_argument("--music", metavar="FILE",
+                       help=tr_help("lay this sound file under the film, repeated "
+                                    "to fill it"))
+        p.add_argument("--music-level", type=float, metavar="DB",
+                       help=tr_help("the level the music averages, in dB "
+                                    "(default: {level})", level=f"{MUSIC_LEVEL:g}"))
+        p.add_argument("--music-fade-in", type=float, metavar="SECONDS",
+                       help=tr_help("the music arrives over SECONDS (default: "
+                                    "{seconds})", seconds=MUSIC_FADE_IN))
+        p.add_argument("--music-fade-out", type=float, metavar="SECONDS",
+                       help=tr_help("the music goes over the last SECONDS "
+                                    "(default: {seconds})", seconds=f"{MUSIC_FADE_OUT:g}"))
+        if clips:
+            p.add_argument("--no-sound", action="store_true",
+                           help=tr_help("leave out the videos' own sound"))
+
     edit = finishing("edit", tr_help("make a film from a script of scenes"),
                      tr_help("make a film from a script of scenes."))
     edit.add_argument("script", help=tr_help("the script file, or - for standard input"))
@@ -3872,6 +4263,7 @@ def build_parser():
     trim.add_argument("--to", dest="end", type=float, metavar="SECONDS",
                       help=tr_help("the last moment kept (default: the end)"))
     fades(trim)
+    sound(trim)
     trim.add_argument("--fade-at", type=float, action="append", default=[],
                       metavar="SECONDS",
                       help=tr_help("fade to black and back around this moment; "
@@ -3897,6 +4289,7 @@ def build_parser():
                              metavar="PERCENT" if key == "size" else "SECONDS",
                              help=about)
     fades(caption)
+    sound(caption)
     caption.set_defaults(func=cmd_caption)
 
     join = finishing("join", tr_help("put videos end to end"),
@@ -3907,6 +4300,7 @@ def build_parser():
                       help=tr_help("fade from each video into the next over SECONDS "
                                    "(default: a plain cut)"))
     fades(join)
+    sound(join)
     join.set_defaults(func=cmd_join)
 
     card = finishing("card", tr_help("make a clip from a picture, or from text"),
@@ -3930,6 +4324,7 @@ def build_parser():
     card.add_argument("-r", "--framerate", type=int,
                       help=tr_help("frames per second (default: 30)"))
     fades(card)
+    sound(card, clips=False)
     card.set_defaults(func=cmd_card)
 
     motion = finishing("motion", tr_help("report how smooth a video is and where it "

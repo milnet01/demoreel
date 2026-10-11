@@ -66,7 +66,9 @@ then be cut, joined to others and given a line of text — see
 
 The video is **silent** unless you ask for the app's own sound with
 `--audio` — see [`--audio`](#--audio-the-apps-own-sound). Either way, the app's
-sound never plays on your speakers. Adding music to a film is planned.
+sound never plays on your speakers. A film made from recordings keeps their
+sound, and can have one music track under it — see
+[Sound and music](#sound-and-music).
 
 ## Install
 
@@ -268,10 +270,10 @@ What they share:
 
 - **`-o` is required by every command that writes a file**, and it may not be
   one of the files being read. A command never writes over its own input.
-- **Every command that writes a video writes a silent H.264 `.mp4` with its
-  index at the front**, and `-o` must end in `.mp4`; any other ending is
-  refused. So one command's output can be another's input. Sound in an input
-  is dropped.
+- **Every command that writes a video writes an H.264 `.mp4` with its index
+  at the front**, and `-o` must end in `.mp4`; any other ending is refused. So
+  one command's output can be another's input. A clip keeps its own sound; a
+  film with no sound in its clips and no music has no sound track at all.
 - **stdout carries the finished path and nothing else**, as with `record`.
   `motion` writes no file, so its report is what it prints there. Everything
   else these commands say goes to stderr.
@@ -329,6 +331,11 @@ order:
   long, so the film is that much shorter than its scenes added together. A
   scene takes a crossfade or a fade-in, not both, and the first scene takes
   no crossfade.
+- `sound off` — leave out this clip's own sound; its span is silent.
+- `volume -6` — turn this clip's own sound down 6 dB, or up with a number
+  above zero, between `-60` and `20`. A clip with no sound refuses it.
+
+A clip's sound fades, cuts and crossfades with its picture.
 
 Nothing takes a piece out of the middle of a clip. To skip a part, use the clip
 twice, with a different `from` and `to` each time.
@@ -403,7 +410,56 @@ size and brought to its frame rate. A clip whose shape differs from the
 film's, wider or taller, is refused rather than stretched.
 
 As it starts, `edit` prints the plan on stderr: each scene, and when it starts
-and ends in the finished film.
+and ends in the finished film. A scene lasts its picture's whole frames, so
+these times are where its picture and its sound land. With music, the plan
+also says what level the music averages and how much it was turned to get
+there, and when each `level` line applies.
+
+#### Sound and music
+
+**`music FILE`** lays one music track under the whole film. It is a line of
+its own, anywhere among the scenes, and takes no time. A script has at most
+one. The file is anything `ffmpeg` reads with sound in it: its first sound
+is used, and any picture in it ignored. demoreel makes no music; the file is
+yours.
+
+```
+music theme.ogg level -32 fade-out 4
+  level -45 from 12 to 18
+```
+
+- The music repeats to fill the film, with no gap, and stops at its end.
+- `level -30` — the level the music averages in the film, in dB below full
+  scale, between `-60` and `0`. It is `-30` unless given: low enough to sit
+  under an app's own sound. demoreel measures the file first and turns it to
+  that level, whatever its own loudness. The level is an average over the
+  whole file, so music with long quiet stretches sounds louder than the number
+  suggests.
+- `normalise off` — use the file at its own loudness. `level` is then a plain
+  change to it, between `-60` and `20`, and `0` unless given.
+- `fade-in 1.5` and `fade-out 3` — the music's own fades at the film's start
+  and end, those lengths unless given. `0` turns one off. Fades you write that
+  are longer together than the film are refused; the default ones shrink to
+  fit a short film.
+- No level lets the music's loudest moment go above -1 dB. A level that
+  would is lowered, and stderr says to what.
+
+**`level DB`** lines, straight after the music line or another `level` line,
+make the music softer or louder for a stretch of the film. Indent them if you
+like.
+
+- `from 12` and `to 18` are times in the finished film, as the plan prints
+  them. Left out, they are the film's start and end.
+- The music slides to the new level over the `ramp` seconds before `from`, and
+  back over the `ramp` seconds after `to`: `ramp 0.5` unless given. Two
+  `level` lines whose stretches overlap, slides counted, are refused.
+- The number means what the music line's `level` means: a level to average
+  with `normalise on`, a change to the file's own with `normalise off`.
+
+The clips' sound and the music are mixed at the levels set. Nothing turns
+either down by itself, and nothing evens out the clips' sound. If the film's
+sound reaches full scale, stderr says it may be distorted, and the film is
+still made: turn the music or a clip down.
 
 ### The shortcuts
 
@@ -440,9 +496,15 @@ demoreel card -o title.mp4 -d 3 --like demo.mp4 --text 'Saving a file'
   `--fade-in` and `--fade-out`. Its size and
   frame rate come from `--like FILE`; `-s` and `-r` set them by hand and win
   over `--like`. With none of them it is 1600x1000 at 30.
+- All four take the music line's words: `--music FILE`, `--music-level`,
+  `--music-fade-in` and `--music-fade-out`. The last three without
+  `--music` are refused. `trim`, `caption` and `join` also take `--no-sound`,
+  which is `sound off` on every clip. `trim` with only `--music` or
+  `--no-sound` adds that and cuts nothing.
 
 A text's `font`, `colour`, `outline`, `shadow`, `band`, `at` and its own fades
-are the script's alone. A shortcut sets a text's words, times and size.
+are the script's alone. A shortcut sets a text's words, times and size. So are
+`normalise`, `level` lines and a clip's `volume`.
 
 Chaining shortcuts encodes the picture once per step. For more than one step,
 write the script.
@@ -609,8 +671,9 @@ demoreel record --audio -o demo.mp4 -d 30 -- my-app
   silent.
 - **With `--gpu`, whether sound and picture stay in step is not yet
   measured.** On the default backend they are within 40 ms.
-- **The finishing commands drop the sound for now.** `edit`, `trim`,
-  `caption`, `join` and `card` write silent videos until music lands.
+- **The finishing commands keep it.** A film made from an `--audio`
+  recording keeps its sound, through cuts and fades — see
+  [Sound and music](#sound-and-music).
 
 ### Scripted steps
 
@@ -839,7 +902,8 @@ Permanently out of scope:
   may cut the ends off a video, measure it, take a frame from it, play scenes
   one after another, show a picture, still or animated, on a card between
   them, put one line of text on or between them, styled as the script says,
-  and fade. That is the whole
+  fade, keep a clip's sound, and lay one music track under a film at levels
+  the script sets. That is the whole
   list. A script is a list of scenes in order and nothing more: no
   layers, no two pictures on screen at once, no transition other than a fade,
   no zoom, no text that moves, no speeding up or slowing down. Nothing is ever

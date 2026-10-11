@@ -542,6 +542,14 @@ msgstr "{where}: בנתיב של קובץ הגופן {path} יש תו שהמסנ
 msgid "{where}: {word} takes a number of seconds, not {value}."
 msgstr "{where}: {word} מקבל מספר שניות, ולא {value}."
 
+#. translators: {word} is level or volume, an edit-script word, and stays in English; {value} is what was written after it, in quotes.
+msgid "{where}: {word} takes a number of decibels, like -6, not {value}."
+msgstr "{where}: {word} מקבל מספר דציבלים, כמו -6, ולא {value}."
+
+#. translators: {word} is sound or normalise, an edit-script word; on and off stay in English too.
+msgid "{where}: {word} is on or off, not {value}."
+msgstr "{where}: {word} הוא on או off, ולא {value}."
+
 msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
 msgstr "{where}: שורת {kind} לא מקבלת את {word}. היא מקבלת: {words}."
 
@@ -553,6 +561,21 @@ msgstr "שורה {number}"
 
 msgid "{where} cannot be read: {reason}."
 msgstr "לא ניתן לקרוא את {where}: {reason}."
+
+msgid "{where}: a text belongs to the scene above it, and the line above is a music or level line."
+msgstr "{where}: טקסט שייך לסצנה שמעליו, והשורה שמעליו היא שורת music או level."
+
+msgid "{where}: a film has one music line, and {first} is already one."
+msgstr "{where}: לסרט יש שורת music אחת, ו־{first} כבר שורה כזו."
+
+msgid "{where}: music needs a sound file after it."
+msgstr "{where}: אחרי music צריך לבוא קובץ קול."
+
+msgid "{where}: a level line belongs to the music line, and comes straight after it or after another level line."
+msgstr "{where}: שורת level שייכת לשורת ה־music, ובאה מיד אחריה או אחרי שורת level אחרת."
+
+msgid "{where}: level needs a number of decibels after it: level -40"
+msgstr "{where}: אחרי level צריך לבוא מספר דציבלים: level -40"
 
 msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
 msgstr "{where}: טקסט שייך לסצנה שמעליו, ואין סצנה לפני הטקסט הזה."
@@ -566,8 +589,9 @@ msgstr "{where}: אחרי clip צריך לבוא קובץ וידאו."
 msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: אחרי card צריך לבוא האורך בשניות: card 3"
 
-msgid "{where}: a line starts with clip, card or text, not {word}."
-msgstr "{where}: שורה מתחילה ב־clip, card או text, ולא ב־{word}."
+#. translators: {word} is the first word of the line, in quotes.
+msgid "{where}: a line starts with clip, card, text, music or level, not {word}."
+msgstr "{where}: שורה מתחילה ב־clip, card, text, music או level, ולא ב־{word}."
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "אין סצנות בתסריט. סצנה היא שורה שמתחילה ב־clip או ב־card."
@@ -681,6 +705,46 @@ msgstr ""
 msgid "--framerate takes a number above zero, not {rate}."
 msgstr "--framerate מקבל מספר גדול מאפס, ולא {rate}."
 
+msgid "{where}: {path} is not a file ffmpeg can read."
+msgstr "{where}: {path} אינו קובץ ש־ffmpeg יכול לקרוא."
+
+msgid "{where}: measuring the sound of {path} took too long, so it was stopped."
+msgstr "{where}: מדידת הקול של {path} ארכה יותר מדי זמן, ולכן היא נעצרה."
+
+msgid "{where}: ffmpeg could not measure the sound of {path}."
+msgstr "{where}: ffmpeg לא הצליח למדוד את הקול של {path}."
+
+msgid "{where}: {path} has no sound in it."
+msgstr "{where}: אין קול ב־{path}."
+
+#. translators: {state} is on or off, and stays in English.
+msgid "{where}: a level with normalise {state} is between {low} and {high} dB, not {value}."
+msgstr "{where}: level עם normalise {state} הוא בין {low} ל־{high} dB, ולא {value}."
+
+msgid "{where}: the music's fades come to {fades} seconds, and the film is only {seconds} long."
+msgstr "{where}: העמעומים של המוזיקה מגיעים ל־{fades} שניות, והסרט ארוך רק {seconds} שניות."
+
+msgid "{where}: a level line's from must come before its to, and both inside the film, which is {seconds} seconds long."
+msgstr "{where}: ה־from של שורת level חייב לבוא לפני ה־to שלה, ושניהם בתוך הסרט, שאורכו {seconds} שניות."
+
+msgid "{where}: this level line and {other} overlap, counting their ramps."
+msgstr "{where}: שורת level הזו ו־{other} חופפות, כולל ה־ramp שלהן."
+
+msgid "{where}: {path} is silent all through."
+msgstr "{where}: {path} שקט מתחילתו ועד סופו."
+
+msgid "{where}: the music at level {level} would peak above {peak} dB, so it plays at level {reached} instead."
+msgstr "{where}: המוזיקה ב־level {level} הייתה מגיעה לשיא מעל {peak} dB, ולכן היא מתנגנת ב־level {reached} במקום זאת."
+
+msgid "music {name}: averages {level} dB; its own average is {mean} dB, so it is turned {change} dB"
+msgstr "music {name}: ממוצע {level} dB; הממוצע שלה עצמה הוא {mean} dB, ולכן העוצמה שונתה ב־{change} dB"
+
+msgid "music {name}: its own level, turned {change} dB"
+msgstr "music {name}: העוצמה שלה עצמה, משונה ב־{change} dB"
+
+msgid "  level {level} dB from {start} to {end}"
+msgstr "  level {level} dB מ־{start} עד {end}"
+
 msgid "-o must end in {ending}, and {name} does not."
 msgstr "-o חייב להסתיים ב־{ending}, ו־{name} לא מסתיים כך."
 
@@ -692,6 +756,12 @@ msgstr "-o הוא {output}, שהוא גם קובץ שהפקודה הזאת קו�
 
 msgid "this ffmpeg cannot encode H.264 with libx264, which every video uses."
 msgstr "ה־ffmpeg הזה לא יכול לקודד H.264 עם libx264, שבו משתמש כל סרטון."
+
+msgid "{where}: volume changes a clip's own sound, and {path} has none."
+msgstr "{where}: volume משנה את הקול של הקטע עצמו, ול־{path} אין קול."
+
+msgid "{where}: volume is between {low} and {high} dB, not {value}."
+msgstr "{where}: volume הוא בין {low} ל־{high} dB, ולא {value}."
 
 msgid "{where}: a crossfade fades from the scene before, and this is the first scene."
 msgstr "{where}: crossfade מתעמעם מהסצנה הקודמת, וזו הסצנה הראשונה."
@@ -714,14 +784,23 @@ msgstr "יוצר את {output}, {seconds} שניות בגודל {size}"
 msgid "ffmpeg could not make the film."
 msgstr "ffmpeg לא הצליח ליצור את הסרט."
 
+msgid "the film's sound reaches full scale, so it may be distorted. Turn the music or a clip down to keep it clean."
+msgstr "הקול של הסרט מגיע לעוצמה המרבית, ולכן הוא עלול להיות מעוות. יש להנמיך את המוזיקה או קטע כדי שהקול יישאר נקי."
+
 msgid "ffmpeg did not finish making the film in the time allowed for its length, so it was stopped."
 msgstr "ffmpeg לא סיים ליצור את הסרט בזמן שהוקצב לאורכו, ולכן הוא נעצר."
 
 msgid "could not read the script {path}: {reason}."
 msgstr "לא ניתן לקרוא את התסריט {path}: {reason}."
 
-msgid "trim needs something to do: --from, --to, or a fade."
-msgstr "ל־trim צריך לתת משהו לעשות: --from, --to, או עמעום."
+msgid "{option} sets the music, and needs --music FILE as well."
+msgstr "{option} מגדיר את המוזיקה, ודורש גם --music FILE."
+
+msgid "{option} takes a number of seconds, not {value}."
+msgstr "{option} מקבל מספר שניות, ולא {value}."
+
+msgid "trim needs something to do: --from, --to, a fade, --music or --no-sound."
+msgstr "ל־trim צריך לתת משהו לעשות: --from, --to, עמעום, --music או --no-sound."
 
 msgid "join takes two or more videos; one on its own is already whole."
 msgstr "join מקבל שני סרטונים או יותר; סרטון אחד לבדו כבר שלם."
@@ -931,6 +1010,26 @@ msgstr "התחלה בשחור; התמונה מופיעה במשך SECONDS שני
 #. argparse formats this text with %
 msgid "go to black over the last SECONDS"
 msgstr "מעבר לשחור במשך SECONDS השניות האחרונות"
+
+#. argparse formats this text with %
+msgid "lay this sound file under the film, repeated to fill it"
+msgstr "הנחת קובץ הקול הזה מתחת לסרט, בחזרות שממלאות אותו"
+
+#. argparse formats this text with %
+msgid "the level the music averages, in dB (default: {level})"
+msgstr "העוצמה הממוצעת של המוזיקה, ב־dB (ברירת מחדל: {level})"
+
+#. argparse formats this text with %
+msgid "the music arrives over SECONDS (default: {seconds})"
+msgstr "המוזיקה נכנסת בהדרגה במשך SECONDS שניות (ברירת מחדל: {seconds})"
+
+#. argparse formats this text with %
+msgid "the music goes over the last SECONDS (default: {seconds})"
+msgstr "המוזיקה נמוגה במשך SECONDS השניות האחרונות (ברירת מחדל: {seconds})"
+
+#. argparse formats this text with %
+msgid "leave out the videos' own sound"
+msgstr "השמטת הקול של הסרטונים עצמם"
 
 #. argparse formats this text with %
 msgid "make a film from a script of scenes"

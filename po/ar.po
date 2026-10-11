@@ -554,6 +554,14 @@ msgstr "{where}: في مسار ملف الخط {path} حرف لا تستطيع �
 msgid "{where}: {word} takes a number of seconds, not {value}."
 msgstr "{where}: يأخذ {word} عددًا من الثواني، لا {value}."
 
+#. translators: {word} is level or volume, an edit-script word, and stays in English; {value} is what was written after it, in quotes.
+msgid "{where}: {word} takes a number of decibels, like -6, not {value}."
+msgstr "{where}: يأخذ {word} عددًا من الديسيبلات، مثل -6، لا {value}."
+
+#. translators: {word} is sound or normalise, an edit-script word; on and off stay in English too.
+msgid "{where}: {word} is on or off, not {value}."
+msgstr "{where}: قيمة {word} هي on أو off، لا {value}."
+
 msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
 msgstr "{where}: {word} ليس مما يأخذه سطر {kind}. ما يأخذه هو: {words}."
 
@@ -565,6 +573,21 @@ msgstr "السطر {number}"
 
 msgid "{where} cannot be read: {reason}."
 msgstr "لا يمكن قراءة {where}: {reason}."
+
+msgid "{where}: a text belongs to the scene above it, and the line above is a music or level line."
+msgstr "{where}: النص يتبع المشهد الذي فوقه، والسطر الذي فوقه سطر music أو level."
+
+msgid "{where}: a film has one music line, and {first} is already one."
+msgstr "{where}: للفيلم سطر music واحد، و{first} هو ذلك السطر بالفعل."
+
+msgid "{where}: music needs a sound file after it."
+msgstr "{where}: يحتاج music إلى ملف صوتي بعده."
+
+msgid "{where}: a level line belongs to the music line, and comes straight after it or after another level line."
+msgstr "{where}: سطر level يتبع سطر music، ويأتي بعده مباشرة أو بعد سطر level آخر."
+
+msgid "{where}: level needs a number of decibels after it: level -40"
+msgstr "{where}: يحتاج level إلى عدد من الديسيبلات بعده: level -40"
 
 msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
 msgstr "{where}: النص يتبع المشهد الذي فوقه، ولا يوجد مشهد قبل هذا السطر."
@@ -578,8 +601,9 @@ msgstr "{where}: يحتاج clip إلى ملف فيديو بعده."
 msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: يحتاج card إلى مدته بالثواني: card 3"
 
-msgid "{where}: a line starts with clip, card or text, not {word}."
-msgstr "{where}: يبدأ السطر بـ clip أو card أو text، لا بـ {word}."
+#. translators: {word} is the first word of the line, in quotes.
+msgid "{where}: a line starts with clip, card, text, music or level, not {word}."
+msgstr "{where}: يبدأ السطر بـ clip أو card أو text أو music أو level، لا بـ {word}."
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "لا يحتوي السيناريو على أي مشهد. المشهد سطر يبدأ بـ clip أو card."
@@ -705,6 +729,46 @@ msgstr ""
 msgid "--framerate takes a number above zero, not {rate}."
 msgstr "يأخذ --framerate عددًا أكبر من الصفر، لا {rate}."
 
+msgid "{where}: {path} is not a file ffmpeg can read."
+msgstr "{where}: {path} ليس ملفًا يستطيع ffmpeg قراءته."
+
+msgid "{where}: measuring the sound of {path} took too long, so it was stopped."
+msgstr "{where}: استغرق قياس صوت {path} وقتًا طويلًا جدًا، لذا أُوقف."
+
+msgid "{where}: ffmpeg could not measure the sound of {path}."
+msgstr "{where}: تعذّر على ffmpeg قياس صوت {path}."
+
+msgid "{where}: {path} has no sound in it."
+msgstr "{where}: لا يحتوي {path} على صوت."
+
+#. translators: {state} is on or off, and stays in English.
+msgid "{where}: a level with normalise {state} is between {low} and {high} dB, not {value}."
+msgstr "{where}: قيمة level مع normalise {state} بين {low} و{high} dB، لا {value}."
+
+msgid "{where}: the music's fades come to {fades} seconds, and the film is only {seconds} long."
+msgstr "{where}: مجموع تلاشيات الموسيقى {fades} ثانية، ومدة الفيلم {seconds} فقط."
+
+msgid "{where}: a level line's from must come before its to, and both inside the film, which is {seconds} seconds long."
+msgstr "{where}: يجب أن تأتي from في سطر level قبل to فيه، وأن تكون كلتاهما داخل الفيلم، ومدته {seconds} ثانية."
+
+msgid "{where}: this level line and {other} overlap, counting their ramps."
+msgstr "{where}: يتداخل سطر level هذا مع {other}، باحتساب ramp لكلٍّ منهما."
+
+msgid "{where}: {path} is silent all through."
+msgstr "{where}: {path} صامت من أوله إلى آخره."
+
+msgid "{where}: the music at level {level} would peak above {peak} dB, so it plays at level {reached} instead."
+msgstr "{where}: ستتجاوز ذروة الموسيقى عند level {level} قيمة {peak} dB، لذا تُشغَّل عند level {reached} بدلًا من ذلك."
+
+msgid "music {name}: averages {level} dB; its own average is {mean} dB, so it is turned {change} dB"
+msgstr "music {name}: المتوسط {level} dB؛ ومتوسطها الأصلي {mean} dB، لذا عُدِّل مستواها بمقدار {change} dB"
+
+msgid "music {name}: its own level, turned {change} dB"
+msgstr "music {name}: مستواها الأصلي، معدَّلًا بمقدار {change} dB"
+
+msgid "  level {level} dB from {start} to {end}"
+msgstr "  level {level} dB من {start} إلى {end}"
+
 msgid "-o must end in {ending}, and {name} does not."
 msgstr "يجب أن ينتهي -o بـ {ending}، و{name} لا ينتهي بها."
 
@@ -716,6 +780,12 @@ msgstr "قيمة -o هي {output}، وهو أيضًا ملف يقرؤه هذا �
 
 msgid "this ffmpeg cannot encode H.264 with libx264, which every video uses."
 msgstr "لا يستطيع ffmpeg هذا الترميز بصيغة H.264 باستخدام libx264، وهو ما يستخدمه كل فيديو."
+
+msgid "{where}: volume changes a clip's own sound, and {path} has none."
+msgstr "{where}: يغيّر volume صوت المقطع نفسه، و{path} لا صوت فيه."
+
+msgid "{where}: volume is between {low} and {high} dB, not {value}."
+msgstr "{where}: قيمة volume بين {low} و{high} dB، لا {value}."
 
 msgid "{where}: a crossfade fades from the scene before, and this is the first scene."
 msgstr "{where}: التلاشي المتداخل ينتقل من المشهد السابق، وهذا هو المشهد الأول."
@@ -738,14 +808,23 @@ msgstr "جارٍ صنع {output}، {seconds} ثانية بأبعاد {size}"
 msgid "ffmpeg could not make the film."
 msgstr "تعذّر على ffmpeg صنع الفيلم."
 
+msgid "the film's sound reaches full scale, so it may be distorted. Turn the music or a clip down to keep it clean."
+msgstr "يبلغ صوت الفيلم الحد الأقصى للمقياس، لذا قد يكون مشوَّهًا. اخفض مستوى الموسيقى أو أحد المقاطع ليبقى الصوت نقيًا."
+
 msgid "ffmpeg did not finish making the film in the time allowed for its length, so it was stopped."
 msgstr "لم يُنهِ ffmpeg صنع الفيلم في الوقت المسموح لمدته، لذا أُوقف."
 
 msgid "could not read the script {path}: {reason}."
 msgstr "تعذّرت قراءة السيناريو {path}: {reason}."
 
-msgid "trim needs something to do: --from, --to, or a fade."
-msgstr "يحتاج trim إلى عمل يقوم به: --from أو --to أو تلاشٍ."
+msgid "{option} sets the music, and needs --music FILE as well."
+msgstr "{option} يضبط الموسيقى، ويحتاج إلى --music FILE أيضًا."
+
+msgid "{option} takes a number of seconds, not {value}."
+msgstr "يأخذ {option} عددًا من الثواني، لا {value}."
+
+msgid "trim needs something to do: --from, --to, a fade, --music or --no-sound."
+msgstr "يحتاج trim إلى عمل يقوم به: --from أو --to أو تلاشٍ أو --music أو --no-sound."
 
 msgid "join takes two or more videos; one on its own is already whole."
 msgstr "يأخذ join فيديوين أو أكثر؛ فالفيديو الواحد كامل أصلًا."
@@ -955,6 +1034,26 @@ msgstr "ابدأ بالأسود؛ وتظهر الصورة تدريجيًا خل�
 #. argparse formats this text with %
 msgid "go to black over the last SECONDS"
 msgstr "انتقل إلى الأسود خلال آخر SECONDS"
+
+#. argparse formats this text with %
+msgid "lay this sound file under the film, repeated to fill it"
+msgstr "ضع ملف الصوت هذا تحت الفيلم، مكرَّرًا ليملأه"
+
+#. argparse formats this text with %
+msgid "the level the music averages, in dB (default: {level})"
+msgstr "متوسط مستوى الموسيقى، بوحدة dB (الافتراضي: {level})"
+
+#. argparse formats this text with %
+msgid "the music arrives over SECONDS (default: {seconds})"
+msgstr "تظهر الموسيقى تدريجيًا خلال SECONDS (الافتراضي: {seconds})"
+
+#. argparse formats this text with %
+msgid "the music goes over the last SECONDS (default: {seconds})"
+msgstr "تتلاشى الموسيقى خلال آخر SECONDS (الافتراضي: {seconds})"
+
+#. argparse formats this text with %
+msgid "leave out the videos' own sound"
+msgstr "استبعد صوت مقاطع الفيديو نفسها"
 
 #. argparse formats this text with %
 msgid "make a film from a script of scenes"

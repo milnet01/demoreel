@@ -14,6 +14,16 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **Films keep their clips' sound, and can have music** (DEMO-0177)
+  `edit`, `trim`, `caption`, `join` and `card` keep each clip's own
+  sound, in step with its picture through cuts, fades and crossfades. A
+  `music FILE` line, or `--music` on a shortcut, lays one music track
+  under the film: repeated to fill it, faded in and out, and set to
+  average -30 dB unless the script says otherwise. `level` lines make it
+  softer or louder for a stretch; `sound off` and `volume` change one
+  clip's sound; `--no-sound` leaves the clips' sound out. A film with no
+  sound in its clips and no music is still silent.
+
 - **`record --audio` puts the app's own sound in the video** (DEMO-0106)
   The sound is in step with the picture to within 40 ms. Without
   `--audio` the video stays silent, exactly as before. Needs `pactl`;

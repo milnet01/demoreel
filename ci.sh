@@ -470,19 +470,52 @@ finishing_checks() {
                    -show_entries stream=nb_read_frames -of csv=p=0 "$1"; }
     v_size() { ffprobe -v error -select_streams v:0 \
                  -show_entries stream=width,height -of csv=s=x:p=0 "$1"; }
+    a_streams() { ffprobe -v error -select_streams a -show_entries stream=index \
+                    -of csv=p=0 "$1" | wc -l; }
+    # The sound's mean or loudest level in dB over FROM to TO seconds.
+    a_level() {  # mean|max file from to
+        ffmpeg -nostdin -hide_banner -i "$2" -map 0:a \
+            -af "atrim=start=$3:end=$4,volumedetect" -f null - 2>&1 \
+            | sed -n "s/.*$1_volume: \\(-*[0-9.inf]*\\) dB.*/\\1/p"
+    }
+    a_mean() { a_level mean "$@"; }
+    a_max() { a_level max "$@"; }
+    # Where a 3 kHz beep starts: the ends of silence once lower sound is cut.
+    a_onsets() {
+        ffmpeg -nostdin -hide_banner -i "$1" -map 0:a \
+            -af "highpass=f=1500,silencedetect=n=-30dB:d=0.05" -f null - 2>&1 \
+            | sed -n 's/.*silence_end: \([0-9.]*\).*/\1/p'
+    }
+    # Where silence starts, at -50 dB for 0.01 s.
+    a_gaps() {
+        ffmpeg -nostdin -hide_banner -i "$1" -map 0:a \
+            -af "silencedetect=n=${2:--50dB}:d=${3:-0.01}" -f null - 2>&1 \
+            | sed -n 's/.*silence_start: \(-*[0-9.]*\).*/\1/p'
+    }
     v_rate() { ffprobe -v error -select_streams v:0 \
                  -show_entries stream=avg_frame_rate -of csv=p=0 "$1" \
                  | awk -F/ '{ printf "%.2f", $1 / $2 }'; }
-    # H.264, yuv420p, silent, index before the pictures.
+    # H.264, yuv420p, index before the pictures, and SOUNDS sound streams (0
+    # unless given). One is AAC, 48000 Hz, stereo, from 0 to within 0.1 s of
+    # the picture's end (DEMO-0177 INV-3).
     assert_finished() {
-        local f=$1 what=$2 codec audio atoms
+        local f=$1 what=$2 want=${3:-0} codec audio atoms
         assert_file "$what" "$f"
         codec=$(ffprobe -v error -select_streams v:0 \
                   -show_entries stream=codec_name,pix_fmt -of csv=p=0 "$f")
         assert_eq "$what: video codec and pixel format" "h264,yuv420p" "$codec"
-        audio=$(ffprobe -v error -select_streams a -show_entries stream=index \
-                  -of csv=p=0 "$f" | wc -l)
-        assert_eq "$what: number of audio streams" 0 "$audio"
+        audio=$(a_streams "$f")
+        assert_eq "$what: number of audio streams" "$want" "$audio"
+        if [ "$want" -eq 1 ]; then
+            assert_eq "$what: sound stream codec, rate and channels" "aac,48000,2" \
+                "$(ffprobe -v error -select_streams a -show_entries \
+                     stream=codec_name,sample_rate,channels -of csv=p=0 "$f")"
+            set -- $(ffprobe -v error -show_entries stream=codec_type,start_time,duration \
+                       -of csv=p=0 "$f" | awk -F, '{ print $1, $2, $2 + $3 }' | sort | tr '\n' ' ')
+            # audio START END video START END, sorted by type
+            assert_near "$what: the sound starts at 0" 0 "$2" 0.001
+            assert_near "$what: the sound ends with the picture" "$6" "$3" 0.1
+        fi
         atoms=$(px atoms "$f")
         printf '%s\n' "$atoms" | awk '{ for (i = 1; i <= NF; i++) {
                 if ($i == "moov" && !m) m = i; if ($i == "mdat" && !d) d = i }
@@ -583,7 +616,7 @@ finishing_checks() {
     # ---- the pieces every check works from --------------------------------
     step "finishing: inputs are generated, not recorded"
     # A: 6 s, 320x240, 10/s, a different hue each second, a bar that moves so
-    # no two frames match, and a sound track (an input's sound must be dropped).
+    # no two frames match, and a sound track, which a film made from it keeps.
     # C: moving 0-3 s, still 3-5, moving 5-7, still 7-9, so the stills start and
     # end at known times. B: another rate. W and T: another shape.
     cat > "$ft/px.py" <<'FINPY'
@@ -737,6 +770,9 @@ def main(argv):
         else:
             print(len(xs), min(xs) / w, min(ys) / h, (max(xs) + 1) / w,
                   (max(ys) + 1) / h)
+    elif cmd == "onsets":    # FILE LUMA: frames where the picture turns brighter than LUMA
+        lit = [luma(d) > float(argv[2]) for d in frames(argv[1])]
+        print(*(i for i, on in enumerate(lit) if on and (i == 0 or not lit[i - 1])))
     elif cmd == "atoms":     # FILE: top-level boxes in order
         names = []
         with open(argv[1], "rb") as fh:
@@ -839,21 +875,22 @@ SHIM
 
     }
     fin_s2() {
-    # README: "Every command that writes a video writes a silent H.264 `.mp4`
-    # with its index at the front ... Sound in an input is dropped." A has sound.
+    # README: "Every command that writes a video writes an H.264 `.mp4` with
+    # its index at the front" and "A clip keeps its own sound." A has sound, so
+    # each film made from it has one sound track, and a card alone has none.
     # And: "stdout carries the finished path and nothing else."
     run trim A.mp4 -o "$ft/out/f1.mp4" --from 1 --to 3
     expect_ok "trim of a video with sound"
     expect_stdout_path "trim" "$ft/out/f1.mp4"
-    assert_finished "$ft/out/f1.mp4" "trim of a video with sound"
+    assert_finished "$ft/out/f1.mp4" "trim of a video with sound" 1
     run caption A.mp4 -o "$ft/out/f2.mp4" --text hi
     expect_ok "caption"
     expect_stdout_path "caption" "$ft/out/f2.mp4"
-    assert_finished "$ft/out/f2.mp4" caption
+    assert_finished "$ft/out/f2.mp4" caption 1
     run join A.mp4 B.mp4 -o "$ft/out/f3.mp4"
     expect_ok "join"
     expect_stdout_path "join" "$ft/out/f3.mp4"
-    assert_finished "$ft/out/f3.mp4" join
+    assert_finished "$ft/out/f3.mp4" join 1
     run card -o "$ft/out/f4.mp4" -d 1 -s 320x240 -r 10
     expect_ok "card"
     expect_stdout_path "card" "$ft/out/f4.mp4"
@@ -862,8 +899,8 @@ SHIM
     run edit f5.txt -o "$ft/out/f5.mp4"
     expect_ok "edit"
     expect_stdout_path "edit" "$ft/out/f5.mp4"
-    assert_finished "$ft/out/f5.mp4" edit
-    echo "trim, caption, join, card and edit each wrote a silent yuv420p H.264 file, index first, path alone on stdout"
+    assert_finished "$ft/out/f5.mp4" edit 1
+    echo "trim, caption, join, card and edit each wrote a yuv420p H.264 file, index first, with A's sound and the card silent, path alone on stdout"
 
     }
     fin_s3() {
@@ -1453,7 +1490,7 @@ SCRIPT
     FIN_PATH="$ft/shim:$PATH" run edit film.txt -o "$ft/out/E1.mp4"
     expect_ok "edit film.txt"
     expect_stdout_path "edit" "$ft/out/E1.mp4"
-    assert_finished "$ft/out/E1.mp4" "edit"
+    assert_finished "$ft/out/E1.mp4" "edit" 1
     assert_near "edit: length (3 + 2 + 3 + 2.9 - 0.5)" 10.4 "$(v_dur "$ft/out/E1.mp4")" 0.15
     assert_eq "edit: size is the first clip's" 320x240 "$(v_size "$ft/out/E1.mp4")"
     assert_eq "edit: rate is the first clip's" 10.00 "$(v_rate "$ft/out/E1.mp4")"
@@ -2195,8 +2232,243 @@ E
     assert_absent "edit: a text from 1 on a clip from 2" "$ft/out/z7.mp4"
     echo "motion's times cut on the frame they were printed for at 30 a second, and a text started with its clip"
     }
+    # ---- sound and music (DEMO-0177) --------------------------------------
+    fin_s41() {
+    # README: "A clip keeps its own sound" and "`--no-sound` leaves the
+    # videos' own sound out". DEMO-0177 INV-1: no sound in, no music, no track.
+    run join --no-sound A.mp4 B.mp4 -o "$ft/out/ns1.mp4"
+    expect_ok "join --no-sound A.mp4 B.mp4"
+    assert_finished "$ft/out/ns1.mp4" "join --no-sound" 0
+    run join A.mp4 B.mp4 -o "$ft/out/ns2.mp4"
+    expect_ok "control: join A.mp4 B.mp4"
+    assert_finished "$ft/out/ns2.mp4" "join, keeping A's sound" 1
+    printf 'clip A.mp4 to 2 sound off\ncard 1\nclip B.mp4\n' > "$ft/ns3.txt"
+    run edit ns3.txt -o "$ft/out/ns3.mp4"
+    expect_ok "edit: A with sound off, a card and B"
+    assert_finished "$ft/out/ns3.mp4" "edit with every clip's sound off" 0
+    echo "with no clip's sound and no music the film has no sound track"
+    }
+    fin_s42() {
+    # DEMO-0177 INV-2 and INV-3. K: black at 10 a second, white for 0.2 s at
+    # 2.0 and 4.0 s with a 3 kHz beep at the same moments. Q: grey, 2 s, its
+    # sound a low tone that ends 0.4 s before its picture. Three cards of 1.04
+    # s each keep 10 frames, so adding up `length` would run 0.12 s ahead.
+    ff -f lavfi -i "color=c=black:s=320x240:r=10:d=6" \
+       -f lavfi -i "aevalsrc='sin(2*PI*3000*t)*(between(t,2,2.1)+between(t,4,4.1))':s=48000:d=6" \
+       -filter_complex "[0:v]format=yuv420p,geq=lum='if(between(T,2,2.15)+between(T,4,4.15),235,16)':cb=128:cr=128[v]" \
+       -map '[v]' -map 1:a -c:a aac $x264 "$ft/K.mp4"
+    ff -f lavfi -i "color=c=#404040:s=320x240:r=10:d=2" \
+       -f lavfi -i "sine=f=200:d=1.6" -map 0:v -map 1:a -c:a aac $x264 "$ft/Q.mp4"
+    printf 'card 1.04\ncard 1.04\ncard 1.04\nclip Q.mp4\nclip K.mp4 from 1.3 to 5 crossfade 0.5\n' > "$ft/st1.txt"
+    run edit st1.txt -o "$ft/out/st1.mp4"
+    expect_ok "edit: cards, a short-sound clip, then K with a crossfade"
+    assert_finished "$ft/out/st1.mp4" "cards, Q and K" 1
+    flashes=$(px onsets "$ft/out/st1.mp4" 128)
+    # silencedetect also reports the film's own end; only a beep counts.
+    beeps=$(a_onsets "$ft/out/st1.mp4" \
+              | awk -v end="$(v_dur "$ft/out/st1.mp4")" '$1 < end - 0.05' | tr '\n' ' ')
+    set -- $flashes
+    assert_eq "the film shows K's two flashes" 2 "$#"
+    set -- $beeps
+    assert_eq "the film plays K's two beeps (found at: $beeps)" 2 "$#"
+    i=0
+    for frame in $flashes; do
+        i=$((i + 1))
+        beep=$(printf '%s\n' $beeps | sed -n "${i}p")
+        assert_near "flash $i (frame $frame) and its beep ($beep) are together" \
+            "$(awk -v f="$frame" 'BEGIN { print f / 10 }')" "$beep" 0.040
+    done
+    # A cut to the same clip: reading only to `scene.read` leaves 0.05 s of
+    # silence at the join.
+    printf 'clip A.mp4 to 2\nclip A.mp4\n' > "$ft/st2.txt"
+    run edit st2.txt -o "$ft/out/st2.mp4"
+    expect_ok "edit: A to 2, then A"
+    assert_eq "no silence where A to 2 is cut to A" "" "$(a_gaps "$ft/out/st2.mp4")"
+    # DEMO-0177 § 14: a sound stream that starts 0.5 s after its picture in its
+    # own file keeps that gap. Its beep is at 1.5 s of its own, so 2.0 s here,
+    # with the flash; lining the two streams' starts up puts it at 1.5.
+    ff -f lavfi -i "aevalsrc='sin(2*PI*3000*t)*between(t,1.5,1.6)':s=48000:d=3.5" \
+       -c:a aac "$ft/late.m4a"
+    ff -i "$ft/K.mp4" -itsoffset 0.5 -i "$ft/late.m4a" -map 0:v -map 1:a -c copy "$ft/L.mp4"
+    printf 'clip L.mp4 to 3\n' > "$ft/st3.txt"
+    run edit st3.txt -o "$ft/out/st3.mp4"
+    expect_ok "edit: a clip whose sound starts 0.5 s after its picture"
+    assert_near "a late sound stream keeps its gap: its beep is with the flash at 2.0" 2.0 \
+        "$(a_onsets "$ft/out/st3.mp4" | head -1)" 0.040
+    echo "flashes and beeps stayed within 40 ms through cards, a short sound, a cut, a crossfade and a late sound stream"
+    }
+    fin_s43() {
+    # DEMO-0177 INV-4. A's sound is a steady tone.
+    printf 'clip A.mp4 fade-in 1 fade-out 1 fade-at 3\n' > "$ft/sf1.txt"
+    run edit sf1.txt -o "$ft/out/sf1.mp4"
+    expect_ok "edit: A with fade-in, fade-out and fade-at"
+    full=$(a_mean "$ft/out/sf1.mp4" 1.95 2.05)
+    for span in "0 0.1 fade-in" "2.95 3.05 fade-at" "5.9 6.0 fade-out"; do
+        set -- $span
+        assert_cmp "the $3 fades the sound: $1-$2 s against 2.0 s" \
+            "$(a_mean "$ft/out/sf1.mp4" "$1" "$2")" "<=" "$full - 20"
+    done
+    echo "the sound faded with the picture at the start, the end and the fade-at"
+    }
+    fin_s44() {
+    # DEMO-0177 INV-5.
+    printf 'clip A.mp4 to 1.9\nclip A.mp4 to 1.9 sound off\nclip A.mp4 to 1.9 volume -6\n' > "$ft/sv1.txt"
+    run edit sv1.txt -o "$ft/out/sv1.mp4"
+    expect_ok "edit: A, A with sound off, A at volume -6"
+    first=$(a_mean "$ft/out/sv1.mp4" 0.1 1.9)
+    assert_cmp "sound off: the second clip is silent" \
+        "$(a_max "$ft/out/sv1.mp4" 2.1 3.9)" "<=" -60
+    assert_near "volume -6: the third clip is 6 dB below the first ($first)" \
+        "$(awk -v f="$first" 'BEGIN { print f - 6 }')" "$(a_mean "$ft/out/sv1.mp4" 4.1 5.9)" 1
+    echo "sound off silenced one clip and volume -6 lowered another by 6 dB"
+    }
+    # A mono 440 Hz tone, and the same 20 dB quieter.
+    tones() {
+        [ -s "$ft/loud.wav" ] && return 0
+        ff -f lavfi -i "sine=f=440:d=4" "$ft/loud.wav"
+        ff -f lavfi -i "sine=f=440:d=4" -af volume=-20dB "$ft/quiet.wav"
+    }
+    fin_s45() {
+    # DEMO-0177 INV-6 and INV-7.
+    tones
+    for case in "loud.wav -30" "quiet.wav -30" "loud.wav -20"; do
+        set -- $case
+        printf 'card 9\nmusic %s level %s\n' "$1" "$2" | ed_ok "mu-$1$2.mp4"
+        assert_finished "$ft/out/mu-$1$2.mp4" "music $1 at level $2" 1
+        assert_near "music $1 at level $2 averages it over 2-5 s" "$2" \
+            "$(a_mean "$ft/out/mu-$1$2.mp4" 2 5)" 1
+    done
+    own=$(ffmpeg -nostdin -hide_banner -i "$ft/quiet.wav" \
+            -af "aresample=48000,aformat=channel_layouts=stereo,volumedetect" -f null - 2>&1 \
+          | sed -n 's/.*mean_volume: \(-*[0-9.]*\) dB.*/\1/p')
+    printf 'card 9\nmusic quiet.wav normalise off level -6\n' | ed_ok mu-off.mp4
+    assert_near "normalise off level -6: 6 dB below the file's own $own dB" \
+        "$(awk -v o="$own" 'BEGIN { print o - 6 }')" "$(a_mean "$ft/out/mu-off.mp4" 2 5)" 1
+    echo "normalised music averaged the level asked whatever the file's own; normalise off took it as a gain"
+    }
+    fin_s46() {
+    # DEMO-0177 INV-8: 2.5 s of music under a 9 s card.
+    ff -f lavfi -i "sine=f=440:d=2.5" "$ft/short.wav"
+    printf 'card 9\nmusic short.wav\n' | ed_ok mr1.mp4
+    # A stream that stops early has no silence in it to find, so its length
+    # is checked first: assert_finished wants it to end with the picture.
+    assert_finished "$ft/out/mr1.mp4" "2.5 s of music under a 9 s card" 1
+    gaps=$(a_gaps "$ft/out/mr1.mp4" -60dB 0.05 \
+             | awk '$1 > 0.1 && $1 < 8.5' | tr '\n' ' ')
+    assert_eq "music repeated to the end with no gap" "" "$gaps"
+    middle=$(a_mean "$ft/out/mr1.mp4" 2 5)
+    assert_cmp "the music fades in" "$(a_mean "$ft/out/mr1.mp4" 0 0.1)" "<=" "$middle - 20"
+    assert_cmp "the music fades out" "$(a_mean "$ft/out/mr1.mp4" 8.9 9)" "<=" "$middle - 20"
+    printf 'card 9\nmusic short.wav fade-in 0 fade-out 0\n' | ed_ok mr2.mp4
+    middle=$(a_mean "$ft/out/mr2.mp4" 2 5)
+    assert_near "fade-in 0: full at the start" "$middle" "$(a_mean "$ft/out/mr2.mp4" 0 0.1)" 1
+    assert_near "fade-out 0: full at the end" "$middle" "$(a_mean "$ft/out/mr2.mp4" 8.9 9)" 1
+    echo "2.5 s of music filled a 9 s film with no gap, and faded in and out unless told not to"
+    }
+    fin_s47() {
+    # DEMO-0177 INV-9.
+    tones
+    printf 'card 12\nmusic loud.wav level -30\n  level -42 from 4 to 7 ramp 0.5\n' | ed_ok ml1.mp4
+    assert_near "a level line holds -42 from 4 to 7" -42 "$(a_mean "$ft/out/ml1.mp4" 4.2 6.8)" 1
+    assert_near "before the level line the music is at -30" -30 "$(a_mean "$ft/out/ml1.mp4" 2 3)" 1
+    assert_near "after the level line the music is back at -30" -30 "$(a_mean "$ft/out/ml1.mp4" 8 9)" 1
+    echo "a level line set its stretch and the music came back after it"
+    }
+    fin_s48() {
+    # DEMO-0177 INV-10. P: a quiet tone with one loud burst at 2 s, so its peak
+    # sits far above its mean: at level -20 it would peak above 0 dB.
+    ff -f lavfi -i "aevalsrc='(0.02+0.8*between(t,2,2.02))*sin(2*PI*440*t)':s=48000:d=4" \
+       "$ft/peaky.wav"
+    printf 'card 9\nmusic peaky.wav level -20\n' | ed_ok mp1.mp4
+    assert_near "the music's peak is held at -1 dB" -1 "$(a_max "$ft/out/mp1.mp4" 0 9)" 0.5
+    grep -q "would peak above" "$fe" || fail "a lowered level should say so on stderr
+    actual:   $(cat "$fe")"
+    ff -f lavfi -i "color=c=gray:s=320x240:r=10:d=3" -f lavfi -i "sine=f=440:d=3" \
+       -filter_complex "[1:a]volume=8[a]" -map 0:v -map '[a]' -c:a aac $x264 "$ft/FS.mp4"
+    printf 'clip FS.mp4 volume 6\n' > "$ft/mp2.txt"
+    run edit mp2.txt -o "$ft/out/mp2.mp4"
+    expect_ok "a clip at full scale turned up 6 dB"
+    grep -q "full scale" "$fe" || fail "a film reaching full scale should say so on stderr
+    actual:   $(cat "$fe")"
+    echo "the music was kept off full scale, and both notes were given without failing the run"
+    }
+    fin_s49() {
+    # DEMO-0177 INV-11: README's "Everything is checked before anything is
+    # made", for the new words. Each bad line is line 2 or later.
+    tones
+    printf 'clip A.mp4 to 2\nmusic loud.wav\n  level -40 from 0.5 to 1\n' > "$ft/bm0.txt"
+    run edit bm0.txt -o "$ft/out/bm0.mp4"
+    expect_ok "control: a clip, music and a level line"
+    n=0
+    while IFS='|' read -r want script; do
+        n=$((n + 1))
+        printf "$script" > "$ft/bm$n.txt"
+        : > "$ft/log/ffmpeg.calls"
+        FIN_PATH="$ft/shim:$PATH" run edit "bm$n.txt" -o "$ft/out/bm$n.mp4"
+        refused_naming_line "edit refuses: $(printf "$script" | tr '\n' '|')" "bm$n.mp4" "$want"
+        assert_eq "edit refuses ($script): no encode started" 0 \
+            "$(grep -cw 'libx264' "$ft/log/ffmpeg.calls" || true)"
+    done <<'CASES'
+3|clip A.mp4 to 2\nmusic loud.wav\nmusic quiet.wav\n
+2|clip A.mp4 to 2\nlevel -40\n
+3|clip A.mp4 to 2\nmusic loud.wav\ntext "hi"\n
+2|clip A.mp4 to 2\nmusic nothing.wav\n
+2|clip A.mp4 to 2\nmusic B.mp4\n
+2|clip A.mp4 to 2\nmusic loud.wav level 5\n
+3|clip A.mp4 to 2\nmusic loud.wav\nlevel loud\n
+1|clip A.mp4 to 2 volume 30\n
+1|clip A.mp4 to 2 volume up\n
+1|clip A.mp4 to 2 sound maybe\n
+2|clip A.mp4 to 2\nmusic loud.wav normalise maybe\n
+3|clip A.mp4 to 2\nmusic loud.wav\nlevel -40 from 1.5 to 1\n
+3|clip A.mp4 to 2\nmusic loud.wav\nlevel -40 from 1 to 9\n
+4|clip A.mp4 to 2\nmusic loud.wav\nlevel -40 from 0.2 to 0.6\nlevel -45 from 1 to 1.5\n
+2|clip A.mp4 to 2\nmusic loud.wav fade-in 1.5 fade-out 1\n
+1|clip B.mp4 volume -3\n
+CASES
+    run join A.mp4 B.mp4 -o "$ft/out/bm-j.mp4" --music-level -25
+    expect_refused "join --music-level without --music"
+    grep -q -- "--music-level" "$fe" || fail "join --music-level without --music: the message should name the option
+    actual:   $(cat "$fe")"
+    assert_absent "join --music-level without --music" "$ft/out/bm-j.mp4"
+    echo "$n bad music, level, sound and volume words, and a --music option alone, were each refused before any encode"
+    }
+    fin_s50() {
+    # DEMO-0177 INV-12: README's "the shortcuts do exactly what the script
+    # would", for the music options and --no-sound.
+    tones
+    run join A.mp4 B.mp4 -o "$ft/out/sm1.mp4" --music quiet.wav --music-level -25 \
+        --music-fade-in 1 --music-fade-out 2 --no-sound
+    expect_ok "join with every music option and --no-sound"
+    printf 'music quiet.wav level -25 fade-in 1 fade-out 2\nclip A.mp4 sound off\nclip B.mp4 sound off\n' > "$ft/sm2.txt"
+    run edit sm2.txt -o "$ft/out/sm2.mp4"
+    expect_ok "edit: the script that says the same"
+    md5() { ffmpeg -nostdin -v error -i "$1" -map 0:a -f md5 -; }
+    assert_eq "join's music and its script's: the same decoded sound" \
+        "$(md5 "$ft/out/sm2.mp4")" "$(md5 "$ft/out/sm1.mp4")"
+    run trim A.mp4 -o "$ft/out/sm3.mp4" --music quiet.wav
+    expect_ok "trim A.mp4 --music alone has something to do"
+    echo "join's music options and --no-sound made the script's sound, and trim took --music alone"
+    }
+    fin_s51() {
+    # DEMO-0177 INV-13: every sound stream ends. 2 s of music under 60 s, and
+    # 10 minutes of music under 3 s, each inside 2 GB of memory.
+    ff -f lavfi -i "sine=d=2" "$ft/two.wav"
+    ff -f lavfi -i "sine=d=600" "$ft/ten.wav"
+    for case in "two.wav 60" "ten.wav 3"; do
+        set -- $case
+        printf 'card %s\nmusic %s\n' "$2" "$1" > "$ft/me.txt"
+        rc=0
+        ( ulimit -v 2000000; cd "$ft" && "$DR" edit me.txt -o "$ft/out/me.mp4" -s 320x240 -r 10 ) \
+            >"$fo" 2>"$fe" || rc=$?
+        expect_ok "music $1 under a $2 s card, inside 2 GB"
+        assert_near "music $1 under a $2 s card: the film's length" "$2" "$(v_dur "$ft/out/me.mp4")" 0.06
+        assert_finished "$ft/out/me.mp4" "music $1 under a $2 s card" 1
+    done
+    echo "music shorter and far longer than its film both ended at the film's length"
+    }
     fin_step "trim keeps the frames from --from to --to, the last one included" fin_s1
-    fin_step "every video a command writes is silent H.264, yuv420p, index first" fin_s2
+    fin_step "every video a command writes is H.264, yuv420p, index first, with its clips' sound" fin_s2
     fin_step "-o may not be an input, and must end in .mp4" fin_s3
     fin_step "a time past the end is an error; the file's own length is not" fin_s4
     fin_step "a failed command leaves nothing at -o, and a file already there as it was" fin_s5
@@ -2235,6 +2507,17 @@ E
     fin_step "text words with a bad value are refused, name their line and leave nothing at -o" fin_s38
     fin_step "caption and card do not take the script-only text words" fin_s39
     fin_step "a time motion prints picks the frame it was printed for, at 30 a second" fin_s40
+    fin_step "with no clip's sound and no music, a film has no sound track; join --no-sound writes none" fin_s41
+    fin_step "a clip's sound stays in step through cuts, cards and crossfades" fin_s42
+    fin_step "a scene's fades fade its sound" fin_s43
+    fin_step "sound off and volume change one clip's sound" fin_s44
+    fin_step "music averages the level asked, or takes it as a gain" fin_s45
+    fin_step "music repeats to fill the film and fades in and out" fin_s46
+    fin_step "a level line changes the music for its stretch" fin_s47
+    fin_step "music is kept off full scale, and a clipping film gets a note" fin_s48
+    fin_step "edit refuses a bad music, level, sound or volume word" fin_s49
+    fin_step "a shortcut's music is the script's music" fin_s50
+    fin_step "music under a long and a short film both end" fin_s51
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }
 
@@ -4433,7 +4716,8 @@ for env, want in (
     if got != want:
         print(f"chosen_languages({env}) gave {got}, not {want}", file=sys.stderr)
         bad += 1
-missing = "trim needs something to do: --from, --to, or a fade."
+missing = ("trim needs something to do: --from, --to, a fade, --music or "
+           "--no-sound.")
 fuzzy = "join takes two or more videos; one on its own is already whole."
 empty = "no recording is running, so there is nothing to stop."
 kept = "the app closed; ending the recording."
@@ -4475,8 +4759,9 @@ cases = [
     ((own,), {"output": "/tmp/x.mp4"},
      f"⟦{FSI}-o{PDI} is {FSI}/tmp/x.mp4{PDI}, which is also a file this command "
      "reads. demoreel never writes over its own input.⟧"),
-    (("trim needs something to do: --from, --to, or a fade.",), {},
-     f"⟦trim needs something to do: {FSI}--from{PDI}, {FSI}--to{PDI}, or a fade.⟧"),
+    (("trim needs something to do: --from, --to, a fade, --music or --no-sound.",), {},
+     f"⟦trim needs something to do: {FSI}--from{PDI}, {FSI}--to{PDI}, a fade, "
+     f"{FSI}--music{PDI} or {FSI}--no-sound{PDI}.⟧"),
     (("the private display {display} stopped answering: `xdotool {command}` did "
       "not return within {seconds}s.",), {"display": ":5", "command": "key", "seconds": "10"},
      f"⟦the private display {FSI}:5{PDI} stopped answering: {FSI}`xdotool key`{PDI} "
@@ -4767,7 +5052,8 @@ plain = {k: v for k, v in os.environ.items() if k not in ("LC_ALL", "LC_MESSAGES
 english = {**plain, "LC_ALL": "C"}
 pseudo = {**plain, "LANGUAGE": "zz", "LANG": "de_DE.UTF-8"}
 NOTHING = ["trim", "x.mp4", "-o", "y.mp4"]
-NOTHING_MSG = "trim needs something to do: --from, --to, or a fade."
+NOTHING_MSG = ("trim needs something to do: --from, --to, a fade, --music or "
+               "--no-sound.")
 OWN = ["trim", "clip.mp4", "-o", "clip.mp4", "--to", "1"]
 OWN_MSG = ("-o is {output}, which is also a file this command reads. demoreel never "
            "writes over its own input.")

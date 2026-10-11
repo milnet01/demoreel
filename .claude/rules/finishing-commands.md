@@ -19,7 +19,18 @@ stop agreeing.
   `loop` filter, which makes a frame only when one is wanted, the output has
   its own `-t`, and `memory_cap` limits that ffmpeg's memory. Never loop a
   picture at the demuxer (`-ignore_loop 0`, `-loop 1`, `-stream_loop`), and do
-  not remove any of them: each covers a mistake in the others.
+  not remove any of them: each covers a mistake in the others. The sound has
+  the same bounds: a scene's sound is cut with `atrim`, a silent one is
+  `anullsrc` with its `duration` set, and music is repeated by `aloop` with an
+  `atrim` after it, never by `-stream_loop`.
+- **A film adds up its scenes in whole frames.** `trim=end_frame` keeps whole
+  frames, so a scene lasts its frame count over the rate, not its `length`.
+  `begins`, `total`, the `xfade` offsets and the plan all use that. Adding up
+  `length` misplaces a crossfaded scene's picture against its sound by up to
+  half a frame for each scene before it.
+- **`amix` takes `normalize=0`.** Its default divides each input by the
+  number of inputs, so the music and the clips would not sit at the levels
+  the caller set (DEMO-0177).
 - **Try a new graph under a memory limit first.** `( ulimit -v 6000000;
   timeout 40 ./demoreel edit ... )` fails a runaway in seconds with "Cannot
   allocate memory". Other sessions share this machine's memory.

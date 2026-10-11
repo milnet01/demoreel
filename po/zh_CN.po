@@ -539,6 +539,14 @@ msgstr "{where}：字体文件 {path} 的路径中有 ffmpeg 滤镜无法处理�
 msgid "{where}: {word} takes a number of seconds, not {value}."
 msgstr "{where}：{word} 需要一个秒数，而不是 {value}。"
 
+#. translators: {word} is level or volume, an edit-script word, and stays in English; {value} is what was written after it, in quotes.
+msgid "{where}: {word} takes a number of decibels, like -6, not {value}."
+msgstr "{where}：{word} 需要一个分贝数，例如 -6，而不是 {value}。"
+
+#. translators: {word} is sound or normalise, an edit-script word; on and off stay in English too.
+msgid "{where}: {word} is on or off, not {value}."
+msgstr "{where}：{word} 只能是 on 或 off，而不是 {value}。"
+
 msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
 msgstr "{where}：{kind} 行不接受 {word}。它接受：{words}。"
 
@@ -550,6 +558,21 @@ msgstr "第 {number} 行"
 
 msgid "{where} cannot be read: {reason}."
 msgstr "无法读取 {where}：{reason}。"
+
+msgid "{where}: a text belongs to the scene above it, and the line above is a music or level line."
+msgstr "{where}：文字属于它上方的场景，但上面一行是 music 或 level 行。"
+
+msgid "{where}: a film has one music line, and {first} is already one."
+msgstr "{where}：一部影片只能有一个 music 行，而 {first} 已经是了。"
+
+msgid "{where}: music needs a sound file after it."
+msgstr "{where}：music 后面需要一个声音文件。"
+
+msgid "{where}: a level line belongs to the music line, and comes straight after it or after another level line."
+msgstr "{where}：level 行属于 music 行，必须紧跟在它之后，或紧跟在另一个 level 行之后。"
+
+msgid "{where}: level needs a number of decibels after it: level -40"
+msgstr "{where}：level 后面需要一个分贝数：level -40"
 
 msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
 msgstr "{where}：文字属于它上方的场景，但这一行之前没有场景。"
@@ -563,8 +586,9 @@ msgstr "{where}：clip 后面需要一个视频文件。"
 msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}：card 需要以秒为单位的时长：card 3"
 
-msgid "{where}: a line starts with clip, card or text, not {word}."
-msgstr "{where}：每一行应以 clip、card 或 text 开头，而不是 {word}。"
+#. translators: {word} is the first word of the line, in quotes.
+msgid "{where}: a line starts with clip, card, text, music or level, not {word}."
+msgstr "{where}：每一行应以 clip、card、text、music 或 level 开头，而不是 {word}。"
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "脚本中没有任何场景。场景是以 clip 或 card 开头的行。"
@@ -675,6 +699,46 @@ msgstr ""
 msgid "--framerate takes a number above zero, not {rate}."
 msgstr "--framerate 需要一个大于零的数，而不是 {rate}。"
 
+msgid "{where}: {path} is not a file ffmpeg can read."
+msgstr "{where}：{path} 不是 ffmpeg 能读取的文件。"
+
+msgid "{where}: measuring the sound of {path} took too long, so it was stopped."
+msgstr "{where}：测量 {path} 的声音用时过长，因此已停止。"
+
+msgid "{where}: ffmpeg could not measure the sound of {path}."
+msgstr "{where}：ffmpeg 无法测量 {path} 的声音。"
+
+msgid "{where}: {path} has no sound in it."
+msgstr "{where}：{path} 中没有声音。"
+
+#. translators: {state} is on or off, and stays in English.
+msgid "{where}: a level with normalise {state} is between {low} and {high} dB, not {value}."
+msgstr "{where}：normalise {state} 时，level 应在 {low} 到 {high} dB 之间，而不是 {value}。"
+
+msgid "{where}: the music's fades come to {fades} seconds, and the film is only {seconds} long."
+msgstr "{where}：音乐的淡入淡出共 {fades} 秒，而影片只有 {seconds} 秒长。"
+
+msgid "{where}: a level line's from must come before its to, and both inside the film, which is {seconds} seconds long."
+msgstr "{where}：level 行的 from 必须在 to 之前，且两者都在影片之内（长 {seconds} 秒）。"
+
+msgid "{where}: this level line and {other} overlap, counting their ramps."
+msgstr "{where}：算上各自的 ramp，这个 level 行与 {other} 重叠。"
+
+msgid "{where}: {path} is silent all through."
+msgstr "{where}：{path} 从头到尾都是静音。"
+
+msgid "{where}: the music at level {level} would peak above {peak} dB, so it plays at level {reached} instead."
+msgstr "{where}：在 level {level} 下，音乐的峰值会超过 {peak} dB，因此改为以 level {reached} 播放。"
+
+msgid "music {name}: averages {level} dB; its own average is {mean} dB, so it is turned {change} dB"
+msgstr "music {name}：平均 {level} dB；它本身的平均值是 {mean} dB，因此调整 {change} dB"
+
+msgid "music {name}: its own level, turned {change} dB"
+msgstr "music {name}：保持原有音量，调整 {change} dB"
+
+msgid "  level {level} dB from {start} to {end}"
+msgstr "  level {level} dB，{start} 到 {end}"
+
 msgid "-o must end in {ending}, and {name} does not."
 msgstr "-o 必须以 {ending} 结尾，而 {name} 不是。"
 
@@ -686,6 +750,12 @@ msgstr "-o 是 {output}，而这也是本命令要读取的文件。demoreel 从
 
 msgid "this ffmpeg cannot encode H.264 with libx264, which every video uses."
 msgstr "此 ffmpeg 无法用 libx264 编码 H.264，而每个视频都要用到它。"
+
+msgid "{where}: volume changes a clip's own sound, and {path} has none."
+msgstr "{where}：volume 用于改变片段自身的声音，但 {path} 没有声音。"
+
+msgid "{where}: volume is between {low} and {high} dB, not {value}."
+msgstr "{where}：volume 应在 {low} 到 {high} dB 之间，而不是 {value}。"
 
 msgid "{where}: a crossfade fades from the scene before, and this is the first scene."
 msgstr "{where}：交叉淡化是从前一个场景过渡过来的，而这是第一个场景。"
@@ -708,14 +778,23 @@ msgstr "正在制作 {output}，{seconds} 秒，{size}"
 msgid "ffmpeg could not make the film."
 msgstr "ffmpeg 无法制作影片。"
 
+msgid "the film's sound reaches full scale, so it may be distorted. Turn the music or a clip down to keep it clean."
+msgstr "影片的声音达到了满刻度，可能会失真。请调低音乐或某个片段的音量，以保持声音干净。"
+
 msgid "ffmpeg did not finish making the film in the time allowed for its length, so it was stopped."
 msgstr "ffmpeg 未能在按影片时长给定的时间内完成制作，因此已被停止。"
 
 msgid "could not read the script {path}: {reason}."
 msgstr "无法读取脚本 {path}：{reason}。"
 
-msgid "trim needs something to do: --from, --to, or a fade."
-msgstr "trim 需要有事可做：--from、--to 或淡入淡出。"
+msgid "{option} sets the music, and needs --music FILE as well."
+msgstr "{option} 用于设置音乐，还需要同时给出 --music FILE。"
+
+msgid "{option} takes a number of seconds, not {value}."
+msgstr "{option} 需要一个秒数，而不是 {value}。"
+
+msgid "trim needs something to do: --from, --to, a fade, --music or --no-sound."
+msgstr "trim 需要有事可做：--from、--to、淡入淡出、--music 或 --no-sound。"
 
 msgid "join takes two or more videos; one on its own is already whole."
 msgstr "join 需要两个或更多视频；只有一个视频时它本身就已完整。"
@@ -925,6 +1004,26 @@ msgstr "从黑屏开始；画面在 SECONDS 秒内逐渐出现"
 #. argparse formats this text with %
 msgid "go to black over the last SECONDS"
 msgstr "在最后 SECONDS 秒内逐渐变黑"
+
+#. argparse formats this text with %
+msgid "lay this sound file under the film, repeated to fill it"
+msgstr "把这个声音文件铺在影片下面，重复播放直到填满整部影片"
+
+#. argparse formats this text with %
+msgid "the level the music averages, in dB (default: {level})"
+msgstr "音乐的平均音量，以 dB 为单位（默认：{level}）"
+
+#. argparse formats this text with %
+msgid "the music arrives over SECONDS (default: {seconds})"
+msgstr "音乐在 SECONDS 秒内淡入（默认：{seconds}）"
+
+#. argparse formats this text with %
+msgid "the music goes over the last SECONDS (default: {seconds})"
+msgstr "音乐在最后 SECONDS 秒内淡出（默认：{seconds}）"
+
+#. argparse formats this text with %
+msgid "leave out the videos' own sound"
+msgstr "不保留视频自身的声音"
 
 #. argparse formats this text with %
 msgid "make a film from a script of scenes"

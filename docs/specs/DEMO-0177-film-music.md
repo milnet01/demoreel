@@ -385,7 +385,7 @@ names, read by ffmpeg like a clip, and the `-o` guard covers it.
   stops with a message, as `make_film` does when ffmpeg overruns.
 - **The mix clips:** the full-scale note (§ 4.5); the film is still made.
 - **A clip whose sound stream starts later than its picture** in its own
-  file: not measured; § 14.
+  file: the gap is kept as silence; § 14.
 - **A sound stream ffmpeg reads but cannot resample** (an exotic layout):
   ffmpeg fails and `make_film` reports its last lines, as for a picture.
 
@@ -510,11 +510,12 @@ Rows live in `../reviews/DEMO-0177-film-music-loop-log.md`.
 ## 14. Open questions
 
 - **A clip whose sound stream starts later than its picture in its own
-  file.** demoreel's own recordings start both at 0 (DEMO-0106 INV-6).
-  Another file may carry an offset that `asetpts=PTS-STARTPTS` would throw
-  away. The builder measures it with an `-itsoffset` fixture and, if the
-  sound moves, keeps the offset (`aresample=async=1:first_pts=0` is the
-  candidate).
+  file** — settled by the build, 2026-10-11. `asetpts=PTS-STARTPTS` threw
+  the offset away: a sound starting 0.48 s late played 0.48 s early from a
+  clip with no `from`. So the sound is moved back by the `start - seek`
+  trim alone, and `aresample=async=1:first_pts=0` fills the gap with
+  silence. ci.sh checks it inside INV-2's step, with a 0.5 s `-itsoffset`
+  fixture.
 - **`volume` with `eval=frame` steps once per sound frame** (1024 samples,
   about 21 ms, for AAC input). Whether that is audible on a slide is not
   measured; a faster `ramp` makes larger steps.

@@ -112,7 +112,8 @@ recording fit to publish" wants OBS and a video editor instead.
 **Editing stops at finishing a recording**, and `README.md` § What it will
 never do holds the list: cut the ends off, measure, take a frame, play scenes
 one after another, show a picture on a card, put one line of text on or
-between scenes, and fade. No layers, no two pictures on screen at once, no
+between scenes, fade, keep a clip's sound, and lay one music track under a
+film at levels the script sets. No layers, no two pictures on screen at once, no
 transition other than a fade, no zoom, no moving text, no change of speed, and
 nothing removed from a video automatically. An `edit` script is a list of
 scenes for one film. It is not a config file: it holds no settings for
@@ -124,8 +125,8 @@ earns its place against the list above, and say nothing about length.
 **Sound is in scope, and only ever by the caller's choice.** An app's own
 sound goes into a video only with `--audio`, and no recorded app's sound
 reaches the user's speakers: `docs/specs/DEMO-0106-app-sound.md` is the
-contract. Music added to a film is DEMO-0177. None of it is built yet, so
-today every file demoreel writes is silent.
+contract. A clip's sound kept through the finishing commands, and music under
+a film, are `docs/specs/DEMO-0177-film-music.md`.
 
 **There are two display backends and there is not a third.** `Xvfb` has no DRI,
 so a GPU app records black on it, and no flag changes that. That is what `--gpu`

@@ -87,6 +87,11 @@ complete -c demoreel -n '__demoreel_on trim caption join card' -l fade-out -x -d
 complete -c demoreel -n '__demoreel_on trim' -l fade-at -x -d 'fade to black and back around this moment'
 complete -c demoreel -n '__demoreel_on trim' -l fade-length -x -d 'how long each half of a fade-at takes'
 complete -c demoreel -n '__demoreel_on join' -l crossfade -x -d 'fade from each video into the next'
+complete -c demoreel -n '__demoreel_on trim caption join card' -l music -r -F -d 'lay this sound file under the film'
+complete -c demoreel -n '__demoreel_on trim caption join card' -l music-level -x -d 'the level the music averages'
+complete -c demoreel -n '__demoreel_on trim caption join card' -l music-fade-in -x -d 'the music arrives over this long'
+complete -c demoreel -n '__demoreel_on trim caption join card' -l music-fade-out -x -d 'the music goes over this long'
+complete -c demoreel -n '__demoreel_on trim caption join' -l no-sound -d "leave out the videos' own sound"
 complete -c demoreel -n '__demoreel_on caption card' -l text -x -d 'one line of text'
 complete -c demoreel -n '__demoreel_on caption card' -l text-size -x -d 'the height of the text'
 complete -c demoreel -n '__demoreel_on card' -s d -l duration -x -d 'how many seconds the card lasts'
