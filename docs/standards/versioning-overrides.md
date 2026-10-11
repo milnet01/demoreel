@@ -126,7 +126,8 @@ exercising it: a black video is a valid file that exits 0.
 when it runs wherever its own prerequisites are met and prints why it skipped
 where they are not. The prerequisites are each step's, and `ci.sh` states them:
 the `--gpu` step needs `cage`, `Xwayland`, `wlr-randr`, `wf-recorder`,
-`vkcube` and a render node under `/dev/dri`; the Flatpak step needs `flatpak`, GIMP (`org.gimp.GIMP`) installed, and no
+`vkcube`, a render node under `/dev/dri`, and `demoreel check` not saying
+`--gpu: NOT READY`; the Flatpak step needs `flatpak`, GIMP (`org.gimp.GIMP`) installed, and no
 copy of it already running, because a launch then hands over to that copy and
 leaves the private display empty. An ordinary GitHub runner meets neither set.
 Holding 1.0 on cover that runs everywhere would hold it on a runner nobody is
