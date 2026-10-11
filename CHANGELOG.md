@@ -12,6 +12,17 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+### Changed
+
+- **The scope ceiling now allows the effects a short trailer needs** (DEMO-0182)
+  README, What it will never do: transitions beyond a fade, changes of
+  speed, a push-in or zoom to a point, a clip in a rounded window over a
+  moving background, a logo that grows as it fades in, text in several
+  lines that slides in, and sound files at chosen moments. Still out:
+  general layers, two clips on screen at once, pan, crop, rotate, and
+  anything removed from a video automatically. None of these effects is
+  built yet.
+
 ## [0.7.0] - 2026-10-11
 
 **Theme:** Sound, when you ask for it.

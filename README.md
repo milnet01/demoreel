@@ -898,16 +898,27 @@ Permanently out of scope:
 
 - No webcam or cursor highlighting.
 
-- No editing beyond [Finishing a recording](#finishing-a-recording). demoreel
-  may cut the ends off a video, measure it, take a frame from it, play scenes
-  one after another, show a picture, still or animated, on a card between
-  them, put one line of text on or between them, styled as the script says,
-  fade, keep a clip's sound, and lay one music track under a film at levels
-  the script sets. That is the whole
-  list. A script is a list of scenes in order and nothing more: no
-  layers, no two pictures on screen at once, no transition other than a fade,
-  no zoom, no text that moves, no speeding up or slowing down. Nothing is ever
-  removed from a video automatically.
+- No editing beyond finishing a recording and making a short trailer from it.
+  demoreel may do these things, and no others:
+  - cut the ends off a video, measure it, and take a frame from it;
+  - play scenes one after another, and change one scene into the next with a
+    fade or another transition, such as a dissolve, a wipe or a slide;
+  - play a clip faster or slower, or hold one of its frames still;
+  - push in slowly on a scene, or zoom smoothly towards one point of it;
+  - show a clip in a smaller window, with rounded corners and a soft shadow,
+    over a plain or slowly moving coloured background;
+  - show a picture, still or animated, on a card, and let it grow slightly as
+    it fades in;
+  - put text on or between scenes, in one line or several, styled as the
+    script says, standing still or sliding and fading in;
+  - keep a clip's sound, lay one music track under a film at levels the
+    script sets, and play a sound file at a moment the script names.
+
+  A script is a list of scenes in order and nothing more. It has no layers
+  beyond one clip's window over its background, and never two clips on screen
+  at once. It does not pan, crop or rotate, and nothing moves on screen except
+  in the ways listed above. Nothing is ever removed from a video automatically.
+  What is built so far is in [Finishing a recording](#finishing-a-recording).
 - No graphical interface, no background service, no config file — options go on
   the command line. An `edit` script describes one film, and a `--steps` file lists
   scripted steps; neither holds settings for demoreel, and neither is read
@@ -924,8 +935,9 @@ The test is that list, not how long the file is. A change earns its place if it
 makes "record this app doing these few things" work somewhere it did not. A
 single picture is the same job, stopped at one frame, which is why `shot` is
 here. The finishing commands are here because every video made for a website
-needed the same few steps afterwards, typed by hand each time. A new one earns
-its place only if it is on the list above.
+needed the same few steps afterwards, typed by hand each time. The trailer
+effects are here because a trailer for a website needed each of them. A new
+one earns its place only if it is on the list above.
 
 ## Things that catch you out
 

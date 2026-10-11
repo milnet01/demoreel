@@ -109,15 +109,14 @@ format, plugins, per-app profiles, and recording the real screen. Anything
 needing more than "record this app doing these few things, and make that
 recording fit to publish" wants OBS and a video editor instead.
 
-**Editing stops at finishing a recording**, and `README.md` § What it will
-never do holds the list: cut the ends off, measure, take a frame, play scenes
-one after another, show a picture on a card, put one line of text on or
-between scenes, fade, keep a clip's sound, and lay one music track under a
-film at levels the script sets. No layers, no two pictures on screen at once, no
-transition other than a fade, no zoom, no moving text, no change of speed, and
-nothing removed from a video automatically. An `edit` script is a list of
-scenes for one film. It is not a config file: it holds no settings for
-demoreel and is read only when named.
+**Editing stops at finishing a recording and making a short trailer from
+it.** `README.md` § What it will never do holds the list of what editing may
+do, and nothing off it is built. Still out: layers beyond one clip's window
+over its background, two clips on screen at once, pan, crop, rotate,
+animating a setting over time in general, and anything removed from a video
+automatically. Those are DEMO-0141's to lift, in 2.0.0. An `edit` script is a
+list of scenes for one film. It is not a config file: it holds no settings
+for demoreel and is read only when named.
 
 **Do not report or reason about the line count.** Judge a change by whether it
 earns its place against the list above, and say nothing about length.
