@@ -3972,12 +3972,18 @@ The effects a real trailer needed, from the website session's Slipcase trailer
 (2026-10-10). The user moved them into 1.0.0 the same day, after sound and
 before packaging. The full editor stays 2.0.0.
 
-- 📋 [DEMO-0182] **Lift the editing limits trailers need from the scope ceiling in CLAUDE.md and README, through the review gate.**
+- ✅ [DEMO-0182] **Lift the editing limits trailers need from the scope ceiling in CLAUDE.md and README, through the review gate.**
   README § What it will never do rules out transitions other than a
   fade, zoom, moving text, speed changes and two pictures on screen.
   Lift exactly what this release builds, and leave the rest for
   DEMO-0141 (2.0.0). Gate both documents (CLAUDE.md rule 14). Nothing
   else in this section is built before it lands.
+  Shipped (2026-10-11) in f7491c5, with review fixes in 80465d9, 0c98146
+  and 9d05a25. README § What it will never do lists what editing may do;
+  CLAUDE.md § Scope ceiling points at it. Gated with review-contract
+  --genre adr on README, rows 16-18 of docs/reviews/readme-loop-log.md,
+  cap reached calm, all 9 verified findings fixed. The rest of 0.8.0 may
+  now be built.
   **Layman:** Change the rule book so trailer effects are allowed, before any of them is built.
   Kind: doc.
   Source: user-request-2026-10-10.
