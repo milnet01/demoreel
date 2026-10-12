@@ -595,6 +595,15 @@ msgstr "{where}：一個片段只能有一行 zoom，而 {first} 已經是一行
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr "{where}：text 需要用引號括起來的文字：text \"Saving a file\""
 
+msgid "{where}: a sound belongs to the scene above it, and no scene comes before this one."
+msgstr "{where}：sound 行屬於它上方的場景，但這一行之前沒有任何場景。"
+
+msgid "{where}: a sound belongs to the scene above it, and the line above is a music or level line."
+msgstr "{where}：sound 行屬於它上方的場景，但上面一行是 music 或 level 行。"
+
+msgid "{where}: sound needs a sound file after it: sound click.wav at 2"
+msgstr "{where}：sound 後面需要一個聲音檔：sound click.wav at 2"
+
 msgid "{where}: clip needs a video file after it."
 msgstr "{where}：clip 後面需要一個影片檔。"
 
@@ -602,8 +611,8 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}：card 需要以秒為單位的長度：card 3"
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, zoom, music or level, not {word}."
-msgstr "{where}：每一行要以 clip、card、text、zoom、music 或 level 開頭，而不是 {word}。"
+msgid "{where}: a line starts with clip, card, text, zoom, sound, music or level, not {word}."
+msgstr "{where}：每一行要以 clip、card、text、zoom、sound、music 或 level 開頭，而不是 {word}。"
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "腳本中沒有任何場景。場景是以 clip 或 card 開頭的一行。"
@@ -772,6 +781,10 @@ msgstr "{where}：{path} 從頭到尾都是靜音。"
 msgid "{where}: the music at level {level} would peak above {peak} dB, so it plays at level {reached} instead."
 msgstr "{where}：在 level {level} 下，音樂的峰值會超過 {peak} dB，因此改以 level {reached} 播放。"
 
+#. translators: {name} is a file name; the times are seconds.
+msgid "{where}: the sound {name} is asked to play at {at}, which is not inside its scene ({scene_start} to {scene_end})."
+msgstr "{where}：聲音 {name} 被要求在 {at} 播放，但這不在它的場景範圍內（{scene_start} 到 {scene_end}）。"
+
 msgid "music {name}: averages {level} dB; its own average is {mean} dB, so it is turned {change} dB"
 msgstr "music {name}：平均 {level} dB；它本身的平均值是 {mean} dB，因此調整 {change} dB"
 
@@ -817,14 +830,17 @@ msgstr "文字"
 msgid "scene {number}: {kind} {name}, {start} to {end}"
 msgstr "場景 {number}：{kind} {name}，{start} 到 {end}"
 
+msgid "  sound {name} at {start}"
+msgstr "  sound {name}，於 {start}"
+
 msgid "making {output}, {seconds} seconds at {size}"
 msgstr "正在製作 {output}，{seconds} 秒，大小 {size}"
 
 msgid "ffmpeg could not make the film."
 msgstr "ffmpeg 無法製作影片。"
 
-msgid "the film's sound reaches full scale, so it may be distorted. Turn the music or a clip down to keep it clean."
-msgstr "影片的聲音達到了滿刻度，可能會失真。請調低音樂或某個片段的音量，讓聲音保持乾淨。"
+msgid "the film's sound reaches full scale, so it may be distorted. Turn the music, a clip or a sound down to keep it clean."
+msgstr "影片的聲音達到了滿刻度，可能會失真。請調低音樂、某個片段或某個音效的音量，讓聲音保持乾淨。"
 
 msgid "ffmpeg did not finish making the film in the time allowed for its length, so it was stopped."
 msgstr "ffmpeg 沒有在依影片長度所允許的時間內完成，所以已將它停止。"

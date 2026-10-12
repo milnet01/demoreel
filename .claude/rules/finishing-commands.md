@@ -21,8 +21,9 @@ stop agreeing.
   picture at the demuxer (`-ignore_loop 0`, `-loop 1`, `-stream_loop`), and do
   not remove any of them: each covers a mistake in the others. The sound has
   the same bounds: a scene's sound is cut with `atrim`, a silent one is
-  `anullsrc` with its `duration` set, and music is repeated by `aloop` with an
-  `atrim` after it, never by `-stream_loop`.
+  `anullsrc` with its `duration` set, music is repeated by `aloop` with an
+  `atrim` after it, never by `-stream_loop`, and a `sound` line's file is
+  padded and cut to the film's length with `apad` and `atrim`.
 - **A film adds up its scenes in whole frames.** `trim=end_frame` keeps whole
   frames, so a scene lasts its frame count over the rate, not its `length`.
   `begins`, `total`, the `xfade` offsets and the plan all use that. Adding up

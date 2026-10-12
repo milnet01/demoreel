@@ -595,6 +595,15 @@ msgstr "{where}: 클립에는 zoom 줄을 하나만 쓸 수 있는데, {first}�
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr "{where}: text에는 따옴표로 묶은 문구가 필요합니다: text \"파일 저장하기\""
 
+msgid "{where}: a sound belongs to the scene above it, and no scene comes before this one."
+msgstr "{where}: sound 줄은 바로 위 장면에 속하는데, 이 줄 앞에 장면이 없습니다."
+
+msgid "{where}: a sound belongs to the scene above it, and the line above is a music or level line."
+msgstr "{where}: sound 줄은 바로 위 장면에 속하는데, 위의 줄은 music 또는 level 줄입니다."
+
+msgid "{where}: sound needs a sound file after it: sound click.wav at 2"
+msgstr "{where}: sound 뒤에는 소리 파일이 와야 합니다: sound click.wav at 2"
+
 msgid "{where}: clip needs a video file after it."
 msgstr "{where}: clip 뒤에는 동영상 파일이 와야 합니다."
 
@@ -602,8 +611,8 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: card에는 초 단위 길이가 필요합니다: card 3"
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, zoom, music or level, not {word}."
-msgstr "{where}: 줄은 {word}이(가) 아니라 clip, card, text, zoom, music 또는 level로 시작해야 합니다."
+msgid "{where}: a line starts with clip, card, text, zoom, sound, music or level, not {word}."
+msgstr "{where}: 줄은 {word}이(가) 아니라 clip, card, text, zoom, sound, music 또는 level로 시작해야 합니다."
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "스크립트에 장면이 없습니다. 장면은 clip이나 card로 시작하는 줄입니다."
@@ -772,6 +781,10 @@ msgstr "{where}: {path}은(는) 처음부터 끝까지 무음입니다."
 msgid "{where}: the music at level {level} would peak above {peak} dB, so it plays at level {reached} instead."
 msgstr "{where}: level {level}에서는 음악의 최고점이 {peak} dB를 넘으므로, 대신 level {reached}로 재생합니다."
 
+#. translators: {name} is a file name; the times are seconds.
+msgid "{where}: the sound {name} is asked to play at {at}, which is not inside its scene ({scene_start} to {scene_end})."
+msgstr "{where}: 소리 {name}은(는) {at}에 재생되도록 되어 있지만, 이는 장면({scene_start}부터 {scene_end}까지) 안이 아닙니다."
+
 msgid "music {name}: averages {level} dB; its own average is {mean} dB, so it is turned {change} dB"
 msgstr "music {name}: 평균 {level} dB. 원래 평균이 {mean} dB이므로 {change} dB 조정합니다"
 
@@ -817,14 +830,17 @@ msgstr "텍스트"
 msgid "scene {number}: {kind} {name}, {start} to {end}"
 msgstr "장면 {number}: {kind} {name}, {start}부터 {end}까지"
 
+msgid "  sound {name} at {start}"
+msgstr "  sound {name}, {start}에"
+
 msgid "making {output}, {seconds} seconds at {size}"
 msgstr "{output} 만드는 중, {seconds}초, {size}"
 
 msgid "ffmpeg could not make the film."
 msgstr "ffmpeg이 영상을 만들지 못했습니다."
 
-msgid "the film's sound reaches full scale, so it may be distorted. Turn the music or a clip down to keep it clean."
-msgstr "영상의 소리가 최대치(풀 스케일)에 도달해 왜곡될 수 있습니다. 깨끗하게 유지하려면 음악이나 클립의 음량을 낮추십시오."
+msgid "the film's sound reaches full scale, so it may be distorted. Turn the music, a clip or a sound down to keep it clean."
+msgstr "영상의 소리가 최대치(풀 스케일)에 도달해 왜곡될 수 있습니다. 깨끗하게 유지하려면 음악, 클립 또는 효과음의 음량을 낮추십시오."
 
 msgid "ffmpeg did not finish making the film in the time allowed for its length, so it was stopped."
 msgstr "ffmpeg이 영상 길이에 맞게 주어진 시간 안에 영상을 다 만들지 못해 중지했습니다."

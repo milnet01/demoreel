@@ -14,6 +14,11 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **A `sound FILE at 5.4` line under a scene plays a sound file at that moment, mixed with the clips' sound and the music, with its own `volume`.** (DEMO-0186)
+  A trailer can have a click where the pointer clicks, or a whoosh as a
+  window arrives. The time is in the clip's own file, so it stays on its
+  moment when earlier scenes change.
+
 - **Several texts can be on screen at once: lines at one place are stacked in script order and keep their place, and `slide-in` makes a line rise into place as it fades in.** (DEMO-0153)
   A title card can have a heading and a line under it, each in its own
   style, arriving one after another. Overlapping texts are no longer refused.

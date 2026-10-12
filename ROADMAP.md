@@ -4140,7 +4140,7 @@ before packaging. The full editor stays 2.0.0.
   Kind: feature.
   Source: peer-website-session-2026-10-10.
 
-- 📋 [DEMO-0186] **Play a sound file at a chosen moment of a film, such as a click when the pointer clicks.**
+- ✅ [DEMO-0186] **Play a sound file at a chosen moment of a film, such as a click when the pointer clicks.**
   The user approved the Slipcase trailer (2026-10-10) and loved its click
   sounds; two synthesized stretch sounds were rejected for a real recorded
   one. So the caller supplies the sound files and demoreel places them;
@@ -4150,6 +4150,11 @@ before packaging. The full editor stays 2.0.0.
   effect counts as sound and joins § 4.5's mix; no spec of its own (user,
   2026-10-11). The words of the line that places a sound are settled in
   the build.
+  Shipped 2026-10-12: a `sound FILE [at S] [volume DB]` line under a scene,
+  timed as a text's from (user's choice that day: the scene above, and the
+  word sound). Each sound is one more amix input, padded and cut to the
+  film. ci.sh: "a sound line plays its file at its moment, at its volume"
+  and "edit refuses a bad sound line".
   **Layman:** A trailer can have click and whoosh sounds exactly where things happen on screen.
   Kind: feature.
   Source: peer-website-session-2026-10-10.

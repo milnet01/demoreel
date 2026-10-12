@@ -517,6 +517,15 @@ msgstr ""
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr ""
 
+msgid "{where}: a sound belongs to the scene above it, and no scene comes before this one."
+msgstr ""
+
+msgid "{where}: a sound belongs to the scene above it, and the line above is a music or level line."
+msgstr ""
+
+msgid "{where}: sound needs a sound file after it: sound click.wav at 2"
+msgstr ""
+
 #. translators: zoom is an edit-script word and stays in English.
 msgid "{where}: a zoom line belongs to the clip above it, and the line above is not part of a clip."
 msgstr ""
@@ -531,7 +540,7 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr ""
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, zoom, music or level, not {word}."
+msgid "{where}: a line starts with clip, card, text, zoom, sound, music or level, not {word}."
 msgstr ""
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
@@ -708,6 +717,13 @@ msgstr ""
 msgid "{where}: the music at level {level} would peak above {peak} dB, so it plays at level {reached} instead."
 msgstr ""
 
+msgid "{where}: volume is between {low} and {high} dB, not {value}."
+msgstr ""
+
+#. translators: {name} is a file name; the times are seconds.
+msgid "{where}: the sound {name} is asked to play at {at}, which is not inside its scene ({scene_start} to {scene_end})."
+msgstr ""
+
 msgid "music {name}: averages {level} dB; its own average is {mean} dB, so it is turned {change} dB"
 msgstr ""
 
@@ -740,9 +756,6 @@ msgstr ""
 msgid "{where}: volume changes a clip's own sound, and {path} has none."
 msgstr ""
 
-msgid "{where}: volume is between {low} and {high} dB, not {value}."
-msgstr ""
-
 msgid "{where}: a crossfade fades from the scene before, and this is the first scene."
 msgstr ""
 
@@ -759,13 +772,16 @@ msgstr ""
 msgid "scene {number}: {kind} {name}, {start} to {end}"
 msgstr ""
 
+msgid "  sound {name} at {start}"
+msgstr ""
+
 msgid "making {output}, {seconds} seconds at {size}"
 msgstr ""
 
 msgid "ffmpeg could not make the film."
 msgstr ""
 
-msgid "the film's sound reaches full scale, so it may be distorted. Turn the music or a clip down to keep it clean."
+msgid "the film's sound reaches full scale, so it may be distorted. Turn the music, a clip or a sound down to keep it clean."
 msgstr ""
 
 msgid "ffmpeg did not finish making the film in the time allowed for its length, so it was stopped."

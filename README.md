@@ -67,8 +67,8 @@ then be cut, joined to others and given a line of text — see
 The video is **silent** unless you ask for the app's own sound with
 `--audio` — see [`--audio`](#--audio-the-apps-own-sound). Either way, the app's
 sound never plays on your speakers. A film made from recordings keeps their
-sound, and can have one music track under it — see
-[Sound and music](#sound-and-music).
+sound, and can have one music track under it and sounds at chosen moments —
+see [Sound and music](#sound-and-music).
 
 ## Install
 
@@ -469,7 +469,8 @@ a `window`, where it is fitted with room round it.
 
 As it starts, `edit` prints the plan on stderr: each scene, and when it starts
 and ends in the finished film. A scene lasts its picture's whole frames, so
-these times are where its picture and its sound land. With music, the plan
+these times are where its picture and its sound land. Under each scene it
+says when that scene's sounds start in the film. With music, the plan
 also says what level the music averages and how much it was turned to get
 there, and when each `level` line applies.
 
@@ -514,10 +515,31 @@ like.
 - The number means what the music line's `level` means: a level to average
   with `normalise on`, a change to the file's own with `normalise off`.
 
-The clips' sound and the music are mixed at the levels set. Nothing turns
-either down by itself, and nothing evens out the clips' sound. If the film's
-sound reaches full scale, stderr says it may be distorted, and the film is
-still made: turn the music or a clip down.
+**`sound FILE`** on its own line under a scene plays that sound file once,
+such as a click where the pointer clicks. Indent it like a text. A scene may
+have any number. The file is anything `ffmpeg` reads with sound in it, and is
+yours: demoreel makes no sounds.
+
+```
+clip demo.mp4 from 2 to 14
+  sound click.wav at 5.4
+  sound whoosh.ogg at 9 volume -8
+```
+
+- `at 5.4` — when the sound starts. On a clip this is a time in the clip's
+  own file, as a text's `from` is, so it stays on its moment when the scenes
+  before it change. On a card it counts from the card's start. Left out, it
+  is the scene's start. It must fall inside the scene.
+- `volume -8` — turn the sound down 8 dB, or up with a number above zero,
+  between `-60` and `20`. It plays at its file's own level unless given.
+- The sound plays to its end, over the scenes after its own, and is cut where
+  the film ends.
+
+The clips' sound, the music and the sounds are mixed at the levels set.
+Nothing turns any of them down by itself, and nothing evens out the clips'
+sound. If the film's sound reaches full scale, stderr says it may be
+distorted, and the film is still made: turn the music, a clip or a sound
+down.
 
 ### The shortcuts
 

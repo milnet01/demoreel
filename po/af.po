@@ -598,6 +598,15 @@ msgstr "{where}: 'n snit neem een zoom-reël, en {first} is reeds een."
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr "{where}: text het sy woorde nodig, tussen aanhalingstekens: text \"Stoor 'n lêer\""
 
+msgid "{where}: a sound belongs to the scene above it, and no scene comes before this one."
+msgstr "{where}: 'n sound-reël behoort aan die toneel daarbo, en geen toneel kom voor hierdie een nie."
+
+msgid "{where}: a sound belongs to the scene above it, and the line above is a music or level line."
+msgstr "{where}: 'n sound-reël behoort aan die toneel daarbo, en die reël daarbo is 'n music- of level-reël."
+
+msgid "{where}: sound needs a sound file after it: sound click.wav at 2"
+msgstr "{where}: sound het 'n klanklêer daarna nodig: sound click.wav at 2"
+
 msgid "{where}: clip needs a video file after it."
 msgstr "{where}: clip het 'n videolêer daarna nodig."
 
@@ -605,8 +614,8 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: card het sy lengte in sekondes nodig: card 3"
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, zoom, music or level, not {word}."
-msgstr "{where}: 'n reël begin met clip, card, text, zoom, music of level, nie {word} nie."
+msgid "{where}: a line starts with clip, card, text, zoom, sound, music or level, not {word}."
+msgstr "{where}: 'n reël begin met clip, card, text, zoom, sound, music of level, nie {word} nie."
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "die skrip het geen tonele nie. 'n Toneel is 'n reël wat met clip of card begin."
@@ -778,6 +787,10 @@ msgstr "{where}: {path} is van begin tot einde stil."
 msgid "{where}: the music at level {level} would peak above {peak} dB, so it plays at level {reached} instead."
 msgstr "{where}: die musiek op level {level} sou bo {peak} dB piek, so dit speel eerder op level {reached}."
 
+#. translators: {name} is a file name; the times are seconds.
+msgid "{where}: the sound {name} is asked to play at {at}, which is not inside its scene ({scene_start} to {scene_end})."
+msgstr "{where}: die klank {name} moet op {at} speel, wat nie binne sy toneel ({scene_start} tot {scene_end}) val nie."
+
 msgid "music {name}: averages {level} dB; its own average is {mean} dB, so it is turned {change} dB"
 msgstr "music {name}: gemiddeld {level} dB; sy eie gemiddelde is {mean} dB, so dit word {change} dB verstel"
 
@@ -823,14 +836,17 @@ msgstr "teks"
 msgid "scene {number}: {kind} {name}, {start} to {end}"
 msgstr "toneel {number}: {kind} {name}, {start} tot {end}"
 
+msgid "  sound {name} at {start}"
+msgstr "  sound {name} op {start}"
+
 msgid "making {output}, {seconds} seconds at {size}"
 msgstr "maak {output}, {seconds} sekondes teen {size}"
 
 msgid "ffmpeg could not make the film."
 msgstr "ffmpeg kon nie die film maak nie."
 
-msgid "the film's sound reaches full scale, so it may be distorted. Turn the music or a clip down to keep it clean."
-msgstr "die film se klank bereik volle skaal, so dit kan dalk vervorm wees. Draai die musiek of 'n snit sagter om dit skoon te hou."
+msgid "the film's sound reaches full scale, so it may be distorted. Turn the music, a clip or a sound down to keep it clean."
+msgstr "die film se klank bereik volle skaal, so dit kan dalk vervorm wees. Draai die musiek, 'n snit of 'n klank sagter om dit skoon te hou."
 
 msgid "ffmpeg did not finish making the film in the time allowed for its length, so it was stopped."
 msgstr "ffmpeg het nie die film klaargemaak binne die tyd wat vir sy lengte toegelaat word nie, so dit is gestop."

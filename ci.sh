@@ -848,6 +848,8 @@ FINPY
     ff -f lavfi -i "testsrc2=s=320x480:r=10:d=3" $x264 "$ft/T.mp4"
     ff -f lavfi -i "testsrc=s=320x240:r=3:d=3" -r 30 $x264 "$ft/S.mp4"
     ff -f lavfi -i "color=c=#808080:s=320x240:r=10:d=4" $x264 "$ft/G.mp4"
+    # A tenth of a second of 3 kHz, which a_onsets finds: DEMO-0186's sound.
+    ff -f lavfi -i "sine=f=3000:d=0.1" "$ft/click.wav"
     ff -f lavfi -i "color=c=#00C000:s=800x800" -frames:v 1 "$ft/sq.png"
     # F: 30 a second, a new picture on each frame up to number 40, then still.
     # N: 29.97 a second, where no frame starts on a whole second.
@@ -2499,6 +2501,62 @@ CASES
     assert_absent "join --music-level without --music" "$ft/out/bm-j.mp4"
     echo "$n bad music, level, sound and volume words, and a --music option alone, were each refused before any encode"
     }
+    fin_s66() {
+    # DEMO-0186. The clip crossfades in at 0.5 s and plays at speed 2, so its
+    # sound at 2.5 in its file, 1 s into the scene, lands at 1.5 in the film.
+    printf 'card 1\n  sound click.wav at 0.3\nclip G.mp4 from 0.5 speed 2 crossfade 0.5\n  sound click.wav at 2.5 volume -6\n' \
+        | ed_ok sx1.mp4
+    assert_finished "$ft/out/sx1.mp4" "sounds alone give a film a sound track" 1
+    set -- $(a_onsets "$ft/out/sx1.mp4" | tr '\n' ' ')
+    assert_near "the card's sound starts at 0.3" 0.3 "${1:-none}" 0.04
+    assert_near "the clip's sound starts at 1.5" 1.5 "${2:-none}" 0.04
+    grep -q "sound click.wav at 1.500" "$fe" || fail "the plan should say when the clip's sound plays
+    actual:   $(cat "$fe")"
+    assert_near "volume -6 plays the sound 6 dB quieter" \
+        "$(awk -v a="$(a_max "$ft/out/sx1.mp4" 0.2 0.5)" 'BEGIN { print a - 6 }')" \
+        "$(a_max "$ft/out/sx1.mp4" 1.4 1.7)" 1
+    # Mixed with a clip's own sound and music: three inputs to one amix.
+    tones
+    printf 'clip A.mp4 to 3\n  sound click.wav at 1\nmusic quiet.wav\n' | ed_ok sx2.mp4
+    assert_finished "$ft/out/sx2.mp4" "a sound mixed with a clip's sound and music" 1
+    assert_near "the sound starts at 1 over the clip and music" 1 \
+        "$(a_onsets "$ft/out/sx2.mp4" | head -n 1)" 0.04
+    # A sound running past the film's end is cut there.
+    ff -f lavfi -i "sine=f=3000:d=3" "$ft/long.wav"
+    printf 'card 2\n  sound long.wav at 1.5\n' | ed_ok sx3.mp4
+    assert_finished "$ft/out/sx3.mp4" "a sound longer than the rest of the film" 1
+    echo "sounds played at their moments in the film, at their volume, mixed with a clip's sound and music, and were cut at the film's end"
+    }
+    fin_s67() {
+    # DEMO-0186: README's "Everything is checked before anything is made",
+    # for the sound line.
+    printf 'clip A.mp4 to 2\n  sound click.wav at 1 volume -3\n' > "$ft/bs0.txt"
+    run edit bs0.txt -o "$ft/out/bs0.mp4"
+    expect_ok "control: a clip with a sound line"
+    n=0
+    while IFS='|' read -r want script; do
+        n=$((n + 1))
+        printf "$script" > "$ft/bs$n.txt"
+        : > "$ft/log/ffmpeg.calls"
+        FIN_PATH="$ft/shim:$PATH" run edit "bs$n.txt" -o "$ft/out/bs$n.mp4"
+        refused_naming_line "edit refuses: $(printf "$script" | tr '\n' '|')" "bs$n.mp4" "$want"
+        assert_eq "edit refuses ($script): no encode started" 0 \
+            "$(grep -cw 'libx264' "$ft/log/ffmpeg.calls" || true)"
+    done <<'CASES'
+1|sound click.wav\ncard 1\n
+3|card 1\nmusic click.wav\nsound click.wav\n
+2|card 1\nsound\n
+2|card 1\nsound nothing.wav\n
+2|card 1\nsound G.mp4\n
+2|card 1\nsound click.wav at 1\n
+2|clip A.mp4 from 1 to 2\nsound click.wav at 0.5\n
+2|card 1\nsound click.wav at -1\n
+2|card 1\nsound click.wav volume 30\n
+2|card 1\nsound click.wav volume up\n
+2|card 1\nsound click.wav loud 3\n
+CASES
+    echo "$n bad sound lines were each refused before any encode, naming their line"
+    }
     fin_s50() {
     # DEMO-0177 INV-12: README's "the shortcuts do exactly what the script
     # would", for the music options and --no-sound.
@@ -2874,6 +2932,8 @@ CASES
     fin_step "slide-in rises into place and fades in" fin_s63
     fin_step "edit refuses a bad stack or slide-in" fin_s64
     fin_step "a card's picture fits below a stack" fin_s65
+    fin_step "a sound line plays its file at its moment, at its volume" fin_s66
+    fin_step "edit refuses a bad sound line" fin_s67
     fin_run
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }

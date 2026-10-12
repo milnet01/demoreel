@@ -598,6 +598,15 @@ msgstr "{where}: una clip prende una sola riga zoom, e {first} è già una."
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr "{where}: text richiede le sue parole, tra virgolette: text \"Salvare un file\""
 
+msgid "{where}: a sound belongs to the scene above it, and no scene comes before this one."
+msgstr "{where}: una riga sound appartiene alla scena sopra di essa, e nessuna scena precede questa riga."
+
+msgid "{where}: a sound belongs to the scene above it, and the line above is a music or level line."
+msgstr "{where}: una riga sound appartiene alla scena sopra di essa, e la riga sopra è una riga music o level."
+
+msgid "{where}: sound needs a sound file after it: sound click.wav at 2"
+msgstr "{where}: sound richiede un file audio dopo di sé: sound click.wav at 2"
+
 msgid "{where}: clip needs a video file after it."
 msgstr "{where}: clip richiede un file video dopo di sé."
 
@@ -605,8 +614,8 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: card richiede la sua durata in secondi: card 3"
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, zoom, music or level, not {word}."
-msgstr "{where}: una riga inizia con clip, card, text, zoom, music o level, non con {word}."
+msgid "{where}: a line starts with clip, card, text, zoom, sound, music or level, not {word}."
+msgstr "{where}: una riga inizia con clip, card, text, zoom, sound, music o level, non con {word}."
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "lo script non contiene scene. Una scena è una riga che inizia con clip o card."
@@ -778,6 +787,10 @@ msgstr "{where}: {path} è muto dall'inizio alla fine."
 msgid "{where}: the music at level {level} would peak above {peak} dB, so it plays at level {reached} instead."
 msgstr "{where}: a level {level} la musica avrebbe picchi sopra {peak} dB, quindi viene riprodotta a level {reached}."
 
+#. translators: {name} is a file name; the times are seconds.
+msgid "{where}: the sound {name} is asked to play at {at}, which is not inside its scene ({scene_start} to {scene_end})."
+msgstr "{where}: il suono {name} deve partire a {at}, che non è dentro la sua scena (da {scene_start} a {scene_end})."
+
 msgid "music {name}: averages {level} dB; its own average is {mean} dB, so it is turned {change} dB"
 msgstr "music {name}: media di {level} dB; la sua media propria è di {mean} dB, quindi viene regolata di {change} dB"
 
@@ -823,14 +836,17 @@ msgstr "testo"
 msgid "scene {number}: {kind} {name}, {start} to {end}"
 msgstr "scena {number}: {kind} {name}, da {start} a {end}"
 
+msgid "  sound {name} at {start}"
+msgstr "  sound {name} a {start}"
+
 msgid "making {output}, {seconds} seconds at {size}"
 msgstr "creazione di {output}, {seconds} secondi a {size}"
 
 msgid "ffmpeg could not make the film."
 msgstr "ffmpeg non è riuscito a creare il film."
 
-msgid "the film's sound reaches full scale, so it may be distorted. Turn the music or a clip down to keep it clean."
-msgstr "il suono del film raggiunge il fondo scala, quindi potrebbe essere distorto. Abbassare la musica o una clip per mantenerlo pulito."
+msgid "the film's sound reaches full scale, so it may be distorted. Turn the music, a clip or a sound down to keep it clean."
+msgstr "il suono del film raggiunge il fondo scala, quindi potrebbe essere distorto. Abbassare la musica, una clip o un suono per mantenerlo pulito."
 
 msgid "ffmpeg did not finish making the film in the time allowed for its length, so it was stopped."
 msgstr "ffmpeg non ha finito di creare il film nel tempo concesso per la sua durata, quindi è stato fermato."

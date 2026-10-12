@@ -2829,6 +2829,7 @@ SCENE_WORDS = {
     "zoom": ("x", "y", "from", "to"),
     "music": ("level", "normalise", "fade-in", "fade-out"),
     "level": ("from", "to", "ramp"),
+    "sound": ("at", "volume"),
 }
 # The ready-made pictures a crossfade may take, after its seconds: xfade's own
 # names, those ffmpeg 6.1.1 and 9.0.2 both have, less `custom`.
@@ -2888,6 +2889,7 @@ class Scene:
         self.push = 0.0         # a windowed clip: % its window grows over the scene
         self.zoom = None        # a windowed clip: its zoom line, a dict, or None
         self.stacks = []        # its texts' stacks, laid out by check_texts
+        self.sounds = []        # its sound lines: each path, at, volume, where
 
 
 # The film's sound: every stream is made this before it is joined or mixed.
@@ -2990,6 +2992,9 @@ def script_words(target, words, kind, where):
                 refuse_window(where, repr(value))
         elif word == "background":
             target.background = value
+        elif kind == "sound":
+            target[word] = (script_decibels if word == "volume" else script_number)(
+                value, where, word)
         elif word in ("sound", "normalise"):
             setattr(target, word, script_on_off(value, where, word))
         elif word in ("volume", "level"):
@@ -3016,6 +3021,7 @@ def parse_script(text):
     a shell splits one, except that `#` starts a comment only at the start of
     a line: a colour is written `#101418`.
 
+    A `sound FILE ...` line belongs to the scene above it, as a text does.
     One `music FILE ...` line may stand anywhere among the scenes, with its
     `level DB ...` lines straight after it. Returns (scenes, music or None).
     """
@@ -3063,6 +3069,19 @@ def parse_script(text):
             entry = {"words": rest[0], "where": where}
             script_words(entry, rest[1:], "text", where)
             scenes[-1].texts.append(entry)
+        elif verb == "sound":
+            if not scenes:
+                die(tr("{where}: a sound belongs to the scene above it, and no "
+                       "scene comes before this one.", where=where))
+            if above in ("music", "level"):
+                die(tr("{where}: a sound belongs to the scene above it, and the line "
+                       "above is a music or level line.", where=where))
+            if not rest:
+                die(tr("{where}: sound needs a sound file after it: "
+                       "sound click.wav at 2", where=where))
+            entry = {"path": Path(rest[0]).expanduser(), "where": where}
+            script_words(entry, rest[1:], "sound", where)
+            scenes[-1].sounds.append(entry)
         elif verb == "zoom":
             if not scenes or scenes[-1].kind != "clip" or above in ("music", "level"):
                 # translators: zoom is an edit-script word and stays in English.
@@ -3100,9 +3119,9 @@ def parse_script(text):
             scenes.append(scene)
         else:
             # translators: {word} is the first word of the line, in quotes.
-            die(tr("{where}: a line starts with clip, card, text, zoom, music or "
-                   "level, not {word}.", where=where, word=repr(verb)) + f"\n  {line}")
-        above = verb if verb != "text" else above
+            die(tr("{where}: a line starts with clip, card, text, zoom, sound, music "
+                   "or level, not {word}.", where=where, word=repr(verb)) + f"\n  {line}")
+        above = verb if verb not in ("text", "sound") else above
     if not scenes:
         die(tr("the script has no scenes in it. A scene is a line starting with "
                "clip or card."))
@@ -3870,6 +3889,45 @@ def music_graph(music, input_number, total):
     return f"[{input_number}:a:0]{','.join(chain)}[m]"
 
 
+def check_sounds(scene, length, begins):
+    """Check a scene's sound lines, and set when each starts in a film where
+    the scene begins at `begins`. Dies naming the line."""
+    for entry in scene.sounds:
+        where = entry["where"]
+        if not sound_info(entry["path"], where)[0]:
+            die(tr("{where}: {path} has no sound in it.", where=where,
+                   path=entry["path"]))
+        volume = entry.setdefault("volume", 0.0)
+        if not -60 <= volume <= 20:
+            die(tr("{where}: volume is between {low} and {high} dB, not "
+                   "{value}.", where=where, low=-60, high=20, value=f"{volume:g}"))
+        # As a text's from, a time just short of the scene's start means it.
+        at = scene_time(scene, entry.get("at", scene.start))
+        if -TIME_SLACK <= at < 0:
+            at = 0.0
+        if not 0 <= at < length:
+            # translators: {name} is a file name; the times are seconds.
+            die(tr("{where}: the sound {name} is asked to play at {at}, which is "
+                   "not inside its scene ({scene_start} to {scene_end}).",
+                   where=where, name=entry["path"].name,
+                   at=f"{entry.get('at', scene.start):g}",
+                   scene_start=f"{scene.start:g}",
+                   scene_end=f"{scene.start + length * scene.speed:.3f}"))
+        entry["film_at"] = begins + at
+
+
+def sound_graph(entry, input_number, number, total):
+    """The chain that makes `[e<number>]`: a sound line's file at its
+    volume, starting at its moment in the film. It is silent before and after,
+    so it lasts the film, and cut where the film ends."""
+    chain = [SOUND_FORMAT, "asetpts=N/SR/TB"]
+    if entry["volume"]:
+        chain.append(f"volume={entry['volume']:.4f}dB")
+    chain += [f"adelay=delays={round(entry['film_at'] * SOUND_RATE)}S:all=1",
+              f"apad=whole_dur={total:.6f}", f"atrim=duration={total:.6f}"]
+    return f"[{input_number}:a:0]{','.join(chain)}[e{number}]"
+
+
 def plan_music(music):
     """The music's lines of the plan on stderr."""
     if music.normalise == "on":
@@ -4137,6 +4195,7 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
                "uses.") + x264_advice(distro_family()))
     output = finishing_output(
         raw_output, [*(s.path for s in scenes if s.path), *also_read,
+                     *(e["path"] for s in scenes for e in s.sounds),
                      *([music.path] if music else [])],
         (".mp4",))
     workdir = Path(tempfile.mkdtemp(prefix="edit-", dir=state_dir()))
@@ -4172,7 +4231,7 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
                            "that long, and one of them is shorter.",
                            where=scene.where, seconds=f"{scene.crossfade:g}"))
         clip_sound = any(keeps_sound(scene) for scene in scenes)
-        film, sound, total = "[v0]", "[a0]", 0.0
+        film, sound, total, effects = "[v0]", "[a0]", 0.0, []
         for number, (scene, length) in enumerate(zip(scenes, lengths, strict=True)):
             first_input = inputs.count("-i")
             more, graph = scene_graph(scene, length, number, first_input,
@@ -4205,20 +4264,30 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
             note(tr("scene {number}: {kind} {name}, {start} to {end}",
                     number=number + 1, kind=scene.kind, name=name,
                     start=f"{begins:.3f}", end=f"{total:.3f}"))
+            check_sounds(scene, length, begins)
+            for entry in scene.sounds:
+                note(tr("  sound {name} at {start}", name=entry["path"].name,
+                        start=f"{entry['film_at']:.3f}"))
+            effects += scene.sounds
         if music:
             check_music(music, total)
             chains.append(music_graph(music, inputs.count("-i"), total))
             inputs += ["-i", str(music.path)]
             plan_music(music)
-        if clip_sound and music:
+        for number, entry in enumerate(effects):
+            chains.append(sound_graph(entry, inputs.count("-i"), number, total))
+            inputs += ["-i", str(entry["path"])]
+        mixed = [*([sound] if clip_sound else []), *(["[m]"] if music else []),
+                 *(f"[e{number}]" for number in range(len(effects)))]
+        if len(mixed) > 1:
             # normalize=0: the default divides each input by the number of
-            # inputs, so neither would sit at the level the caller set.
-            chains.append(f"{sound}[m]amix=inputs=2:normalize=0:duration=first,"
-                          f"atrim=duration={total:.6f}[s]")
+            # inputs, so none would sit at the level the caller set.
+            chains.append(f"{''.join(mixed)}amix=inputs={len(mixed)}:normalize=0:"
+                          f"duration=longest,atrim=duration={total:.6f}[s]")
         elif clip_sound:
             chains.append(f"{sound}atrim=duration={total:.6f}[s]")
-        audio = (["-map", "[s]", *AUDIO_ENCODER] if clip_sound
-                 else ["-map", "[m]", *AUDIO_ENCODER] if music else ["-an"])
+        audio = (["-map", "[s]" if len(mixed) > 1 or clip_sound else mixed[0],
+                  *AUDIO_ENCODER] if mixed else ["-an"])
         note(tr("making {output}, {seconds} seconds at {size}", output=output,
                 seconds=f"{total:.3f}", size=f"{width}x{height}"))
         made = subprocess.run(  # noqa: PLW1510 - a failure is handled below
@@ -4234,10 +4303,10 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
             lines = [ln for ln in made.stderr.splitlines() if ln.strip()]
             die(tr("ffmpeg could not make the film.") + "\n  "
                 + ("\n  ".join(lines[-4:]) or unreadable))
-        peak = loudest(part) if clip_sound or music else None
+        peak = loudest(part) if mixed else None
         if peak is not None and peak >= FULL_SCALE:
             note(tr("the film's sound reaches full scale, so it may be distorted. "
-                    "Turn the music or a clip down to keep it clean."))
+                    "Turn the music, a clip or a sound down to keep it clean."))
         os.replace(part, output)
     except subprocess.TimeoutExpired:
         die(tr("ffmpeg did not finish making the film in the time allowed for "

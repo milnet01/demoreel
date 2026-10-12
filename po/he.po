@@ -598,6 +598,15 @@ msgstr "{where}: לקטע יש שורת zoom אחת, ו־{first} היא כבר �
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr "{where}: אחרי text צריכות לבוא המילים, במירכאות: text \"שמירת קובץ\""
 
+msgid "{where}: a sound belongs to the scene above it, and no scene comes before this one."
+msgstr "{where}: שורת sound שייכת לסצנה שמעליה, ואין סצנה לפני השורה הזאת."
+
+msgid "{where}: a sound belongs to the scene above it, and the line above is a music or level line."
+msgstr "{where}: שורת sound שייכת לסצנה שמעליה, והשורה שמעליה היא שורת music או level."
+
+msgid "{where}: sound needs a sound file after it: sound click.wav at 2"
+msgstr "{where}: אחרי sound צריך לבוא קובץ קול: sound click.wav at 2"
+
 msgid "{where}: clip needs a video file after it."
 msgstr "{where}: אחרי clip צריך לבוא קובץ וידאו."
 
@@ -605,8 +614,8 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: אחרי card צריך לבוא האורך בשניות: card 3"
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, zoom, music or level, not {word}."
-msgstr "{where}: שורה מתחילה ב־clip, card, text, zoom, music או level, ולא ב־{word}."
+msgid "{where}: a line starts with clip, card, text, zoom, sound, music or level, not {word}."
+msgstr "{where}: שורה מתחילה ב־clip, card, text, zoom, sound, music או level, ולא ב־{word}."
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "אין סצנות בתסריט. סצנה היא שורה שמתחילה ב־clip או ב־card."
@@ -778,6 +787,10 @@ msgstr "{where}: {path} שקט מתחילתו ועד סופו."
 msgid "{where}: the music at level {level} would peak above {peak} dB, so it plays at level {reached} instead."
 msgstr "{where}: המוזיקה ב־level {level} הייתה מגיעה לשיא מעל {peak} dB, ולכן היא מתנגנת ב־level {reached} במקום זאת."
 
+#. translators: {name} is a file name; the times are seconds.
+msgid "{where}: the sound {name} is asked to play at {at}, which is not inside its scene ({scene_start} to {scene_end})."
+msgstr "{where}: הקול {name} אמור להתנגן ב־{at}, וזה לא בתוך הסצנה שלו ({scene_start} עד {scene_end})."
+
 msgid "music {name}: averages {level} dB; its own average is {mean} dB, so it is turned {change} dB"
 msgstr "music {name}: ממוצע {level} dB; הממוצע שלה עצמה הוא {mean} dB, ולכן העוצמה שונתה ב־{change} dB"
 
@@ -823,14 +836,17 @@ msgstr "טקסט"
 msgid "scene {number}: {kind} {name}, {start} to {end}"
 msgstr "סצנה {number}: {kind} {name}, {start} עד {end}"
 
+msgid "  sound {name} at {start}"
+msgstr "  sound {name} ב־{start}"
+
 msgid "making {output}, {seconds} seconds at {size}"
 msgstr "יוצר את {output}, {seconds} שניות בגודל {size}"
 
 msgid "ffmpeg could not make the film."
 msgstr "ffmpeg לא הצליח ליצור את הסרט."
 
-msgid "the film's sound reaches full scale, so it may be distorted. Turn the music or a clip down to keep it clean."
-msgstr "הקול של הסרט מגיע לעוצמה המרבית, ולכן הוא עלול להיות מעוות. יש להנמיך את המוזיקה או קטע כדי שהקול יישאר נקי."
+msgid "the film's sound reaches full scale, so it may be distorted. Turn the music, a clip or a sound down to keep it clean."
+msgstr "הקול של הסרט מגיע לעוצמה המרבית, ולכן הוא עלול להיות מעוות. יש להנמיך את המוזיקה, קטע או קול כדי שהקול יישאר נקי."
 
 msgid "ffmpeg did not finish making the film in the time allowed for its length, so it was stopped."
 msgstr "ffmpeg לא סיים ליצור את הסרט בזמן שהוקצב לאורכו, ולכן הוא נעצר."

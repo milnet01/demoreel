@@ -601,6 +601,15 @@ msgstr "{where}: кліп може мати один рядок zoom, і {first}
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr "{where}: text потребує слів у лапках: text \"Збереження файлу\""
 
+msgid "{where}: a sound belongs to the scene above it, and no scene comes before this one."
+msgstr "{where}: рядок sound належить до сцени над ним, але перед цим рядком немає жодної сцени."
+
+msgid "{where}: a sound belongs to the scene above it, and the line above is a music or level line."
+msgstr "{where}: рядок sound належить до сцени над ним, а рядок над ним — рядок music або level."
+
+msgid "{where}: sound needs a sound file after it: sound click.wav at 2"
+msgstr "{where}: після sound потрібен звуковий файл: sound click.wav at 2"
+
 msgid "{where}: clip needs a video file after it."
 msgstr "{where}: після clip потрібен відеофайл."
 
@@ -608,8 +617,8 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: card потребує тривалості в секундах: card 3"
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, zoom, music or level, not {word}."
-msgstr "{where}: рядок починається з clip, card, text, zoom, music або level, а не з {word}."
+msgid "{where}: a line starts with clip, card, text, zoom, sound, music or level, not {word}."
+msgstr "{where}: рядок починається з clip, card, text, zoom, sound, music або level, а не з {word}."
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "у сценарії немає сцен. Сцена — це рядок, що починається з clip або card."
@@ -784,6 +793,10 @@ msgstr "{where}: {path} беззвучний від початку до кінц
 msgid "{where}: the music at level {level} would peak above {peak} dB, so it plays at level {reached} instead."
 msgstr "{where}: музика з level {level} мала б піки понад {peak} dB, тому вона грає з level {reached}."
 
+#. translators: {name} is a file name; the times are seconds.
+msgid "{where}: the sound {name} is asked to play at {at}, which is not inside its scene ({scene_start} to {scene_end})."
+msgstr "{where}: звук {name} має пролунати в {at}, а це не в межах його сцени ({scene_start}–{scene_end})."
+
 msgid "music {name}: averages {level} dB; its own average is {mean} dB, so it is turned {change} dB"
 msgstr "music {name}: у середньому {level} dB; власне середнє — {mean} dB, тому гучність змінено на {change} dB"
 
@@ -829,14 +842,17 @@ msgstr "текст"
 msgid "scene {number}: {kind} {name}, {start} to {end}"
 msgstr "сцена {number}: {kind} {name}, з {start} до {end}"
 
+msgid "  sound {name} at {start}"
+msgstr "  sound {name} о {start}"
+
 msgid "making {output}, {seconds} seconds at {size}"
 msgstr "створення {output}, {seconds} с, розмір {size}"
 
 msgid "ffmpeg could not make the film."
 msgstr "ffmpeg не зміг створити фільм."
 
-msgid "the film's sound reaches full scale, so it may be distorted. Turn the music or a clip down to keep it clean."
-msgstr "звук фільму сягає повної шкали, тому він може спотворюватися. Зробіть музику або кліп тихішими, щоб звук лишався чистим."
+msgid "the film's sound reaches full scale, so it may be distorted. Turn the music, a clip or a sound down to keep it clean."
+msgstr "звук фільму сягає повної шкали, тому він може спотворюватися. Зробіть музику, кліп або звук тихішими, щоб звук лишався чистим."
 
 msgid "ffmpeg did not finish making the film in the time allowed for its length, so it was stopped."
 msgstr "ffmpeg не встиг створити фільм за час, відведений на його тривалість, тому його зупинено."

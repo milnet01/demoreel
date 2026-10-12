@@ -595,6 +595,15 @@ msgstr "{where}: クリップに付けられる zoom 行は 1 つだけで、{fi
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr "{where}: text には引用符で囲んだ文字が必要です: text \"Saving a file\""
 
+msgid "{where}: a sound belongs to the scene above it, and no scene comes before this one."
+msgstr "{where}: sound の行はその上にあるシーンに付くものですが、この行より前にシーンがありません。"
+
+msgid "{where}: a sound belongs to the scene above it, and the line above is a music or level line."
+msgstr "{where}: sound の行はその上にあるシーンに付くものですが、上の行は music か level の行です。"
+
+msgid "{where}: sound needs a sound file after it: sound click.wav at 2"
+msgstr "{where}: sound の後に音声ファイルが必要です: sound click.wav at 2"
+
 msgid "{where}: clip needs a video file after it."
 msgstr "{where}: clip の後に動画ファイルが必要です。"
 
@@ -602,8 +611,8 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: card には秒単位の長さが必要です: card 3"
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, zoom, music or level, not {word}."
-msgstr "{where}: 行は clip、card、text、zoom、music、level のどれかで始めます。{word} では始められません。"
+msgid "{where}: a line starts with clip, card, text, zoom, sound, music or level, not {word}."
+msgstr "{where}: 行は clip、card、text、zoom、sound、music、level のどれかで始めます。{word} では始められません。"
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "スクリプトにシーンがありません。シーンとは clip か card で始まる行のことです。"
@@ -772,6 +781,10 @@ msgstr "{where}: {path} は最初から最後まで無音です。"
 msgid "{where}: the music at level {level} would peak above {peak} dB, so it plays at level {reached} instead."
 msgstr "{where}: level {level} では音楽のピークが {peak} dB を超えるため、代わりに level {reached} で再生します。"
 
+#. translators: {name} is a file name; the times are seconds.
+msgid "{where}: the sound {name} is asked to play at {at}, which is not inside its scene ({scene_start} to {scene_end})."
+msgstr "{where}: 音 {name} は {at} に鳴らすよう指定されていますが、これはシーンの範囲 ({scene_start} から {scene_end}) に収まっていません。"
+
 msgid "music {name}: averages {level} dB; its own average is {mean} dB, so it is turned {change} dB"
 msgstr "music {name}: 平均 {level} dB。元の平均は {mean} dB なので、{change} dB 調整します"
 
@@ -817,14 +830,17 @@ msgstr "テキスト"
 msgid "scene {number}: {kind} {name}, {start} to {end}"
 msgstr "シーン {number}: {kind} {name}、{start} から {end}"
 
+msgid "  sound {name} at {start}"
+msgstr "  sound {name}、{start} に"
+
 msgid "making {output}, {seconds} seconds at {size}"
 msgstr "{output} を作成中、{seconds} 秒、{size}"
 
 msgid "ffmpeg could not make the film."
 msgstr "ffmpeg が映像を作成できませんでした。"
 
-msgid "the film's sound reaches full scale, so it may be distorted. Turn the music or a clip down to keep it clean."
-msgstr "映像の音がフルスケールに達しているため、歪むおそれがあります。歪みを避けるには、音楽かクリップの音量を下げてください。"
+msgid "the film's sound reaches full scale, so it may be distorted. Turn the music, a clip or a sound down to keep it clean."
+msgstr "映像の音がフルスケールに達しているため、歪むおそれがあります。歪みを避けるには、音楽、クリップ、または効果音の音量を下げてください。"
 
 msgid "ffmpeg did not finish making the film in the time allowed for its length, so it was stopped."
 msgstr "ffmpeg が映像の長さに見合った時間内に作成を終えなかったため、停止しました。"
