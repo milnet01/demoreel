@@ -586,6 +586,12 @@ msgstr "{where}: после level нужно число децибел: level -4
 msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
 msgstr "{where}: текст относится к сцене над ним, а перед этой строкой нет ни одной сцены."
 
+msgid "{where}: a zoom line belongs to the clip above it, and the line above is not part of a clip."
+msgstr "{where}: строка zoom относится к клипу над ней, а строка над ней не относится к клипу."
+
+msgid "{where}: a clip takes one zoom line, and {first} is already one."
+msgstr "{where}: у клипа может быть одна строка zoom, и {first} уже такая строка."
+
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr "{where}: после text нужны слова в кавычках: text \"Сохранение файла\""
 
@@ -596,8 +602,8 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: после card нужна длительность в секундах: card 3"
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, music or level, not {word}."
-msgstr "{where}: строка начинается с clip, card, text, music или level, а не с {word}."
+msgid "{where}: a line starts with clip, card, text, zoom, music or level, not {word}."
+msgstr "{where}: строка начинается с clip, card, text, zoom, music или level, а не с {word}."
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "в сценарии нет сцен. Сцена — это строка, начинающаяся с clip или card."
@@ -635,6 +641,12 @@ msgstr "рисование строки текста заняло больше {
 
 msgid "this machine cannot draw text on a video: ffmpeg needs its drawtext filter and a font."
 msgstr "этот компьютер не может рисовать текст на видео: ffmpeg нужен фильтр drawtext и шрифт."
+
+msgid "{where}: a zoom's {word} is a percentage of the picture, from 0 to 100, not {value}."
+msgstr "{where}: {word} у zoom — доля изображения в процентах, от 0 до 100, а не {value}."
+
+msgid "{where}: the zoom is asked to run from {start} to {end}, which is not inside its clip ({scene_start} to {scene_end})."
+msgstr "{where}: zoom должен идти с {start} до {end}, а это за пределами его клипа ({scene_start} до {scene_end})."
 
 msgid "{where}: a text is one line of words, and this one is empty."
 msgstr "{where}: текст — это одна строка слов, а эта пуста."
@@ -685,6 +697,15 @@ msgstr "{where}: reveal показывает картинку карточки, 
 
 msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
 msgstr "{where}: background у клипа задаёт цвет вокруг его окна, а у этого клипа окна нет."
+
+msgid "{where}: {word} acts on a clip's window, and this clip has no window."
+msgstr "{where}: {word} действует на окно клипа, а у этого клипа окна нет."
+
+msgid "{where}: push is how much the window grows, in percent, from 0 to {high}, not {value}."
+msgstr "{where}: push — на сколько процентов растёт окно, от 0 до {high}, а не {value}."
+
+msgid "{where}: window {window} grown by push {push} is larger than the room it sits in. Make one of them smaller."
+msgstr "{where}: window {window}, увеличенное на push {push}, больше места, в котором оно стоит. Уменьшите одно из двух."
 
 msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
 msgstr "{where}: window — доля места в процентах, от {low} до {high}, а не {value}."
@@ -765,6 +786,9 @@ msgstr "music {name}: собственный уровень, изменён на
 
 msgid "  level {level} dB from {start} to {end}"
 msgstr "  level {level} dB с {start} до {end}"
+
+msgid "{where}: zoom is how many times larger the picture grows, above {low} and at most {high}, not {value}."
+msgstr "{where}: zoom — во сколько раз увеличивается изображение, больше {low} и не больше {high}, а не {value}."
 
 msgid "-o must end in {ending}, and {name} does not."
 msgstr "-o должен заканчиваться на {ending}, а {name} — нет."

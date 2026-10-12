@@ -4023,7 +4023,7 @@ before packaging. The full editor stays 2.0.0.
   Kind: feature.
   Source: peer-website-session-2026-10-10.
 
-- 📋 [DEMO-0184] **Push in slowly on a scene, or zoom smoothly towards a point between two times.**
+- ✅ [DEMO-0184] **Push in slowly on a scene, or zoom smoothly towards a point between two times.**
   Slipcase trailer: scale with eval=frame for the push-in; zoompan
   after a 2x upscale, so it does not jitter, with smoothstep easing.
   The trailer-sized part of DEMO-0151; crop and rotate stay in 2.0.0.
@@ -4034,6 +4034,13 @@ before packaging. The full editor stays 2.0.0.
   only, not on a full-frame clip. The window grows, or the picture
   inside it zooms toward a point; its shadow follows the window's size
   and place.
+  Shipped 2026-10-12, words approved by the user that day: `push PERCENT`
+  (0 to 20) on a windowed clip line, and a `zoom FACTOR [x] [y] [from]
+  [to]` line under it (above 1, at most 4; x and y in percent, default
+  50; times in the clip's own file). Push scales window and shadow about
+  the window's middle with eval=frame; zoom is a 2x upscale then zoompan
+  with smoothstep easing, staying zoomed after `to`. ci.sh fin_s59 and
+  fin_s60 (13 refusals).
   **Layman:** The camera can drift closer, or glide in on the part of the app that matters.
   Kind: feature.
   Source: peer-website-session-2026-10-10.

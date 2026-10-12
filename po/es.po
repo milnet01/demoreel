@@ -583,6 +583,12 @@ msgstr "{where}: level necesita un número de decibelios después: level -40"
 msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
 msgstr "{where}: un texto pertenece a la escena de encima, y no hay ninguna escena antes de esta."
 
+msgid "{where}: a zoom line belongs to the clip above it, and the line above is not part of a clip."
+msgstr "{where}: una línea zoom pertenece al clip de encima, y la línea de encima no forma parte de un clip."
+
+msgid "{where}: a clip takes one zoom line, and {first} is already one."
+msgstr "{where}: un clip lleva una sola línea zoom, y {first} ya es una."
+
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr "{where}: text necesita sus palabras, entre comillas: text \"Guardar un archivo\""
 
@@ -593,8 +599,8 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: card necesita su duración en segundos: card 3"
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, music or level, not {word}."
-msgstr "{where}: una línea empieza con clip, card, text, music o level, no con {word}."
+msgid "{where}: a line starts with clip, card, text, zoom, music or level, not {word}."
+msgstr "{where}: una línea empieza con clip, card, text, zoom, music o level, no con {word}."
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "el guion no contiene ninguna escena. Una escena es una línea que empieza con clip o card."
@@ -629,6 +635,12 @@ msgstr "dibujar una línea de texto tardó más de {seconds} s."
 
 msgid "this machine cannot draw text on a video: ffmpeg needs its drawtext filter and a font."
 msgstr "este equipo no puede dibujar texto sobre un vídeo: ffmpeg necesita su filtro drawtext y un tipo de letra."
+
+msgid "{where}: a zoom's {word} is a percentage of the picture, from 0 to 100, not {value}."
+msgstr "{where}: el {word} de un zoom es un porcentaje de la imagen, de 0 a 100, no {value}."
+
+msgid "{where}: the zoom is asked to run from {start} to {end}, which is not inside its clip ({scene_start} to {scene_end})."
+msgstr "{where}: se pide que el zoom vaya de {start} a {end}, y eso no está dentro de su clip ({scene_start} a {scene_end})."
 
 msgid "{where}: a text is one line of words, and this one is empty."
 msgstr "{where}: un texto es una línea de palabras, y esta está vacía."
@@ -679,6 +691,15 @@ msgstr "{where}: reveal hace aparecer la imagen de un rótulo, y este rótulo no
 
 msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
 msgstr "{where}: background en un clip colorea el espacio alrededor de su ventana, y este clip no tiene ventana."
+
+msgid "{where}: {word} acts on a clip's window, and this clip has no window."
+msgstr "{where}: {word} actúa sobre la ventana de un clip, y este clip no tiene ventana."
+
+msgid "{where}: push is how much the window grows, in percent, from 0 to {high}, not {value}."
+msgstr "{where}: push es cuánto crece la ventana, en porcentaje, de 0 a {high}, no {value}."
+
+msgid "{where}: window {window} grown by push {push} is larger than the room it sits in. Make one of them smaller."
+msgstr "{where}: window {window} con push {push} es más grande que el espacio donde está. Reduce uno de los dos."
 
 msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
 msgstr "{where}: window es una parte del espacio en porcentaje, de {low} a {high}, no {value}."
@@ -759,6 +780,9 @@ msgstr "music {name}: su propio nivel, ajustado {change} dB"
 
 msgid "  level {level} dB from {start} to {end}"
 msgstr "  level {level} dB de {start} a {end}"
+
+msgid "{where}: zoom is how many times larger the picture grows, above {low} and at most {high}, not {value}."
+msgstr "{where}: zoom es cuántas veces más grande se hace la imagen, más de {low} y como mucho {high}, no {value}."
 
 msgid "-o must end in {ending}, and {name} does not."
 msgstr "-o debe terminar en {ending}, y {name} no termina así."

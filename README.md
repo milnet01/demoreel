@@ -353,6 +353,21 @@ order:
   moving gradient, as on a card. Without it the background is `#101418`. A
   clip with no `window` refuses it. A text with no band takes its colour from
   it, as on a card.
+- `push 4` — the window grows steadily as the clip plays, about its own
+  middle, until it is 4% larger at the end; its shadow grows with it. It is
+  between `0` and `20`, and needs a `window`. The window at its largest must
+  still fit the room, so `window 90` takes at most `push 11`.
+
+**`zoom 2`** on its own line under a clip with a `window`, indented like a
+text, zooms the picture inside the window to twice its size. It is above `1`
+and at most `4`, and a clip takes one zoom line.
+
+- `x 60` and `y 40` name the point it closes in on, in percent across and
+  down the clip's picture. Left out, it is the middle. The view drifts
+  towards the point as it closes in, and never past the picture's edge.
+- `from 3` and `to 5` say when, in the clip's own file, as a text's times
+  do. The zoom starts slowly and slows again as it arrives, and stays zoomed
+  after `to`. Left out, it runs over the whole clip.
 
 A clip's sound fades, cuts and crossfades with its picture.
 

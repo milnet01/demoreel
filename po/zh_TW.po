@@ -580,6 +580,12 @@ msgstr "{where}：level 後面需要一個分貝數：level -40"
 msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
 msgstr "{where}：文字屬於它上方的場景，但這一行之前沒有任何場景。"
 
+msgid "{where}: a zoom line belongs to the clip above it, and the line above is not part of a clip."
+msgstr "{where}：zoom 行屬於它上方的片段，但上一行不屬於任何片段。"
+
+msgid "{where}: a clip takes one zoom line, and {first} is already one."
+msgstr "{where}：一個片段只能有一行 zoom，而 {first} 已經是一行。"
+
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr "{where}：text 需要用引號括起來的文字：text \"Saving a file\""
 
@@ -590,8 +596,8 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}：card 需要以秒為單位的長度：card 3"
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, music or level, not {word}."
-msgstr "{where}：每一行要以 clip、card、text、music 或 level 開頭，而不是 {word}。"
+msgid "{where}: a line starts with clip, card, text, zoom, music or level, not {word}."
+msgstr "{where}：每一行要以 clip、card、text、zoom、music 或 level 開頭，而不是 {word}。"
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "腳本中沒有任何場景。場景是以 clip 或 card 開頭的一行。"
@@ -623,6 +629,12 @@ msgstr "繪製一行文字花了超過 {seconds}s。"
 
 msgid "this machine cannot draw text on a video: ffmpeg needs its drawtext filter and a font."
 msgstr "這台電腦無法在影片上繪製文字：ffmpeg 需要 drawtext 濾鏡和一種字型。"
+
+msgid "{where}: a zoom's {word} is a percentage of the picture, from 0 to 100, not {value}."
+msgstr "{where}：zoom 的 {word} 是畫面的百分比，應介於 0 到 100 之間，而不是 {value}。"
+
+msgid "{where}: the zoom is asked to run from {start} to {end}, which is not inside its clip ({scene_start} to {scene_end})."
+msgstr "{where}：zoom 被要求從 {start} 進行到 {end}，但這不在它的片段之內（{scene_start} 到 {scene_end}）。"
 
 msgid "{where}: a text is one line of words, and this one is empty."
 msgstr "{where}：文字應為一行字，但這一個是空的。"
@@ -673,6 +685,15 @@ msgstr "{where}：reveal 用來讓卡片的圖片出現，而這張卡片沒有�
 
 msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
 msgstr "{where}：片段的 background 用來為其視窗周圍的區域上色，而這個片段沒有視窗。"
+
+msgid "{where}: {word} acts on a clip's window, and this clip has no window."
+msgstr "{where}：{word} 作用於片段的視窗，而這個片段沒有視窗。"
+
+msgid "{where}: push is how much the window grows, in percent, from 0 to {high}, not {value}."
+msgstr "{where}：push 是視窗放大的百分比，應介於 0 到 {high} 之間，而不是 {value}。"
+
+msgid "{where}: window {window} grown by push {push} is larger than the room it sits in. Make one of them smaller."
+msgstr "{where}：window {window} 經 push {push} 放大後，比它所在的區域還大。請把其中一個調小。"
 
 msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
 msgstr "{where}：window 是所佔區域的百分比，應介於 {low} 到 {high} 之間，而不是 {value}。"
@@ -753,6 +774,9 @@ msgstr "music {name}：保持原有音量，調整 {change} dB"
 
 msgid "  level {level} dB from {start} to {end}"
 msgstr "  level {level} dB，{start} 到 {end}"
+
+msgid "{where}: zoom is how many times larger the picture grows, above {low} and at most {high}, not {value}."
+msgstr "{where}：zoom 是畫面放大的倍數，應大於 {low} 且不超過 {high}，而不是 {value}。"
 
 msgid "-o must end in {ending}, and {name} does not."
 msgstr "-o 必須以 {ending} 結尾，但 {name} 不是。"

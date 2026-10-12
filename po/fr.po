@@ -583,6 +583,12 @@ msgstr "{where} : level doit être suivi d'un nombre de décibels : level -40"
 msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
 msgstr "{where} : un texte se rattache à la scène qui le précède, et aucune scène ne vient avant cette ligne."
 
+msgid "{where}: a zoom line belongs to the clip above it, and the line above is not part of a clip."
+msgstr "{where} : une ligne zoom se rattache au clip qui la précède, et la ligne précédente ne fait pas partie d'un clip."
+
+msgid "{where}: a clip takes one zoom line, and {first} is already one."
+msgstr "{where} : un clip prend une seule ligne zoom, et {first} en est déjà une."
+
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr "{where} : text a besoin de ses mots, entre guillemets : text \"Enregistrer un fichier\""
 
@@ -593,8 +599,8 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where} : card a besoin de sa durée en secondes : card 3"
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, music or level, not {word}."
-msgstr "{where} : une ligne commence par clip, card, text, music ou level, et non par {word}."
+msgid "{where}: a line starts with clip, card, text, zoom, music or level, not {word}."
+msgstr "{where} : une ligne commence par clip, card, text, zoom, music ou level, et non par {word}."
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "le script ne contient aucune scène. Une scène est une ligne qui commence par clip ou card."
@@ -629,6 +635,12 @@ msgstr "le dessin d'une ligne de texte a pris plus de {seconds} s."
 
 msgid "this machine cannot draw text on a video: ffmpeg needs its drawtext filter and a font."
 msgstr "cette machine ne peut pas dessiner de texte sur une vidéo : ffmpeg a besoin de son filtre drawtext et d'une police."
+
+msgid "{where}: a zoom's {word} is a percentage of the picture, from 0 to 100, not {value}."
+msgstr "{where} : le {word} d'un zoom est un pourcentage de l'image, de 0 à 100, et non {value}."
+
+msgid "{where}: the zoom is asked to run from {start} to {end}, which is not inside its clip ({scene_start} to {scene_end})."
+msgstr "{where} : le zoom doit aller de {start} à {end}, ce qui n'est pas dans son clip ({scene_start} à {scene_end})."
 
 msgid "{where}: a text is one line of words, and this one is empty."
 msgstr "{where} : un texte est une ligne de mots, et celui-ci est vide."
@@ -679,6 +691,15 @@ msgstr "{where} : reveal fait apparaître l'image d'un carton, et ce carton n'en
 
 msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
 msgstr "{where} : background sur un clip colore l'espace autour de sa fenêtre, et ce clip n'a pas de fenêtre."
+
+msgid "{where}: {word} acts on a clip's window, and this clip has no window."
+msgstr "{where} : {word} agit sur la fenêtre d'un clip, et ce clip n'a pas de fenêtre."
+
+msgid "{where}: push is how much the window grows, in percent, from 0 to {high}, not {value}."
+msgstr "{where} : push est l'agrandissement de la fenêtre, en pourcentage, de 0 à {high}, et non {value}."
+
+msgid "{where}: window {window} grown by push {push} is larger than the room it sits in. Make one of them smaller."
+msgstr "{where} : window {window} agrandie de push {push} dépasse l'espace où elle se trouve. Réduisez l'une des deux valeurs."
 
 msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
 msgstr "{where} : window est une part de l'espace en pourcentage, de {low} à {high}, et non {value}."
@@ -759,6 +780,9 @@ msgstr "music {name} : son propre niveau, ajusté de {change} dB"
 
 msgid "  level {level} dB from {start} to {end}"
 msgstr "  level {level} dB de {start} à {end}"
+
+msgid "{where}: zoom is how many times larger the picture grows, above {low} and at most {high}, not {value}."
+msgstr "{where} : zoom est le nombre de fois que l'image grandit, plus de {low} et au plus {high}, et non {value}."
 
 msgid "-o must end in {ending}, and {name} does not."
 msgstr "-o doit se terminer par {ending}, ce qui n'est pas le cas de {name}."

@@ -583,6 +583,12 @@ msgstr "{where}: אחרי level צריך לבוא מספר דציבלים: level
 msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
 msgstr "{where}: טקסט שייך לסצנה שמעליו, ואין סצנה לפני הטקסט הזה."
 
+msgid "{where}: a zoom line belongs to the clip above it, and the line above is not part of a clip."
+msgstr "{where}: שורת zoom שייכת לקטע שמעליה, והשורה שמעליה אינה חלק מקטע."
+
+msgid "{where}: a clip takes one zoom line, and {first} is already one."
+msgstr "{where}: לקטע יש שורת zoom אחת, ו־{first} היא כבר שורה כזו."
+
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr "{where}: אחרי text צריכות לבוא המילים, במירכאות: text \"שמירת קובץ\""
 
@@ -593,8 +599,8 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: אחרי card צריך לבוא האורך בשניות: card 3"
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, music or level, not {word}."
-msgstr "{where}: שורה מתחילה ב־clip, card, text, music או level, ולא ב־{word}."
+msgid "{where}: a line starts with clip, card, text, zoom, music or level, not {word}."
+msgstr "{where}: שורה מתחילה ב־clip, card, text, zoom, music או level, ולא ב־{word}."
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "אין סצנות בתסריט. סצנה היא שורה שמתחילה ב־clip או ב־card."
@@ -629,6 +635,12 @@ msgstr "ציור שורת טקסט ארך יותר מ־{seconds} שניות."
 
 msgid "this machine cannot draw text on a video: ffmpeg needs its drawtext filter and a font."
 msgstr "המחשב הזה לא יכול לצייר טקסט על סרטון: ffmpeg צריך את מסנן ה־drawtext שלו וגופן."
+
+msgid "{where}: a zoom's {word} is a percentage of the picture, from 0 to 100, not {value}."
+msgstr "{where}: ה־{word} של zoom הוא אחוז מהתמונה, מ־0 עד 100, ולא {value}."
+
+msgid "{where}: the zoom is asked to run from {start} to {end}, which is not inside its clip ({scene_start} to {scene_end})."
+msgstr "{where}: ה־zoom אמור לרוץ מ־{start} עד {end}, וזה לא בתוך הקטע שלו ({scene_start} עד {scene_end})."
 
 msgid "{where}: a text is one line of words, and this one is empty."
 msgstr "{where}: טקסט הוא שורה אחת של מילים, והטקסט הזה ריק."
@@ -679,6 +691,15 @@ msgstr "{where}: reveal מכניס את התמונה של כרטיס, ולכרט
 
 msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
 msgstr "{where}: background בקטע צובע את השטח סביב החלון שלו, ולקטע הזה אין חלון."
+
+msgid "{where}: {word} acts on a clip's window, and this clip has no window."
+msgstr "{where}: {word} פועל על החלון של קטע, ולקטע הזה אין חלון."
+
+msgid "{where}: push is how much the window grows, in percent, from 0 to {high}, not {value}."
+msgstr "{where}: push הוא בכמה אחוזים החלון גדל, מ־0 עד {high}, ולא {value}."
+
+msgid "{where}: window {window} grown by push {push} is larger than the room it sits in. Make one of them smaller."
+msgstr "{where}: window {window} שגדל ב־push {push} גדול מהשטח שבו הוא נמצא. הקטינו אחד מהם."
 
 msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
 msgstr "{where}: window הוא חלק מהשטח באחוזים, מ־{low} עד {high}, ולא {value}."
@@ -759,6 +780,9 @@ msgstr "music {name}: העוצמה שלה עצמה, משונה ב־{change} dB"
 
 msgid "  level {level} dB from {start} to {end}"
 msgstr "  level {level} dB מ־{start} עד {end}"
+
+msgid "{where}: zoom is how many times larger the picture grows, above {low} and at most {high}, not {value}."
+msgstr "{where}: zoom הוא פי כמה התמונה גדלה, יותר מ־{low} ולכל היותר {high}, ולא {value}."
 
 msgid "-o must end in {ending}, and {name} does not."
 msgstr "-o חייב להסתיים ב־{ending}, ו־{name} לא מסתיים כך."

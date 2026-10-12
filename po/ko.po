@@ -580,6 +580,12 @@ msgstr "{where}: level 뒤에는 데시벨 숫자가 필요합니다: level -40"
 msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
 msgstr "{where}: 텍스트는 바로 위 장면에 속하는데, 이 줄 앞에 장면이 없습니다."
 
+msgid "{where}: a zoom line belongs to the clip above it, and the line above is not part of a clip."
+msgstr "{where}: zoom 줄은 바로 위 클립에 속하는데, 위 줄은 클립의 일부가 아닙니다."
+
+msgid "{where}: a clip takes one zoom line, and {first} is already one."
+msgstr "{where}: 클립에는 zoom 줄을 하나만 쓸 수 있는데, {first}이(가) 이미 zoom 줄입니다."
+
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr "{where}: text에는 따옴표로 묶은 문구가 필요합니다: text \"파일 저장하기\""
 
@@ -590,8 +596,8 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: card에는 초 단위 길이가 필요합니다: card 3"
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, music or level, not {word}."
-msgstr "{where}: 줄은 {word}이(가) 아니라 clip, card, text, music 또는 level로 시작해야 합니다."
+msgid "{where}: a line starts with clip, card, text, zoom, music or level, not {word}."
+msgstr "{where}: 줄은 {word}이(가) 아니라 clip, card, text, zoom, music 또는 level로 시작해야 합니다."
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "스크립트에 장면이 없습니다. 장면은 clip이나 card로 시작하는 줄입니다."
@@ -623,6 +629,12 @@ msgstr "텍스트 한 줄을 그리는 데 {seconds}초 넘게 걸렸습니다."
 
 msgid "this machine cannot draw text on a video: ffmpeg needs its drawtext filter and a font."
 msgstr "이 컴퓨터는 동영상에 텍스트를 그릴 수 없습니다: ffmpeg에 drawtext 필터와 글꼴이 필요합니다."
+
+msgid "{where}: a zoom's {word} is a percentage of the picture, from 0 to 100, not {value}."
+msgstr "{where}: zoom의 {word}는 그림에서 차지하는 비율(퍼센트)로, 0에서 100 사이입니다. {value}은(는) 안 됩니다."
+
+msgid "{where}: the zoom is asked to run from {start} to {end}, which is not inside its clip ({scene_start} to {scene_end})."
+msgstr "{where}: zoom을 {start}부터 {end}까지 하라고 했지만, 이는 클립 범위({scene_start}부터 {scene_end}까지) 밖입니다."
 
 msgid "{where}: a text is one line of words, and this one is empty."
 msgstr "{where}: 텍스트는 한 줄이어야 하는데, 이것은 비어 있습니다."
@@ -673,6 +685,15 @@ msgstr "{where}: reveal은 card의 그림을 나타나게 하는데, 이 card에
 
 msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
 msgstr "{where}: 클립의 background는 창 주위 공간의 색을 정하는데, 이 클립에는 창이 없습니다."
+
+msgid "{where}: {word} acts on a clip's window, and this clip has no window."
+msgstr "{where}: {word}는 클립의 창에 작용하는데, 이 클립에는 창이 없습니다."
+
+msgid "{where}: push is how much the window grows, in percent, from 0 to {high}, not {value}."
+msgstr "{where}: push는 창이 커지는 비율(퍼센트)로, 0에서 {high} 사이입니다. {value}은(는) 안 됩니다."
+
+msgid "{where}: window {window} grown by push {push} is larger than the room it sits in. Make one of them smaller."
+msgstr "{where}: window {window}을(를) push {push}만큼 키우면 놓인 공간보다 커집니다. 둘 중 하나를 줄이세요."
 
 msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
 msgstr "{where}: window는 공간에서 차지하는 비율(퍼센트)로, {low}에서 {high} 사이입니다. {value}은(는) 안 됩니다."
@@ -753,6 +774,9 @@ msgstr "music {name}: 원래 음량, {change} dB 조정"
 
 msgid "  level {level} dB from {start} to {end}"
 msgstr "  level {level} dB, {start}부터 {end}까지"
+
+msgid "{where}: zoom is how many times larger the picture grows, above {low} and at most {high}, not {value}."
+msgstr "{where}: zoom은 그림을 몇 배로 키울지로, {low}보다 크고 {high} 이하입니다. {value}은(는) 안 됩니다."
 
 msgid "-o must end in {ending}, and {name} does not."
 msgstr "-o는 {ending}(으)로 끝나야 하는데, {name}은(는) 그렇지 않습니다."

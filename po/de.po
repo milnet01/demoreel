@@ -583,6 +583,12 @@ msgstr "{where}: nach level muss eine Anzahl Dezibel folgen: level -40"
 msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
 msgstr "{where}: ein Text gehört zur Szene darüber, und davor steht keine Szene."
 
+msgid "{where}: a zoom line belongs to the clip above it, and the line above is not part of a clip."
+msgstr "{where}: eine zoom-Zeile gehört zum Clip darüber, und die Zeile darüber gehört zu keinem Clip."
+
+msgid "{where}: a clip takes one zoom line, and {first} is already one."
+msgstr "{where}: ein Clip nimmt eine zoom-Zeile, und {first} ist schon eine."
+
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr "{where}: text braucht seine Wörter, in Anführungszeichen: text \"Datei speichern\""
 
@@ -593,8 +599,8 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: card braucht ihre Länge in Sekunden: card 3"
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, music or level, not {word}."
-msgstr "{where}: eine Zeile beginnt mit clip, card, text, music oder level, nicht mit {word}."
+msgid "{where}: a line starts with clip, card, text, zoom, music or level, not {word}."
+msgstr "{where}: eine Zeile beginnt mit clip, card, text, zoom, music oder level, nicht mit {word}."
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "das Skript enthält keine Szenen. Eine Szene ist eine Zeile, die mit clip oder card beginnt."
@@ -629,6 +635,12 @@ msgstr "das Zeichnen einer Textzeile dauerte länger als {seconds}s."
 
 msgid "this machine cannot draw text on a video: ffmpeg needs its drawtext filter and a font."
 msgstr "dieser Rechner kann keinen Text auf ein Video zeichnen: ffmpeg braucht dafür seinen drawtext-Filter und eine Schrift."
+
+msgid "{where}: a zoom's {word} is a percentage of the picture, from 0 to 100, not {value}."
+msgstr "{where}: {word} eines Zooms ist ein Anteil des Bildes in Prozent, von 0 bis 100, nicht {value}."
+
+msgid "{where}: the zoom is asked to run from {start} to {end}, which is not inside its clip ({scene_start} to {scene_end})."
+msgstr "{where}: der Zoom soll von {start} bis {end} laufen, und das liegt nicht in seinem Clip ({scene_start} bis {scene_end})."
 
 msgid "{where}: a text is one line of words, and this one is empty."
 msgstr "{where}: ein Text ist eine Zeile mit Wörtern, und dieser ist leer."
@@ -679,6 +691,15 @@ msgstr "{where}: reveal blendet das Bild einer Karte ein, und diese Karte hat ke
 
 msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
 msgstr "{where}: background färbt bei einem Clip den Raum um sein Fenster, und dieser Clip hat kein Fenster."
+
+msgid "{where}: {word} acts on a clip's window, and this clip has no window."
+msgstr "{where}: {word} wirkt auf das Fenster eines Clips, und dieser Clip hat kein Fenster."
+
+msgid "{where}: push is how much the window grows, in percent, from 0 to {high}, not {value}."
+msgstr "{where}: push ist, um wie viel Prozent das Fenster wächst, von 0 bis {high}, nicht {value}."
+
+msgid "{where}: window {window} grown by push {push} is larger than the room it sits in. Make one of them smaller."
+msgstr "{where}: window {window}, gewachsen um push {push}, ist größer als der Raum, in dem es sitzt. Mach einen der beiden Werte kleiner."
 
 msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
 msgstr "{where}: window ist ein Anteil des Raums in Prozent, von {low} bis {high}, nicht {value}."
@@ -759,6 +780,9 @@ msgstr "music {name}: ihr eigener Pegel, um {change} dB geregelt"
 
 msgid "  level {level} dB from {start} to {end}"
 msgstr "  level {level} dB von {start} bis {end}"
+
+msgid "{where}: zoom is how many times larger the picture grows, above {low} and at most {high}, not {value}."
+msgstr "{where}: zoom ist, wie viel Mal größer das Bild wird, über {low} und höchstens {high}, nicht {value}."
 
 msgid "-o must end in {ending}, and {name} does not."
 msgstr "-o muss auf {ending} enden, und {name} tut das nicht."

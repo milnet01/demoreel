@@ -2816,10 +2816,11 @@ def frame_at(moment, step):
 SCENE_WORDS = {
     "clip": ("from", "to", "fade-in", "fade-out", "fade-at", "fade-length",
              "crossfade", "sound", "volume", "speed", "hold", "window",
-             "background"),
+             "background", "push"),
     "card": ("background", "fade-in", "fade-out", "crossfade", "reveal"),
     "text": ("from", "to", "size", "font", "colour", "outline", "shadow",
              "fade-in", "fade-out", "band", "at"),
+    "zoom": ("x", "y", "from", "to"),
     "music": ("level", "normalise", "fade-in", "fade-out"),
     "level": ("from", "to", "ramp"),
 }
@@ -2878,6 +2879,8 @@ class Scene:
         self.reveal = 0.0       # a card: seconds its picture takes to arrive
         self.window = None      # a clip: its window's share of the room, or None
         self.box = None         # a windowed clip: (x, y, w, h) of its window
+        self.push = 0.0         # a windowed clip: % its window grows over the scene
+        self.zoom = None        # a windowed clip: its zoom line, a dict, or None
 
 
 # The film's sound: every stream is made this before it is joined or mixed.
@@ -2984,7 +2987,7 @@ def script_words(target, words, kind, where):
             setattr(target, word, script_on_off(value, where, word))
         elif word in ("volume", "level"):
             setattr(target, word, script_decibels(value, where, word))
-        elif kind == "level":
+        elif kind in ("level", "zoom"):
             target[names.get(word, word)] = script_number(value, where, word)
         elif word == "fade-at":
             target.fade_at.append(script_number(value, where, word))
@@ -3001,7 +3004,8 @@ def parse_script(text):
     """Read an `edit` script into scenes, or die naming the line.
 
     One scene a line, `clip FILE ...` or `card SECONDS [PICTURE] ...`; a
-    `text "WORDS" ...` line belongs to the scene above it. A line is split as
+    `text "WORDS" ...` line belongs to the scene above it, and a `zoom FACTOR
+    ...` line to the clip above it. A line is split as
     a shell splits one, except that `#` starts a comment only at the start of
     a line: a colour is written `#101418`.
 
@@ -3020,7 +3024,7 @@ def parse_script(text):
             die(tr("{where} cannot be read: {reason}.", where=where, reason=exc)
                 + f"\n  {line}")
         verb, rest = words[0], words[1:]
-        if verb == "text" and above in ("music", "level"):
+        if verb in ("text", "zoom") and above in ("music", "level"):
             die(tr("{where}: a text belongs to the scene above it, and the line "
                    "above is a music or level line.", where=where))
         if verb == "music":
@@ -3052,6 +3056,23 @@ def parse_script(text):
             entry = {"words": rest[0], "where": where}
             script_words(entry, rest[1:], "text", where)
             scenes[-1].texts.append(entry)
+        elif verb == "zoom":
+            if not scenes or scenes[-1].kind != "clip" or above in ("music", "level"):
+                # translators: zoom is an edit-script word and stays in English.
+                die(tr("{where}: a zoom line belongs to the clip above it, and the "
+                       "line above is not part of a clip.", where=where))
+            if scenes[-1].zoom is not None:
+                die(tr("{where}: a clip takes one zoom line, and {first} is already "
+                       "one.", where=where, first=scenes[-1].zoom["where"]))
+            try:
+                factor = float(rest[0]) if rest else math.nan
+            except ValueError:
+                factor = math.nan
+            if not ZOOM_LOW < factor <= ZOOM_HIGH:
+                refuse_zoom(where, repr(rest[0]) if rest else "''")
+            entry = {"factor": factor, "where": where}
+            script_words(entry, rest[1:], "zoom", where)
+            scenes[-1].zoom = entry
         elif verb == "clip":
             if not rest:
                 die(tr("{where}: clip needs a video file after it.", where=where))
@@ -3072,8 +3093,8 @@ def parse_script(text):
             scenes.append(scene)
         else:
             # translators: {word} is the first word of the line, in quotes.
-            die(tr("{where}: a line starts with clip, card, text, music or level, "
-                   "not {word}.", where=where, word=repr(verb)) + f"\n  {line}")
+            die(tr("{where}: a line starts with clip, card, text, zoom, music or "
+                   "level, not {word}.", where=where, word=repr(verb)) + f"\n  {line}")
         above = verb if verb != "text" else above
     if not scenes:
         die(tr("the script has no scenes in it. A scene is a line starting with "
@@ -3234,6 +3255,31 @@ def tempo_filters(speed):
     return [f"atempo={speed:.9g}"]
 
 
+def check_zoom(scene, length):
+    """Check a clip's zoom line and turn its times into times from the
+    scene's start. Left out, it zooms over the whole clip."""
+    zoom, where = scene.zoom, scene.zoom["where"]
+    for word in ("x", "y"):
+        if not 0 <= zoom.get(word, 50) <= 100:
+            # translators: {word} is x or y, an edit-script word that stays in English.
+            die(tr("{where}: a zoom's {word} is a percentage of the picture, from "
+                   "0 to 100, not {value}.", where=where, word=word,
+                   value=f"{zoom[word]:g}"))
+    played = length - scene.hold
+    begin = scene_time(scene, zoom.get("start", scene.start))
+    if -TIME_SLACK <= begin < 0:
+        begin = 0.0
+    finish = scene_time(scene, zoom["end"]) if "end" in zoom else played
+    if begin < 0 or finish > played + TIME_SLACK or begin >= finish:
+        die(tr("{where}: the zoom is asked to run from {start} to {end}, which "
+               "is not inside its clip ({scene_start} to {scene_end}).",
+               where=where, start=f"{zoom.get('start', scene.start):g}",
+               end=f"{zoom.get('end', scene.start + played * scene.speed):g}",
+               scene_start=f"{scene.start:g}",
+               scene_end=f"{scene.start + played * scene.speed:.3f}"))
+    zoom["begin"], zoom["finish"] = begin, min(finish, played)
+
+
 def check_texts(scene, length, width, height, workdir):
     """Check a scene's texts and turn their times into times from its start.
 
@@ -3360,6 +3406,22 @@ def check_scene(scene, width, height, rate, workdir):
             refuse_window(where, f"{scene.window:g}")
         if scene.window is not None:
             scene.background = scene.background or CARD_BACKGROUND
+        for word, given in (("push", scene.push), ("zoom", scene.zoom)):
+            if scene.window is None and given:
+                # translators: {word} is push or zoom, and window an edit-script word;
+                # both stay in English.
+                die(tr("{where}: {word} acts on a clip's window, and this clip has "
+                       "no window.", where=where, word=word))
+        if not 0 <= scene.push <= PUSH_HIGH:
+            # translators: push is an edit-script word and stays in English.
+            die(tr("{where}: push is how much the window grows, in percent, from "
+                   "0 to {high}, not {value}.", where=where, high=PUSH_HIGH,
+                   value=f"{scene.push:g}"))
+        if scene.push and scene.window * (1 + scene.push / 100) > 100 + 1e-9:
+            # translators: window and push are edit-script words and stay in English.
+            die(tr("{where}: window {window} grown by push {push} is larger than "
+                   "the room it sits in. Make one of them smaller.", where=where,
+                   window=f"{scene.window:g}", push=f"{scene.push:g}"))
         if scene.window is None and abs(info["width"] * height - info["height"] * width) \
                 > 0.01 * info["height"] * width:
             die(tr("{where}: {path} is {size}, a different shape from the film's "
@@ -3423,6 +3485,8 @@ def check_scene(scene, width, height, rate, workdir):
                "{seconds} long.", where=where,
                fades=f"{scene.fade_in + scene.fade_out:g}", seconds=f"{length:.3f}"))
     check_texts(scene, length, width, height, workdir)
+    if scene.zoom is not None:
+        check_zoom(scene, length)
     if scene.kind == "card" and scene.path is not None \
             and picture_room(scene, width, height)[2] < 2:
         die(tr("{where}: its texts leave no room for the picture between them. "
@@ -3848,6 +3912,21 @@ WINDOW_DROP = 0.012
 WINDOW_SHADOW = 0.75
 
 
+# How far a window may grow over its scene, in percent (DEMO-0184; the
+# Slipcase trailer pushed in 3.5% on a clip and 6% on a picture), and how many
+# times larger a zoom may make the picture.
+PUSH_HIGH = 20
+ZOOM_LOW = 1
+ZOOM_HIGH = 4
+
+
+def refuse_zoom(where, value):
+    # translators: zoom is an edit-script word and stays in English.
+    die(tr("{where}: zoom is how many times larger the picture grows, above "
+           "{low} and at most {high}, not {value}.", where=where, low=ZOOM_LOW,
+           high=ZOOM_HIGH, value=value))
+
+
 def refuse_window(where, value):
     # translators: window is an edit-script word and stays in English.
     die(tr("{where}: window is a share of the room in percent, from {low} to "
@@ -3894,19 +3973,46 @@ def window_graph(scene, length, number, first_input, pts, rest, rate):
     sigma, drop = WINDOW_BLUR * h, round(WINDOW_DROP * h)
     pad = math.ceil(3 * sigma) + drop
     n = number
+    # A push grows the window and its shadow together, about the window's
+    # middle, from their size to push% more as the clip plays (DEMO-0184).
+    grow = ""
+    if scene.push:
+        k = f"(1+{scene.push / 100:.6g}*min(n,{clip_frames})/{clip_frames})"
+        grow = f",scale=w='trunc(iw*{k}/2)*2':h='trunc(ih*{k}/2)*2':eval=frame"
+    cx, cy = x + w // 2, y + h // 2
+    centre = f"x='{cx}-w/2':y='{cy}-h/2'"
     return [
-        f"[{first_input}:v]setpts={pts},fps={fps},scale={w}:{h},setsar=1,"
-        f"format=rgba,trim=end_frame={clip_frames}[c{n}]",
+        f"[{first_input}:v]setpts={pts},fps={fps},{zoom_filters(scene, w, h, rate)},"
+        f"setsar=1,format=rgba,trim=end_frame={clip_frames}[c{n}]",
         f"color=c=white:s={w}x{h}:{one},format=gray,"
         f"geq=lum='255*{rounded(0, 0, w, h, r)}',"
         f"loop=loop=-1:size=1,trim=end_frame={frames}[m{n}]",
-        f"[c{n}][m{n}]alphamerge[w{n}]",
+        f"[c{n}][m{n}]alphamerge{grow}[w{n}]",
         f"color=c=black:s={w + 2 * pad}x{h + 2 * pad}:{one},format=rgba,"
         f"geq=r=0:g=0:b=0:a='{round(255 * WINDOW_SHADOW)}*"
         f"{rounded(pad, pad + drop, w, h, r)}',gblur=sigma={sigma:.3f},"
-        f"loop=loop=-1:size=1,trim=end_frame={frames}[s{n}]",
-        f"[{first_input + 1}:v][s{n}]overlay=x={x - pad}:y={y - pad}[b{n}]",
-        f"[b{n}][w{n}]overlay=x={x}:y={y}:format=auto,{rest}"]
+        f"loop=loop=-1:size=1,trim=end_frame={frames}{grow}[s{n}]",
+        f"[{first_input + 1}:v][s{n}]overlay={centre}[b{n}]",
+        f"[b{n}][w{n}]overlay={centre}:format=auto,{rest}"]
+
+
+def zoom_filters(scene, w, h, rate):
+    """Scale a windowed clip to its window, zooming as its zoom line says:
+    the view closes in on a point of the picture and drifts towards it,
+    never past the picture's edge, eased in and out (smoothstep) between two
+    times, and stays there. The
+    clip is first made twice the window's size, so the view moves by half
+    pixels and does not jitter (DEMO-0184, after the Slipcase trailer)."""
+    zoom = scene.zoom
+    if zoom is None:
+        return f"scale={w}:{h}"
+    begin, finish = zoom["begin"], zoom["finish"]
+    p = f"clip((on/{rate:.9g}-{begin:.6f})/{finish - begin:.6f},0,1)"
+    z = f"1+{zoom['factor'] - 1:.6g}*{p}*{p}*(3-2*{p})"
+    px, py = 2 * w * zoom.get("x", 50) / 100, 2 * h * zoom.get("y", 50) / 100
+    return (f"scale={2 * w}:{2 * h},zoompan=z='{z}':d=1:fps={rate_text(rate)}:"
+            f"s={w}x{h}:x='max(0,min(iw-iw/zoom,{px:.3f}-iw/zoom/2))':"
+            f"y='max(0,min(ih-ih/zoom,{py:.3f}-ih/zoom/2))'")
 
 
 # A revealed picture starts at this share of its size (DEMO-0185, after the

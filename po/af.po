@@ -583,6 +583,12 @@ msgstr "{where}: level het 'n aantal desibel daarna nodig: level -40"
 msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
 msgstr "{where}: 'n teks behoort aan die toneel daarbo, en geen toneel kom voor hierdie een nie."
 
+msgid "{where}: a zoom line belongs to the clip above it, and the line above is not part of a clip."
+msgstr "{where}: 'n zoom-reël behoort aan die snit daarbo, en die reël daarbo is nie deel van 'n snit nie."
+
+msgid "{where}: a clip takes one zoom line, and {first} is already one."
+msgstr "{where}: 'n snit neem een zoom-reël, en {first} is reeds een."
+
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr "{where}: text het sy woorde nodig, tussen aanhalingstekens: text \"Stoor 'n lêer\""
 
@@ -593,8 +599,8 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: card het sy lengte in sekondes nodig: card 3"
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, music or level, not {word}."
-msgstr "{where}: 'n reël begin met clip, card, text, music of level, nie {word} nie."
+msgid "{where}: a line starts with clip, card, text, zoom, music or level, not {word}."
+msgstr "{where}: 'n reël begin met clip, card, text, zoom, music of level, nie {word} nie."
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "die skrip het geen tonele nie. 'n Toneel is 'n reël wat met clip of card begin."
@@ -629,6 +635,12 @@ msgstr "om 'n reël teks te teken, het langer as {seconds}s geduur."
 
 msgid "this machine cannot draw text on a video: ffmpeg needs its drawtext filter and a font."
 msgstr "hierdie masjien kan nie teks op 'n video teken nie: ffmpeg het sy drawtext-filter en 'n lettertipe nodig."
+
+msgid "{where}: a zoom's {word} is a percentage of the picture, from 0 to 100, not {value}."
+msgstr "{where}: 'n zoom se {word} is 'n persentasie van die beeld, van 0 tot 100, nie {value} nie."
+
+msgid "{where}: the zoom is asked to run from {start} to {end}, which is not inside its clip ({scene_start} to {scene_end})."
+msgstr "{where}: die zoom moet van {start} tot {end} loop, wat nie binne sy snit ({scene_start} tot {scene_end}) is nie."
 
 msgid "{where}: a text is one line of words, and this one is empty."
 msgstr "{where}: 'n teks is een reël woorde, en hierdie een is leeg."
@@ -679,6 +691,15 @@ msgstr "{where}: reveal bring 'n kaart se prent in, en hierdie kaart het geen ni
 
 msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
 msgstr "{where}: background kleur op 'n snit die ruimte om sy venster, en hierdie snit het geen venster nie."
+
+msgid "{where}: {word} acts on a clip's window, and this clip has no window."
+msgstr "{where}: {word} werk op 'n snit se venster, en hierdie snit het geen venster nie."
+
+msgid "{where}: push is how much the window grows, in percent, from 0 to {high}, not {value}."
+msgstr "{where}: push is hoeveel die venster groei, in persent, van 0 tot {high}, nie {value} nie."
+
+msgid "{where}: window {window} grown by push {push} is larger than the room it sits in. Make one of them smaller."
+msgstr "{where}: window {window}, gegroei met push {push}, is groter as die ruimte waarin dit staan. Maak een van die twee kleiner."
 
 msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
 msgstr "{where}: window is 'n deel van die ruimte in persent, van {low} tot {high}, nie {value} nie."
@@ -759,6 +780,9 @@ msgstr "music {name}: sy eie vlak, {change} dB verstel"
 
 msgid "  level {level} dB from {start} to {end}"
 msgstr "  level {level} dB van {start} tot {end}"
+
+msgid "{where}: zoom is how many times larger the picture grows, above {low} and at most {high}, not {value}."
+msgstr "{where}: zoom is hoeveel keer groter die beeld word, meer as {low} en hoogstens {high}, nie {value} nie."
 
 msgid "-o must end in {ending}, and {name} does not."
 msgstr "-o moet op {ending} eindig, en {name} doen dit nie."

@@ -586,6 +586,12 @@ msgstr "{where}: після level потрібна кількість дециб
 msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
 msgstr "{where}: текст належить до сцени над ним, але перед цим рядком немає жодної сцени."
 
+msgid "{where}: a zoom line belongs to the clip above it, and the line above is not part of a clip."
+msgstr "{where}: рядок zoom належить до кліпу над ним, а рядок над ним не належить до кліпу."
+
+msgid "{where}: a clip takes one zoom line, and {first} is already one."
+msgstr "{where}: кліп може мати один рядок zoom, і {first} уже такий рядок."
+
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr "{where}: text потребує слів у лапках: text \"Збереження файлу\""
 
@@ -596,8 +602,8 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: card потребує тривалості в секундах: card 3"
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, music or level, not {word}."
-msgstr "{where}: рядок починається з clip, card, text, music або level, а не з {word}."
+msgid "{where}: a line starts with clip, card, text, zoom, music or level, not {word}."
+msgstr "{where}: рядок починається з clip, card, text, zoom, music або level, а не з {word}."
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "у сценарії немає сцен. Сцена — це рядок, що починається з clip або card."
@@ -635,6 +641,12 @@ msgstr "малювання рядка тексту тривало понад {se
 
 msgid "this machine cannot draw text on a video: ffmpeg needs its drawtext filter and a font."
 msgstr "цей комп'ютер не може малювати текст на відео: ffmpeg потрібні фільтр drawtext і шрифт."
+
+msgid "{where}: a zoom's {word} is a percentage of the picture, from 0 to 100, not {value}."
+msgstr "{where}: {word} у zoom — частка зображення у відсотках, від 0 до 100, а не {value}."
+
+msgid "{where}: the zoom is asked to run from {start} to {end}, which is not inside its clip ({scene_start} to {scene_end})."
+msgstr "{where}: zoom має тривати з {start} до {end}, а це поза його кліпом ({scene_start} до {scene_end})."
 
 msgid "{where}: a text is one line of words, and this one is empty."
 msgstr "{where}: текст — це один рядок слів, а цей порожній."
@@ -685,6 +697,15 @@ msgstr "{where}: reveal показує зображення картки, а ц�
 
 msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
 msgstr "{where}: background у кліпу задає колір навколо його вікна, а цей кліп не має вікна."
+
+msgid "{where}: {word} acts on a clip's window, and this clip has no window."
+msgstr "{where}: {word} діє на вікно кліпу, а цей кліп не має вікна."
+
+msgid "{where}: push is how much the window grows, in percent, from 0 to {high}, not {value}."
+msgstr "{where}: push — на скільки відсотків росте вікно, від 0 до {high}, а не {value}."
+
+msgid "{where}: window {window} grown by push {push} is larger than the room it sits in. Make one of them smaller."
+msgstr "{where}: window {window}, збільшене на push {push}, більше за місце, у якому воно стоїть. Зменште одне з двох."
 
 msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
 msgstr "{where}: window — частка місця у відсотках, від {low} до {high}, а не {value}."
@@ -765,6 +786,9 @@ msgstr "music {name}: власний рівень, змінений на {change
 
 msgid "  level {level} dB from {start} to {end}"
 msgstr "  level {level} dB з {start} до {end}"
+
+msgid "{where}: zoom is how many times larger the picture grows, above {low} and at most {high}, not {value}."
+msgstr "{where}: zoom — у скільки разів збільшується зображення, більше {low} і не більше {high}, а не {value}."
 
 msgid "-o must end in {ending}, and {name} does not."
 msgstr "-o має закінчуватися на {ending}, а {name} так не закінчується."

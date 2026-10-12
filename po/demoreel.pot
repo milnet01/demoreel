@@ -517,6 +517,13 @@ msgstr ""
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr ""
 
+#. translators: zoom is an edit-script word and stays in English.
+msgid "{where}: a zoom line belongs to the clip above it, and the line above is not part of a clip."
+msgstr ""
+
+msgid "{where}: a clip takes one zoom line, and {first} is already one."
+msgstr ""
+
 msgid "{where}: clip needs a video file after it."
 msgstr ""
 
@@ -524,7 +531,7 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr ""
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, music or level, not {word}."
+msgid "{where}: a line starts with clip, card, text, zoom, music or level, not {word}."
 msgstr ""
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
@@ -555,6 +562,13 @@ msgid "drawing a line of text took over {seconds}s."
 msgstr ""
 
 msgid "this machine cannot draw text on a video: ffmpeg needs its drawtext filter and a font."
+msgstr ""
+
+#. translators: {word} is x or y, an edit-script word that stays in English.
+msgid "{where}: a zoom's {word} is a percentage of the picture, from 0 to 100, not {value}."
+msgstr ""
+
+msgid "{where}: the zoom is asked to run from {start} to {end}, which is not inside its clip ({scene_start} to {scene_end})."
 msgstr ""
 
 msgid "{where}: a text is one line of words, and this one is empty."
@@ -607,6 +621,18 @@ msgstr ""
 
 #. translators: background and window are edit-script words and stay in English.
 msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
+msgstr ""
+
+#. translators: {word} is push or zoom, and window an edit-script word; both stay in English.
+msgid "{where}: {word} acts on a clip's window, and this clip has no window."
+msgstr ""
+
+#. translators: push is an edit-script word and stays in English.
+msgid "{where}: push is how much the window grows, in percent, from 0 to {high}, not {value}."
+msgstr ""
+
+#. translators: window and push are edit-script words and stay in English.
+msgid "{where}: window {window} grown by push {push} is larger than the room it sits in. Make one of them smaller."
 msgstr ""
 
 msgid "{where}: {path} is {size}, a different shape from the film's {film}, and demoreel will not stretch it."
@@ -681,6 +707,10 @@ msgid "music {name}: its own level, turned {change} dB"
 msgstr ""
 
 msgid "  level {level} dB from {start} to {end}"
+msgstr ""
+
+#. translators: zoom is an edit-script word and stays in English.
+msgid "{where}: zoom is how many times larger the picture grows, above {low} and at most {high}, not {value}."
 msgstr ""
 
 #. translators: window is an edit-script word and stays in English.

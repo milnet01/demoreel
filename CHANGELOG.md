@@ -14,6 +14,10 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **A windowed clip can push in with `push 4`, its window growing slowly, and a `zoom 2 x 60 y 40 from 3 to 5` line under it zooms smoothly in on a point.** (DEMO-0184)
+  The camera can drift closer, or glide in on the part of the app that
+  matters, as in the Slipcase trailer.
+
 - **A card's or a window's `background` can be two to eight colours joined by commas: a gradient through them that turns slowly, darkened, with a vignette.** (DEMO-0178)
   A trailer's backdrop can move gently in the site's own colours instead of
   being plain. The same script makes the same film, at any frame rate.

@@ -583,6 +583,12 @@ msgstr "{where}: level precisa de um número de decibéis depois: level -40"
 msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
 msgstr "{where}: um texto pertence à cena acima dele, e nenhuma cena vem antes deste."
 
+msgid "{where}: a zoom line belongs to the clip above it, and the line above is not part of a clip."
+msgstr "{where}: uma linha zoom pertence ao clipe acima dela, e a linha acima não faz parte de um clipe."
+
+msgid "{where}: a clip takes one zoom line, and {first} is already one."
+msgstr "{where}: um clipe aceita uma linha zoom, e {first} já é uma."
+
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr "{where}: text precisa das palavras, entre aspas: text \"Salvando um arquivo\""
 
@@ -593,8 +599,8 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: card precisa da duração em segundos: card 3"
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, music or level, not {word}."
-msgstr "{where}: uma linha começa com clip, card, text, music ou level, não com {word}."
+msgid "{where}: a line starts with clip, card, text, zoom, music or level, not {word}."
+msgstr "{where}: uma linha começa com clip, card, text, zoom, music ou level, não com {word}."
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "o roteiro não tem cenas. Uma cena é uma linha que começa com clip ou card."
@@ -629,6 +635,12 @@ msgstr "desenhar uma linha de texto levou mais de {seconds}s."
 
 msgid "this machine cannot draw text on a video: ffmpeg needs its drawtext filter and a font."
 msgstr "este computador não consegue desenhar texto num vídeo: o ffmpeg precisa do filtro drawtext e de uma fonte."
+
+msgid "{where}: a zoom's {word} is a percentage of the picture, from 0 to 100, not {value}."
+msgstr "{where}: o {word} de um zoom é uma porcentagem da imagem, de 0 a 100, não {value}."
+
+msgid "{where}: the zoom is asked to run from {start} to {end}, which is not inside its clip ({scene_start} to {scene_end})."
+msgstr "{where}: o zoom deve ir de {start} a {end}, o que não está dentro do seu clipe ({scene_start} a {scene_end})."
 
 msgid "{where}: a text is one line of words, and this one is empty."
 msgstr "{where}: um texto é uma linha de palavras, e este está vazio."
@@ -679,6 +691,15 @@ msgstr "{where}: reveal faz surgir a imagem de um cartão, e este cartão não t
 
 msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
 msgstr "{where}: background em um clipe colore o espaço ao redor da sua janela, e este clipe não tem janela."
+
+msgid "{where}: {word} acts on a clip's window, and this clip has no window."
+msgstr "{where}: {word} age sobre a janela de um clipe, e este clipe não tem janela."
+
+msgid "{where}: push is how much the window grows, in percent, from 0 to {high}, not {value}."
+msgstr "{where}: push é quanto a janela cresce, em porcentagem, de 0 a {high}, não {value}."
+
+msgid "{where}: window {window} grown by push {push} is larger than the room it sits in. Make one of them smaller."
+msgstr "{where}: window {window} aumentada por push {push} fica maior que o espaço em que está. Diminua um dos dois."
 
 msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
 msgstr "{where}: window é uma parte do espaço em porcentagem, de {low} a {high}, não {value}."
@@ -759,6 +780,9 @@ msgstr "music {name}: nível próprio, ajustado em {change} dB"
 
 msgid "  level {level} dB from {start} to {end}"
 msgstr "  level {level} dB de {start} a {end}"
+
+msgid "{where}: zoom is how many times larger the picture grows, above {low} and at most {high}, not {value}."
+msgstr "{where}: zoom é quantas vezes maior a imagem fica, mais de {low} e no máximo {high}, não {value}."
 
 msgid "-o must end in {ending}, and {name} does not."
 msgstr "-o precisa terminar em {ending}, e {name} não termina."

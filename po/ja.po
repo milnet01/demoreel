@@ -580,6 +580,12 @@ msgstr "{where}: level の後にデシベル数が必要です: level -40"
 msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
 msgstr "{where}: text はその上にあるシーンに付くものですが、この行より前にシーンがありません。"
 
+msgid "{where}: a zoom line belongs to the clip above it, and the line above is not part of a clip."
+msgstr "{where}: zoom 行はその上にあるクリップに付くものですが、上の行はクリップの一部ではありません。"
+
+msgid "{where}: a clip takes one zoom line, and {first} is already one."
+msgstr "{where}: クリップに付けられる zoom 行は 1 つだけで、{first} がすでにそれです。"
+
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr "{where}: text には引用符で囲んだ文字が必要です: text \"Saving a file\""
 
@@ -590,8 +596,8 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: card には秒単位の長さが必要です: card 3"
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, music or level, not {word}."
-msgstr "{where}: 行は clip、card、text、music、level のどれかで始めます。{word} では始められません。"
+msgid "{where}: a line starts with clip, card, text, zoom, music or level, not {word}."
+msgstr "{where}: 行は clip、card、text、zoom、music、level のどれかで始めます。{word} では始められません。"
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "スクリプトにシーンがありません。シーンとは clip か card で始まる行のことです。"
@@ -623,6 +629,12 @@ msgstr "1 行のテキストの描画に {seconds}秒以上かかりました。
 
 msgid "this machine cannot draw text on a video: ffmpeg needs its drawtext filter and a font."
 msgstr "このマシンでは動画にテキストを描画できません。ffmpeg の drawtext フィルターとフォントが必要です。"
+
+msgid "{where}: a zoom's {word} is a percentage of the picture, from 0 to 100, not {value}."
+msgstr "{where}: zoom の {word} は画像に対する割合 (パーセント) で、0 から 100 の間です。{value} は使えません。"
+
+msgid "{where}: the zoom is asked to run from {start} to {end}, which is not inside its clip ({scene_start} to {scene_end})."
+msgstr "{where}: zoom を {start} から {end} まで行うよう指定されていますが、これはクリップの範囲 ({scene_start} から {scene_end}) の外です。"
 
 msgid "{where}: a text is one line of words, and this one is empty."
 msgstr "{where}: text は 1 行の文字ですが、これは空です。"
@@ -673,6 +685,15 @@ msgstr "{where}: reveal は card の画像を登場させるもので、この c
 
 msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
 msgstr "{where}: クリップの background はウィンドウの周りの色を決めるもので、このクリップにはウィンドウがありません。"
+
+msgid "{where}: {word} acts on a clip's window, and this clip has no window."
+msgstr "{where}: {word} はクリップのウィンドウに作用するものですが、このクリップにはウィンドウがありません。"
+
+msgid "{where}: push is how much the window grows, in percent, from 0 to {high}, not {value}."
+msgstr "{where}: push はウィンドウが大きくなる割合 (パーセント) で、0 から {high} の間です。{value} は使えません。"
+
+msgid "{where}: window {window} grown by push {push} is larger than the room it sits in. Make one of them smaller."
+msgstr "{where}: window {window} を push {push} で大きくすると、置かれている領域より大きくなります。どちらかを小さくしてください。"
 
 msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
 msgstr "{where}: window は領域に占める割合 (パーセント) で、{low} から {high} の間です。{value} は使えません。"
@@ -753,6 +774,9 @@ msgstr "music {name}: 元の音量のまま、{change} dB 調整"
 
 msgid "  level {level} dB from {start} to {end}"
 msgstr "  level {level} dB、{start} から {end}"
+
+msgid "{where}: zoom is how many times larger the picture grows, above {low} and at most {high}, not {value}."
+msgstr "{where}: zoom は画像を何倍に大きくするかで、{low} より大きく {high} 以下です。{value} は使えません。"
 
 msgid "-o must end in {ending}, and {name} does not."
 msgstr "-o は {ending} で終わる必要がありますが、{name} はそうなっていません。"

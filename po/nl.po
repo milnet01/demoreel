@@ -583,6 +583,12 @@ msgstr "{where}: na level moet een aantal decibel komen: level -40"
 msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
 msgstr "{where}: een tekst hoort bij de scène erboven, en er komt geen scène voor deze."
 
+msgid "{where}: a zoom line belongs to the clip above it, and the line above is not part of a clip."
+msgstr "{where}: een zoom-regel hoort bij de clip erboven, en de regel erboven hoort niet bij een clip."
+
+msgid "{where}: a clip takes one zoom line, and {first} is already one."
+msgstr "{where}: een clip neemt één zoom-regel, en {first} is er al een."
+
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr "{where}: text heeft zijn woorden nodig, tussen aanhalingstekens: text \"Een bestand opslaan\""
 
@@ -593,8 +599,8 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: card heeft zijn lengte in seconden nodig: card 3"
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, music or level, not {word}."
-msgstr "{where}: een regel begint met clip, card, text, music of level, niet met {word}."
+msgid "{where}: a line starts with clip, card, text, zoom, music or level, not {word}."
+msgstr "{where}: een regel begint met clip, card, text, zoom, music of level, niet met {word}."
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "het script bevat geen scènes. Een scène is een regel die begint met clip of card."
@@ -629,6 +635,12 @@ msgstr "het tekenen van een regel tekst duurde langer dan {seconds}s."
 
 msgid "this machine cannot draw text on a video: ffmpeg needs its drawtext filter and a font."
 msgstr "deze computer kan geen tekst op een video tekenen: ffmpeg heeft zijn drawtext-filter en een lettertype nodig."
+
+msgid "{where}: a zoom's {word} is a percentage of the picture, from 0 to 100, not {value}."
+msgstr "{where}: de {word} van een zoom is een percentage van het beeld, van 0 tot 100, niet {value}."
+
+msgid "{where}: the zoom is asked to run from {start} to {end}, which is not inside its clip ({scene_start} to {scene_end})."
+msgstr "{where}: de zoom moet lopen van {start} tot {end}, en dat ligt niet binnen zijn clip ({scene_start} tot {scene_end})."
 
 msgid "{where}: a text is one line of words, and this one is empty."
 msgstr "{where}: een tekst is één regel woorden, en deze is leeg."
@@ -679,6 +691,15 @@ msgstr "{where}: reveal laat de afbeelding van een kaart verschijnen, en deze ka
 
 msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
 msgstr "{where}: background kleurt bij een clip de ruimte rond zijn venster, en deze clip heeft geen venster."
+
+msgid "{where}: {word} acts on a clip's window, and this clip has no window."
+msgstr "{where}: {word} werkt op het venster van een clip, en deze clip heeft geen venster."
+
+msgid "{where}: push is how much the window grows, in percent, from 0 to {high}, not {value}."
+msgstr "{where}: push is hoeveel het venster groeit, in procent, van 0 tot {high}, niet {value}."
+
+msgid "{where}: window {window} grown by push {push} is larger than the room it sits in. Make one of them smaller."
+msgstr "{where}: window {window}, gegroeid met push {push}, is groter dan de ruimte waarin het staat. Maak een van beide kleiner."
 
 msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
 msgstr "{where}: window is een deel van de ruimte in procent, van {low} tot {high}, niet {value}."
@@ -759,6 +780,9 @@ msgstr "music {name}: eigen niveau, {change} dB bijgesteld"
 
 msgid "  level {level} dB from {start} to {end}"
 msgstr "  level {level} dB van {start} tot {end}"
+
+msgid "{where}: zoom is how many times larger the picture grows, above {low} and at most {high}, not {value}."
+msgstr "{where}: zoom is hoeveel keer groter het beeld wordt, meer dan {low} en hoogstens {high}, niet {value}."
 
 msgid "-o must end in {ending}, and {name} does not."
 msgstr "-o moet eindigen op {ending}, en {name} doet dat niet."

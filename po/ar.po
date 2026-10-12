@@ -595,6 +595,12 @@ msgstr "{where}: يحتاج level إلى عدد من الديسيبلات بعد
 msgid "{where}: a text belongs to the scene above it, and no scene comes before this one."
 msgstr "{where}: النص يتبع المشهد الذي فوقه، ولا يوجد مشهد قبل هذا السطر."
 
+msgid "{where}: a zoom line belongs to the clip above it, and the line above is not part of a clip."
+msgstr "{where}: سطر zoom يتبع المقطع الذي فوقه، والسطر الذي فوقه ليس جزءًا من مقطع."
+
+msgid "{where}: a clip takes one zoom line, and {first} is already one."
+msgstr "{where}: يأخذ المقطع سطر zoom واحدًا، و{first} سطر zoom بالفعل."
+
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr "{where}: يحتاج text إلى كلماته بين علامتي تنصيص: text \"حفظ ملف\""
 
@@ -605,8 +611,8 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: يحتاج card إلى مدته بالثواني: card 3"
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, music or level, not {word}."
-msgstr "{where}: يبدأ السطر بـ clip أو card أو text أو music أو level، لا بـ {word}."
+msgid "{where}: a line starts with clip, card, text, zoom, music or level, not {word}."
+msgstr "{where}: يبدأ السطر بـ clip أو card أو text أو zoom أو music أو level، لا بـ {word}."
 
 msgid "the script has no scenes in it. A scene is a line starting with clip or card."
 msgstr "لا يحتوي السيناريو على أي مشهد. المشهد سطر يبدأ بـ clip أو card."
@@ -653,6 +659,12 @@ msgstr "استغرق رسم سطر من النص أكثر من {seconds} ثان�
 
 msgid "this machine cannot draw text on a video: ffmpeg needs its drawtext filter and a font."
 msgstr "لا يستطيع هذا الجهاز رسم نص على فيديو: يحتاج ffmpeg إلى مرشّح drawtext وإلى خط."
+
+msgid "{where}: a zoom's {word} is a percentage of the picture, from 0 to 100, not {value}."
+msgstr "{where}: قيمة {word} في zoom نسبة مئوية من الصورة، من 0 إلى 100، لا {value}."
+
+msgid "{where}: the zoom is asked to run from {start} to {end}, which is not inside its clip ({scene_start} to {scene_end})."
+msgstr "{where}: طُلب أن يعمل zoom من {start} إلى {end}، وهذا ليس داخل مقطعه ({scene_start} إلى {scene_end})."
 
 msgid "{where}: a text is one line of words, and this one is empty."
 msgstr "{where}: النص سطر واحد من الكلمات، وهذا النص فارغ."
@@ -703,6 +715,15 @@ msgstr "{where}: يُظهر reveal صورة البطاقة، وهذه البطا
 
 msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
 msgstr "{where}: يلوّن background في المقطع المساحة حول نافذته، وهذا المقطع بلا نافذة."
+
+msgid "{where}: {word} acts on a clip's window, and this clip has no window."
+msgstr "{where}: يعمل {word} على نافذة المقطع، وهذا المقطع بلا نافذة."
+
+msgid "{where}: push is how much the window grows, in percent, from 0 to {high}, not {value}."
+msgstr "{where}: قيمة push مقدار نموّ النافذة بالنسبة المئوية، من 0 إلى {high}، لا {value}."
+
+msgid "{where}: window {window} grown by push {push} is larger than the room it sits in. Make one of them smaller."
+msgstr "{where}: النافذة window {window} بعد نموّها بـ push {push} أكبر من المساحة التي تقع فيها. صغّر إحداهما."
 
 msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
 msgstr "{where}: قيمة window نسبة مئوية من المساحة، من {low} إلى {high}، لا {value}."
@@ -783,6 +804,9 @@ msgstr "music {name}: مستواها الأصلي، معدَّلًا بمقدا�
 
 msgid "  level {level} dB from {start} to {end}"
 msgstr "  level {level} dB من {start} إلى {end}"
+
+msgid "{where}: zoom is how many times larger the picture grows, above {low} and at most {high}, not {value}."
+msgstr "{where}: قيمة zoom عدد المرات التي تكبر بها الصورة، أكبر من {low} وعلى الأكثر {high}، لا {value}."
 
 msgid "-o must end in {ending}, and {name} does not."
 msgstr "يجب أن ينتهي -o بـ {ending}، و{name} لا ينتهي بها."

@@ -2656,6 +2656,56 @@ CASES
     assert_near "a windowed clip then a crossfade: length" 9.5 "$(v_dur "$ft/out/wn5.mp4")" 0.15
     echo "a windowed scene ended where the plan says, before a crossfade"
     }
+    fin_s59() {
+    # DEMO-0184. push 20 grows window 50's 144x108 box (fin_s54) to 172x128
+    # about its middle, (160, 120), steadily: half way at frame 30 of 60.
+    printf 'clip A.mp4 window 50 push 20\n' | ed_ok ps1.mp4
+    bbox_near "push 20, first frame" "$ft/out/ps1.mp4" 0 '#101418' 0.275 0.275 0.725 0.725 0.01
+    bbox_near "push 20, frame 30" "$ft/out/ps1.mp4" 30 '#101418' 0.253 0.25 0.747 0.75 0.01
+    bbox_near "push 20, last frame" "$ft/out/ps1.mp4" 59 '#101418' 0.231 0.233 0.769 0.767 0.01
+    # H is white on its left half and black on its right. Zooming 2 on its
+    # right edge's middle leaves 1 - z/2 of the window white; the window is
+    # 288x216 at (16, 12), so the white's right edge is 0.05 + 0.9 (1 - z/2).
+    # z follows smoothstep between 1 and 3 s: 1.156 at 1.5 s (a steady zoom
+    # would be 1.25, and an edge at 0.388), 1.5 at 2 s, 2 from 3 s on.
+    ff -f lavfi -i "color=c=white:s=320x240:r=10:d=4,drawbox=x=160:y=0:w=160:h=240:c=black:t=fill" \
+        $x264 "$ft/H.mp4"
+    printf 'clip H.mp4 window 100\n  zoom 2 x 100 y 50 from 1 to 3\n' | ed_ok zm1.mp4
+    edge() { px find "$ft/out/zm1.mp4" "$1" light:200 | awk '{ print ($1 ? $4 : 0) }'; }
+    assert_near "zoom: before it starts, half the window is white" 0.5 "$(edge 5)" 0.01
+    assert_near "zoom: at 1.5 s, eased in" 0.431 "$(edge 15)" 0.015
+    assert_near "zoom: at 2 s, half way" 0.275 "$(edge 20)" 0.015
+    assert_eq "zoom: at 3 s it has reached the black half" 0 "$(edge 30)"
+    assert_eq "zoom: and it stays there" 0 "$(edge 39)"
+    echo "a push grew the window steadily about its middle, and a zoom eased in on its point and stayed"
+    }
+    fin_s60() {
+    n=0
+    while IFS='|' read -r line script; do
+        n=$((n + 1))
+        printf '%b\n' "$script" > "$ft/zb$n.txt"
+        : > "$ft/log/ffmpeg.calls"
+        FIN_PATH="$ft/shim:$PATH" run edit "zb$n.txt" -o "$ft/out/zb$n.mp4"
+        refused_naming_line "edit refuses: $script" "zb$n.mp4" "$line"
+        assert_eq "edit refuses ($script): no encode started" 0 \
+            "$(grep -cw 'libx264' "$ft/log/ffmpeg.calls" || true)"
+    done <<'CASES'
+1|clip A.mp4 push 5
+1|clip A.mp4 window 50 push 25
+1|clip A.mp4 window 90 push 20
+1|clip A.mp4\n  zoom 2
+2|clip A.mp4 window 50\n  zoom 5
+2|clip A.mp4 window 50\n  zoom 1
+2|clip A.mp4 window 50\n  zoom
+2|clip A.mp4 window 50\n  zoom 2 x 120
+2|clip A.mp4 window 50\n  zoom 2 from 3 to 2
+2|clip A.mp4 window 50\n  zoom 2 to 9
+3|clip A.mp4 window 50\n  zoom 2\n  zoom 3
+2|card 2\n  zoom 2
+2|clip A.mp4 window 50\n  zoom 2 speed 2
+CASES
+    echo "$n bad push and zoom lines were each refused, naming the line, before any encode"
+    }
     fin_step "trim keeps the frames from --from to --to, the last one included" fin_s1
     fin_step "every video a command writes is H.264, yuv420p, index first, with its clips' sound" fin_s2
     fin_step "-o may not be an input, and must end in .mp4" fin_s3
@@ -2714,6 +2764,8 @@ CASES
     fin_step "edit refuses a bad window or a clip's background" fin_s56
     fin_step "a windowed scene ends where the plan says" fin_s57
     fin_step "a gradient background is darkened, moves, and is the same every run" fin_s58
+    fin_step "push grows a window, and zoom eases in on a point" fin_s59
+    fin_step "edit refuses a bad push or zoom" fin_s60
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }
 
