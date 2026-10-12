@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=192 -->
+<!-- ants-roadmap-id-high-water: DEMO=193 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -351,6 +351,21 @@ simplest case, and a gate proves it still records.
   Kind: investigate.
   Source: in-session-2026-10-11 DEMO-0183 build.
   Lanes: finishing.
+
+- ✅ [DEMO-0193] **Run the finishing checks side by side, each in its own copy of the inputs.**
+  Asked for by the user on 2026-10-12: CI speed-ups that cannot flake, mindful
+  of this machine's resources. The finishing checks time nothing, so a busy
+  machine makes them slower, never wrong; the recording checks stay one at a
+  time (DEMO-0042, DEMO-0120). FIN_JOBS at a time (at most 4, or the core
+  count), each at nice 10 in its own copy of the inputs, printed in order.
+  Measured locally: 245 s one after another, 65-68 s side by side, four runs
+  green. Isolation found one hidden dependency (K.mp4, now a shared input).
+  GitHub's run on 2026-10-12 spent 110 s of its 320 s gate here. Not taken:
+  the 62 s translation step and the rest are recordings; GitHub's install
+  (23 s) already skips man-db.
+  **Layman:** The checks for the video-editing commands now run four at a time, so the pre-push check and GitHub's are quicker.
+  Kind: perf.
+  Source: user-request-2026-10-12.
 
 ## Standing chores
 

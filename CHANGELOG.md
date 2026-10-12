@@ -57,6 +57,10 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **A clip in a window lost its last frame on ffmpeg 6.1.1, so the scene ran a frame short of its plan.**
+  The window's background now runs a frame past the scene and is trimmed
+  back, so every frame of the clip is kept on older ffmpeg too.
+
 - **Music taken from a video now repeats by its sound's own length, so a video whose picture outlasts its sound no longer leaves the film's sound to stop early.** (DEMO-0191)
   Music taken from a video file keeps repeating to the end of the film instead of stopping early.
 

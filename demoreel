@@ -3913,8 +3913,13 @@ def scene_graph(scene, length, number, first_input, width, height, rate):
         pts = "PTS-STARTPTS" if scene.speed == 1 else f"(PTS-STARTPTS)/{scene.speed:.9g}"
         if scene.window is None:
             return inputs, [f"[{first_input}:v]setpts={pts},{shape}{tail}{out}"]
+        # The background runs a frame past the scene, and `shape` trims it
+        # back. Ending with the clip, ffmpeg 6.1.1's overlay hands on its end
+        # at its last frame's own time, and the fps after it then drops that
+        # frame: a windowed scene came out a frame short there (9.0.2 kept it).
         inputs += ["-f", "lavfi", "-i",
-                   background_source(scene, width, height, rate, length, number)]
+                   background_source(scene, width, height, rate, length + 1 / rate,
+                                     number)]
         return inputs, window_graph(scene, length, number, first_input, pts,
                                     f"{shape}{tail}{out}", rate)
     inputs = ["-f", "lavfi", "-i",

@@ -607,13 +607,42 @@ finishing_checks() {
     }
     # Each check below runs on its own, so one failing does not hide the next:
     # a check that fails ends only itself, and the run fails at the end.
-    fin_failed=0
-    fin_step() {
-        local st
-        step "$1"
-        set +e; ( set -e; "$2" ); st=$?; set -e
-        [ "$st" -eq 0 ] || fin_failed=$((fin_failed + 1))
+    #
+    # They also run side by side, FIN_JOBS at a time, each in its own copy of
+    # the inputs: its own sc.txt, ffmpeg log, stdout and stderr, and its own
+    # tree for `snap` to hash. That is safe here and not for the recording
+    # checks (DEMO-0042, DEMO-0120): nothing in these times anything, so a busy
+    # machine makes them slower, never wrong. Each runs at lower priority, so
+    # the rest of the machine keeps its share, and its output is printed in
+    # the list's order once all are done.
+    fin_names=(); fin_funcs=()
+    fin_step() { fin_names+=("$1"); fin_funcs+=("$2"); }
+    fin_one() {  # index: run one check in a fresh copy of the inputs
+        local w="$tmp/fin-steps/$1"
+        mkdir -p "$w"
+        ( cd "$ft" && find . -mindepth 1 -maxdepth 1 ! -name out ! -name log \
+              -exec cp -a {} "$w/" \; )
+        mkdir -p "$w/out" "$w/log"
+        ft=$w; fo="$w/log/stdout"; fe="$w/log/stderr"
+        set +e; ( set -e; "${fin_funcs[$1]}" ); echo $? > "$w.rc"
     }
+    fin_run() {
+        local i jobs=${FIN_JOBS:-$(( $(nproc) < 4 ? $(nproc) : 4 ))}
+        mkdir -p "$tmp/fin-steps"
+        for i in "${!fin_funcs[@]}"; do
+            while [ "$(jobs -rp | wc -l)" -ge "$jobs" ]; do wait -n || true; done
+            ( renice -n 10 "$BASHPID" >/dev/null 2>&1 || true; fin_one "$i" ) \
+                > "$tmp/fin-steps/$i.log" 2>&1 &
+        done
+        wait || true
+        for i in "${!fin_funcs[@]}"; do
+            step "${fin_names[$i]}"
+            cat "$tmp/fin-steps/$i.log"
+            [ "$(cat "$tmp/fin-steps/$i.rc" 2>/dev/null)" = 0 ] \
+                || fin_failed=$((fin_failed + 1))
+        done
+    }
+    fin_failed=0
 
     # ---- the pieces every check works from --------------------------------
     step "finishing: inputs are generated, not recorded"
@@ -826,6 +855,12 @@ FINPY
        -vf "select='lte(n,40)',tpad=stop_mode=clone:stop_duration=2,fps=30" -t 3 $x264 "$ft/F.mp4"
     ff -f lavfi -i "testsrc2=s=320x240:r=30000/1001:d=4" $x264 "$ft/N.mp4"
     printf 'this is not a video\n' > "$ft/bad.mp4"
+    # K: black at 10 a second, white for 0.2 s at 2.0 and 4.0 s with a 3 kHz
+    # beep at the same moments. The sound checks and the speed checks use it.
+    ff -f lavfi -i "color=c=black:s=320x240:r=10:d=6" \
+       -f lavfi -i "aevalsrc='sin(2*PI*3000*t)*(between(t,2,2.1)+between(t,4,4.1))':s=48000:d=6" \
+       -filter_complex "[0:v]format=yuv420p,geq=lum='if(between(T,2,2.15)+between(T,4,4.15),235,16)':cb=128:cr=128[v]" \
+       -map '[v]' -map 1:a -c:a aac $x264 "$ft/K.mp4"
     # Pictures for cards.
     ff -f lavfi -i "testsrc2=s=100x80:r=10:d=1" -vf "select=eq(n\\,3)" -frames:v 1 "$ft/small.png"
     ff -f lavfi -i "testsrc2=s=800x400:r=10:d=1" -vf "select=eq(n\\,3)" -frames:v 1 "$ft/wide.png"
@@ -2276,14 +2311,9 @@ E
     echo "with no clip's sound and no music the film has no sound track"
     }
     fin_s42() {
-    # DEMO-0177 INV-2 and INV-3. K: black at 10 a second, white for 0.2 s at
-    # 2.0 and 4.0 s with a 3 kHz beep at the same moments. Q: grey, 2 s, its
-    # sound a low tone that ends 0.4 s before its picture. Three cards of 1.04
-    # s each keep 10 frames, so adding up `length` would run 0.12 s ahead.
-    ff -f lavfi -i "color=c=black:s=320x240:r=10:d=6" \
-       -f lavfi -i "aevalsrc='sin(2*PI*3000*t)*(between(t,2,2.1)+between(t,4,4.1))':s=48000:d=6" \
-       -filter_complex "[0:v]format=yuv420p,geq=lum='if(between(T,2,2.15)+between(T,4,4.15),235,16)':cb=128:cr=128[v]" \
-       -map '[v]' -map 1:a -c:a aac $x264 "$ft/K.mp4"
+    # DEMO-0177 INV-2 and INV-3. K (made with the inputs above). Q: grey, 2 s,
+    # its sound a low tone that ends 0.4 s before its picture. Three cards of
+    # 1.04 s each keep 10 frames, so adding up `length` would run 0.12 s ahead.
     ff -f lavfi -i "color=c=#404040:s=320x240:r=10:d=2" \
        -f lavfi -i "sine=f=200:d=1.6" -map 0:v -map 1:a -c:a aac $x264 "$ft/Q.mp4"
     printf 'card 1.04\ncard 1.04\ncard 1.04\nclip Q.mp4\nclip K.mp4 from 1.3 to 5 crossfade 0.5\n' > "$ft/st1.txt"
@@ -2517,7 +2547,7 @@ CASES
     assert_finished "$ft/out/sp4.mp4" "a held clip" 1
     printf 'clip A.mp4 from 3 to 3 hold 2\n' | ed_ok sp5.mp4
     assert_is_frame "a freeze frame, at its end" "$ft/out/sp5.mp4" 20 "$ft/A.mp4" 30
-    # K (fin_s42): flashes and beeps at 2.0 and 4.0 s of its own time. At
+    # K: flashes and beeps at 2.0 and 4.0 s of its own time. At
     # speed 2 from 1 they come at 0.5 and 1.5, together. The text's times are
     # K's own, so its 4 to 5 is the scene's 1.5 to 2.
     printf 'clip K.mp4 from 1 to 5 speed 2\ntext "late" from 4 to 5\n' | ed_ok sp6.mp4
@@ -2572,6 +2602,9 @@ CASES
     # fills its height: 144x108 at (88, 66).
     printf 'clip A.mp4 window 50\n' | ed_ok wn1.mp4
     bbox_near "A in window 50" "$ft/out/wn1.mp4" 5 '#101418' 0.275 0.275 0.725 0.725 0.01
+    # A windowed scene keeps every frame of its clip. ffmpeg 6.1.1 once lost
+    # the last one where the window's overlay ended with the clip.
+    assert_eq "A in window 50: all 60 frames" 60 "$(v_frames "$ft/out/wn1.mp4")"
     # INV-2: W is 640x240, so it fills the box's width, 148x55.5, rounded down
     # to 148x54 at (86, 93). Without a window it is still refused (the join
     # step "join A with W.mp4, a different shape").
@@ -2670,10 +2703,7 @@ CASES
     printf 'clip A.mp4 window 50 push 20\n' | ed_ok ps1.mp4
     bbox_near "push 20, first frame" "$ft/out/ps1.mp4" 0 '#101418' 0.275 0.275 0.725 0.725 0.01
     bbox_near "push 20, frame 30" "$ft/out/ps1.mp4" 30 '#101418' 0.253 0.25 0.747 0.75 0.01
-    # The film's last frame, not a fixed 59: the gate has made 59 frames of
-    # A here as well as 60, and the push is the same within the tolerance.
-    bbox_near "push 20, last frame" "$ft/out/ps1.mp4" "$(( $(v_frames "$ft/out/ps1.mp4") - 1 ))" \
-        '#101418' 0.231 0.233 0.769 0.767 0.01
+    bbox_near "push 20, last frame" "$ft/out/ps1.mp4" 59 '#101418' 0.231 0.233 0.769 0.767 0.01
     # H is white on its left half and black on its right. Zooming 2 on its
     # right edge's middle leaves 1 - z/2 of the window white; the window is
     # 288x216 at (16, 12), so the white's right edge is 0.05 + 0.9 (1 - z/2).
@@ -2844,6 +2874,7 @@ CASES
     fin_step "slide-in rises into place and fades in" fin_s63
     fin_step "edit refuses a bad stack or slide-in" fin_s64
     fin_step "a card's picture fits below a stack" fin_s65
+    fin_run
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }
 
