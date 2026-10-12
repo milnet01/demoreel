@@ -4091,7 +4091,7 @@ before packaging. The full editor stays 2.0.0.
   Kind: feature.
   Source: user-request-2026-10-02.
 
-- 📋 [DEMO-0153] **Titles and text that move, with more than one line and a choice of style.**
+- ✅ [DEMO-0153] **Titles and text that move, with more than one line and a choice of style.**
   Wanted by the Slipcase trailer (2026-10-10): lines that slide up and
   fade in with ease-out, staggered line by line, several per card, each
   with its own colour, size and font. An end card is this plus a logo:
@@ -4099,6 +4099,11 @@ before packaging. The full editor stays 2.0.0.
   per-app content.
   Spec: docs/specs/DEMO-0153-moving-text.md, accepted 2026-10-11 at the
   review cap (2 loops, 10 findings fixed).
+  Shipped 2026-10-12 to docs/specs/DEMO-0153-moving-text.md: text_stacks
+  and place_stack lay out each stack once; text_filters slides with a
+  cubic ease-out; picture_room reads scene.stacks. INV-1 to INV-8 in
+  ci.sh fin_s61 to fin_s65, fin_s21 and the fading-band step. INV-5 and
+  INV-8 were seen red against a linear rise and a one-line room.
   **Layman:** Add headings and captions that slide in, in the font, size and colour you pick.
   Kind: feature.
   Source: user-request-2026-10-02.

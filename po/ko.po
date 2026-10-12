@@ -7,6 +7,12 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Demoreel-Review: draft\n"
 
+msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
+msgstr "{where}: 텍스트 {words}이(가) {first}와(과) 같은 자리에 함께 표시되는데, 하나는 띠가 있고 다른 하나는 없습니다. 함께 쌓이는 텍스트는 모두 띠가 있거나 모두 없어야 합니다."
+
+msgid "{where}: the text {words} does not fit: with the texts stacked above it, on screen at the same time, it is taller than the frame. Give them a smaller size, or show them at different times."
+msgstr "{where}: 텍스트 {words}이(가) 들어가지 않습니다. 같은 시간에 위에 쌓인 텍스트와 합치면 화면보다 높습니다. 크기를 줄이거나 다른 시간에 보여 주세요."
+
 msgid "ended by {signal} before it finished, so there is nothing to hand back."
 msgstr "끝나기 전에 {signal} 신호로 종료되어 돌려줄 결과가 없습니다."
 
@@ -660,6 +666,9 @@ msgstr "{where}: 텍스트의 band는 on 또는 off입니다. {value}은(는) �
 msgid "{where}: a text sits at {places} or {last}, not at {value}."
 msgstr "{where}: 텍스트 위치는 {places} 또는 {last}입니다. {value}은(는) 안 됩니다."
 
+msgid "{where}: the text {words} takes slide-in or fade-in, not both: a sliding text fades in as it rises."
+msgstr "{where}: 텍스트 {words}에는 slide-in과 fade-in 중 하나만 쓸 수 있습니다. 미끄러져 들어오는 텍스트는 올라오면서 나타납니다."
+
 msgid "{where}: the text {words} fades for {fades} seconds, and shows for only {seconds}."
 msgstr "{where}: 텍스트 {words}은(는) {fades}초 동안 페이드되는데, 표시되는 시간은 {seconds}초뿐입니다."
 
@@ -676,9 +685,6 @@ msgid ""
 msgstr ""
 "{where}: 텍스트 {words}은(는) 크기 {size}에서 너비가 {wide}픽셀인데, 프레임에는 {room}픽셀만큼의 공간이 있습니다.\n"
 "  줄이거나 더 작은 크기를 주십시오: 약 {fits} 정도면 맞습니다."
-
-msgid "{where}: the texts {first} and {second} would be on screen at the same time. Only one shows at a time."
-msgstr "{where}: 텍스트 {first}와(과) {second}이(가) 동시에 화면에 나오게 됩니다. 한 번에 하나만 표시됩니다."
 
 msgid "{where}: reveal brings in a card's picture, and this card has none."
 msgstr "{where}: reveal은 card의 그림을 나타나게 하는데, 이 card에는 그림이 없습니다."

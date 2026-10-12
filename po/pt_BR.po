@@ -7,6 +7,12 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Demoreel-Review: draft\n"
 
+msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
+msgstr "{where}: o texto {words} está na tela com {first} no mesmo lugar, e um tem faixa e o outro não. Textos empilhados juntos têm todos faixa ou nenhum tem."
+
+msgid "{where}: the text {words} does not fit: with the texts stacked above it, on screen at the same time, it is taller than the frame. Give them a smaller size, or show them at different times."
+msgstr "{where}: o texto {words} não cabe: com os textos empilhados acima dele, na tela ao mesmo tempo, fica mais alto que o quadro. Diminua o tamanho deles ou mostre-os em momentos diferentes."
+
 msgid "ended by {signal} before it finished, so there is nothing to hand back."
 msgstr "encerrado por {signal} antes de terminar, então não há nada para entregar."
 
@@ -666,6 +672,9 @@ msgstr "{where}: a faixa de um texto é on ou off, não {value}."
 msgid "{where}: a text sits at {places} or {last}, not at {value}."
 msgstr "{where}: um texto fica em {places} ou {last}, não em {value}."
 
+msgid "{where}: the text {words} takes slide-in or fade-in, not both: a sliding text fades in as it rises."
+msgstr "{where}: o texto {words} aceita slide-in ou fade-in, não os dois: um texto que desliza aparece aos poucos enquanto sobe."
+
 msgid "{where}: the text {words} fades for {fades} seconds, and shows for only {seconds}."
 msgstr "{where}: o texto {words} esmaece por {fades} segundos e aparece por apenas {seconds}."
 
@@ -682,9 +691,6 @@ msgid ""
 msgstr ""
 "{where}: o texto {words} tem {wide} pixels de largura no tamanho {size}, e o quadro tem espaço para {room}.\n"
 "  Encurte-o ou dê a ele um tamanho menor: cerca de {fits} caberia."
-
-msgid "{where}: the texts {first} and {second} would be on screen at the same time. Only one shows at a time."
-msgstr "{where}: os textos {first} e {second} ficariam na tela ao mesmo tempo. Só um aparece por vez."
 
 msgid "{where}: reveal brings in a card's picture, and this card has none."
 msgstr "{where}: reveal faz surgir a imagem de um cartão, e este cartão não tem nenhuma."

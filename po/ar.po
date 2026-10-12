@@ -7,6 +7,12 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 "X-Demoreel-Review: draft\n"
 
+msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
+msgstr "{where}: النص {words} يظهر مع {first} في المكان نفسه، وأحدهما له شريط والآخر بلا شريط. النصوص المكدّسة معًا لها كلها شريط أو لا شريط لأيٍّ منها."
+
+msgid "{where}: the text {words} does not fit: with the texts stacked above it, on screen at the same time, it is taller than the frame. Give them a smaller size, or show them at different times."
+msgstr "{where}: النص {words} لا يتّسع: مع النصوص المكدّسة فوقه والظاهرة في الوقت نفسه يصبح أطول من الإطار. صغّر حجمها، أو اعرضها في أوقات مختلفة."
+
 msgid "ended by {signal} before it finished, so there is nothing to hand back."
 msgstr "أُوقف بالإشارة {signal} قبل أن ينتهي، لذا لا يوجد ما يُسلَّم."
 
@@ -690,6 +696,9 @@ msgstr "{where}: قيمة band للنص هي on أو off، لا {value}."
 msgid "{where}: a text sits at {places} or {last}, not at {value}."
 msgstr "{where}: يوضع النص في {places} أو {last}، لا في {value}."
 
+msgid "{where}: the text {words} takes slide-in or fade-in, not both: a sliding text fades in as it rises."
+msgstr "{where}: يأخذ النص {words} إمّا slide-in أو fade-in، لا كليهما: النص المنزلق يظهر تدريجيًا وهو يرتفع."
+
 msgid "{where}: the text {words} fades for {fades} seconds, and shows for only {seconds}."
 msgstr "{where}: يتلاشى النص {words} لمدة {fades} ثانية، ولا يظهر إلا لمدة {seconds}."
 
@@ -706,9 +715,6 @@ msgid ""
 msgstr ""
 "{where}: عرض النص {words} هو {wide} بكسل بالحجم {size}، والإطار يتسع لـ {room}.\n"
 "  اختصره، أو أعطه حجمًا أصغر: نحو {fits} سيتسع."
-
-msgid "{where}: the texts {first} and {second} would be on screen at the same time. Only one shows at a time."
-msgstr "{where}: سيظهر النصان {first} و{second} على الشاشة في الوقت نفسه. لا يظهر إلا نص واحد في كل مرة."
 
 msgid "{where}: reveal brings in a card's picture, and this card has none."
 msgstr "{where}: يُظهر reveal صورة البطاقة، وهذه البطاقة بلا صورة."

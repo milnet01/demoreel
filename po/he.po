@@ -7,6 +7,12 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Demoreel-Review: draft\n"
 
+msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
+msgstr "{where}: הטקסט {words} מוצג יחד עם {first} באותו מקום, ולאחד יש פס ולשני אין. לטקסטים שנערמים יחד יש פס לכולם או לאף אחד."
+
+msgid "{where}: the text {words} does not fit: with the texts stacked above it, on screen at the same time, it is taller than the frame. Give them a smaller size, or show them at different times."
+msgstr "{where}: הטקסט {words} לא נכנס: יחד עם הטקסטים שנערמים מעליו באותו זמן, הוא גבוה מהמסגרת. הקטינו את הגודל שלהם, או הציגו אותם בזמנים שונים."
+
 msgid "ended by {signal} before it finished, so there is nothing to hand back."
 msgstr "הופסק על ידי {signal} לפני שהסתיים, ולכן אין מה להחזיר."
 
@@ -666,6 +672,9 @@ msgstr "{where}: הרצועה של טקסט היא on או off, ולא {value}."
 msgid "{where}: a text sits at {places} or {last}, not at {value}."
 msgstr "{where}: טקסט ממוקם ב־{places} או ב־{last}, ולא ב־{value}."
 
+msgid "{where}: the text {words} takes slide-in or fade-in, not both: a sliding text fades in as it rises."
+msgstr "{where}: הטקסט {words} מקבל slide-in או fade-in, לא את שניהם: טקסט שמחליק נכנס בהדרגה תוך כדי עלייה."
+
 msgid "{where}: the text {words} fades for {fades} seconds, and shows for only {seconds}."
 msgstr "{where}: הטקסט {words} מתעמעם במשך {fades} שניות, ומוצג רק {seconds} שניות."
 
@@ -682,9 +691,6 @@ msgid ""
 msgstr ""
 "{where}: רוחב הטקסט {words} הוא {wide} פיקסלים בגודל {size}, ובפריים יש מקום ל־{room}.\n"
 "  יש לקצר אותו, או לתת לו גודל קטן יותר: בערך {fits} ייכנס."
-
-msgid "{where}: the texts {first} and {second} would be on screen at the same time. Only one shows at a time."
-msgstr "{where}: הטקסטים {first} ו־{second} היו מופיעים על המסך באותו זמן. רק אחד מוצג בכל פעם."
 
 msgid "{where}: reveal brings in a card's picture, and this card has none."
 msgstr "{where}: reveal מכניס את התמונה של כרטיס, ולכרטיס הזה אין תמונה."

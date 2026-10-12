@@ -7,6 +7,12 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Demoreel-Review: draft\n"
 
+msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
+msgstr "{where}：文字 {words} 与 {first} 同时显示在同一位置，但一个有底条，另一个没有。叠在一起的文字要么都有底条，要么都没有。"
+
+msgid "{where}: the text {words} does not fit: with the texts stacked above it, on screen at the same time, it is taller than the frame. Give them a smaller size, or show them at different times."
+msgstr "{where}：文字 {words} 放不下：加上同时叠在它上方的文字，它比画面还高。请把它们调小，或在不同时间显示。"
+
 msgid "ended by {signal} before it finished, so there is nothing to hand back."
 msgstr "在完成之前被 {signal} 终止，因此没有可交付的内容。"
 
@@ -660,6 +666,9 @@ msgstr "{where}：文字的底条只能是 on 或 off，而不是 {value}。"
 msgid "{where}: a text sits at {places} or {last}, not at {value}."
 msgstr "{where}：文字的位置可以是 {places} 或 {last}，而不是 {value}。"
 
+msgid "{where}: the text {words} takes slide-in or fade-in, not both: a sliding text fades in as it rises."
+msgstr "{where}：文字 {words} 只能用 slide-in 或 fade-in 之一，不能同时用：滑入的文字会在上升时淡入。"
+
 msgid "{where}: the text {words} fades for {fades} seconds, and shows for only {seconds}."
 msgstr "{where}：文字 {words} 的淡入淡出共 {fades} 秒，而它只显示 {seconds} 秒。"
 
@@ -676,9 +685,6 @@ msgid ""
 msgstr ""
 "{where}：文字 {words} 在大小 {size} 下宽 {wide} 像素，而画面只容得下 {room}。\n"
 "  请缩短文字，或用更小的大小：约 {fits} 可以放下。"
-
-msgid "{where}: the texts {first} and {second} would be on screen at the same time. Only one shows at a time."
-msgstr "{where}：文字 {first} 和 {second} 会同时出现在屏幕上。同一时间只能显示一条。"
 
 msgid "{where}: reveal brings in a card's picture, and this card has none."
 msgstr "{where}：reveal 用于让卡片的图片出现，而这张卡片没有图片。"

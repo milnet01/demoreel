@@ -586,6 +586,8 @@ finishing_checks() {
     # (a script with a clip in it takes the clip's shape instead).
     ed() { local out=$1; cat > "$ft/sc.txt"; run edit sc.txt -o "$ft/out/$out" -s 320x240 -r 10; }
     ed_ok() { ed "$@"; expect_ok "edit $1 ($(tr '\n' '|' < "$ft/sc.txt"))"; }
+    # The same at 640x480, where DEMO-0153's spec measures its texts.
+    ed640() { local out=$1; cat > "$ft/sc.txt"; run edit sc.txt -o "$ft/out/$out" -s 640x480 -r 10; }
     # How many pixels of frame IDX match SPEC (see px.py `find`); the rest of the
     # words are the region, as fractions of the frame.
     n_of() { px find "$@" | awk '{ print $1 }'; }
@@ -1403,7 +1405,7 @@ JSONPY
     fin_s21() {
     # README: "A `--from`, `--to` or `--text-size` belongs to the `--text` before
     # it, and one given before the first `--text` is refused: `caption` never
-    # cuts the video." "two whose times overlap are refused".
+    # cuts the video." Texts whose times overlap are stacked (DEMO-0153 INV-4).
     run caption A.mp4 -o "$ft/out/r0.mp4" --text one --from 1 --to 3
     expect_ok "control: caption with one text"
     for args in "--from 1 --text one" "--to 3 --text one" "--text-size 8 --text one"; do
@@ -1412,15 +1414,13 @@ JSONPY
         assert_absent "caption $args" "$ft/out/r1.mp4"
     done
     run caption A.mp4 -o "$ft/out/r2.mp4" --text one --from 1 --to 4 --text two --from 3 --to 5
-    expect_refused "caption with texts overlapping between 3 and 4"
-    assert_absent "caption with overlapping texts" "$ft/out/r2.mp4"
+    expect_ok "caption with texts overlapping between 3 and 4"
     run caption A.mp4 -o "$ft/out/r3.mp4" --text one --text two --from 2 --to 3
-    expect_refused "caption with a whole-video text and another beside it"
-    assert_absent "caption with a whole-video text and another" "$ft/out/r3.mp4"
+    expect_ok "caption with a whole-video text and another beside it"
     run caption A.mp4 -o "$ft/out/r4.mp4" --text 'This is far too wide to fit across a small frame at any ordinary size at all'
     expect_refused "caption with text wider than the frame"
     assert_absent "caption with too wide a text" "$ft/out/r4.mp4"
-    echo "a stray --from and overlapping texts were refused"
+    echo "a stray --from was refused, and overlapping texts made a film"
 
     # ---- fades ------------------------------------------------------------
     }
@@ -1852,6 +1852,14 @@ E
         assert_cmp "fade-in: the band is faint with the text (frame 6, dark pixels)" "$(n_of "$ft/out/fd3.mp4" 6 dark:100 0 .6 1 1)" '<=' 20
         assert_cmp "fade-out: the band is faint with the text (frame 34, dark pixels)" "$(n_of "$ft/out/fd3.mp4" 34 dark:100 0 .6 1 1)" '<=' 20
         echo "the band faded with the text"
+        # DEMO-0153 INV-7: a sliding band rises with its text, as INV-5's does.
+        ed640 sl2.mp4 < <(printf 'card 2 background #F0F0F0\n  text "Rise" size 10 band on slide-in 1\n')
+        expect_ok "edit: a sliding text on a band"
+        b2=$(px find "$ft/out/sl2.mp4" 2 dark:225 | awk '{ print $3 * 480 }')
+        b15=$(px find "$ft/out/sl2.mp4" 15 dark:225 | awk '{ print $3 * 480 }')
+        assert_cmp "slide-in on a band: the band is 9 to 15 px low at frame 2 ($b2 against $b15)" \
+            "$b2 - $b15 >= 9 && $b2 - $b15" "<=" 15
+        echo "a sliding band rose with its text"
     else
         refused_naming_line "a fading text on a band, with an ffmpeg that has no boxw" fd3.mp4 2
         echo "this ffmpeg has no boxw: the fading text on a band was refused, as README says"
@@ -2662,7 +2670,10 @@ CASES
     printf 'clip A.mp4 window 50 push 20\n' | ed_ok ps1.mp4
     bbox_near "push 20, first frame" "$ft/out/ps1.mp4" 0 '#101418' 0.275 0.275 0.725 0.725 0.01
     bbox_near "push 20, frame 30" "$ft/out/ps1.mp4" 30 '#101418' 0.253 0.25 0.747 0.75 0.01
-    bbox_near "push 20, last frame" "$ft/out/ps1.mp4" 59 '#101418' 0.231 0.233 0.769 0.767 0.01
+    # The film's last frame, not a fixed 59: the gate has made 59 frames of
+    # A here as well as 60, and the push is the same within the tolerance.
+    bbox_near "push 20, last frame" "$ft/out/ps1.mp4" "$(( $(v_frames "$ft/out/ps1.mp4") - 1 ))" \
+        '#101418' 0.231 0.233 0.769 0.767 0.01
     # H is white on its left half and black on its right. Zooming 2 on its
     # right edge's middle leaves 1 - z/2 of the window white; the window is
     # 288x216 at (16, 12), so the white's right edge is 0.05 + 0.9 (1 - z/2).
@@ -2706,6 +2717,68 @@ CASES
 CASES
     echo "$n bad push and zoom lines were each refused, naming the line, before any encode"
     }
+    fin_s61() {
+    # DEMO-0153 INV-1 and INV-2, at 640x480 on #101418: size 10 is 48 px.
+    ed640 st1.mp4 < <(printf 'card 2\n  text "Heading" colour #FFFFFF size 10\n  text "Second" colour #FF4040 size 6 from 0.5\n')
+    expect_ok "edit: two texts on screen together"
+    read -r _ _ wt _ wb <<<"$(px find "$ft/out/st1.mp4" 10 '#FFFFFF:40')"
+    read -r _ _ rt _ rb <<<"$(px find "$ft/out/st1.mp4" 10 '#FF4040:60')"
+    assert_cmp "stack: Heading ($wt to $wb) ends above Second ($rt to $rb)" "$wb" "<=" "$rt"
+    assert_near "stack: centred at the middle" 0.5 "$(awk "BEGIN { print ($wt + $rb) / 2 }")" 0.03
+    read -r _ x0 y0 x1 y1 <<<"$(px find "$ft/out/st1.mp4" 2 '#FFFFFF:40')"
+    read -r _ X0 Y0 X1 Y1 <<<"$(px find "$ft/out/st1.mp4" 10 '#FFFFFF:40')"
+    for e in "x0 $x0 $X0" "y0 $y0 $Y0" "x1 $x1 $X1" "y1 $y1 $Y1"; do
+        set -- $e
+        assert_near "stack: Heading's $1 stays put when Second arrives" "$3" "$2" 0.003
+    done
+    echo "texts on screen together were stacked in the script's order, centred, and stayed put"
+    }
+    fin_s62() {
+    # DEMO-0153 INV-4.
+    printf 'card 2\n  text "Top" at top\n  text "Bottom" at bottom\n' | ed_ok st2.mp4
+    assert_cmp "texts at two places: text in the top fifth" \
+        "$(n_of "$ft/out/st2.mp4" 10 light:40 0 0 1 .2)" ">" 0
+    assert_cmp "texts at two places: text in the bottom fifth" \
+        "$(n_of "$ft/out/st2.mp4" 10 light:40 0 .8 1 1)" ">" 0
+    echo "a text at the top and one at the bottom showed together"
+    }
+    fin_s63() {
+    # DEMO-0153 INV-5. The rise is 24 px; at frame 2 it is 24 x 0.8^3, about
+    # 12 px, low (a steady rise would be 19), and faint.
+    ed640 sl1.mp4 < <(printf 'card 2\n  text "Rise" size 10 slide-in 1\n')
+    expect_ok "edit: a sliding text"
+    t2=$(px find "$ft/out/sl1.mp4" 2 light:40 | awk '{ print $3 * 480 }')
+    t15=$(px find "$ft/out/sl1.mp4" 15 light:40 | awk '{ print $3 * 480 }')
+    assert_cmp "slide-in: 9 to 15 px low at frame 2 ($t2 against $t15)" \
+        "$t2 - $t15 >= 9 && $t2 - $t15" "<=" 15
+    assert_cmp "slide-in: faint at frame 2" "$(px minmax "$ft/out/sl1.mp4" 2 full | awk '{ print $2 }')" "<" 120
+    assert_cmp "slide-in: whole at frame 15" "$(px minmax "$ft/out/sl1.mp4" 15 full | awk '{ print $2 }')" ">" 200
+    echo "a sliding text rose into place, easing out, as it faded in"
+    }
+    fin_s64() {
+    # DEMO-0153 INV-6.
+    n=0
+    while IFS='|' read -r line size script; do
+        n=$((n + 1))
+        printf '%b\n' "$script" > "$ft/sb$n.txt"
+        run edit "sb$n.txt" -o "$ft/out/sb$n.mp4" -s "$size" -r 10
+        refused_naming_line "edit refuses: $script" "sb$n.mp4" "$line"
+    done <<'CASES'
+2|640x480|card 2\n  text "x" slide-in 1 fade-in 1
+2|640x480|card 2\n  text "x" slide-in 1.5 fade-out 1
+4|320x240|card 2\n  text "A" size 30\n  text "B" size 30\n  text "C" size 30\n  text "D" size 30
+3|320x240|clip A.mp4\n  text "a" band off\n  text "b"
+CASES
+    echo "$n bad stacks and slide-ins were refused, naming the line"
+    }
+    fin_s65() {
+    # DEMO-0153 INV-8.
+    printf 'card 2 sq.png\n  text "A" at top size 8\n  text "B" at top size 6\n' | ed_ok st3.mp4
+    read -r _ _ _ _ wb <<<"$(px find "$ft/out/st3.mp4" 10 '#FFFFFF:40' 0 0 1 .5)"
+    read -r _ _ gt _ _ <<<"$(px find "$ft/out/st3.mp4" 10 '#00C000:60')"
+    assert_cmp "a card's picture ($gt) starts below its stack at the top ($wb)" "$gt" ">=" "$wb"
+    echo "a card's picture was fitted below a stack of two lines"
+    }
     fin_step "trim keeps the frames from --from to --to, the last one included" fin_s1
     fin_step "every video a command writes is H.264, yuv420p, index first, with its clips' sound" fin_s2
     fin_step "-o may not be an input, and must end in .mp4" fin_s3
@@ -2726,7 +2799,7 @@ CASES
     fin_step "card: an animated picture plays at its own speed and starts again" fin_s18
     fin_step "card: text too wide for the frame is refused" fin_s19
     fin_step "caption shows text only inside its from/to window" fin_s20
-    fin_step "caption refuses a --from before any --text, and texts that overlap" fin_s21
+    fin_step "caption refuses a --from before any --text" fin_s21
     fin_step "fade-in, fade-out and fade-at change the brightness where README says" fin_s22
     fin_step "edit makes the film in order, from a file or from standard input" fin_s23
     fin_step "edit's film size and rate: the first clip's, or -s and -r, or 1600x1000 at 30" fin_s24
@@ -2766,6 +2839,11 @@ CASES
     fin_step "a gradient background is darkened, moves, and is the same every run" fin_s58
     fin_step "push grows a window, and zoom eases in on a point" fin_s59
     fin_step "edit refuses a bad push or zoom" fin_s60
+    fin_step "texts on screen together are stacked in order and stay put" fin_s61
+    fin_step "texts at different places show together" fin_s62
+    fin_step "slide-in rises into place and fades in" fin_s63
+    fin_step "edit refuses a bad stack or slide-in" fin_s64
+    fin_step "a card's picture fits below a stack" fin_s65
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }
 

@@ -427,6 +427,11 @@ you like; the indent is only for your eyes.
   which needs an ffmpeg whose text filter can size its own box (`boxw` in
   `ffmpeg -h filter=drawtext`). On one that cannot, a text that fades with
   its band on is refused.
+- `slide-in 0.6` brings the text in over 0.6 seconds from its `from` by
+  rising into its place from half its height below, slowing as it arrives,
+  while it fades in. Its band rises and fades with it, and needs `boxw` as a
+  fading band does. A text takes `slide-in` or `fade-in`, not both, and
+  `slide-in` with `fade-out` may not be longer than the text shows.
 - `band off` takes the dark band away, and `band on` gives a card's text one.
   Text on a band is white unless `colour` says otherwise.
 - `at top`, `at middle` or `at bottom` says where it sits. With a band, the
@@ -441,9 +446,19 @@ you like; the indent is only for your eyes.
   only just fits on one machine may be refused on another. It is found with
   `fc-match`; on a machine without that program the text is drawn in the
   regular weight, and a font asked for by name is refused.
-- A scene may have several texts, but only one on screen at a time: two whose
-  times overlap are refused. A text shows from its `from` up to its `to` and
-  not on the frame at `to`, so one may start at the time another ends.
+- A text shows from its `from` up to its `to` and not on the frame at `to`.
+- Texts at one place that are on screen at the same time are stacked, one
+  line above another in the order the script writes them, so a heading and a
+  line under it can share a card and arrive one after another. Texts that
+  are on screen together through a third count as one stack. Each line
+  keeps its place for as long as the stack lasts, so a line does not move
+  when another arrives or leaves. Lines on bands touch; lines without one
+  are three tenths of the taller one's height apart. The stack sits where
+  one text of its height would, and the picture on a card is fitted below a
+  stack at the top. A stack's lines all have a band or none do, and a stack
+  taller than the frame less a twentieth at the top and bottom is refused.
+  Texts at different places show together, a title at the top over a
+  caption at the bottom.
 
 **The film's picture size and frame rate** are the first clip's. `-s` and
 `-r` set them by hand. A film with no clip in it, cards only, is 1600x1000 at

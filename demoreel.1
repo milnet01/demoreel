@@ -431,15 +431,20 @@ Then any of
 .BI volume " dB"\fR,\fP
 .BI speed " factor"\fR,\fP
 .BI hold " s"\fR,\fP
-.BI window " percent"
+.BI window " percent"\fR,\fP
+.BI background " #RRGGBB"
 and
-.BI background " #RRGGBB"\fR.\fP
+.BI push " percent"\fR.\fP
 A clip keeps its own sound unless told not to.
 .B window
 plays it in a smaller window with rounded corners and a shadow, on its
 .BR background ,
-and lets a clip of another shape from the film's in.
-Its times stay in its own file's time whatever its speed, and
+and lets a clip of another shape from the film's in;
+.B push
+grows that window slowly as the clip plays.
+A background of two to eight colours joined by commas is a slowly moving,
+darkened gradient through them, on a clip's window or a card.
+A clip's times stay in its own file's time whatever its speed, and
 .B hold
 keeps its last frame on screen.
 A crossfade is a fade unless it names one of ffmpeg's ready-made
@@ -461,8 +466,23 @@ with a transition as on a clip, and
 .BI reveal " s"\fR,\fP
 which fades the picture in while it grows to its full size.
 .TP
+.BI "zoom " factor
+Under a clip with a
+.BR window :
+zoom the picture inside it to that many times its size, easing in and out,
+and stay there.
+Then any of
+.BI x " percent"
+and
+.BI y " percent"
+(the point it closes in on, default the middle),
+.BI from " s"
+and
+.BI to " s"\fR.\fP
+.TP
 .BI "text " "\(dqwords\(dq"
 Put one line of text on the scene above.
+Texts at one place on screen at the same time are stacked in script order.
 Then any of
 .BI from " s"\fR,\fP
 .BI to " s"\fR,\fP
@@ -473,6 +493,8 @@ Then any of
 .BI shadow " #RRGGBB"\fR,\fP
 .BI fade\-in " s"\fR,\fP
 .BI fade\-out " s"\fR,\fP
+.BI slide\-in " s"\fR,\fP
+which rises the text into place as it fades in,
 .BR band " " on | off
 and
 .BR at " " top | middle | bottom .

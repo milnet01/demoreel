@@ -7,6 +7,12 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Demoreel-Review: draft\n"
 
+msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
+msgstr "{where}: el texto {words} está en pantalla con {first} en el mismo lugar, y uno tiene banda y el otro no. Los textos apilados juntos tienen todos banda o ninguno."
+
+msgid "{where}: the text {words} does not fit: with the texts stacked above it, on screen at the same time, it is taller than the frame. Give them a smaller size, or show them at different times."
+msgstr "{where}: el texto {words} no cabe: con los textos apilados encima, en pantalla a la vez, es más alto que el fotograma. Dales un tamaño menor o muéstralos en momentos distintos."
+
 msgid "ended by {signal} before it finished, so there is nothing to hand back."
 msgstr "terminado por {signal} antes de acabar, así que no hay nada que devolver."
 
@@ -666,6 +672,9 @@ msgstr "{where}: la banda de un texto está activada o desactivada (on u off), n
 msgid "{where}: a text sits at {places} or {last}, not at {value}."
 msgstr "{where}: un texto se coloca en {places} o {last}, no en {value}."
 
+msgid "{where}: the text {words} takes slide-in or fade-in, not both: a sliding text fades in as it rises."
+msgstr "{where}: el texto {words} lleva slide-in o fade-in, no ambos: un texto que se desliza aparece gradualmente mientras sube."
+
 msgid "{where}: the text {words} fades for {fades} seconds, and shows for only {seconds}."
 msgstr "{where}: el texto {words} hace un fundido de {fades} segundos, y solo se muestra durante {seconds}."
 
@@ -682,9 +691,6 @@ msgid ""
 msgstr ""
 "{where}: el texto {words} mide {wide} píxeles de ancho con el tamaño {size}, y en el cuadro caben {room}.\n"
 "  Acórtelo, o dele un tamaño menor: cabría uno de unos {fits}."
-
-msgid "{where}: the texts {first} and {second} would be on screen at the same time. Only one shows at a time."
-msgstr "{where}: los textos {first} y {second} estarían en pantalla a la vez. Solo se muestra uno cada vez."
 
 msgid "{where}: reveal brings in a card's picture, and this card has none."
 msgstr "{where}: reveal hace aparecer la imagen de un rótulo, y este rótulo no tiene ninguna."

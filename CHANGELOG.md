@@ -14,6 +14,10 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **Several texts can be on screen at once: lines at one place are stacked in script order and keep their place, and `slide-in` makes a line rise into place as it fades in.** (DEMO-0153)
+  A title card can have a heading and a line under it, each in its own
+  style, arriving one after another. Overlapping texts are no longer refused.
+
 - **A windowed clip can push in with `push 4`, its window growing slowly, and a `zoom 2 x 60 y 40 from 3 to 5` line under it zooms smoothly in on a point.** (DEMO-0184)
   The camera can drift closer, or glide in on the part of the app that
   matters, as in the Slipcase trailer.

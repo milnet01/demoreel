@@ -7,6 +7,12 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Demoreel-Review: draft\n"
 
+msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
+msgstr "{where}: die teks {words} is saam met {first} op dieselfde plek op die skerm, en een het 'n band en die ander nie. Tekste wat saam gestapel is, het almal 'n band of geeneen nie."
+
+msgid "{where}: the text {words} does not fit: with the texts stacked above it, on screen at the same time, it is taller than the frame. Give them a smaller size, or show them at different times."
+msgstr "{where}: die teks {words} pas nie: saam met die tekste wat terselfdertyd daarbo gestapel is, is dit hoër as die raam. Gee hulle 'n kleiner grootte, of wys hulle op verskillende tye."
+
 msgid "ended by {signal} before it finished, so there is nothing to hand back."
 msgstr "deur {signal} beëindig voordat dit klaar was, so daar is niks om terug te gee nie."
 
@@ -666,6 +672,9 @@ msgstr "{where}: 'n teks se band is on of off, nie {value} nie."
 msgid "{where}: a text sits at {places} or {last}, not at {value}."
 msgstr "{where}: 'n teks staan by {places} of {last}, nie by {value} nie."
 
+msgid "{where}: the text {words} takes slide-in or fade-in, not both: a sliding text fades in as it rises."
+msgstr "{where}: die teks {words} neem slide-in of fade-in, nie albei nie: 'n teks wat inskuif, vervaag in terwyl dit opskuif."
+
 msgid "{where}: the text {words} fades for {fades} seconds, and shows for only {seconds}."
 msgstr "{where}: die teks {words} vervaag vir {fades} sekondes, en wys vir net {seconds}."
 
@@ -682,9 +691,6 @@ msgid ""
 msgstr ""
 "{where}: die teks {words} is {wide} pieksels breed teen grootte {size}, en die raam het plek vir {room}.\n"
 "  Maak dit korter, of gee dit 'n kleiner grootte: omtrent {fits} sal pas."
-
-msgid "{where}: the texts {first} and {second} would be on screen at the same time. Only one shows at a time."
-msgstr "{where}: die tekste {first} en {second} sou terselfdertyd op die skerm wees. Net een wys op 'n slag."
 
 msgid "{where}: reveal brings in a card's picture, and this card has none."
 msgstr "{where}: reveal bring 'n kaart se prent in, en hierdie kaart het geen nie."

@@ -593,6 +593,10 @@ msgstr ""
 msgid "{where}: a text sits at {places} or {last}, not at {value}."
 msgstr ""
 
+#. translators: slide-in and fade-in are edit-script words and stay in English.
+msgid "{where}: the text {words} takes slide-in or fade-in, not both: a sliding text fades in as it rises."
+msgstr ""
+
 msgid "{where}: the text {words} fades for {fades} seconds, and shows for only {seconds}."
 msgstr ""
 
@@ -606,7 +610,11 @@ msgid ""
 "  Shorten it, or give it a smaller size: about {fits} would fit."
 msgstr ""
 
-msgid "{where}: the texts {first} and {second} would be on screen at the same time. Only one shows at a time."
+#. translators: band is an edit-script word and stays in English.
+msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
+msgstr ""
+
+msgid "{where}: the text {words} does not fit: with the texts stacked above it, on screen at the same time, it is taller than the frame. Give them a smaller size, or show them at different times."
 msgstr ""
 
 msgid "{where}: a card needs a length above zero."

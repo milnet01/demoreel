@@ -7,6 +7,12 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Demoreel-Review: draft\n"
 
+msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
+msgstr "{where}: テキスト {words} は {first} と同時に同じ位置に表示されますが、一方には帯があり、もう一方にはありません。重ねて並べるテキストは、すべて帯ありか、すべて帯なしにしてください。"
+
+msgid "{where}: the text {words} does not fit: with the texts stacked above it, on screen at the same time, it is taller than the frame. Give them a smaller size, or show them at different times."
+msgstr "{where}: テキスト {words} が収まりません。同時に上に積み重なるテキストと合わせると、画面より高くなります。サイズを小さくするか、表示する時間をずらしてください。"
+
 msgid "ended by {signal} before it finished, so there is nothing to hand back."
 msgstr "完了する前に {signal} で終了したため、渡せるものはありません。"
 
@@ -660,6 +666,9 @@ msgstr "{where}: テキストの band は on か off です。{value} は使え�
 msgid "{where}: a text sits at {places} or {last}, not at {value}."
 msgstr "{where}: テキストの位置は {places} か {last} です。{value} は使えません。"
 
+msgid "{where}: the text {words} takes slide-in or fade-in, not both: a sliding text fades in as it rises."
+msgstr "{where}: テキスト {words} には slide-in か fade-in のどちらかを指定します。両方は使えません。スライドするテキストは上がりながらフェードインします。"
+
 msgid "{where}: the text {words} fades for {fades} seconds, and shows for only {seconds}."
 msgstr "{where}: テキスト {words} のフェードは {fades} 秒ですが、表示は {seconds} 秒しかありません。"
 
@@ -676,9 +685,6 @@ msgid ""
 msgstr ""
 "{where}: テキスト {words} はサイズ {size} で幅 {wide} ピクセルですが、フレームの余裕は {room} です。\n"
 "  短くするか、サイズを小さくしてください。{fits} 程度なら収まります。"
-
-msgid "{where}: the texts {first} and {second} would be on screen at the same time. Only one shows at a time."
-msgstr "{where}: テキスト {first} と {second} が同時に画面に出てしまいます。一度に表示できるのは 1 つだけです。"
 
 msgid "{where}: reveal brings in a card's picture, and this card has none."
 msgstr "{where}: reveal は card の画像を登場させるもので、この card には画像がありません。"
