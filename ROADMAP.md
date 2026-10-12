@@ -4096,7 +4096,7 @@ before packaging. The full editor stays 2.0.0.
   Kind: feature.
   Source: user-request-2026-10-02.
 
-- 📋 [DEMO-0178] **A moving background behind a scene: a slow gradient in chosen colours, darkened, with a vignette.**
+- ✅ [DEMO-0178] **A moving background behind a scene: a slow gradient in chosen colours, darkened, with a vignette.**
   From the Slipcase trailer (website session, 2026-10-10): ffmpeg's
   gradients source in the site's colours, darkened with
   colorchannelmixer, plus vignette, with the app's window (DEMO-0149)
@@ -4104,6 +4104,11 @@ before packaging. The full editor stays 2.0.0.
   Builds without a spec, under DEMO-0183's layout (user, 2026-10-11):
   it replaces layer 1, the background, of docs/specs/DEMO-0183-clip-window.md
   § 4.4, for a windowed clip and a card alike.
+  Shipped 2026-10-12: `background` takes two to eight colours joined by
+  commas, on a card and on a windowed clip. ffmpeg's gradients, turning
+  0.36 rad a second at any rate, seeded by the scene's number, darkened
+  to 38% with colorchannelmixer, vignette PI/4. ci.sh fin_s58 and three
+  new refusal cases in fin_s56.
   **Layman:** A gently moving coloured backdrop for a trailer, instead of plain black.
   Kind: feature.
   Source: peer-website-session-2026-10-10.

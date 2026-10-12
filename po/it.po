@@ -686,8 +686,8 @@ msgstr "{where}: window è una parte dello spazio in percentuale, da {low} a {hi
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: un cartello richiede una durata maggiore di zero."
 
-msgid "{where}: a background is a colour written #RRGGBB, like {example}, not {value}."
-msgstr "{where}: uno sfondo è un colore scritto come #RRGGBB, per esempio {example}, non {value}."
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, or two to {most} of them joined by commas for a moving gradient, not {value}."
+msgstr "{where}: uno sfondo è un colore scritto come #RRGGBB, per esempio {example}, oppure da due a {most} colori separati da virgole per una sfumatura in movimento, non {value}."
 
 msgid "{where}: {path} has no length ffmpeg can tell."
 msgstr "{where}: {path} non ha una durata che ffmpeg possa determinare."

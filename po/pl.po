@@ -692,8 +692,8 @@ msgstr "{where}: window to część przestrzeni w procentach, od {low} do {high}
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: karta musi mieć długość większą od zera."
 
-msgid "{where}: a background is a colour written #RRGGBB, like {example}, not {value}."
-msgstr "{where}: tło to kolor zapisany jako #RRGGBB, np. {example}, a nie {value}."
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, or two to {most} of them joined by commas for a moving gradient, not {value}."
+msgstr "{where}: tło to kolor zapisany jako #RRGGBB, np. {example}, albo od dwóch do {most} kolorów połączonych przecinkami dla ruchomego gradientu, a nie {value}."
 
 msgid "{where}: {path} has no length ffmpeg can tell."
 msgstr "{where}: ffmpeg nie potrafi ustalić długości {path}."

@@ -692,8 +692,8 @@ msgstr "{where}: window — частка місця у відсотках, ві�
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: тривалість картки має бути більшою за нуль."
 
-msgid "{where}: a background is a colour written #RRGGBB, like {example}, not {value}."
-msgstr "{where}: тло — це колір у вигляді #RRGGBB, наприклад {example}, а не {value}."
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, or two to {most} of them joined by commas for a moving gradient, not {value}."
+msgstr "{where}: тло — це колір у вигляді #RRGGBB, наприклад {example}, або від двох до {most} кольорів через кому для рухомого градієнта, а не {value}."
 
 msgid "{where}: {path} has no length ffmpeg can tell."
 msgstr "{where}: ffmpeg не може визначити тривалість {path}."

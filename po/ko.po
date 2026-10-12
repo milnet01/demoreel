@@ -680,8 +680,8 @@ msgstr "{where}: window는 공간에서 차지하는 비율(퍼센트)로, {low}
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: card의 길이는 0보다 커야 합니다."
 
-msgid "{where}: a background is a colour written #RRGGBB, like {example}, not {value}."
-msgstr "{where}: 배경은 {example}처럼 #RRGGBB로 쓴 색이어야 합니다. {value}은(는) 안 됩니다."
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, or two to {most} of them joined by commas for a moving gradient, not {value}."
+msgstr "{where}: 배경은 {example}처럼 #RRGGBB로 쓴 색이거나, 움직이는 그라데이션을 위해 쉼표로 이은 2~{most}개의 색이어야 합니다. {value}은(는) 안 됩니다."
 
 msgid "{where}: {path} has no length ffmpeg can tell."
 msgstr "{where}: ffmpeg이 {path}의 길이를 알 수 없습니다."

@@ -686,8 +686,8 @@ msgstr "{where}: window הוא חלק מהשטח באחוזים, מ־{low} עד 
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: לכרטיס צריך להיות אורך גדול מאפס."
 
-msgid "{where}: a background is a colour written #RRGGBB, like {example}, not {value}."
-msgstr "{where}: רקע הוא צבע שנכתב #RRGGBB, כמו {example}, ולא {value}."
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, or two to {most} of them joined by commas for a moving gradient, not {value}."
+msgstr "{where}: רקע הוא צבע שנכתב #RRGGBB, כמו {example}, או שניים עד {most} צבעים מופרדים בפסיקים למעבר צבעים נע, ולא {value}."
 
 msgid "{where}: {path} has no length ffmpeg can tell."
 msgstr "{where}: ל־{path} אין אורך ש־ffmpeg יכול לזהות."

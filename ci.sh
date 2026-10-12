@@ -2612,9 +2612,38 @@ window 10
 window 101
 window big
 window 50 background red
+window 50 background #ff0000,
+window 50 background #ff0000,red
+window 50 background #000001,#000002,#000003,#000004,#000005,#000006,#000007,#000008,#000009
 background #202830
 CASES
     echo "$n bad window and clip background words were each refused before any encode"
+    }
+    fin_s58() {
+    # DEMO-0178. Two reds make a flat red gradient, so what is left is the
+    # darkening to 38% (97) and the vignette, darker at the corner.
+    printf 'card 3 background #ff0000,#ff0000\n' | ed_ok gr1.mp4
+    assert_colour "gradient card: the middle is red at 38%" "$ft/out/gr1.mp4" 5 0.5 0.5 97 0 0 6
+    assert_colour "gradient card: the corner is darkened by the vignette" \
+        "$ft/out/gr1.mp4" 5 0.02 0.02 10 0 0 8
+    printf 'clip A.mp4 window 50 background #ff0000,#ff0000\n' | ed_ok gr2.mp4
+    assert_colour "gradient behind a window: above it is red at 38%, less the vignette" \
+        "$ft/out/gr2.mp4" 5 0.5 0.03 56 0 0 8
+    # Red to blue moves, and moves as far in a second whatever the rate.
+    printf 'card 3 background #ff0000,#0000ff\n' > "$ft/gr3.txt"
+    for r in 10 30; do
+        run edit gr3.txt -o "$ft/out/gr3-$r.mp4" -s 320x240 -r "$r"
+        expect_ok "edit: a red-to-blue gradient card at $r a second"
+    done
+    assert_cmp "gradient: frames 0 and 29 differ ($(px diff "$ft/out/gr3-10.mp4" 0 "$ft/out/gr3-10.mp4" 29))" \
+        "$(px diff "$ft/out/gr3-10.mp4" 0 "$ft/out/gr3-10.mp4" 29)" ">=" 3
+    assert_cmp "gradient: 2.5 s in is the same picture at 10 and 30 a second" \
+        "$(px diff "$ft/out/gr3-10.mp4" 25 "$ft/out/gr3-30.mp4" 75)" "<=" 1.5
+    run edit gr3.txt -o "$ft/out/gr3-again.mp4" -s 320x240 -r 10
+    expect_ok "edit: the same gradient card again"
+    assert_cmp "gradient: the same script makes the same picture" \
+        "$(px diff "$ft/out/gr3-10.mp4" 15 "$ft/out/gr3-again.mp4" 15)" "<=" 0.5
+    echo "a gradient was darkened with a vignette, behind a card and a window, and moved at one speed whatever the rate"
     }
     fin_s57() {
     # DEMO-0183 INV-6, partial: a windowed scene and a crossfade, 6 + 4 - 0.5.
@@ -2684,6 +2713,7 @@ CASES
     fin_step "a window has rounded corners and a shadow" fin_s55
     fin_step "edit refuses a bad window or a clip's background" fin_s56
     fin_step "a windowed scene ends where the plan says" fin_s57
+    fin_step "a gradient background is darkened, moves, and is the same every run" fin_s58
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }
 

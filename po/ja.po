@@ -680,8 +680,8 @@ msgstr "{where}: window は領域に占める割合 (パーセント) で、{low
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: card の長さは 0 より大きくしてください。"
 
-msgid "{where}: a background is a colour written #RRGGBB, like {example}, not {value}."
-msgstr "{where}: 背景は {example} のように #RRGGBB 形式の色で指定します。{value} は使えません。"
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, or two to {most} of them joined by commas for a moving gradient, not {value}."
+msgstr "{where}: 背景は {example} のように #RRGGBB 形式の色で指定します。動くグラデーションにするには、2〜{most} 色をカンマでつなぎます。{value} は使えません。"
 
 msgid "{where}: {path} has no length ffmpeg can tell."
 msgstr "{where}: {path} の長さを ffmpeg が判断できません。"

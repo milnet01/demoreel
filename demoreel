@@ -3410,9 +3410,13 @@ def check_scene(scene, width, height, rate, workdir):
                        where=where, moment=f"{moment:g}",
                        seconds=f"{scene.fade_length:g}", start=f"{scene.start:.3f}",
                        end=f"{scene.start + length * scene.speed:.3f}"))
-    if scene.background is not None and not COLOUR_RE.fullmatch(scene.background):
+    if scene.background is not None and not (
+            1 <= len(scene.background.split(",")) <= GRADIENT_MOST
+            and all(COLOUR_RE.fullmatch(c) for c in scene.background.split(","))):
         die(tr("{where}: a background is a colour written #RRGGBB, like "
-               "{example}, not {value}.", where=where, example=CARD_BACKGROUND,
+               "{example}, or two to {most} of them joined by commas for a "
+               "moving gradient, not {value}.", where=where,
+               example=CARD_BACKGROUND, most=GRADIENT_MOST,
                value=repr(scene.background)))
     if scene.fade_in + scene.fade_out > length + 1e-6:
         die(tr("{where}: its fades come to {fades} seconds, and the scene is only "
@@ -3463,7 +3467,8 @@ def text_filters(scene, width, height):
     if not scene.texts:
         return []
     dark = True
-    if scene.background is not None:
+    # A gradient is darkened to GRADIENT_DARK, so it is always dark.
+    if scene.background is not None and "," not in scene.background:
         red, green, blue = (int(scene.background[i:i + 2], 16) for i in (1, 3, 5))
         dark = 0.299 * red + 0.587 * green + 0.114 * blue < 140
     margin = round(CARD_MARGIN * height)
@@ -3784,12 +3789,12 @@ def scene_graph(scene, length, number, first_input, width, height, rate):
         pts = "PTS-STARTPTS" if scene.speed == 1 else f"(PTS-STARTPTS)/{scene.speed:.9g}"
         if scene.window is None:
             return inputs, [f"[{first_input}:v]setpts={pts},{shape}{tail}{out}"]
-        inputs += ["-f", "lavfi", "-i", f"color=c=0x{scene.background[1:]}:"
-                   f"s={width}x{height}:r={fps}:d={length:.6f}"]
+        inputs += ["-f", "lavfi", "-i",
+                   background_source(scene, width, height, rate, length, number)]
         return inputs, window_graph(scene, length, number, first_input, pts,
                                     f"{shape}{tail}{out}", rate)
-    inputs = ["-f", "lavfi", "-i", f"color=c=0x{scene.background[1:]}:"
-              f"s={width}x{height}:r={fps}:d={length:.6f}"]
+    inputs = ["-f", "lavfi", "-i",
+              background_source(scene, width, height, rate, length, number)]
     if scene.path is None:
         return inputs, [f"[{first_input}:v]{shape}{tail}{out}"]
     # The picture is read once and shown again and again by the loop filter,
@@ -3807,6 +3812,30 @@ def scene_graph(scene, length, number, first_input, width, height, rate):
         f"[p{number}]",
         f"[{first_input}:v][p{number}]overlay=x='(W-w)/2':"
         f"y='{top}+({room_h}-h)/2':format=auto,{shape}{tail}{out}"]
+
+
+# A moving background (DEMO-0178), after the Slipcase trailer: ffmpeg's
+# gradients in the caller's colours (at most GRADIENT_MOST, ffmpeg's limit),
+# turning GRADIENT_TURN radians a second (its 0.012 a frame at 30 a second),
+# darkened to GRADIENT_DARK of their brightness, with a vignette.
+GRADIENT_TURN = 0.36
+GRADIENT_DARK = 0.38
+GRADIENT_MOST = 8
+
+
+def background_source(scene, width, height, rate, length, number):
+    """The lavfi source behind a card or a clip's window: one colour, or a
+    slowly moving gradient through several. The gradient's seed is the
+    scene's number, so the same script makes the same film."""
+    colours = scene.background.split(",")
+    shape = f"s={width}x{height}:r={rate_text(rate)}:d={length:.6f}"
+    if len(colours) == 1:
+        return f"color=c=0x{colours[0][1:]}:{shape}"
+    stops = ":".join(f"c{i}=0x{c[1:]}" for i, c in enumerate(colours))
+    dark = GRADIENT_DARK
+    return (f"gradients={shape}:n={len(colours)}:{stops}:"
+            f"speed={GRADIENT_TURN / rate:.6g}:seed={number},"
+            f"colorchannelmixer=rr={dark}:gg={dark}:bb={dark},vignette=PI/4")
 
 
 # A clip's window (DEMO-0183): the smallest share of the room it may take,

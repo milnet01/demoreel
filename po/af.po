@@ -686,8 +686,8 @@ msgstr "{where}: window is 'n deel van die ruimte in persent, van {low} tot {hig
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: 'n kaart het 'n lengte groter as nul nodig."
 
-msgid "{where}: a background is a colour written #RRGGBB, like {example}, not {value}."
-msgstr "{where}: 'n agtergrond is 'n kleur geskryf as #RRGGBB, soos {example}, nie {value} nie."
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, or two to {most} of them joined by commas for a moving gradient, not {value}."
+msgstr "{where}: 'n agtergrond is 'n kleur geskryf as #RRGGBB, soos {example}, of twee tot {most} daarvan met kommas verbind vir 'n bewegende kleurverloop, nie {value} nie."
 
 msgid "{where}: {path} has no length ffmpeg can tell."
 msgstr "{where}: {path} het geen lengte wat ffmpeg kan bepaal nie."

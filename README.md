@@ -349,9 +349,10 @@ order:
   into 80% of the room a card leaves its picture, its shape kept, with rounded
   corners and a soft shadow below it, centred on a plain background. It is
   between `20` and `100`. A caption sits on its band under the window.
-- `background #202830` — the colour round a window, written `#RRGGBB`, as on
-  a card. Without it the background is `#101418`. A clip with no `window`
-  refuses it. A text with no band takes its colour from it, as on a card.
+- `background #202830` — the colour round a window, written `#RRGGBB`, or a
+  moving gradient, as on a card. Without it the background is `#101418`. A
+  clip with no `window` refuses it. A text with no band takes its colour from
+  it, as on a card.
 
 A clip's sound fades, cuts and crossfades with its picture.
 
@@ -370,6 +371,11 @@ picture, text, or both.
   a clip.
 - `background #202830` sets the colour, written `#RRGGBB`. Without it the
   background is `#101418`.
+- `background #0f766e,#6d28d9,#9f1239` — two to eight colours joined by
+  commas — makes a gradient through them that turns slowly instead. It is
+  darkened to 38% of its brightness and darker still towards the corners, so
+  a text with no band on it is white. It turns at the same speed whatever the
+  film's rate, and the same script makes the same film.
 - `fade-in`, `fade-out` and `crossfade` work as on a clip.
 - `reveal 0.9` brings the picture in over that many seconds: it fades in and
   grows from 82% of its size to the whole, slowing as it arrives. It is for a

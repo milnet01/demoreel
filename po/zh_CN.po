@@ -680,8 +680,8 @@ msgstr "{where}：window 是所占区域的百分比，应在 {low} 到 {high} �
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}：卡片的时长必须大于零。"
 
-msgid "{where}: a background is a colour written #RRGGBB, like {example}, not {value}."
-msgstr "{where}：背景是一种颜色，写作 #RRGGBB，例如 {example}，而不是 {value}。"
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, or two to {most} of them joined by commas for a moving gradient, not {value}."
+msgstr "{where}：背景应是写作 #RRGGBB 的颜色，例如 {example}，或用逗号连接的两到 {most} 种颜色（构成移动的渐变），而不是 {value}。"
 
 msgid "{where}: {path} has no length ffmpeg can tell."
 msgstr "{where}：ffmpeg 无法判断 {path} 的时长。"

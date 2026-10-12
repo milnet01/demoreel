@@ -626,7 +626,7 @@ msgstr ""
 msgid "{where}: `fade-at {moment}` needs {seconds} seconds of the scene on each side, and the scene runs from {start} to {end}."
 msgstr ""
 
-msgid "{where}: a background is a colour written #RRGGBB, like {example}, not {value}."
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, or two to {most} of them joined by commas for a moving gradient, not {value}."
 msgstr ""
 
 msgid "{where}: its fades come to {fades} seconds, and the scene is only {seconds} long."

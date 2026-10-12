@@ -14,6 +14,10 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **A card's or a window's `background` can be two to eight colours joined by commas: a gradient through them that turns slowly, darkened, with a vignette.** (DEMO-0178)
+  A trailer's backdrop can move gently in the site's own colours instead of
+  being plain. The same script makes the same film, at any frame rate.
+
 - **A clip can play in a window with `window 80`: smaller, with rounded corners and a soft shadow, centred on a `background` colour; a clip of another shape is fitted in rather than refused.** (DEMO-0183)
   The app appears as a neat floating window in the trailer instead of filling the whole frame.
 
