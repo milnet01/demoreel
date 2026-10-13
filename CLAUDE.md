@@ -38,6 +38,13 @@ says the Ubuntu step was skipped. That is not a pass. GitHub's packages move
 weekly and the image does not, so the step prints a note once the image is two
 weeks old; rebuild then.
 
+`packaging/` builds the `.deb`, the `.rpm` and the Arch package, and
+`packaging/install.sh` alone decides where an installed file goes.
+`./ci.sh --packages` builds all three and installs each in a clean container of
+every distro it targets (`docs/specs/DEMO-0068-linux-packages.md`). The full
+gate runs it where `podman` is; GitHub runs it in its own job, and
+`release.yml` runs it again to attach the files to a published release.
+
 The gate records on `--gpu` and on a real Flatpak as well, but only where
 the machine has what those steps need — both skip on GitHub, so CI still covers
 `Xvfb` alone. Touching the `--gpu` path still means looking at a frame:

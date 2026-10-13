@@ -1,6 +1,7 @@
 # Contributing to demoreel
 
-Thank you for helping. This file says how to help with the translations.
+Thank you for helping. This file says how to help with the translations,
+and how to test the packages.
 Other ways to contribute will be added here as they open.
 
 ## Translations
@@ -82,3 +83,19 @@ From then on `--help` no longer calls it a draft. If any translation in the
 file changes afterwards, the fingerprint no longer matches and the checks
 fail. The header then goes back to `draft`, or a native speaker confirms
 the new wording and a new fingerprint is recorded.
+
+## Packages
+
+`packaging/` holds the `.deb`, `.rpm` and Arch package definitions, and
+`packaging/install.sh`, which decides where every installed file goes. A file
+added to the install goes into `install.sh`, never into one format alone.
+
+To build all three and test each in a clean container of every distro it
+targets, you need `podman` and a network connection:
+
+```sh
+./ci.sh --packages
+```
+
+It builds from the tree as it stands, new files included. Add `--out <folder>`
+to keep the files it built.

@@ -362,7 +362,236 @@ if [ "${1:-}" = "--version-lockstep" ]; then
         echo "dated section says '${notes:-<none>}'" >&2
         exit 1
     fi
+    # Every package reads the version from __version__, so no file under
+    # packaging/ may carry one of its own (DEMO-0068 INV-7).
+    if grep -rnF -- "$tool" packaging/ >&2; then
+        echo "packaging/ holds the version literally (above); read it from __version__" >&2
+        exit 1
+    fi
     printf 'version lockstep: %s\n' "$tool"
+    exit 0
+fi
+
+# The packages: a .deb, one .rpm for Fedora and openSUSE, and an Arch package,
+# each built from the tree and installed and run in a clean container of every
+# distro it targets (docs/specs/DEMO-0068-linux-packages.md § 4.4). The full
+# gate runs this, and so does the release workflow, with --out, to keep the
+# files it attaches.
+PKG_DEBIAN='docker.io/library/debian:stable'
+PKG_UBUNTU='docker.io/library/ubuntu:24.04'
+PKG_FEDORA='registry.fedoraproject.org/fedora:latest'
+PKG_OPENSUSE='docker.io/opensuse/tumbleweed:latest'
+PKG_ARCH='docker.io/library/archlinux:latest'
+
+# Run inside each container, as root, with the work folder at /w. Its first
+# argument says which distro this is; the second, what to do before testing:
+# build the package here, or only install the one built elsewhere.
+pkg_container_script() {
+    cat <<'EOF'
+set -euo pipefail
+distro=$1 build=$2 v=$3
+fail() { echo "FAIL ($distro): $*" >&2; exit 1; }
+mkdir -p /tmp/src && tar -xzf /w/demoreel-"$v".tar.gz -C /tmp/src
+src=/tmp/src/demoreel-$v
+# The layout every format must install: install.sh's own (INV-1).
+DESTDIR=/tmp/stage "$src"/packaging/install.sh
+# Listed by the shell: openSUSE's image has no find.
+staged=$(cd /tmp/stage && shopt -s globstar dotglob \
+    && for p in **; do [ -d "$p" ] && [ ! -L "$p" ] || echo "/$p"; done | sort)
+
+case $distro in
+debian|ubuntu)
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get -qq -o Acquire::Retries=3 update
+    pkg=/w/demoreel_"$v"-1_all.deb
+    install_pkg() { apt-get -qq -o Acquire::Retries=3 install -y "$@" "$pkg" >/dev/null; }
+    norec=--no-install-recommends
+    remove_pkg() { apt-get -qq purge -y demoreel >/dev/null; }
+    list_pkg() { dpkg -L demoreel; }
+    pkg_version() { dpkg-query -W -f '${Version}' demoreel; }
+    ;;
+fedora|opensuse)
+    pkg=/w/demoreel-"$v"-1.noarch.rpm
+    if [ "$distro" = fedora ]; then
+        install_pkg() { dnf -q install -y "$pkg" >/dev/null; }
+        norec=''
+        remove_pkg() { dnf -q remove -y demoreel >/dev/null; }
+    else
+        install_pkg() { zypper -q -n --no-gpg-checks install --allow-unsigned-rpm \
+            "${1:---recommends}" "$pkg" >/dev/null; }
+        norec=--no-recommends
+        remove_pkg() { zypper -q -n remove demoreel >/dev/null; }
+    fi
+    list_pkg() { rpm -ql demoreel; }
+    pkg_version() { rpm -q --qf '%{VERSION}-%{RELEASE}' demoreel; }
+    ;;
+arch)
+    pacman -Syu --noconfirm >/dev/null
+    install_pkg() { pacman -U --noconfirm /w/demoreel-"$v"-1-any.pkg.tar.zst >/dev/null; }
+    norec=''
+    remove_pkg() { pacman -Rns --noconfirm demoreel >/dev/null; }
+    list_pkg() { pacman -Qlq demoreel; }
+    pkg_version() { pacman -Q demoreel | cut -d' ' -f2; }
+    ;;
+esac
+
+if [ "$build" = build ]; then
+    case $distro in
+    debian)
+        root=/tmp/deb
+        DESTDIR=$root "$src"/packaging/install.sh
+        gzip -9n "$root"/usr/share/man/man1/demoreel.1
+        install -Dm644 "$src"/LICENSE "$root"/usr/share/doc/demoreel/copyright
+        mkdir "$root"/DEBIAN
+        sed "s/@VERSION@/$v/" "$src"/packaging/debian-control > "$root"/DEBIAN/control
+        dpkg-deb --root-owner-group --build "$root" /w/ >/dev/null
+        ;;
+    fedora)
+        dnf -q install -y rpm-build >/dev/null
+        mkdir -p /tmp/rpm/SOURCES
+        cp /w/demoreel-"$v".tar.gz /tmp/rpm/SOURCES/
+        rpmbuild -bb --quiet --define "_topdir /tmp/rpm" --define "ver $v" \
+            "$src"/packaging/demoreel.spec
+        cp /tmp/rpm/RPMS/noarch/demoreel-"$v"-1.noarch.rpm /w/
+        ;;
+    arch)
+        # makepkg refuses root, so it runs as a user made for it.
+        pacman -S --noconfirm --needed fakeroot binutils >/dev/null
+        useradd -m build
+        install -d -o build /tmp/arch
+        cp /w/PKGBUILD /w/demoreel-"$v".tar.gz /tmp/arch/
+        chown build /tmp/arch/*
+        # INV-9: the filled PKGBUILD accepts the tarball beside it.
+        (cd /tmp/arch && su build -c 'makepkg --verifysource' >/dev/null) \
+            || fail "makepkg --verifysource rejected the tarball"
+        # -d: building a script needs none of its run-time dependencies; the
+        # install below pulls them in, and INV-4 checks it did.
+        (cd /tmp/arch && su build -c 'makepkg -f -d' >/dev/null)
+        cp /tmp/arch/demoreel-"$v"-1-any.pkg.tar.zst /w/
+        ;;
+    esac
+fi
+
+# INV-5: without recommended packages, none of --gpu's programs comes along.
+if [ -n "$norec" ]; then
+    install_pkg "$norec"
+    ! command -v cage >/dev/null || fail "cage came with a no-recommends install"
+    remove_pkg
+fi
+
+install_pkg
+# INV-1: the package's files are install.sh's, apart from the licence. pacman
+# marks a folder with a trailing /, and Arch's image does not unpack manual
+# pages, so a folder there may not be on disk to test.
+listed=$(list_pkg | grep -v '/$' \
+    | while read -r p; do [ -d "$p" ] && [ ! -L "$p" ] || echo "$p"; done \
+    | grep -v '^/usr/share/\(licenses\|doc\)/demoreel/' \
+    | sed 's/\.\(gz\|zst\|xz\|bz2\)$//' | sort)
+[ "$listed" = "$staged" ] || {
+    comm -3 <(echo "$staged") <(echo "$listed") >&2
+    fail "the package's files are not install.sh's (left: staged only; indented: package only)"; }
+# INV-2: the installed command finds its translations.
+help=$(PYTHONUTF8=1 LANG=fr_FR.UTF-8 demoreel --help)
+case $help in "utilisation :"*) ;; *) fail "demoreel --help is not in French";; esac
+# INV-3: the installed script is the archive's, byte for byte.
+# By checksum: Arch's image has no cmp.
+[ "$(sha256sum </usr/share/demoreel/demoreel)" = "$(sha256sum <"$src"/demoreel)" ] \
+    || fail "the installed script was changed"
+# INV-4: every required program came from the distro's own repositories.
+for t in python3 Xvfb xauth xdotool ffmpeg ffprobe fc-match; do
+    command -v "$t" >/dev/null || fail "$t is not installed"
+done
+# INV-5: with recommended packages, --gpu's programs come too.
+if [ "$distro" != arch ]; then
+    for t in cage Xwayland wlr-randr wf-recorder; do
+        command -v "$t" >/dev/null || fail "$t did not come as a recommended package"
+    done
+fi
+# INV-6: it can record where the distro's ffmpeg has libx264, and says how to
+# get one where it has not.
+rc=0; out=$(demoreel check 2>&1) || rc=$?
+grep -q 'text on a card or a caption: ready' <<<"$out" || { echo "$out" >&2; fail "check: text is not ready"; }
+case $distro in
+fedora)   [ "$rc" = 1 ] && grep -q 'dnf swap ffmpeg-free ffmpeg' <<<"$out" ;;
+opensuse) [ "$rc" = 1 ] && grep -q 'Packman' <<<"$out" ;;
+*)        [ "$rc" = 0 ] && grep -q 'record and shot: ready' <<<"$out" ;;
+esac || { echo "$out" >&2; fail "check did not say what was expected (exit $rc)"; }
+# INV-7: the package's version is the script's.
+[ "$(demoreel --version)" = "demoreel $v" ] || fail "demoreel --version: $(demoreel --version)"
+[ "$(pkg_version)" = "$v-1" ] || fail "the package manager says version $(pkg_version)"
+# INV-8: removing it removes everything it installed.
+remove_pkg
+while read -r p; do
+    [ ! -e "$p" ] && [ ! -L "$p" ] || fail "$p is left after removal"
+done <<<"$staged"
+[ ! -e /usr/share/demoreel ] || fail "/usr/share/demoreel is left after removal"
+echo "PASS ($distro)"
+EOF
+}
+
+# Build and test every package; with a folder, leave the release files there.
+packages_check() {
+    local out=$1 v work tree rev distro image pids=() names=() failed=0 i
+    command -v podman >/dev/null || { echo "podman is not installed" >&2; return 1; }
+    v=$(sed -n 's/^__version__ = "\(.*\)"$/\1/p' demoreel)
+    work=$(mktemp -d)
+    # The tree as it stands, tracked and new files alike, as the parity leg runs
+    # it. On a clean tree that is HEAD's, and then HEAD is archived, so a
+    # release's tarball carries the tagged commit's time and nothing of this run.
+    tree=$(GIT_INDEX_FILE="$work/index" bash -c 'git read-tree HEAD && git add -A && git write-tree')
+    rev=$tree
+    [ "$tree" = "$(git rev-parse 'HEAD^{tree}')" ] && rev=HEAD
+    git archive --prefix="demoreel-$v/" "$rev" | gzip -n > "$work/demoreel-$v.tar.gz"
+    sed -e "s/@VERSION@/$v/" \
+        -e "s/@SHA256@/$(sha256sum "$work/demoreel-$v.tar.gz" | cut -d' ' -f1)/" \
+        packaging/PKGBUILD > "$work/PKGBUILD"
+    # INV-5 for Arch, which installs no optional dependency itself.
+    for t in cage xorg-xwayland wlr-randr wf-recorder; do
+        grep -q "^depends=.*\b$t\b" "$work/PKGBUILD" && { echo "PKGBUILD requires $t" >&2; return 1; }
+        grep -q "'$t: " "$work/PKGBUILD" || { echo "PKGBUILD does not offer $t" >&2; return 1; }
+    done
+    pkg_container_script > "$work/test.sh"
+    # Two waves: the distros that build a format, then those that only install
+    # one built in the first. Each container is a clean image, pulled again
+    # when its tag has moved, so a renamed dependency fails here first.
+    run_wave() {
+        pids=() names=()
+        while [ $# -gt 0 ]; do
+            distro=$1 image=$2 build=$3; shift 3
+            podman run --rm --pull=newer -v "$work:/w:z" "$image" \
+                bash /w/test.sh "$distro" "$build" "$v" > "$work/$distro.log" 2>&1 &
+            pids+=($!) names+=("$distro")
+        done
+        for i in "${!pids[@]}"; do
+            if wait "${pids[$i]}"; then
+                tail -1 "$work/${names[$i]}.log"
+            else
+                echo "the ${names[$i]} container failed; its output:" >&2
+                cat "$work/${names[$i]}.log" >&2
+                failed=1
+            fi
+        done
+    }
+    run_wave debian "$PKG_DEBIAN" build fedora "$PKG_FEDORA" build arch "$PKG_ARCH" build
+    [ "$failed" = 0 ] && run_wave ubuntu "$PKG_UBUNTU" test opensuse "$PKG_OPENSUSE" test
+    if [ "$failed" = 0 ] && [ -n "$out" ]; then
+        mkdir -p "$out"
+        cp "$work/demoreel_$v-1_all.deb" "$work/demoreel-$v-1.noarch.rpm" \
+            "$work/demoreel-$v.tar.gz" "$work/PKGBUILD" "$out/"
+    fi
+    rm -rf "$work"
+    return "$failed"
+}
+
+if [ "${1:-}" = "--packages" ]; then
+    # Called directly it always runs, and fails rather than skips when it cannot.
+    out=''
+    if [ "${2:-}" = "--out" ]; then
+        out=${3:?--out needs a folder}
+        mkdir -p "$out" && out=$(cd "$out" && pwd)
+    fi
+    packages_check "$out"
+    echo "every package installed and ran on every distro it targets"
     exit 0
 fi
 
@@ -5655,6 +5884,28 @@ step "default output name"
 ( cd "$tmp" && "$OLDPWD/demoreel" record -n gatedefault -d 3 -s 640x480 -- xclock >/dev/null )
 ls "$tmp"/xclock-*.mp4 >/dev/null
 
+step "only the release job can write to the repository"
+# DEMO-0068 INV-10. It reads the workflow files, not GitHub's effective
+# permissions.
+grants=$(grep -rn 'contents: write' .github/workflows/ || true)
+[ "$(wc -l <<<"$grants")" = 1 ] && [[ $grants == .github/workflows/release.yml:* ]] || {
+    echo "the write grant must appear once, in release.yml; found:" >&2
+    echo "${grants:-<none>}" >&2
+    exit 1; }
+echo "$grants"
+
+step "the packages, on every distro they target"
+# Slow, so near the end. GitHub runs it in its own job, and the Ubuntu leg below
+# is a copy of this run, so neither runs it again.
+if [ -n "${GITHUB_ACTIONS:-}" ] || [ -n "${DEMOREEL_PARITY_INSIDE:-}" ]; then
+    echo "not applicable: the packages job runs it on GitHub"
+elif ! command -v podman >/dev/null; then
+    printf '\n=== checks passed; the packages and the Ubuntu leg were SKIPPED: podman is not installed ===\n'
+    exit 0
+else
+    packages_check ''
+fi
+
 step "the same gate on GitHub's Ubuntu"
 # Last, because it is the slow one and everything above is cheaper to fail on.
 # It runs the files as they are here -- tracked and new, not ignored -- which is
@@ -5662,9 +5913,6 @@ step "the same gate on GitHub's Ubuntu"
 # its threads from the cores it may use, and that is what differed last time.
 if [ -n "${GITHUB_ACTIONS:-}" ] || [ -n "${DEMOREEL_PARITY_INSIDE:-}" ]; then
     echo "not applicable: this run already is on that Ubuntu"
-elif ! command -v podman >/dev/null; then
-    printf '\n=== checks passed; the Ubuntu leg was SKIPPED: podman is not installed ===\n'
-    exit 0
 elif ! podman image exists "$PARITY_IMAGE"; then
     printf '\n=== checks passed; the Ubuntu leg was SKIPPED: its image is not built ===\n'
     echo "build it once (a few minutes): ./ci.sh --parity-build"

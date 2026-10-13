@@ -12,6 +12,15 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+### Added
+
+- **Packages for Debian and Ubuntu (.deb), Fedora and openSUSE (.rpm), and Arch (PKGBUILD), attached to each GitHub release from the next one on (DEMO-0068, DEMO-0069, DEMO-0070)**
+  Each installs the command, its manual page, tab completion for bash,
+  zsh and fish, and the translations, and pulls in every program
+  demoreel needs. The --gpu programs are recommended, not required.
+  Every package is built and installed in a clean container of each
+  distro it targets before it is attached: `./ci.sh --packages`.
+
 ## [0.8.0] - 2026-10-13
 
 **Theme:** Trailers.

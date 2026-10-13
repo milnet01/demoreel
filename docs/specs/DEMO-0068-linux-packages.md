@@ -137,8 +137,9 @@ All live under `packaging/`, all are noarch, and all take the version from
 
 ### 4.4 Build and install test: `./ci.sh --packages`
 
-One `ci.sh` step builds all three from a `git archive` of `HEAD`, the same
-way the release does, then installs each in a clean container of every
+One `ci.sh` step builds all three from a `git archive` of the tree as it
+stands, tracked and new files alike. On a clean tree that is `HEAD`, which is
+what the release builds from its tag. It then installs each in a clean container of every
 target and runs it there. Containers run under `podman`, as the parity leg
 does. The full gate runs it, except on GitHub (`GITHUB_ACTIONS`), where the
 `packages` job runs it instead, and inside the parity container
@@ -191,14 +192,13 @@ openSUSE install line. The packages do not wait for DEMO-0174.
 ## 5. Invariants
 
 The container checks are run by `./ci.sh --packages` in every container of
-§ 4.4's table. That step does not exist yet, so no clause below has an
-output to paste.
+§ 4.4's table.
 
 - **INV-1** — Every format installs the same file list. Every path from
   § 4.1 is present, and none outside it apart from the licence and
   distro-generated files.
-  *Test:* `./ci.sh --packages` compares each package's file list (`dpkg -c`,
-  `rpm -qlp`, `pacman -Qlq`) against `install.sh`'s staged tree, with each
+  *Test:* `./ci.sh --packages` compares each installed package's file list
+  (`dpkg -L`, `rpm -ql`, `pacman -Qlq`) against `install.sh`'s staged tree, with each
   format's compression suffix on the manual page stripped.
   *Breaks when:* a file is added to one format's wrapper and not to
   `install.sh`, or `install.sh` gains a path one format drops.
@@ -212,8 +212,9 @@ output to paste.
   `po/` is installed anywhere but beside the script it resolves to.
 
 - **INV-3** — The installed script is the tagged one.
-  *Test:* in each container, `cmp /usr/share/demoreel/demoreel` against the
-  `demoreel` in the archive the package was built from.
+  *Test:* in each container, the checksum of `/usr/share/demoreel/demoreel`
+  equals that of the `demoreel` in the archive the package was built from.
+  A checksum, because Arch's image has no `cmp`.
   *Breaks when:* a build step rewrites the shebang (rpm's
   `brp-mangle-shebangs`), stamps a version, or strips anything.
 
@@ -356,7 +357,7 @@ shebang (INV-3), `cage` moved to the required set of the `.deb` and of the
 |------|----------------------|
 | INV-1 | `./ci.sh --packages`, file-list comparison |
 | INV-2 | `./ci.sh --packages`, French `--help` in each container |
-| INV-3 | `./ci.sh --packages`, `cmp` in each container |
+| INV-3 | `./ci.sh --packages`, checksum in each container |
 | INV-4 | `./ci.sh --packages`, clean install with default repositories |
 | INV-5 | `./ci.sh --packages`, no-recommends installs and `PKGBUILD` grep |
 | INV-6 | `./ci.sh --packages`, `demoreel check` in each container |
@@ -393,7 +394,9 @@ Rows live in `../reviews/DEMO-0068-linux-packages-loop-log.md`.
 - **No new dependency for demoreel.** The build tools (`dpkg-deb`,
   `rpmbuild`, `makepkg`) live in the containers, never on a user's machine.
 - **Gate time and disk:** five container images and five dependency
-  installs per full gate. Not measured yet; § 6 says when it will be.
+  installs per full gate. Measured 2026-10-13: about three minutes for the
+  whole step, with the images already pulled. The largest image,
+  `archlinux:latest`, is about 410 MB.
 - **Release assets:** four files per release, the tarball the largest.
 
 ## 14. Migration / compatibility

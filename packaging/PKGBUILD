@@ -1,0 +1,25 @@
+# The tree's copy names no version and no hash. `./ci.sh --packages --out`
+# fills both from the release's own tarball, and that filled copy is the one
+# attached to the release (docs/specs/DEMO-0068-linux-packages.md § 4.3).
+pkgname=demoreel
+pkgver=@VERSION@
+pkgrel=1
+pkgdesc='Record a GUI app on a private virtual display'
+arch=(any)
+url='https://github.com/milnet01/demoreel'
+license=(MIT)
+# A script has nothing to strip or debug.
+options=(!strip !debug)
+depends=(python xorg-server-xvfb xorg-xauth xdotool ffmpeg fontconfig ttf-font)
+optdepends=('cage: --gpu, for apps that need the graphics card'
+            'xorg-xwayland: --gpu'
+            'wlr-randr: --gpu'
+            'wf-recorder: record --gpu')
+source=("https://github.com/milnet01/demoreel/releases/download/v$pkgver/demoreel-$pkgver.tar.gz")
+sha256sums=('@SHA256@')
+
+package() {
+    cd "demoreel-$pkgver"
+    DESTDIR="$pkgdir" PREFIX=/usr packaging/install.sh
+    install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

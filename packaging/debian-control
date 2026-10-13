@@ -1,0 +1,16 @@
+Package: demoreel
+Version: @VERSION@-1
+Architecture: all
+Maintainer: Anthony Schemel <milnet01@users.noreply.github.com>
+Section: video
+Priority: optional
+Homepage: https://github.com/milnet01/demoreel
+Depends: python3, xvfb, xauth, xdotool, ffmpeg, fontconfig, fonts-dejavu-core
+Recommends: cage, xwayland, wlr-randr, wf-recorder
+Description: record a GUI app on a private virtual display
+ demoreel records a video or a picture of one app running on a display of
+ its own, so nothing of your desktop can end up in frame. It can also trim,
+ caption and join recordings, and make a short film from them.
+ .
+ The recommended packages are for --gpu, which records apps that need the
+ graphics card.

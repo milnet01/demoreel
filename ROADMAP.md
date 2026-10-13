@@ -4266,6 +4266,17 @@ system looks for them.
   once there is an account" line needs amending, and that amendment goes
   through review-contract before building. finbreak's packaging/obs/
   (_service tracking a release tag) is the model to follow.
+  Progress (2026-10-13): built under the accepted spec. packaging/ holds
+  install.sh, debian-control, demoreel.spec and PKGBUILD; ./ci.sh
+  --packages builds all three and passed in all five containers
+  (about three minutes), and spec section 7's three broken packages were
+  each caught. ci.yml has a packages job; release.yml attaches the files
+  when a release is published. The .deb's maintainer address is the
+  GitHub noreply one (user, 2026-10-13). Left: README section Install
+  (leads with the packages; written with DEMO-0072 so one README gate
+  covers both), the first release carrying the files plus the website
+  hand-off, then the OBS amendment, its review-contract run and the OBS
+  publish.
   **Layman:** Install demoreel on openSUSE with zypper, dependencies included.
   Kind: package.
   Source: user-request-2026-09-25.
@@ -4282,6 +4293,8 @@ system looks for them.
   location (see DEMO-0071).
   Decided 2026-10-08: a .deb attached to each GitHub release, not a
   PPA. See DEMO-0068 for the whole 0.9.0 design brief.
+  Progress (2026-10-13): the .deb is built and tested on ubuntu:24.04
+  and debian:stable by ./ci.sh --packages. See DEMO-0068 for what is left.
   **Layman:** Install demoreel on Debian or Ubuntu with apt, dependencies included.
   Kind: package.
   Source: user-request-2026-09-25.
@@ -4298,6 +4311,9 @@ system looks for them.
   Decided 2026-10-08: 0.9.0 ships the .rpm file and the Arch PKGBUILD,
   tested in CI; COPR and AUR publishing follow once the user has
   those accounts. See DEMO-0068.
+  Progress (2026-10-13): the .rpm passes on fedora:latest and the Arch
+  package on archlinux:latest, by ./ci.sh --packages. COPR and the AUR
+  still wait on accounts. See DEMO-0068.
   **Layman:** Install demoreel on Fedora (dnf) or Arch (from the AUR).
   Kind: package.
   Source: user-request-2026-09-25.

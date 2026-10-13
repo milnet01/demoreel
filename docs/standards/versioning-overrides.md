@@ -65,6 +65,11 @@ and changing one is a breaking change:
   it; `sound off` and `--no-sound` leave a clip's sound out. Otherwise it has
   none. A video that had no sound track must not gain one, and one that had a
   sound track must not lose it.
+- **The package name and the installed command.** The `.deb`, `.rpm` and
+  Arch packages are named `demoreel` and install the command as
+  `/usr/bin/demoreel` (`docs/specs/DEMO-0068-linux-packages.md`). A script
+  that installs, removes or depends on the package by name, or calls that
+  path, depends on both.
 
 A surface nobody wrote down is still a surface, except for what the next
 section names. The list above makes the common cases cheap.
@@ -96,6 +101,8 @@ makes them the exception to the line above:
 - The default output name's timestamp format. A script that sorts by it or
   reads a date from it is not covered.
 - Which non-zero value a failed run exits with.
+- Where a package keeps the files behind the command, under
+  `/usr/share/demoreel/`. Only the command's own path is covered above.
 - Everything on stderr, progress and failure text alike. None of that text is
   protected. The surfaces listed above are untouched by this bullet.
 
