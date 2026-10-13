@@ -98,4 +98,5 @@ targets, you need `podman` and a network connection:
 ```
 
 It builds from the tree as it stands, new files included. Add `--out <folder>`
-to keep the files it built.
+to keep the files it built. It then runs README § Install from source in a
+clean container of each distro, `--uninstall` included.

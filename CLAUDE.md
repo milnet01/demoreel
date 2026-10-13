@@ -41,7 +41,8 @@ weeks old; rebuild then.
 `packaging/` builds the `.deb`, the `.rpm` and the Arch package, and
 `packaging/install.sh` alone decides where an installed file goes.
 `./ci.sh --packages` builds all three and installs each in a clean container of
-every distro it targets (`docs/specs/DEMO-0068-linux-packages.md`). The full
+every distro it targets (`docs/specs/DEMO-0068-linux-packages.md`), then runs
+README § Install from source in each (DEMO-0072). The full
 gate runs it where `podman` is; GitHub runs it in its own job, and
 `release.yml` runs it again to attach the files to a published release.
 

@@ -394,10 +394,59 @@ fail() { echo "FAIL ($distro): $*" >&2; exit 1; }
 mkdir -p /tmp/src && tar -xzf /w/demoreel-"$v".tar.gz -C /tmp/src
 src=/tmp/src/demoreel-$v
 # The layout every format must install: install.sh's own (INV-1).
-DESTDIR=/tmp/stage "$src"/packaging/install.sh
+DESTDIR=/tmp/stage PREFIX=/usr "$src"/packaging/install.sh
 # Listed by the shell: openSUSE's image has no find.
 staged=$(cd /tmp/stage && shopt -s globstar dotglob \
     && for p in **; do [ -d "$p" ] && [ ! -L "$p" ] || echo "/$p"; done | sort)
+
+# DEMO-0072: README § Install from source, run as it is written. Its install
+# line for this distro, sudo dropped, then install.sh with no PREFIX.
+if [ "$build" = source ]; then
+    fail() { echo "FAIL ($distro, from source): $*" >&2; exit 1; }
+    read -r -a line </w/deps-"$distro"
+    manager=${line[0]} deps=("${line[@]:2}")
+    case $manager in
+    apt) export DEBIAN_FRONTEND=noninteractive
+         apt-get -qq -o Acquire::Retries=3 update
+         apt-get -qq -o Acquire::Retries=3 install -y "${deps[@]}" python3 >/dev/null ;;
+    dnf) dnf -q install -y "${deps[@]}" python3 >/dev/null ;;
+    zypper) zypper -q -n install "${deps[@]}" python3 >/dev/null ;;
+    pacman) pacman -Syu --noconfirm "${deps[@]}" python >/dev/null ;;
+    esac
+    DESTDIR=/tmp/stage-src "$src"/packaging/install.sh
+    expected=$(cd /tmp/stage-src && shopt -s globstar dotglob \
+        && for p in **; do [ -d "$p" ] && [ ! -L "$p" ] || echo "/$p"; done | sort)
+    grep -q '^/usr/local/bin/demoreel$' <<<"$expected" \
+        || fail "install.sh's default prefix is not /usr/local"
+    "$src"/packaging/install.sh
+    while read -r p; do
+        [ -e "$p" ] || fail "$p was not installed"
+    done <<<"$expected"
+    [ "$(command -v demoreel)" = /usr/local/bin/demoreel ] \
+        || fail "demoreel on PATH is $(command -v demoreel)"
+    # README's line brings every program a recording needs.
+    for t in Xvfb xauth xdotool ffmpeg ffprobe; do
+        command -v "$t" >/dev/null || fail "$t did not come with README's install line"
+    done
+    help=$(PYTHONUTF8=1 LANG=fr_FR.UTF-8 demoreel --help)
+    case $help in "utilisation :"*) ;; *) fail "demoreel --help is not in French";; esac
+    [ "$(sha256sum </usr/local/share/demoreel/demoreel)" = "$(sha256sum <"$src"/demoreel)" ] \
+        || fail "the installed script was changed"
+    # Text is left out: README's line brings no font, and says check reports it.
+    rc=0; out=$(demoreel check 2>&1) || rc=$?
+    case $distro in
+    fedora)   [ "$rc" = 1 ] && grep -q 'dnf swap ffmpeg-free ffmpeg' <<<"$out" ;;
+    opensuse) [ "$rc" = 1 ] && grep -q 'Packman' <<<"$out" ;;
+    *)        [ "$rc" = 0 ] && grep -q 'record and shot: ready' <<<"$out" ;;
+    esac || { echo "$out" >&2; fail "check did not say what was expected (exit $rc)"; }
+    "$src"/packaging/install.sh --uninstall
+    while read -r p; do
+        [ ! -e "$p" ] && [ ! -L "$p" ] || fail "$p is left after --uninstall"
+    done <<<"$expected"
+    [ ! -e /usr/local/share/demoreel ] || fail "/usr/local/share/demoreel is left after --uninstall"
+    echo "PASS ($distro, from source)"
+    exit 0
+fi
 
 case $distro in
 debian|ubuntu)
@@ -439,7 +488,7 @@ if [ "$build" = build ]; then
     case $distro in
     debian)
         root=/tmp/deb
-        DESTDIR=$root "$src"/packaging/install.sh
+        DESTDIR=$root PREFIX=/usr "$src"/packaging/install.sh
         gzip -9n "$root"/usr/share/man/man1/demoreel.1
         install -Dm644 "$src"/LICENSE "$root"/usr/share/doc/demoreel/copyright
         mkdir "$root"/DEBIAN
@@ -551,6 +600,22 @@ packages_check() {
         grep -q "'$t: " "$work/PKGBUILD" || { echo "PKGBUILD does not offer $t" >&2; return 1; }
     done
     pkg_container_script > "$work/test.sh"
+    # README § Install from source's line per distro, from the table README is
+    # held to (the install-lines step), without its sudo.
+    python3 - "$work" <<'DEPSPY' || return 1
+import importlib.machinery, importlib.util, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+demoreel = importlib.util.module_from_spec(
+    importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(demoreel)
+programs = demoreel.required_programs(False, True)
+for distro, family in (("debian", "apt"), ("ubuntu", "apt"), ("fedora", "dnf"),
+                       ("opensuse", "zypper"), ("arch", "pacman")):
+    command, names = demoreel.PACKAGES[family]
+    line = " ".join([command, *dict.fromkeys(names[p] for p in programs if p in names)])
+    with open(f"{sys.argv[1]}/deps-{distro}", "w", encoding="utf-8") as f:
+        f.write(line.removeprefix("sudo ") + "\n")
+DEPSPY
     # Two waves: the distros that build a format, then those that only install
     # one built in the first. Each container is a clean image, pulled again
     # when its tag has moved, so a renamed dependency fails here first.
@@ -558,9 +623,10 @@ packages_check() {
         pids=() names=()
         while [ $# -gt 0 ]; do
             distro=$1 image=$2 build=$3; shift 3
+            name=$distro; [ "$build" = source ] && name=$distro-source
             podman run --rm --pull=newer -v "$work:/w:z" "$image" \
-                bash /w/test.sh "$distro" "$build" "$v" > "$work/$distro.log" 2>&1 &
-            pids+=($!) names+=("$distro")
+                bash /w/test.sh "$distro" "$build" "$v" > "$work/$name.log" 2>&1 &
+            pids+=($!) names+=("$name")
         done
         for i in "${!pids[@]}"; do
             if wait "${pids[$i]}"; then
@@ -574,6 +640,9 @@ packages_check() {
     }
     run_wave debian "$PKG_DEBIAN" build fedora "$PKG_FEDORA" build arch "$PKG_ARCH" build
     [ "$failed" = 0 ] && run_wave ubuntu "$PKG_UBUNTU" test opensuse "$PKG_OPENSUSE" test
+    # A third wave: the install from source, in a clean container of each distro.
+    [ "$failed" = 0 ] && run_wave debian "$PKG_DEBIAN" source ubuntu "$PKG_UBUNTU" source \
+        fedora "$PKG_FEDORA" source opensuse "$PKG_OPENSUSE" source arch "$PKG_ARCH" source
     if [ "$failed" = 0 ] && [ -n "$out" ]; then
         mkdir -p "$out"
         cp "$work/demoreel_$v-1_all.deb" "$work/demoreel-$v-1.noarch.rpm" \
