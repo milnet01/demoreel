@@ -4501,6 +4501,18 @@ system looks for them.
   Tumbleweed's appdata file; the GitHub-Ubuntu leg did not run. Before
   push: ./ci.sh --packages, then the full gate. The clean-container
   vendor-swap test is still owed. Flip shipped once those pass.
+  Measured (2026-10-13, clean containers, ctypes probe of the libavcodec
+  wf-recorder loads): opensuse/tumbleweed (repos on ftp.fau.de, since
+  the default mirror lacked a metadata file) wf-recorder loads
+  libavcodec62-8.1.3 vendor openSUSE, libx264 NO; after README's
+  `zypper install --from packman --allow-vendor-change libavcodec62` the
+  vendor is Packman and libx264 is yes. fedora:latest (44): wf-recorder
+  loads libavcodec.so.62 from libavcodec-free, libx264 NO; after README's
+  RPM Fusion `dnf swap ffmpeg-free ffmpeg --allowerasing` it comes from
+  ffmpeg-libs-8.1.3 and libx264 is yes. So Fedora needs no new advice.
+  The vendor-swap test is done. Left: ./ci.sh --packages once the
+  opensuse container's mirror serves Tumbleweed's metadata, then the full
+  gate, then flip.
   **Layman:** On openSUSE, recording a 3D app works with the distro's own packages.
   Kind: feature.
   Source: user-request-2026-10-08.
