@@ -189,9 +189,10 @@ downloaded from GitHub. It also states the limit in § 6's last bullet.
 - **INV-3** — `cut-release` stops before bumping anything when this clone
   would not sign the tag.
   *Test:* `.claude/bump.json`'s `publish_precheck` is
-  `./ci.sh --signing-check`; with `git -c tag.gpgSign=false` in effect,
-  or a `user.signingkey` whose key is not in `packaging/release-signers`,
-  the mode exits non-zero.
+  `./ci.sh --signing-check`. Run as
+  `GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=tag.gpgSign GIT_CONFIG_VALUE_0=false ./ci.sh --signing-check`,
+  or with a `user.signingkey` whose key is not in
+  `packaging/release-signers`, the mode exits non-zero.
   *Breaks when:* the precheck is removed, or `--signing-check` passes
   without proving a signature that verifies against the file.
 
@@ -214,13 +215,17 @@ downloaded from GitHub. It also states the limit in § 6's last bullet.
   `contents: write`, `id-token: write` or `attestations: write`.
   *Test:* the full gate's "only the release job can write to the
   repository" step (DEMO-0068 INV-10) greps `.github/workflows/` for each
-  of the three and requires exactly one line each, in `release.yml`.
+  of the three and requires exactly one line each, in `release.yml`,
+  indented six spaces as the `release` job's own `permissions:` writes
+  it. A grant at the workflow level is indented two, so it fails.
   *Breaks when:* any of the three moves to the workflow level or another
   job.
 
 - **INV-7** — The private key never enters the repository.
-  *Test:* the full gate fails on any tracked file containing
-  `BEGIN OPENSSH PRIVATE KEY`.
+  *Test:* the full gate fails on any tracked file with a line that is
+  exactly `-----BEGIN OPENSSH PRIVATE KEY-----` and nothing else. The
+  step builds that string from two parts, so `ci.sh` does not hold it,
+  and prose that quotes it inside a sentence does not match.
   *Breaks when:* the key file, or a copy, is committed.
 
 - **INV-8** — `SECURITY.md`'s *Checking a download* steps work as written
