@@ -12,6 +12,10 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-13
+
+**Theme:** Trailers.
+
 ### Added
 
 - **A `sound FILE at 5.4` line under a scene plays a sound file at that moment, mixed with the clips' sound and the music, with its own `volume`.** (DEMO-0186)
