@@ -4303,6 +4303,22 @@ system looks for them.
   line pointing at
   https://download.opensuse.org/repositories/home:/milnet:/demoreel/
   (only once it exists), and the website hand-off.
+  Progress (2026-10-13, later): 3bd9cf1 pushed after a green full gate.
+  The user decided 0.9.0 waits for DEMO-0084 (built, gate green on
+  e26dd59) and DEMO-0174 (planned, see its build plan), and that all
+  three of DEMO-0068, 0069 and 0070 are flipped shipped at the release,
+  with COPR and the AUR moved to a new backlog item first. The user also
+  approved publishing 0.9.0 without a further prompt once its checks are
+  green. Order: finish DEMO-0174; the user runs `gh auth refresh -h
+  github.com -s admin:ssh_signing_key`, then `gh ssh-key add
+  ~/.ssh/demoreel-release.pub --type signing --title "demoreel release
+  signing"`; full ./ci.sh; push; file the COPR/AUR item and flip the
+  three; cut-release 0.9.0 (its publish_precheck is ./ci.sh
+  --signing-check); ./ci.sh --release-check v0.9.0; then the OBS steps
+  (obs-submit.sh, obs-status.sh, ./ci.sh --obs-check), delete the trial
+  package demoreel-test, add the README pointer to
+  https://download.opensuse.org/repositories/home:/milnet:/demoreel/,
+  and tell the ants-projects-hub-website session.
   **Layman:** Install demoreel on openSUSE with zypper, dependencies included.
   Kind: package.
   Source: user-request-2026-09-25.
@@ -4380,6 +4396,16 @@ system looks for them.
   checksums with each GitHub release, sign release tags, and add a build
   provenance attestation from the workflow. Say in SECURITY.md how to
   check each one.
+  Progress (2026-10-13): built under
+  docs/specs/DEMO-0084-verify-a-download.md (accepted at its review
+  cap). Tags are signed with ~/.ssh/demoreel-release (public half
+  packaging/release-signers); ./ci.sh gains --signing-check (the bump
+  recipe's publish_precheck), --verify-tag (the release job's first
+  step) and --release-check; --packages --out writes SHA256SUMS; the
+  release job attests every file. Full gate green on e26dd59. Left: add
+  the key to the GitHub account as a signing key (needs the
+  admin:ssh_signing_key scope from the user), then ./ci.sh
+  --release-check on 0.9.0.
   **Layman:** Downloads come with a way to check they are genuine and untampered.
   Kind: security.
   Source: user-request-2026-09-25.
@@ -4420,6 +4446,34 @@ system looks for them.
   1280x800: ffv1 17.6 MB, converted in about 1 s; measure a real
   recording before choosing the codec. check stops calling --gpu NOT
   READY for this case once the fallback exists.
+  Decided by the user 2026-10-13: Packman has shipped libavcodec62 with
+  libx264 since 2026-10-09, and the distro wf-recorder recorded --gpu
+  correctly with it here. So instead of the lossless fallback, README's
+  openSUSE --gpu steps gain `sudo zypper install --from packman
+  --allow-vendor-change libavcodec62`, and check prints that command on
+  openSUSE when wf-recorder's library has no libx264. Spec:
+  docs/specs/DEMO-0068-linux-packages.md § 4.6, amended and in review.
+  Build plan (2026-10-13; spec DEMO-0068 § 4.6 gated, loop 5 converged):
+  (1) demoreel cmd_check: where wf-recorder's library has no libx264 and
+  distro_family() is "zypper", append the new message "Packman's build
+  of that library has libx264. Install it with:" and the line `sudo
+  zypper install --from packman --allow-vendor-change <name>`, the name
+  built from the library file (libavcodec.so.62 -> libavcodec62). (2)
+  Draft that message into all 16 po/ catalogs, matching each one's
+  translation of "Fedora's ffmpeg-free leaves it out. Enable RPM Fusion,
+  then:" for register; run ./ci.sh --pot. (3) README § Install: add
+  `sudo zypper install --from packman --allow-vendor-change
+  libavcodec62` under "# openSUSE" in the --gpu sh block, and replace
+  the "cannot write the video yet" paragraph (Packman's build has
+  libx264; check names the package if wf-recorder loads a newer
+  library). Rule 14 for README: another gate already decided it
+  (DEMO-0068 loop 5); grep README for the key terms for Q2. (4) Mirror
+  both into the 16 docs/quickstart/<code>.md pages: the same command
+  line in the same block (ci.sh's quick-start step compares non-#
+  lines), and a translated paragraph. Not measured: the vendor swap in a
+  clean Tumbleweed container (download.opensuse.org repo metadata was
+  broken all of 2026-10-13); retry it with packaging scratch
+  /mnt/Emulators/claude-scratch/demoreel-0174/swap.sh.
   **Layman:** On openSUSE, recording a 3D app works with the distro's own packages.
   Kind: feature.
   Source: user-request-2026-10-08.
