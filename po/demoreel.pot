@@ -212,6 +212,9 @@ msgstr ""
 msgid "Install a build of ffmpeg that includes libx264."
 msgstr ""
 
+msgid "Packman's build of that library has libx264. Install it with:"
+msgstr ""
+
 msgid "Install with: {command}"
 msgstr ""
 

@@ -5020,6 +5020,31 @@ if demoreel.linked_library("python3", "libavcodec.so") is not None:
 print(f"{library}: libx264 yes, a made-up encoder no; python3 has none")
 ENCPY
 
+step "check names Packman's library package on openSUSE"
+# DEMO-0174. When wf-recorder's libavcodec has no libx264, check prints the
+# command that takes it from Packman, with the package named from the file,
+# and only on openSUSE: no other distro has Packman.
+python3 - <<'PACKPY'
+import importlib.machinery, importlib.util, sys
+
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+demoreel = importlib.util.module_from_spec(
+    importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(demoreel)
+demoreel.tr = lambda text, **fields: text.format(**fields)
+
+command = "sudo zypper install --from packman --allow-vendor-change libavcodec62"
+advice = demoreel.packman_advice("/usr/lib64/libavcodec.so.62", "zypper")
+if not advice.endswith("\n    " + command):
+    sys.exit(f"openSUSE advice does not end in {command!r}: {advice!r}")
+for library, family in (("/usr/lib64/libavcodec.so.62", "apt"),
+                        ("/usr/lib64/libavcodec.so.62", None),
+                        ("/usr/lib64/libavcodec.so", "zypper")):
+    if demoreel.packman_advice(library, family):
+        sys.exit(f"advice given for {library} on {family}")
+print("libavcodec.so.62 on openSUSE: libavcodec62; none elsewhere")
+PACKPY
+
 step "check says --gpu is not ready when wf-recorder cannot start"
 # DEMO-0176. A libavcodec from another repository left wf-recorder unable to
 # load, and check still said --gpu was ready: it read the library's encoders

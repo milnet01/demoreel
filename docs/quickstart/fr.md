@@ -82,6 +82,7 @@ sources, installez-les vous-même :
 ```sh
 # openSUSE
 sudo zypper install cage xwayland wlr-randr wf-recorder
+sudo zypper install --from packman --allow-vendor-change libavcodec62
 # Debian et Ubuntu
 sudo apt install cage xwayland wlr-randr wf-recorder
 # Fedora
@@ -90,9 +91,11 @@ sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
 ```
 
-**Sur openSUSE, `record --gpu` ne peut pas encore écrire la vidéo.** Le
-wf-recorder d'openSUSE charge la bibliothèque vidéo d'openSUSE, qui n'a pas
-libx264. `demoreel check` le signale, et indique que `--gpu` n'est pas prêt.
+**Sur openSUSE, exécutez la ligne `libavcodec62`, quelle que soit la façon dont
+vous avez installé.** Elle prend chez Packman, ajouté plus haut pour ffmpeg, la
+bibliothèque vidéo de wf-recorder. La version d'openSUSE n'a pas libx264. Si
+wf-recorder charge une bibliothèque plus récente, `demoreel check` nomme à la
+place le paquet à installer.
 
 **Pour le son**, demoreel a besoin de `pactl`. Avec lui, le son d'une app enregistrée n'atteint jamais vos haut-parleurs, et `--audio` peut mettre ce son dans la vidéo :
 

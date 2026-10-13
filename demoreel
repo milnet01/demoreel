@@ -1794,6 +1794,18 @@ def x264_advice(family):
     return "\n  " + tr("Install a build of ffmpeg that includes libx264.")
 
 
+def packman_advice(library, family):
+    """On openSUSE, how to take the libavcodec at `library` from Packman, whose
+    build has libx264, as lines to append; "" elsewhere (DEMO-0174). The
+    package is named from the file: libavcodec.so.62 is libavcodec62."""
+    soname = re.match(r"(lib[a-z]+)\.so\.(\d+)$", Path(library).name)
+    if family != "zypper" or soname is None:
+        return ""
+    return ("\n  " + tr("Packman's build of that library has libx264. Install it with:")
+            + "\n    sudo zypper install --from packman --allow-vendor-change "
+            + soname[1] + soname[2])
+
+
 def distro_family():
     """The package manager this distro uses, from /etc/os-release; None if
     it is not one the table knows."""
@@ -2506,7 +2518,8 @@ def cmd_check(a):
                    if gpu and "wf-recorder" not in missing else None)
         if library and not has_encoder(library, "libx264"):
             problems.append(tr("wf-recorder loads {library}, which has no libx264, so "
-                               "it cannot write the video.", library=library))
+                               "it cannot write the video.", library=library)
+                            + packman_advice(library, distro_family()))
         if gpu and not list(Path("/dev/dri").glob("renderD*")):
             problems.append(tr("no graphics render node in /dev/dri, so there is "
                                "no GPU for it to use."))

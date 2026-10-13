@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=194 -->
+<!-- ants-roadmap-id-high-water: DEMO=195 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -366,6 +366,23 @@ simplest case, and a gate proves it still records.
   **Layman:** The checks for the video-editing commands now run four at a time, so the pre-push check and GitHub's are quicker.
   Kind: perf.
   Source: user-request-2026-10-12.
+
+- 📋 [DEMO-0195] **Point openSUSE codec advice at OneUp and Groundwork once OneUp's codec action ships.**
+  The user asked (2026-10-13) that OneUp and Groundwork cater for
+  Packman's libavcodec with libx264, which record --gpu needs on
+  openSUSE (DEMO-0174). Groundwork already does: its Media codecs item
+  installs Packman's libavcodec, and Packman's priority 90 makes a later
+  install come from Packman too (its session, 2026-10-13; not measured on
+  a fresh system). OneUp's one-click Packman codec action is ONEUP-0274,
+  planned for OneUp 2.1; the OneUp session will say when it is released.
+  Then: README § Install's openSUSE codec lines and the 16 quick-start
+  pages name OneUp and Groundwork beside the commands, and check's
+  packman_advice may name them too. Keep the commands: they serve anyone
+  using neither tool. Not before ONEUP-0274 ships.
+  Dependencies: ONEUP-0274.
+  **Layman:** On openSUSE, demoreel's install notes will name the user's own update tools for getting video codecs.
+  Kind: doc.
+  Source: user-request-2026-10-13.
 
 ## Standing chores
 
@@ -4474,6 +4491,16 @@ system looks for them.
   clean Tumbleweed container (download.opensuse.org repo metadata was
   broken all of 2026-10-13); retry it with packaging scratch
   /mnt/Emulators/claude-scratch/demoreel-0174/swap.sh.
+  Progress (2026-10-13): built. check appends packman_advice (the
+  command, package named from the library file) on openSUSE; the
+  message is drafted in all 16 catalogs; README § Install and the 16
+  quick-start pages carry the libavcodec62 line and paragraph; ci.sh
+  step "check names Packman's library package on openSUSE" (red when the
+  package name is cut). Full gate green up to the packages step, whose
+  opensuse container failed on a mirror (liquidtelecom) missing
+  Tumbleweed's appdata file; the GitHub-Ubuntu leg did not run. Before
+  push: ./ci.sh --packages, then the full gate. The clean-container
+  vendor-swap test is still owed. Flip shipped once those pass.
   **Layman:** On openSUSE, recording a 3D app works with the distro's own packages.
   Kind: feature.
   Source: user-request-2026-10-08.

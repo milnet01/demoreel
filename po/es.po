@@ -476,6 +476,9 @@ msgstr "este ffmpeg no tiene libx264, que usan todas las grabaciones."
 msgid "wf-recorder loads {library}, which has no libx264, so it cannot write the video."
 msgstr "wf-recorder carga {library}, que no tiene libx264, así que no puede escribir el vídeo."
 
+msgid "Packman's build of that library has libx264. Install it with:"
+msgstr "La versión de Packman de esa biblioteca tiene libx264. Instálela con:"
+
 msgid "no graphics render node in /dev/dri, so there is no GPU for it to use."
 msgstr "no hay ningún nodo de renderizado gráfico en /dev/dri, así que no hay GPU que usar."
 

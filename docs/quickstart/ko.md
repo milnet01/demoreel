@@ -77,6 +77,7 @@ Arch에서, 또는 소스에서 설치한 뒤에는 직접 설치하십시오.
 ```sh
 # openSUSE
 sudo zypper install cage xwayland wlr-randr wf-recorder
+sudo zypper install --from packman --allow-vendor-change libavcodec62
 # Debian 및 Ubuntu
 sudo apt install cage xwayland wlr-randr wf-recorder
 # Fedora
@@ -85,10 +86,9 @@ sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
 ```
 
-**openSUSE에서는 아직 `record --gpu`로 동영상을 쓸 수 없습니다.** openSUSE의
-wf-recorder는 openSUSE 자체의 동영상 라이브러리를 불러오는데, 여기에는
-libx264가 없습니다. `demoreel check`가 이를 알려 주고, `--gpu`가 준비되지
-않았다고 표시합니다.
+**openSUSE에서는 어떻게 설치했든 `libavcodec62` 줄을 실행하세요.** 이 줄은 wf-recorder의 동영상 라이브러리를
+위에서 ffmpeg용으로 추가한 Packman에서 가져옵니다. openSUSE 자체 빌드에는 libx264가 없습니다. wf-recorder가
+더 새 라이브러리를 불러오면 `demoreel check`가 대신 설치할 패키지를 알려 줍니다.
 
 **소리를 위해** demoreel에는 `pactl`이 필요합니다. 이것이 있으면 녹화하는 앱의 소리가 스피커로 나가지 않고, `--audio`로 그 소리를 영상에 넣을 수 있습니다.
 

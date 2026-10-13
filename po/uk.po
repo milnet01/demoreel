@@ -476,6 +476,9 @@ msgstr "у цьому ffmpeg немає libx264, який потрібен дл�
 msgid "wf-recorder loads {library}, which has no libx264, so it cannot write the video."
 msgstr "wf-recorder завантажує {library}, у якій немає libx264, тому він не може записати відео."
 
+msgid "Packman's build of that library has libx264. Install it with:"
+msgstr "Збірка цієї бібліотеки з Packman містить libx264. Установіть її командою:"
+
 msgid "no graphics render node in /dev/dri, so there is no GPU for it to use."
 msgstr "у /dev/dri немає графічного вузла рендерингу, тому немає GPU, яким можна скористатися."
 

@@ -79,6 +79,7 @@ sudo pacman -R demoreel
 ```sh
 # openSUSE
 sudo zypper install cage xwayland wlr-randr wf-recorder
+sudo zypper install --from packman --allow-vendor-change libavcodec62
 # Debian та Ubuntu
 sudo apt install cage xwayland wlr-randr wf-recorder
 # Fedora
@@ -87,9 +88,10 @@ sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
 ```
 
-**В openSUSE `record --gpu` поки не може записати відео.** wf-recorder з
-openSUSE завантажує власну відеобібліотеку openSUSE, а в ній немає libx264.
-`demoreel check` повідомляє про це й називає `--gpu` неготовим.
+**В openSUSE виконайте рядок з `libavcodec62`, хоч би як ви встановлювали.**
+Він бере відеобібліотеку wf-recorder із Packman, доданого вище для ffmpeg. У
+власній збірці openSUSE немає libx264. Якщо wf-recorder завантажує новішу
+бібліотеку, `demoreel check` назве пакет, який треба встановити замість неї.
 
 **Для звуку** demoreel потрібен `pactl`. З ним звук застосунку, що записується, ніколи не потрапляє у ваші динаміки, а `--audio` може додати цей звук у відео:
 
