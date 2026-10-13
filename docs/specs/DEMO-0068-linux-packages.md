@@ -193,6 +193,10 @@ top-level `permissions: contents: read` stays. A failed test attaches
 nothing. Re-running the job for the same tag replaces the files
 (`--clobber`).
 
+`docs/specs/DEMO-0084-verify-a-download.md` § 4.4 adds steps to this job
+(a tag-signature check first, `SHA256SUMS`, a build record) and two
+permissions; that spec governs them.
+
 ### 4.6 openSUSE and `record --gpu`
 
 The package recommends wf-recorder on openSUSE as everywhere. The video
@@ -353,6 +357,8 @@ The container checks are run by `./ci.sh --packages` in every container of
 
 - **INV-10** — Trust boundary: only the `release` job can write to the
   repository, and it uploads only files that passed INV-1 to INV-9.
+  DEMO-0084 INV-4 and INV-6 extend this to `SHA256SUMS` and to the two
+  permissions its build record needs.
   *Test:* `grep -rn 'contents: write' .github/workflows/` names one line,
   inside `release.yml`'s `release` job. The upload step runs after the
   `./ci.sh --packages --out` step and only if it succeeded.
@@ -499,7 +505,7 @@ shebang (INV-3), `cage` moved to the required set of the `.deb` and of the
   container image to test it in.
 - Other processor architectures on OBS. The targets build on x86_64.
 - `record --gpu` on openSUSE — tracked by DEMO-0174.
-- Checksums, signed tags and a provenance attestation — tracked by DEMO-0084.
+- Checksums, signed tags and a provenance attestation — `docs/specs/DEMO-0084-verify-a-download.md`.
 - The documented from-source install, and its container check — tracked by
   DEMO-0072.
 - Testing the release files on openSUSE Leap, Ubuntu releases other than
