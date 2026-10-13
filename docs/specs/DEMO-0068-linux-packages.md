@@ -48,7 +48,11 @@ its published repository and run before the release counts as on OBS.
    machine `has_encoder` reports that library has no `libx264` (ffv1,
    utvideo and huffyuv are present). `zypper se` shows Packman offering no
    `libavcodec62` binary, only `libavcodec63`, which that wf-recorder cannot
-   load. `cmd_check` already reports this (DEMO-0171).
+   load. `cmd_check` already reports this (DEMO-0171). Packman has shipped a
+   `libavcodec62` with `libx264` since 2026-10-09 (8.1.3, in its
+   `Essentials` folder, listed 2026-10-13). With it installed on this
+   machine, the distro's wf-recorder recorded `record --gpu -- vkcube` as
+   H.264 showing a shaded cube (2026-10-13).
 
 ## 3. Scope decisions (agreed with the user)
 
@@ -72,8 +76,10 @@ next two on 2026-10-08 while this spec was drafted, and the OBS ones on
   (2026-10-13). No OBS credential is stored on GitHub.
 - **OBS builds from the release's own tarball** (2026-10-13), not from a
   second copy of the source fetched from the tag.
-- **openSUSE `record --gpu`: record losslessly, then convert**, as
-  DEMO-0174 (§ 4.6). Not "unsupported", and not a self-build guide.
+- **openSUSE `record --gpu`: take wf-recorder's library from Packman**
+  (2026-10-13), as DEMO-0174 (§ 4.6). This replaces the lossless recording
+  chosen on 2026-10-08, before Packman shipped that library. Not
+  "unsupported", and not a self-build guide.
 - **Release files are built on GitHub when a release is published**, by a
   workflow job, not on this machine. That keeps DEMO-0084's provenance
   attestation possible later.
@@ -199,12 +205,18 @@ permissions; that spec governs them.
 
 ### 4.6 openSUSE and `record --gpu`
 
-The package recommends wf-recorder on openSUSE as everywhere. The video
-library it loads cannot write H.264 (§ 2, item 4). DEMO-0174 makes `record --gpu`
-fall back to a lossless recording that the `ffmpeg` program converts, and
-`check` treats that case as ready. Until DEMO-0174 ships, `check` reports
-`--gpu: NOT READY` with the reason, and the README says so beside the
-openSUSE install line. The packages do not wait for DEMO-0174.
+The package recommends wf-recorder on openSUSE as everywhere. openSUSE's
+build of the video library it loads has no H.264, and Packman's has (§ 2,
+item 4). README's openSUSE `--gpu` instructions install Packman's:
+
+```sh
+sudo zypper install --from packman --allow-vendor-change libavcodec62
+```
+
+When wf-recorder's library has no `libx264`, `check` reports
+`--gpu: NOT READY` with the reason, as now, and on openSUSE also prints that
+command, with the package named from the library's file name (DEMO-0174).
+No package depends on Packman.
 
 ### 4.7 Publishing to OBS
 
@@ -504,7 +516,6 @@ shebang (INV-3), `cage` moved to the required set of the `.deb` and of the
   carry no `ffmpeg` and no `xdotool`; and openSUSE Slowroll, which has no
   container image to test it in.
 - Other processor architectures on OBS. The targets build on x86_64.
-- `record --gpu` on openSUSE — tracked by DEMO-0174.
 - Checksums, signed tags and a provenance attestation — `docs/specs/DEMO-0084-verify-a-download.md`.
 - The documented from-source install, and its container check — tracked by
   DEMO-0072.
