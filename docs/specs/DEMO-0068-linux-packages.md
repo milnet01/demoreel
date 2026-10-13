@@ -276,7 +276,8 @@ system's updates.
   1. refuses unless the tag `v<version>` exists and none of the files OBS
      builds from differs from it (INV-12): `demoreel.spec`,
      `debian-control`, and `packaging/obs/`'s `debian/`, `demoreel.dsc`
-     and `demoreel-rpmlintrc`. The rest comes in the release's tarball;
+     and `demoreel-rpmlintrc` where it exists. The rest comes in the
+     release's tarball;
   2. downloads the release's tarball and `PKGBUILD`, and refuses unless the
      tarball's checksum is the one the `PKGBUILD` names (INV-11);
   3. updates its `osc` checkout, kept outside the tree, swaps the previous
@@ -348,9 +349,9 @@ The container checks are run by `./ci.sh --packages` in every container of
 
 - **INV-7** — The package's version is the script's.
   *Test:* `./ci.sh --version-lockstep` also fails when a file under
-  `packaging/` holds a version literal. In each container, `demoreel
-  --version` prints `demoreel <__version__>`, and the package manager reports
-  version `<__version__>-1`.
+  `packaging/` holds `__version__`'s current value as written. In each
+  container, `demoreel --version` prints `demoreel <__version__>`, and the
+  package manager reports version `<__version__>-1`.
   *Breaks when:* a packaging file carries its own version and a bump misses it.
   *Scope:* the release files. OBS numbers its own builds' release, so on OBS
   only the version part is checked (INV-13).
