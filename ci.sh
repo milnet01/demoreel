@@ -3274,6 +3274,8 @@ for flag in $(grep -oE '`-{1,2}[a-z-]+`' README.md | tr -d '`' | sort -u); do
     # Flags belonging to other programs the caller invokes THROUGH demoreel:
     # flatpak's sockets, and the -geometry demoreel forwards to Xwayland.
     case "$flag" in --socket|--nosocket|--filesystem|-geometry) continue ;; esac
+    # And zypper's, which README § Install's openSUSE package line needs.
+    case "$flag" in --allow-unsigned-rpm) continue ;; esac
     # A here-string, not a pipe: grep -q stops reading at its first match,
     # the writer then dies of SIGPIPE, and pipefail reports that as a miss.
     # A longer help text is all it takes to hit it.

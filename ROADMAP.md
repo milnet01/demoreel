@@ -4277,6 +4277,11 @@ system looks for them.
   covers both), the first release carrying the files plus the website
   hand-off, then the OBS amendment, its review-contract run and the OBS
   publish.
+  Progress (2026-10-13): README § Install leads with the packages,
+  gated with DEMO-0072's from-source section (readme loop log rows
+  19-21), and the 16 quick-start pages follow it. Left: the first
+  release carrying the files plus the website hand-off, then the OBS
+  amendment, its review-contract run and the OBS publish.
   **Layman:** Install demoreel on openSUSE with zypper, dependencies included.
   Kind: package.
   Source: user-request-2026-09-25.
@@ -4334,11 +4339,16 @@ system looks for them.
   Kind: implement.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0072] **Document an install from source, and check it in a clean container per distro.**
+- ✅ [DEMO-0072] **Document an install from source, and check it in a clean container per distro.**
   For a distro with no package: which programs to install, where to put
   the script, man page, completions and catalogs. Verified by running it
   in a fresh container for each packaged distro, which also catches a
   missing dependency in the package lists.
+  Shipped (2026-10-13): README § Install from source (gated with
+  README § Install, docs/reviews/readme-loop-log.md rows 19-21).
+  packaging/install.sh defaults to /usr/local and takes --uninstall;
+  ./ci.sh --packages runs README's line and install.sh in a clean
+  container of all five distros, then --uninstall, and passed.
   **Layman:** Anyone can install it by hand with a few commands, and those commands are tested.
   Kind: doc.
   Source: user-request-2026-09-25.

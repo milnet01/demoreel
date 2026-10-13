@@ -7,23 +7,33 @@ volledige gids, in Engels, is [README.md](../../README.md).
 
 ## Installeer
 
-demoreel is een Python 3-skrip. Dit stuur 'n paar algemene programme aan, en
-elke distro hieronder verpak hulle almal.
+Vanaf 0.9.0 het elke weergawe 'n pakket vir Debian, Ubuntu, Fedora, openSUSE
+en Arch. Die pakket bring die programme wat demoreel aanstuur uit u distro se
+eie bewaarplekke. Dit installeer ook die handleidingbladsy en tab-voltooiing.
+Vir enige ander distro, sien [Installeer uit bronkode](../../README.md#install-from-source)
+(in Engels).
 
-**1. Installeer die programme wat dit aanstuur.** Een reël, vir u distro:
+**1. Laai die pakket vir u distro af** van die
+[nuutste weergawe](https://github.com/milnet01/demoreel/releases/latest): die
+`.deb` vir Debian en Ubuntu, die `.rpm` vir Fedora en openSUSE, of die
+`PKGBUILD` vir Arch.
+
+**2. Installeer dit.** In die gids waarheen u dit afgelaai het, een reël vir u
+distro:
 
 ```sh
-# openSUSE
-sudo zypper install ffmpeg xdotool xauth xorg-x11-server-Xvfb
 # Debian en Ubuntu
-sudo apt install ffmpeg xdotool xauth xvfb
+sudo apt install ./demoreel_*_all.deb
 # Fedora
-sudo dnf install ffmpeg xdotool xorg-x11-xauth xorg-x11-server-Xvfb
+sudo dnf install ./demoreel-*.noarch.rpm
+# openSUSE
+sudo zypper install --allow-unsigned-rpm ./demoreel-*.noarch.rpm
 # Arch
-sudo pacman -S ffmpeg xdotool xorg-xauth xorg-server-xvfb
+makepkg -si
 ```
 
-U het ook `python3` en `git` nodig.
+Die pakket is nie onderteken nie. Daarom het openSUSE
+`--allow-unsigned-rpm` nodig.
 
 **Op openSUSE en Fedora kan die distro se eie ffmpeg nie die video skryf
 nie.** Dit laat die H.264-enkodeerder, libx264, weg. Kry ffmpeg van Packman op
@@ -41,22 +51,6 @@ sudo dnf swap ffmpeg-free ffmpeg --allowerasing
 Die eerste keer vra zypper of dit Packman se ondertekeningsleutel moet
 vertrou. Kies die antwoord wat dit altyd vertrou.
 
-**2. Kry demoreel, en sit dit op u PATH.**
-
-```sh
-git clone https://github.com/milnet01/demoreel.git
-mkdir -p ~/.local/bin
-ln -s "$PWD/demoreel/demoreel" ~/.local/bin/demoreel
-```
-
-As die dop dan sê dat dit die opdrag `demoreel` nie kan vind nie, is
-`~/.local/bin` nog nie op u PATH nie. Voeg hierdie reël by `~/.bashrc` en maak
-'n nuwe terminaal oop:
-
-```sh
-export PATH="$HOME/.local/bin:$PATH"
-```
-
 **3. Toets dit.**
 
 ```sh
@@ -66,8 +60,22 @@ demoreel check
 Dit neem niks op nie. Dit sê `gereed`, of noem wat ontbreek en die opdrag wat
 dit installeer.
 
+**Om dit te verwyder**, gebruik u pakketbestuurder:
+
+```sh
+# Debian en Ubuntu
+sudo apt remove demoreel
+# Fedora
+sudo dnf remove demoreel
+# openSUSE
+sudo zypper remove demoreel
+# Arch
+sudo pacman -R demoreel
+```
+
 **Vir toeps wat die grafiese kaart nodig het**, het `--gpu` nog vier programme
-nodig:
+nodig. Die pakkette vir Debian, Ubuntu, Fedora en openSUSE bring hulle. Op
+Arch, of ná 'n installasie uit bronkode, installeer u hulle self:
 
 ```sh
 # openSUSE
@@ -79,6 +87,10 @@ sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 # Arch
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
 ```
+
+**Op openSUSE kan `record --gpu` nog nie die video skryf nie.** openSUSE se
+wf-recorder laai openSUSE se eie videobiblioteek, wat geen libx264 het nie.
+`demoreel check` sê so, en noem `--gpu` nie gereed nie.
 
 **Vir klank** het demoreel `pactl` nodig. Daarmee bereik 'n opgeneemde app se klank nooit u luidsprekers nie, en kan `--audio` daardie klank in die video sit:
 

@@ -6,23 +6,30 @@
 
 ## התקנה
 
-demoreel הוא סקריפט Python 3 אחד. הוא מפעיל כמה תוכניות נפוצות, וכל אחת
-מההפצות שלהלן אורזת את כולן.
+מגרסה 0.9.0 והלאה, כל גרסה מגיעה עם חבילה ל־Debian, ל־Ubuntu, ל־Fedora,
+ל־openSUSE ול־Arch. החבילה מביאה את התוכניות ש־demoreel מפעיל מהמאגרים של
+ההפצה עצמה. היא מתקינה גם את דף העזרה (man) ואת ההשלמה במקש Tab. להפצה אחרת,
+ראו [התקנה מקוד המקור](../../README.md#install-from-source) (באנגלית).
 
-**1. התקנת התוכניות שהוא מפעיל.** שורה אחת, לפי ההפצה:
+**1. הורדת החבילה להפצה שלך** מתוך
+[הגרסה האחרונה](https://github.com/milnet01/demoreel/releases/latest): קובץ
+ה־`.deb` ל־Debian ול־Ubuntu, קובץ ה־`.rpm` ל־Fedora ול־openSUSE, או
+ה־`PKGBUILD` ל־Arch.
+
+**2. התקנה.** בתיקייה שאליה הורדת אותה, שורה אחת לפי ההפצה:
 
 ```sh
-# openSUSE
-sudo zypper install ffmpeg xdotool xauth xorg-x11-server-Xvfb
 # Debian ו־Ubuntu
-sudo apt install ffmpeg xdotool xauth xvfb
+sudo apt install ./demoreel_*_all.deb
 # Fedora
-sudo dnf install ffmpeg xdotool xorg-x11-xauth xorg-x11-server-Xvfb
+sudo dnf install ./demoreel-*.noarch.rpm
+# openSUSE
+sudo zypper install --allow-unsigned-rpm ./demoreel-*.noarch.rpm
 # Arch
-sudo pacman -S ffmpeg xdotool xorg-xauth xorg-server-xvfb
+makepkg -si
 ```
 
-נדרשים גם `python3` ו־`git`.
+החבילה לא חתומה. לכן openSUSE צריך את `--allow-unsigned-rpm`.
 
 **ב־openSUSE וב־Fedora, ה־ffmpeg של ההפצה עצמה לא יכול לכתוב את הסרטון.** חסר
 בו מקודד ה־H.264, libx264. יש לקחת את ffmpeg מ־Packman ב־openSUSE, או
@@ -40,22 +47,6 @@ sudo dnf swap ffmpeg-free ffmpeg --allowerasing
 בפעם הראשונה zypper שואל אם לסמוך על מפתח החתימה של Packman. יש לענות בבחירה
 שסומכת עליו תמיד.
 
-**2. הורדת demoreel והוספתו ל־PATH.**
-
-```sh
-git clone https://github.com/milnet01/demoreel.git
-mkdir -p ~/.local/bin
-ln -s "$PWD/demoreel/demoreel" ~/.local/bin/demoreel
-```
-
-אם המעטפת (ה־shell) אומרת אחר כך שהיא לא מוצאת את הפקודה `demoreel`, התיקייה
-`~/.local/bin` עדיין לא נמצאת ב־PATH. יש להוסיף את השורה הזו ל־`~/.bashrc`
-ולפתוח מסוף חדש:
-
-```sh
-export PATH="$HOME/.local/bin:$PATH"
-```
-
 **3. בדיקה.**
 
 ```sh
@@ -65,7 +56,22 @@ demoreel check
 הפקודה לא מקליטה כלום. היא אומרת `מוכן`, או מציינת מה חסר ואת הפקודה שמתקינה
 אותו.
 
-**ליישומים שצריכים את כרטיס המסך**, `--gpu` דורש עוד ארבע תוכניות:
+**כדי להסיר אותו**, יש להשתמש במנהל החבילות:
+
+```sh
+# Debian ו־Ubuntu
+sudo apt remove demoreel
+# Fedora
+sudo dnf remove demoreel
+# openSUSE
+sudo zypper remove demoreel
+# Arch
+sudo pacman -R demoreel
+```
+
+**ליישומים שצריכים את כרטיס המסך**, `--gpu` דורש עוד ארבע תוכניות. החבילות
+ל־Debian, ל־Ubuntu, ל־Fedora ול־openSUSE מביאות אותן. ב־Arch, או אחרי התקנה
+מקוד המקור, יש להתקין אותן בעצמך:
 
 ```sh
 # openSUSE
@@ -77,6 +83,10 @@ sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 # Arch
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
 ```
+
+**ב־openSUSE, `record --gpu` עדיין לא יכול לכתוב את הסרטון.** ה־wf-recorder
+של openSUSE טוען את ספריית הווידאו של openSUSE עצמה, ואין בה libx264.
+`demoreel check` מציין זאת, ואומר ש־`--gpu` לא מוכן.
 
 **לקול** demoreel צריך את `pactl`. איתו הקול של אפליקציה מוקלטת לעולם לא מגיע לרמקולים שלך, ו־`--audio` יכול להכניס את הקול הזה לסרטון:
 

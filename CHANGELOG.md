@@ -21,6 +21,12 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   Every package is built and installed in a clean container of each
   distro it targets before it is attached: `./ci.sh --packages`.
 
+- **An install from source puts demoreel under `/usr/local` with one command, and `--uninstall` takes it out again (DEMO-0072)**
+  `sudo ./packaging/install.sh` in a clone installs the command, the
+  manual page, tab completion and the translations. README § Install
+  now leads with the packages and keeps this as the other route. It is
+  run as written in a clean container of each packaged distro.
+
 ## [0.8.0] - 2026-10-13
 
 **Theme:** Trailers.

@@ -7,24 +7,34 @@ enregistrement. Le guide complet, en anglais, est [README.md](../../README.md).
 
 ## Installation
 
-demoreel est un seul script Python 3. Il pilote quelques programmes courants,
-et chaque distribution ci-dessous les fournit tous.
+À partir de la version 0.9.0, chaque version fournit un paquet pour Debian,
+Ubuntu, Fedora, openSUSE et Arch. Le paquet installe les programmes que
+demoreel pilote, depuis les dépôts de votre distribution. Il installe aussi la
+page de manuel et la complétion par tabulation. Pour toute autre distribution,
+voir [Installer depuis les sources](../../README.md#install-from-source) (en
+anglais).
 
-**1. Installez les programmes qu'il pilote.** Une ligne, pour votre
-distribution :
+**1. Téléchargez le paquet pour votre distribution** depuis la
+[dernière version](https://github.com/milnet01/demoreel/releases/latest) : le
+`.deb` pour Debian et Ubuntu, le `.rpm` pour Fedora et openSUSE, ou le
+`PKGBUILD` pour Arch.
+
+**2. Installez-le.** Dans le dossier où vous l'avez téléchargé, une ligne pour
+votre distribution :
 
 ```sh
-# openSUSE
-sudo zypper install ffmpeg xdotool xauth xorg-x11-server-Xvfb
 # Debian et Ubuntu
-sudo apt install ffmpeg xdotool xauth xvfb
+sudo apt install ./demoreel_*_all.deb
 # Fedora
-sudo dnf install ffmpeg xdotool xorg-x11-xauth xorg-x11-server-Xvfb
+sudo dnf install ./demoreel-*.noarch.rpm
+# openSUSE
+sudo zypper install --allow-unsigned-rpm ./demoreel-*.noarch.rpm
 # Arch
-sudo pacman -S ffmpeg xdotool xorg-xauth xorg-server-xvfb
+makepkg -si
 ```
 
-Il vous faut aussi `python3` et `git`.
+Le paquet n'est pas signé. C'est pourquoi openSUSE a besoin de
+`--allow-unsigned-rpm`.
 
 **Sur openSUSE et Fedora, le ffmpeg de la distribution ne peut pas écrire la
 vidéo.** Il ne contient pas l'encodeur H.264, libx264. Prenez ffmpeg chez
@@ -42,22 +52,6 @@ sudo dnf swap ffmpeg-free ffmpeg --allowerasing
 La première fois, zypper demande s'il faut faire confiance à la clé de
 signature de Packman. Répondez par le choix qui lui fait toujours confiance.
 
-**2. Récupérez demoreel et placez-le dans votre PATH.**
-
-```sh
-git clone https://github.com/milnet01/demoreel.git
-mkdir -p ~/.local/bin
-ln -s "$PWD/demoreel/demoreel" ~/.local/bin/demoreel
-```
-
-Si le shell indique ensuite qu'il ne trouve pas la commande `demoreel`,
-`~/.local/bin` n'est pas encore dans votre PATH. Ajoutez cette ligne à
-`~/.bashrc` et ouvrez un nouveau terminal :
-
-```sh
-export PATH="$HOME/.local/bin:$PATH"
-```
-
 **3. Vérifiez.**
 
 ```sh
@@ -67,8 +61,23 @@ demoreel check
 Cette commande n'enregistre rien. Elle affiche `prêt`, ou indique ce qui
 manque et la commande qui l'installe.
 
+**Pour le désinstaller**, utilisez votre gestionnaire de paquets :
+
+```sh
+# Debian et Ubuntu
+sudo apt remove demoreel
+# Fedora
+sudo dnf remove demoreel
+# openSUSE
+sudo zypper remove demoreel
+# Arch
+sudo pacman -R demoreel
+```
+
 **Pour les applications qui ont besoin de la carte graphique**, `--gpu`
-nécessite quatre programmes de plus :
+nécessite quatre programmes de plus. Les paquets Debian, Ubuntu, Fedora et
+openSUSE les installent. Sur Arch, ou après une installation depuis les
+sources, installez-les vous-même :
 
 ```sh
 # openSUSE
@@ -80,6 +89,10 @@ sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 # Arch
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
 ```
+
+**Sur openSUSE, `record --gpu` ne peut pas encore écrire la vidéo.** Le
+wf-recorder d'openSUSE charge la bibliothèque vidéo d'openSUSE, qui n'a pas
+libx264. `demoreel check` le signale, et indique que `--gpu` n'est pas prêt.
 
 **Pour le son**, demoreel a besoin de `pactl`. Avec lui, le son d'une app enregistrée n'atteint jamais vos haut-parleurs, et `--audio` peut mettre ce son dans la vidéo :
 

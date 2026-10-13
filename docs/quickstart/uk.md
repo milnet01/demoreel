@@ -6,23 +6,33 @@
 
 ## Встановлення
 
-demoreel — це один скрипт на Python 3. Він керує кількома поширеними
-програмами, і кожен дистрибутив нижче постачає їх усі.
+Починаючи з версії 0.9.0, кожен випуск містить пакет для Debian, Ubuntu,
+Fedora, openSUSE і Arch. Пакет установлює програми, якими керує demoreel, із
+власних репозиторіїв вашого дистрибутива. Він також установлює сторінку
+довідки й автодоповнення клавішею Tab. Для інших дистрибутивів див.
+[Встановлення з вихідного коду](../../README.md#install-from-source)
+(англійською).
 
-**1. Установіть програми, якими він керує.** Один рядок для вашого дистрибутива:
+**1. Завантажте пакет для вашого дистрибутива** зі сторінки
+[останнього випуску](https://github.com/milnet01/demoreel/releases/latest):
+`.deb` для Debian та Ubuntu, `.rpm` для Fedora та openSUSE або `PKGBUILD` для
+Arch.
+
+**2. Установіть його.** У теці, куди ви його завантажили, виконайте один рядок
+для вашого дистрибутива:
 
 ```sh
-# openSUSE
-sudo zypper install ffmpeg xdotool xauth xorg-x11-server-Xvfb
 # Debian та Ubuntu
-sudo apt install ffmpeg xdotool xauth xvfb
+sudo apt install ./demoreel_*_all.deb
 # Fedora
-sudo dnf install ffmpeg xdotool xorg-x11-xauth xorg-x11-server-Xvfb
+sudo dnf install ./demoreel-*.noarch.rpm
+# openSUSE
+sudo zypper install --allow-unsigned-rpm ./demoreel-*.noarch.rpm
 # Arch
-sudo pacman -S ffmpeg xdotool xorg-xauth xorg-server-xvfb
+makepkg -si
 ```
 
-Також потрібні `python3` і `git`.
+Пакет не підписаний. Тому openSUSE потребує `--allow-unsigned-rpm`.
 
 **В openSUSE і Fedora власний ffmpeg дистрибутива не може записати відео.** У
 ньому немає кодувальника H.264, libx264. Візьміть ffmpeg із Packman в openSUSE
@@ -40,22 +50,6 @@ sudo dnf swap ffmpeg-free ffmpeg --allowerasing
 Першого разу zypper запитає, чи довіряти ключу підпису Packman. Виберіть
 варіант, який довіряє йому завжди.
 
-**2. Отримайте demoreel і додайте його до PATH.**
-
-```sh
-git clone https://github.com/milnet01/demoreel.git
-mkdir -p ~/.local/bin
-ln -s "$PWD/demoreel/demoreel" ~/.local/bin/demoreel
-```
-
-Якщо після цього оболонка повідомить, що не може знайти команду `demoreel`,
-то `~/.local/bin` ще не входить до вашого PATH. Додайте цей рядок до
-`~/.bashrc` і відкрийте новий термінал:
-
-```sh
-export PATH="$HOME/.local/bin:$PATH"
-```
-
 **3. Перевірте.**
 
 ```sh
@@ -65,7 +59,22 @@ demoreel check
 Ця команда нічого не записує. Вона повідомляє `готово` або називає, чого
 бракує, і команду, яка це встановить.
 
-**Для програм, яким потрібна відеокарта**, `--gpu` потребує ще чотирьох програм:
+**Щоб вилучити його**, скористайтеся менеджером пакетів:
+
+```sh
+# Debian та Ubuntu
+sudo apt remove demoreel
+# Fedora
+sudo dnf remove demoreel
+# openSUSE
+sudo zypper remove demoreel
+# Arch
+sudo pacman -R demoreel
+```
+
+**Для програм, яким потрібна відеокарта**, `--gpu` потребує ще чотирьох програм.
+Пакети для Debian, Ubuntu, Fedora та openSUSE встановлюють їх. В Arch або після
+встановлення з вихідного коду встановіть їх самі:
 
 ```sh
 # openSUSE
@@ -77,6 +86,10 @@ sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 # Arch
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
 ```
+
+**В openSUSE `record --gpu` поки не може записати відео.** wf-recorder з
+openSUSE завантажує власну відеобібліотеку openSUSE, а в ній немає libx264.
+`demoreel check` повідомляє про це й називає `--gpu` неготовим.
 
 **Для звуку** demoreel потрібен `pactl`. З ним звук застосунку, що записується, ніколи не потрапляє у ваші динаміки, а `--audio` може додати цей звук у відео:
 

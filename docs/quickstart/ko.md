@@ -6,23 +6,31 @@
 
 ## 설치
 
-demoreel은 Python 3 스크립트 하나입니다. 널리 쓰이는 프로그램 몇 개를
-사용하며, 아래의 배포판들은 모두 이 프로그램들을 패키지로 제공합니다.
+0.9.0부터 모든 릴리스에는 Debian, Ubuntu, Fedora, openSUSE, Arch용 패키지가
+들어 있습니다. 패키지는 demoreel이 사용하는 프로그램을 배포판 자체의
+저장소에서 가져옵니다. 매뉴얼 페이지와 탭 자동 완성도 설치합니다.
+다른 배포판은 [소스에서 설치하기](../../README.md#install-from-source)(영어)를
+보십시오.
 
-**1. demoreel이 사용하는 프로그램을 설치합니다.** 사용하는 배포판에 맞는 한 줄입니다.
+**1. 사용하는 배포판에 맞는 패키지를 내려받습니다.**
+[최신 릴리스](https://github.com/milnet01/demoreel/releases/latest)에서 받으십시오.
+Debian과 Ubuntu는 `.deb`, Fedora와 openSUSE는 `.rpm`, Arch는 `PKGBUILD`입니다.
+
+**2. 설치합니다.** 내려받은 폴더에서, 사용하는 배포판에 맞는 한 줄입니다.
 
 ```sh
-# openSUSE
-sudo zypper install ffmpeg xdotool xauth xorg-x11-server-Xvfb
 # Debian 및 Ubuntu
-sudo apt install ffmpeg xdotool xauth xvfb
+sudo apt install ./demoreel_*_all.deb
 # Fedora
-sudo dnf install ffmpeg xdotool xorg-x11-xauth xorg-x11-server-Xvfb
+sudo dnf install ./demoreel-*.noarch.rpm
+# openSUSE
+sudo zypper install --allow-unsigned-rpm ./demoreel-*.noarch.rpm
 # Arch
-sudo pacman -S ffmpeg xdotool xorg-xauth xorg-server-xvfb
+makepkg -si
 ```
 
-`python3`와 `git`도 필요합니다.
+패키지에는 서명이 없습니다. 그래서 openSUSE에는 `--allow-unsigned-rpm`이
+필요합니다.
 
 **openSUSE와 Fedora에서는 배포판 자체의 ffmpeg으로 동영상을 쓸 수 없습니다.**
 H.264 인코더인 libx264가 빠져 있기 때문입니다. openSUSE에서는 Packman에서,
@@ -40,21 +48,6 @@ sudo dnf swap ffmpeg-free ffmpeg --allowerasing
 처음에는 zypper가 Packman의 서명 키를 신뢰할지 묻습니다. 항상 신뢰하는
 선택지로 답하십시오.
 
-**2. demoreel을 받아 PATH에 넣습니다.**
-
-```sh
-git clone https://github.com/milnet01/demoreel.git
-mkdir -p ~/.local/bin
-ln -s "$PWD/demoreel/demoreel" ~/.local/bin/demoreel
-```
-
-그 뒤에 셸이 `demoreel` 명령을 찾을 수 없다고 하면, `~/.local/bin`이 아직
-PATH에 없는 것입니다. 다음 줄을 `~/.bashrc`에 추가하고 새 터미널을 여십시오.
-
-```sh
-export PATH="$HOME/.local/bin:$PATH"
-```
-
 **3. 확인합니다.**
 
 ```sh
@@ -64,7 +57,22 @@ demoreel check
 아무것도 녹화하지 않습니다. `준비됨`이라고 표시하거나, 빠진 것과 그것을
 설치하는 명령을 알려 줍니다.
 
+**제거하려면** 패키지 관리자를 사용하십시오.
+
+```sh
+# Debian 및 Ubuntu
+sudo apt remove demoreel
+# Fedora
+sudo dnf remove demoreel
+# openSUSE
+sudo zypper remove demoreel
+# Arch
+sudo pacman -R demoreel
+```
+
 **그래픽 카드가 필요한 앱의 경우**, `--gpu`에는 프로그램 네 개가 더 필요합니다.
+Debian, Ubuntu, Fedora, openSUSE 패키지는 이 프로그램들을 함께 설치합니다.
+Arch에서, 또는 소스에서 설치한 뒤에는 직접 설치하십시오.
 
 ```sh
 # openSUSE
@@ -76,6 +84,11 @@ sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 # Arch
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
 ```
+
+**openSUSE에서는 아직 `record --gpu`로 동영상을 쓸 수 없습니다.** openSUSE의
+wf-recorder는 openSUSE 자체의 동영상 라이브러리를 불러오는데, 여기에는
+libx264가 없습니다. `demoreel check`가 이를 알려 주고, `--gpu`가 준비되지
+않았다고 표시합니다.
 
 **소리를 위해** demoreel에는 `pactl`이 필요합니다. 이것이 있으면 녹화하는 앱의 소리가 스피커로 나가지 않고, `--audio`로 그 소리를 영상에 넣을 수 있습니다.
 

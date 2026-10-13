@@ -6,22 +6,24 @@
 
 ## 安装
 
-demoreel 是一个 Python 3 脚本。它调用几个常见的程序，下面每个发行版都提供了全部这些程序的软件包。
+从 0.9.0 起，每个版本都附带适用于 Debian、Ubuntu、Fedora、openSUSE 和 Arch 的软件包。软件包会从您发行版自己的软件源安装 demoreel 调用的程序。它还会安装手册页和 Tab 补全。其他发行版请见英文的[从源码安装](../../README.md#install-from-source)。
 
-**1. 安装它调用的程序。** 按您的发行版，运行一行命令：
+**1. 下载适合您发行版的软件包**，在[最新版本](https://github.com/milnet01/demoreel/releases/latest)页面：Debian 和 Ubuntu 用 `.deb`，Fedora 和 openSUSE 用 `.rpm`，Arch 用 `PKGBUILD`。
+
+**2. 安装它。** 在您下载它的文件夹中，按您的发行版运行一行命令：
 
 ```sh
-# openSUSE
-sudo zypper install ffmpeg xdotool xauth xorg-x11-server-Xvfb
 # Debian 和 Ubuntu
-sudo apt install ffmpeg xdotool xauth xvfb
+sudo apt install ./demoreel_*_all.deb
 # Fedora
-sudo dnf install ffmpeg xdotool xorg-x11-xauth xorg-x11-server-Xvfb
+sudo dnf install ./demoreel-*.noarch.rpm
+# openSUSE
+sudo zypper install --allow-unsigned-rpm ./demoreel-*.noarch.rpm
 # Arch
-sudo pacman -S ffmpeg xdotool xorg-xauth xorg-server-xvfb
+makepkg -si
 ```
 
-您还需要 `python3` 和 `git`。
+软件包没有签名。所以 openSUSE 需要 `--allow-unsigned-rpm`。
 
 **在 openSUSE 和 Fedora 上，发行版自带的 ffmpeg 无法写出视频。** 它缺少 H.264 编码器 libx264。请在 openSUSE 上改用 Packman 的 ffmpeg，在 Fedora 上改用 RPM Fusion 的 ffmpeg：
 
@@ -36,20 +38,6 @@ sudo dnf swap ffmpeg-free ffmpeg --allowerasing
 
 第一次时，zypper 会询问是否信任 Packman 的签名密钥。请选择“始终信任”的那一项。
 
-**2. 获取 demoreel，并把它放到您的 PATH 中。**
-
-```sh
-git clone https://github.com/milnet01/demoreel.git
-mkdir -p ~/.local/bin
-ln -s "$PWD/demoreel/demoreel" ~/.local/bin/demoreel
-```
-
-如果这时 shell 提示找不到命令 `demoreel`，说明 `~/.local/bin` 还不在您的 PATH 中。请把下面这一行加到 `~/.bashrc`，然后打开一个新终端：
-
-```sh
-export PATH="$HOME/.local/bin:$PATH"
-```
-
 **3. 检查一下。**
 
 ```sh
@@ -58,7 +46,20 @@ demoreel check
 
 它不会录制任何内容。它会显示 `就绪`，或者指出缺少什么，以及安装它的命令。
 
-**对于需要显卡的应用**，`--gpu` 还需要另外四个程序：
+**要卸载它**，请使用您的软件包管理器：
+
+```sh
+# Debian 和 Ubuntu
+sudo apt remove demoreel
+# Fedora
+sudo dnf remove demoreel
+# openSUSE
+sudo zypper remove demoreel
+# Arch
+sudo pacman -R demoreel
+```
+
+**对于需要显卡的应用**，`--gpu` 还需要另外四个程序。Debian、Ubuntu、Fedora 和 openSUSE 的软件包会一并安装它们。在 Arch 上，或从源码安装之后，请自己安装：
 
 ```sh
 # openSUSE
@@ -70,6 +71,8 @@ sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 # Arch
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
 ```
+
+**在 openSUSE 上，`record --gpu` 暂时无法写出视频。** openSUSE 的 wf-recorder 会加载 openSUSE 自己的视频库，而这个库没有 libx264。`demoreel check` 会指出这一点，并显示 `--gpu` 未就绪。
 
 **声音**需要 `pactl`。有了它，被录制应用的声音永远不会传到您的扬声器，`--audio` 还能把这声音放进视频：
 
