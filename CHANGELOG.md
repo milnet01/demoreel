@@ -14,6 +14,12 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **Each release can be checked: its tag is signed, its files are listed in SHA256SUMS, and each has a GitHub build record** (DEMO-0084)
+  SECURITY.md § Checking a download gives the three commands. The
+  release workflow attaches nothing to a release whose tag is not
+  signed, and `./ci.sh --release-check <tag>` runs the same three
+  checks against a published release.
+
 - **Packages for Debian and Ubuntu (.deb), Fedora and openSUSE (.rpm), and Arch (PKGBUILD), attached to each GitHub release from the next one on (DEMO-0068, DEMO-0069, DEMO-0070)**
   Each installs the command, its manual page, tab completion for bash,
   zsh and fish, and the translations, and pulls in every program

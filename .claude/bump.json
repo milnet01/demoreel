@@ -20,5 +20,7 @@
     "Cut the changelog with the changelog verb: changelog_log op:\"release\" version:\"{NEW}\" date:\"{TODAY}\". It closes [Unreleased] into a dated section and opens a fresh empty one. Mechanical -- it moves text that already exists and writes no prose."
   ],
 
-  "post_check": "./ci.sh --version-lockstep"
+  "post_check": "./ci.sh --version-lockstep",
+
+  "publish_precheck": "./ci.sh --signing-check"
 }

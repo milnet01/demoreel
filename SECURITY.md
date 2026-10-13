@@ -90,6 +90,54 @@ video, and `--app-log` keeps whatever the app printed. Both are ordinary files
 with the caller's umask. Check what is in them before publishing one; demoreel
 cannot tell a secret on screen from any other pixels.
 
+## Checking a download
+
+From 0.9.0 on, a release can be checked three ways. The commands below use
+0.9.0; put the version you downloaded in its place.
+
+**The tag is signed.** Release tags are signed with an SSH key used for
+nothing else. Its public half is
+[`packaging/release-signers`](packaging/release-signers), and the same key
+is listed as a signing key on the GitHub account, at
+<https://api.github.com/users/milnet01/ssh_signing_keys>. In a clone of this
+repository:
+
+```sh
+git fetch --tags
+git -c gpg.ssh.allowedSignersFile=packaging/release-signers tag -v v0.9.0
+```
+
+It prints `Good "git" signature` and exits 0.
+
+**The files are the ones listed.** Each release carries `SHA256SUMS`, which
+names every other file with its SHA-256 hash. In the folder holding your
+downloads:
+
+```sh
+sha256sum -c --ignore-missing SHA256SUMS
+```
+
+Each file you downloaded is reported `OK`.
+
+**GitHub built them from that tag.** Every file, `SHA256SUMS` included, has a
+build record made by the release workflow. With the GitHub CLI:
+
+```sh
+gh attestation verify demoreel_0.9.0-1_all.deb --repo milnet01/demoreel \
+    --source-ref refs/tags/v0.9.0 \
+    --signer-workflow milnet01/demoreel/.github/workflows/release.yml
+```
+
+A package installed from the openSUSE Build Service repositories is checked
+by your package manager against that repository's own key. These steps are
+for files downloaded from GitHub.
+
+**The limit.** The tag check reads `packaging/release-signers` from the
+repository it checks, so someone who could push to the repository could
+change that file too. The key's listing on the GitHub account is a second
+source. Compare the two for a check that does not rest on the repository
+alone.
+
 ## Supported versions
 
 Before 1.0, only the latest release. There are no maintenance branches.

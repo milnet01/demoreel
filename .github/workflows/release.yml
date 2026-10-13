@@ -1,9 +1,10 @@
 name: Release
 
-# When a release is published, build the packages from its tag, test each in
-# a clean container of every distro it targets, and attach them
-# (docs/specs/DEMO-0068-linux-packages.md § 4.5). A trigger belongs to a whole
-# workflow file, which is why this is not a job in ci.yml.
+# When a release is published, check its tag is signed, build the packages
+# from it, test each in a clean container of every distro it targets, and
+# attach them with SHA256SUMS and a build record for each
+# (docs/specs/DEMO-0068-linux-packages.md § 4.5, DEMO-0084 § 4.4). A trigger
+# belongs to a whole workflow file, which is why this is not a job in ci.yml.
 on:
   release:
     types: [published]
@@ -16,14 +17,27 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     # The one job in this repository that may write to it, to upload the
-    # files. ci.sh's full gate fails if that grant appears anywhere else.
+    # files, and the one that may make a build record (DEMO-0084 § 4.4).
+    # ci.sh's full gate fails if any of these grants appears anywhere else.
     permissions:
       contents: write
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.release.tag_name }}
           persist-credentials: false
+
+      - name: Check the tag is signed
+        # Nothing is built or attached for an unsigned tag (DEMO-0084 INV-2).
+        # The tag object is fetched by name, so this never depends on what
+        # the checkout fetched. The tag arrives through env, as data.
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          git fetch --no-tags origin "+refs/tags/$TAG:refs/tags/$TAG"
+          ./ci.sh --verify-tag "$TAG"
 
       - name: Install podman
         timeout-minutes: 15
@@ -36,6 +50,12 @@ jobs:
         # failure here attaches nothing: the upload below does not run.
         timeout-minutes: 25
         run: ./ci.sh --packages --out "$RUNNER_TEMP/release"
+
+      - name: Make a build record for every file
+        # Before the upload, so a failed record attaches nothing.
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: ${{ runner.temp }}/release/*
 
       - name: Attach them to the release
         # The tag arrives through env, so the shell sees data rather than code.

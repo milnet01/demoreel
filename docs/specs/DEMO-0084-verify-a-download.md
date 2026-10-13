@@ -144,7 +144,7 @@ not use, so it is left out. The workflow's top-level `contents: read` stays.
 ### 4.5 Checking a published release: `./ci.sh --release-check <tag>`
 
 Run on this machine after each release, as `--obs-check` is (CONTRIBUTING
-§ After a release: OBS). It does what `SECURITY.md` tells a user to do:
+§ Cutting a release). It does what `SECURITY.md` tells a user to do:
 
 1. Downloads every asset of the release with `gh release download` into a
    new folder under the run's temporary directory.
@@ -313,8 +313,8 @@ downloaded from GitHub. It also states the limit in § 6's last bullet.
   for the new steps and permissions; § 9's DEMO-0084 line points at this
   spec.
 - `SECURITY.md`: the new *Checking a download* section (§ 4.6).
-- `CONTRIBUTING.md` § After a release: OBS gains `./ci.sh --release-check <tag>`;
-  and a note that a release clone needs the § 4.1 settings.
+- `CONTRIBUTING.md` § Cutting a release: the § 4.1 settings,
+  `--signing-check` and `./ci.sh --release-check <tag>`.
 - `.claude/bump.json`: `publish_precheck`.
 - `CHANGELOG.md`: an *Added* entry under `[Unreleased]`.
 

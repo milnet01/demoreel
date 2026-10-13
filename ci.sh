@@ -639,6 +639,29 @@ echo "PASS (${OBS_TARGET:-$distro})"
 EOF
 }
 
+# DEMO-0084 § 4.3, in the current folder: SHA256SUMS names exactly the other
+# files there, none with a folder in its name, and every hash matches.
+check_sums() {
+    local listed present
+    [ -f SHA256SUMS ] || { echo "there is no SHA256SUMS" >&2; return 1; }
+    listed=$(awk '{ sub(/^\*/, "", $2); print $2 }' SHA256SUMS | sort)
+    present=$(find . -maxdepth 1 -type f ! -name SHA256SUMS -printf '%f\n' | sort)
+    if grep -q / <<<"$listed" || [ "$listed" != "$present" ]; then
+        echo "SHA256SUMS does not name exactly the files beside it:" >&2
+        diff <(echo "$listed") <(echo "$present") >&2 || true
+        return 1
+    fi
+    sha256sum -c --quiet SHA256SUMS
+}
+
+# DEMO-0084 § 4.2: the tag is signed by a key packaging/release-signers lists.
+verify_tag() {
+    git -c gpg.ssh.allowedSignersFile=packaging/release-signers tag -v "$1" >/dev/null || {
+        echo "$1 is not signed by a key in packaging/release-signers" >&2
+        return 1; }
+    echo "$1 is signed by a key in packaging/release-signers"
+}
+
 # Build and test every package; with a folder, leave the release files there.
 packages_check() {
     local out=$1 v work tree rev distro image pids=() names=() failed=0 i
@@ -708,6 +731,9 @@ DEPSPY
         mkdir -p "$out"
         cp "$work/demoreel_$v-1_all.deb" "$work/demoreel-$v-1.noarch.rpm" \
             "$work/demoreel-$v.tar.gz" "$work/PKGBUILD" "$out/"
+        # DEMO-0084 § 4.3: the sums of those four, by name, checked in place.
+        ( cd "$out" && sha256sum "demoreel_$v-1_all.deb" "demoreel-$v-1.noarch.rpm" \
+            "demoreel-$v.tar.gz" PKGBUILD > SHA256SUMS && check_sums ) || failed=1
     fi
     rm -rf "$work"
     return "$failed"
@@ -760,6 +786,62 @@ if [ "${1:-}" = "--obs-check" ]; then
     done
     [ "$failed" = 0 ] || exit 1
     echo "demoreel $v installed from OBS and ran on every target"
+    exit 0
+fi
+
+# DEMO-0084 § 4.2: will this clone sign the next release tag with a key
+# packaging/release-signers lists? It signs a test message with the
+# configured key and verifies it against that file. cut-release runs it
+# before bumping anything (.claude/bump.json's publish_precheck). It reads
+# local configuration, so the full gate does not run it.
+if [ "${1:-}" = "--signing-check" ]; then
+    signers=packaging/release-signers
+    [ "$(git config --get tag.gpgSign || true)" = true ] \
+        || { echo "tag.gpgSign is not true in this clone (CONTRIBUTING.md § Cutting a release)" >&2; exit 1; }
+    [ "$(git config --get gpg.format || true)" = ssh ] \
+        || { echo "gpg.format is not ssh in this clone (CONTRIBUTING.md § Cutting a release)" >&2; exit 1; }
+    key=$(git config --get user.signingkey || true)
+    [ -n "$key" ] && [ -r "$key" ] \
+        || { echo "user.signingkey does not name a readable key file: ${key:-<unset>}" >&2; exit 1; }
+    work=$(mktemp -d)
+    trap 'rm -rf "$work"' EXIT
+    echo "demoreel release signing check" > "$work/msg"
+    ssh-keygen -Y sign -n git -f "$key" "$work/msg" 2>/dev/null \
+        || { echo "could not sign with $key" >&2; exit 1; }
+    principal=$(ssh-keygen -Y find-principals -f "$signers" -s "$work/msg.sig" 2>/dev/null | head -1 || true)
+    if [ -z "$principal" ] || ! ssh-keygen -Y verify -f "$signers" -I "$principal" -n git \
+        -s "$work/msg.sig" < "$work/msg" >/dev/null 2>&1; then
+        echo "$key is not a key $signers lists" >&2
+        exit 1
+    fi
+    echo "release tags will be signed with $(ssh-keygen -lf "$key" | cut -d' ' -f2)"
+    exit 0
+fi
+
+# DEMO-0084 § 4.2: the release job runs this first, so an unsigned tag gets no
+# files. It needs the tag object present locally.
+if [ "${1:-}" = "--verify-tag" ]; then
+    verify_tag "${2:?--verify-tag needs a tag}"
+    exit 0
+fi
+
+# DEMO-0084 § 4.5: what SECURITY.md tells a user to do, against a published
+# release. It reads a live release, so the full gate does not run it.
+if [ "${1:-}" = "--release-check" ]; then
+    tag=${2:?--release-check needs a tag}
+    command -v gh >/dev/null || { echo "gh is not installed" >&2; exit 1; }
+    work=$(mktemp -d)
+    trap 'rm -rf "$work"' EXIT
+    gh release download "$tag" --repo milnet01/demoreel --dir "$work/assets"
+    ( cd "$work/assets" && check_sums ) || { echo "$tag's assets fail their SHA256SUMS" >&2; exit 1; }
+    for f in "$work"/assets/*; do
+        gh attestation verify "$f" --repo milnet01/demoreel --source-ref "refs/tags/$tag" \
+            --signer-workflow milnet01/demoreel/.github/workflows/release.yml >/dev/null \
+            || { echo "${f##*/} has no build record from release.yml at $tag" >&2; exit 1; }
+    done
+    git fetch --quiet --no-tags origin "+refs/tags/$tag:refs/tags/$tag"
+    verify_tag "$tag"
+    echo "$tag: every file matches SHA256SUMS and has a build record, and the tag is signed"
     exit 0
 fi
 
@@ -6055,14 +6137,33 @@ step "default output name"
 ls "$tmp"/xclock-*.mp4 >/dev/null
 
 step "only the release job can write to the repository"
-# DEMO-0068 INV-10. It reads the workflow files, not GitHub's effective
-# permissions.
-grants=$(grep -rn 'contents: write' .github/workflows/ || true)
-[ "$(wc -l <<<"$grants")" = 1 ] && [[ $grants == .github/workflows/release.yml:* ]] || {
-    echo "the write grant must appear once, in release.yml; found:" >&2
-    echo "${grants:-<none>}" >&2
-    exit 1; }
-echo "$grants"
+# DEMO-0068 INV-10 and DEMO-0084 INV-6. It reads the workflow files, not
+# GitHub's effective permissions. Each grant appears once, in release.yml,
+# indented six spaces as a job's own permission, under the release: job.
+for grant in 'contents: write' 'id-token: write' 'attestations: write'; do
+    grants=$(grep -rn -- "$grant" .github/workflows/ || true)
+    job=$(awk -v g="      $grant" '/^  [A-Za-z0-9_-]+:/ { job = $1 } $0 == g { print job }' \
+        .github/workflows/release.yml)
+    [ "$(wc -l <<<"$grants")" = 1 ] && [[ $grants == .github/workflows/release.yml:* ]] \
+        && [ "$job" = release: ] || {
+        echo "'$grant' must appear once, as the release job's own permission; found:" >&2
+        echo "${grants:-<none>}" >&2
+        exit 1; }
+    echo "$grants"
+done
+
+step "no private key is in the repository"
+# DEMO-0084 INV-7. The header is built from two parts, so this file does not
+# hold the line it looks for. The Ubuntu leg gets the files without .git.
+key_header="-----BEGIN OPENSSH"
+key_header="^$key_header PRIVATE KEY-----\$"
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    found=$(git grep -nE -- "$key_header" || true)
+else
+    found=$(grep -rnE -- "$key_header" . || true)
+fi
+[ -z "$found" ] || { echo "a private key is in the repository:" >&2; echo "$found" >&2; exit 1; }
+echo "no file holds a private key"
 
 step "only this machine submits to OBS"
 # DEMO-0068 INV-14. Partial: it reads the workflow files for names, and a

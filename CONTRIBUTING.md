@@ -101,6 +101,33 @@ It builds from the tree as it stands, new files included. Add `--out <folder>`
 to keep the files it built. It then runs README § Install from source in a
 clean container of each distro, `--uninstall` included.
 
+### Cutting a release
+
+Release tags are signed with `~/.ssh/demoreel-release`, a key kept for that
+one job, whose public half is `packaging/release-signers`
+(`docs/specs/DEMO-0084-verify-a-download.md`). The clone a release is cut
+from signs every annotated tag with it:
+
+```sh
+git config gpg.format ssh
+git config user.signingkey ~/.ssh/demoreel-release.pub
+git config tag.gpgSign true
+```
+
+`./ci.sh --signing-check` says whether the next tag will be signed with a
+key that file lists. The release recipe runs it before anything is bumped,
+and the release workflow attaches nothing to a release whose tag is
+unsigned.
+
+Once the files are attached, check the release as a user would:
+
+```sh
+./ci.sh --release-check v<version>
+```
+
+It downloads every file, checks each against `SHA256SUMS` and its build
+record, and checks the tag's signature.
+
 ### After a release: OBS
 
 The openSUSE Build Service builds each release for every distro version in
