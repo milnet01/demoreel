@@ -1,7 +1,7 @@
 <!-- ants-spec-format: 1 -->
 # DEMO-0084 — Sign release tags, and attach checksums and a build record to each release
 
-**Status:** spec draft (2026-10-13).
+**Status:** accepted (2026-10-13).
 **Kind:** security.
 **Source:** ROADMAP DEMO-0084 (user-request-2026-09-25; decisions 2026-10-13).
 **Pairs with:** DEMO-0068 (its release job, `docs/specs/DEMO-0068-linux-packages.md` § 4.5 and INV-10, gains the steps below; that spec is amended in the same batch).
@@ -105,8 +105,9 @@ Phase 0h, before anything is bumped, and stops on a non-zero exit.
 
 `./ci.sh --packages --out <dir>`, after copying the four files, writes
 `<dir>/SHA256SUMS` with `sha256sum` over exactly those four files, by
-name with no folder, then runs `sha256sum -c SHA256SUMS` in `<dir>` and
-fails if any line fails. A user checks a download with:
+name with no folder. Then, in `<dir>`, it fails unless the names in
+`SHA256SUMS` are exactly the other files there, none holding a `/`, and
+`sha256sum -c SHA256SUMS` passes. A user checks a download with:
 
 ```sh
 sha256sum -c --ignore-missing SHA256SUMS
@@ -143,8 +144,7 @@ not use, so it is left out. The workflow's top-level `contents: read` stays.
 ### 4.5 Checking a published release: `./ci.sh --release-check <tag>`
 
 Run on this machine after each release, as `--obs-check` is (CONTRIBUTING
-§ After a release: OBS). It does what `SECURITY.md` tells a user to do, so the
-two cannot drift apart unnoticed:
+§ After a release: OBS). It does what `SECURITY.md` tells a user to do:
 
 1. Downloads every asset of the release with `gh release download` into a
    new folder under the run's temporary directory.
@@ -198,8 +198,8 @@ downloaded from GitHub. It also states the limit in § 6's last bullet.
 
 - **INV-4** — `SHA256SUMS` names every other attached file exactly once,
   with its correct hash, and nothing else.
-  *Test:* `./ci.sh --packages --out <dir>` runs `sha256sum -c SHA256SUMS`
-  in `<dir>` and fails otherwise; `--release-check` fails unless the
+  *Test:* `./ci.sh --packages --out <dir>` runs § 4.3's name and hash
+  checks in `<dir>` and fails otherwise; `--release-check` fails unless the
   release's assets are exactly `SHA256SUMS` plus the names it lists.
   *Breaks when:* a file is added to `<dir>` after the sums are written, or
   a name in the file carries a folder.
@@ -217,7 +217,9 @@ downloaded from GitHub. It also states the limit in § 6's last bullet.
   repository" step (DEMO-0068 INV-10) greps `.github/workflows/` for each
   of the three and requires exactly one line each, in `release.yml`,
   indented six spaces as the `release` job's own `permissions:` writes
-  it. A grant at the workflow level is indented two, so it fails.
+  it, with `release:` as the nearest line above it indented two spaces.
+  A grant at the workflow level is indented two, and one in a second job
+  sits under that job's name, so both fail.
   *Breaks when:* any of the three moves to the workflow level or another
   job.
 
