@@ -996,9 +996,10 @@ sudo ./packaging/install.sh
 
 It installs under `/usr/local`: the `demoreel` command, its translations, the
 manual page, and tab completion for bash, zsh and fish. Then run
-`demoreel check`, as [Install](#install) shows. Every package passes
-`PREFIX=/usr` to `install.sh`, so the packages install under `/usr`; a
-bare run, as above, takes `/usr/local`.
+`demoreel check`, as [Install](#install) shows. The packages install under
+`/usr`: every package build, the `.deb` included, passes `PREFIX=/usr` to
+`install.sh`, and so does the reference layout `./ci.sh --packages` checks
+each package against.
 
 **To update it**, run `git pull` in the `demoreel` folder, then
 `sudo ./packaging/install.sh` again.
