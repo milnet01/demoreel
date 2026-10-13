@@ -9,7 +9,8 @@
 A stranger who finds demoreel on the website or GitHub downloads one file
 for their distro, installs it with their own package manager, and gets the
 command, its manual page, tab completion and translations, with every
-program it needs pulled in.
+program it needs pulled in. Or they add demoreel's repository once, and each
+new version arrives with their system's own updates.
 
 ## 1. Goal
 
@@ -18,6 +19,11 @@ one `.rpm` for Fedora and openSUSE, and a `PKGBUILD` for Arch. All three
 install the same files in the same places. Each file was built by the same
 `ci.sh` step the gate runs, from the tagged tree, and was installed and run
 in a clean container of every distro it targets before it was attached.
+
+From 0.9.0 on, the openSUSE Build Service (OBS) also builds each release for
+every distro version it can, and publishes a repository for each. Those
+packages are built from the release's own tarball, and each is installed from
+its published repository and run before the release counts as on OBS.
 
 ## 2. Problem
 
@@ -47,7 +53,8 @@ in a clean container of every distro it targets before it was attached.
 ## 3. Scope decisions (agreed with the user)
 
 All made by the user. The first four on 2026-10-08 in DEMO-0068's brief, the
-last two on 2026-10-08 while this spec was drafted.
+next two on 2026-10-08 while this spec was drafted, and the OBS ones on
+2026-10-11 and 2026-10-13.
 
 - **Audience: strangers** who find demoreel on the website or GitHub, not
   this machine.
@@ -56,9 +63,15 @@ last two on 2026-10-08 while this spec was drafted.
   already names the Packman or RPM Fusion fix (`x264_advice`). The package
   does not depend on a third-party repository.
 - **Debian and Ubuntu get a `.deb` attached to each release, not a PPA.**
-- **Files first, repositories after.** 0.9.0 ships files on the release.
-  Publishing to OBS, COPR and the AUR follows as the user creates each
-  account.
+- **Files on the release, and OBS in 0.9.0.** The OBS account exists
+  (`home:milnet`, 2026-10-11), so 0.9.0 publishes there too (§ 4.7). COPR
+  and the AUR follow as the user creates each account.
+- **OBS builds for as many distro versions as it can** (2026-10-13). § 4.7
+  says which count.
+- **A script run on this machine after each release submits to OBS**
+  (2026-10-13). No OBS credential is stored on GitHub.
+- **OBS builds from the release's own tarball** (2026-10-13), not from a
+  second copy of the source fetched from the tag.
 - **openSUSE `record --gpu`: record losslessly, then convert**, as
   DEMO-0174 (§ 4.6). Not "unsupported", and not a self-build guide.
 - **Release files are built on GitHub when a release is published**, by a
@@ -189,6 +202,63 @@ fall back to a lossless recording that the `ffmpeg` program converts, and
 `--gpu: NOT READY` with the reason, and the README says so beside the
 openSUSE install line. The packages do not wait for DEMO-0174.
 
+### 4.7 Publishing to OBS
+
+OBS builds demoreel for each target below and publishes a signed repository
+for each. Someone who adds that repository gets each new version with their
+system's updates.
+
+- **Where.** Project `home:milnet:demoreel`, package `demoreel`. A project
+  of its own, as finbreak has, so its targets are its own.
+- **Built from the release's files.** The submit script uploads the tarball
+  and the filled `PKGBUILD` that `release.yml` attached (§ 4.5). No OBS
+  source service fetches from GitHub. Every package, on the release page and
+  on OBS, is then built from one file.
+- **The recipes.** The `.rpm` targets build `packaging/demoreel.spec`; the
+  copy the script commits starts with `%define ver <version>`, and the
+  tree's copy is unchanged. The Arch target builds the release's `PKGBUILD`.
+  The Debian and Ubuntu targets need a source package, which `dpkg-deb`
+  does not make: `packaging/obs/debian/` holds its `rules`, `changelog`,
+  `copyright` and `source/format`, and `packaging/obs/demoreel.dsc` names
+  it. `rules` runs `install.sh` with `PREFIX=/usr`, like every other format
+  (§ 4.1). The script writes `debian/control`'s binary stanza from
+  `packaging/debian-control`, so the `.deb`'s dependency list keeps one
+  home.
+- **The shebang stays.** If openSUSE's `rpmlint` refuses
+  `#!/usr/bin/env python3`, a `packaging/obs/demoreel-rpmlintrc` filters
+  that one check (§ 4.1, INV-3).
+- **Targets.** `packaging/obs/targets` lists each: its OBS repository name
+  and path, the container image `--obs-check` tests it in, and what
+  `demoreel check` should say there. `obs-setup.sh` writes the OBS
+  project's repositories from it, and `./ci.sh --obs-check` reads it, so the
+  two cannot disagree. A target is listed when OBS builds for it, it is a
+  released version its distro still supports, and INV-13 passes in its
+  container. Candidates for the first submit: openSUSE Tumbleweed, Slowroll,
+  Leap 16.0 and Leap 15.6; Fedora 43 and 44; Debian 12 and 13; Ubuntu 22.04,
+  24.04 and 26.04; Arch; Mageia 10; Amazon Linux 2023; openEuler 24.03. A
+  candidate that fails for a reason outside demoreel, such as a dependency
+  its distro does not carry, is left out, and § 9 names it with the reason.
+- **Not targets: development branches and versions past their end of
+  life** (Rawhide, Debian Testing and Unstable, Ubuntu 26.10, Mageia
+  Cauldron). Such a version can fail with no change to demoreel.
+- **Submitting a release.** `packaging/obs/obs-submit.sh`, run on this
+  machine with the user's `osc` login once `release.yml` has attached the
+  files. It takes the version from the checkout's `__version__`, and:
+  1. refuses unless the tag `v<version>` exists and nothing under
+     `packaging/` differs from it (INV-12);
+  2. downloads the release's tarball and `PKGBUILD`, and refuses unless the
+     tarball's checksum is the one the `PKGBUILD` names (INV-11);
+  3. updates its `osc` checkout, kept outside the tree, swaps the previous
+     release's files for these, and commits one revision.
+
+  `packaging/obs/obs-status.sh` then waits until every target has finished
+  building, and `./ci.sh --obs-check` tests what was published (INV-13).
+- **Credentials stay on this machine**, in the user's `osc` configuration.
+  No workflow talks to OBS (INV-14).
+- **`packaging/obs/obs-setup.sh`** creates the project and package, and
+  re-applies the targets when `targets` changes. Running it twice changes
+  nothing.
+
 ## 5. Invariants
 
 The container checks are run by `./ci.sh --packages` in every container of
@@ -251,6 +321,8 @@ The container checks are run by `./ci.sh --packages` in every container of
   --version` prints `demoreel <__version__>`, and the package manager reports
   version `<__version__>-1`.
   *Breaks when:* a packaging file carries its own version and a bump misses it.
+  *Scope:* the release files. OBS numbers its own builds' release, so on OBS
+  only the version part is checked (INV-13).
 
 - **INV-8** — Removing the package removes everything it installed.
   *Test:* after removal in each container, none of § 4.1's paths exists, and
@@ -271,6 +343,42 @@ The container checks are run by `./ci.sh --packages` in every container of
   `./ci.sh --packages --out` step and only if it succeeded.
   *Breaks when:* `contents: write` moves to the workflow level or another
   job, or the upload runs on failure.
+
+- **INV-11** — OBS builds the release's own tarball.
+  *Test:* by hand, once: with the downloaded tarball replaced by another
+  file, `obs-submit.sh` stops before its first `osc` call and names the
+  checksum mismatch. In every `--obs-check` container, INV-3's checksum
+  compares the installed script with the release tarball's.
+  *Breaks when:* the script makes its own tarball, fetches a different
+  file, or OBS's build rewrites the script.
+
+- **INV-12** — The recipes OBS builds are the tag's.
+  *Test:* by hand, once each: with an uncommitted change under
+  `packaging/`, and with `__version__` naming a tag that does not exist,
+  `obs-submit.sh` stops before its first `osc` call and names the cause.
+  *Breaks when:* a recipe edited after the release ships under the
+  release's version.
+
+- **INV-13** — The published package installs and runs on every target.
+  *Test:* `./ci.sh --obs-check` runs, in a clean container of each target
+  in `packaging/obs/targets`: it adds the published repository with the
+  repository's key trusted, never with signature checks off, installs
+  `demoreel`, then runs INV-1's, INV-2's, INV-3's, INV-4's and INV-8's
+  checks. `demoreel check` must say what `targets` records for that target,
+  and `demoreel --version` must print the checkout's version, as must the
+  package manager before its release part. It fails when any target fails,
+  or still serves an older version. It reads a live repository, so the full
+  gate does not run it. INV-5 is not repeated there: the recommended
+  packages are named by the same files the release's packages use.
+  *Breaks when:* a recipe differs from the release files' build, OBS's
+  build changes an installed file, or a dependency is missing on one
+  target.
+
+- **INV-14** — Only this machine submits to OBS.
+  *Test:* the full gate's workflow step fails when a file under
+  `.github/workflows/` names `osc` or `api.opensuse.org`.
+  *Breaks when:* a workflow is given OBS access, which needs an OBS
+  credential stored on GitHub.
 
 ## 6. Failure modes
 
@@ -295,6 +403,19 @@ The container checks are run by `./ci.sh --packages` in every container of
   user created inside the container.
 - **The gate becomes too slow** with five installs. Measured when
   `./ci.sh --packages` first runs, and recorded in § 13.
+- **Nobody runs `obs-submit.sh` after a release.** OBS keeps serving the
+  previous version, and its builds stay green. `cut-release` has no step
+  after publishing that could run it, so CONTRIBUTING.md's release steps
+  list it, and nothing else catches the miss (§ 10). finbreak measured
+  this failure on its own OBS package (FIBR-0317).
+- **`release.yml` has not attached the files yet.** `obs-submit.sh` finds
+  no tarball and stops before its first `osc` call.
+- **One target fails to build or install.** `obs-status.sh` and
+  `--obs-check` fail and name it. Fixing it is a recipe change, so it ships
+  in the next release (INV-12); a target that cannot be fixed is taken out
+  of `targets`.
+- **A target reaches its end of life.** Its repository stops getting
+  updates from OBS. It is taken out of `targets` and `obs-setup.sh` re-run.
 
 ## 7. Tests
 
@@ -310,6 +431,10 @@ All in `ci.sh`, in the `--packages` step, run inside each container of
 - INV-9 — `--packages --out`, which the `release` job runs. The gate runs the
   same `makepkg --verifysource` against a locally made tarball.
 - INV-10 — a `ci.sh` grep of the workflow files, in the full gate.
+- INV-11, INV-12 — by hand, once, when `obs-submit.sh` is first built: each
+  seeded break named in the invariant.
+- INV-13 — `./ci.sh --obs-check`, run after each OBS submit.
+- INV-14 — a `ci.sh` grep of the workflow files, in the full gate.
 
 Each check must be seen failing once against a deliberately broken package
 before it is trusted: a copy instead of the symlink (INV-2), a mangled
@@ -318,8 +443,16 @@ shebang (INV-3), `cage` moved to the required set of the `.deb` and of the
 
 ## 8. Alternatives considered (and rejected)
 
-- **A PPA, OBS, COPR or the AUR in 0.9.0.** Each needs an account the user
-  does not have yet. Files on the release need none (§ 3).
+- **A PPA, COPR or the AUR in 0.9.0.** Each needs an account the user
+  does not have yet. Files on the release need none (§ 3). OBS was in this
+  list until its account existed.
+- **OBS fetches the source from the tag** with its source services, as
+  finbreak's does. That is a second copy of the source, made a second way,
+  and the user chose the release's own tarball (§ 3).
+- **A GitHub workflow submits to OBS.** It needs an OBS credential stored
+  on GitHub. The user chose a script on this machine (§ 3).
+- **OBS for openSUSE alone.** The user asked for as many distros as OBS
+  can serve (§ 3).
 - **One package per distro family, named by package.** An openSUSE `.rpm`
   and a Fedora `.rpm` differ only in dependency names, and file dependencies
   remove the difference (§ 4.2, measured).
@@ -342,14 +475,18 @@ shebang (INV-3), `cage` moved to the required set of the `.deb` and of the
 
 ## 9. Out of scope
 
-- Publishing to OBS, COPR and the AUR — follows as the user creates each
-  account; DEMO-0068 and DEMO-0070 stay open for it.
+- Publishing to COPR and the AUR — follows as the user creates each
+  account; DEMO-0070 stays open for it.
+- OBS targets that failed INV-13 for a reason outside demoreel — named
+  here, each with its reason, once the first submit has measured them.
+- Other processor architectures on OBS. The targets build on x86_64.
 - `record --gpu` on openSUSE — tracked by DEMO-0174.
 - Checksums, signed tags and a provenance attestation — tracked by DEMO-0084.
 - The documented from-source install, and its container check — tracked by
   DEMO-0072.
-- openSUSE Leap, Ubuntu releases other than 24.04, and Debian other than
-  stable — deferred; not yet queued.
+- Testing the release files on openSUSE Leap, Ubuntu releases other than
+  24.04, and Debian other than stable — deferred; not yet queued. OBS
+  covers those versions with its own packages (§ 4.7).
 
 ## 10. What checks this
 
@@ -365,20 +502,29 @@ shebang (INV-3), `cage` moved to the required set of the `.deb` and of the
 | INV-8 | `./ci.sh --packages`, removal check |
 | INV-9 | `./ci.sh --packages --out`'s `makepkg --verifysource`; the gate's local equivalent |
 | INV-10 | full gate's workflow grep. **Partial:** it reads the file, not GitHub's effective permissions |
+| INV-11 | `obs-submit.sh`'s checksum check; the seeded break, by hand, once; INV-3 in `--obs-check` |
+| INV-12 | `obs-submit.sh`'s tag check; the seeded breaks, by hand, once |
+| INV-13 | `./ci.sh --obs-check`, after each submit. **Partial:** not in the full gate |
+| INV-14 | full gate's workflow grep |
 | § 4.1 one layout | INV-1 |
 | § 4.5 files attached to every release | **nothing** — a release whose job never ran has no packages and nothing fails; the website hand-off is the only reader |
+| § 4.7 every release submitted to OBS | **nothing** — CONTRIBUTING.md's release steps are the only reminder |
 
 ## 11. Cross-doc impact
 
 - **README.md** — § Install leads with the package for each distro and keeps
   the clone as the from-source route. The openSUSE `--gpu` note of § 4.6.
+  It also says where demoreel's OBS repository is, for updates with the
+  system's own.
 - **`docs/standards/versioning-overrides.md`** — the package name `demoreel`
   and the command `/usr/bin/demoreel` become breaking surfaces. The
   directory `/usr/share/demoreel/` is not one.
 - **CLAUDE.md** — § State names `packaging/` and `./ci.sh --packages`.
   Its "There is no spec and none is wanted" has been false since DEMO-0060.
   That sentence is DEMO-0173's to fix.
-- **CONTRIBUTING.md** — how to run the package step locally.
+- **CONTRIBUTING.md** — how to run the package step locally, and the OBS
+  steps after a release: `obs-submit.sh`, `obs-status.sh`, then
+  `./ci.sh --obs-check`.
 - **CHANGELOG.md** — under DEMO-0068, DEMO-0069 and DEMO-0070.
 - **`.claude/bump.json`** — no new version-bearing file, since every format
   reads `__version__` (INV-7).
@@ -398,6 +544,9 @@ Rows live in `../reviews/DEMO-0068-linux-packages-loop-log.md`.
   whole step, with the images already pulled. The largest image,
   `archlinux:latest`, is about 410 MB.
 - **Release assets:** four files per release, the tarball the largest.
+- **OBS:** one submit per release, run by hand on this machine. Its build
+  time is OBS's. `--obs-check` pulls one container image per target, and
+  `osc` is needed on this machine only.
 
 ## 14. Migration / compatibility
 
