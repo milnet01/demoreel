@@ -230,11 +230,12 @@ system's updates.
 - **The shebang stays.** If openSUSE's `rpmlint` refuses
   `#!/usr/bin/env python3`, a `packaging/obs/demoreel-rpmlintrc` filters
   that one check (§ 4.1, INV-3).
-- **Targets.** `packaging/obs/targets` holds one line per target, with
-  whitespace-separated fields: the OBS repository name, the OBS project and
-  repository it builds against, the container image, the package manager,
-  `demoreel check`'s expected exit status, and the text its output must
-  contain. `obs-setup.sh` writes the OBS project's repositories from it, and
+- **Targets.** `packaging/obs/targets` holds one line per target, and `#`
+  starts a comment. Six fields, separated by whitespace: the OBS repository
+  name, `<project>/<repository>` it builds against, the container image,
+  the package manager, `demoreel check`'s expected exit status, and the
+  text its output must contain, which runs to the end of the line.
+  `obs-setup.sh` writes the OBS project's repositories from it, and
   `./ci.sh --obs-check` reads it, so the two cannot disagree. A target is
   listed when OBS builds for it, it is a released version its distro still
   supports, and INV-13 passes in its container. Candidates for the first
@@ -385,8 +386,8 @@ The container checks are run by `./ci.sh --packages` in every container of
 
 - **INV-14** — Only this machine submits to OBS.
   *Test:* the full gate's workflow step fails when a file under
-  `.github/workflows/` names `opensuse.org`, `obs-submit`, `OBS_` or `osc`
-  as a whole word.
+  `.github/workflows/` contains `opensuse.org`, `obs-submit` or `OBS_`, or
+  `osc` as a whole word.
   *Breaks when:* a workflow is given OBS access, which needs an OBS
   credential stored on GitHub.
 
