@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+# The Debian and Ubuntu recipe OBS builds (docs/specs/DEMO-0068-linux-packages.md
+# § 4.7). install.sh places every file, as it does for every other format
+# (§ 4.1); nothing here is compiled, and the script keeps its shebang (INV-3).
+
+%:
+	dh $@
+
+override_dh_auto_build:
+
+override_dh_auto_test:
+
+override_dh_auto_install:
+	DESTDIR=$(CURDIR)/debian/demoreel PREFIX=/usr packaging/install.sh

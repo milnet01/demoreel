@@ -48,5 +48,12 @@ DESTDIR=%{buildroot} PREFIX=%{_prefix} packaging/install.sh
 %{_datadir}/demoreel/
 %{_mandir}/man1/demoreel.1*
 %{_datadir}/bash-completion/completions/demoreel
+# openSUSE's build refuses a folder no package owns, and zsh or fish may not
+# be installed. Owning a folder with them is allowed, and rpm removes it only
+# once no package owns it.
+%dir %{_datadir}/zsh
+%dir %{_datadir}/zsh/site-functions
 %{_datadir}/zsh/site-functions/_demoreel
+%dir %{_datadir}/fish
+%dir %{_datadir}/fish/vendor_completions.d
 %{_datadir}/fish/vendor_completions.d/demoreel.fish

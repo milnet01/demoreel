@@ -100,3 +100,21 @@ targets, you need `podman` and a network connection:
 It builds from the tree as it stands, new files included. Add `--out <folder>`
 to keep the files it built. It then runs README § Install from source in a
 clean container of each distro, `--uninstall` included.
+
+### After a release: OBS
+
+The openSUSE Build Service builds each release for every distro version in
+`packaging/obs/targets`, and publishes a repository for each. Nothing runs
+this for you. Once the release's files are attached, run these on a machine
+with `osc` logged in to the `home:milnet` account:
+
+```sh
+packaging/obs/obs-submit.sh    # send the release's tarball and the recipes
+packaging/obs/obs-status.sh    # wait until every target has built
+./ci.sh --obs-check            # install from each repository and test it
+```
+
+`obs-submit.sh` refuses when a recipe differs from the release's tag, and
+when the tarball is not the release's own. `--dry-run` stages the files in
+`build-obs/staged/` and sends nothing. After editing `targets`, run
+`packaging/obs/obs-setup.sh` to update the OBS project.

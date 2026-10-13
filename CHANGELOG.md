@@ -21,6 +21,13 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   Every package is built and installed in a clean container of each
   distro it targets before it is attached: `./ci.sh --packages`.
 
+- **A repository on the openSUSE Build Service, so each new version arrives with your system's updates (DEMO-0068)**
+  OBS builds every release, from the release's own tarball, for openSUSE
+  Tumbleweed and Leap 16.0, Fedora 43 and 44, Debian 12 and 13, Ubuntu
+  22.04, 24.04 and 26.04, Arch, Mageia 10 and openEuler 24.03. Each
+  published package is installed from its repository and tested:
+  `./ci.sh --obs-check`.
+
 - **An install from source puts demoreel under `/usr/local` with one command, and `--uninstall` takes it out again (DEMO-0072)**
   `sudo ./packaging/install.sh` in a clone installs the command, the
   manual page, tab completion and the translations. README § Install

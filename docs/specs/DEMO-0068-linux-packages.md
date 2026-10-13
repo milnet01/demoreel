@@ -223,13 +223,18 @@ system's updates.
   it. `rules` runs `install.sh` with `PREFIX=/usr`, like every other format
   (§ 4.1). The tree's `changelog` and `.dsc` carry `@VERSION@` where the
   version goes, as `debian-control` does, and the script fills it (INV-7).
-  The script writes `debian/control`'s binary stanza from
-  `packaging/debian-control`'s `Package`, `Architecture`, `Section`,
-  `Depends`, `Recommends` and `Description` fields, so the `.deb`'s
-  dependency list keeps one home.
+  The script writes `debian/control` from `packaging/debian-control`: its
+  `Package`, `Architecture`, `Section`, `Depends`, `Recommends` and
+  `Description` fields make the binary stanza, and its `Maintainer`,
+  `Section`, `Priority` and `Homepage` go into the source stanza. So the
+  `.deb`'s dependency list keeps one home.
 - **The shebang stays.** If openSUSE's `rpmlint` refuses
   `#!/usr/bin/env python3`, a `packaging/obs/demoreel-rpmlintrc` filters
-  that one check (§ 4.1, INV-3).
+  that one check (§ 4.1, INV-3). Measured 2026-10-13, it does not: it scores
+  the shebang 9 against openSUSE's limit of 999, and the OBS build passes.
+- **The `.rpm` owns its zsh and fish completion folders** with `%dir`. An
+  OBS openSUSE build fails on a folder no package owns, and neither shell
+  need be installed.
 - **Targets.** `packaging/obs/targets` holds one line per target, and `#`
   starts a comment. Six fields, separated by whitespace: the OBS repository
   name, `<project>/<repository>` it builds against, the container image,
@@ -488,8 +493,10 @@ shebang (INV-3), `cage` moved to the required set of the `.deb` and of the
 
 - Publishing to COPR and the AUR — follows as the user creates each
   account; DEMO-0070 stays open for it.
-- OBS targets that failed INV-13 for a reason outside demoreel — named
-  here, each with its reason, once the first submit has measured them.
+- OBS candidates left out (measured 2026-10-13, each package installed in a
+  clean container of the candidate): Amazon Linux 2023, whose repositories
+  carry no `ffmpeg` and no `xdotool`; and openSUSE Slowroll, which has no
+  container image to test it in.
 - Other processor architectures on OBS. The targets build on x86_64.
 - `record --gpu` on openSUSE — tracked by DEMO-0174.
 - Checksums, signed tags and a provenance attestation — tracked by DEMO-0084.

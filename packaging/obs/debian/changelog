@@ -1,0 +1,5 @@
+demoreel (@VERSION@-1) unstable; urgency=medium
+
+  * Release @VERSION@. CHANGELOG.md in the source says what changed.
+
+ -- @MAINTAINER@  @DATE@

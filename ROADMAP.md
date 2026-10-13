@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=193 -->
+<!-- ants-roadmap-id-high-water: DEMO=194 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -4289,6 +4289,20 @@ system looks for them.
   tarball. Next: build packaging/obs/ and ./ci.sh --obs-check, then the
   release carrying the files, then the OBS submit and the website
   hand-off.
+  Progress (2026-10-13): the OBS packaging is built: packaging/obs/
+  (targets, obs-setup.sh, obs-submit.sh, obs-status.sh, debian/,
+  demoreel.dsc), ./ci.sh --obs-check, and INV-14's workflow grep. The OBS
+  project home:milnet:demoreel exists with the 12 targets in
+  packaging/obs/targets. An unpublished trial package,
+  home:milnet:demoreel/demoreel-test, built every target from the
+  unreleased tree; delete it (osc rdelete home:milnet:demoreel
+  demoreel-test) once the real package has built. Screening in clean
+  containers dropped Amazon Linux 2023 and Slowroll (spec section 9).
+  Left: the full ./ci.sh on this commit, the 0.9.0 release (cut-release),
+  then obs-submit.sh, obs-status.sh, ./ci.sh --obs-check, the README
+  line pointing at
+  https://download.opensuse.org/repositories/home:/milnet:/demoreel/
+  (only once it exists), and the website hand-off.
   **Layman:** Install demoreel on openSUSE with zypper, dependencies included.
   Kind: package.
   Source: user-request-2026-09-25.
@@ -4553,6 +4567,20 @@ covers both display backends and the Flatpak invocation.
   **Layman:** `man demoreel` will be translated too, but only near 1.0, so each change to the manual doesn't need ten more edits.
   Kind: doc.
   Source: user-decision-2026-10-02.
+
+- 📋 [DEMO-0194] **On Mageia, demoreel check gives Fedora's ffmpeg advice.**
+  Measured 2026-10-13 in a clean mageia:10 container with the 0.9.0
+  package installed: check exits 1 and says "sudo dnf swap ffmpeg-free
+  ffmpeg --allowerasing". Mageia has no ffmpeg-free; its libx264 build
+  is in the tainted repositories. x264_advice reads the package manager,
+  dnf, and so takes Mageia for Fedora. It needs to tell them apart from
+  /etc/os-release and name Mageia's own route, a new message in every
+  po/ catalog. Mageia 10 is an OBS target (DEMO-0068 section 4.7);
+  packaging/obs/targets expects only the "no libx264" line there until
+  this is fixed, and then should expect the new advice.
+  **Layman:** On Mageia, the setup check suggests a fix that only works on Fedora.
+  Kind: fix.
+  Source: in-session-2026-10-13.
 
 ## 1.1.0 — A window for people who want one
 

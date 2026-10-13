@@ -448,6 +448,58 @@ if [ "$build" = source ]; then
     exit 0
 fi
 
+# DEMO-0068 INV-13: install from the published OBS repository, its key
+# trusted, never with signature checks off. Here $distro is the target's
+# package manager, and OBS_URL is its repository.
+if [ "$build" = obs ]; then
+    fail() { echo "FAIL ($OBS_TARGET, from OBS): $*" >&2; exit 1; }
+    case $distro in
+    apt)
+        export DEBIAN_FRONTEND=noninteractive
+        apt-get -qq -o Acquire::Retries=3 update
+        apt-get -qq -o Acquire::Retries=3 install -y curl ca-certificates >/dev/null
+        install -d /etc/apt/keyrings
+        curl -fsSL "$OBS_URL/Release.key" -o /etc/apt/keyrings/demoreel.asc
+        echo "deb [signed-by=/etc/apt/keyrings/demoreel.asc] $OBS_URL/ /" \
+            > /etc/apt/sources.list.d/demoreel.list
+        apt-get -qq -o Acquire::Retries=3 update
+        install_pkg() { apt-get -qq -o Acquire::Retries=3 install -y demoreel >/dev/null; }
+        remove_pkg() { apt-get -qq purge -y demoreel >/dev/null; }
+        list_pkg() { dpkg -L demoreel; }
+        pkg_version() { dpkg-query -W -f '${Version}' demoreel; }
+        ;;
+    dnf)
+        command -v curl >/dev/null || dnf -q install -y curl >/dev/null
+        curl -fsSL "$OBS_URL/home:milnet:demoreel.repo" -o /etc/yum.repos.d/demoreel.repo
+        install_pkg() { dnf -q install -y demoreel >/dev/null; }
+        remove_pkg() { dnf -q remove -y demoreel >/dev/null; }
+        ;;
+    zypper)
+        zypper -q -n --gpg-auto-import-keys addrepo "$OBS_URL/home:milnet:demoreel.repo"
+        install_pkg() { zypper -q -n --gpg-auto-import-keys install demoreel >/dev/null; }
+        remove_pkg() { zypper -q -n remove demoreel >/dev/null; }
+        ;;
+    pacman)
+        pacman-key --init >/dev/null 2>&1
+        key=$(curl -fsSL "$OBS_URL/x86_64/home_milnet_demoreel_Arch.key")
+        pacman-key --add - <<<"$key" >/dev/null 2>&1
+        pacman-key --lsign-key "$(gpg --with-colons --show-keys <<<"$key" | awk -F: '/^fpr/ {print $10; exit}')" >/dev/null 2>&1
+        printf '[home_milnet_demoreel_Arch]\nServer = %s/$arch\n' "$OBS_URL" >> /etc/pacman.conf
+        pacman -Syu --noconfirm >/dev/null
+        install_pkg() { pacman -S --noconfirm demoreel >/dev/null; }
+        remove_pkg() { pacman -Rns --noconfirm demoreel >/dev/null; }
+        list_pkg() { pacman -Qlq demoreel; }
+        pkg_version() { pacman -Q demoreel | cut -d' ' -f2; }
+        ;;
+    *) fail "targets names an unknown package manager: $distro" ;;
+    esac
+    case $distro in dnf|zypper)
+        list_pkg() { rpm -ql demoreel; }
+        pkg_version() { rpm -q --qf '%{VERSION}-%{RELEASE}' demoreel; } ;;
+    esac
+    norec=''
+fi
+
 case $distro in
 debian|ubuntu)
     export DEBIAN_FRONTEND=noninteractive
@@ -550,8 +602,9 @@ case $help in "utilisation :"*) ;; *) fail "demoreel --help is not in French";; 
 for t in python3 Xvfb xauth xdotool ffmpeg ffprobe fc-match; do
     command -v "$t" >/dev/null || fail "$t is not installed"
 done
-# INV-5: with recommended packages, --gpu's programs come too.
-if [ "$distro" != arch ]; then
+# INV-5: with recommended packages, --gpu's programs come too. Not from
+# OBS, whose packages name them through the same files (INV-13).
+if [ "$distro" != arch ] && [ "$build" != obs ]; then
     for t in cage Xwayland wlr-randr wf-recorder; do
         command -v "$t" >/dev/null || fail "$t did not come as a recommended package"
     done
@@ -560,21 +613,29 @@ fi
 # get one where it has not.
 rc=0; out=$(demoreel check 2>&1) || rc=$?
 grep -q 'text on a card or a caption: ready' <<<"$out" || { echo "$out" >&2; fail "check: text is not ready"; }
+# From OBS, packaging/obs/targets says what check prints on each target.
+[ "$build" = obs ] && distro=obs
 case $distro in
+obs)      [ "$rc" = "$EXPECT_RC" ] && grep -qF -- "$EXPECT_TEXT" <<<"$out" ;;
 fedora)   [ "$rc" = 1 ] && grep -q 'dnf swap ffmpeg-free ffmpeg' <<<"$out" ;;
 opensuse) [ "$rc" = 1 ] && grep -q 'Packman' <<<"$out" ;;
 *)        [ "$rc" = 0 ] && grep -q 'record and shot: ready' <<<"$out" ;;
 esac || { echo "$out" >&2; fail "check did not say what was expected (exit $rc)"; }
 # INV-7: the package's version is the script's.
 [ "$(demoreel --version)" = "demoreel $v" ] || fail "demoreel --version: $(demoreel --version)"
-[ "$(pkg_version)" = "$v-1" ] || fail "the package manager says version $(pkg_version)"
+# OBS numbers its own builds, so there only the version part is checked.
+case $(pkg_version) in
+"$v-1") ;;
+"$v-"*) [ "$build" = obs ] || fail "the package manager says version $(pkg_version)" ;;
+*) fail "the package manager says version $(pkg_version)" ;;
+esac
 # INV-8: removing it removes everything it installed.
 remove_pkg
 while read -r p; do
     [ ! -e "$p" ] && [ ! -L "$p" ] || fail "$p is left after removal"
 done <<<"$staged"
 [ ! -e /usr/share/demoreel ] || fail "/usr/share/demoreel is left after removal"
-echo "PASS ($distro)"
+echo "PASS (${OBS_TARGET:-$distro})"
 EOF
 }
 
@@ -661,6 +722,44 @@ if [ "${1:-}" = "--packages" ]; then
     fi
     packages_check "$out"
     echo "every package installed and ran on every distro it targets"
+    exit 0
+fi
+
+# DEMO-0068 INV-13: after an OBS submit, install the published package from
+# its repository in a clean container of every target in packaging/obs/targets,
+# and run the same checks as --packages. It reads a live repository, so the
+# full gate does not run it.
+if [ "${1:-}" = "--obs-check" ]; then
+    command -v podman >/dev/null || { echo "podman is not installed" >&2; exit 1; }
+    v=$(sed -n 's/^__version__ = "\(.*\)"$/\1/p' demoreel)
+    work=$(mktemp -d)
+    trap 'rm -rf "$work"' EXIT
+    # INV-3 compares the installed script with the release's own tarball.
+    gh release download "v$v" --repo milnet01/demoreel --dir "$work" \
+        --pattern "demoreel-$v.tar.gz" \
+        || { echo "release v$v has no demoreel-$v.tar.gz attached" >&2; exit 1; }
+    pkg_container_script > "$work/test.sh"
+    base=https://download.opensuse.org/repositories/home:/milnet:/demoreel
+    pids=() names=() failed=0
+    while read -r name _path image manager rc text; do
+        case $name in ''|'#'*) continue ;; esac
+        podman run --rm --pull=newer -v "$work:/w:z" \
+            -e OBS_TARGET="$name" -e OBS_URL="$base/$name" \
+            -e EXPECT_RC="$rc" -e EXPECT_TEXT="$text" \
+            "$image" bash /w/test.sh "$manager" obs "$v" > "$work/$name.log" 2>&1 &
+        pids+=($!) names+=("$name")
+    done < packaging/obs/targets
+    for i in "${!pids[@]}"; do
+        if wait "${pids[$i]}"; then
+            tail -1 "$work/${names[$i]}.log"
+        else
+            echo "the ${names[$i]} container failed; its output:" >&2
+            cat "$work/${names[$i]}.log" >&2
+            failed=1
+        fi
+    done
+    [ "$failed" = 0 ] || exit 1
+    echo "demoreel $v installed from OBS and ran on every target"
     exit 0
 fi
 
@@ -5964,6 +6063,15 @@ grants=$(grep -rn 'contents: write' .github/workflows/ || true)
     echo "${grants:-<none>}" >&2
     exit 1; }
 echo "$grants"
+
+step "only this machine submits to OBS"
+# DEMO-0068 INV-14. Partial: it reads the workflow files for names, and a
+# workflow could reach OBS without one.
+if grep -rnE 'opensuse\.org|obs-submit|OBS_|\bosc\b' .github/workflows/ >&2; then
+    echo "a workflow names OBS (above); OBS submits run on this machine only" >&2
+    exit 1
+fi
+echo "no workflow names OBS"
 
 step "the packages, on every distro they target"
 # Slow, so near the end. GitHub runs it in its own job, and the Ubuntu leg below

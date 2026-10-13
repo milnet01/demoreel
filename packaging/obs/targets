@@ -1,0 +1,20 @@
+# Every distro version OBS builds demoreel for
+# (docs/specs/DEMO-0068-linux-packages.md § 4.7). obs-setup.sh makes the OBS
+# project's repositories from this file, and ./ci.sh --obs-check tests each.
+#
+# Six fields: the OBS repository name, the <project>/<repository> it builds
+# against, the container image --obs-check tests it in, its package manager,
+# and what `demoreel check` must do there: its exit status, then text its
+# output must contain, which runs to the end of the line.
+openSUSE_Tumbleweed  openSUSE:Factory/snapshot  docker.io/opensuse/tumbleweed:latest  zypper  1  Packman
+openSUSE_Leap_16.0   openSUSE:Leap:16.0/standard  docker.io/opensuse/leap:16.0  zypper  1  Packman
+Fedora_44            Fedora:44/standard  docker.io/library/fedora:44  dnf  1  dnf swap ffmpeg-free ffmpeg
+Fedora_43            Fedora:43/standard  docker.io/library/fedora:43  dnf  1  dnf swap ffmpeg-free ffmpeg
+Debian_13            Debian:13/standard  docker.io/library/debian:13  apt  0  record and shot: ready
+Debian_12            Debian:12/standard  docker.io/library/debian:12  apt  0  record and shot: ready
+xUbuntu_26.04        Ubuntu:26.04/universe  docker.io/library/ubuntu:26.04  apt  0  record and shot: ready
+xUbuntu_24.04        Ubuntu:24.04/universe  docker.io/library/ubuntu:24.04  apt  0  record and shot: ready
+xUbuntu_22.04        Ubuntu:22.04/universe  docker.io/library/ubuntu:22.04  apt  0  record and shot: ready
+Arch                 Arch:Extra/standard  docker.io/library/archlinux:latest  pacman  0  record and shot: ready
+Mageia_10            Mageia:10/standard  docker.io/library/mageia:10  dnf  1  this ffmpeg has no libx264
+openEuler_24.03      openEuler:24.03/standard  docker.io/openeuler/openeuler:24.03  dnf  0  record and shot: ready
