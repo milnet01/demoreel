@@ -4281,6 +4281,14 @@ system looks for them.
   gated with DEMO-0072's from-source section (readme loop log rows
   19-21), and the 16 quick-start pages follow it. Left: the OBS amendment and its review-contract run,
   the OBS build, then the first release carrying the files plus the website hand-off.
+  Progress (2026-10-13): the OBS amendment is in the spec (section 4.7,
+  INV-11 to INV-14) and gated with review-contract to its cap (loop-log
+  rows 3 and 4; 8 verified, 8 fixed). User decisions the same day: as
+  many distro versions as OBS can serve, a script run on this machine
+  after each release submits, and OBS builds from the release's own
+  tarball. Next: build packaging/obs/ and ./ci.sh --obs-check, then the
+  release carrying the files, then the OBS submit and the website
+  hand-off.
   **Layman:** Install demoreel on openSUSE with zypper, dependencies included.
   Kind: package.
   Source: user-request-2026-09-25.
