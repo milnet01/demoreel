@@ -57,8 +57,7 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   fades in, text in several lines that slides in, and sound files at
   chosen moments. Still out: general layers, two clips on screen outside
   a transition, pan, crop, rotate, and anything removed from a video
-  automatically. None of these effects is
-  built yet.
+  automatically.
 
 ### Fixed
 
