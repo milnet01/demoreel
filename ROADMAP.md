@@ -4159,7 +4159,7 @@ before packaging. The full editor stays 2.0.0.
   Kind: feature.
   Source: peer-website-session-2026-10-10.
 
-- 📋 [DEMO-0187] **Record footage and write notes for demoreel's own YouTube trailer.**
+- ✅ [DEMO-0187] **Record footage and write notes for demoreel's own YouTube trailer.**
   Brief: /home/ants/.local/share/claude-handoff/ants-projects-hub-website-trailers-2026-10-10.md
   (shared, do not delete). Deliver 3 to 6 clips of 4 to 10 s at
   1920x1080 plus notes.md (two hook lines, a tagline, a caption per clip
@@ -4167,6 +4167,10 @@ before packaging. The full editor stays 2.0.0.
   sound) to /mnt/Games/Trailers/incoming/demoreel/, then message the
   ants-projects-hub-website session. Only released features, so after
   0.7.0 and 0.8.0 ship; no rush (website session, 2026-10-10).
+  Delivered 2026-10-13: six clips (one command, scripted clicks, framed
+  window, zoom, sliding titles, transitions) and notes.md in
+  /mnt/Games/Trailers/incoming/demoreel/; website session told by
+  session_message 635.
   **Layman:** Short clips of demoreel at work, for the website session to cut into a trailer.
   Kind: marketing.
   Source: peer-website-session-2026-10-10.
