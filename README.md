@@ -982,6 +982,10 @@ On openSUSE and Fedora, take ffmpeg from Packman or RPM Fusion, as
 [Install](#install) shows. `--gpu` and sound need the programs listed there
 too.
 
+Text on a card or a caption also needs `fontconfig` and a font, which a
+desktop normally has. On a bare system `demoreel check` says when they are
+missing.
+
 **2. Get demoreel and install it.**
 
 ```sh
@@ -990,9 +994,11 @@ cd demoreel
 sudo ./packaging/install.sh
 ```
 
-It installs under `/usr/local`, where the packages use `/usr`: the
-`demoreel` command, its translations, the manual page, and tab completion for
-bash, zsh and fish. Then run `demoreel check`, as [Install](#install) shows.
+It installs under `/usr/local`: the `demoreel` command, its translations, the
+manual page, and tab completion for bash, zsh and fish. Then run
+`demoreel check`, as [Install](#install) shows. Every package passes
+`PREFIX=/usr` to `install.sh`, so the packages install under `/usr`; a
+bare run, as above, takes `/usr/local`.
 
 **To update it**, run `git pull` in the `demoreel` folder, then
 `sudo ./packaging/install.sh` again.
