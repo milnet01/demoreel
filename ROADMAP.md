@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=195 -->
+<!-- ants-roadmap-id-high-water: DEMO=196 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -383,6 +383,18 @@ simplest case, and a gate proves it still records.
   **Layman:** On openSUSE, demoreel's install notes will name the user's own update tools for getting video codecs.
   Kind: doc.
   Source: user-request-2026-10-13.
+
+- 📋 [DEMO-0196] **Verify record --gpu --audio and update README's line saying wf-recorder does not start here.**
+  README's sound status says `--gpu --audio` is not yet verified
+  because wf-recorder does not start on this machine. That was written
+  before this machine's wf-recorder was rebuilt and Packman's
+  libavcodec62 arrived (DEMO-0174); the full gate's --gpu recording step
+  ran on 2026-10-13. Record --gpu --audio once here, check the sound is in
+  the video and not on the speakers, then correct the line. Noticed
+  while building DEMO-0174, not fixed there (outside its change).
+  **Layman:** Check that recording a 3D app with its sound works, and fix the README sentence that says it could not be tested.
+  Kind: doc-fix.
+  Source: in-session-2026-10-13.
 
 ## Standing chores
 
