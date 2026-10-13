@@ -72,23 +72,32 @@ see [Sound and music](#sound-and-music).
 
 ## Install
 
-demoreel is one Python 3 script. It drives a few common programs, and each
-distro below packages all of them.
+From 0.9.0 on, every release carries a package for Debian, Ubuntu, Fedora,
+openSUSE and Arch. The package brings the programs demoreel drives from your
+distro's own repositories, and installs the manual page and tab completion.
+For any other distro, see [Install from source](#install-from-source).
 
-**1. Install the programs it drives.** One line, for your distro:
+**1. Download the package for your distro** from the
+[latest release](https://github.com/milnet01/demoreel/releases/latest): the
+`.deb` for Debian and Ubuntu, the `.rpm` for Fedora and openSUSE, or the
+`PKGBUILD` for Arch.
+
+**2. Install it.** In the folder you downloaded it to, one line for your
+distro:
 
 ```sh
-# openSUSE
-sudo zypper install ffmpeg xdotool xauth xorg-x11-server-Xvfb
 # Debian and Ubuntu
-sudo apt install ffmpeg xdotool xauth xvfb
+sudo apt install ./demoreel_*_all.deb
 # Fedora
-sudo dnf install ffmpeg xdotool xorg-x11-xauth xorg-x11-server-Xvfb
+sudo dnf install ./demoreel-*.noarch.rpm
+# openSUSE
+sudo zypper install --allow-unsigned-rpm ./demoreel-*.noarch.rpm
 # Arch
-sudo pacman -S ffmpeg xdotool xorg-xauth xorg-server-xvfb
+makepkg -si
 ```
 
-You also need `python3` and `git`.
+The package is not signed, which is why openSUSE needs
+`--allow-unsigned-rpm`.
 
 **On openSUSE and Fedora, the distro's own ffmpeg cannot write the video.** It
 leaves out the H.264 encoder, libx264. Take ffmpeg from Packman on openSUSE,
@@ -106,21 +115,6 @@ sudo dnf swap ffmpeg-free ffmpeg --allowerasing
 zypper asks whether to trust Packman's signing key the first time. Answer
 `a`, to trust it always.
 
-**2. Get demoreel, and put it on your PATH.**
-
-```sh
-git clone https://github.com/milnet01/demoreel.git
-mkdir -p ~/.local/bin
-ln -s "$PWD/demoreel/demoreel" ~/.local/bin/demoreel
-```
-
-If the shell then says `demoreel: command not found`, `~/.local/bin` is not on
-your PATH yet. Add this line to `~/.bashrc` and open a new terminal:
-
-```sh
-export PATH="$HOME/.local/bin:$PATH"
-```
-
 **3. Check it.**
 
 ```sh
@@ -130,7 +124,22 @@ demoreel check
 It records nothing. It says `ready`, or names what is missing and the command
 that installs it.
 
-**For apps that need the graphics card**, `--gpu` needs four more programs:
+**To remove it**, use your package manager:
+
+```sh
+# Debian and Ubuntu
+sudo apt remove demoreel
+# Fedora
+sudo dnf remove demoreel
+# openSUSE
+sudo zypper remove demoreel
+# Arch
+sudo pacman -R demoreel
+```
+
+**For apps that need the graphics card**, `--gpu` needs four more programs.
+The Debian, Ubuntu, Fedora and openSUSE packages bring them. On Arch, or after
+an install from source, install them yourself:
 
 ```sh
 # openSUSE
@@ -142,6 +151,10 @@ sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 # Arch
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
 ```
+
+**On openSUSE, `record --gpu` cannot write the video yet.** openSUSE's
+wf-recorder loads openSUSE's own video library, which has no libx264.
+`demoreel check` says so, and calls `--gpu` not ready.
 
 **For sound**, demoreel needs `pactl`. With it, a recorded app's sound never
 reaches your speakers, and `--audio` can put that sound in the video:
@@ -837,14 +850,20 @@ bar, so it is built for a startup screen that is genuinely blank.
 ### The manual page
 
 `demoreel.1` is the reference: every command, option and step, the exit
-statuses, and the files a run keeps. Read it in place with `man ./demoreel.1`.
+statuses, and the files a run keeps. Once installed, read it with
+`man demoreel`. In a clone, `man ./demoreel.1` reads it in place.
 
 ### Tab completion
 
 `completions/` has scripts for bash, zsh and fish. They complete the
 subcommands, every option, the step names after `-a`, and, after
 `demoreel stop`, the names of the recordings still running. Everything after
-`--` is completed as the app's own command line. To turn them on:
+`--` is completed as the app's own command line.
+
+The package and the install from source both install them. fish picks them up
+in a new terminal, bash does once the `bash-completion` package is
+installed, and zsh does once `compinit` runs in `~/.zshrc`. To use them from a clone that is not installed, turn them on by
+hand:
 
 ```sh
 # bash: add this line to ~/.bashrc
@@ -940,6 +959,53 @@ running, not a source checkout.
 **An ordinary, non-Flatpak app needs the same nudge, and demoreel does it for
 you** — no flags, nothing to remember. It applies to every target that is not
 sandboxed away from its environment.
+
+## Install from source
+
+This is for a distro with no package, or for the newest code on `main`.
+
+**1. Install the programs it drives.** You need `python3` and `git`, and one
+line for your distro:
+
+```sh
+# openSUSE
+sudo zypper install ffmpeg xdotool xauth xorg-x11-server-Xvfb
+# Debian and Ubuntu
+sudo apt install ffmpeg xdotool xauth xvfb
+# Fedora
+sudo dnf install ffmpeg xdotool xorg-x11-xauth xorg-x11-server-Xvfb
+# Arch
+sudo pacman -S ffmpeg xdotool xorg-xauth xorg-server-xvfb
+```
+
+On openSUSE and Fedora, take ffmpeg from Packman or RPM Fusion, as
+[Install](#install) shows. `--gpu` and sound need the programs listed there
+too.
+
+**2. Get demoreel and install it.**
+
+```sh
+git clone https://github.com/milnet01/demoreel.git
+cd demoreel
+sudo ./packaging/install.sh
+```
+
+It installs under `/usr/local`, where the packages use `/usr`: the
+`demoreel` command, its translations, the manual page, and tab completion for
+bash, zsh and fish. Then run `demoreel check`, as [Install](#install) shows.
+
+**To update it**, run `git pull` in the `demoreel` folder, then
+`sudo ./packaging/install.sh` again.
+
+**To remove it**, in the same folder:
+
+```sh
+sudo ./packaging/install.sh --uninstall
+```
+
+It removes the `demoreel` command, the folder `/usr/local/share/demoreel/`,
+the manual page and the three completion files. Folders other programs share
+stay.
 
 ## Any Claude Code session must be able to drive it
 
