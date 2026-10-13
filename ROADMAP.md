@@ -4279,9 +4279,8 @@ system looks for them.
   publish.
   Progress (2026-10-13): README § Install leads with the packages,
   gated with DEMO-0072's from-source section (readme loop log rows
-  19-21), and the 16 quick-start pages follow it. Left: the first
-  release carrying the files plus the website hand-off, then the OBS
-  amendment, its review-contract run and the OBS publish.
+  19-21), and the 16 quick-start pages follow it. Left: the OBS amendment and its review-contract run,
+  the OBS build, then the first release carrying the files plus the website hand-off.
   **Layman:** Install demoreel on openSUSE with zypper, dependencies included.
   Kind: package.
   Source: user-request-2026-09-25.
