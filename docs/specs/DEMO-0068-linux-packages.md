@@ -221,31 +221,40 @@ system's updates.
   does not make: `packaging/obs/debian/` holds its `rules`, `changelog`,
   `copyright` and `source/format`, and `packaging/obs/demoreel.dsc` names
   it. `rules` runs `install.sh` with `PREFIX=/usr`, like every other format
-  (§ 4.1). The script writes `debian/control`'s binary stanza from
-  `packaging/debian-control`, so the `.deb`'s dependency list keeps one
-  home.
+  (§ 4.1). The tree's `changelog` and `.dsc` carry `@VERSION@` where the
+  version goes, as `debian-control` does, and the script fills it (INV-7).
+  The script writes `debian/control`'s binary stanza from
+  `packaging/debian-control`'s `Package`, `Architecture`, `Section`,
+  `Depends`, `Recommends` and `Description` fields, so the `.deb`'s
+  dependency list keeps one home.
 - **The shebang stays.** If openSUSE's `rpmlint` refuses
   `#!/usr/bin/env python3`, a `packaging/obs/demoreel-rpmlintrc` filters
   that one check (§ 4.1, INV-3).
-- **Targets.** `packaging/obs/targets` lists each: its OBS repository name
-  and path, the container image `--obs-check` tests it in, and what
-  `demoreel check` should say there. `obs-setup.sh` writes the OBS
-  project's repositories from it, and `./ci.sh --obs-check` reads it, so the
-  two cannot disagree. A target is listed when OBS builds for it, it is a
-  released version its distro still supports, and INV-13 passes in its
-  container. Candidates for the first submit: openSUSE Tumbleweed, Slowroll,
-  Leap 16.0 and Leap 15.6; Fedora 43 and 44; Debian 12 and 13; Ubuntu 22.04,
-  24.04 and 26.04; Arch; Mageia 10; Amazon Linux 2023; openEuler 24.03. A
-  candidate that fails for a reason outside demoreel, such as a dependency
-  its distro does not carry, is left out, and § 9 names it with the reason.
+- **Targets.** `packaging/obs/targets` holds one line per target, with
+  whitespace-separated fields: the OBS repository name, the OBS project and
+  repository it builds against, the container image, the package manager,
+  `demoreel check`'s expected exit status, and the text its output must
+  contain. `obs-setup.sh` writes the OBS project's repositories from it, and
+  `./ci.sh --obs-check` reads it, so the two cannot disagree. A target is
+  listed when OBS builds for it, it is a released version its distro still
+  supports, and INV-13 passes in its container. Candidates for the first
+  submit: openSUSE Tumbleweed, Slowroll and Leap 16.0; Fedora 43 and 44;
+  Debian 12 and 13; Ubuntu 22.04, 24.04 and 26.04; Arch; Mageia 10; Amazon
+  Linux 2023; openEuler 24.03. A candidate that fails for a reason outside
+  demoreel, such as a dependency its distro does not carry, is left out, and
+  § 9 names it with the reason. **A `python3` too old to run demoreel is
+  such a reason**: the packages name no Python version, so that target is
+  left out rather than every package gaining a floor.
 - **Not targets: development branches and versions past their end of
   life** (Rawhide, Debian Testing and Unstable, Ubuntu 26.10, Mageia
   Cauldron). Such a version can fail with no change to demoreel.
 - **Submitting a release.** `packaging/obs/obs-submit.sh`, run on this
   machine with the user's `osc` login once `release.yml` has attached the
   files. It takes the version from the checkout's `__version__`, and:
-  1. refuses unless the tag `v<version>` exists and nothing under
-     `packaging/` differs from it (INV-12);
+  1. refuses unless the tag `v<version>` exists and none of the files OBS
+     builds from differs from it (INV-12): `demoreel.spec`,
+     `debian-control`, and `packaging/obs/`'s `debian/`, `demoreel.dsc`
+     and `demoreel-rpmlintrc`. The rest comes in the release's tarball;
   2. downloads the release's tarball and `PKGBUILD`, and refuses unless the
      tarball's checksum is the one the `PKGBUILD` names (INV-11);
   3. updates its `osc` checkout, kept outside the tree, swaps the previous
@@ -353,8 +362,8 @@ The container checks are run by `./ci.sh --packages` in every container of
   file, or OBS's build rewrites the script.
 
 - **INV-12** — The recipes OBS builds are the tag's.
-  *Test:* by hand, once each: with an uncommitted change under
-  `packaging/`, and with `__version__` naming a tag that does not exist,
+  *Test:* by hand, once each: with an uncommitted change to
+  `packaging/demoreel.spec`, and with `__version__` naming a tag that does not exist,
   `obs-submit.sh` stops before its first `osc` call and names the cause.
   *Breaks when:* a recipe edited after the release ships under the
   release's version.
@@ -376,7 +385,8 @@ The container checks are run by `./ci.sh --packages` in every container of
 
 - **INV-14** — Only this machine submits to OBS.
   *Test:* the full gate's workflow step fails when a file under
-  `.github/workflows/` names `osc` or `api.opensuse.org`.
+  `.github/workflows/` names `opensuse.org`, `obs-submit`, `OBS_` or `osc`
+  as a whole word.
   *Breaks when:* a workflow is given OBS access, which needs an OBS
   credential stored on GitHub.
 
@@ -505,7 +515,7 @@ shebang (INV-3), `cage` moved to the required set of the `.deb` and of the
 | INV-11 | `obs-submit.sh`'s checksum check; the seeded break, by hand, once; INV-3 in `--obs-check` |
 | INV-12 | `obs-submit.sh`'s tag check; the seeded breaks, by hand, once |
 | INV-13 | `./ci.sh --obs-check`, after each submit. **Partial:** not in the full gate |
-| INV-14 | full gate's workflow grep |
+| INV-14 | full gate's workflow grep. **Partial:** it reads the file for names, and a workflow could reach OBS without one |
 | § 4.1 one layout | INV-1 |
 | § 4.5 files attached to every release | **nothing** — a release whose job never ran has no packages and nothing fails; the website hand-off is the only reader |
 | § 4.7 every release submitted to OBS | **nothing** — CONTRIBUTING.md's release steps are the only reminder |
