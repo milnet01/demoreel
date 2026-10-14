@@ -343,7 +343,11 @@ The container checks are run by `./ci.sh --packages` in every container of
   prints `record and shot: ready`. In the Fedora and openSUSE containers it
   exits 1, and its output carries `x264_advice`'s line for that distro.
   Measured 2026-10-08 with the required programs installed by hand: exactly
-  that, once a font was present.
+  that, once a font was present. One exception, from OBS only: a target
+  whose `targets` text is `Packman` need not print the text line. Leap
+  16.0's own `ffmpeg` has no `drawtext` filter. Packman's `ffmpeg`, which
+  `check` already names there, has `drawtext` and `libx264` (measured
+  2026-10-14 in a clean `opensuse/leap:16.0` container).
   *Breaks when:* a required program is missing from the dependency list, or a
   file the script reads at run time is not installed.
 
@@ -515,7 +519,9 @@ shebang (INV-3), `cage` moved to the required set of the `.deb` and of the
 - OBS candidates left out (measured 2026-10-13, each package installed in a
   clean container of the candidate): Amazon Linux 2023, whose repositories
   carry no `ffmpeg` and no `xdotool`; and openSUSE Slowroll, which has no
-  container image to test it in.
+  container image to test it in. Removed after 0.9.0's first submit
+  (measured 2026-10-14): openEuler 24.03, whose only `ffmpeg` is 6.1.1
+  with no `drawtext` filter, so INV-6's text line fails there.
 - Other processor architectures on OBS. The targets build on x86_64.
 - Checksums, signed tags and a provenance attestation — `docs/specs/DEMO-0084-verify-a-download.md`.
 - The documented from-source install, and its container check — tracked by
