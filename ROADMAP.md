@@ -409,7 +409,7 @@ simplest case, and a gate proves it still records.
   Kind: package.
   Source: user-request-2026-10-13.
 
-- 📋 [DEMO-0198] **obs-status.sh reads a state marked about to change as final, and fails before OBS has built.**
+- ✅ [DEMO-0198] **obs-status.sh reads a state marked about to change as final, and fails before OBS has built.**
   Measured 2026-10-14 on the first real submit of 0.9.0: straight after
   obs-submit.sh, osc results printed "broken*" for every target, and
   obs-status.sh failed on its first poll with "no logfile". osc results
@@ -419,6 +419,9 @@ simplest case, and a gate proves it still records.
   any state ending in * as pending. Proof of the fix is that same first
   poll waiting instead of failing.
   Lanes: packaging.
+  Fixed in 81a3be3 (2026-10-14): a state ending in * counts as
+  pending. Proved red then green against a stand-in osc printing that
+  morning's twelve broken* lines.
   **Layman:** The script that waits for the openSUSE build servers stops too early and reports a failure that is not real.
   Kind: fix.
   Source: in-session-2026-10-14.

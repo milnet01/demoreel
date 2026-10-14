@@ -612,7 +612,11 @@ fi
 # INV-6: it can record where the distro's ffmpeg has libx264, and says how to
 # get one where it has not.
 rc=0; out=$(demoreel check 2>&1) || rc=$?
-grep -q 'text on a card or a caption: ready' <<<"$out" || { echo "$out" >&2; fail "check: text is not ready"; }
+# Leap 16.0's own ffmpeg has no drawtext; Packman's, which check names there,
+# has it (INV-6's one exception, OBS only).
+grep -q 'text on a card or a caption: ready' <<<"$out" \
+    || [ "${OBS_TARGET:-}" = openSUSE_Leap_16.0 ] \
+    || { echo "$out" >&2; fail "check: text is not ready"; }
 # From OBS, packaging/obs/targets says what check prints on each target.
 [ "$build" = obs ] && distro=obs
 case $distro in
