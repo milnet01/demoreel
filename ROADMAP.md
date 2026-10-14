@@ -443,6 +443,11 @@ simplest case, and a gate proves it still records.
   Leap user following README gets the wrong repository. The 16
   quick-start pages mirror the line.
   Lanes: check, docs.
+  User, 2026-10-14: this is next, ahead of other queued work, because
+  Leap 16.0's place on OBS rests on users reaching Packman (DEMO-0068
+  INV-6's one exception). Before writing Mageia's advice, measure in a
+  clean mageia:10 container how a Mageia user gets an ffmpeg with
+  libx264; do not write it from memory.
   **Layman:** On Mageia and openSUSE Leap, demoreel's advice for getting a full ffmpeg points at the wrong place.
   Kind: review-fix.
   Source: review-contract-2026-10-14 DEMO-0068 spec loop 6.
