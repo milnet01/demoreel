@@ -4402,6 +4402,12 @@ system looks for them.
   Shipped with 0.9.0 (user decision 2026-10-13). The OBS submit,
   its status check, the README pointer and the website hand-off follow
   the release in the order above.
+  Done (2026-10-14): 0.9.0 released and submitted to OBS. The first
+  --obs-check failed on Leap 16.0 and openEuler 24.03 (no drawtext);
+  user decisions that day: Leap kept with INV-6's one exception,
+  openEuler removed. Spec amended and gated (loop 6), 11 targets pass
+  --obs-check, demoreel-test deleted, README names the repository, and
+  the website session was told. Left from the review: DEMO-0199.
   **Layman:** Install demoreel on openSUSE with zypper, dependencies included.
   Kind: package.
   Source: user-request-2026-09-25.
