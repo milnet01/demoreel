@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=201 -->
+<!-- ants-roadmap-id-high-water: DEMO=202 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -521,6 +521,23 @@ simplest case, and a gate proves it still records.
   Kind: fix.
   Source: in-session-2026-10-14 DEMO-0196.
   Lanes: record, gpu.
+
+- 📋 [DEMO-0202] **On a slow machine, check says ready when it could not tell whether ffmpeg has libx264.**
+  has_libx264() returns True when `ffmpeg -encoders` times out
+  (CALL_TIMEOUT, 10 s since 14d5af9): "cannot tell; let the recording
+  itself say what is wrong". For record that is a deliberate choice, but
+  `demoreel check` then prints "ready". Seen 2026-10-14 at load 24.8 on
+  12 CPUs with several gates running: the pre-push --packages step's
+  Fedora from-source check printed "record and shot: ready" and, for
+  --gpu, "this ffmpeg has no libx264", and failed expecting the libx264
+  line for both (log ~/.local/state/cc-job/demo0199-push.log, the
+  original DEMO-0199 session's). check should report "could not tell"
+  as its own answer, as SampleError does for the blank check (DEMO-0033),
+  not fold it into ready.
+  **Layman:** On a very busy computer, the setup check can say everything is ready when it actually ran out of time checking.
+  Kind: fix.
+  Source: in-session-2026-10-14 DEMO-0199 push.
+  Lanes: check.
 
 ## Standing chores
 
