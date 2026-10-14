@@ -4260,7 +4260,7 @@ A person installs demoreel from their distro's usual tools, and the programs it
 needs come with it. The man page, tab completion and translations land where the
 system looks for them.
 
-- 📋 [DEMO-0068] **Package demoreel for openSUSE through the Open Build Service.**
+- ✅ [DEMO-0068] **Package demoreel for openSUSE through the Open Build Service.**
   This machine's distro. The package declares Xvfb, xauth, ffmpeg and
   xdotool as requirements, and cage, Xwayland, wlr-randr and wf-recorder
   as recommended for `--gpu`. It installs the man page, completions and catalogs.
@@ -4361,11 +4361,14 @@ system looks for them.
   package demoreel-test, add the README pointer to
   https://download.opensuse.org/repositories/home:/milnet:/demoreel/,
   and tell the ants-projects-hub-website session.
+  Shipped with 0.9.0 (user decision 2026-10-13). The OBS submit,
+  its status check, the README pointer and the website hand-off follow
+  the release in the order above.
   **Layman:** Install demoreel on openSUSE with zypper, dependencies included.
   Kind: package.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0069] **Package demoreel for Debian and Ubuntu.**
+- ✅ [DEMO-0069] **Package demoreel for Debian and Ubuntu.**
   The GitHub runner is Ubuntu, so the package can be built and installed
   there as a gate step. Requirements: xvfb, xauth, ffmpeg, xdotool.
   Recommends the `--gpu` pair where the distro carries it.
@@ -4379,11 +4382,12 @@ system looks for them.
   PPA. See DEMO-0068 for the whole 0.9.0 design brief.
   Progress (2026-10-13): the .deb is built and tested on ubuntu:24.04
   and debian:stable by ./ci.sh --packages. See DEMO-0068 for what is left.
+  Shipped with 0.9.0: the .deb is attached to the release.
   **Layman:** Install demoreel on Debian or Ubuntu with apt, dependencies included.
   Kind: package.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0070] **Package demoreel for Fedora and Arch.**
+- ✅ [DEMO-0070] **Package demoreel for Fedora and Arch.**
   Fedora through COPR, Arch as an AUR PKGBUILD. Same file layout and
   dependency split as the other packages.
   Follow-up (2026-09-28): see DEMO-0068 - tell the website project when
@@ -4398,6 +4402,8 @@ system looks for them.
   Progress (2026-10-13): the .rpm passes on fedora:latest and the Arch
   package on archlinux:latest, by ./ci.sh --packages. COPR and the AUR
   still wait on accounts. See DEMO-0068.
+  Shipped with 0.9.0: the .rpm and the Arch package are attached
+  to the release. COPR and AUR publishing moved to DEMO-0197.
   **Layman:** Install demoreel on Fedora (dnf) or Arch (from the AUR).
   Kind: package.
   Source: user-request-2026-09-25.
