@@ -845,6 +845,9 @@ msgstr "  sound {name}、{start} に"
 msgid "making {output}, {seconds} seconds at {size}"
 msgstr "{output} を作成中、{seconds} 秒、{size}"
 
+msgid "ffmpeg used more than {size} GB of memory making the film, half this machine's, so it was stopped."
+msgstr "ffmpeg が動画の作成で {size} GB を超えるメモリー（このマシンの半分）を使ったため、停止しました。"
+
 msgid "ffmpeg could not make the film."
 msgstr "ffmpeg が映像を作成できませんでした。"
 

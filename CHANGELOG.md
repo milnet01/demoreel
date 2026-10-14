@@ -14,6 +14,12 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **A trailer of windowed scenes no longer fails on a computer with 8 GB of memory or less** (DEMO-0192)
+  The film's ffmpeg was limited by the memory it reserved, which for
+  windowed scenes is several times what it uses. It is now stopped only
+  once it uses more than half the machine's memory, and the message
+  says so.
+
 - **`demoreel check` on Mageia names Mageia's own packages, and says which programs Mageia has no package for** (DEMO-0200)
   Its install command asked for Fedora's package names, several of which
   Mageia does not have. Mageia packages no cage, wlr-randr or

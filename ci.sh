@@ -3040,6 +3040,55 @@ CASES
 CASES
     echo "$n bad sound lines were each refused before any encode, naming their line"
     }
+    fin_s68() {
+    # DEMO-0192. The film's ffmpeg is stopped by the memory it uses, not by
+    # the address space it reserves: a windowed trailer reserved 4-6 GB while
+    # using 1.3 GB, and the old limit on address space failed it.
+    python3 - "$DR" <<'CAPPY'
+import importlib.machinery, importlib.util, os, sys, time
+loader = importlib.machinery.SourceFileLoader("demoreel", sys.argv[1])
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+MB = 1024 ** 2
+assert d.memory_cap() == os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES") // 2
+# Holds 400 MB, touched, then waits.
+uses = [sys.executable, "-c", "import time; b = bytearray(400 * 2**20); time.sleep(20)"]
+start = time.monotonic()
+done, stopped = d.run_capped(uses, 60, 100 * MB)
+took = time.monotonic() - start
+assert stopped and done.returncode != 0, (stopped, done.returncode)
+assert took < 5, f"stopped after {took:.1f} s"
+# Reserves 8 GB of address space and touches almost none of it, for long
+# enough to be looked at several times.
+reserves = [sys.executable, "-c",
+            "import mmap, time; m = mmap.mmap(-1, 8 * 2**30); m[0] = 1; time.sleep(1.5)"]
+done, stopped = d.run_capped(reserves, 60, 200 * MB)
+assert not stopped and done.returncode == 0, (stopped, done.returncode, done.stderr)
+done, stopped = d.run_capped([sys.executable, "-c", "print('ok')"], 60, 200 * MB)
+assert (stopped, done.returncode, done.stdout) == (False, 0, "ok\n"), (stopped, done)
+print(f"400 MB in use was stopped under a 100 MB cap in {took:.1f} s; "
+      "8 GB reserved and unused was not")
+CAPPY
+    # Through edit: a film whose ffmpeg passes the cap is refused, saying so.
+    cat >"$ft/tinycap.py" <<'CAPPY'
+import importlib.machinery, importlib.util, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", sys.argv[1])
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+d.memory_cap = lambda: 1024 ** 2
+sys.argv = ["demoreel", *sys.argv[2:]]
+d.main()
+CAPPY
+    printf 'card 2\n' > "$ft/cap.txt"
+    rc=0
+    ( cd "$ft" && python3 tinycap.py "$DR" edit cap.txt -o "$ft/out/cap.mp4" ) \
+        >"$fo" 2>"$fe" || rc=$?
+    expect_refused "a film over its memory cap"
+    grep -q "of memory making the film" "$fe" || {
+        echo "FAIL: a film over its memory cap did not say why:" >&2; show_err; exit 1; }
+    assert_absent "a film over its memory cap leaves no film" "$ft/out/cap.mp4"
+    echo "a film's ffmpeg over its cap is stopped and the run says why"
+    }
     fin_s50() {
     # DEMO-0177 INV-12: README's "the shortcuts do exactly what the script
     # would", for the music options and --no-sound.
@@ -3417,6 +3466,7 @@ CASES
     fin_step "a card's picture fits below a stack" fin_s65
     fin_step "a sound line plays its file at its moment, at its volume" fin_s66
     fin_step "edit refuses a bad sound line" fin_s67
+    fin_step "a film's ffmpeg is held to the memory it uses, not the address space it reserves" fin_s68
     fin_run
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }

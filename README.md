@@ -1232,8 +1232,10 @@ Checked by running them, not assumed. This section is for maintainers.
   were built, an animated `.png` read with ffmpeg's own looping, behind
   another scene, took ffmpeg to 14 GB in six minutes. Every stream in a film is
   now cut to its own number of frames, pictures repeat inside the filter graph
-  where a frame is made only when wanted, and the ffmpeg that makes a film may
-  take at most half the machine's memory, or 4 GB where that is more.
+  where a frame is made only when wanted, and the ffmpeg that makes a film is
+  stopped once it uses more than half the machine's memory. The limit counts
+  memory in use, not what ffmpeg reserves: a film of windowed scenes reserved
+  4 to 6 GB while using 1.3 GB.
 - **`wf-recorder` draws no pointer.** With the pointer moved over the app, none
   of the 39 frames of a recording showed it; `x11grab` on the same X screen drew
   it at that spot. `wf-recorder` has no option to draw one.

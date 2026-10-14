@@ -875,6 +875,9 @@ msgstr "  sound {name} عند {start}"
 msgid "making {output}, {seconds} seconds at {size}"
 msgstr "جارٍ صنع {output}، {seconds} ثانية بأبعاد {size}"
 
+msgid "ffmpeg used more than {size} GB of memory making the film, half this machine's, so it was stopped."
+msgstr "استخدم ffmpeg أكثر من {size} غيغابايت من الذاكرة في صنع الفيلم، وهو نصف ذاكرة هذا الجهاز، لذلك أُوقف."
+
 msgid "ffmpeg could not make the film."
 msgstr "تعذّر على ffmpeg صنع الفيلم."
 

@@ -845,6 +845,9 @@ msgstr "  sound {name}, {start}에"
 msgid "making {output}, {seconds} seconds at {size}"
 msgstr "{output} 만드는 중, {seconds}초, {size}"
 
+msgid "ffmpeg used more than {size} GB of memory making the film, half this machine's, so it was stopped."
+msgstr "ffmpeg가 영상을 만드는 데 이 컴퓨터 메모리의 절반인 {size} GB를 넘게 사용해서 중지했습니다."
+
 msgid "ffmpeg could not make the film."
 msgstr "ffmpeg이 영상을 만들지 못했습니다."
 

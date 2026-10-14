@@ -845,6 +845,9 @@ msgstr "  sound {name}，于 {start}"
 msgid "making {output}, {seconds} seconds at {size}"
 msgstr "正在制作 {output}，{seconds} 秒，{size}"
 
+msgid "ffmpeg used more than {size} GB of memory making the film, half this machine's, so it was stopped."
+msgstr "ffmpeg 制作影片时使用的内存超过 {size} GB，即本机内存的一半，因此已被停止。"
+
 msgid "ffmpeg could not make the film."
 msgstr "ffmpeg 无法制作影片。"
 

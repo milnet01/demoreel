@@ -333,7 +333,7 @@ simplest case, and a gate proves it still records.
   Kind: doc-fix.
   Source: review-contract-2026-10-11 versioning-overrides row 18.
 
-- 📋 [DEMO-0192] **memory_cap limits virtual memory, which a windowed trailer exceeds at 4 GB while using far less.**
+- ✅ [DEMO-0192] **memory_cap limits virtual memory, which a windowed trailer exceeds at 4 GB while using far less.**
   memory_cap sets RLIMIT_AS to half the machine's memory, at least 4 GB.
   RLIMIT_AS counts address space ffmpeg reserves, not what it uses.
   Measured 2026-10-11 on this machine (12 threads), four 1600x1000
@@ -347,6 +347,16 @@ simplest case, and a gate proves it still records.
   watchdog on RSS), a higher floor, or fewer ffmpeg threads. The cap
   exists to stop a runaway graph (14 GB in six minutes); whatever
   replaces it must still do that.
+  Resolved 2026-10-14: a cap on resident memory. memory_cap() is now half
+  the machine's memory with no floor, and run_capped polls the film's
+  ffmpeg's VmRSS every 0.25 s, killing it past the cap; make_film then
+  dies saying so (one new message, 16 catalogs). RLIMIT_AS is gone, so a
+  caller's own ulimit -v still applies and nothing else limits address
+  space. Red: the old script under the 4 GB an 8 GB machine gave it
+  failed a four-scene windowed 1920x1080 trailer. Green: the new one,
+  with its cap set to that machine's 4 GB, made it whole at a 1.66 GB
+  peak. Gate step fin_s68 holds both halves; a copy counting VmSize
+  fails it.
   **Layman:** On a computer with little memory, a trailer with several windowed scenes may fail even though it needs little real memory.
   Kind: investigate.
   Source: in-session-2026-10-11 DEMO-0183 build.

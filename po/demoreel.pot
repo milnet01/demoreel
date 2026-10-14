@@ -787,6 +787,9 @@ msgstr ""
 msgid "making {output}, {seconds} seconds at {size}"
 msgstr ""
 
+msgid "ffmpeg used more than {size} GB of memory making the film, half this machine's, so it was stopped."
+msgstr ""
+
 msgid "ffmpeg could not make the film."
 msgstr ""
 
