@@ -1253,7 +1253,9 @@ def start_wf_recorder(env, wayland, framerate, output, logfile, monitor=None):
     -y stops it prompting before an overwrite. The encoder settings match
     start_ffmpeg's, so the two backends hand back the same kind of file. With
     `monitor` it records the sound as well, which lands 50-130 ms after the
-    picture (measured 2026-10-14, DEMO-0201).
+    picture (measured 2026-10-14, DEMO-0201). wf-recorder dates the sound
+    from after it has connected to the sound server, so the fix is its own;
+    DEMO-0106 section 13 has the measurements.
 
     It prints no progress reports, so the start signal is the line announcing
     its output, printed once the encoder has its first frame. The countdown is

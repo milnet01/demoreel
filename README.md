@@ -1327,7 +1327,9 @@ landed within 13 ms of each other over four runs; two runs at once did not hear
 each other. Each of those checks was broken in turn to see it fail. `--gpu
 --audio` verified on 2026-10-14 the same way: all three tones reached the
 video and none reached the speakers. Its sound is not yet in step: the beep
-landed 50 to 132 ms after the flash over four runs (DEMO-0201).
+landed 50 to 132 ms after the flash over four runs (DEMO-0201). The delay is
+`wf-recorder`'s: it dates its sound from after it has connected to the sound
+server, so the fix is waiting on `wf-recorder`.
 
 `--settle` is checked by the gate against a window that is one flat colour for
 four seconds and then draws: without it the blank check fails the run; with it

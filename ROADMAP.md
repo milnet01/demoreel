@@ -517,6 +517,16 @@ simplest case, and a gate proves it still records.
   Fix the offset, then give the step a --gpu run where --gpu is ready.
   Spec: DEMO-0106 section 13 names the fallback, ffmpeg recording the
   monitor beside wf-recorder and shifting by the two start times.
+  Progress (2026-10-14): the cause is in wf-recorder, not demoreel.
+  PulseReader::init reads the clock that dates sample zero after
+  pa_simple_new returns, and capture has begun inside that call. The
+  ffmpeg-beside-wf-recorder fallback was built as a prototype and measured
+  worse; upstream's wf-recorder pull request 353 measured no better.
+  DEMO-0106 section 13 holds the numbers. demoreel builds nothing for it.
+  This machine's hand-built wf-recorder now reads the clock before
+  connecting (patch clock-before-connect.diff in its build folder). The
+  item stays open until a wf-recorder release fixes it; then give the
+  gate's sync step a --gpu run.
   **Layman:** On a 3D app recorded with its sound, the sound comes a little after the picture, enough to notice on a click or a footstep.
   Kind: fix.
   Source: in-session-2026-10-14 DEMO-0196.

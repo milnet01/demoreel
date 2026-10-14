@@ -391,9 +391,19 @@ Rows live in `../reviews/DEMO-0106-app-sound-loop-log.md`.
   monitor, and its track is out of step. INV-5's fixture on `--gpu`,
   measured 2026-10-14 at load 15-19 on 12 CPUs: the beep landed 132, 50,
   121 and 61 ms after the flash; on Xvfb, straight after, 32, 4, 17 and
-  47 ms. `wf-recorder` logs no start times, so the fallback is the Xvfb
-  path's shape: record the monitor with ffmpeg beside it and shift by the
-  two start times. DEMO-0201 holds the fix.
+  47 ms. The cause is in `wf-recorder`: `PulseReader::init` reads the
+  clock that dates sample zero after `pa_simple_new` returns, and capture
+  has begun inside that call. Measured 2026-10-14 at 60 fps, alternating
+  runs at load 3-5: with the clock read before the call, the beep landed
+  37 ms after the flash on average over four runs, against 55 ms without.
+  Xvfb's floor in this fixture is about 34 ms. Recording the monitor with
+  ffmpeg beside `wf-recorder`, shifted by the two start times, was built
+  as a prototype and measured worse: +14 to -54 ms over four runs.
+  `wf-recorder` names no time for its first frame, and the moment it prints
+  `Output #0` wanders more than the error. Upstream's open fix,
+  `wf-recorder` pull request 353, measured no better: 57 ms on average over
+  five runs, against 50 ms without. So demoreel builds nothing for this,
+  and DEMO-0201 waits on `wf-recorder`.
 - **`pactl`'s package on each distro — settled 2026-10-10.** openSUSE,
   Debian, Ubuntu and Fedora ship it in `pulseaudio-utils`, Arch in
   `libpulse`. Looked up in each distro's own index: `rpm -qf` here,
