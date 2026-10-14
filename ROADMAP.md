@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=196 -->
+<!-- ants-roadmap-id-high-water: DEMO=197 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -395,6 +395,19 @@ simplest case, and a gate proves it still records.
   **Layman:** Check that recording a 3D app with its sound works, and fix the README sentence that says it could not be tested.
   Kind: doc-fix.
   Source: in-session-2026-10-13.
+
+- 📋 [DEMO-0197] **Publish demoreel to COPR for Fedora and to the AUR for Arch.**
+  Moved out of DEMO-0070 at the user's decision (2026-10-13), so that
+  DEMO-0068, 0069 and 0070 ship with 0.9.0. 0.9.0 attaches the .rpm and
+  the Arch package to the GitHub release, both tested by ./ci.sh
+  --packages. Publishing them waits on a COPR account and an AUR
+  account. packaging/demoreel.spec and packaging/PKGBUILD are the
+  starting point; obs-submit.sh is the model for a script run on this
+  machine after each release.
+  Dependencies: DEMO-0070.
+  **Layman:** Install demoreel on Fedora with dnf and on Arch from the AUR, without downloading a file by hand.
+  Kind: package.
+  Source: user-request-2026-10-13.
 
 ## Standing chores
 
