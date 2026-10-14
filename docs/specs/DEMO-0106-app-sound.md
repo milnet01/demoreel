@@ -117,8 +117,8 @@ packets while the other is read.
 `--gpu --audio` adds `--audio=<sink>.monitor -C aac` to
 `start_wf_recorder`, as one argument: `man wf-recorder` gives the device as
 optional (`-a, --audio [=DEVICE]`), so it must be attached.
-Whether that track is in step is not measured: `wf-recorder` does not start
-on this machine since the Packman update DEMO-0176 reports. § 13 holds it.
+That track is not in step: measured 2026-10-14, the beep landed 50 to
+132 ms after the flash. § 13 holds it.
 
 ### 4.4 Keeping sound and picture in step
 
@@ -295,7 +295,7 @@ README.
 - **A Flatpak without sound permission:** it makes no sound, the track is
   silent, and § 4.6's note says so.
 - **The log lacks a `start:` line:** § 4.4; the run fails.
-- **`--gpu --audio`:** unmeasured, § 13.
+- **`--gpu --audio`:** sound lands after the picture, § 13.
 
 ## 7. Tests
 
@@ -388,12 +388,12 @@ Rows live in `../reviews/DEMO-0106-app-sound-loop-log.md`.
 ## 13. Open questions
 
 - **`--gpu --audio` sync.** `wf-recorder --audio=` records the sink's
-  monitor, but whether its track is in step is not measured, because
-  `wf-recorder` does not start here (DEMO-0176). Build it, and run INV-5's
-  fixture on `--gpu` as a measurement, not a gate, once `wf-recorder`
-  starts. If it is out of step and `wf-recorder` logs no start
-  times, the fallback is the Xvfb path's shape: record the monitor with
-  ffmpeg beside it and shift by the two start times.
+  monitor, and its track is out of step. INV-5's fixture on `--gpu`,
+  measured 2026-10-14 at load 15-19 on 12 CPUs: the beep landed 132, 50,
+  121 and 61 ms after the flash; on Xvfb, straight after, 32, 4, 17 and
+  47 ms. `wf-recorder` logs no start times, so the fallback is the Xvfb
+  path's shape: record the monitor with ffmpeg beside it and shift by the
+  two start times. DEMO-0201 holds the fix.
 - **`pactl`'s package on each distro — settled 2026-10-10.** openSUSE,
   Debian, Ubuntu and Fedora ship it in `pulseaudio-utils`, Arch in
   `libpulse`. Looked up in each distro's own index: `rpm -qf` here,

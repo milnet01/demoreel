@@ -1323,8 +1323,9 @@ measuring: a tone from each of `paplay`, `aplay` and `pw-play` reached the
 video, and none reached the speakers; a white flash and the beep played with it
 landed within 13 ms of each other over four runs; two runs at once did not hear
 each other. Each of those checks was broken in turn to see it fail. `--gpu
---audio` is not yet verified, because `wf-recorder` does not start on this
-machine.
+--audio` verified on 2026-10-14 the same way: all three tones reached the
+video and none reached the speakers. Its sound is not yet in step: the beep
+landed 50 to 132 ms after the flash over four runs (DEMO-0201).
 
 `--settle` is checked by the gate against a window that is one flat colour for
 four seconds and then draws: without it the blank check fails the run; with it

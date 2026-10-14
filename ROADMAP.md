@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=200 -->
+<!-- ants-roadmap-id-high-water: DEMO=201 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -384,7 +384,7 @@ simplest case, and a gate proves it still records.
   Kind: doc.
   Source: user-request-2026-10-13.
 
-- 📋 [DEMO-0196] **Verify record --gpu --audio and update README's line saying wf-recorder does not start here.**
+- ✅ [DEMO-0196] **Verify record --gpu --audio and update README's line saying wf-recorder does not start here.**
   README's sound status says `--gpu --audio` is not yet verified
   because wf-recorder does not start on this machine. That was written
   before this machine's wf-recorder was rebuilt and Packman's
@@ -392,6 +392,13 @@ simplest case, and a gate proves it still records.
   ran on 2026-10-13. Record --gpu --audio once here, check the sound is in
   the video and not on the speakers, then correct the line. Noticed
   while building DEMO-0174, not fixed there (outside its change).
+  Resolved 2026-10-14. This machine's wf-recorder had broken again after
+  an ffmpeg update; rebuilt per the usual recipe, and --gpu -- vkcube showed
+  a shaded cube. record --gpu --audio with the gate's three-tone app: all
+  three players' streams on the run's own sink, three tones in an AAC 48 kHz
+  stereo track. Sync measured with the gate's flash-and-beep app: 50-132 ms
+  late, filed as DEMO-0201. README's status line, start_wf_recorder's
+  docstring and DEMO-0106 sections 4.3, 6 and 13 now say so.
   **Layman:** Check that recording a 3D app with its sound works, and fix the README sentence that says it could not be tested.
   Kind: doc-fix.
   Source: in-session-2026-10-13.
@@ -487,6 +494,23 @@ simplest case, and a gate proves it still records.
   Kind: fix.
   Source: in-session-2026-10-14 DEMO-0199.
   Lanes: check.
+
+- 📋 [DEMO-0201] **On record --gpu --audio, the sound lands 50-130 ms after the picture.**
+  Measured 2026-10-14 with the gate's flash-and-beep app (ci.sh step
+  "--audio keeps sound and picture in step"), four runs each, at load
+  15-19 on 12 CPUs: --gpu put the beep 132, 50, 121 and 61 ms after the
+  flash; the default backend, run straight after, 32, 4, 17 and 47 ms.
+  The sound is late every time on --gpu. start_wf_recorder passes
+  --audio to wf-recorder and has no counterpart to start_ffmpeg's
+  late-start correction (DEMO-0169); where the offset comes from is not
+  yet known. The gate's sync step runs on the default backend only.
+  Fix the offset, then give the step a --gpu run where --gpu is ready.
+  Spec: DEMO-0106 section 13 names the fallback, ffmpeg recording the
+  monitor beside wf-recorder and shifting by the two start times.
+  **Layman:** On a 3D app recorded with its sound, the sound comes a little after the picture, enough to notice on a click or a footstep.
+  Kind: fix.
+  Source: in-session-2026-10-14 DEMO-0196.
+  Lanes: record, gpu.
 
 ## Standing chores
 
