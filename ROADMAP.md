@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=198 -->
+<!-- ants-roadmap-id-high-water: DEMO=199 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -422,6 +422,27 @@ simplest case, and a gate proves it still records.
   **Layman:** The script that waits for the openSUSE build servers stops too early and reports a failure that is not real.
   Kind: fix.
   Source: in-session-2026-10-14.
+
+- 📋 [DEMO-0199] **check gives Mageia Fedora's RPM Fusion command, and README gives Leap Tumbleweed's Packman address.**
+  Found by the cold review of DEMO-0068's spec on 2026-10-14, outside
+  the amendment it gated, so filed here rather than fixed in the run.
+  (1) Mageia 10's /etc/os-release says ID_LIKE="mandriva fedora", so
+  distro_family() returns dnf and x264_advice prints "Fedora's
+  ffmpeg-free leaves it out. Enable RPM Fusion, then: sudo dnf swap
+  ffmpeg-free ffmpeg --allowerasing". Mageia's own route to a libx264
+  ffmpeg is not yet measured. Measured:
+  podman run mageia:10 grep ID_LIKE /etc/os-release. The OBS target's
+  expected text, "this ffmpeg has no libx264", never tests the advice.
+  (2) README § Install's Packman line uses the openSUSE_Tumbleweed path.
+  Leap 16.0 needs .../suse/openSUSE_Leap_16.0/ (measured 2026-10-14:
+  that path gives an ffmpeg with drawtext and libx264). DEMO-0068's
+  INV-6 now excuses Leap's text line on the strength of Packman, so a
+  Leap user following README gets the wrong repository. The 16
+  quick-start pages mirror the line.
+  Lanes: check, docs.
+  **Layman:** On Mageia and openSUSE Leap, demoreel's advice for getting a full ffmpeg points at the wrong place.
+  Kind: review-fix.
+  Source: review-contract-2026-10-14 DEMO-0068 spec loop 6.
 
 ## Standing chores
 

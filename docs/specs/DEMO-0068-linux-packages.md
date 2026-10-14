@@ -343,8 +343,8 @@ The container checks are run by `./ci.sh --packages` in every container of
   prints `record and shot: ready`. In the Fedora and openSUSE containers it
   exits 1, and its output carries `x264_advice`'s line for that distro.
   Measured 2026-10-08 with the required programs installed by hand: exactly
-  that, once a font was present. One exception, from OBS only: a target
-  whose `targets` text is `Packman` need not print the text line. Leap
+  that, once a font was present. One exception, from OBS only: the
+  `openSUSE_Leap_16.0` target need not print the text line. Leap
   16.0's own `ffmpeg` has no `drawtext` filter. Packman's `ffmpeg`, which
   `check` already names there, has `drawtext` and `libx264` (measured
   2026-10-14 in a clean `opensuse/leap:16.0` container).
@@ -402,8 +402,9 @@ The container checks are run by `./ci.sh --packages` in every container of
   in `packaging/obs/targets`: it adds the published repository with the
   repository's key trusted, never with signature checks off, installs
   `demoreel`, then runs INV-1's, INV-2's, INV-3's, INV-4's and INV-8's
-  checks. `demoreel check` must say what `targets` records for that target,
-  and `demoreel --version` must print the checkout's version, as must the
+  checks, and INV-6's text line with INV-6's one exception. `demoreel
+  check` must say what `targets` records for that target, and `demoreel
+  --version` must print the checkout's version, as must the
   package manager before its release part. It fails when any target fails,
   or still serves an older version. It reads a live repository, so the full
   gate does not run it. INV-5 is not repeated there: the recommended
