@@ -40,6 +40,13 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   now leads with the packages and keeps this as the other route. It is
   run as written in a clean container of each packaged distro.
 
+- **On openSUSE, `record --gpu` can write its video once wf-recorder's video library comes from Packman, and `demoreel check` names the package to install (DEMO-0174)**
+  openSUSE's own build of that library has no libx264, so wf-recorder
+  could not write the video. README § Install now gives the line
+  `sudo zypper install --from packman --allow-vendor-change libavcodec62`.
+  When wf-recorder loads a library with no libx264, `check` names the
+  package matching that library.
+
 ## [0.8.0] - 2026-10-13
 
 **Theme:** Trailers.

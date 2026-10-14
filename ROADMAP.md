@@ -4438,7 +4438,7 @@ system looks for them.
   Kind: doc.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0084] **Let a user verify that what they installed is what was released.**
+- ✅ [DEMO-0084] **Let a user verify that what they installed is what was released.**
   Once demoreel ships as packages and release files, a user needs a way to
   check that what they got is what this repository built. Publish
   checksums with each GitHub release, sign release tags, and add a build
@@ -4454,6 +4454,9 @@ system looks for them.
   the key to the GitHub account as a signing key (needs the
   admin:ssh_signing_key scope from the user), then ./ci.sh
   --release-check on 0.9.0.
+  Shipped with 0.9.0 (2026-10-14). The key is on the GitHub account
+  as a signing key ("demoreel release signing"). ./ci.sh --release-check
+  v0.9.0 runs straight after the release; a failure there reopens this.
   **Layman:** Downloads come with a way to check they are genuine and untampered.
   Kind: security.
   Source: user-request-2026-09-25.
