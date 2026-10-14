@@ -4463,7 +4463,7 @@ system looks for them.
   Kind: package.
   Source: user-request-2026-10-02.
 
-- 📋 [DEMO-0174] **Let record --gpu work when wf-recorder's libavcodec has no libx264.**
+- ✅ [DEMO-0174] **Let record --gpu work when wf-recorder's libavcodec has no libx264.**
   Decided by the user 2026-10-08, for the DEMO-0068 packaging design.
   openSUSE's wf-recorder links libavcodec.so.62, which has no libx264,
   and Packman ships no .so.62 build (only .so.63, which that wf-recorder
@@ -4525,6 +4525,10 @@ system looks for them.
   The vendor-swap test is done. Left: ./ci.sh --packages once the
   opensuse container's mirror serves Tumbleweed's metadata, then the full
   gate, then flip.
+  Shipped (2026-10-14): the opensuse container's mirror serves
+  Tumbleweed's metadata again; the full ./ci.sh passed on 61363a1,
+  every package container and the Ubuntu parity step included, and
+  61363a1 was pushed after the pre-push gate passed again.
   **Layman:** On openSUSE, recording a 3D app works with the distro's own packages.
   Kind: feature.
   Source: user-request-2026-10-08.
