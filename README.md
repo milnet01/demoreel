@@ -77,6 +77,12 @@ openSUSE and Arch. The package brings the programs demoreel drives from your
 distro's own repositories, and installs the manual page and tab completion.
 For any other distro, see [Install from source](#install-from-source).
 
+**To get each new version with your system's updates**, add demoreel's
+repository on the openSUSE Build Service instead of downloading a file:
+<https://download.opensuse.org/repositories/home:/milnet:/demoreel/>. It has
+a folder for openSUSE Tumbleweed and Leap 16.0, Fedora 43 and 44, Debian 12
+and 13, Ubuntu 22.04, 24.04 and 26.04, Arch and Mageia 10.
+
 **1. Download the package for your distro** from the
 [latest release](https://github.com/milnet01/demoreel/releases/latest): the
 `.deb` for Debian and Ubuntu, the `.rpm` for Fedora and openSUSE, or the
