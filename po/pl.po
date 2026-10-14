@@ -248,6 +248,9 @@ msgstr ""
 "Własny ffmpeg openSUSE go nie zawiera. Zainstaluj ffmpeg z repozytorium Packman,\n"
 "  w którym jest dostępny."
 
+msgid "Mageia's own ffmpeg leaves it out. The build in Mageia's tainted repositories has it:"
+msgstr "Własny ffmpeg Mageii go nie zawiera. Wersja z repozytoriów tainted Mageii go zawiera:"
+
 msgid "Fedora's ffmpeg-free leaves it out. Enable RPM Fusion, then:"
 msgstr "ffmpeg-free z Fedory go nie zawiera. Włącz RPM Fusion, a następnie:"
 

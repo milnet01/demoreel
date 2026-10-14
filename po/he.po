@@ -248,6 +248,9 @@ msgstr ""
 "ה־ffmpeg של openSUSE עצמה לא כולל אותו. יש להתקין ffmpeg ממאגר Packman,\n"
 "  שבו הוא כלול."
 
+msgid "Mageia's own ffmpeg leaves it out. The build in Mageia's tainted repositories has it:"
+msgstr "ה־ffmpeg של Mageia לא כולל אותו. הגרסה במאגרי tainted של Mageia כוללת אותו:"
+
 msgid "Fedora's ffmpeg-free leaves it out. Enable RPM Fusion, then:"
 msgstr "ffmpeg-free של Fedora לא כולל אותו. יש להפעיל את RPM Fusion, ואז:"
 

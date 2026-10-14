@@ -248,6 +248,9 @@ msgstr ""
 "openSUSE 자체 ffmpeg에는 이것이 빠져 있습니다. 이것이 포함된 Packman 저장소에서\n"
 "  ffmpeg을 설치하십시오."
 
+msgid "Mageia's own ffmpeg leaves it out. The build in Mageia's tainted repositories has it:"
+msgstr "Mageia 자체 ffmpeg에는 이것이 빠져 있습니다. Mageia의 tainted 저장소에 있는 빌드에는 들어 있습니다:"
+
 msgid "Fedora's ffmpeg-free leaves it out. Enable RPM Fusion, then:"
 msgstr "Fedora의 ffmpeg-free에는 이것이 빠져 있습니다. RPM Fusion을 켠 다음:"
 

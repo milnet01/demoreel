@@ -206,6 +206,9 @@ msgid ""
 "  which has it."
 msgstr ""
 
+msgid "Mageia's own ffmpeg leaves it out. The build in Mageia's tainted repositories has it:"
+msgstr ""
+
 msgid "Fedora's ffmpeg-free leaves it out. Enable RPM Fusion, then:"
 msgstr ""
 

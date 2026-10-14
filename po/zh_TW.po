@@ -248,6 +248,9 @@ msgstr ""
 "openSUSE 內建的 ffmpeg 沒有包含它。請改從 Packman 軟體庫安裝 ffmpeg，\n"
 "  那裡的版本有包含。"
 
+msgid "Mageia's own ffmpeg leaves it out. The build in Mageia's tainted repositories has it:"
+msgstr "Mageia 本身的 ffmpeg 沒有包含它。Mageia 的 tainted 軟體庫中的版本有包含它："
+
 msgid "Fedora's ffmpeg-free leaves it out. Enable RPM Fusion, then:"
 msgstr "Fedora 的 ffmpeg-free 沒有包含它。請啟用 RPM Fusion，然後執行："
 

@@ -16,4 +16,4 @@ xUbuntu_26.04        Ubuntu:26.04/universe  docker.io/library/ubuntu:26.04  apt 
 xUbuntu_24.04        Ubuntu:24.04/universe  docker.io/library/ubuntu:24.04  apt  0  record and shot: ready
 xUbuntu_22.04        Ubuntu:22.04/universe  docker.io/library/ubuntu:22.04  apt  0  record and shot: ready
 Arch                 Arch:Extra/standard  docker.io/library/archlinux:latest  pacman  0  record and shot: ready
-Mageia_10            Mageia:10/standard  docker.io/library/mageia:10  dnf  1  this ffmpeg has no libx264
+Mageia_10            Mageia:10/standard  docker.io/library/mageia:10  dnf  1  dnf distro-sync ffmpeg

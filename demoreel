@@ -1788,6 +1788,18 @@ def x264_advice(family):
     if family == "zypper":
         return "\n  " + tr("openSUSE's own ffmpeg leaves it out. Install ffmpeg from the "
                            "Packman repository,\n  which has it.")
+    if family == "dnf" and "mageia" in os_release_ids():
+        # Mageia's ID_LIKE names fedora, but RPM Fusion is not its route: its
+        # own tainted repositories carry an ffmpeg with libx264. Measured on
+        # x86_64 in a clean mageia:10 container (DEMO-0199); the repository
+        # names carry the architecture.
+        arch = os.uname().machine
+        return ("\n  " + tr("Mageia's own ffmpeg leaves it out. The build in Mageia's "
+                             "tainted repositories has it:")
+                + "\n    sudo dnf install dnf5-plugins"
+                + f"\n    sudo dnf config-manager setopt mageia-{arch}-tainted.enabled=1"
+                + f" updates-{arch}-tainted.enabled=1"
+                + "\n    sudo dnf distro-sync ffmpeg")
     if family == "dnf":
         return ("\n  " + tr("Fedora's ffmpeg-free leaves it out. Enable RPM Fusion, then:")
                 + "\n    sudo dnf swap ffmpeg-free ffmpeg --allowerasing")
@@ -1806,16 +1818,21 @@ def packman_advice(library, family):
             + soname[1] + soname[2])
 
 
-def distro_family():
-    """The package manager this distro uses, from /etc/os-release; None if
-    it is not one the table knows."""
+def os_release_ids():
+    """/etc/os-release's ID, then its ID_LIKE names; [] if it cannot be read."""
     try:
         lines = Path("/etc/os-release").read_text().splitlines()
     except OSError:
-        return None
+        return []
     fields = dict(line.split("=", 1) for line in lines if "=" in line)
     ids = [fields.get("ID", ""), *fields.get("ID_LIKE", "").split()]
-    for name in (i.strip('"') for i in ids):
+    return [i.strip('"') for i in ids]
+
+
+def distro_family():
+    """The package manager this distro uses, from /etc/os-release; None if
+    it is not one the table knows."""
+    for name in os_release_ids():
         family = DISTRO_FAMILIES.get(name)
         if family:
             return family
