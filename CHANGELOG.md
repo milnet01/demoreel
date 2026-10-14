@@ -12,6 +12,10 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-14
+
+**Theme:** Installs like any other program.
+
 ### Added
 
 - **Each release can be checked: its tag is signed, its files are listed in SHA256SUMS, and each has a GitHub build record** (DEMO-0084)
