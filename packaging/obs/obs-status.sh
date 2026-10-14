@@ -30,10 +30,13 @@ for ((i = 1; i <= max; i++)); do
     results=$(osc -A "$api" results "$project" "$package" 2>/dev/null || true)
     waiting=0
     # osc also lists each repository's own state, as package _repository.
-    # A trailing * marks a state about to change.
+    # A trailing * marks a state about to change, so it is still pending:
+    # straight after a submit every target reads "broken*", left over from
+    # before the upload (DEMO-0198).
     while read -r repo _arch pkg status _; do
         [ "${pkg:-}" = "$package" ] || continue
-        pending "${status%\*}" && waiting=1
+        case $status in *\*) waiting=1; continue ;; esac
+        pending "$status" && waiting=1
     done <<<"$results"
     grep -qw -- "$package" <<<"$results" && [ "$waiting" = 0 ] && break
     echo "[poll $i] still building"
