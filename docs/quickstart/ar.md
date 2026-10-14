@@ -86,6 +86,8 @@ sudo apt install cage xwayland wlr-randr wf-recorder
 sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 # Arch
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
+# Mageia، التي لا توجد فيها حزمة لـ cage أو wlr-randr أو wf-recorder
+sudo dnf install x11-server-xwayland
 ```
 
 **على openSUSE، شغّل سطر `libavcodec62` أيًّا كانت طريقة التثبيت.** فهو يأخذ
@@ -100,7 +102,7 @@ ffmpeg. نسخة openSUSE نفسها من هذه المكتبة بلا libx264. 
 sudo zypper install pulseaudio-utils
 # Debian و Ubuntu
 sudo apt install pulseaudio-utils
-# Fedora
+# Fedora و Mageia
 sudo dnf install pulseaudio-utils
 # Arch
 sudo pacman -S libpulse

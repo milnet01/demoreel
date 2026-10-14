@@ -1768,19 +1768,29 @@ PACKAGES = {
         "xauth": "xorg-x11-xauth", "Xvfb": "xorg-x11-server-Xvfb",
         "cage": "cage", "Xwayland": "xorg-x11-server-Xwayland",
         "wlr-randr": "wlr-randr", "wf-recorder": "wf-recorder", "pactl": "pulseaudio-utils"}),
+    # Mageia uses dnf under its own names, and packages no cage, wlr-randr or
+    # wf-recorder in any of its repositories: measured with dnf repoquery
+    # --whatprovides in a clean mageia:10 container on 2026-10-14 (DEMO-0200).
+    "mageia": ("sudo dnf install", {
+        "ffmpeg": "ffmpeg", "ffprobe": "ffmpeg", "xdotool": "xdotool",
+        "xauth": "xauth", "Xvfb": "x11-server-xvfb",
+        "Xwayland": "x11-server-xwayland", "pactl": "pulseaudio-utils"}),
     "pacman": ("sudo pacman -S", {
         "ffmpeg": "ffmpeg", "ffprobe": "ffmpeg", "xdotool": "xdotool",
         "xauth": "xorg-xauth", "Xvfb": "xorg-server-xvfb", "cage": "cage",
         "Xwayland": "xorg-xwayland", "wlr-randr": "wlr-randr",
         "wf-recorder": "wf-recorder", "pactl": "libpulse"}),
 }
-# /etc/os-release ID or ID_LIKE -> package manager.
+# /etc/os-release ID or ID_LIKE -> its row in PACKAGES: the package manager,
+# or the distro where it names packages its own way. Mageia's ID_LIKE says
+# fedora, so its ID has to be found first, and os_release_ids puts ID first.
 DISTRO_FAMILIES = {"opensuse": "zypper", "suse": "zypper", "debian": "apt",
-                   "ubuntu": "apt", "fedora": "dnf", "arch": "pacman"}
+                   "ubuntu": "apt", "fedora": "dnf", "arch": "pacman",
+                   "mageia": "mageia"}
 # Measured in containers the same day: the distros' own ffmpeg on openSUSE
 # (ffmpeg-8) and Fedora (ffmpeg-free) has no libx264 encoder; Packman's and
 # RPM Fusion's do (DEMO-0117). x264_advice says what to do about it.
-X264_FAMILIES = ("zypper", "dnf")
+X264_FAMILIES = ("zypper", "dnf", "mageia")
 
 
 def x264_advice(family):
@@ -1788,9 +1798,9 @@ def x264_advice(family):
     if family == "zypper":
         return "\n  " + tr("openSUSE's own ffmpeg leaves it out. Install ffmpeg from the "
                            "Packman repository,\n  which has it.")
-    if family == "dnf" and "mageia" in os_release_ids():
-        # Mageia's ID_LIKE names fedora, but RPM Fusion is not its route: its
-        # own tainted repositories carry an ffmpeg with libx264. Measured on
+    if family == "mageia":
+        # RPM Fusion is not Mageia's route: its own tainted repositories
+        # carry an ffmpeg with libx264. Measured on
         # x86_64 in a clean mageia:10 container (DEMO-0199); the repository
         # names carry the architecture.
         arch = os.uname().machine
@@ -1830,8 +1840,8 @@ def os_release_ids():
 
 
 def distro_family():
-    """The package manager this distro uses, from /etc/os-release; None if
-    it is not one the table knows."""
+    """This distro's row in PACKAGES, from /etc/os-release; None if it is
+    not one the table knows."""
     for name in os_release_ids():
         family = DISTRO_FAMILIES.get(name)
         if family:
@@ -1846,8 +1856,13 @@ def install_hint(programs):
         return ""
     command, names = PACKAGES[family]
     packages = list(dict.fromkeys(names[p] for p in programs if p in names))
-    hint = "\n  " + tr("Install with: {command}",
-                       command=f"{command} {' '.join(packages)}")
+    hint = ("\n  " + tr("Install with: {command}",
+                        command=f"{command} {' '.join(packages)}")
+            if packages else "")
+    unpackaged = [p for p in programs if p not in names]
+    if unpackaged:
+        hint += "\n  " + tr("This distro has no package for {programs}.",
+                            programs=", ".join(unpackaged))
     if "ffmpeg" in packages and family in X264_FAMILIES:
         hint += x264_advice(family)
     return hint

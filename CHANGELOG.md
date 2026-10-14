@@ -14,6 +14,12 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **`demoreel check` on Mageia names Mageia's own packages, and says which programs Mageia has no package for** (DEMO-0200)
+  Its install command asked for Fedora's package names, several of which
+  Mageia does not have. Mageia packages no cage, wlr-randr or
+  wf-recorder, so `--gpu` there needs them from elsewhere. README now
+  gives Mageia's install lines.
+
 - **`demoreel check` on Mageia gives Mageia's way to an ffmpeg with libx264, not Fedora's** (DEMO-0199)
   It used to print Fedora's RPM Fusion command. It now gives the commands
   that take ffmpeg from Mageia's tainted repositories.

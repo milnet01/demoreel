@@ -86,6 +86,8 @@ sudo apt install cage xwayland wlr-randr wf-recorder
 sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 # Arch
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
+# Mageia, שאין בה חבילה עבור cage, wlr-randr או wf-recorder
+sudo dnf install x11-server-xwayland
 ```
 
 **ב־openSUSE, יש להריץ את שורת `libavcodec62` בכל דרך התקנה.** היא לוקחת את
@@ -100,7 +102,7 @@ check` מציין במקום זאת את החבילה שיש להתקין.
 sudo zypper install pulseaudio-utils
 # Debian ו־Ubuntu
 sudo apt install pulseaudio-utils
-# Fedora
+# Fedora ו־Mageia
 sudo dnf install pulseaudio-utils
 # Arch
 sudo pacman -S libpulse

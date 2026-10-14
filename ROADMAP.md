@@ -463,7 +463,7 @@ simplest case, and a gate proves it still records.
   Kind: review-fix.
   Source: review-contract-2026-10-14 DEMO-0068 spec loop 6.
 
-- 📋 [DEMO-0200] **check's install command on Mageia names Fedora's packages, which Mageia does not have.**
+- ✅ [DEMO-0200] **check's install command on Mageia names Fedora's packages, which Mageia does not have.**
   Found while fixing DEMO-0199. Mageia 10's ID_LIKE names fedora, so
   install_hint uses PACKAGES["dnf"]. Measured 2026-10-14 in a clean
   mageia:10 container with dnf repoquery --whatprovides: ffmpeg,
@@ -473,6 +473,16 @@ simplest case, and a gate proves it still records.
   install xdotool xorg-x11-xauth cage xorg-x11-server-Xwayland
   wlr-randr wf-recorder". Measure Mageia's real names before writing
   them; some of the --gpu programs may not be packaged at all.
+  Resolved 2026-10-14. Measured in a clean mageia:10 container (dnf repoquery
+  --whatprovides, every repository enabled): xauth is xauth, Xvfb is
+  x11-server-xvfb, Xwayland is x11-server-xwayland; ffmpeg, xdotool and
+  pulseaudio-utils match Fedora; cage, wlr-randr and wf-recorder are in no
+  Mageia repository. PACKAGES has a mageia row, which DISTRO_FAMILIES finds
+  by ID before ID_LIKE's fedora. install_hint names programs the row lacks
+  in a new message ("This distro has no package for ..."), translated in
+  all 16 catalogs. README and the 16 quick-start pages carry Mageia's lines.
+  Old and new script side by side in mageia:10: old asked for Fedora names,
+  new asks for Mageia's and names the three it lacks.
   **Layman:** On Mageia, the command demoreel suggests for installing missing programs asks for packages under names Mageia does not use.
   Kind: fix.
   Source: in-session-2026-10-14 DEMO-0199.
@@ -4774,7 +4784,7 @@ covers both display backends and the Flatpak invocation.
   Kind: doc.
   Source: user-decision-2026-10-02.
 
-- 📋 [DEMO-0194] **On Mageia, demoreel check gives Fedora's ffmpeg advice.**
+- ✅ [DEMO-0194] **On Mageia, demoreel check gives Fedora's ffmpeg advice.**
   Measured 2026-10-13 in a clean mageia:10 container with the 0.9.0
   package installed: check exits 1 and says "sudo dnf swap ffmpeg-free
   ffmpeg --allowerasing". Mageia has no ffmpeg-free; its libx264 build
@@ -4784,6 +4794,10 @@ covers both display backends and the Flatpak invocation.
   po/ catalog. Mageia 10 is an OBS target (DEMO-0068 section 4.7);
   packaging/obs/targets expects only the "no libx264" line there until
   this is fixed, and then should expect the new advice.
+  Resolved 2026-10-14 by 34f1f94 (DEMO-0199), which is this item's fix:
+  check gives Mageia its tainted repositories, and packaging/obs/targets'
+  Mageia line expects the new advice. Found open after the fact; nothing
+  more to do.
   **Layman:** On Mageia, the setup check suggests a fix that only works on Fedora.
   Kind: fix.
   Source: in-session-2026-10-13.

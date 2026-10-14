@@ -74,6 +74,8 @@ sudo apt install cage xwayland wlr-randr wf-recorder
 sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 # Arch
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
+# Mageia（没有 cage、wlr-randr 和 wf-recorder 的软件包）
+sudo dnf install x11-server-xwayland
 ```
 
 **在 openSUSE 上，无论用哪种方式安装，都请运行 `libavcodec62` 这一行。** 它从上面为 ffmpeg 添加的 Packman 获取 wf-recorder 的视频库。openSUSE 自己构建的版本没有 libx264。如果 wf-recorder 加载的是更新的库，`demoreel check` 会改为指出要安装的软件包。
@@ -85,7 +87,7 @@ sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
 sudo zypper install pulseaudio-utils
 # Debian 和 Ubuntu
 sudo apt install pulseaudio-utils
-# Fedora
+# Fedora 和 Mageia
 sudo dnf install pulseaudio-utils
 # Arch
 sudo pacman -S libpulse

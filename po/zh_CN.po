@@ -260,6 +260,9 @@ msgstr "请安装一个包含 libx264 的 ffmpeg 版本。"
 msgid "Install with: {command}"
 msgstr "安装命令：{command}"
 
+msgid "This distro has no package for {programs}."
+msgstr "此发行版没有 {programs} 的软件包。"
+
 msgid "missing required program(s): {programs}"
 msgstr "缺少必需的程序：{programs}"
 

@@ -221,6 +221,9 @@ msgstr ""
 msgid "Install with: {command}"
 msgstr ""
 
+msgid "This distro has no package for {programs}."
+msgstr ""
+
 msgid "missing required program(s): {programs}"
 msgstr ""
 

@@ -87,6 +87,8 @@ sudo apt install cage xwayland wlr-randr wf-recorder
 sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 # Arch
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
+# Mageia (cage, wlr-randr, wf-recorder 패키지는 없습니다)
+sudo dnf install x11-server-xwayland
 ```
 
 **openSUSE에서는 어떻게 설치했든 `libavcodec62` 줄을 실행하세요.** 이 줄은 wf-recorder의 동영상 라이브러리를
@@ -100,7 +102,7 @@ sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
 sudo zypper install pulseaudio-utils
 # Debian 및 Ubuntu
 sudo apt install pulseaudio-utils
-# Fedora
+# Fedora 및 Mageia
 sudo dnf install pulseaudio-utils
 # Arch
 sudo pacman -S libpulse

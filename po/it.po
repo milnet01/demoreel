@@ -260,6 +260,9 @@ msgstr "Installare una versione di ffmpeg che includa libx264."
 msgid "Install with: {command}"
 msgstr "Installare con: {command}"
 
+msgid "This distro has no package for {programs}."
+msgstr "Questa distribuzione non ha alcun pacchetto per {programs}."
+
 msgid "missing required program(s): {programs}"
 msgstr "programmi obbligatori mancanti: {programs}"
 

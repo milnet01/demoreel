@@ -160,6 +160,8 @@ sudo apt install cage xwayland wlr-randr wf-recorder
 sudo dnf install cage xorg-x11-server-Xwayland wlr-randr wf-recorder
 # Arch
 sudo pacman -S cage xorg-xwayland wlr-randr wf-recorder
+# Mageia, which has no package for cage, wlr-randr or wf-recorder
+sudo dnf install x11-server-xwayland
 ```
 
 **On openSUSE, run the `libavcodec62` line however you installed.** It
@@ -175,7 +177,7 @@ reaches your speakers, and `--audio` can put that sound in the video:
 sudo zypper install pulseaudio-utils
 # Debian and Ubuntu
 sudo apt install pulseaudio-utils
-# Fedora
+# Fedora and Mageia
 sudo dnf install pulseaudio-utils
 # Arch
 sudo pacman -S libpulse
@@ -987,10 +989,13 @@ sudo apt install ffmpeg xdotool xauth xvfb
 sudo dnf install ffmpeg xdotool xorg-x11-xauth xorg-x11-server-Xvfb
 # Arch
 sudo pacman -S ffmpeg xdotool xorg-xauth xorg-server-xvfb
+# Mageia
+sudo dnf install ffmpeg xdotool xauth x11-server-xvfb
 ```
 
 On openSUSE and Fedora, take ffmpeg from Packman or RPM Fusion, as
-[Install](#install) shows. `--gpu` and sound need the programs listed there
+[Install](#install) shows. On Mageia, `demoreel check` names the
+repositories that have it. `--gpu` and sound need the programs listed there
 too.
 
 Text on a card or a caption also needs `fontconfig` and a font, which a

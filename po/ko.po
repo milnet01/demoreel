@@ -260,6 +260,9 @@ msgstr "libx264가 포함된 ffmpeg 빌드를 설치하십시오."
 msgid "Install with: {command}"
 msgstr "설치 명령: {command}"
 
+msgid "This distro has no package for {programs}."
+msgstr "이 배포판에는 {programs} 패키지가 없습니다."
+
 msgid "missing required program(s): {programs}"
 msgstr "필요한 프로그램이 없습니다: {programs}"
 
