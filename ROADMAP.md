@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=197 -->
+<!-- ants-roadmap-id-high-water: DEMO=198 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -408,6 +408,20 @@ simplest case, and a gate proves it still records.
   **Layman:** Install demoreel on Fedora with dnf and on Arch from the AUR, without downloading a file by hand.
   Kind: package.
   Source: user-request-2026-10-13.
+
+- 📋 [DEMO-0198] **obs-status.sh reads a state marked about to change as final, and fails before OBS has built.**
+  Measured 2026-10-14 on the first real submit of 0.9.0: straight after
+  obs-submit.sh, osc results printed "broken*" for every target, and
+  obs-status.sh failed on its first poll with "no logfile". osc results
+  -v showed "outdated (was: broken: no source uploaded)": the state
+  predates the upload and a rebuild was queued. pending() strips the
+  trailing * before matching, so a stale state reads as final. Fix: treat
+  any state ending in * as pending. Proof of the fix is that same first
+  poll waiting instead of failing.
+  Lanes: packaging.
+  **Layman:** The script that waits for the openSUSE build servers stops too early and reports a failure that is not real.
+  Kind: fix.
+  Source: in-session-2026-10-14.
 
 ## Standing chores
 
