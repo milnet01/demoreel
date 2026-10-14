@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=199 -->
+<!-- ants-roadmap-id-high-water: DEMO=200 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -426,7 +426,7 @@ simplest case, and a gate proves it still records.
   Kind: fix.
   Source: in-session-2026-10-14.
 
-- 📋 [DEMO-0199] **check gives Mageia Fedora's RPM Fusion command, and README gives Leap Tumbleweed's Packman address.**
+- ✅ [DEMO-0199] **check gives Mageia Fedora's RPM Fusion command, and README gives Leap Tumbleweed's Packman address.**
   Found by the cold review of DEMO-0068's spec on 2026-10-14, outside
   the amendment it gated, so filed here rather than fixed in the run.
   (1) Mageia 10's /etc/os-release says ID_LIKE="mandriva fedora", so
@@ -448,9 +448,35 @@ simplest case, and a gate proves it still records.
   INV-6's one exception). Before writing Mageia's advice, measure in a
   clean mageia:10 container how a Mageia user gets an ffmpeg with
   libx264; do not write it from memory.
+  Resolved 2026-10-14. Measured in a clean mageia:10 container:
+  core's ffmpeg has no libx264; tainted's has. check now prints, on
+  Mageia: sudo dnf install dnf5-plugins; sudo dnf config-manager setopt
+  mageia-<arch>-tainted.enabled=1 updates-<arch>-tainted.enabled=1;
+  sudo dnf distro-sync ffmpeg. Those three, run in the container, give
+  an ffmpeg with libx264. targets' Mageia line now expects "dnf
+  distro-sync ffmpeg", so --obs-check fails there until a release with
+  the fix is on the openSUSE Build Service. README and the 16
+  quick-start pages give Tumbleweed and Leap 16.0 their own Packman
+  lines; Leap's ran clean in opensuse/leap:16.0 (libx264 and drawtext).
+  Mageia's install command names Fedora packages: filed as DEMO-0200.
   **Layman:** On Mageia and openSUSE Leap, demoreel's advice for getting a full ffmpeg points at the wrong place.
   Kind: review-fix.
   Source: review-contract-2026-10-14 DEMO-0068 spec loop 6.
+
+- 📋 [DEMO-0200] **check's install command on Mageia names Fedora's packages, which Mageia does not have.**
+  Found while fixing DEMO-0199. Mageia 10's ID_LIKE names fedora, so
+  install_hint uses PACKAGES["dnf"]. Measured 2026-10-14 in a clean
+  mageia:10 container with dnf repoquery --whatprovides: ffmpeg,
+  xdotool and pulseaudio-utils resolve; xorg-x11-xauth,
+  xorg-x11-server-Xvfb, cage, xorg-x11-server-Xwayland, wlr-randr and
+  wf-recorder resolve to nothing. check printed "Install with: sudo dnf
+  install xdotool xorg-x11-xauth cage xorg-x11-server-Xwayland
+  wlr-randr wf-recorder". Measure Mageia's real names before writing
+  them; some of the --gpu programs may not be packaged at all.
+  **Layman:** On Mageia, the command demoreel suggests for installing missing programs asks for packages under names Mageia does not use.
+  Kind: fix.
+  Source: in-session-2026-10-14 DEMO-0199.
+  Lanes: check.
 
 ## Standing chores
 

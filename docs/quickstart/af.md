@@ -40,8 +40,11 @@ nie.** Dit laat die H.264-enkodeerder, libx264, weg. Kry ffmpeg van Packman op
 openSUSE, of van RPM Fusion op Fedora:
 
 ```sh
-# openSUSE
+# openSUSE Tumbleweed
 sudo zypper addrepo -cfp 90 https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Tumbleweed/ packman
+sudo zypper install --from packman --allow-vendor-change ffmpeg
+# openSUSE Leap 16.0
+sudo zypper addrepo -cfp 90 https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Leap_16.0/ packman
 sudo zypper install --from packman --allow-vendor-change ffmpeg
 # Fedora
 sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm

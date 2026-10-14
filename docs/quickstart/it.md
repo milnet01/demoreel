@@ -40,8 +40,11 @@ video.** Gli manca il codificatore H.264, libx264. Si prenda ffmpeg da Packman
 su openSUSE, oppure da RPM Fusion su Fedora:
 
 ```sh
-# openSUSE
+# openSUSE Tumbleweed
 sudo zypper addrepo -cfp 90 https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Tumbleweed/ packman
+sudo zypper install --from packman --allow-vendor-change ffmpeg
+# openSUSE Leap 16.0
+sudo zypper addrepo -cfp 90 https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Leap_16.0/ packman
 sudo zypper install --from packman --allow-vendor-change ffmpeg
 # Fedora
 sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm

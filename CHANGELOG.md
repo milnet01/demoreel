@@ -12,6 +12,16 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`demoreel check` on Mageia gives Mageia's way to an ffmpeg with libx264, not Fedora's** (DEMO-0199)
+  It used to print Fedora's RPM Fusion command. It now gives the commands
+  that take ffmpeg from Mageia's tainted repositories.
+
+- **README's install steps give openSUSE Leap 16.0 its own Packman repository** (DEMO-0199)
+  The one address it gave was Tumbleweed's. The translated quick-start
+  pages carry the same lines.
+
 ## [0.9.0] - 2026-10-14
 
 **Theme:** Installs like any other program.

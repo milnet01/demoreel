@@ -37,8 +37,11 @@ H.264 인코더인 libx264가 빠져 있기 때문입니다. openSUSE에서는 P
 Fedora에서는 RPM Fusion에서 ffmpeg을 받으십시오.
 
 ```sh
-# openSUSE
+# openSUSE Tumbleweed
 sudo zypper addrepo -cfp 90 https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Tumbleweed/ packman
+sudo zypper install --from packman --allow-vendor-change ffmpeg
+# openSUSE Leap 16.0
+sudo zypper addrepo -cfp 90 https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Leap_16.0/ packman
 sudo zypper install --from packman --allow-vendor-change ffmpeg
 # Fedora
 sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm

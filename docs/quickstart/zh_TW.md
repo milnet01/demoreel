@@ -28,8 +28,11 @@ makepkg -si
 **在 openSUSE 和 Fedora 上，發行版本身的 ffmpeg 無法寫出影片。** 它少了 H.264 編碼器 libx264。請在 openSUSE 上改用 Packman 的 ffmpeg，在 Fedora 上改用 RPM Fusion 的 ffmpeg：
 
 ```sh
-# openSUSE
+# openSUSE Tumbleweed
 sudo zypper addrepo -cfp 90 https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Tumbleweed/ packman
+sudo zypper install --from packman --allow-vendor-change ffmpeg
+# openSUSE Leap 16.0
+sudo zypper addrepo -cfp 90 https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Leap_16.0/ packman
 sudo zypper install --from packman --allow-vendor-change ffmpeg
 # Fedora
 sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm

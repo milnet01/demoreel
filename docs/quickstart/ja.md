@@ -28,8 +28,11 @@ makepkg -si
 **openSUSE と Fedora では、ディストリビューション標準の ffmpeg では動画を書き出せません。** H.264 エンコーダーの libx264 が入っていないためです。openSUSE では Packman から、Fedora では RPM Fusion から ffmpeg を入れてください。
 
 ```sh
-# openSUSE
+# openSUSE Tumbleweed
 sudo zypper addrepo -cfp 90 https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Tumbleweed/ packman
+sudo zypper install --from packman --allow-vendor-change ffmpeg
+# openSUSE Leap 16.0
+sudo zypper addrepo -cfp 90 https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Leap_16.0/ packman
 sudo zypper install --from packman --allow-vendor-change ffmpeg
 # Fedora
 sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
