@@ -527,6 +527,15 @@ simplest case, and a gate proves it still records.
   connecting (patch clock-before-connect.diff in its build folder). The
   item stays open until a wf-recorder release fixes it; then give the
   gate's sync step a --gpu run.
+  Open (2026-10-14), waiting on the user: post the drafted comment on
+  wf-recorder pull request 353
+  (/mnt/Emulators/claude-scratch/demo-0201/pr353-comment.md), or open a
+  one-line pull request of our own instead. Recommended: the comment.
+  Nothing is posted without the user's word. The user asked whether to
+  build our own wf-recorder; recommended against (a compiled fork per
+  distro, tracking ffmpeg's API, for about 15-20 ms), unless upstream
+  stays unmerged for months, and then asking distros to carry the patch
+  first. The user has not decided.
   **Layman:** On a 3D app recorded with its sound, the sound comes a little after the picture, enough to notice on a click or a footstep.
   Kind: fix.
   Source: in-session-2026-10-14 DEMO-0196.
