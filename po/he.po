@@ -972,8 +972,8 @@ msgid "video file to write (default: ./<app>-<timestamp>.mp4)"
 msgstr "קובץ הווידאו לכתיבה (ברירת מחדל: ./<app>-<timestamp>.mp4)"
 
 #. argparse formats this text with %
-msgid "seconds to record; 0 means until `demoreel stop` (default: 30)"
-msgstr "כמה שניות להקליט; 0 פירושו עד `demoreel stop` (ברירת מחדל: 30)"
+msgid "seconds to record, counted from when the -a steps finish; 0 means until `demoreel stop` (default: 30)"
+msgstr "כמה שניות להקליט, נספרות מסיום שלבי -a; 0 פירושו עד `demoreel stop` (ברירת מחדל: 30)"
 
 #. argparse formats this text with %
 msgid "virtual display size, even numbers (default: 1600x1000)"

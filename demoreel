@@ -4710,7 +4710,8 @@ def build_parser():
                      help=tr_help("video file to write (default: "
                                   "./<app>-<timestamp>.mp4)"))
     rec.add_argument("-d", "--duration", type=float, default=30,
-                     help=tr_help("seconds to record; 0 means until `demoreel stop` "
+                     help=tr_help("seconds to record, counted from when the -a steps "
+                                  "finish; 0 means until `demoreel stop` "
                                   "(default: 30)"))
     rec.add_argument("-s", "--size", default="1600x1000",
                      help=tr_help("virtual display size, even numbers "

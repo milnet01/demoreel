@@ -906,7 +906,7 @@ msgid "video file to write (default: ./<app>-<timestamp>.mp4)"
 msgstr ""
 
 #. argparse formats this text with %
-msgid "seconds to record; 0 means until `demoreel stop` (default: 30)"
+msgid "seconds to record, counted from when the -a steps finish; 0 means until `demoreel stop` (default: 30)"
 msgstr ""
 
 #. argparse formats this text with %

@@ -966,8 +966,8 @@ msgid "video file to write (default: ./<app>-<timestamp>.mp4)"
 msgstr "書き出す動画ファイル (既定値: ./<app>-<timestamp>.mp4)"
 
 #. argparse formats this text with %
-msgid "seconds to record; 0 means until `demoreel stop` (default: 30)"
-msgstr "録画する秒数。0 なら `demoreel stop` まで (既定値: 30)"
+msgid "seconds to record, counted from when the -a steps finish; 0 means until `demoreel stop` (default: 30)"
+msgstr "録画する秒数。-a の手順が終わった時点から数える。0 なら `demoreel stop` まで (既定値: 30)"
 
 #. argparse formats this text with %
 msgid "virtual display size, even numbers (default: 1600x1000)"
