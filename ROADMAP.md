@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=207 -->
+<!-- ants-roadmap-id-high-water: DEMO=208 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -637,6 +637,19 @@ simplest case, and a gate proves it still records.
   **Layman:** A recording can show a right-click menu being opened.
   Kind: feature.
   Source: claude-config relay of an album-builder field report, 2026-10-15.
+
+- 📋 [DEMO-0208] **Check the two new messages' translations with Gemini in Chrome.**
+  The user said "check now" on 2026-10-15; it stopped because the Claude
+  in Chrome extension was not connected. The messages: the libx264
+  timeout line from ee853fc (DEMO-0202) and the -d help line from
+  4d7ff8b and c3ef6f8, in all 16 po files. A list of both, per language,
+  is in /mnt/Emulators/claude-scratch/gemini-check.txt. Method: the
+  memory note translation-check-via-gemini. A flag like -a stays a
+  separate word; a changed msgstr needs msgfmt -c and the full gate.
+  **Layman:** Have a second AI read the newest translated messages, so wrong wording gets caught.
+  Kind: chore.
+  Source: user-request-2026-10-15.
+  Lanes: po.
 
 ## Standing chores
 
