@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=206 -->
+<!-- ants-roadmap-id-high-water: DEMO=207 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -619,6 +619,18 @@ simplest case, and a gate proves it still records.
   Kind: investigate.
   Source: peer-report-2026-10-15 rusty-psn via ants-terminal-95.
   Lanes: actions.
+
+- 📋 [DEMO-0207] **Let the click step press the right or middle button, and let drag use them.**
+  album-builder needed a right-click and a drag between two apps, and
+  put xdotool calls inside its launched command to get them. `click`
+  presses button 1 only (`xdotool click 1` in run_action). A trailing
+  `right` or `middle` word on `click` and `drag` would cover it; it is
+  a scripted step, which the README already allows. Not yet designed.
+  The same report said -d 15 gave a 29.1 s video: README's -d row says
+  the count starts when the steps finish, so that one is by design.
+  **Layman:** A recording can show a right-click menu being opened.
+  Kind: feature.
+  Source: claude-config relay of an album-builder field report, 2026-10-15.
 
 ## Standing chores
 
