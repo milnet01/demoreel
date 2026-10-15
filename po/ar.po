@@ -264,7 +264,7 @@ msgid "This distro has no package for {programs}."
 msgstr "لا توجد في هذه التوزيعة حزمة لـ {programs}."
 
 msgid "could not tell whether this ffmpeg has libx264: asking it took over {seconds}s."
-msgstr "تعذّر معرفة ما إذا كان ffmpeg هذا يحتوي على libx264: استغرق سؤاله أكثر من {seconds} ثانية."
+msgstr "تعذّر معرفة ما إذا كان ffmpeg هذا يحتوي على libx264: استغرق الاستعلام عنه أكثر من {seconds} ثانية."
 
 msgid "missing required program(s): {programs}"
 msgstr "برامج مطلوبة غير موجودة: {programs}"

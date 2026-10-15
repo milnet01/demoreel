@@ -264,7 +264,7 @@ msgid "This distro has no package for {programs}."
 msgstr "此發行版沒有 {programs} 的套件。"
 
 msgid "could not tell whether this ffmpeg has libx264: asking it took over {seconds}s."
-msgstr "無法判斷此 ffmpeg 是否有 libx264：詢問花了超過 {seconds} 秒。"
+msgstr "無法判斷此 ffmpeg 是否有 libx264：查詢花了超過 {seconds} 秒。"
 
 msgid "missing required program(s): {programs}"
 msgstr "缺少必要的程式：{programs}"

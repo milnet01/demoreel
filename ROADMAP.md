@@ -638,7 +638,7 @@ simplest case, and a gate proves it still records.
   Kind: feature.
   Source: claude-config relay of an album-builder field report, 2026-10-15.
 
-- 📋 [DEMO-0208] **Check the two new messages' translations with Gemini in Chrome.**
+- ✅ [DEMO-0208] **Check the two new messages' translations with Gemini in Chrome.**
   The user said "check now" on 2026-10-15; it stopped because the Claude
   in Chrome extension was not connected. The messages: the libx264
   timeout line from ee853fc (DEMO-0202) and the -d help line from
@@ -646,6 +646,10 @@ simplest case, and a gate proves it still records.
   is in /mnt/Emulators/claude-scratch/gemini-check.txt. Method: the
   memory note translation-check-via-gemini. A flag like -a stays a
   separate word; a changed msgstr needs msgfmt -c and the full gate.
+  Done 2026-10-15. Gemini passed 26 of 32 lines. It flagged the libx264
+  line in ar, es, he, pt_BR, zh_CN and zh_TW for "asking" ffmpeg as if
+  it were a person; each now uses the word for a query. The catalogs
+  stay drafts: a Gemini pass is not a native check (DEMO-0060).
   **Layman:** Have a second AI read the newest translated messages, so wrong wording gets caught.
   Kind: chore.
   Source: user-request-2026-10-15.
