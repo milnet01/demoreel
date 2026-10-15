@@ -596,7 +596,7 @@ simplest case, and a gate proves it still records.
   Kind: chore.
   Source: token-ideas-2026-10-15.
 
-- 💭 [DEMO-0205] **Let shot keep only one region of the picture, with --region x,y,w,h.**
+- 📋 [DEMO-0205] **Let shot keep only one region of the picture, with --region x,y,w,h.**
   Asked for by doom-ants, Rolodex and rusty-psn through the 2026-10-15
   token survey: doom-ants measured six PNGs of 190K-420K characters as
   95% of one session's reads. Needs the user's word first: README
@@ -604,6 +604,12 @@ simplest case, and a gate proves it still records.
   a clip in 2.0.0. A region of a still taken at capture is narrower than
   that, but it is the same word. Today a caller can crop the PNG with
   ffmpeg before reading it.
+  User 2026-10-15: build it. Their words: "Cropping makes sense to add as
+  a feature. Not sure why cropping isn't allowed. It is up to the person
+  using this app to get the image / video they require." So the README
+  § What it will never do line against crop goes, for stills and for
+  video (video cropping is DEMO-0151). That README edit is a contract
+  change: gate it with review-contract before building.
   **Layman:** A screenshot could hold just the part of the app being checked, so a session reading it pays for a small picture instead of a big one.
   Kind: feature.
   Source: peer-request-2026-10-15 ants-terminal-95 token survey.
