@@ -297,14 +297,15 @@ fi
 if [ "${1:-}" = "--summary" ]; then
     log=${2:?usage: ./ci.sh --summary LOG}
     awk '
-        /^=== .* ===$/ { steps++; name = $0; n = 0 }
+        /^=== .* ===$/ { steps++; name = $0; n = 0; passed = /checks passed/ }
+        /gate FAILED/ { passed = 0 }
         { line[++n] = $0 }
         tolower($0) ~ /skipped/ && !/^=== / { skips = skips "  " name ": " $0 "\n" }
         NF { last = $0 }
         END {
             printf "%d steps; last line: %s\n", steps, last
             if (skips != "") printf "skipped:\n%s", skips
-            if (last ~ /^=== .*checks passed.* ===$/) exit
+            if (passed) exit
             print "stopped in:"
             if (n > 60) print "  [" n - 60 " lines of this step left out]"
             for (i = (n > 60 ? n - 59 : 1); i <= n; i++) print line[i]
