@@ -29,6 +29,10 @@ subset, which a documentation-only push selects. `./ci.sh --finishing` runs
 only the finishing commands' checks, which need no display; it is for working
 on them, and the full gate runs them too.
 
+To read a gate's saved output, such as a `cc-job` log, run `./ci.sh --summary
+<log>` rather than reading the log. It prints the steps that skipped and, on a
+failure, only the step that failed.
+
 The full gate ends by running itself again in a local `ubuntu:24.04` image
 built from the same package list the workflow installs (`./ci.sh
 --ci-packages`), so a difference in GitHub's older packages fails here first.

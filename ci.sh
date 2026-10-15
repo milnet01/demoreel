@@ -288,6 +288,30 @@ if [ "${1:-}" = "--docs-glob" ]; then
     exit 0
 fi
 
+# ./ci.sh --summary LOG reads a gate's saved output and prints only what a
+# reader needs: how many steps ran, every step that skipped, the last line,
+# and, when the gate did not pass, the output of the step it stopped in (the
+# last `===` header; for a failed Ubuntu re-run, the header inside its output).
+# For a session reading a cc-job or pre-push log: the whole log costs far more
+# to read than it says.
+if [ "${1:-}" = "--summary" ]; then
+    log=${2:?usage: ./ci.sh --summary LOG}
+    awk '
+        /^=== .* ===$/ { steps++; name = $0; n = 0 }
+        { line[++n] = $0 }
+        tolower($0) ~ /skipped/ && !/^=== / { skips = skips "  " name ": " $0 "\n" }
+        NF { last = $0 }
+        END {
+            printf "%d steps; last line: %s\n", steps, last
+            if (skips != "") printf "skipped:\n%s", skips
+            if (last ~ /^=== .*checks passed.* ===$/) exit
+            print "stopped in:"
+            if (n > 60) print "  [" n - 60 " lines of this step left out]"
+            for (i = (n > 60 ? n - 59 : 1); i <= n; i++) print line[i]
+        }' "$log"
+    exit 0
+fi
+
 if [ "${1:-}" = "--ruff-version" ]; then
     printf '%s\n' "$RUFF_VERSION"
     exit 0

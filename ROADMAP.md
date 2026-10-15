@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=203 -->
+<!-- ants-roadmap-id-high-water: DEMO=206 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -581,6 +581,44 @@ simplest case, and a gate proves it still records.
   Kind: fix.
   Source: in-session-2026-10-15 DEMO-0202.
   Lanes: check.
+
+- ✅ [DEMO-0204] **ci.sh could print a short summary instead of every step's output.**
+  A gate's whole log lands in a session's context when it is read. A
+  --quiet mode printing one PASS/FAIL/SKIP line per step, plus the full
+  output of a failing step only, would keep that out. The pre-push hook
+  already writes the full log to a file.
+  Resolved (2026-10-15) by a simpler route than a quiet mode: `./ci.sh
+  --summary LOG` reads a saved gate log and prints the step count, every
+  skipped step, and on a failure only the failing step (its last 60
+  lines). The gate's own output is unchanged. CLAUDE.md tells sessions
+  to use it.
+  **Layman:** The automatic checks print a lot of text, and an AI session pays to read it; a short summary would be cheaper.
+  Kind: chore.
+  Source: token-ideas-2026-10-15.
+
+- 💭 [DEMO-0205] **Let shot keep only one region of the picture, with --region x,y,w,h.**
+  Asked for by doom-ants, Rolodex and rusty-psn through the 2026-10-15
+  token survey: doom-ants measured six PNGs of 190K-420K characters as
+  95% of one session's reads. Needs the user's word first: README
+  § What it will never do rules out crop now, and DEMO-0151 puts cropping
+  a clip in 2.0.0. A region of a still taken at capture is narrower than
+  that, but it is the same word. Today a caller can crop the PNG with
+  ffmpeg before reading it.
+  **Layman:** A screenshot could hold just the part of the app being checked, so a session reading it pays for a small picture instead of a big one.
+  Kind: feature.
+  Source: peer-request-2026-10-15 ants-terminal-95 token survey.
+  Lanes: shot.
+
+- 📋 [DEMO-0206] **Find out why -a key presses did not reach an egui/winit app, while type and click did.**
+  Reported second-hand by rusty-psn: `-a 'key ctrl+s'` had no effect on
+  an egui/winit app on the private display. Not yet reproduced. First
+  step: reproduce with a small winit app on both backends. A known cause
+  to test: winit reads keys through XKB/XInput2, and xdotool key sends
+  XTEST events that can miss there when no keymap or focus is set.
+  **Layman:** One app ignored the scripted key presses, such as Ctrl+S, though typed text and clicks reached it.
+  Kind: investigate.
+  Source: peer-report-2026-10-15 rusty-psn via ants-terminal-95.
+  Lanes: actions.
 
 ## Standing chores
 
