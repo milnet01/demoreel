@@ -263,6 +263,9 @@ msgstr "インストール方法: {command}"
 msgid "This distro has no package for {programs}."
 msgstr "このディストリビューションには {programs} のパッケージがありません。"
 
+msgid "could not tell whether this ffmpeg has libx264: asking it took over {seconds}s."
+msgstr "この ffmpeg に libx264 があるか判断できませんでした。問い合わせに {seconds}秒以上かかりました。"
+
 msgid "missing required program(s): {programs}"
 msgstr "必要なプログラムがありません: {programs}"
 

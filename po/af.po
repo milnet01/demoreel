@@ -263,6 +263,9 @@ msgstr "Installeer met: {command}"
 msgid "This distro has no package for {programs}."
 msgstr "Hierdie distro het geen pakket vir {programs} nie."
 
+msgid "could not tell whether this ffmpeg has libx264: asking it took over {seconds}s."
+msgstr "kon nie sê of hierdie ffmpeg libx264 het nie: om dit te vra, het langer as {seconds}s geduur."
+
 msgid "missing required program(s): {programs}"
 msgstr "vereiste program(me) ontbreek: {programs}"
 

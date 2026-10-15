@@ -263,6 +263,9 @@ msgstr "להתקנה: {command}"
 msgid "This distro has no package for {programs}."
 msgstr "בהפצה זו אין חבילה עבור {programs}."
 
+msgid "could not tell whether this ffmpeg has libx264: asking it took over {seconds}s."
+msgstr "לא ניתן היה לדעת אם ל־ffmpeg הזה יש libx264: השאלה ארכה יותר מ־{seconds} שניות."
+
 msgid "missing required program(s): {programs}"
 msgstr "חסרות תוכניות נדרשות: {programs}"
 

@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=202 -->
+<!-- ants-roadmap-id-high-water: DEMO=203 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -212,6 +212,11 @@ simplest case, and a gate proves it still records.
   which fits memory pressure evicting ffmpeg's libraries. Still unproven.
   If it recurs, one fix that does not touch STOP_GRACE is to register
   before the ffmpeg check.
+  Recurred 2026-10-15 at about 09:40, in the gate's ubuntu:24.04 re-run
+  (podman), right after the --packages step's ten container installs.
+  The native run of the same gate passed the step minutes earlier. Load
+  at the start of the gate was 1.35; iostat and uptime were not captured
+  at the miss.
   **Layman:** Once, the automatic checks asked a recording to stop so quickly that it was not found; it has not happened again.
   Kind: investigate.
   Source: in-session-2026-10-02.
@@ -536,12 +541,15 @@ simplest case, and a gate proves it still records.
   distro, tracking ffmpeg's API, for about 15-20 ms), unless upstream
   stays unmerged for months, and then asking distros to carry the patch
   first. The user has not decided.
+  Progress (2026-10-15): the user chose to post the measurements on
+  wf-recorder pull request 353 rather than open a separate one. Posted:
+  https://github.com/ammen99/wf-recorder/pull/353#issuecomment-6186368958
   **Layman:** On a 3D app recorded with its sound, the sound comes a little after the picture, enough to notice on a click or a footstep.
   Kind: fix.
   Source: in-session-2026-10-14 DEMO-0196.
   Lanes: record, gpu.
 
-- 📋 [DEMO-0202] **On a slow machine, check says ready when it could not tell whether ffmpeg has libx264.**
+- ✅ [DEMO-0202] **On a slow machine, check says ready when it could not tell whether ffmpeg has libx264.**
   has_libx264() returns True when `ffmpeg -encoders` times out
   (CALL_TIMEOUT, 10 s since 14d5af9): "cannot tell; let the recording
   itself say what is wrong". For record that is a deliberate choice, but
@@ -553,9 +561,25 @@ simplest case, and a gate proves it still records.
   original DEMO-0199 session's). check should report "could not tell"
   as its own answer, as SampleError does for the blank check (DEMO-0033),
   not fold it into ready.
+  Resolved (2026-10-15): has_libx264() answers None on a timeout; check
+  reports "could not tell whether this ffmpeg has libx264" as NOT READY
+  on the record, --gpu and finishing lines, and record and edit still go
+  ahead. ci.sh step "check says when it could not tell whether ffmpeg
+  has libx264".
   **Layman:** On a very busy computer, the setup check can say everything is ready when it actually ran out of time checking.
   Kind: fix.
   Source: in-session-2026-10-14 DEMO-0199 push.
+  Lanes: check.
+
+- 📋 [DEMO-0203] **On a slow machine, check says --audio is ready when it could not tell whether ffmpeg reads from a sound server.**
+  DEMO-0202's shape, one probe over: has_pulse_input() returns True when
+  `ffmpeg -devices` times out, and audio_problems() then reports
+  "--audio: ready". Found while fixing DEMO-0202, not seen failing. The
+  fix is the same: a third answer for check, while record --audio still
+  goes ahead on it.
+  **Layman:** On a very busy computer, the setup check can say sound recording is ready when it actually ran out of time checking.
+  Kind: fix.
+  Source: in-session-2026-10-15 DEMO-0202.
   Lanes: check.
 
 ## Standing chores

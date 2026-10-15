@@ -5031,6 +5031,35 @@ set -e
 }
 echo "check reports ready here, and names the install command when it is not"
 
+step "check says when it could not tell whether ffmpeg has libx264"
+# DEMO-0202. A probe that times out used to read as "has libx264", so on a
+# loaded machine check printed ready without knowing. An ffmpeg that is slow
+# to list its encoders, under a one-second timeout, must give neither the
+# ready line nor the no-libx264 one, but say it could not tell.
+mkdir -p "$tmp/slowx264"
+printf '#!/bin/sh\ncase "$*" in *-encoders*) sleep 3 ;;\n*) exec %s "$@" ;; esac\n' \
+    "$(command -v ffmpeg)" >"$tmp/slowx264/ffmpeg"
+chmod +x "$tmp/slowx264/ffmpeg"
+PATH="$tmp/slowx264:$PATH" python3 - 2>"$tmp/check-slow.err" <<'SLOWPY' || true
+import importlib.machinery, importlib.util
+
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+demoreel = importlib.util.module_from_spec(
+    importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(demoreel)
+demoreel.CALL_TIMEOUT = 1
+demoreel.display_problem = lambda: []  # a display is not what this tests
+demoreel.cmd_check(None)
+SLOWPY
+! grep -q 'record and shot: ready' "$tmp/check-slow.err" \
+    && ! grep -q 'has no libx264' "$tmp/check-slow.err" \
+    && [ "$(grep -c 'could not tell whether this ffmpeg has libx264' "$tmp/check-slow.err")" -ge 3 ] || {
+    echo "check did not say it could not tell whether ffmpeg has libx264:" >&2
+    cat "$tmp/check-slow.err" >&2
+    exit 1
+}
+echo "check says it could not tell when ffmpeg is too slow to answer"
+
 # DEMO-0106 INV-8. check says whether --audio can record, and like --gpu's
 # line it never changes the exit status. $nosound points both sound servers
 # at nothing (the "no sound server" step).

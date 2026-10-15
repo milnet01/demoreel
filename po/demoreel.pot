@@ -224,6 +224,9 @@ msgstr ""
 msgid "This distro has no package for {programs}."
 msgstr ""
 
+msgid "could not tell whether this ffmpeg has libx264: asking it took over {seconds}s."
+msgstr ""
+
 msgid "missing required program(s): {programs}"
 msgstr ""
 

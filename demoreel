@@ -1694,7 +1694,7 @@ def private_sound(audio, name):
 
 def has_pulse_input():
     """Whether this ffmpeg can read from a sound server; True if it cannot
-    tell, as has_libx264 does."""
+    tell, so a run is not stopped on a guess."""
     try:
         devices = subprocess.run(["ffmpeg", "-hide_banner", "-devices"],
                                  capture_output=True, text=True,
@@ -1870,13 +1870,26 @@ def install_hint(programs):
 
 
 def has_libx264():
+    """Whether this ffmpeg has libx264; None if it cannot tell. A run goes
+    ahead on None and lets the recording say what is wrong; `check` says it
+    could not tell, never ready (DEMO-0202)."""
     try:
         encoders = subprocess.run(["ffmpeg", "-hide_banner", "-encoders"],
                                   capture_output=True, text=True,
                                   timeout=CALL_TIMEOUT, check=False).stdout
     except subprocess.TimeoutExpired:
-        return True  # cannot tell; let the recording itself say what is wrong
+        return None
     return " libx264 " in encoders
+
+
+def x264_problem(uses):
+    """Why check cannot call this ffmpeg ready for libx264, with `uses` the
+    sentence saying what needs it; None if it has libx264."""
+    found = has_libx264()
+    if found is None:
+        return tr("could not tell whether this ffmpeg has libx264: asking it "
+                  "took over {seconds}s.", seconds=CALL_TIMEOUT)
+    return None if found else uses + x264_advice(distro_family())
 
 
 def linked_library(program, stem):
@@ -1911,8 +1924,8 @@ def start_failure(program):
 def has_encoder(library, encoder):
     """Whether the libavcodec at `library` has `encoder`. wf-recorder loads
     libavcodec itself rather than running ffmpeg, so the ffmpeg program having
-    libx264 says nothing about it (DEMO-0171). True if it cannot tell, as
-    has_libx264 does."""
+    libx264 says nothing about it (DEMO-0171). True if it cannot tell, so a
+    run is not stopped on a guess."""
     try:
         find = ctypes.CDLL(library).avcodec_find_encoder_by_name
     except (OSError, AttributeError):
@@ -1940,7 +1953,7 @@ def prepare(a, suffix):
     if missing:
         die(tr("missing required program(s): {programs}", programs=", ".join(missing))
             + install_hint(missing))
-    if recording and not has_libx264():
+    if recording and has_libx264() is False:
         die(tr("this ffmpeg cannot encode H.264 with libx264, which every "
                "recording uses.") + x264_advice(distro_family()))
     if getattr(a, "audio", False):
@@ -2539,9 +2552,10 @@ def cmd_check(a):
                    if shutil.which(t) is None]
         problems = [tr("missing {programs}", programs=", ".join(missing))
                     + install_hint(missing)] if missing else []
-        if "ffmpeg" not in missing and not has_libx264():
-            problems.append(tr("this ffmpeg has no libx264, which every recording "
-                               "uses.") + x264_advice(distro_family()))
+        x264 = None if "ffmpeg" in missing else x264_problem(
+            tr("this ffmpeg has no libx264, which every recording uses."))
+        if x264:
+            problems.append(x264)
         failure = (start_failure("wf-recorder")
                    if gpu and "wf-recorder" not in missing else None)
         if failure:
@@ -4273,7 +4287,7 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
     place only when it is whole, so a failure leaves nothing at -o.
     """
     finishing_tools()
-    if not has_libx264():
+    if has_libx264() is False:
         die(tr("this ffmpeg cannot encode H.264 with libx264, which every video "
                "uses.") + x264_advice(distro_family()))
     output = finishing_output(
@@ -4609,9 +4623,7 @@ def finishing_problems():
     if missing:
         why = tr("missing {programs}", programs=", ".join(missing)) + install_hint(missing)
         return why, tr("needs ffmpeg first")
-    videos = None if has_libx264() else (
-        tr("this ffmpeg has no libx264, which every video uses.")
-        + x264_advice(distro_family()))
+    videos = x264_problem(tr("this ffmpeg has no libx264, which every video uses."))
     workdir = Path(tempfile.mkdtemp(prefix="check-", dir=state_dir()))
     try:
         (workdir / "text.txt").write_text("demoreel")
