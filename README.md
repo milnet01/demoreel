@@ -1404,6 +1404,14 @@ need no display. Each holds one sentence of
 text and fades show, a film's length, what is refused, and that a failure
 leaves nothing behind. The full gate runs them too.
 
+**A new option has to be written in several files, and one command lists
+them.** `./ci.sh --option-places --zoom poster` names each place an option of
+`poster` must appear: the parser, its help in the translation template, the
+manual page, the three completion scripts and `poster`'s section of this
+README. It marks each present or missing, so run it before the work and again
+after. Without a command it checks every command that already takes the
+option.
+
 **Two of its steps only run where the machine can run them.** One records
 `--gpu -- vkcube` and needs a graphics card with `cage`, `Xwayland`,
 `wf-recorder` and `wlr-randr`, and an ffmpeg library under `wf-recorder` that

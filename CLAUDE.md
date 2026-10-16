@@ -33,6 +33,9 @@ To read a gate's saved output, such as a `cc-job` log, run `./ci.sh --summary
 <log>` rather than reading the log. It prints the steps that skipped and, on a
 failure, only the step that failed.
 
+`./ci.sh --option-places OPTION COMMAND...` lists every file that must name an
+option of those commands, each present or missing.
+
 The full gate ends by running itself again in a local `ubuntu:24.04` image
 built from the same package list the workflow installs (`./ci.sh
 --ci-packages`), so a difference in GitHub's older packages fails here first.

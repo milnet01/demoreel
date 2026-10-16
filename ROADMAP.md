@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=276 -->
+<!-- ants-roadmap-id-high-water: DEMO=277 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -4965,11 +4965,13 @@ covers both display backends and the Flatpak invocation.
   Kind: feature.
   Source: user-request-2026-10-10.
 
-- 📋 [DEMO-0213] **A check that names every place a new option must appear, before it is added.**
+- ✅ [DEMO-0213] **A check that names every place a new option must appear, before it is added.**
   Adding shot --region touched the parser, demoreel.1, three completion
   scripts, README § The options and the po template. ci.sh catches a
   missing one only after the fact; this lists them, present or missing,
   for an option name given before the work starts.
+  Shipped as ./ci.sh --option-places OPTION [COMMAND...], with a gate
+  step that holds it to --region and a made-up option.
   **Layman:** When a new option is added, one command lists every file that has to mention it.
   Kind: chore.
   Source: in-session-2026-10-16 DEMO-0205.
@@ -5069,6 +5071,20 @@ covers both display backends and the Flatpak invocation.
   **Layman:** On Mageia, the setup check suggests a fix that only works on Fedora.
   Kind: fix.
   Source: in-session-2026-10-13.
+
+- 📋 [DEMO-0277] **Time each gate step, then speed up the slowest ones.**
+  The user asked to speed up ./ci.sh. step() prints a heading
+  but no time, so no log says where the time goes. First make each
+  step print its elapsed seconds and have ./ci.sh --summary list the
+  slowest, then run the gate once and show the user that list before
+  cutting anything. Some slow steps are there on purpose: the Ubuntu
+  rerun catches failures only GitHub's older packages show, and
+  --packages installs each package in a clean container per distro.
+  Measure with load below 10, as DEMO-0252 does.
+  **Layman:** The checks that run before every push take too long; first measure which parts are slow, then fix those.
+  Kind: perf.
+  Source: user-request-2026-10-16.
+  Lanes: ci.
 
 ## 1.1.0 — A window for people who want one
 

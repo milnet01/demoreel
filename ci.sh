@@ -320,6 +320,150 @@ if [ "${1:-}" = "--summary" ]; then
     exit 0
 fi
 
+# write_zcomp writes the zsh driver into $tmp; then offered SHELL LINE prints
+# what SHELL's tab completion offers after LINE, one candidate per line.
+# The gate's completion step and --option-places both ask the shells so.
+write_zcomp() {
+    cat > "$tmp/zcomp.zsh" <<'ZCOMP'
+# zsh completes only at an interactive prompt, so drive one through zpty and
+# wrap compadd to print each candidate. The markers are split in two so that
+# the terminal echoing these lines back cannot match them.
+zmodload zsh/zpty
+zpty z zsh -f -i
+zpty -w z "PS1= fpath=($1 \$fpath); autoload -Uz compinit; compinit -u -D"
+zpty -w z 'compadd () {
+  if [[ ${@[1,(i)(-|--)]} == *-(O|A|D)\ * ]]; then builtin compadd "$@"; return; fi
+  typeset -a __hits; builtin compadd -A __hits "$@"
+  local h; for h in $__hits; print -r -- "<""HIT>$h"
+  builtin compadd -Q -U ""
+}'
+zpty -w z 'finish () { print "<""DONE>"; zle kill-whole-line; zle -R }
+zle -N finish; bindkey "^X" finish'
+zpty -n -w z "$2"$'\t'
+zpty -n -w z $'\C-X'
+while zpty -r z line; do
+  [[ $line == *'<DONE>'* ]] && break
+  [[ $line == *'<HIT>'* ]] && print -r -- "${${line#*<HIT>}//[$'\r\n']/}"
+done
+zpty -d z
+ZCOMP
+}
+offered() {  # shell, command line -> the candidates, one per line
+    case $1 in
+    bash) bash -c 'source completions/demoreel.bash
+        read -ra COMP_WORDS <<< "$1"; [[ $1 == *" " ]] && COMP_WORDS+=("")
+        COMP_CWORD=$((${#COMP_WORDS[@]} - 1))
+        _demoreel 2>/dev/null; printf "%s\n" "${COMPREPLY[@]}"' _ "$2" ;;
+    zsh) timeout 20 zsh "$tmp/zcomp.zsh" "$PWD/completions" "$2" ;;
+    fish) fish -c 'source completions/demoreel.fish
+        complete -C $argv[1] | cut -f1' "$2" ;;
+    esac
+}
+
+# ./ci.sh --option-places OPTION [COMMAND...] lists every place an option of
+# COMMAND must appear, each present or missing (DEMO-0213): the parser, the
+# help text in po/demoreel.pot, demoreel.1, the three completion scripts and
+# README. Run it before adding an option, and again after; the gate checks
+# most of these too, but only once the work is done. Without COMMAND it takes
+# the commands that already accept OPTION. Exits 1 while any place is missing.
+if [ "${1:-}" = "--option-places" ]; then
+    [ -n "${2:-}" ] || { echo "usage: ./ci.sh --option-places OPTION [COMMAND...]" >&2
+                         exit 2; }
+    tmp=$(mktemp -d)
+    trap 'rm -rf "$tmp"' EXIT
+    write_zcomp
+    export tmp
+    export -f offered
+    python3 - "${@:2}" <<'PLACESPY'
+import argparse, importlib.machinery, importlib.util, re, shutil, subprocess, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+option, *commands = sys.argv[1:]
+sub = next(a for a in d.build_parser()._actions
+           if isinstance(a, argparse._SubParsersAction))
+if not commands:
+    commands = [c for c, p in sub.choices.items()
+                if option in p._option_string_actions]
+    if not commands:
+        sys.exit(f"no command accepts {option} yet: name the commands it is for, "
+                 f"from {' '.join(sub.choices)}")
+unknown = [c for c in commands if c not in sub.choices]
+if unknown:
+    sys.exit(f"demoreel has no command {' '.join(unknown)}")
+
+# A word match, as the gate's flag steps use: a bare -o is not inside "read-only".
+def words(*names):
+    return re.compile(rf"(?<![A-Za-z0-9_-])({'|'.join(map(re.escape, names))})"
+                      r"(?![A-Za-z0-9_-])")
+word = words(option)
+# demoreel.1's OPTIONS has one entry per option, shared by every command: the
+# line after each .TP names the option it is for.
+man = open("demoreel.1", encoding="utf-8").read().replace("\\-", "-")
+man = man.split("\n.SH OPTIONS\n", 1)[1].split("\n.SH ", 1)[0].split("\n")
+man_entries = "\n".join(man[i + 1] for i, line in enumerate(man[:-1]) if line == ".TP")
+readme = open("README.md", encoding="utf-8").read().splitlines()
+pot = [e["msgid"] for e in d.read_po(open("po/demoreel.pot", encoding="utf-8").read())]
+
+def readme_section(command):
+    """The README section that documents command's options: its own, or the
+    shortcuts', or § The options for the commands that start an app."""
+    heading, body, fenced = None, {}, False
+    for line in readme:
+        fenced ^= line.startswith("```")
+        if not fenced and line.startswith("#"):
+            heading = line.lstrip("#").strip()
+            body[heading] = []
+        elif heading:
+            body[heading].append(line)
+    if command in ("trim", "caption", "join", "card"):
+        name = "The shortcuts"
+    else:
+        name = next((h for h in body if h.startswith(f"`{command}`")), "The options")
+    return name, "\n".join(body.get(name, []))
+
+def in_pot(action):
+    """Whether the option's help is a message in the template. The help was
+    filled in from its msgid, so each {value} in a msgid matches anything."""
+    if not action or not action.help:
+        return False
+    return any(re.fullmatch(re.sub(r"\\\{\w+\\\}", ".*", re.escape(m)), action.help,
+                            re.S) for m in pot)
+
+missing = 0
+for command in commands:
+    action = sub.choices[command]._option_string_actions.get(option)
+    section, text = readme_section(command)
+    places = [("the parser", bool(action)),
+              ("its help in po/demoreel.pot", in_pot(action)),
+              ("demoreel.1 § OPTIONS", bool(word.search(man_entries)))]
+    for shell, script in (("bash", "demoreel.bash"), ("zsh", "_demoreel"),
+                          ("fish", "demoreel.fish")):
+        where = f"completions/{script}"
+        if not shutil.which(shell):
+            places.append((where, None))
+            continue
+        got = subprocess.run(["bash", "-c", 'offered "$@"', "_", shell,
+                              f"demoreel {command} -"], capture_output=True,
+                             text=True, stdin=subprocess.DEVNULL).stdout
+        places.append((where, option in (o.strip("'\" ") for o in got.splitlines())))
+    # A section may name the option by its other spelling: the finishing
+    # commands' sections write -o, and § The options holds --output.
+    spellings = action.option_strings if action else [option]
+    places.append((f"README.md § {section}", bool(words(*spellings).search(text))))
+    print(f"{option} on {command}:")
+    for where, ok in places:
+        print(f"  {'present' if ok else 'not checked' if ok is None else 'MISSING'}"
+              f"  {where}" + ("  (the shell is not installed)" if ok is None else ""))
+        missing += ok is False
+if word.search(man_entries):
+    print("demoreel.1 has one entry for each option, whatever the command: "
+          "read it to see that it covers each one above.")
+sys.exit(1 if missing else 0)
+PLACESPY
+    exit $?
+fi
+
 if [ "${1:-}" = "--ruff-version" ]; then
     printf '%s\n' "$RUFF_VERSION"
     exit 0
@@ -5810,40 +5954,7 @@ print("demoreel record -a |" + " ".join(demoreel.ACTION_EXAMPLES))
 print("demoreel stop |gatelive")
 COMPLETIONPY
 )
-cat > "$tmp/zcomp.zsh" <<'ZCOMP'
-# zsh completes only at an interactive prompt, so drive one through zpty and
-# wrap compadd to print each candidate. The markers are split in two so that
-# the terminal echoing these lines back cannot match them.
-zmodload zsh/zpty
-zpty z zsh -f -i
-zpty -w z "PS1= fpath=($1 \$fpath); autoload -Uz compinit; compinit -u -D"
-zpty -w z 'compadd () {
-  if [[ ${@[1,(i)(-|--)]} == *-(O|A|D)\ * ]]; then builtin compadd "$@"; return; fi
-  typeset -a __hits; builtin compadd -A __hits "$@"
-  local h; for h in $__hits; print -r -- "<""HIT>$h"
-  builtin compadd -Q -U ""
-}'
-zpty -w z 'finish () { print "<""DONE>"; zle kill-whole-line; zle -R }
-zle -N finish; bindkey "^X" finish'
-zpty -n -w z "$2"$'\t'
-zpty -n -w z $'\C-X'
-while zpty -r z line; do
-  [[ $line == *'<DONE>'* ]] && break
-  [[ $line == *'<HIT>'* ]] && print -r -- "${${line#*<HIT>}//[$'\r\n']/}"
-done
-zpty -d z
-ZCOMP
-offered() {  # shell, command line -> the candidates, one per line
-    case $1 in
-    bash) bash -c 'source completions/demoreel.bash
-        read -ra COMP_WORDS <<< "$1"; [[ $1 == *" " ]] && COMP_WORDS+=("")
-        COMP_CWORD=$((${#COMP_WORDS[@]} - 1))
-        _demoreel 2>/dev/null; printf "%s\n" "${COMPREPLY[@]}"' _ "$2" ;;
-    zsh) timeout 20 zsh "$tmp/zcomp.zsh" "$PWD/completions" "$2" ;;
-    fish) fish -c 'source completions/demoreel.fish
-        complete -C $argv[1] | cut -f1' "$2" ;;
-    esac
-}
+write_zcomp
 completion_bad=0
 for shell in bash zsh fish; do
     command -v "$shell" >/dev/null || { echo "skipped $shell: not installed"; continue; }
@@ -5863,6 +5974,23 @@ for shell in bash zsh fish; do
 done
 kill "$fake_run" 2>/dev/null
 [ "$completion_bad" -eq 0 ] || exit 1
+
+step "--option-places finds an option everywhere, and a new one nowhere"
+# DEMO-0213. --region is in every place on all three commands that take it, and
+# an option nobody has added yet is in none of them.
+places=$("$0" --option-places --region) || {
+    echo "--option-places reported a place missing for --region:" >&2
+    echo "$places" >&2; exit 1; }
+[ "$(grep -c '^  present ' <<<"$places")" -eq 21 ] || {
+    echo "--option-places did not find --region in all seven places on" \
+         "shot, motion and sheet:" >&2; echo "$places" >&2; exit 1; }
+if places=$("$0" --option-places --not-an-option poster); then
+    echo "--option-places passed an option nobody has added" >&2; exit 1
+fi
+grep -q '^  present ' <<<"$places" && {
+    echo "--option-places found an option nobody has added:" >&2
+    echo "$places" >&2; exit 1; }
+echo "--option-places found --region in every place, and --not-an-option in none"
 
 finishing_checks
 
