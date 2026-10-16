@@ -5081,6 +5081,29 @@ covers both display backends and the Flatpak invocation.
   rerun catches failures only GitHub's older packages show, and
   --packages installs each package in a clean container per distro.
   Measure with load below 10, as DEMO-0252 does.
+  Timing shipped in bd6abb5. First full run, load under 3: 155 steps,
+  about 15.5 min. Ubuntu rerun 283s, packages 261s, "translation:
+  stdout and exit status do not move" 79s, finishing batch 68s; no other
+  step over 18s. During the DEMO-0213 push the packages step took about
+  45 min: Fedora's mirror sent about 30 KB/s, and every run downloads
+  fresh.
+
+  User decision 2026-10-16: build all four, none drops a check.
+  1. Start the Ubuntu rerun in the background before the packages step;
+     its step waits for it. cleanup must stop its container (podman rm
+     -f by name) when an earlier step fails.
+  2. Keep downloads between runs: per-distro dir under
+     ${XDG_CACHE_HOME:-~/.cache}/demoreel-ci, mounted at the package
+     cache (apt archives, /var/cache/libdnf5, zypp/packages,
+     pacman/pkg). Remove Debian's docker-clean, dnf keepcache=True with
+     metadata always refreshed, zypper --keep-packages. Prune files
+     unused for 30 days. /home has room.
+  3. The translation step's time is mostly same_stdout: a 1 s recording
+     plus a failing trim in each of 16 languages, serially. Parallel
+     recordings collide with DEMO-0120's warning (timed checks flake
+     under load), so measure: each language needs its own -n and
+     directory, and run the changed gate repeatedly.
+  4. Rebuild the Ubuntu image (./ci.sh --parity-build): 14 days old.
   **Layman:** The checks that run before every push take too long; first measure which parts are slow, then fix those.
   Kind: perf.
   Source: user-request-2026-10-16.
