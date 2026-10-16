@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=209 -->
+<!-- ants-roadmap-id-high-water: DEMO=210 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -683,6 +683,20 @@ simplest case, and a gate proves it still records.
   Kind: fix.
   Source: in-session-2026-10-16 DEMO-0165.
   Lanes: ci.
+
+- 📋 [DEMO-0210] **Check DEMO-0203's new message in all 16 catalogs: DeepSeek for zh_CN, zh_TW, ja, ko; Gemini for the rest.**
+  The msgid "could not tell whether this ffmpeg can read from a sound
+  server: asking it took over {seconds}s." went in as drafts in 8c8d31d.
+  Each draft follows its catalog's libx264 "could not tell" line and its
+  "has no pulse input" line. User 2026-10-16: DeepSeek
+  (https://chat.deepseek.com/) for the Chinese catalogs, and try it for
+  ja and ko; Gemini for the others. Blocked on 2026-10-16 by the Chrome
+  extension not being connected (/chrome, Reconnect extension). A pass
+  improves a draft; it does not confirm one (docs/specs/DEMO-0060).
+  **Layman:** The one new sentence in every language still needs a second check by another AI before it is as good as the rest.
+  Kind: doc-fix.
+  Source: in-session-2026-10-16 DEMO-0203.
+  Lanes: po.
 
 ## Standing chores
 

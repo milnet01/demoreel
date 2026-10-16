@@ -14,6 +14,16 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **`demoreel stop` finds a recording started a moment before it, on a busy computer** (DEMO-0165)
+  A recording asked ffmpeg two slow questions before it could be
+  stopped. A stop sent straight after it could say no recording was
+  running while one was starting. It now asks them afterwards.
+
+- **`demoreel check` says it could not tell, rather than ready, when ffmpeg is too slow to answer** (DEMO-0202, DEMO-0203)
+  On a busy computer, the libx264 and `--audio` lines used to read
+  ready without knowing. They now say the question took too long. A
+  recording still goes ahead in that case, as before.
+
 - **A trailer of windowed scenes no longer fails on a computer with 8 GB of memory or less** (DEMO-0192)
   The film's ffmpeg was limited by the memory it reserved, which for
   windowed scenes is several times what it uses. It is now stopped only
