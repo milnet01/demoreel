@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=210 -->
+<!-- ants-roadmap-id-high-water: DEMO=214 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -707,6 +707,51 @@ simplest case, and a gate proves it still records.
   **Layman:** The one new sentence in every language still needs a second check by another AI before it is as good as the rest.
   Kind: doc-fix.
   Source: in-session-2026-10-16 DEMO-0203.
+  Lanes: po.
+
+- 📋 [DEMO-0211] **Let motion look at one region of the video, with --region x,y,w,h.**
+  The website session's biggest token cost is reading frame sheets as
+  images to find when part of a video changes. motion already answers
+  "where does it stand still" in text; with --region it answers that for
+  one rectangle, the same x,y,w,h form shot --region takes (DEMO-0205).
+  Cropping is allowed since the user's 2026-10-15 ruling. Tell
+  ants-projects-hub-website when it ships.
+  **Layman:** A session could ask when one part of a video changes and get a short list of times, instead of reading pictures of frames.
+  Kind: feature.
+  Source: peer-request-2026-10-16 ants-projects-hub-website via claude-config.
+  Lanes: motion.
+
+- 💭 [DEMO-0212] **Consider a frame sheet: several frames of a video, with their times, as one picture.**
+  Asked for as video_frames {path, every_s | at[], crop?, scale}.
+  Needs the user's word: README § What it will never do lets demoreel
+  take a frame from a video, and says nothing of tiling several into one
+  picture. The motion --region item above answers the same need in text,
+  which costs a session far less; build that first and ask whether this
+  is still wanted.
+  **Layman:** One picture showing a video's frames side by side, each labelled with its time.
+  Kind: feature.
+  Source: peer-request-2026-10-16 ants-projects-hub-website via claude-config.
+  Lanes: poster.
+
+- 📋 [DEMO-0213] **A check that names every place a new option must appear, before it is added.**
+  Adding shot --region touched the parser, demoreel.1, three completion
+  scripts, README § The options and the po template. ci.sh catches a
+  missing one only after the fact; this lists them, present or missing,
+  for an option name given before the work starts.
+  **Layman:** When a new option is added, one command lists every file that has to mention it.
+  Kind: chore.
+  Source: in-session-2026-10-16 DEMO-0205.
+  Lanes: ci.
+
+- 📋 [DEMO-0214] **A helper that adds one message's drafts to all 16 catalogs and checks each.**
+  Each new msgid meant a python heredoc appending to 16 catalogs, then
+  msgfmt -c, then the gate's code-token check 138 steps into ./ci.sh,
+  which today caught three drafts with a flag joined to a word. The
+  helper appends, runs msgfmt and CODE_TOKEN_RE per language, and names
+  the ones that fail at once.
+  **Layman:** Adding a new sentence in every language becomes one step that also checks each language straight away.
+  Kind: chore.
+  Source: in-session-2026-10-16 DEMO-0205.
   Lanes: po.
 
 ## Standing chores
