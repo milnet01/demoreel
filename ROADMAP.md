@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=275 -->
+<!-- ants-roadmap-id-high-water: DEMO=276 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -5316,7 +5316,7 @@ is a front-end to the same recording engine, not a second one.
   Kind: ux.
   Source: user-request-2026-10-16.
 
-- 📋 [DEMO-0274] **An opt-in usage log, sent in one click by email or as a GitHub issue.**
+- 📋 [DEMO-0274] **An opt-in usage log, with three ways to send it: email, a GitHub issue, or anonymous Google Analytics reports.**
   Off until the user turns it on; never asked by a prompt on the
   command line. It records which feature was used, steps per task, long
   pauses and errors; never file names, paths or anything in a video. A
@@ -5327,7 +5327,11 @@ is a front-end to the same recording engine, not a second one.
   The log goes in the message text: not every mail program accepts an
   attachment this way. A long log must be cut to fit a link's length.
   Feeds DEMO-0162 and the ease-of-use items.
-  **Layman:** If the user agrees, demoreel notes which features they use and where they got stuck, and one button sends it to us by email or GitHub.
+  User, 2026-10-16: all three routes are offered side by side, and the
+  user picks one. Email and GitHub show who sent it; the Google
+  Analytics route (DEMO-0275) is labelled anonymous, and is the only one
+  that sends without a click each time.
+  **Layman:** If the user agrees, demoreel notes which features they use and where they got stuck. They choose how it reaches us: one-click email, a GitHub issue, or anonymous automatic reports.
   Kind: feature.
   Source: user-request-2026-10-16.
 
@@ -5359,6 +5363,19 @@ is a front-end to the same recording engine, not a second one.
   User, 2026-10-16: planned for 1.1.0, beside the one-click log
   (DEMO-0274).
   **Layman:** If the user agrees, the usage notes are sent automatically and without a name, so they do not have to press send.
+  Kind: feature.
+  Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0276] **Send a suggestion or report a problem in one click, by email or as a GitHub issue.**
+  Two choices, as for the usage log (DEMO-0274), and no Google Analytics
+  route: a suggestion or a problem needs words from the user, and a way
+  to answer them. Email opens a new message in the user's own mail
+  program; GitHub opens a new issue with the right template. Both come
+  filled in with demoreel's version and the system, and, for a problem,
+  the last error, which the user can read and delete before sending.
+  Nothing is sent until the user presses send. Email shows their address
+  and GitHub their username: say so beside each button.
+  **Layman:** A button lets the user send us an idea or a problem, through their own email or GitHub, with the details already filled in.
   Kind: feature.
   Source: user-request-2026-10-16.
 
