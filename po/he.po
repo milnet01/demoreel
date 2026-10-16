@@ -1297,4 +1297,4 @@ msgstr "לא ניתן לחתוך את המלבן של --region מהתמונה."
 
 #. argparse formats this text with %
 msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
-msgstr "לשמור רק את המלבן הזה מהתמונה: הפינה השמאלית העליונה שלו ב־X,Y, ברוחב W פיקסלים ובגובה H"
+msgstr "שמירת המלבן הזה בלבד מהתמונה: הפינה השמאלית העליונה שלו ב־X,Y, ברוחב W פיקסלים ובגובה H"

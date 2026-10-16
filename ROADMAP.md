@@ -691,7 +691,7 @@ simplest case, and a gate proves it still records.
   Source: in-session-2026-10-16 DEMO-0165.
   Lanes: ci.
 
-- 📋 [DEMO-0210] **Check DEMO-0203's new message in all 16 catalogs: DeepSeek for zh_CN, zh_TW, ja, ko; Gemini for the rest.**
+- ✅ [DEMO-0210] **Check DEMO-0203's new message in all 16 catalogs: DeepSeek for zh_CN, zh_TW, ja, ko; Gemini for the rest.**
   The msgid "could not tell whether this ffmpeg can read from a sound
   server: asking it took over {seconds}s." went in as drafts in 8c8d31d.
   Each draft follows its catalog's libx264 "could not tell" line and its
@@ -704,6 +704,12 @@ simplest case, and a gate proves it still records.
   the shot --region help line, "--region takes x,y,w,h in whole pixels,
   ...", "--region {region} does not fit inside the {size} picture." and
   "could not cut the --region rectangle out of the picture."
+  Done 2026-10-16. Gemini (12 catalogs) and DeepSeek (zh_CN, zh_TW,
+  ja, ko) passed every error-message draft. The shot --region help
+  line was moved to each catalog's own help-line form in he, it, pl,
+  pt_BR, ru and ko; both models agreed. DeepSeek's zh swap of 画面
+  for 图片 was declined: messages 4 and 5 and "could not take the
+  picture." already use 画面. Drafts improved, not confirmed.
   **Layman:** The one new sentence in every language still needs a second check by another AI before it is as good as the rest.
   Kind: doc-fix.
   Source: in-session-2026-10-16 DEMO-0203.

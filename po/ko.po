@@ -1291,4 +1291,4 @@ msgstr "이미지에서 --region 사각형을 잘라낼 수 없었습니다."
 
 #. argparse formats this text with %
 msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
-msgstr "이미지에서 이 사각형만 남깁니다. 왼쪽 위 모서리는 X,Y, 너비 W 픽셀, 높이 H 픽셀입니다"
+msgstr "이미지에서 이 사각형만 남김. 왼쪽 위 모서리 X,Y, 너비 W 픽셀, 높이 H 픽셀"

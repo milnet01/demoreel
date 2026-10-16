@@ -1303,4 +1303,4 @@ msgstr "не удалось вырезать прямоугольник --region
 
 #. argparse formats this text with %
 msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
-msgstr "оставить только этот прямоугольник изображения: левый верхний угол в X,Y, ширина W пикселей и высота H"
+msgstr "оставлять только этот прямоугольник изображения: левый верхний угол в X,Y, ширина W пикселей и высота H"

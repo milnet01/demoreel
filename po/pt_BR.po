@@ -1297,4 +1297,4 @@ msgstr "não foi possível recortar o retângulo de --region da imagem."
 
 #. argparse formats this text with %
 msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
-msgstr "manter só este retângulo da imagem: o canto superior esquerdo em X,Y, com W pixels de largura e H de altura"
+msgstr "mantém só este retângulo da imagem: o canto superior esquerdo em X,Y, com W pixels de largura e H de altura"

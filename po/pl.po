@@ -1303,4 +1303,4 @@ msgstr "nie można wyciąć prostokąta --region z obrazu."
 
 #. argparse formats this text with %
 msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
-msgstr "zachowaj tylko ten prostokąt obrazu: jego lewy górny róg w X,Y, szerokość W pikseli i wysokość H"
+msgstr "zachowuje tylko ten prostokąt obrazu: jego lewy górny róg w X,Y, szerokość W pikseli i wysokość H"
