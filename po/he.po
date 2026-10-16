@@ -1310,7 +1310,7 @@ msgid "{option} takes a whole number of at least {least}, not {value}."
 msgstr "{option} מקבל מספר שלם של {least} לפחות, ולא {value}."
 
 msgid "a sheet holds at most {most} frames, and these times ask for more. Take a longer --every, or fewer --at times."
-msgstr "גיליון מכיל לכל היותר {most} פריימים, והזמנים האלה דורשים יותר. בחרו --every ארוך יותר, או פחות זמנים ב־--at."
+msgstr "גיליון מגע מכיל לכל היותר {most} פריימים, והזמנים האלה דורשים יותר. בחרו --every ארוך יותר, או פחות זמנים ב־--at."
 
 msgid "could not put the frames together into one picture."
 msgstr "לא ניתן לחבר את הפריימים לתמונה אחת."
@@ -1333,7 +1333,7 @@ msgstr "לקיחת פריים כל SECONDS שניות, מההתחלה"
 
 #. argparse formats this text with %
 msgid "take the frames on screen at these moments, like 1,4.5,9"
-msgstr "לקיחת הפריימים שעל המסך ברגעים האלה, למשל 1,4.5,9"
+msgstr "לקיחת הפריימים שעל המסך ברגעים האלה, כמו 1,4.5,9"
 
 #. argparse formats this text with %
 msgid "show only this rectangle of each frame: its top-left corner at X,Y, W pixels wide and H high"

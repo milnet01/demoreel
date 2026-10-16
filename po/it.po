@@ -1310,7 +1310,7 @@ msgid "{option} takes a whole number of at least {least}, not {value}."
 msgstr "{option} accetta un numero intero di almeno {least}, non {value}."
 
 msgid "a sheet holds at most {most} frames, and these times ask for more. Take a longer --every, or fewer --at times."
-msgstr "un foglio contiene al massimo {most} fotogrammi, e questi tempi ne chiedono di più. Usa un --every più lungo, o meno tempi in --at."
+msgstr "un provino contiene al massimo {most} fotogrammi, e questi tempi ne chiedono di più. Usa un --every più lungo, o meno tempi in --at."
 
 msgid "could not put the frames together into one picture."
 msgstr "impossibile unire i fotogrammi in un'unica immagine."
@@ -1329,7 +1329,7 @@ msgstr "il video da cui prendere i fotogrammi"
 
 #. argparse formats this text with %
 msgid "take a frame every SECONDS, from the start"
-msgstr "prende un fotogramma ogni SECONDS, dall'inizio"
+msgstr "prende un fotogramma ogni SECONDS dall'inizio"
 
 #. argparse formats this text with %
 msgid "take the frames on screen at these moments, like 1,4.5,9"

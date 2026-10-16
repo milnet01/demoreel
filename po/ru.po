@@ -1316,7 +1316,7 @@ msgid "{option} takes a whole number of at least {least}, not {value}."
 msgstr "{option} принимает целое число не меньше {least}, а не {value}."
 
 msgid "a sheet holds at most {most} frames, and these times ask for more. Take a longer --every, or fewer --at times."
-msgstr "на лист помещается не больше {most} кадров, а эти моменты требуют больше. Возьмите --every подлиннее или меньше моментов в --at."
+msgstr "на контактный лист помещается не больше {most} кадров, а эти моменты требуют больше. Возьмите --every подлиннее или меньше моментов в --at."
 
 msgid "could not put the frames together into one picture."
 msgstr "не удалось собрать кадры в одно изображение."

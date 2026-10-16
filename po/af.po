@@ -1310,7 +1310,7 @@ msgid "{option} takes a whole number of at least {least}, not {value}."
 msgstr "{option} neem 'n heelgetal van minstens {least}, nie {value} nie."
 
 msgid "a sheet holds at most {most} frames, and these times ask for more. Take a longer --every, or fewer --at times."
-msgstr "'n blad hou hoogstens {most} rame, en hierdie tye vra vir meer. Neem 'n langer --every, of minder tye by --at."
+msgstr "'n kontakblad hou hoogstens {most} rame, en hierdie tye vra vir meer. Neem 'n langer --every, of minder tye by --at."
 
 msgid "could not put the frames together into one picture."
 msgstr "kon nie die rame tot een prent saamvoeg nie."

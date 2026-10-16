@@ -4907,13 +4907,20 @@ covers both display backends and the Flatpak invocation.
   Source: in-session-2026-10-16 DEMO-0212.
   Lanes: ci.
 
-- 📋 [DEMO-0215] **Second-model pass over DEMO-0212's new sheet messages.**
+- ✅ [DEMO-0215] **Second-model pass over DEMO-0212's new sheet messages.**
   Twelve new msgids and one changed one (the check line now ends
   "motion, poster and sheet") went in as drafts with DEMO-0212.
   DeepSeek for zh_CN, zh_TW, ja and ko; Gemini for the rest. Look at
   the word chosen for "a sheet" in the at-most-100 message: zh drafts
   use 拼图/拼圖, de Übersichtsbild. A pass improves a draft; it does
   not confirm one (docs/specs/DEMO-0060).
+  Done 2026-10-16. DeepSeek (zh_CN, zh_TW, ja, ko): no changes; on a
+  follow-up it kept 拼图/拼圖, the usual word for a photo collage.
+  Gemini: the "a sheet" word became each language's contact-sheet or
+  grid term in de, es, it, nl, pt_BR, pl, af, ru, uk, he (fr planche
+  and ar اللوحة kept). Small wording fixes in it, nl, pt_BR, he.
+  Suggestions that broke a catalog's own wording elsewhere were
+  refused. Still drafts, not confirmed.
   **Layman:** The new frame-sheet sentences in every language still need a second check by another AI.
   Kind: doc-fix.
   Source: in-session-2026-10-16 DEMO-0212.

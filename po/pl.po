@@ -1316,7 +1316,7 @@ msgid "{option} takes a whole number of at least {least}, not {value}."
 msgstr "{option} przyjmuje liczbę całkowitą nie mniejszą niż {least}, a nie {value}."
 
 msgid "a sheet holds at most {most} frames, and these times ask for more. Take a longer --every, or fewer --at times."
-msgstr "arkusz mieści najwyżej {most} klatek, a te chwile wymagają więcej. Podaj dłuższe --every albo mniej chwil w --at."
+msgstr "arkusz kontaktowy mieści najwyżej {most} klatek, a te chwile wymagają więcej. Podaj dłuższe --every albo mniej chwil w --at."
 
 msgid "could not put the frames together into one picture."
 msgstr "nie można połączyć klatek w jeden obraz."
