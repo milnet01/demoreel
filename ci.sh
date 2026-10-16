@@ -290,8 +290,9 @@ fi
 
 # ./ci.sh --summary LOG reads a gate's saved output and prints only what a
 # reader needs: how many steps ran, every step that skipped, the last line,
-# and, when the gate did not pass, the output of the step it stopped in (the
-# last `===` header; for a failed Ubuntu re-run, the header inside its output).
+# and, when the gate did not pass, the output of the step that failed: each
+# step ending "this check failed" (the finishing checks run them all), or else
+# the last `===` header (for a failed Ubuntu re-run, the header inside it).
 # For a session reading a cc-job or pre-push log: the whole log costs far more
 # to read than it says.
 if [ "${1:-}" = "--summary" ]; then
@@ -300,15 +301,21 @@ if [ "${1:-}" = "--summary" ]; then
         /^=== .* ===$/ { steps++; name = $0; n = 0; passed = /checks passed/ }
         /gate FAILED/ { passed = 0 }
         { line[++n] = $0 }
+        /^this check failed$/ { failed = failed tail_of_step() }
         tolower($0) ~ /skipped/ && !/^=== / { skips = skips "  " name ": " $0 "\n" }
         NF { last = $0 }
+        function tail_of_step(   i, s) {
+            if (n > 60) s = "  [" n - 60 " lines of this step left out]\n"
+            for (i = (n > 60 ? n - 59 : 1); i <= n; i++) s = s line[i] "\n"
+            return s
+        }
         END {
             printf "%d steps; last line: %s\n", steps, last
             if (skips != "") printf "skipped:\n%s", skips
             if (passed) exit
+            if (failed != "") { printf "failed:\n%s", failed; exit }
             print "stopped in:"
-            if (n > 60) print "  [" n - 60 " lines of this step left out]"
-            for (i = (n > 60 ? n - 59 : 1); i <= n; i++) print line[i]
+            printf "%s", tail_of_step()
         }' "$log"
     exit 0
 fi
@@ -1146,8 +1153,10 @@ finishing_checks() {
         for i in "${!fin_funcs[@]}"; do
             step "${fin_names[$i]}"
             cat "$tmp/fin-steps/$i.log"
+            # The line ./ci.sh --summary looks for: every step is printed,
+            # so the last header is not the step that failed.
             [ "$(cat "$tmp/fin-steps/$i.rc" 2>/dev/null)" = 0 ] \
-                || fin_failed=$((fin_failed + 1))
+                || { echo "this check failed"; fin_failed=$((fin_failed + 1)); }
         done
     }
     fin_failed=0
@@ -3620,6 +3629,26 @@ if [ -n "$configured" ] && [ "$configured" != "$DOCS_GLOB" ]; then
     exit 1
 fi
 echo "docs glob: $DOCS_GLOB"
+
+step "--summary names the step that failed, not the last one"
+# The finishing checks print every step, so a failed one sits mid-log with a
+# passing one after it (DEMO-0216).
+sum=$("$0" --summary /dev/stdin <<'EOF'
+=== a check that failed ===
+FAIL: the made-up failure
+this check failed
+=== a check after it, which passed ===
+all good
+1 finishing check(s) failed
+EOF
+)
+case $sum in
+    *"failed:"*"the made-up failure"*) ;;
+    *) echo "--summary did not name the failed step:" >&2; echo "$sum" >&2; exit 1 ;;
+esac
+case $sum in *"all good"*) echo "--summary showed the passing step too:" >&2
+    echo "$sum" >&2; exit 1 ;; esac
+echo "--summary named the failed step and left the passing one out"
 
 step "documented flags exist"
 # Also runs in both modes. README.md is this project's design contract, so a
