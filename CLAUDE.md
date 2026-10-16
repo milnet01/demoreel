@@ -125,7 +125,7 @@ recording fit to publish" wants OBS and a video editor instead.
 it.** `README.md` § What it will never do holds the list of what editing may
 do, and nothing off it is built. Still out: a clip laid over another picture,
 except one clip's window over its background; two clips on screen together
-outside a transition; pan, crop and rotate beyond the list's zoom; animating
+outside a transition; pan and rotate beyond the list's zoom; animating
 a setting over time in general; and anything removed from a video
 automatically. An `edit` script is a
 list of scenes for one film. It is not a config file: it holds no settings

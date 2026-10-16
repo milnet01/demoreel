@@ -239,6 +239,9 @@ demoreel shot -- kate
 
 # choose the filename, and click something first
 demoreel shot -o menu.png -a 'click 40 12' -- myapp
+
+# keep only the top-left 400x300 of the picture
+demoreel shot --region 0,0,400,300 -- myapp
 ```
 
 `shot` uses the same private screen as `record`, and sizes the window the same
@@ -254,10 +257,18 @@ thing they can share is the default filename, the app and the time to the
 second, so give simultaneous shots of one app their own `-o`. The size need not
 be even; that rule belongs to video.
 
+`--region x,y,w,h` keeps one rectangle of the picture: its top-left corner at
+`x,y`, counted in pixels from the top-left of the screen, and `w` wide by `h`
+high. The rectangle must fit inside `--size`, or the run stops before it
+starts the app. A smaller picture is a smaller file, and cheaper for a Claude
+Code session to read.
+
 The picture is always checked, even if the app has closed itself: an app that
 has gone leaves only an empty screen. A picture that is one flat colour fails
-the run, and so does not being able to look at the screen at all. A failed run
-prints no path, and keeps any picture it had saved.
+the run, and so does not being able to look at the screen at all. With
+`--region`, the check looks at the whole screen, not the rectangle: a plain
+rectangle may be what you asked for. A failed run prints no path, and keeps
+any picture it had saved.
 
 ## Finishing a recording
 
@@ -748,6 +759,7 @@ you would only find out by watching it.
 | `--settle` | Wait for the app to draw something before starting to record. |
 | `--gpu` | For apps that need the graphics card. |
 | `--audio` | Put the app's own sound in the video. Off by default. `record` only. |
+| `--region` | Keep only one rectangle of the picture, as `x,y,w,h`. `shot` only; see [Taking a picture](#taking-a-picture). |
 | `--startup-timeout` | How long to wait for the app's window to appear. |
 
 ### `--audio`: the app's own sound
@@ -1076,6 +1088,7 @@ Permanently out of scope:
 - No editing beyond finishing a recording and making a short trailer from it.
   demoreel may do these things, and no others:
   - cut the ends off a video, measure it, and take a frame from it;
+  - keep only one rectangle of a picture or a clip, the one you name;
   - play scenes one after another, and change one scene into the next with a
     fade or any other transition ffmpeg has ready-made, such as a dissolve,
     a wipe or a slide;
@@ -1096,7 +1109,7 @@ Permanently out of scope:
   are not scenes, and nothing more. No clip is laid over
   another picture, except one clip's window over its background. Two clips
   are on screen together only while one scene changes into the next. It does not
-  pan, crop or rotate, beyond the zoom above, and nothing on screen moves
+  pan or rotate, beyond the zoom above, and nothing on screen moves
   or changes over time except in the ways listed above. Nothing is ever removed from a video automatically.
   What is built so far is in [Finishing a recording](#finishing-a-recording).
 - No graphical interface, no background service, no config file — options go on
