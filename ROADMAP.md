@@ -5331,6 +5331,37 @@ is a front-end to the same recording engine, not a second one.
   Kind: feature.
   Source: user-request-2026-10-16.
 
+- 📋 [DEMO-0275] **Opt-in automatic usage reports to Google Analytics, as Pressless sends them.**
+  The only fully anonymous route: email and GitHub both show who sent
+  it. demoreel has never used the network, so README and CLAUDE.md go
+  through the review gate first.
+  Model (user, 2026-10-16): Pressless's usage reports, PRESS-0262, sent
+  with Google Analytics' Measurement Protocol
+  (Pressless docs/specs/PRESS-0262-usage-reports.md, src/pressless/usage.py).
+  What to copy: off by default; asked once in the window, never on the
+  command line; unanswered counts as no; saying no forgets the random id.
+  Only names demoreel chose are sent (feature, step, error type), never
+  a path, a file name or an error's text. A copy of each report sent is
+  kept for the user to read. Each send runs on its own thread with a
+  five-second limit, to Google's European endpoint; a failure logs one
+  line without the URL, which holds the key.
+  The key is written into release builds from GitHub secrets and never
+  committed; a build without it never asks. It ships in the program, so
+  anyone can send fake reports: the figures are a guide.
+  Google side (the user's to do): a new Analytics property with a
+  stream, a Measurement Protocol secret, and custom dimensions.
+  Pressless's lessons: error is a reserved event name; session_id cannot
+  be a custom dimension; send numbers as numbers. The privacy policy on
+  antsprojectshub.co.za must match the property's settings (2-month
+  retention, no signals, no ads personalisation), so the website session
+  writes it. Pressless's Google approval was for its sign-in feature, not
+  for these reports; reports needed none.
+  User, 2026-10-16: planned for 1.1.0, beside the one-click log
+  (DEMO-0274).
+  **Layman:** If the user agrees, the usage notes are sent automatically and without a name, so they do not have to press send.
+  Kind: feature.
+  Source: user-request-2026-10-16.
+
 ## 1.2.0 — Point at it, or hide it
 
 The road from 1.2.0 to 2.0.0 builds the full video editor (DEMO-0140),
@@ -5567,19 +5598,6 @@ command line too (DEMO-0181).
   DEMO-0159). The counts are the baseline for 1.5.0 to 2.0.0.
   **Layman:** The editor's menus are laid out so that everything is quick to reach and nothing is hard to find.
   Kind: ux.
-  Source: user-request-2026-10-16.
-
-- 💭 [DEMO-0275] **Opt-in automatic sending of the usage log to a free online service.**
-  The only fully anonymous route: email and GitHub both show who sent
-  it. demoreel has never used the network, so this goes through the
-  review gate first. Candidates, not yet checked: Firebase has no
-  official desktop Linux library, so it would be used through its web
-  interface; Aptabase is built for desktop apps; PostHog and Google
-  Analytics' Measurement Protocol take plain web requests. Check each
-  one's free limits, privacy terms and how a key built into a public
-  program can be abused, before choosing.
-  **Layman:** If the user agrees, the usage notes are sent automatically and without a name, so they do not have to press send.
-  Kind: feature.
   Source: user-request-2026-10-16.
 
 ## 1.5.0 — A timeline to work in
