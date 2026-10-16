@@ -1355,6 +1355,9 @@ FINPY
     ff -f lavfi -i "testsrc2=s=640x240:r=10:d=3" $x264 "$ft/W.mp4"
     ff -f lavfi -i "testsrc2=s=320x480:r=10:d=3" $x264 "$ft/T.mp4"
     ff -f lavfi -i "testsrc=s=320x240:r=3:d=3" -r 30 $x264 "$ft/S.mp4"
+    # Left half moving, right half one grey: DEMO-0211's motion --region.
+    ff -f lavfi -i "testsrc2=s=160x240:r=10:d=3" -f lavfi -i "color=c=#808080:s=160x240:r=10:d=3" \
+       -filter_complex hstack $x264 "$ft/H.mp4"
     ff -f lavfi -i "color=c=#808080:s=320x240:r=10:d=4" $x264 "$ft/G.mp4"
     # A tenth of a second of 3 kHz, which a_onsets finds: DEMO-0186's sound.
     ff -f lavfi -i "sine=f=3000:d=0.1" "$ft/click.wav"
@@ -1574,6 +1577,29 @@ SHIM
         "$(awk -v n="$new" 'BEGIN { printf "%.2f", n / 9 }')" \
         "$(l 4 | sed 's/^new frames per second: //')" 0.1
     echo "the plain report has the README's lines, in its order"
+
+    }
+    fin_s6r() {
+    # README: "`--region x,y,w,h` looks at one rectangle of the picture and
+    # ignores the rest ... The rectangle must fit inside the video, or
+    # `motion` stops before reading it." H.mp4 moves on its left half only.
+    run motion H.mp4 --region 0,0,160,240
+    expect_ok "motion --region over the moving half"
+    assert_eq "motion --region over the moving half: new frames = frames" 30 "$(sed -n 's/^new frames: //p' "$fo")"
+    run motion H.mp4 --region 161,1,150,200
+    expect_ok "motion --region over the still half"
+    assert_eq "motion --region over the still half: only the first frame is new" 1 "$(sed -n 's/^new frames: //p' "$fo")"
+    assert_eq "motion --region over the still half: one still line, the whole video" 1 "$(grep -c '^still:' "$fo")"
+    run motion H.mp4
+    expect_ok "motion H.mp4 without --region"
+    assert_eq "motion without --region sees the moving half" 30 "$(sed -n 's/^new frames: //p' "$fo")"
+    run motion H.mp4 --region 200,0,160,240
+    expect_refused "motion --region wider than the video"
+    grep -q 'does not fit inside the 320x240 picture' "$fe" \
+        || fail "motion --region too wide: expected 'does not fit inside the 320x240 picture', actual: $(cat "$fe")"
+    run motion H.mp4 --region 1,2,3
+    expect_refused "motion --region with three numbers"
+    echo "motion --region measures the rectangle alone, and refuses one that does not fit"
 
     }
     fin_s7() {
@@ -3432,6 +3458,7 @@ CASES
     fin_step "a time past the end is an error; the file's own length is not" fin_s4
     fin_step "a failed command leaves nothing at -o, and a file already there as it was" fin_s5
     fin_step "motion prints the report README shows" fin_s6
+    fin_step "motion --region looks at one rectangle and refuses one that does not fit" fin_s6r
     fin_step "motion's last change and still lines agree with where the clip goes still" fin_s7
     fin_step "motion --json is the same report as one JSON object" fin_s8
     fin_step "motion writes no file and changes nothing" fin_s9

@@ -2490,7 +2490,8 @@ def take_picture(env, display, width, height, cursor, output, gpu):
 def shot_region(text, width, height):
     """--region's x, y, w, h, or None without it; dies on one that cannot be kept.
 
-    Checked before the app starts, so a mistyped rectangle costs no run.
+    Checked before the app starts, so a mistyped rectangle costs no run;
+    `motion` checks its --region with it too, before reading the video.
     """
     if text is None:
         return None
@@ -4591,13 +4592,21 @@ def cmd_motion(a):
         die(tr("--from and --to must be inside {path}, which is "
                "{seconds} seconds long, with --from before --to.", path=a.input,
                seconds=f"{whole:.3f}"))
+    region = shot_region(a.region, info["width"], info["height"])
+    # exact=1, or crop rounds an odd corner down to the chroma grid on yuv420p
+    # and looks one pixel off the rectangle named: without it a 40x40 crop at
+    # 1,1 matched the one at 0,0 by checksum. ci.sh does not lock this; its
+    # colour samples straddle any boundary a fixture could put there. A crop
+    # off the 8x8 grid keeps NEW_FRAME's calibration: a 9-in-90 pattern scored
+    # 9 at x of 0, 3, 5 and 8. Both measured 2026-10-16.
+    crop = "crop={2}:{3}:{0}:{1}:exact=1,".format(*region) if region else ""
     try:
         seen = subprocess.run(
             ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "info",
              "-ss", f"{start:.6f}", "-t", f"{end - start:.6f}",
              "-i", str(Path(a.input).expanduser()),
-             "-vf", f"showinfo=checksum=0,{NEW_FRAME},"
-                    "showinfo=checksum=0",
+             "-vf", f"{crop}showinfo@every=checksum=0,{NEW_FRAME},"
+                    "showinfo@new=checksum=0",
              "-an", "-f", "null", "-"],
             capture_output=True, text=True, timeout=60 + 10 * (end - start),
             check=False)
@@ -4605,10 +4614,11 @@ def cmd_motion(a):
         die(tr("reading {path} took too long for its length, so it was "
                "stopped.", path=a.input))
     # Two showinfo filters, one each side of the test: the first sees every
-    # frame, the second only the new ones.
-    every = re.findall(r"Parsed_showinfo_0 .* pts_time:([0-9.]+)", seen.stderr)
+    # frame, the second only the new ones. Named, so a crop before them does
+    # not move the names ffmpeg logs them under.
+    every = re.findall(r"showinfo@every .* pts_time:([0-9.]+)", seen.stderr)
     new = [start + float(t) for t in
-           re.findall(r"Parsed_showinfo_2 .* pts_time:([0-9.]+)", seen.stderr)]
+           re.findall(r"showinfo@new .* pts_time:([0-9.]+)", seen.stderr)]
     if seen.returncode != 0 or not every or not new:
         lines = [ln for ln in seen.stderr.splitlines() if ln.strip()]
         die(tr("could not read the frames of {path}.", path=a.input) + "\n  "
@@ -4996,6 +5006,10 @@ def build_parser():
     motion.add_argument("--still", type=float, default=1.0, metavar="SECONDS",
                         help=tr_help("report a stretch with no change longer than "
                                      "this (default: 1)"))
+    motion.add_argument("--region", metavar="X,Y,W,H",
+                        help=tr_help("look only at this rectangle of the picture: "
+                                     "its top-left corner at X,Y, W pixels wide "
+                                     "and H high"))
     motion.add_argument("--json", action="store_true",
                         help=tr_help("print the report as one JSON object"))
     motion.set_defaults(func=cmd_motion)

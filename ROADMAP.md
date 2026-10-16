@@ -715,13 +715,18 @@ simplest case, and a gate proves it still records.
   Source: in-session-2026-10-16 DEMO-0203.
   Lanes: po.
 
-- 📋 [DEMO-0211] **Let motion look at one region of the video, with --region x,y,w,h.**
+- ✅ [DEMO-0211] **Let motion look at one region of the video, with --region x,y,w,h.**
   The website session's biggest token cost is reading frame sheets as
   images to find when part of a video changes. motion already answers
   "where does it stand still" in text; with --region it answers that for
   one rectangle, the same x,y,w,h form shot --region takes (DEMO-0205).
   Cropping is allowed since the user's 2026-10-15 ruling. Tell
   ants-projects-hub-website when it ships.
+  Shipped 2026-10-16. README gated first (readme-loop-log row 24,
+  converged at loop 1). cmd_motion crops with exact=1 before the test
+  and checks the rectangle with shot_region; ci.sh fin_s6r covers it.
+  The new help line is drafted in all 16 catalogs and passed Gemini
+  and DeepSeek on first reading.
   **Layman:** A session could ask when one part of a video changes and get a short list of times, instead of reading pictures of frames.
   Kind: feature.
   Source: peer-request-2026-10-16 ants-projects-hub-website via claude-config.

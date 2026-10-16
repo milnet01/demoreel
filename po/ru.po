@@ -1269,6 +1269,10 @@ msgid "report a stretch with no change longer than this (default: 1)"
 msgstr "сообщать об участках без изменений длиннее этого (по умолчанию: 1)"
 
 #. argparse formats this text with %
+msgid "look only at this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
+msgstr "смотреть только на этот прямоугольник изображения: левый верхний угол в X,Y, ширина W пикселей и высота H"
+
+#. argparse formats this text with %
 msgid "print the report as one JSON object"
 msgstr "вывести отчёт одним объектом JSON"
 

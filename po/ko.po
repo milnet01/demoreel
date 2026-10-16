@@ -1257,6 +1257,10 @@ msgid "report a stretch with no change longer than this (default: 1)"
 msgstr "이보다 오래 변화가 없는 구간을 알림 (기본값: 1)"
 
 #. argparse formats this text with %
+msgid "look only at this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
+msgstr "이미지에서 이 사각형만 살펴봄. 왼쪽 위 모서리 X,Y, 너비 W 픽셀, 높이 H 픽셀"
+
+#. argparse formats this text with %
 msgid "print the report as one JSON object"
 msgstr "보고서를 JSON 객체 하나로 출력"
 

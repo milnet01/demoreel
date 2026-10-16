@@ -16,6 +16,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 - **`shot --region x,y,w,h` keeps one rectangle of the picture** (DEMO-0205)
   A smaller picture is a smaller file, and cheaper for a Claude Code session to read. The blank-picture check still looks at the whole screen, and a failed run writes nothing to `-o`.
+- **`motion --region x,y,w,h` reports on one rectangle of a video** (DEMO-0211)
+  It says when that part of the picture changes and where it stands still, in the same few lines of text, so a session need not look at frames to find out.
 
 ### Fixed
 
