@@ -3104,7 +3104,9 @@ d.memory_cap = lambda: 1024 ** 2
 sys.argv = ["demoreel", *sys.argv[2:]]
 d.main()
 CAPPY
-    printf 'card 2\n' > "$ft/cap.txt"
+    # Long enough to outlast several of run_capped's 0.25 s looks: a 2 s
+    # card was made in 0.24 s on ubuntu:24.04 and never looked at.
+    printf 'card 30\n' > "$ft/cap.txt"
     rc=0
     ( cd "$ft" && python3 tinycap.py "$DR" edit cap.txt -o "$ft/out/cap.mp4" ) \
         >"$fo" 2>"$fe" || rc=$?
