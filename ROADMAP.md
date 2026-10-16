@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=262 -->
+<!-- ants-roadmap-id-high-water: DEMO=275 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -4989,6 +4989,16 @@ covers both display backends and the Flatpak invocation.
   Kind: perf.
   Source: user-request-2026-10-16.
 
+- 📋 [DEMO-0263] **Count the steps for the common command-line tasks, cut the ones that can go, and check every feature is easy to find from --help.**
+  List the common tasks (record an app, trim, caption, join, make a
+  poster), write down the shortest command for each and how many
+  options it needs, and remove any step a sensible default could do.
+  Check each command and option is reachable from `demoreel --help` in
+  one step. The counts are the baseline later versions compare against.
+  **Layman:** Recording and finishing a video takes as few commands and options as possible, and every feature can be found in the help.
+  Kind: ux.
+  Source: user-request-2026-10-16.
+
 - 📋 [DEMO-0094] **Run a full security pass before 1.0 and fix what it finds.**
   Everything since the last security look: the stop verdict, translations,
   packages and the window. Run `check-code` with its security tools
@@ -5298,6 +5308,29 @@ is a front-end to the same recording engine, not a second one.
   Kind: perf.
   Source: user-request-2026-10-16.
 
+- 📋 [DEMO-0264] **The recording window: count the clicks for each common task, check the menus flow, and every option is easy to find.**
+  Record a common task in the fewest clicks; set a target count per
+  task and meet it. Menus follow the order a user works in. Every
+  feature can be found within two steps, or by searching for it.
+  **Layman:** Recording from the window takes as few clicks as possible, and nothing is hidden in a menu nobody would look in.
+  Kind: ux.
+  Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0274] **An opt-in usage log, sent in one click by email or as a GitHub issue.**
+  Off until the user turns it on; never asked by a prompt on the
+  command line. It records which feature was used, steps per task, long
+  pauses and errors; never file names, paths or anything in a video. A
+  plain-text file the user can read before sending. One button opens a
+  new email in their own mail program with the log filled in, ready to
+  send; another opens a pre-filled GitHub issue, for a user who would
+  rather not share an email address (a GitHub username is still seen).
+  The log goes in the message text: not every mail program accepts an
+  attachment this way. A long log must be cut to fit a link's length.
+  Feeds DEMO-0162 and the ease-of-use items.
+  **Layman:** If the user agrees, demoreel notes which features they use and where they got stuck, and one button sends it to us by email or GitHub.
+  Kind: feature.
+  Source: user-request-2026-10-16.
+
 ## 1.2.0 — Point at it, or hide it
 
 The road from 1.2.0 to 2.0.0 builds the full video editor (DEMO-0140),
@@ -5391,6 +5424,13 @@ Claude Code can use them before the editor's window exists.
   Kind: perf.
   Source: user-request-2026-10-16.
 
+- 📋 [DEMO-0265] **Adding a blur, arrow, spotlight, key badge or auto zoom takes as few steps as possible, in a script and later in the window.**
+  Count the words in the shortest edit-script line for each mark, and
+  choose defaults so most need only a place and a time.
+  **Layman:** Pointing at or hiding something in a video is quick, and the options are easy to find.
+  Kind: ux.
+  Source: user-request-2026-10-16.
+
 ## 1.3.0 — Sound that sits right
 
 Music and voice tracks, even loudness, music that ducks under a voice and
@@ -5453,6 +5493,12 @@ review gate.
   Kind: perf.
   Source: user-request-2026-10-16.
 
+- 📋 [DEMO-0266] **Common sound tasks (add music, even the loudness, duck under a voice) take one step each, with good defaults.**
+  Count the steps per task; most should need no settings at all.
+  **Layman:** Adding music or making the sound even takes one step, not a page of settings.
+  Kind: ux.
+  Source: user-request-2026-10-16.
+
 ## 1.4.0 — The editor opens
 
 The editor's window, on 1.1.0's window: a project file, bring in any
@@ -5512,6 +5558,28 @@ command line too (DEMO-0181).
   or saving. Measure start-up, preview frame rate, CPU, GPU and memory.
   **Layman:** The editor opens quickly and plays a video smoothly while you edit.
   Kind: perf.
+  Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0267] **Design the editor's menus and layout for few steps per task, a natural flow, and every feature easy to find.**
+  List the common tasks, set a target number of clicks for each, and
+  measure them. Menus follow the order work is done in. A search box
+  finds any command by name. Large, clear controls (DEMO-0143,
+  DEMO-0159). The counts are the baseline for 1.5.0 to 2.0.0.
+  **Layman:** The editor's menus are laid out so that everything is quick to reach and nothing is hard to find.
+  Kind: ux.
+  Source: user-request-2026-10-16.
+
+- 💭 [DEMO-0275] **Opt-in automatic sending of the usage log to a free online service.**
+  The only fully anonymous route: email and GitHub both show who sent
+  it. demoreel has never used the network, so this goes through the
+  review gate first. Candidates, not yet checked: Firebase has no
+  official desktop Linux library, so it would be used through its web
+  interface; Aptabase is built for desktop apps; PostHog and Google
+  Analytics' Measurement Protocol take plain web requests. Check each
+  one's free limits, privacy terms and how a key built into a public
+  program can be abused, before choosing.
+  **Layman:** If the user agrees, the usage notes are sent automatically and without a name, so they do not have to press send.
+  Kind: feature.
   Source: user-request-2026-10-16.
 
 ## 1.5.0 — A timeline to work in
@@ -5581,6 +5649,13 @@ detection.
   Memory stays flat as clips are added. Measure with a long project.
   **Layman:** Long projects stay as quick to work in as short ones.
   Kind: perf.
+  Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0268] **New timeline features fit the existing menus and keep each task's step count at or below 1.4.0's.**
+  Re-measure the 1.4.0 task counts, and add counts for the new tasks.
+  Check each new feature is easy to find.
+  **Layman:** Adding timeline features does not make the editor more confusing or slower to use.
+  Kind: ux.
   Source: user-request-2026-10-16.
 
 ## 1.6.0 — Shaping the picture
@@ -5663,6 +5738,13 @@ titles. Motion tracking comes last here, as the least needed.
   Kind: perf.
   Source: user-request-2026-10-16.
 
+- 📋 [DEMO-0269] **Picture tools (layers, colour, keyframes, transitions) fit the menus, with step counts measured and every tool easy to find.**
+  Ready-made looks and presets so most tasks need no fine-tuning.
+  Re-measure the earlier task counts too.
+  **Layman:** Colour, zoom and layers are easy to find and quick to use, even for a beginner.
+  Kind: ux.
+  Source: user-request-2026-10-16.
+
 ## 1.7.0 — Words and voices
 
 Subtitles, then the features that need a local speech or voice model:
@@ -5738,6 +5820,13 @@ too, as the other cut offered for approval.
   Kind: perf.
   Source: user-request-2026-10-16.
 
+- 📋 [DEMO-0270] **Subtitles, narration and transcript editing are easy to find and take few steps; a model download is explained before it starts.**
+  Count the steps per task. Say in plain words what a model is, how
+  big it is, and that it stays on this computer, before downloading it.
+  **Layman:** Adding subtitles or a narration is quick and clear, with no surprises.
+  Kind: ux.
+  Source: user-request-2026-10-16.
+
 ## 1.8.0 — Out the door
 
 Getting a film out: export presets, tall and square versions, background
@@ -5794,6 +5883,12 @@ and style kits for a series.
   Kind: perf.
   Source: user-request-2026-10-16.
 
+- 📋 [DEMO-0271] **Saving a film for a named place (YouTube, a phone, a GIF) takes one step; the export menus flow and are easy to find.**
+  Count the steps per export task, and re-measure the earlier ones.
+  **Layman:** Saving a finished video for YouTube or a phone takes one click.
+  Kind: ux.
+  Source: user-request-2026-10-16.
+
 ## 1.9.0 — Plug-ins
 
 A plug-in system, and the features that suit it moved into plug-ins so each
@@ -5828,6 +5923,13 @@ can be updated on its own. "No plugins" is lifted with the other limits in
   Kind: perf.
   Source: user-request-2026-10-16.
 
+- 📋 [DEMO-0272] **Finding, adding and removing a plug-in is easy, and a plug-in's features show up where a user would look for them.**
+  Count the steps to add and remove a plug-in. A plug-in's commands
+  appear in the same menus and search as built-in ones.
+  **Layman:** Plug-ins are easy to add, and their features appear in the menus where you would expect them.
+  Kind: ux.
+  Source: user-request-2026-10-16.
+
 ## 2.0.0 — A full video editor
 
 The finished editor, after 1.2.0 to 1.9.0 have built it (DEMO-0140, the
@@ -5858,6 +5960,9 @@ first-time user's run, and a last performance pass.
 - 📋 [DEMO-0162] **Watch a first-time user make a short film, and fix what stops them.**
   Give them a few clips and one task, say nothing, and note every place
   they hesitate or ask. Each one becomes a fix, then the test repeats.
+  User, 2026-10-16: opt-in usage logs, sent by email or GitHub issue in
+  one click, add to the watched sessions (1.1.0); automatic sending is
+  under consideration for 1.4.0.
   **Layman:** Someone new tries the editor while we watch, and everything they get stuck on is fixed.
   Kind: ux.
   Source: user-request-2026-10-02.
@@ -5876,4 +5981,11 @@ first-time user's run, and a last performance pass.
   got worse. Profile the slowest steps rather than guessing.
   **Layman:** Before 2.0, prove the finished editor stays quick on a long film and on an ordinary computer.
   Kind: perf.
+  Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0273] **A last ease-of-use pass: every task's step count, the menu flow and how easy each feature is to find, against every earlier version's figures.**
+  Fix any task that grew more steps than its earlier count. Pairs
+  with the first-time user test (DEMO-0162).
+  **Layman:** Before 2.0, check the whole editor is still easy and quick to use, now that everything is in it.
+  Kind: ux.
   Source: user-request-2026-10-16.
