@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=216 -->
+<!-- ants-roadmap-id-high-water: DEMO=262 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -274,22 +274,6 @@ simplest case, and a gate proves it still records.
   Kind: fix.
   Source: in-session-2026-10-08.
 
-- 📋 [DEMO-0175] **Make a YouTube thumbnail from a recording.**
-  Asked by the user 2026-10-10. Close to `poster`, which saves one
-  frame at the recording's own size (1600x1000, 16:10, by default).
-  YouTube asks for 16:9, 1280x720 recommended, as JPG or PNG under its
-  size limit; check YouTube's current limits when this is built rather
-  than trusting these. Open: whether it carries a line of title text,
-  and how a 16:10 frame becomes 16:9 (crop or bars). Must stay inside
-  CLAUDE.md § Scope ceiling: one picture, at most one line of text.
-  Decided (user, 2026-10-10): a frame of the video plus an optional
-  single line of large title text; a 16:10 frame is fitted to 16:9 by
-  trimming the top and bottom, never with bars; built after the 0.9.0
-  packaging work.
-  **Layman:** Make the small picture YouTube shows for a video, in the size and file limits YouTube asks for.
-  Kind: feature.
-  Source: user-request-2026-10-10.
-
 - ✅ [DEMO-0176] **`demoreel check` says --gpu is ready when wf-recorder cannot even start.**
   Found 2026-10-10. A system update installed Packman's libavcodec63
   (9.0.2-1699.3.pm.1). openSUSE's wf-recorder 0.6.0+git4-1.8 needs
@@ -389,23 +373,6 @@ simplest case, and a gate proves it still records.
   Kind: perf.
   Source: user-request-2026-10-12.
 
-- 📋 [DEMO-0195] **Point openSUSE codec advice at OneUp and Groundwork once OneUp's codec action ships.**
-  The user asked (2026-10-13) that OneUp and Groundwork cater for
-  Packman's libavcodec with libx264, which record --gpu needs on
-  openSUSE (DEMO-0174). Groundwork already does: its Media codecs item
-  installs Packman's libavcodec, and Packman's priority 90 makes a later
-  install come from Packman too (its session, 2026-10-13; not measured on
-  a fresh system). OneUp's one-click Packman codec action is ONEUP-0274,
-  planned for OneUp 2.1; the OneUp session will say when it is released.
-  Then: README § Install's openSUSE codec lines and the 16 quick-start
-  pages name OneUp and Groundwork beside the commands, and check's
-  packman_advice may name them too. Keep the commands: they serve anyone
-  using neither tool. Not before ONEUP-0274 ships.
-  Dependencies: ONEUP-0274.
-  **Layman:** On openSUSE, demoreel's install notes will name the user's own update tools for getting video codecs.
-  Kind: doc.
-  Source: user-request-2026-10-13.
-
 - ✅ [DEMO-0196] **Verify record --gpu --audio and update README's line saying wf-recorder does not start here.**
   README's sound status says `--gpu --audio` is not yet verified
   because wf-recorder does not start on this machine. That was written
@@ -424,19 +391,6 @@ simplest case, and a gate proves it still records.
   **Layman:** Check that recording a 3D app with its sound works, and fix the README sentence that says it could not be tested.
   Kind: doc-fix.
   Source: in-session-2026-10-13.
-
-- 📋 [DEMO-0197] **Publish demoreel to COPR for Fedora and to the AUR for Arch.**
-  Moved out of DEMO-0070 at the user's decision (2026-10-13), so that
-  DEMO-0068, 0069 and 0070 ship with 0.9.0. 0.9.0 attaches the .rpm and
-  the Arch package to the GitHub release, both tested by ./ci.sh
-  --packages. Publishing them waits on a COPR account and an AUR
-  account. packaging/demoreel.spec and packaging/PKGBUILD are the
-  starting point; obs-submit.sh is the model for a script run on this
-  machine after each release.
-  Dependencies: DEMO-0070.
-  **Layman:** Install demoreel on Fedora with dnf and on Arch from the AUR, without downloading a file by hand.
-  Kind: package.
-  Source: user-request-2026-10-13.
 
 - ✅ [DEMO-0198] **obs-status.sh reads a state marked about to change as final, and fails before OBS has built.**
   Measured 2026-10-14 on the first real submit of 0.9.0: straight after
@@ -517,45 +471,6 @@ simplest case, and a gate proves it still records.
   Source: in-session-2026-10-14 DEMO-0199.
   Lanes: check.
 
-- 📋 [DEMO-0201] **On record --gpu --audio, the sound lands 50-130 ms after the picture.**
-  Measured 2026-10-14 with the gate's flash-and-beep app (ci.sh step
-  "--audio keeps sound and picture in step"), four runs each, at load
-  15-19 on 12 CPUs: --gpu put the beep 132, 50, 121 and 61 ms after the
-  flash; the default backend, run straight after, 32, 4, 17 and 47 ms.
-  The sound is late every time on --gpu. start_wf_recorder passes
-  --audio to wf-recorder and has no counterpart to start_ffmpeg's
-  late-start correction (DEMO-0169); where the offset comes from is not
-  yet known. The gate's sync step runs on the default backend only.
-  Fix the offset, then give the step a --gpu run where --gpu is ready.
-  Spec: DEMO-0106 section 13 names the fallback, ffmpeg recording the
-  monitor beside wf-recorder and shifting by the two start times.
-  Progress (2026-10-14): the cause is in wf-recorder, not demoreel.
-  PulseReader::init reads the clock that dates sample zero after
-  pa_simple_new returns, and capture has begun inside that call. The
-  ffmpeg-beside-wf-recorder fallback was built as a prototype and measured
-  worse; upstream's wf-recorder pull request 353 measured no better.
-  DEMO-0106 section 13 holds the numbers. demoreel builds nothing for it.
-  This machine's hand-built wf-recorder now reads the clock before
-  connecting (patch clock-before-connect.diff in its build folder). The
-  item stays open until a wf-recorder release fixes it; then give the
-  gate's sync step a --gpu run.
-  Open (2026-10-14), waiting on the user: post the drafted comment on
-  wf-recorder pull request 353
-  (/mnt/Emulators/claude-scratch/demo-0201/pr353-comment.md), or open a
-  one-line pull request of our own instead. Recommended: the comment.
-  Nothing is posted without the user's word. The user asked whether to
-  build our own wf-recorder; recommended against (a compiled fork per
-  distro, tracking ffmpeg's API, for about 15-20 ms), unless upstream
-  stays unmerged for months, and then asking distros to carry the patch
-  first. The user has not decided.
-  Progress (2026-10-15): the user chose to post the measurements on
-  wf-recorder pull request 353 rather than open a separate one. Posted:
-  https://github.com/ammen99/wf-recorder/pull/353#issuecomment-6186368958
-  **Layman:** On a 3D app recorded with its sound, the sound comes a little after the picture, enough to notice on a click or a footstep.
-  Kind: fix.
-  Source: in-session-2026-10-14 DEMO-0196.
-  Lanes: record, gpu.
-
 - ✅ [DEMO-0202] **On a slow machine, check says ready when it could not tell whether ffmpeg has libx264.**
   has_libx264() returns True when `ffmpeg -encoders` times out
   (CALL_TIMEOUT, 10 s since 14d5af9): "cannot tell; let the recording
@@ -633,29 +548,6 @@ simplest case, and a gate proves it still records.
   Kind: feature.
   Source: peer-request-2026-10-15 ants-terminal-95 token survey.
   Lanes: shot.
-
-- 📋 [DEMO-0206] **Find out why -a key presses did not reach an egui/winit app, while type and click did.**
-  Reported second-hand by rusty-psn: `-a 'key ctrl+s'` had no effect on
-  an egui/winit app on the private display. Not yet reproduced. First
-  step: reproduce with a small winit app on both backends. A known cause
-  to test: winit reads keys through XKB/XInput2, and xdotool key sends
-  XTEST events that can miss there when no keymap or focus is set.
-  **Layman:** One app ignored the scripted key presses, such as Ctrl+S, though typed text and clicks reached it.
-  Kind: investigate.
-  Source: peer-report-2026-10-15 rusty-psn via ants-terminal-95.
-  Lanes: actions.
-
-- 📋 [DEMO-0207] **Let the click step press the right or middle button, and let drag use them.**
-  album-builder needed a right-click and a drag between two apps, and
-  put xdotool calls inside its launched command to get them. `click`
-  presses button 1 only (`xdotool click 1` in run_action). A trailing
-  `right` or `middle` word on `click` and `drag` would cover it; it is
-  a scripted step, which the README already allows. Not yet designed.
-  The same report said -d 15 gave a 29.1 s video: README's -d row says
-  the count starts when the steps finish, so that one is by design.
-  **Layman:** A recording can show a right-click menu being opened.
-  Kind: feature.
-  Source: claude-config relay of an album-builder field report, 2026-10-15.
 
 - ✅ [DEMO-0208] **Check the two new messages' translations with Gemini in Chrome.**
   The user said "check now" on 2026-10-15; it stopped because the Claude
@@ -748,51 +640,6 @@ simplest case, and a gate proves it still records.
   Kind: feature.
   Source: peer-request-2026-10-16 ants-projects-hub-website via claude-config.
   Lanes: poster.
-
-- 📋 [DEMO-0213] **A check that names every place a new option must appear, before it is added.**
-  Adding shot --region touched the parser, demoreel.1, three completion
-  scripts, README § The options and the po template. ci.sh catches a
-  missing one only after the fact; this lists them, present or missing,
-  for an option name given before the work starts.
-  **Layman:** When a new option is added, one command lists every file that has to mention it.
-  Kind: chore.
-  Source: in-session-2026-10-16 DEMO-0205.
-  Lanes: ci.
-
-- 📋 [DEMO-0214] **A helper that adds one message's drafts to all 16 catalogs and checks each.**
-  Each new msgid meant a python heredoc appending to 16 catalogs, then
-  msgfmt -c, then the gate's code-token check 138 steps into ./ci.sh,
-  which today caught three drafts with a flag joined to a word. The
-  helper appends, runs msgfmt and CODE_TOKEN_RE per language, and names
-  the ones that fail at once.
-  **Layman:** Adding a new sentence in every language becomes one step that also checks each language straight away.
-  Kind: chore.
-  Source: in-session-2026-10-16 DEMO-0205.
-  Lanes: po.
-
-- 📋 [DEMO-0215] **Second-model pass over DEMO-0212's new sheet messages.**
-  Twelve new msgids and one changed one (the check line now ends
-  "motion, poster and sheet") went in as drafts with DEMO-0212.
-  DeepSeek for zh_CN, zh_TW, ja and ko; Gemini for the rest. Look at
-  the word chosen for "a sheet" in the at-most-100 message: zh drafts
-  use 拼图/拼圖, de Übersichtsbild. A pass improves a draft; it does
-  not confirm one (docs/specs/DEMO-0060).
-  **Layman:** The new frame-sheet sentences in every language still need a second check by another AI.
-  Kind: doc-fix.
-  Source: in-session-2026-10-16 DEMO-0212.
-  Lanes: po.
-
-- 📋 [DEMO-0216] **ci.sh --summary names the last step, not the failed one, on a --finishing run.**
-  Seen 2026-10-16: ./ci.sh --finishing failed in "sheet lays out the
-  frames asked for" and went on to the end, as the finishing checks
-  do. --summary then printed "stopped in:" the memory-cap step, which
-  passed, and not the FAIL line. CLAUDE.md says it prints only the
-  step that failed. Reproduce: make one finishing assertion fail, run
-  ./ci.sh --finishing to a log, then ./ci.sh --summary <log>.
-  **Layman:** The short report of a failed test run pointed at the wrong test.
-  Kind: fix.
-  Source: in-session-2026-10-16 DEMO-0212.
-  Lanes: ci.
 
 ## Standing chores
 
@@ -5044,6 +4891,104 @@ covers both display backends and the Flatpak invocation.
   Kind: marketing.
   Source: user-request-2026-09-25.
 
+- ✅ [DEMO-0216] **ci.sh --summary names the last step, not the failed one, on a --finishing run.**
+  Seen 2026-10-16: ./ci.sh --finishing failed in "sheet lays out the
+  frames asked for" and went on to the end, as the finishing checks
+  do. --summary then printed "stopped in:" the memory-cap step, which
+  passed, and not the FAIL line. CLAUDE.md says it prints only the
+  step that failed. Reproduce: make one finishing assertion fail, run
+  ./ci.sh --finishing to a log, then ./ci.sh --summary <log>.
+  Shipped 2026-10-16 in d5be6fa: fin_run prints "this check failed"
+  under a failed step, and --summary prints each such step under
+  "failed:". Seen red on an injected sheet failure, green after; a gate
+  step locks it.
+  **Layman:** The short report of a failed test run pointed at the wrong test.
+  Kind: fix.
+  Source: in-session-2026-10-16 DEMO-0212.
+  Lanes: ci.
+
+- 📋 [DEMO-0215] **Second-model pass over DEMO-0212's new sheet messages.**
+  Twelve new msgids and one changed one (the check line now ends
+  "motion, poster and sheet") went in as drafts with DEMO-0212.
+  DeepSeek for zh_CN, zh_TW, ja and ko; Gemini for the rest. Look at
+  the word chosen for "a sheet" in the at-most-100 message: zh drafts
+  use 拼图/拼圖, de Übersichtsbild. A pass improves a draft; it does
+  not confirm one (docs/specs/DEMO-0060).
+  **Layman:** The new frame-sheet sentences in every language still need a second check by another AI.
+  Kind: doc-fix.
+  Source: in-session-2026-10-16 DEMO-0212.
+  Lanes: po.
+
+- 📋 [DEMO-0206] **Find out why -a key presses did not reach an egui/winit app, while type and click did.**
+  Reported second-hand by rusty-psn: `-a 'key ctrl+s'` had no effect on
+  an egui/winit app on the private display. Not yet reproduced. First
+  step: reproduce with a small winit app on both backends. A known cause
+  to test: winit reads keys through XKB/XInput2, and xdotool key sends
+  XTEST events that can miss there when no keymap or focus is set.
+  **Layman:** One app ignored the scripted key presses, such as Ctrl+S, though typed text and clicks reached it.
+  Kind: investigate.
+  Source: peer-report-2026-10-15 rusty-psn via ants-terminal-95.
+  Lanes: actions.
+
+- 📋 [DEMO-0207] **Let the click step press the right or middle button, and let drag use them.**
+  album-builder needed a right-click and a drag between two apps, and
+  put xdotool calls inside its launched command to get them. `click`
+  presses button 1 only (`xdotool click 1` in run_action). A trailing
+  `right` or `middle` word on `click` and `drag` would cover it; it is
+  a scripted step, which the README already allows. Not yet designed.
+  The same report said -d 15 gave a 29.1 s video: README's -d row says
+  the count starts when the steps finish, so that one is by design.
+  **Layman:** A recording can show a right-click menu being opened.
+  Kind: feature.
+  Source: claude-config relay of an album-builder field report, 2026-10-15.
+
+- 📋 [DEMO-0175] **Make a YouTube thumbnail from a recording.**
+  Asked by the user 2026-10-10. Close to `poster`, which saves one
+  frame at the recording's own size (1600x1000, 16:10, by default).
+  YouTube asks for 16:9, 1280x720 recommended, as JPG or PNG under its
+  size limit; check YouTube's current limits when this is built rather
+  than trusting these. Open: whether it carries a line of title text,
+  and how a 16:10 frame becomes 16:9 (crop or bars). Must stay inside
+  CLAUDE.md § Scope ceiling: one picture, at most one line of text.
+  Decided (user, 2026-10-10): a frame of the video plus an optional
+  single line of large title text; a 16:10 frame is fitted to 16:9 by
+  trimming the top and bottom, never with bars; built after the 0.9.0
+  packaging work.
+  **Layman:** Make the small picture YouTube shows for a video, in the size and file limits YouTube asks for.
+  Kind: feature.
+  Source: user-request-2026-10-10.
+
+- 📋 [DEMO-0213] **A check that names every place a new option must appear, before it is added.**
+  Adding shot --region touched the parser, demoreel.1, three completion
+  scripts, README § The options and the po template. ci.sh catches a
+  missing one only after the fact; this lists them, present or missing,
+  for an option name given before the work starts.
+  **Layman:** When a new option is added, one command lists every file that has to mention it.
+  Kind: chore.
+  Source: in-session-2026-10-16 DEMO-0205.
+  Lanes: ci.
+
+- 📋 [DEMO-0214] **A helper that adds one message's drafts to all 16 catalogs and checks each.**
+  Each new msgid meant a python heredoc appending to 16 catalogs, then
+  msgfmt -c, then the gate's code-token check 138 steps into ./ci.sh,
+  which today caught three drafts with a flag joined to a word. The
+  helper appends, runs msgfmt and CODE_TOKEN_RE per language, and names
+  the ones that fail at once.
+  **Layman:** Adding a new sentence in every language becomes one step that also checks each language straight away.
+  Kind: chore.
+  Source: in-session-2026-10-16 DEMO-0205.
+  Lanes: po.
+
+- 📋 [DEMO-0252] **Measure the time, CPU and peak memory of record, edit and every finishing command, and fix the worst before 1.0.**
+  Baselines for every later version's performance item to compare
+  against. Measure on a quiet machine (load below 10), several runs
+  each. memory_cap already bounds a film's ffmpeg; this finds what
+  else costs most. Record the figures in a file the gate can read, so a
+  later change that makes one much worse is noticed.
+  **Layman:** Know how fast and how memory-hungry demoreel is today, and fix the slowest parts before 1.0.
+  Kind: perf.
+  Source: user-request-2026-10-16.
+
 - 📋 [DEMO-0094] **Run a full security pass before 1.0 and fix what it finds.**
   Everything since the last security look: the stop verdict, translations,
   packages and the window. Run `check-code` with its security tools
@@ -5277,12 +5222,95 @@ is a front-end to the same recording engine, not a second one.
   Kind: ux.
   Source: user-request-2026-10-08.
 
-## 2.0.0 — A full video editor
+- 📋 [DEMO-0201] **On record --gpu --audio, the sound lands 50-130 ms after the picture.**
+  Measured 2026-10-14 with the gate's flash-and-beep app (ci.sh step
+  "--audio keeps sound and picture in step"), four runs each, at load
+  15-19 on 12 CPUs: --gpu put the beep 132, 50, 121 and 61 ms after the
+  flash; the default backend, run straight after, 32, 4, 17 and 47 ms.
+  The sound is late every time on --gpu. start_wf_recorder passes
+  --audio to wf-recorder and has no counterpart to start_ffmpeg's
+  late-start correction (DEMO-0169); where the offset comes from is not
+  yet known. The gate's sync step runs on the default backend only.
+  Fix the offset, then give the step a --gpu run where --gpu is ready.
+  Spec: DEMO-0106 section 13 names the fallback, ffmpeg recording the
+  monitor beside wf-recorder and shifting by the two start times.
+  Progress (2026-10-14): the cause is in wf-recorder, not demoreel.
+  PulseReader::init reads the clock that dates sample zero after
+  pa_simple_new returns, and capture has begun inside that call. The
+  ffmpeg-beside-wf-recorder fallback was built as a prototype and measured
+  worse; upstream's wf-recorder pull request 353 measured no better.
+  DEMO-0106 section 13 holds the numbers. demoreel builds nothing for it.
+  This machine's hand-built wf-recorder now reads the clock before
+  connecting (patch clock-before-connect.diff in its build folder). The
+  item stays open until a wf-recorder release fixes it; then give the
+  gate's sync step a --gpu run.
+  Open (2026-10-14), waiting on the user: post the drafted comment on
+  wf-recorder pull request 353
+  (/mnt/Emulators/claude-scratch/demo-0201/pr353-comment.md), or open a
+  one-line pull request of our own instead. Recommended: the comment.
+  Nothing is posted without the user's word. The user asked whether to
+  build our own wf-recorder; recommended against (a compiled fork per
+  distro, tracking ffmpeg's API, for about 15-20 ms), unless upstream
+  stays unmerged for months, and then asking distros to carry the patch
+  first. The user has not decided.
+  Progress (2026-10-15): the user chose to post the measurements on
+  wf-recorder pull request 353 rather than open a separate one. Posted:
+  https://github.com/ammen99/wf-recorder/pull/353#issuecomment-6186368958
+  **Layman:** On a 3D app recorded with its sound, the sound comes a little after the picture, enough to notice on a click or a footstep.
+  Kind: fix.
+  Source: in-session-2026-10-14 DEMO-0196.
+  Lanes: record, gpu.
 
-Starts only after everything above is done (DEMO-0140, the user's decision of
-2026-10-01). The first two items change direction and run through the review
-gate before anything below them is built. The order of the rest is a first
-guess, for the spec to settle.
+- 📋 [DEMO-0195] **Point openSUSE codec advice at OneUp and Groundwork once OneUp's codec action ships.**
+  The user asked (2026-10-13) that OneUp and Groundwork cater for
+  Packman's libavcodec with libx264, which record --gpu needs on
+  openSUSE (DEMO-0174). Groundwork already does: its Media codecs item
+  installs Packman's libavcodec, and Packman's priority 90 makes a later
+  install come from Packman too (its session, 2026-10-13; not measured on
+  a fresh system). OneUp's one-click Packman codec action is ONEUP-0274,
+  planned for OneUp 2.1; the OneUp session will say when it is released.
+  Then: README § Install's openSUSE codec lines and the 16 quick-start
+  pages name OneUp and Groundwork beside the commands, and check's
+  packman_advice may name them too. Keep the commands: they serve anyone
+  using neither tool. Not before ONEUP-0274 ships.
+  Dependencies: ONEUP-0274.
+  **Layman:** On openSUSE, demoreel's install notes will name the user's own update tools for getting video codecs.
+  Kind: doc.
+  Source: user-request-2026-10-13.
+
+- 📋 [DEMO-0197] **Publish demoreel to COPR for Fedora and to the AUR for Arch.**
+  Moved out of DEMO-0070 at the user's decision (2026-10-13), so that
+  DEMO-0068, 0069 and 0070 ship with 0.9.0. 0.9.0 attaches the .rpm and
+  the Arch package to the GitHub release, both tested by ./ci.sh
+  --packages. Publishing them waits on a COPR account and an AUR
+  account. packaging/demoreel.spec and packaging/PKGBUILD are the
+  starting point; obs-submit.sh is the model for a script run on this
+  machine after each release.
+  Dependencies: DEMO-0070.
+  **Layman:** Install demoreel on Fedora with dnf and on Arch from the AUR, without downloading a file by hand.
+  Kind: package.
+  Source: user-request-2026-10-13.
+
+- 📋 [DEMO-0253] **The recording window opens fast, never freezes while ffmpeg works, and uses almost no CPU when idle.**
+  Long work runs outside the window's own thread. Measure start-up
+  time, idle CPU and memory against 1.0.0's baselines.
+  **Layman:** The window always answers a click straight away, even while a recording or a film is being made.
+  Kind: perf.
+  Source: user-request-2026-10-16.
+
+## 1.2.0 — Point at it, or hide it
+
+The road from 1.2.0 to 2.0.0 builds the full video editor (DEMO-0140),
+
+after everything above. The editing limits are lifted through the review
+
+gate and the editor is specced (DEMO-0141, DEMO-0142) before anything else
+
+on that road is built. Then: marks for demo videos — hide, point,
+
+spotlight, show the keys, zoom to the action — in edit scripts first, so
+
+Claude Code can use them before the editor's window exists.
 
 - 📋 [DEMO-0141] **Lift the editing limits from the scope ceiling in CLAUDE.md and README, through the review gate.**
   README.md § What it will never do and CLAUDE.md § Scope ceiling rule out
@@ -5309,13 +5337,131 @@ guess, for the spec to settle.
   Kind: doc.
   Source: user-request-2026-10-02.
 
-- 📋 [DEMO-0143] **Make the editor easy for a first-time user.**
-  Plain words instead of editing jargon, sensible defaults so most edits
-  need no settings, a guided first edit, large clear controls, and every
-  change undoable. Measured by the hands-on test below, not by opinion.
-  **Layman:** Someone who has never edited a video can make a good one without reading a manual.
-  Kind: ux.
+- 📋 [DEMO-0217] **Blur or black out a region of the picture for a stretch of time.**
+  A rectangle, its start and end time, and blur or solid fill.
+  Cropping already exists for stills and video (DEMO-0151, DEMO-0205);
+  this keeps the whole frame and hides one part of it. Usable from the
+  window and from a script (DEMO-0181).
+  **Layman:** Hide a password, an email address or any private detail that got into a recording.
+  Kind: feature.
+  Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0233] **Arrows, boxes and hand-drawn callouts that point at part of the picture.**
+  Camtasia's most-praised feature for screencasts (techsmith.com
+  tutorials, annotations). Placed by coordinates and time, so a script
+  can place one. Not cursor highlighting: it points at the picture.
+  **Layman:** Point at a button or a menu with an arrow or a circle, so viewers know where to look.
+  Kind: feature.
+  Source: research-2026-10-16.
+
+- 📋 [DEMO-0234] **Spotlight: dim everything but one area, and optionally enlarge it.**
+  ScreenFlow callouts, Camtasia highlight. The opposite of the blur
+  item: it shows one area rather than hiding it.
+  **Layman:** Darken the rest of the screen so one part stands out.
+  Kind: feature.
+  Source: research-2026-10-16.
+
+- 📋 [DEMO-0235] **Show the keys pressed during a recording as on-screen badges, taken from its -a steps.**
+  Camtasia and ScreenFlow do this. demoreel already knows every key
+  it sent, so nothing is guessed. Shows keys, not the pointer, so it is
+  outside cursor highlighting; confirm that reading at the gate.
+  **Layman:** Viewers see which shortcut was pressed, such as Ctrl+S, as a small label on screen.
+  Kind: feature.
+  Source: research-2026-10-16.
+
+- 📋 [DEMO-0236] **Zoom in automatically where the scripted clicks and typing happen.**
+  Camtasia SmartFocus and Screen Studio. demoreel knows its own click
+  coordinates. Builds on zoom (DEMO-0151) and keyframes (DEMO-0154).
+  Known weakness to avoid: SmartFocus cut off window edges.
+  **Layman:** The video moves in close where something is clicked or typed, then back out.
+  Kind: feature.
+  Source: research-2026-10-16.
+
+- 📋 [DEMO-0237] **Place a video inside a picture of a laptop, monitor or phone.**
+  Camtasia's device frames. The frame images must be freely
+  licensed or drawn by demoreel.
+  **Layman:** Show the app on a drawn laptop or phone screen, for trailers and store pages.
+  Kind: feature.
+  Source: research-2026-10-16.
+
+- 📋 [DEMO-0254] **Marks (blur, callouts, spotlight, key badges, auto zoom) add little time and memory to making a film.**
+  Keep them in the film's one ffmpeg run. Measure a film with every
+  mark against the same film without, and against 1.0.0's baselines.
+  **Layman:** Adding arrows, blurs and zooms does not make saving a video much slower.
+  Kind: perf.
+  Source: user-request-2026-10-16.
+
+## 1.3.0 — Sound that sits right
+
+Music and voice tracks, even loudness, music that ducks under a voice and
+
+ends with the film, and a voice-over from the microphone. The microphone
+
+lifts the app's-own-sound rule, so it waits for that line to pass the
+
+review gate.
+
+- 📋 [DEMO-0156] **Edit sound: music and voice tracks, volume, fades and mute.**
+  Needs the 0.7.0 sound items first (DEMO-0104, DEMO-0106).
+  **Layman:** Add music or a voice-over and set how loud each part is.
+  Kind: feature.
   Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0223] **Even out loudness to the level video sites expect, and reduce background hiss.**
+  Loudness normalisation to a target (for example ffmpeg's loudnorm,
+  two-pass) and a noise-reduction filter. Check each site's current
+  target when built rather than trusting a remembered number.
+  **Layman:** Make every video play at a comfortable, even volume, with less hiss.
+  Kind: feature.
+  Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0238] **Lower the music automatically while a voice speaks.**
+  Premiere Pro and Resolve. Kdenlive users have asked for it since
+  2018. A local version could use ffmpeg's sidechaincompress; not yet
+  measured. Pairs with the voice track (DEMO-0156).
+  **Layman:** Music gets quieter on its own when someone talks, and comes back up after.
+  Kind: feature.
+  Source: research-2026-10-16.
+
+- 📋 [DEMO-0244] **Fit a music track to the film's length so it ends when the film ends.**
+  Premiere Pro's Remix analyses the music. Music already repeats to
+  fill a film (DEMO-0177); this ends it cleanly, for example by
+  crossfading into its own ending. No model needed for that version.
+  **Layman:** Music finishes neatly at the end of the video instead of being cut off.
+  Kind: feature.
+  Source: research-2026-10-16.
+
+- 📋 [DEMO-0243] **Tag sound as voice, music or effects, and adjust or export each group on its own.**
+  Final Cut's roles and stem export.
+  **Layman:** Turn all the music down at once, or save the voice alone, for example for translation.
+  Kind: feature.
+  Source: research-2026-10-16.
+
+- 📋 [DEMO-0232] **Record a voice-over from the microphone, after the review gate lifts the app's-own-sound rule.**
+  Today only the recorded app's own sound goes into a video
+  (docs/specs/DEMO-0106-app-sound.md). A microphone is a change of
+  direction, so README and CLAUDE.md go through the review gate first,
+  alongside DEMO-0141. The voice track itself is DEMO-0156's.
+  **Layman:** Record your own voice explaining what happens in the video.
+  Kind: feature.
+  Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0255] **Sound work (two-pass loudness, ducking, clean-up) never decodes the video twice and stays within memory.**
+  A loudness measuring pass reads the sound alone. Measure time and
+  peak memory against 1.0.0's baselines.
+  **Layman:** Evening out the sound does not double the time it takes to save a video.
+  Kind: perf.
+  Source: user-request-2026-10-16.
+
+## 1.4.0 — The editor opens
+
+The editor's window, on 1.1.0's window: a project file, bring in any
+
+video or picture, a timeline, a live preview, undo, autosave, and a first
+
+edit a newcomer can make unaided. Every action stays usable from the
+
+command line too (DEMO-0181).
 
 - 📋 [DEMO-0144] **Save an edit as a project file and open it again.**
   **Layman:** Stop half-way through an edit and carry on later where you left off.
@@ -5344,6 +5490,106 @@ guess, for the spec to settle.
   **Layman:** Take back a mistake, or bring back what you took back.
   Kind: feature.
   Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0225] **Autosave the project as you work, and offer it back after a crash.**
+  Builds on the project file (DEMO-0144). Autosaves beside the
+  project, never over it.
+  **Layman:** A crash or a power cut never loses more than a moment's work.
+  Kind: feature.
+  Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0143] **Make the editor easy for a first-time user.**
+  Plain words instead of editing jargon, sensible defaults so most edits
+  need no settings, a guided first edit, large clear controls, and every
+  change undoable. Measured by the hands-on test below, not by opinion.
+  **Layman:** Someone who has never edited a video can make a good one without reading a manual.
+  Kind: ux.
+  Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0256] **The editor starts fast, previews at full frame rate, and decodes on the graphics card where it can.**
+  Hardware decoding (for example VAAPI) where the machine has it,
+  with a software fallback. The window's thread never waits on decoding
+  or saving. Measure start-up, preview frame rate, CPU, GPU and memory.
+  **Layman:** The editor opens quickly and plays a video smoothly while you edit.
+  Kind: perf.
+  Source: user-request-2026-10-16.
+
+## 1.5.0 — A timeline to work in
+
+What makes a timeline quick to work in: waveforms, a media library,
+
+snapping and markers, many clips at once, clips that keep their titles and
+
+sound attached, reusable compound clips, alternative takes, and scene
+
+detection.
+
+- 📋 [DEMO-0224] **Show each clip's sound as a waveform on the timeline.**
+  **Layman:** See where a click, a word or a beep is, so cuts land in the right place.
+  Kind: feature.
+  Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0226] **A media library: the project's clips and pictures with small previews, to drag onto the timeline.**
+  Ties to bringing in any video or picture (DEMO-0145).
+  **Layman:** See all your clips and pictures in one place and drag them into the film.
+  Kind: feature.
+  Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0227] **Snapping, markers, and markers saved as YouTube chapters.**
+  Chapters export as the plain timestamp list YouTube reads from a
+  video's description, and as chapters inside the file where the
+  container supports it.
+  **Layman:** Clips snap neatly into place, and you can mark moments that become chapters on YouTube.
+  Kind: feature.
+  Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0228] **Select several clips, move, copy and paste them together, and group them.**
+  **Layman:** Work on many clips at once instead of one at a time.
+  Kind: feature.
+  Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0242] **Attach titles and sounds to their clip, so they move with it and gaps close by themselves.**
+  Final Cut's connected clips and magnetic timeline. Goes further than
+  ripple delete (DEMO-0146).
+  **Layman:** Text and sound stay with the clip they belong to when the clip moves.
+  Kind: feature.
+  Source: research-2026-10-16.
+
+- 📋 [DEMO-0240] **Fold several clips into one reusable clip that can be opened and edited later.**
+  Final Cut's compound clips, Resolve's and Premiere's nested
+  sequences.
+  **Layman:** Make an intro or ending once, and reuse it in every film.
+  Kind: feature.
+  Source: research-2026-10-16.
+
+- 📋 [DEMO-0241] **Keep several takes in one place on the timeline and switch between them.**
+  Final Cut's auditions. Suits a script that records three takes and
+  leaves the choice to the user.
+  **Layman:** Record a few tries of the same moment and pick the best one later.
+  Kind: feature.
+  Source: research-2026-10-16.
+
+- 📋 [DEMO-0239] **Find where the picture changes sharply, and mark or cut there.**
+  Kdenlive and Premiere Pro. ffmpeg's scene score is one local way;
+  not yet measured. motion's NEW_FRAME test is the related code here.
+  **Layman:** Find the scene changes in a long video for you, so cutting it up is quick.
+  Kind: feature.
+  Source: research-2026-10-16.
+
+- 📋 [DEMO-0257] **A timeline with hundreds of clips scrolls and zooms smoothly; previews and waveforms are cached on disk and drawn only when on screen.**
+  Caches go on a real disk, never in /tmp, which is memory here.
+  Memory stays flat as clips are added. Measure with a long project.
+  **Layman:** Long projects stay as quick to work in as short ones.
+  Kind: perf.
+  Source: user-request-2026-10-16.
+
+## 1.6.0 — Shaping the picture
+
+Layers, zoom, pan, crop and rotate, keyframes, colour, and the window's
+
+view onto what edit scripts already do: transitions, speed and moving
+
+titles. Motion tracking comes last here, as the least needed.
 
 - 📋 [DEMO-0149] **Layer video: picture-in-picture, overlays and opacity.**
   Wanted by the Slipcase trailer (2026-10-10): the clip in a smaller
@@ -5380,11 +5626,103 @@ guess, for the spec to settle.
   Kind: feature.
   Source: user-request-2026-10-02.
 
-- 📋 [DEMO-0156] **Edit sound: music and voice tracks, volume, fades and mute.**
-  Needs the 0.7.0 sound items first (DEMO-0104, DEMO-0106).
-  **Layman:** Add music or a voice-over and set how loud each part is.
+- 📋 [DEMO-0218] **Pick and preview transitions between clips in the editor.**
+  edit scripts already take `crossfade S NAME` with xfade's
+  ready-made transitions (DEMO-0150). This puts the same list in the
+  window, with a preview. No second transition engine.
+  **Layman:** Choose how one scene changes into the next by clicking, and see it before saving.
   Kind: feature.
-  Source: user-request-2026-10-02.
+  Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0219] **Change a clip's speed in the editor: slow motion, speed-up, freeze frame and reverse.**
+  `speed` and `hold` exist in edit scripts (DEMO-0152). This adds
+  them to the window, and adds reverse, which neither has yet.
+  **Layman:** Make part of a video play slower, faster, backwards, or hold one moment still.
+  Kind: feature.
+  Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0221] **Design titles and name bars in the editor: font, colour, position and simple animation.**
+  Moving text exists in edit scripts (DEMO-0153). This is the
+  window's view onto the same text stacks, with ready-made styles.
+  **Layman:** Make styled titles and the name bars that sit at the bottom of the screen, by clicking.
+  Kind: feature.
+  Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0251] **Make a blur, label or arrow follow something that moves on screen.**
+  Kdenlive and Resolve. Low value for app recordings, which rarely
+  move, so it comes late. Kdenlive's tracker downloads models; prefer a
+  method with none.
+  **Layman:** A blur or arrow follows a moving thing, so it stays over what it hides or points at.
+  Kind: feature.
+  Source: research-2026-10-16.
+
+- 📋 [DEMO-0258] **Effects preview in real time: on the graphics card where possible, with rendered frames cached.**
+  Keyframes are cheap to work out per frame. Measure preview frame
+  rate and memory with several layers and effects.
+  **Layman:** Colour, zoom and layers show at once while you adjust them, without stuttering.
+  Kind: perf.
+  Source: user-request-2026-10-16.
+
+## 1.7.0 — Words and voices
+
+Subtitles, then the features that need a local speech or voice model:
+
+automatic subtitles, typed narration, editing by transcript, filler-word
+
+removal and voice clean-up. Whether to take on a model, and which, is this
+
+release's first decision; it would be demoreel's first heavy dependency,
+
+and nothing here uses an online service. Idle-stretch removal sits here
+
+too, as the other cut offered for approval.
+
+- 📋 [DEMO-0222] **Subtitles: bring in or save an .srt file, edit its lines, and burn them into the picture.**
+  Import and export .srt, edit text and times on the timeline, and
+  choose between a separate subtitle track and burned-in text.
+  **Layman:** Add subtitles to a video, or use subtitles made elsewhere.
+  Kind: feature.
+  Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0246] **Make subtitles automatically from the speech in a video.**
+  CapCut is known for it. Needs a speech model, which would be
+  demoreel's first heavy dependency. Local only, never an online
+  service; whether and which model is the spec's to decide. Writes the
+  subtitle item's .srt.
+  **Layman:** Spoken words become subtitles without typing them.
+  Kind: feature.
+  Source: research-2026-10-16.
+
+- 📋 [DEMO-0247] **Make a voice-over from typed text.**
+  CapCut and Clipchamp. Lets a script narrate a demo with no one
+  recording. Needs a local voice model (Piper and espeak exist; not
+  checked). The spec decides whether, and which.
+  **Layman:** Type what should be said, and the video gets a spoken narration.
+  Kind: feature.
+  Source: research-2026-10-16.
+
+- 📋 [DEMO-0248] **Edit a video by editing its transcript: delete words and the video is cut to match.**
+  Descript's defining feature, and a good fit for an agent, which
+  edits text easily. Needs speech-to-text with word timings, the same
+  model as automatic subtitles.
+  **Layman:** Cut a video by deleting words from its written-out text.
+  Kind: feature.
+  Source: research-2026-10-16.
+
+- 📋 [DEMO-0249] **Cut 'um', 'uh' and stutters from a voice-over, for the user to approve.**
+  Descript. Its own guides warn that removing every one sounds
+  robotic, so each cut is offered, not made, like DEMO-0157. Needs the
+  transcript item's model.
+  **Layman:** Remove the ums and stumbles from a recorded voice.
+  Kind: feature.
+  Source: research-2026-10-16.
+
+- 📋 [DEMO-0250] **Clean up a voice in one step: less echo and room noise, clearer speech.**
+  Descript Studio Sound and Resolve's audio tools use models. Goes
+  beyond the hiss item. Find first how far ffmpeg's own filters get.
+  **Layman:** Make a voice recorded in an ordinary room sound clear.
+  Kind: feature.
+  Source: research-2026-10-16.
 
 - 📋 [DEMO-0157] **Cut out still and idle stretches automatically, for the user to approve.**
   Builds on `motion`. Nothing is removed until the user agrees.
@@ -5392,10 +5730,111 @@ guess, for the spec to settle.
   Kind: feature.
   Source: user-request-2026-10-02.
 
+- 📋 [DEMO-0259] **Speech and voice models load only when asked, are held to a memory cap and a thread limit, and are freed after.**
+  Prefer the smallest model that does the job, and say its cost
+  before it is downloaded. Runs at low priority. Other sessions share
+  this machine's memory.
+  **Layman:** Making subtitles or a narration never slows the editor or the rest of the computer.
+  Kind: perf.
+  Source: user-request-2026-10-16.
+
+## 1.8.0 — Out the door
+
+Getting a film out: export presets, tall and square versions, background
+
+export, smooth editing of long videos, recording from inside the editor,
+
+and style kits for a series.
+
 - 📋 [DEMO-0158] **Export presets: web video, GIF, WebM, and a choice of size and frame rate.**
   **Layman:** Save the finished film in the right shape for where it is going, in one step.
   Kind: feature.
   Source: user-request-2026-10-02.
+
+- 📋 [DEMO-0220] **Make tall (9:16) and square (1:1) versions of a film, keeping the important part in frame.**
+  Choose which part of a wide frame to keep, per clip, with a sensible
+  centre default. Ties to export presets (DEMO-0158).
+  **Layman:** Make a version of a video for phone platforms like Shorts, Reels and TikTok.
+  Kind: feature.
+  Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0231] **Export in the background, and queue several exports.**
+  **Layman:** Keep editing while a video saves, and save several versions in one go.
+  Kind: feature.
+  Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0230] **Edit long and large videos smoothly, using lighter stand-in copies while editing.**
+  Proxy copies made in the background, used for preview only. Export
+  always reads the originals. Mind memory: other sessions share this
+  machine (.claude/rules/finishing-commands.md).
+  **Layman:** Long or large videos play smoothly while you edit, and the final film still uses the full-quality originals.
+  Kind: perf.
+  Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0229] **Start a demoreel recording from the editor and land the clip on the timeline.**
+  Calls the same recording engine as `demoreel record`, on a private
+  display as always. The window is a front-end, not a second engine.
+  **Layman:** Press record in the editor; the new recording appears in your film, ready to edit.
+  Kind: feature.
+  Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0245] **Save a style kit (fonts, colours, intro, logo) as a reusable project or script, and apply it in one step.**
+  CapCut templates, Clipchamp brand kits. It must stay a saved
+  project or edit script, never a config file format or a per-app
+  profile (CLAUDE.md scope ceiling).
+  **Layman:** Give a series of videos the same look without setting it up each time.
+  Kind: feature.
+  Source: research-2026-10-16.
+
+- 📋 [DEMO-0260] **Export on the graphics card's video encoder where it has one, with a software fallback; background exports run at low priority.**
+  VAAPI or NVENC where present, libx264 otherwise, same picture
+  quality either way within a measured margin. Proxy copies are cleaned
+  up when no longer used.
+  **Layman:** Videos save faster, and saving one never makes the editor sluggish.
+  Kind: perf.
+  Source: user-request-2026-10-16.
+
+## 1.9.0 — Plug-ins
+
+A plug-in system, and the features that suit it moved into plug-ins so each
+
+can be updated on its own. "No plugins" is lifted with the other limits in
+
+1.2.0 (DEMO-0141).
+
+- 📋 [DEMO-0179] **A plug-in system, so new effects and steps can be added to the editor without changing demoreel itself.**
+  User, 2026-10-10: plug-ins for video editing, some written by us.
+  The point is that updating a plug-in does not mean updating the
+  whole app. Needs "no plugins" lifted first (DEMO-0141). The editor
+  spec (DEMO-0142) decides what a plug-in may do and how it is
+  found, versioned and trusted.
+  **Layman:** Anyone, us included, can write an add-on that gives the editor a new effect.
+  Kind: feature.
+  Source: user-request-2026-10-10.
+
+- 📋 [DEMO-0180] **Ship the features that suit it as plug-ins, so each can be updated on its own.**
+  User, 2026-10-10. Candidates are self-contained effects such as
+  transitions (DEMO-0150) and moving backgrounds (DEMO-0178); the
+  editor spec (DEMO-0142) picks which. Depends on the plug-in system
+  (DEMO-0179).
+  **Layman:** Parts of the editor update separately, so a fix to one effect does not need a new release of everything.
+  Kind: refactor.
+  Source: user-request-2026-10-10.
+
+- 📋 [DEMO-0261] **Plug-ins load only when used, and one that is slow or memory-hungry is measured and named.**
+  Each plug-in's start-up time, run time and memory are measured,
+  and the editor reports the one that crosses a limit.
+  **Layman:** A badly made plug-in cannot quietly slow the editor down.
+  Kind: perf.
+  Source: user-request-2026-10-16.
+
+## 2.0.0 — A full video editor
+
+The finished editor, after 1.2.0 to 1.9.0 have built it (DEMO-0140, the
+user's decision of 2026-10-01; split into those versions 2026-10-16).
+What is left for 2.0.0 is proof: every feature usable by Claude Code from
+the command line, accessibility, translation, testing on long projects, a
+first-time user's run, and a last performance pass.
 
 - 📋 [DEMO-0159] **Make the editor fully usable by keyboard, screen reader and magnifier.**
   A timeline is the hardest part to make accessible, so this is designed
@@ -5423,25 +5862,6 @@ guess, for the spec to settle.
   Kind: ux.
   Source: user-request-2026-10-02.
 
-- 📋 [DEMO-0179] **A plug-in system, so new effects and steps can be added to the editor without changing demoreel itself.**
-  User, 2026-10-10: plug-ins for video editing, some written by us.
-  The point is that updating a plug-in does not mean updating the
-  whole app. Needs "no plugins" lifted first (DEMO-0141). The editor
-  spec (DEMO-0142) decides what a plug-in may do and how it is
-  found, versioned and trusted.
-  **Layman:** Anyone, us included, can write an add-on that gives the editor a new effect.
-  Kind: feature.
-  Source: user-request-2026-10-10.
-
-- 📋 [DEMO-0180] **Ship the features that suit it as plug-ins, so each can be updated on its own.**
-  User, 2026-10-10. Candidates are self-contained effects such as
-  transitions (DEMO-0150) and moving backgrounds (DEMO-0178); the
-  editor spec (DEMO-0142) picks which. Depends on the plug-in system
-  (DEMO-0179).
-  **Layman:** Parts of the editor update separately, so a fix to one effect does not need a new release of everything.
-  Kind: refactor.
-  Source: user-request-2026-10-10.
-
 - 📋 [DEMO-0181] **Make every editor feature usable by Claude Code, from the command line or a script, not only through the window.**
   User, 2026-10-10: "I would like Claude Code to be able to fully
   use" the 2.0.0 editor. Every edit the GUI can make is reachable
@@ -5450,3 +5870,10 @@ guess, for the spec to settle.
   **Layman:** Claude Code can make any edit a person can, so videos can be produced without anyone clicking.
   Kind: feature.
   Source: user-request-2026-10-10.
+
+- 📋 [DEMO-0262] **A last performance pass on a long real project: CPU, GPU and memory within budget, on a modest machine as well as this one.**
+  Compare against every earlier version's figures and fix any that
+  got worse. Profile the slowest steps rather than guessing.
+  **Layman:** Before 2.0, prove the finished editor stays quick on a long film and on an ordinary computer.
+  Kind: perf.
+  Source: user-request-2026-10-16.
