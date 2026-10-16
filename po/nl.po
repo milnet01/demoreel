@@ -1285,3 +1285,16 @@ msgstr "de video om het beeld uit te halen"
 #. argparse formats this text with %
 msgid "which moment to save"
 msgstr "welk moment opgeslagen wordt"
+
+msgid "--region takes x,y,w,h in whole pixels, with w and h above 0, like 0,0,640,400, not {region}."
+msgstr "--region verwacht x,y,w,h in hele pixels, met w en h groter dan 0, zoals 0,0,640,400, niet {region}."
+
+msgid "--region {region} does not fit inside the {size} picture."
+msgstr "--region {region} past niet binnen de afbeelding van {size}."
+
+msgid "could not cut the --region rectangle out of the picture."
+msgstr "kon de rechthoek van --region niet uit de afbeelding knippen."
+
+#. argparse formats this text with %
+msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
+msgstr "alleen deze rechthoek van de afbeelding houden: linkerbovenhoek op X,Y, W pixels breed en H hoog"

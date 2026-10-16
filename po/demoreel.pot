@@ -394,6 +394,15 @@ msgstr ""
 msgid "the picture is one flat colour: {output}"
 msgstr ""
 
+msgid "--region takes x,y,w,h in whole pixels, with w and h above 0, like 0,0,640,400, not {region}."
+msgstr ""
+
+msgid "--region {region} does not fit inside the {size} picture."
+msgstr ""
+
+msgid "could not cut the --region rectangle out of the picture."
+msgstr ""
+
 msgid ""
 "nothing was drawn within {seconds}s; taking the picture anyway.\n"
 "  If the app takes longer to show its first picture, raise --settle."
@@ -994,6 +1003,10 @@ msgstr ""
 
 #. argparse formats this text with %
 msgid "show the mouse pointer in the picture"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
 msgstr ""
 
 #. argparse formats this text with %

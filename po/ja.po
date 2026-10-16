@@ -1279,3 +1279,16 @@ msgstr "フレームを取り出す動画"
 #. argparse formats this text with %
 msgid "which moment to save"
 msgstr "保存する時点"
+
+msgid "--region takes x,y,w,h in whole pixels, with w and h above 0, like 0,0,640,400, not {region}."
+msgstr "--region には 0,0,640,400 のように整数のピクセルで x,y,w,h を指定し、w と h は 0 より大きくします。{region} は使えません。"
+
+msgid "--region {region} does not fit inside the {size} picture."
+msgstr "--region {region} は {size} の画像の中に収まりません。"
+
+msgid "could not cut the --region rectangle out of the picture."
+msgstr "画像から --region の長方形を切り出せませんでした。"
+
+#. argparse formats this text with %
+msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
+msgstr "画像のこの長方形だけを残します。左上の角が X,Y、幅 W ピクセル、高さ H ピクセルです"

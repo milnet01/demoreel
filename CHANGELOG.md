@@ -12,6 +12,11 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+### Added
+
+- **`shot --region x,y,w,h` keeps one rectangle of the picture** (DEMO-0205)
+  A smaller picture is a smaller file, and cheaper for a Claude Code session to read. The blank-picture check still looks at the whole screen, and a failed run writes nothing to `-o`.
+
 ### Fixed
 
 - **`demoreel stop` finds a recording started a moment before it, on a busy computer** (DEMO-0165)

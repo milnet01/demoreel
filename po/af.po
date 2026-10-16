@@ -1285,3 +1285,16 @@ msgstr "die video om die raam uit te neem"
 #. argparse formats this text with %
 msgid "which moment to save"
 msgstr "watter oomblik om te stoor"
+
+msgid "--region takes x,y,w,h in whole pixels, with w and h above 0, like 0,0,640,400, not {region}."
+msgstr "--region neem x,y,w,h in heel pieksels, met w en h groter as 0, soos 0,0,640,400, nie {region} nie."
+
+msgid "--region {region} does not fit inside the {size} picture."
+msgstr "--region {region} pas nie binne die {size}-prent nie."
+
+msgid "could not cut the --region rectangle out of the picture."
+msgstr "kon nie die reghoek van --region uit die prent sny nie."
+
+#. argparse formats this text with %
+msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
+msgstr "hou net hierdie reghoek van die prent: sy boonste linkerhoek by X,Y, W pieksels breed en H hoog"

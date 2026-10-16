@@ -1291,3 +1291,16 @@ msgstr "film, z którego pobrać klatkę"
 #. argparse formats this text with %
 msgid "which moment to save"
 msgstr "którą chwilę zapisać"
+
+msgid "--region takes x,y,w,h in whole pixels, with w and h above 0, like 0,0,640,400, not {region}."
+msgstr "--region przyjmuje x,y,w,h w całych pikselach, z w i h większymi od 0, np. 0,0,640,400, a nie {region}."
+
+msgid "--region {region} does not fit inside the {size} picture."
+msgstr "--region {region} nie mieści się w obrazie {size}."
+
+msgid "could not cut the --region rectangle out of the picture."
+msgstr "nie można wyciąć prostokąta --region z obrazu."
+
+#. argparse formats this text with %
+msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
+msgstr "zachowaj tylko ten prostokąt obrazu: jego lewy górny róg w X,Y, szerokość W pikseli i wysokość H"

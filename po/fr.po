@@ -1285,3 +1285,16 @@ msgstr "la vidéo d'où prendre l'image"
 #. argparse formats this text with %
 msgid "which moment to save"
 msgstr "quel moment enregistrer"
+
+msgid "--region takes x,y,w,h in whole pixels, with w and h above 0, like 0,0,640,400, not {region}."
+msgstr "--region prend x,y,w,h en pixels entiers, avec w et h supérieurs à 0, comme 0,0,640,400, et non {region}."
+
+msgid "--region {region} does not fit inside the {size} picture."
+msgstr "--region {region} ne tient pas dans l'image de {size}."
+
+msgid "could not cut the --region rectangle out of the picture."
+msgstr "impossible de découper le rectangle de --region dans l'image."
+
+#. argparse formats this text with %
+msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
+msgstr "ne garder que ce rectangle de l'image : son coin supérieur gauche en X,Y, W pixels de large et H de haut"

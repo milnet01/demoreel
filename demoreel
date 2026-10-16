@@ -32,6 +32,7 @@ from pathlib import Path
 __version__ = "0.9.0"
 
 SIZE_RE = re.compile(r"^(\d+)x(\d+)$")
+REGION_RE = re.compile(r"^(\d+),(\d+),(\d+),(\d+)$")
 DISPLAY_READY_TIMEOUT = 15.0
 
 # The one definition of "nothing is on this display". Measured: an empty Xvfb
@@ -2461,8 +2462,9 @@ def take_picture(env, display, width, height, cursor, output, gpu):
     """Save one PNG of the display and check it; the reason it failed, or None.
 
     The check reads the saved file back rather than grabbing a second frame, so
-    the picture judged is the picture handed over. The test is frame_is_flat,
-    the same one that judges a recording.
+    the picture judged is the picture handed over, or with --region the one it
+    is cut from. The test is frame_is_flat, the same one that judges a
+    recording.
     """
     grab = subprocess.run(  # noqa: PLW1510 - a failed grab is handled below
         ["ffmpeg", "-hide_banner", "-loglevel", "error",
@@ -2485,14 +2487,54 @@ def take_picture(env, display, width, height, cursor, output, gpu):
     return None
 
 
+def shot_region(text, width, height):
+    """--region's x, y, w, h, or None without it; dies on one that cannot be kept.
+
+    Checked before the app starts, so a mistyped rectangle costs no run.
+    """
+    if text is None:
+        return None
+    match = REGION_RE.match(text)
+    x, y, w, h = (int(n) for n in match.groups()) if match else (0, 0, 0, 0)
+    if not w or not h:
+        die(tr("--region takes x,y,w,h in whole pixels, with w and h above 0, "
+               "like 0,0,640,400, not {region}.", region=repr(text)))
+    if x + w > width or y + h > height:
+        die(tr("--region {region} does not fit inside the {size} picture.",
+               region=text, size=f"{width}x{height}"))
+    return x, y, w, h
+
+
+def cut_region(screen, region, output):
+    """Write region of the checked screen to output; the reason it failed, or None.
+
+    A failed cut leaves nothing at output: README promises a failed --region
+    shot writes nothing there.
+    """
+    x, y, w, h = region
+    cut = subprocess.run(  # noqa: PLW1510 - a failed cut is handled below
+        ["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(screen),
+         "-vf", f"crop={w}:{h}:{x}:{y}", "-frames:v", "1", "-y", str(output)],
+        capture_output=True, timeout=CALL_TIMEOUT)
+    if cut.returncode != 0 or not output.exists():
+        output.unlink(missing_ok=True)
+        tail = cut.stderr.decode(errors="replace").strip().splitlines()[-3:]
+        return tr("could not cut the --region rectangle out of the picture.") + (
+            "\n  " + "\n  ".join(tail))
+    return None
+
+
 def cmd_shot(a):
     """One picture of the app, on the same private display `record` uses.
 
     No name and no state file: there is nothing to stop, so a shot keeps its
     files in a folder of its own and `stop` never sees it. The folder goes when
-    the shot succeeds and is kept, and named, when it fails.
+    the shot succeeds and is kept, and named, when it fails. With --region the
+    whole screen is saved and checked there, and only a picture that passes is
+    cut and written to output.
     """
     command, width, height, output, applog = prepare(a, ".png")
+    region = shot_region(a.region, width, height)
     rundir = Path(tempfile.mkdtemp(prefix="shot-", dir=state_dir()))
     displaylog = rundir / "display.log"
     # Deliberate: closed in the finally block, as in cmd_record.
@@ -2519,8 +2561,11 @@ def cmd_shot(a):
             moved = window_off_frame(env, window, width, height)
             if moved:
                 note(moved)
-        failed = take_picture(env, display, width, height, a.cursor, output,
+        screen = rundir / "screen.png" if region else output
+        failed = take_picture(env, display, width, height, a.cursor, screen,
                               a.gpu)
+        if region and not failed:
+            failed = cut_region(screen, region, output)
     except subprocess.TimeoutExpired:
         failed = tr("could not take the picture: the display did not answer "
                     "within {seconds}s.", seconds=CALL_TIMEOUT)
@@ -4767,9 +4812,9 @@ def build_parser():
                      help=tr_help("-- followed by the command that starts the app"))
     rec.set_defaults(func=cmd_record)
 
-    # The options `record` takes, less the ones about time and names: a shot
-    # has no duration, no frame rate and nothing to stop (README, Taking a
-    # picture). --settle defaults to 10 here, since a picture of a startup
+    # The options `record` takes, less the ones about time, names and sound,
+    # plus --region: a shot has no duration, no frame rate and nothing to stop
+    # (README, Taking a picture). --settle defaults to 10 here, since a picture of a startup
     # screen is never what anyone wanted.
     shot = sub.add_parser("shot", help=tr_help("take one picture of an app and write "
                                                "a PNG"))
@@ -4799,6 +4844,9 @@ def build_parser():
                                    "cage, Xwayland and wlr-randr"))
     shot.add_argument("--cursor", action="store_true",
                       help=tr_help("show the mouse pointer in the picture"))
+    shot.add_argument("--region", metavar="X,Y,W,H",
+                      help=tr_help("keep only this rectangle of the picture: its "
+                                   "top-left corner at X,Y, W pixels wide and H high"))
     shot.add_argument("--startup-timeout", type=float, default=20,
                       metavar="SECONDS",
                       help=tr_help("how long to wait for the app's window (default: 20)"))

@@ -1286,3 +1286,15 @@ msgstr "הסרטון שממנו יילקח הפריים"
 msgid "which moment to save"
 msgstr "איזה רגע לשמור"
 
+msgid "--region takes x,y,w,h in whole pixels, with w and h above 0, like 0,0,640,400, not {region}."
+msgstr "--region מקבל x,y,w,h בפיקסלים שלמים, כאשר w ו־h גדולים מ־0, כמו 0,0,640,400, ולא {region}."
+
+msgid "--region {region} does not fit inside the {size} picture."
+msgstr "--region {region} לא נכנס בתוך התמונה בגודל {size}."
+
+msgid "could not cut the --region rectangle out of the picture."
+msgstr "לא ניתן לחתוך את המלבן של --region מהתמונה."
+
+#. argparse formats this text with %
+msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
+msgstr "לשמור רק את המלבן הזה מהתמונה: הפינה השמאלית העליונה שלו ב־X,Y, ברוחב W פיקסלים ובגובה H"

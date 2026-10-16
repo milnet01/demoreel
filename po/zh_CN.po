@@ -1279,3 +1279,16 @@ msgstr "要从中取帧的视频"
 #. argparse formats this text with %
 msgid "which moment to save"
 msgstr "要保存哪个时刻"
+
+msgid "--region takes x,y,w,h in whole pixels, with w and h above 0, like 0,0,640,400, not {region}."
+msgstr "--region 需要以整数像素表示的 x,y,w,h，且 w 和 h 大于 0，例如 0,0,640,400，而不是 {region}。"
+
+msgid "--region {region} does not fit inside the {size} picture."
+msgstr "--region {region} 超出了 {size} 的画面。"
+
+msgid "could not cut the --region rectangle out of the picture."
+msgstr "无法从画面中裁出 --region 的矩形。"
+
+#. argparse formats this text with %
+msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
+msgstr "只保留画面中的这个矩形：左上角位于 X,Y，宽 W 像素、高 H 像素"

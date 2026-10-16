@@ -1279,3 +1279,16 @@ msgstr "프레임을 가져올 동영상"
 #. argparse formats this text with %
 msgid "which moment to save"
 msgstr "저장할 순간"
+
+msgid "--region takes x,y,w,h in whole pixels, with w and h above 0, like 0,0,640,400, not {region}."
+msgstr "--region은 0,0,640,400처럼 정수 픽셀 단위의 x,y,w,h를 받으며, w와 h는 0보다 커야 합니다. {region}은(는) 안 됩니다."
+
+msgid "--region {region} does not fit inside the {size} picture."
+msgstr "--region {region}이(가) {size} 이미지 안에 들어가지 않습니다."
+
+msgid "could not cut the --region rectangle out of the picture."
+msgstr "이미지에서 --region 사각형을 잘라낼 수 없었습니다."
+
+#. argparse formats this text with %
+msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
+msgstr "이미지에서 이 사각형만 남깁니다. 왼쪽 위 모서리는 X,Y, 너비 W 픽셀, 높이 H 픽셀입니다"

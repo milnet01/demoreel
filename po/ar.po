@@ -1309,3 +1309,16 @@ msgstr "الفيديو المراد أخذ الإطار منه"
 #. argparse formats this text with %
 msgid "which moment to save"
 msgstr "اللحظة المراد حفظها"
+
+msgid "--region takes x,y,w,h in whole pixels, with w and h above 0, like 0,0,640,400, not {region}."
+msgstr "يأخذ --region القيم x,y,w,h بالبكسل الصحيح، على أن يكون w و h أكبر من 0، مثل 0,0,640,400، لا {region}."
+
+msgid "--region {region} does not fit inside the {size} picture."
+msgstr "لا يتسع --region {region} داخل الصورة {size}."
+
+msgid "could not cut the --region rectangle out of the picture."
+msgstr "تعذّر قص مستطيل --region من الصورة."
+
+#. argparse formats this text with %
+msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
+msgstr "احتفظ بهذا المستطيل فقط من الصورة: زاويته العلوية اليسرى عند X,Y، وعرضه W بكسل وارتفاعه H"

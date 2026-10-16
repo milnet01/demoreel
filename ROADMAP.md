@@ -608,7 +608,7 @@ simplest case, and a gate proves it still records.
   Kind: chore.
   Source: token-ideas-2026-10-15.
 
-- 📋 [DEMO-0205] **Let shot keep only one region of the picture, with --region x,y,w,h.**
+- ✅ [DEMO-0205] **Let shot keep only one region of the picture, with --region x,y,w,h.**
   Asked for by doom-ants, Rolodex and rusty-psn through the 2026-10-15
   token survey: doom-ants measured six PNGs of 190K-420K characters as
   95% of one session's reads. Needs the user's word first: README
@@ -622,6 +622,13 @@ simplest case, and a gate proves it still records.
   § What it will never do line against crop goes, for stills and for
   video (video cropping is DEMO-0151). That README edit is a contract
   change: gate it with review-contract before building.
+  Shipped 2026-10-16. README gated first (readme-loop-log rows 22-23,
+  converged at loop 2). The whole screen is saved in the shot's own
+  folder and checked there; only a passing picture is cut and written to
+  -o. A rectangle that does not fit, or is not four whole numbers with w
+  and h above 0, stops the run before the app starts. Four new messages,
+  drafted in all 16 catalogs; their check is DEMO-0210. Video cropping
+  stays DEMO-0151.
   **Layman:** A screenshot could hold just the part of the app being checked, so a session reading it pays for a small picture instead of a big one.
   Kind: feature.
   Source: peer-request-2026-10-15 ants-terminal-95 token survey.
@@ -693,6 +700,10 @@ simplest case, and a gate proves it still records.
   ja and ko; Gemini for the others. Blocked on 2026-10-16 by the Chrome
   extension not being connected (/chrome, Reconnect extension). A pass
   improves a draft; it does not confirm one (docs/specs/DEMO-0060).
+  Added 2026-10-16: DEMO-0205's four new messages need the same pass:
+  the shot --region help line, "--region takes x,y,w,h in whole pixels,
+  ...", "--region {region} does not fit inside the {size} picture." and
+  "could not cut the --region rectangle out of the picture."
   **Layman:** The one new sentence in every language still needs a second check by another AI before it is as good as the rest.
   Kind: doc-fix.
   Source: in-session-2026-10-16 DEMO-0203.

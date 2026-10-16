@@ -59,7 +59,7 @@ _demoreel() {
             compopt -o nospace
             return ;;
         -d | --duration | -s | --size | -r | --framerate | -n | --name | \
-            --settle | --startup-timeout | --from | --to | --fade-in | \
+            --settle | --startup-timeout | --region | --from | --to | --fade-in | \
             --fade-out | --fade-at | --fade-length | --crossfade | --text | \
             --text-size | --background | --still | -t | --time | \
             --music-level | --music-fade-in | --music-fade-out)
@@ -80,7 +80,7 @@ _demoreel() {
                 -n --name -a --action --steps --app-log --settle --gpu --cursor
                 --audio --startup-timeout -h --help --" ;;
         shot) words="-o --output -s --size -a --action --steps --app-log --settle
-                --gpu --cursor --startup-timeout -h --help --" ;;
+                --gpu --cursor --region --startup-timeout -h --help --" ;;
         check) words="-h --help" ;;
         edit) words="-o --output -s --size -r --framerate -h --help" ;;
         trim) words="-o --output --from --to --fade-in --fade-out --fade-at

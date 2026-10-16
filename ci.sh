@@ -5582,6 +5582,55 @@ grep -q 'one flat colour' "$tmp/flat.err" || { cat "$tmp/flat.err" >&2; exit 1; 
 rm -rf "$(sed -n 's/.*display log is kept in //p' "$tmp/flat.err")"
 echo "a flat picture failed the run and printed no path"
 
+step "shot --region keeps one rectangle, and only of a checked screen"
+# DEMO-0205. The cut is tested on a known picture: a white box at 50,30,
+# 40x20 on black. Swapping x and y, or w and h, cuts some black with it.
+ffmpeg -loglevel error -f lavfi -i color=black:s=320x240 -frames:v 1 \
+    -vf "drawbox=x=50:y=30:w=40:h=20:color=white:t=fill" -y "$tmp/box.png"
+python3 - "$tmp/box.png" "$tmp/boxcut.png" <<'PY'
+import importlib.machinery, importlib.util, subprocess, sys
+from pathlib import Path
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+dr = importlib.util.module_from_spec(
+    importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(dr)
+assert dr.cut_region(Path(sys.argv[1]), (50, 30, 40, 20), Path(sys.argv[2])) is None
+raw = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", sys.argv[2],
+                      "-pix_fmt", "gray", "-f", "rawvideo", "-"],
+                     capture_output=True, check=True).stdout
+assert len(raw) == 40 * 20, len(raw)
+assert min(raw) > 200, "the cut holds more than the box"
+PY
+# A real shot: the rectangle's size, its path, and no folder left behind.
+before=$(find "$statedir" -maxdepth 1 -name "shot-*" | wc -l)
+shot=$(./demoreel shot -o "$tmp/region.png" -s 321x241 --region 10,20,101,61 -- xclock)
+[ "$shot" = "$tmp/region.png" ] || { echo "shot printed '$shot', not its path" >&2; exit 1; }
+size=$(ffprobe -v error -show_entries stream=width,height -of csv=p=0 "$tmp/region.png")
+[ "$size" = "101,61" ] || { echo "--region 10,20,101,61 made a $size picture" >&2; exit 1; }
+after=$(find "$statedir" -maxdepth 1 -name "shot-*" | wc -l)
+[ "$after" -eq "$before" ] || { echo "a --region shot left its folder behind" >&2; exit 1; }
+# A rectangle that cannot be kept stops the run before the app starts.
+for bad in 0,0,400,300 1,2,3 0,0,0,5; do
+    if ./demoreel shot -o "$tmp/bad.png" -s 320x240 --region "$bad" -- \
+           sh -c "touch '$tmp/started'" 2>"$tmp/bad.err"; then
+        echo "--region $bad was accepted" >&2; exit 1
+    fi
+    grep -q -- '--region' "$tmp/bad.err" || { cat "$tmp/bad.err" >&2; exit 1; }
+    [ ! -e "$tmp/started" ] || { echo "--region $bad started the app" >&2; exit 1; }
+done
+# A flat screen fails even with --region: nothing at -o, and the folder
+# keeps the whole screen it judged.
+if ./demoreel shot -o "$tmp/flatcut.png" -s 320x240 --region 0,0,100,100 \
+       --settle 1 --startup-timeout 2 -- sleep 30 >/dev/null 2>"$tmp/flatcut.err"; then
+    echo "a --region picture of nothing was accepted" >&2; exit 1
+fi
+grep -q 'one flat colour' "$tmp/flatcut.err" || { cat "$tmp/flatcut.err" >&2; exit 1; }
+[ ! -e "$tmp/flatcut.png" ] || { echo "a failed --region shot wrote to -o" >&2; exit 1; }
+kept=$(sed -n 's/.*display log is kept in //p' "$tmp/flatcut.err")
+[ -s "$kept/screen.png" ] || { echo "the kept folder has no whole screen" >&2; exit 1; }
+rm -rf "$kept"
+echo "the rectangle is the one named; bad ones stop early; a flat screen still fails"
+
 step "a shot that fails early names the folder it kept"
 # DEMO-0107. A failed shot keeps its private folder, and that folder lives
 # in RAM under /run/user. Only two failure paths said where it was, so one

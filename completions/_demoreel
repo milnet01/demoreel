@@ -103,7 +103,8 @@ _demoreel() {
             '--audio[put the app'\''s own sound in the video]' ;;
         shot)
           _arguments -S $both \
-            {-o+,--output=}'[picture file to write]:file:_files' ;;
+            {-o+,--output=}'[picture file to write]:file:_files' \
+            '--region=[keep only this rectangle of the picture]:x,y,w,h:' ;;
         check)
           _arguments '(-)'{-h,--help}'[show help]' ;;
         stop)

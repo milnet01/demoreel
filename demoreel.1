@@ -258,6 +258,21 @@ every run gives the app a private sound output.
 Needs
 .BR pactl .
 .TP
+.BI \-\-region " x,y,w,h"
+.BR shot :
+keep only one rectangle of the picture, its top-left corner at
+.IR x , y
+and
+.I w
+by
+.I h
+pixels.
+It must fit inside
+.BR \-\-size .
+The whole screen is checked for a flat picture, and only a picture that
+passes is cut and written to
+.BR \-o .
+.TP
 .BI \-\-startup\-timeout " seconds"
 How long to wait for the app's window (default 20).
 .TP
