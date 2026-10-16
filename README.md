@@ -635,6 +635,7 @@ write the script.
 ```sh
 demoreel motion demo.mp4
 demoreel motion demo.mp4 --from 30 --to 37 --still 0.7
+demoreel motion demo.mp4 --region 0,0,400,60
 ```
 
 Reads the video and changes nothing. A frame counts as new when the picture has
@@ -677,6 +678,11 @@ script:
  "still": [{"from": 12.3, "to": 16.8, "seconds": 4.5},
            {"from": 29.8, "to": 37.5, "seconds": 7.7}]}
 ```
+
+`--region x,y,w,h` looks at one rectangle of the picture and ignores the
+rest, in the form `shot --region` takes. A frame is then new when that
+rectangle has changed. The report is the same, about that rectangle alone. The
+rectangle must fit inside the video, or `motion` stops before reading it.
 
 `motion` never fails a video and never cuts one. Cutting out a still stretch
 would hide a real wait, so that stays your decision.
@@ -762,7 +768,7 @@ you would only find out by watching it.
 | `--settle` | Wait for the app to draw something before starting to record. |
 | `--gpu` | For apps that need the graphics card. |
 | `--audio` | Put the app's own sound in the video. Off by default. `record` only. |
-| `--region` | Keep only one rectangle of the picture, as `x,y,w,h`. `shot` only; see [Taking a picture](#taking-a-picture). |
+| `--region` | Keep only one rectangle of the picture, as `x,y,w,h`. `shot` only; see [Taking a picture](#taking-a-picture). `motion` takes it too, to look at one rectangle of a video. |
 | `--startup-timeout` | How long to wait for the app's window to appear. |
 
 ### `--audio`: the app's own sound
