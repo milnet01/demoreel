@@ -289,10 +289,11 @@ if [ "${1:-}" = "--docs-glob" ]; then
 fi
 
 # ./ci.sh --summary LOG reads a gate's saved output and prints only what a
-# reader needs: how many steps ran, every step that skipped, the last line,
-# and, when the gate did not pass, the output of the step that failed: each
-# step ending "this check failed" (the finishing checks run them all), or else
-# the last `===` header (for a failed Ubuntu re-run, the header inside it).
+# reader needs: how many steps ran, the slowest, every step that skipped, the
+# last line, and, when the gate did not pass, the output of the step that
+# failed: each step ending "this check failed" (the finishing checks run them
+# all), or else the last `===` header (for a failed Ubuntu re-run, the header
+# inside it).
 # For a session reading a cc-job or pre-push log: the whole log costs far more
 # to read than it says.
 if [ "${1:-}" = "--summary" ]; then
@@ -302,6 +303,12 @@ if [ "${1:-}" = "--summary" ]; then
         /gate FAILED/ { passed = 0 }
         { line[++n] = $0 }
         /^this check failed$/ { failed = failed tail_of_step() }
+        /^took [0-9.]+s(, beside the others)?: / {
+            t = substr($2, 1, length($2) - 1) + 0
+            s = $0; sub(/^[^:]*: /, "", s)
+            if (/beside/) { pt[++np] = t; pn[np] = s } else { st[++ns] = t; sn[ns] = s }
+            next
+        }
         tolower($0) ~ /skipped/ && !/^=== / { skips = skips "  " name ": " $0 "\n" }
         NF { last = $0 }
         function tail_of_step(   i, s) {
@@ -309,8 +316,18 @@ if [ "${1:-}" = "--summary" ]; then
             for (i = (n > 60 ? n - 59 : 1); i <= n; i++) s = s line[i] "\n"
             return s
         }
+        function slowest(title, k, t, nm, max,   i, j, b, used, s) {
+            for (i = 1; i <= max && i <= k; i++) {
+                b = 0
+                for (j = 1; j <= k; j++) if (!(j in used) && (!b || t[j] > t[b])) b = j
+                used[b] = 1; s = s sprintf("  %7.1fs  %s\n", t[b], nm[b])
+            }
+            if (s != "") printf "%s\n%s", title, s
+        }
         END {
             printf "%d steps; last line: %s\n", steps, last
+            slowest("slowest steps:", ns, st, sn, 10)
+            slowest("slowest finishing checks (these run side by side):", np, pt, pn, 5)
             if (skips != "") printf "skipped:\n%s", skips
             if (passed) exit
             if (failed != "") { printf "failed:\n%s", failed; exit }
@@ -1055,7 +1072,23 @@ DOCS_ONLY=false
 FINISHING_ONLY=false
 [ "${1:-}" = "--finishing" ] && FINISHING_ONLY=true
 
-step() { printf '\n=== %s ===\n' "$1"; }
+# Each step ends with "took 1.2s: NAME", which ./ci.sh --summary ranks
+# (DEMO-0277). The line names its step because a header is not always the
+# step a time belongs to. A step that fails prints no time.
+since() {  # start, in microseconds -> seconds since then, one decimal
+    local us=$(( ${EPOCHREALTIME/./} - $1 ))
+    printf '%d.%d' $(( us / 1000000 )) $(( us / 100000 % 10 ))
+}
+step_end() {
+    [ -z "${step_t0:-}" ] || printf 'took %ss: %s\n' "$(since "$step_t0")" "$step_name"
+    step_t0=
+}
+step() {
+    step_end
+    printf '\n=== %s ===\n' "$1"
+    step_name=$1; step_t0=${EPOCHREALTIME/./}
+}
+gate_end() { step_end; printf '\n=== %s ===\n' "$1"; }
 
 # The finishing commands (edit, trim, caption, join, card, motion, poster, sheet), held
 # to README.md § "Finishing a recording". One definition, run by the full gate
@@ -1277,26 +1310,32 @@ finishing_checks() {
     fin_names=(); fin_funcs=()
     fin_step() { fin_names+=("$1"); fin_funcs+=("$2"); }
     fin_one() {  # index: run one check in a fresh copy of the inputs
-        local w="$tmp/fin-steps/$1"
+        local w="$tmp/fin-steps/$1" t0=${EPOCHREALTIME/./}
         mkdir -p "$w"
         ( cd "$ft" && find . -mindepth 1 -maxdepth 1 ! -name out ! -name log \
               -exec cp -a {} "$w/" \; )
         mkdir -p "$w/out" "$w/log"
         ft=$w; fo="$w/log/stdout"; fe="$w/log/stderr"
         set +e; ( set -e; "${fin_funcs[$1]}" ); echo $? > "$w.rc"
+        since "$t0" > "$w.time"
     }
     fin_run() {
         local i jobs=${FIN_JOBS:-$(( $(nproc) < 4 ? $(nproc) : 4 ))}
         mkdir -p "$tmp/fin-steps"
+        # The checks' own times overlap, so the batch is timed as a step too.
+        step "finishing: the checks below, run side by side"
         for i in "${!fin_funcs[@]}"; do
             while [ "$(jobs -rp | wc -l)" -ge "$jobs" ]; do wait -n || true; done
             ( renice -n 10 "$BASHPID" >/dev/null 2>&1 || true; fin_one "$i" ) \
                 > "$tmp/fin-steps/$i.log" 2>&1 &
         done
         wait || true
+        step_end
         for i in "${!fin_funcs[@]}"; do
-            step "${fin_names[$i]}"
+            printf '\n=== %s ===\n' "${fin_names[$i]}"
             cat "$tmp/fin-steps/$i.log"
+            printf 'took %ss, beside the others: %s\n' \
+                "$(cat "$tmp/fin-steps/$i.time" 2>/dev/null)" "${fin_names[$i]}"
             # The line ./ci.sh --summary looks for: every step is printed,
             # so the last header is not the step that failed.
             [ "$(cat "$tmp/fin-steps/$i.rc" 2>/dev/null)" = 0 ] \
@@ -3758,7 +3797,7 @@ if $FINISHING_ONLY; then
     tmp=$(mktemp -d)
     trap 'rm -rf "$tmp"' EXIT
     finishing_checks
-    printf '\n=== finishing checks passed ===\n'
+    gate_end 'finishing checks passed'
     exit 0
 fi
 
@@ -3793,6 +3832,31 @@ esac
 case $sum in *"all good"*) echo "--summary showed the passing step too:" >&2
     echo "$sum" >&2; exit 1 ;; esac
 echo "--summary named the failed step and left the passing one out"
+
+step "--summary ranks the steps by time"
+# DEMO-0277. The slow step is listed first, and a check that ran beside the
+# others is kept out of the main list, whose times do not overlap.
+sum=$("$0" --summary /dev/stdin <<'EOF'
+=== quick ===
+took 2.5s: quick
+=== slow ===
+took 31.0s: slow
+=== side ===
+took 40.0s, beside the others: side
+=== all checks passed ===
+EOF
+)
+want=$(printf '%s\n' "slowest steps:" "     31.0s  slow" "      2.5s  quick" \
+    "slowest finishing checks (these run side by side):" "     40.0s  side")
+case $sum in
+    *"$want"*) ;;
+    *) echo "--summary did not rank the steps:" >&2; echo "$sum" >&2; exit 1 ;;
+esac
+case $sum in *"last line: === all checks passed ==="*) ;;
+    *) echo "--summary took a time line for the last line:" >&2
+       echo "$sum" >&2; exit 1 ;;
+esac
+echo "--summary listed the slow step first and the side-by-side check apart"
 
 step "documented flags exist"
 # Also runs in both modes. README.md is this project's design contract, so a
@@ -4055,7 +4119,7 @@ done
 echo "all present and valid UTF-8"
 
 if $DOCS_ONLY; then
-    printf '\n=== documentation checks passed ===\n'
+    gate_end 'documentation checks passed'
     exit 0
 fi
 
@@ -6671,7 +6735,7 @@ step "the packages, on every distro they target"
 if [ -n "${GITHUB_ACTIONS:-}" ] || [ -n "${DEMOREEL_PARITY_INSIDE:-}" ]; then
     echo "not applicable: the packages job runs it on GitHub"
 elif ! command -v podman >/dev/null; then
-    printf '\n=== checks passed; the packages and the Ubuntu leg were SKIPPED: podman is not installed ===\n'
+    gate_end 'checks passed; the packages and the Ubuntu leg were SKIPPED: podman is not installed'
     exit 0
 else
     packages_check ''
@@ -6685,7 +6749,7 @@ step "the same gate on GitHub's Ubuntu"
 if [ -n "${GITHUB_ACTIONS:-}" ] || [ -n "${DEMOREEL_PARITY_INSIDE:-}" ]; then
     echo "not applicable: this run already is on that Ubuntu"
 elif ! podman image exists "$PARITY_IMAGE"; then
-    printf '\n=== checks passed; the Ubuntu leg was SKIPPED: its image is not built ===\n'
+    gate_end 'checks passed; the Ubuntu leg was SKIPPED: its image is not built'
     echo "build it once (a few minutes): ./ci.sh --parity-build"
     exit 0
 else
@@ -6713,4 +6777,4 @@ else
     echo "every check above also passed on $PARITY_BASE"
 fi
 
-printf '\n=== all checks passed ===\n'
+gate_end 'all checks passed'

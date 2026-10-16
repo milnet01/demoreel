@@ -30,8 +30,8 @@ only the finishing commands' checks, which need no display; it is for working
 on them, and the full gate runs them too.
 
 To read a gate's saved output, such as a `cc-job` log, run `./ci.sh --summary
-<log>` rather than reading the log. It prints the steps that skipped and, on a
-failure, only the step that failed.
+<log>` rather than reading the log. It prints the slowest steps, the steps
+that skipped and, on a failure, only the step that failed.
 
 `./ci.sh --option-places OPTION COMMAND...` lists every file that must name an
 option of those commands, each present or missing.
