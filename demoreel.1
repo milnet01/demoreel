@@ -50,6 +50,15 @@ demoreel \- record a GUI app on a private virtual display
 .B \-o
 .I picture
 .br
+.B demoreel sheet
+.I video
+.RB ( \-\-every
+.IR seconds " | " \-\-at
+.IR seconds,... )
+.RI [ options ]
+.B \-o
+.I picture
+.br
 .B demoreel
 .RB [ \-\-version ]
 .RB [ \-h | \-\-help ]
@@ -134,6 +143,11 @@ It writes no file; its report goes to standard output.
 Save the frame on screen at
 .B \-t
 as a picture.
+.TP
+.B sheet
+Save several frames of a video as one picture, in rows, each with the time
+it appears written under it.
+At most 100 frames.
 .SH OPTIONS
 .TP
 .BR \-o ", " \-\-output " \fIpath\fR"
@@ -148,6 +162,8 @@ a video must end in
 .BR .mp4 ,
 a
 .B poster
+or
+.B sheet
 picture in
 .B .png
 or
@@ -272,6 +288,11 @@ It must fit inside
 The whole screen is checked for a flat picture, and only a picture that
 passes is cut and written to
 .BR \-o .
+.BR motion :
+look only at that rectangle of the video.
+.BR sheet :
+show only that rectangle of each frame.
+Either must fit inside the video.
 .TP
 .BI \-\-startup\-timeout " seconds"
 How long to wait for the app's window (default 20).
@@ -370,6 +391,27 @@ print the report as one JSON object.
 .BR \-t ", " \-\-time " \fIseconds\fR"
 .BR poster :
 which moment to save; required.
+.TP
+.BI \-\-every " seconds"
+.BR sheet :
+take a frame every so many seconds, from the start.
+.TP
+.BI \-\-at " seconds,..."
+.BR sheet :
+take the frames on screen at these times, separated by commas.
+One of
+.B \-\-every
+and
+.B \-\-at
+is required.
+.TP
+.BI \-\-width " pixels"
+.BR sheet :
+each frame's width (default 320, or less if the frame is narrower).
+.TP
+.BI \-\-columns " n"
+.BR sheet :
+how many frames sit side by side (default 4).
 .TP
 .BR \-h ", " \-\-help
 Show the options.
@@ -667,6 +709,7 @@ demoreel motion demo.mp4
 demoreel trim demo.mp4 \-o short.mp4 \-\-to 29.8
 demoreel edit film.txt \-o film.mp4
 demoreel poster film.mp4 \-t 14.9 \-o poster.jpg
+demoreel sheet demo.mp4 \-\-every 2 \-o sheet.png
 .fi
 .SH SEE ALSO
 .BR Xvfb (1),

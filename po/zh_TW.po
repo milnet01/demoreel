@@ -497,8 +497,8 @@ msgstr "{name}：尚未就緒"
 msgid "{name}: ready"
 msgstr "{name}：就緒"
 
-msgid "edit, trim, caption, join, card, motion and poster"
-msgstr "edit、trim、caption、join、card、motion 和 poster"
+msgid "edit, trim, caption, join, card, motion, poster and sheet"
+msgstr "edit、trim、caption、join、card、motion、poster 和 sheet"
 
 msgid "text on a card or a caption"
 msgstr "卡片或字幕上的文字"
@@ -1296,3 +1296,47 @@ msgstr "無法從畫面中裁出 --region 的矩形。"
 #. argparse formats this text with %
 msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
 msgstr "只保留畫面中的這個矩形：左上角位於 X,Y，寬 W 像素、高 H 像素"
+
+msgid "--at {time} is not inside {path}, which is {seconds} seconds long."
+msgstr "--at {time} 不在 {path} 的範圍內，它長 {seconds} 秒。"
+
+msgid "{option} takes a whole number of at least {least}, not {value}."
+msgstr "{option} 需要一個不小於 {least} 的整數，而不是 {value}。"
+
+msgid "a sheet holds at most {most} frames, and these times ask for more. Take a longer --every, or fewer --at times."
+msgstr "一張拼圖最多容納 {most} 個影格，而這些時間點要求的更多。請使用更長的 --every，或減少 --at 的時間點。"
+
+msgid "could not put the frames together into one picture."
+msgstr "無法把這些影格拼成一張圖片。"
+
+#. argparse formats this text with %
+msgid "save several frames of a video, with their times, as one picture"
+msgstr "將影片的多個影格連同各自的時間儲存成一張圖片"
+
+#. argparse formats this text with %
+msgid "save several frames of a video, with their times, as one picture."
+msgstr "將影片的多個影格連同各自的時間儲存成一張圖片。"
+
+#. argparse formats this text with %
+msgid "the video to take the frames from"
+msgstr "要從中擷取影格的影片"
+
+#. argparse formats this text with %
+msgid "take a frame every SECONDS, from the start"
+msgstr "從開頭起每隔 SECONDS 秒擷取一個影格"
+
+#. argparse formats this text with %
+msgid "take the frames on screen at these moments, like 1,4.5,9"
+msgstr "擷取這些時間點畫面上的影格，例如 1,4.5,9"
+
+#. argparse formats this text with %
+msgid "show only this rectangle of each frame: its top-left corner at X,Y, W pixels wide and H high"
+msgstr "只顯示每個影格畫面中的這個矩形：左上角位於 X,Y，寬 W 像素、高 H 像素"
+
+#. argparse formats this text with %
+msgid "each frame's width (default: {width}, or less if the frame is narrower)"
+msgstr "每個影格的寬度（預設：{width}，影格較窄時則更小）"
+
+#. argparse formats this text with %
+msgid "how many frames side by side (default: {columns})"
+msgstr "並排幾個影格（預設：{columns}）"

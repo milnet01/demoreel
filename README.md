@@ -277,8 +277,8 @@ writes nothing to `-o`, and its folder keeps the whole screen.
 
 A recording is rarely what you publish. `demoreel edit` takes a short script,
 a list of scenes in plain words, and makes the finished film from it.
-Shortcuts do the one-step jobs without a script, and `motion` and `poster`
-look at a video without changing it.
+Shortcuts do the one-step jobs without a script, and `motion`, `poster` and
+`sheet` look at a video without changing it.
 
 Each of these works on video files, not on an app. So it starts no private
 screen, takes no `-n` name, and can run beside recordings.
@@ -697,6 +697,29 @@ Saves the frame on screen at `-t`, or `--time`, as a picture. `-t` is
 required. `-o` ends in `.png` or `.jpg`. `shot` photographs an app; `poster` photographs the video, so the
 picture is a frame of the very file you publish.
 
+### `sheet`: several frames in one picture
+
+```sh
+demoreel sheet demo.mp4 --every 2 -o sheet.png
+demoreel sheet demo.mp4 --at 1,4.5,9 --region 0,0,400,60 -o sheet.jpg
+```
+
+Takes the frames on screen at the moments `--every` or `--at` names, the way
+`poster` takes one, and lays them out in rows, in the order asked. Under each
+frame is the time that frame appears, to a thousandth of a second. That time
+can be given to `poster -t` or a clip's `from`, and picks the same frame.
+
+- `--every SECONDS` takes a frame every so many seconds, from the start.
+- `--at` takes the frames at the times listed, separated by commas.
+- One of `--every` and `--at` is required. A time past the end is an error.
+- `--region x,y,w,h` shows only that rectangle of each frame, in the form
+  `shot --region` takes.
+- `--width` is each frame's width in pixels, at least 80: 320 unless you
+  say, or the width of what is shown if that is narrower, but not under 80.
+  An odd width is rounded down by one.
+- `--columns` is how many frames sit side by side: 4 unless you say.
+- A sheet holds at most 100 frames. `-o` ends in `.png` or `.jpg`.
+
 ## How it avoids filming your desktop
 
 This is the whole idea, so it is worth a minute.
@@ -1096,7 +1119,8 @@ Permanently out of scope:
 
 - No editing beyond finishing a recording and making a short trailer from it.
   demoreel may do these things, and no others:
-  - cut the ends off a video, measure it, and take a frame from it;
+  - cut the ends off a video, measure it, and take a frame from it, or several
+    frames side by side with their times;
   - keep only one rectangle of a picture or a clip, the one you name;
   - play scenes one after another, and change one scene into the next with a
     fade or any other transition ffmpeg has ready-made, such as a dissolve,

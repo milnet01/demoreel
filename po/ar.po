@@ -497,8 +497,8 @@ msgstr "{name}: غير جاهز"
 msgid "{name}: ready"
 msgstr "{name}: جاهز"
 
-msgid "edit, trim, caption, join, card, motion and poster"
-msgstr "edit وtrim وcaption وjoin وcard وmotion وposter"
+msgid "edit, trim, caption, join, card, motion, poster and sheet"
+msgstr "edit وtrim وcaption وjoin وcard وmotion وposter وsheet"
 
 msgid "text on a card or a caption"
 msgstr "نص على بطاقة أو في تعليق"
@@ -1326,3 +1326,47 @@ msgstr "تعذّر قص مستطيل --region من الصورة."
 #. argparse formats this text with %
 msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
 msgstr "احتفظ بهذا المستطيل فقط من الصورة: زاويته العلوية اليسرى عند X,Y، وعرضه W بكسل وارتفاعه H"
+
+msgid "--at {time} is not inside {path}, which is {seconds} seconds long."
+msgstr "القيمة --at {time} ليست داخل {path}، ومدته {seconds} ثانية."
+
+msgid "{option} takes a whole number of at least {least}, not {value}."
+msgstr "يأخذ {option} عددًا صحيحًا لا يقل عن {least}، لا {value}."
+
+msgid "a sheet holds at most {most} frames, and these times ask for more. Take a longer --every, or fewer --at times."
+msgstr "تتسع اللوحة لـ {most} إطار على الأكثر، وهذه الأوقات تطلب أكثر. اختر قيمة أطول لـ --every، أو أوقاتًا أقل في --at."
+
+msgid "could not put the frames together into one picture."
+msgstr "تعذّر جمع الإطارات في صورة واحدة."
+
+#. argparse formats this text with %
+msgid "save several frames of a video, with their times, as one picture"
+msgstr "احفظ عدة إطارات من فيديو، مع أوقاتها، كصورة واحدة"
+
+#. argparse formats this text with %
+msgid "save several frames of a video, with their times, as one picture."
+msgstr "احفظ عدة إطارات من فيديو، مع أوقاتها، كصورة واحدة."
+
+#. argparse formats this text with %
+msgid "the video to take the frames from"
+msgstr "الفيديو المراد أخذ الإطارات منه"
+
+#. argparse formats this text with %
+msgid "take a frame every SECONDS, from the start"
+msgstr "خذ إطارًا كل SECONDS، من البداية"
+
+#. argparse formats this text with %
+msgid "take the frames on screen at these moments, like 1,4.5,9"
+msgstr "خذ الإطارات الظاهرة على الشاشة في هذه اللحظات، مثل 1,4.5,9"
+
+#. argparse formats this text with %
+msgid "show only this rectangle of each frame: its top-left corner at X,Y, W pixels wide and H high"
+msgstr "اعرض هذا المستطيل فقط من كل إطار: زاويته العلوية اليسرى عند X,Y، وعرضه W بكسل وارتفاعه H"
+
+#. argparse formats this text with %
+msgid "each frame's width (default: {width}, or less if the frame is narrower)"
+msgstr "عرض كل إطار (الافتراضي: {width}، أو أقل إن كان الإطار أضيق)"
+
+#. argparse formats this text with %
+msgid "how many frames side by side (default: {columns})"
+msgstr "عدد الإطارات جنبًا إلى جنب (الافتراضي: {columns})"

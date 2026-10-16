@@ -497,8 +497,8 @@ msgstr "{name}: לא מוכן"
 msgid "{name}: ready"
 msgstr "{name}: מוכן"
 
-msgid "edit, trim, caption, join, card, motion and poster"
-msgstr "edit, trim, caption, join, card, motion ו־poster"
+msgid "edit, trim, caption, join, card, motion, poster and sheet"
+msgstr "edit, trim, caption, join, card, motion, poster ו־sheet"
 
 msgid "text on a card or a caption"
 msgstr "טקסט על כרטיס או בכיתוב"
@@ -1302,3 +1302,47 @@ msgstr "לא ניתן לחתוך את המלבן של --region מהתמונה."
 #. argparse formats this text with %
 msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
 msgstr "שמירת המלבן הזה בלבד מהתמונה: הפינה השמאלית העליונה שלו ב־X,Y, ברוחב W פיקסלים ובגובה H"
+
+msgid "--at {time} is not inside {path}, which is {seconds} seconds long."
+msgstr "--at {time} אינו בתוך {path}, שאורכו {seconds} שניות."
+
+msgid "{option} takes a whole number of at least {least}, not {value}."
+msgstr "{option} מקבל מספר שלם של {least} לפחות, ולא {value}."
+
+msgid "a sheet holds at most {most} frames, and these times ask for more. Take a longer --every, or fewer --at times."
+msgstr "גיליון מכיל לכל היותר {most} פריימים, והזמנים האלה דורשים יותר. בחרו --every ארוך יותר, או פחות זמנים ב־--at."
+
+msgid "could not put the frames together into one picture."
+msgstr "לא ניתן לחבר את הפריימים לתמונה אחת."
+
+#. argparse formats this text with %
+msgid "save several frames of a video, with their times, as one picture"
+msgstr "שמירת כמה פריימים מסרטון, עם הזמנים שלהם, כתמונה אחת"
+
+#. argparse formats this text with %
+msgid "save several frames of a video, with their times, as one picture."
+msgstr "שמירת כמה פריימים מסרטון, עם הזמנים שלהם, כתמונה אחת."
+
+#. argparse formats this text with %
+msgid "the video to take the frames from"
+msgstr "הסרטון שממנו יילקחו הפריימים"
+
+#. argparse formats this text with %
+msgid "take a frame every SECONDS, from the start"
+msgstr "לקיחת פריים כל SECONDS שניות, מההתחלה"
+
+#. argparse formats this text with %
+msgid "take the frames on screen at these moments, like 1,4.5,9"
+msgstr "לקיחת הפריימים שעל המסך ברגעים האלה, למשל 1,4.5,9"
+
+#. argparse formats this text with %
+msgid "show only this rectangle of each frame: its top-left corner at X,Y, W pixels wide and H high"
+msgstr "הצגת המלבן הזה בלבד מכל פריים: הפינה השמאלית העליונה שלו ב־X,Y, ברוחב W פיקסלים ובגובה H"
+
+#. argparse formats this text with %
+msgid "each frame's width (default: {width}, or less if the frame is narrower)"
+msgstr "הרוחב של כל פריים (ברירת מחדל: {width}, או פחות אם הפריים צר יותר)"
+
+#. argparse formats this text with %
+msgid "how many frames side by side (default: {columns})"
+msgstr "כמה פריימים זה לצד זה (ברירת מחדל: {columns})"

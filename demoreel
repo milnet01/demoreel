@@ -2638,8 +2638,8 @@ def cmd_check(a):
     # The finishing commands need no display, and nothing here changes the
     # exit status: that still says only whether the default backend records.
     videos, words = finishing_problems()
-    for name, problem in ((tr("edit, trim, caption, join, card, motion and "
-                              "poster"), videos),
+    for name, problem in ((tr("edit, trim, caption, join, card, motion, "
+                              "poster and sheet"), videos),
                           (tr("text on a card or a caption"), words)):
         note(tr("{name}: NOT READY", name=name) + "\n  - "
              + problem.replace("\n", "\n    ") if problem
@@ -4644,40 +4644,157 @@ def cmd_motion(a):
               f"({still['seconds']:.3f})")
 
 
+def frame_on_screen(moment, info):
+    """The number of the frame on screen at `moment`, never past the video's
+    last, and the seconds between frames."""
+    step = 1 / (info["rate"] or 30)
+    return min(frame_at(moment, step),
+               max(0, math.ceil(info["duration"] / step - 1e-6) - 1)), step
+
+
+def grab_frame(path, moment, info, picture, look=None):
+    """Write the frame on screen at `moment` in the video at path to picture,
+    through the filters `look` if given, or die naming the moment. The caller
+    removes a picture left half-written."""
+    frame, step = frame_on_screen(moment, info)
+    # The frame on screen at a time is the last one that started at or before
+    # it; seeking lands on the first frame at or after the point given, so
+    # aim half a frame before that frame's own start.
+    try:
+        grab = subprocess.run(  # noqa: PLW1510 - a failure is handled below
+            ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
+             "-ss", f"{max(0.0, (frame - 0.5) * step):.6f}",
+             "-i", str(Path(path).expanduser()), "-frames:v", "1",
+             *(["-vf", look] if look else []),
+             *(["-q:v", "3"] if picture.suffix.lower() == ".jpg" else []),
+             "-y", str(picture)],
+            capture_output=True, text=True, timeout=6 * CALL_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        die(tr("taking the frame took over {seconds}s.", seconds=6 * CALL_TIMEOUT))
+    if grab.returncode != 0 or not picture.exists() or not picture.stat().st_size:
+        lines = [ln for ln in grab.stderr.splitlines() if ln.strip()]
+        die(tr("could not take the frame at {time} from {path}.",
+               time=f"{moment:g}", path=path)
+            + ("\n  " + "\n  ".join(lines[-2:]) if lines else ""))
+
+
 def cmd_poster(a):
     """The frame on screen at -t, as a picture."""
     finishing_tools()
     output = finishing_output(a.output, [a.input], (".png", ".jpg"))
     info = probe(a.input, Path(a.input).name)
-    whole, step = info["duration"], 1 / (info["rate"] or 30)
+    whole = info["duration"]
     if a.time < 0 or a.time > whole + TIME_SLACK:
         die(tr("-t {time} is not inside {path}, which is {seconds} "
                "seconds long.", time=f"{a.time:g}", path=a.input,
                seconds=f"{whole:.3f}"))
-    # The frame on screen at a time is the last one that started at or before
-    # it; seeking lands on the first frame at or after the point given, so
-    # aim half a frame before that frame's own start.
-    frame = min(frame_at(a.time, step),
-                max(0, math.ceil(whole / step - 1e-6) - 1))
     part = output.with_name(f".{output.stem}.demoreel-part{output.suffix}")
     try:
-        grab = subprocess.run(  # noqa: PLW1510 - a failure is handled below
-            ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
-             "-ss", f"{max(0.0, (frame - 0.5) * step):.6f}",
-             "-i", str(Path(a.input).expanduser()), "-frames:v", "1",
-             *(["-q:v", "3"] if output.suffix.lower() == ".jpg" else []),
-             "-y", str(part)],
-            capture_output=True, text=True, timeout=6 * CALL_TIMEOUT)
-        if grab.returncode != 0 or not part.exists() or not part.stat().st_size:
-            lines = [ln for ln in grab.stderr.splitlines() if ln.strip()]
-            die(tr("could not take the frame at {time} from {path}.",
-                   time=f"{a.time:g}", path=a.input)
-                + ("\n  " + "\n  ".join(lines[-2:]) if lines else ""))
+        grab_frame(a.input, a.time, info, part)
         os.replace(part, output)
-    except subprocess.TimeoutExpired:
-        die(tr("taking the frame took over {seconds}s.", seconds=6 * CALL_TIMEOUT))
     finally:
         part.unlink(missing_ok=True)
+    print(output)
+
+
+# A frame sheet's frames are SHEET_WIDTH pixels wide unless --width says, or
+# the width shown where that is narrower, never under SHEET_LEAST_WIDTH: below
+# it a time under a frame no longer fits across it. SHEET_COLUMNS sit side by
+# side. Each frame is one seek, so a sheet holds at most SHEET_FRAMES.
+SHEET_WIDTH = 320
+SHEET_COLUMNS = 4
+SHEET_FRAMES = 100
+SHEET_LEAST_WIDTH = 80
+
+
+def sheet_times(a, info):
+    """The moments --every or --at asks for, each checked against the video."""
+    whole = info["duration"]
+    if a.every is not None:
+        if not (a.every > 0 and math.isfinite(a.every)):
+            die(tr("{option} takes a number of seconds, not {value}.",
+                   option="--every", value=f"{a.every:g}"))
+        frame, step = frame_on_screen(whole, info)
+        count = math.floor(frame * step / a.every + 1e-9) + 1
+        return [i * a.every for i in range(min(count, SHEET_FRAMES + 1))]
+    times = []
+    for word in a.at.split(","):
+        try:
+            moment = float(word)
+        except ValueError:
+            moment = math.nan
+        if not (moment >= 0 and math.isfinite(moment)):
+            die(tr("{option} takes a number of seconds, not {value}.",
+                   option="--at", value=repr(word.strip())))
+        if moment > whole + TIME_SLACK:
+            die(tr("--at {time} is not inside {path}, which is {seconds} "
+                   "seconds long.", time=f"{moment:g}", path=a.input,
+                   seconds=f"{whole:.3f}"))
+        times.append(moment)
+    return times
+
+
+def cmd_sheet(a):
+    """Several frames of a video in rows, each with the time it appears under
+    it, as one picture. Each frame is taken as poster takes one, so a time
+    picks the same frame in both, and the time printed is that frame's start:
+    given to poster -t or a clip's from, it picks the frame again."""
+    finishing_tools()
+    output = finishing_output(a.output, [a.input], (".png", ".jpg"))
+    info = probe(a.input, Path(a.input).name)
+    for flag, value, least in (("--width", a.width, SHEET_LEAST_WIDTH),
+                               ("--columns", a.columns, 1)):
+        if value is not None and value < least:
+            die(tr("{option} takes a whole number of at least {least}, not "
+                   "{value}.", option=flag, least=least, value=value))
+    region = shot_region(a.region, info["width"], info["height"])
+    times = sheet_times(a, info)
+    if len(times) > SHEET_FRAMES:
+        die(tr("a sheet holds at most {most} frames, and these times ask for "
+               "more. Take a longer --every, or fewer --at times.",
+               most=SHEET_FRAMES))
+    width, height = region[2:] if region else (info["width"], info["height"])
+    tile = a.width or max(SHEET_LEAST_WIDTH, min(SHEET_WIDTH, width))
+    tile -= tile % 2
+    tall = max(2, round(height * tile / width / 2) * 2)
+    size = max(10, round(tile / 12))
+    band = round(size * 1.6)
+    columns = min(a.columns, len(times))
+    rows = math.ceil(len(times) / columns)
+    font = text_font()
+    crop = "crop={2}:{3}:{0}:{1},".format(*region) if region else ""
+    workdir = Path(tempfile.mkdtemp(prefix="sheet-", dir=state_dir()))
+    part = output.with_name(f".{output.stem}.demoreel-part{output.suffix}")
+    try:
+        # Each frame is cut, scaled and labelled as it is taken, so the last
+        # ffmpeg reads small pictures one at a time: given a hundred full
+        # frames as a hundred inputs, it failed under a 6 GB address-space
+        # cap (measured 2026-10-16, 1920x1080).
+        for i, moment in enumerate(times):
+            frame, step = frame_on_screen(moment, info)
+            grab_frame(a.input, moment, info, workdir / f"{i:03d}.png",
+                       f"{crop}scale={tile}:{tall},pad={tile}:{tall + band}:0:0:"
+                       f"black,drawtext={font}:text='{frame * step:.3f}':"
+                       f"fontsize={size}:fontcolor=white:x=(w-text_w)/2:"
+                       f"y={tall}+({band}-text_h)/2")
+        try:
+            made = subprocess.run(  # noqa: PLW1510 - a failure is handled below
+                ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
+                 "-start_number", "0", "-i", str(workdir / "%03d.png"),
+                 "-vf", f"tile={columns}x{rows}:color=black", "-frames:v", "1",
+                 *(["-q:v", "3"] if output.suffix.lower() == ".jpg" else []),
+                 "-y", str(part)],
+                capture_output=True, text=True, timeout=6 * CALL_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            made = subprocess.CompletedProcess([], 1, "", "")
+        if made.returncode != 0 or not part.exists() or not part.stat().st_size:
+            lines = [ln for ln in made.stderr.splitlines() if ln.strip()]
+            die(tr("could not put the frames together into one picture.")
+                + ("\n  " + "\n  ".join(lines[-2:]) if lines else ""))
+        os.replace(part, output)
+    finally:
+        part.unlink(missing_ok=True)
+        shutil.rmtree(workdir, ignore_errors=True)
     print(output)
 
 
@@ -5021,6 +5138,30 @@ def build_parser():
     poster.add_argument("-t", "--time", type=float, required=True,
                         metavar="SECONDS", help=tr_help("which moment to save"))
     poster.set_defaults(func=cmd_poster)
+
+    sheet = finishing("sheet", tr_help("save several frames of a video, with their "
+                                       "times, as one picture"),
+                      tr_help("save several frames of a video, with their times, "
+                              "as one picture."),
+                      output=tr_help("picture file to write, ending in .png or .jpg"))
+    sheet.add_argument("input", help=tr_help("the video to take the frames from"))
+    times = sheet.add_mutually_exclusive_group(required=True)
+    times.add_argument("--every", type=float, metavar="SECONDS",
+                       help=tr_help("take a frame every SECONDS, from the start"))
+    times.add_argument("--at", metavar="SECONDS,...",
+                       help=tr_help("take the frames on screen at these moments, "
+                                    "like 1,4.5,9"))
+    sheet.add_argument("--region", metavar="X,Y,W,H",
+                       help=tr_help("show only this rectangle of each frame: its "
+                                    "top-left corner at X,Y, W pixels wide and H "
+                                    "high"))
+    sheet.add_argument("--width", type=int, metavar="PIXELS",
+                       help=tr_help("each frame's width (default: {width}, or less "
+                                    "if the frame is narrower)", width=SHEET_WIDTH))
+    sheet.add_argument("--columns", type=int, default=SHEET_COLUMNS, metavar="N",
+                       help=tr_help("how many frames side by side (default: "
+                                    "{columns})", columns=SHEET_COLUMNS))
+    sheet.set_defaults(func=cmd_sheet)
     return parser
 
 

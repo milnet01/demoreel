@@ -497,8 +497,8 @@ msgstr "{name}: 준비 안 됨"
 msgid "{name}: ready"
 msgstr "{name}: 준비됨"
 
-msgid "edit, trim, caption, join, card, motion and poster"
-msgstr "edit, trim, caption, join, card, motion 및 poster"
+msgid "edit, trim, caption, join, card, motion, poster and sheet"
+msgstr "edit, trim, caption, join, card, motion, poster 및 sheet"
 
 msgid "text on a card or a caption"
 msgstr "카드나 자막의 텍스트"
@@ -1296,3 +1296,47 @@ msgstr "이미지에서 --region 사각형을 잘라낼 수 없었습니다."
 #. argparse formats this text with %
 msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
 msgstr "이미지에서 이 사각형만 남김. 왼쪽 위 모서리 X,Y, 너비 W 픽셀, 높이 H 픽셀"
+
+msgid "--at {time} is not inside {path}, which is {seconds} seconds long."
+msgstr "--at {time}은(는) 길이가 {seconds}초인 {path} 안에 있지 않습니다."
+
+msgid "{option} takes a whole number of at least {least}, not {value}."
+msgstr "{option}에는 {value}이(가) 아니라 {least} 이상의 정수를 주어야 합니다."
+
+msgid "a sheet holds at most {most} frames, and these times ask for more. Take a longer --every, or fewer --at times."
+msgstr "시트 하나에는 프레임을 최대 {most}개까지 넣을 수 있는데, 이 시점들은 그보다 많습니다. --every를 더 길게 하거나 --at 시점을 줄이세요."
+
+msgid "could not put the frames together into one picture."
+msgstr "프레임들을 그림 하나로 합칠 수 없었습니다."
+
+#. argparse formats this text with %
+msgid "save several frames of a video, with their times, as one picture"
+msgstr "동영상의 여러 프레임을 각 시각과 함께 그림 하나로 저장"
+
+#. argparse formats this text with %
+msgid "save several frames of a video, with their times, as one picture."
+msgstr "동영상의 여러 프레임을 각 시각과 함께 그림 하나로 저장합니다."
+
+#. argparse formats this text with %
+msgid "the video to take the frames from"
+msgstr "프레임들을 가져올 동영상"
+
+#. argparse formats this text with %
+msgid "take a frame every SECONDS, from the start"
+msgstr "처음부터 SECONDS초마다 프레임 하나를 가져옴"
+
+#. argparse formats this text with %
+msgid "take the frames on screen at these moments, like 1,4.5,9"
+msgstr "이 시점들에 화면에 있는 프레임을 가져옴, 예: 1,4.5,9"
+
+#. argparse formats this text with %
+msgid "show only this rectangle of each frame: its top-left corner at X,Y, W pixels wide and H high"
+msgstr "각 프레임에서 이 사각형만 보여 줌. 왼쪽 위 모서리 X,Y, 너비 W 픽셀, 높이 H 픽셀"
+
+#. argparse formats this text with %
+msgid "each frame's width (default: {width}, or less if the frame is narrower)"
+msgstr "각 프레임의 너비 (기본값: {width}, 프레임이 더 좁으면 그보다 작게)"
+
+#. argparse formats this text with %
+msgid "how many frames side by side (default: {columns})"
+msgstr "나란히 놓을 프레임 수 (기본값: {columns})"

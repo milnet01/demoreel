@@ -24,7 +24,7 @@ _demoreel() {
     for ((i = 1; i < COMP_CWORD; i++)); do
         case ${COMP_WORDS[i]} in
             record | shot | check | stop | edit | trim | caption | join | \
-                card | motion | poster)
+                card | motion | poster | sheet)
                 [[ -z $sub ]] && sub=${COMP_WORDS[i]} ;;
             --)
                 # Everything after -- is the app's own command line.
@@ -61,7 +61,8 @@ _demoreel() {
         -d | --duration | -s | --size | -r | --framerate | -n | --name | \
             --settle | --startup-timeout | --region | --from | --to | --fade-in | \
             --fade-out | --fade-at | --fade-length | --crossfade | --text | \
-            --text-size | --background | --still | -t | --time | \
+            --text-size | --background | --still | -t | --time | --every | --at | \
+            --width | --columns | \
             --music-level | --music-fade-in | --music-fade-out)
             return ;;
     esac
@@ -74,7 +75,7 @@ _demoreel() {
                 words="-h --help --version"
             else
                 words="record shot check stop edit trim caption join card
-                    motion poster"
+                    motion poster sheet"
             fi ;;
         record) words="-o --output -d --duration -s --size -r --framerate
                 -n --name -a --action --steps --app-log --settle --gpu --cursor
@@ -92,8 +93,9 @@ _demoreel() {
         card) words="-o --output -d --duration --text --text-size --background
                 --like -s --size -r --framerate --fade-in --fade-out $music
                 -h --help" ;;
-        motion) words="--from --to --still --json -h --help" ;;
+        motion) words="--from --to --still --region --json -h --help" ;;
         poster) words="-o --output -t --time -h --help" ;;
+        sheet) words="-o --output --every --at --region --width --columns -h --help" ;;
         stop)
             if [[ $cur == -* ]]; then
                 words="-h --help"
@@ -104,7 +106,7 @@ _demoreel() {
             fi ;;
     esac
     # The finishing commands take files: a script, videos, a picture.
-    if [[ $cur != -* && $sub == @(edit|trim|caption|join|card|motion|poster) ]]; then
+    if [[ $cur != -* && $sub == @(edit|trim|caption|join|card|motion|poster|sheet) ]]; then
         compopt -o default
         COMPREPLY=()
         return

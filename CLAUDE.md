@@ -78,7 +78,8 @@ screen readable.
 
 It also finishes a recording: `edit` makes a film from a plain-text script of
 scenes, `trim`, `caption`, `join` and `card` are one-scene shortcuts over the
-same renderer, and `motion` and `poster` read a video without changing it.
+same renderer, and `motion`, `poster` and `sheet` read a video without
+changing it.
 These work on files. They start no display and take no run name.
 
 ## Non-negotiable requirements
@@ -296,7 +297,7 @@ Moved to `.claude/rules/gpu-backend.md`, which loads when a session reads
 
 Moved to `.claude/rules/finishing-commands.md`, which loads when a session
 reads `demoreel` or `ci.sh`. Read it before changing `edit`, its shortcuts,
-`motion` or `poster`.
+`motion`, `poster` or `sheet`.
 
 ## Wayland-only apps: the limit of this design
 

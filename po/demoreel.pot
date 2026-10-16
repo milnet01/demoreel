@@ -435,7 +435,7 @@ msgstr ""
 msgid "{name}: ready"
 msgstr ""
 
-msgid "edit, trim, caption, join, card, motion and poster"
+msgid "edit, trim, caption, join, card, motion, poster and sheet"
 msgstr ""
 
 msgid "text on a card or a caption"
@@ -841,13 +841,25 @@ msgstr ""
 msgid "could not read the frames of {path}."
 msgstr ""
 
-msgid "-t {time} is not inside {path}, which is {seconds} seconds long."
+msgid "taking the frame took over {seconds}s."
 msgstr ""
 
 msgid "could not take the frame at {time} from {path}."
 msgstr ""
 
-msgid "taking the frame took over {seconds}s."
+msgid "-t {time} is not inside {path}, which is {seconds} seconds long."
+msgstr ""
+
+msgid "--at {time} is not inside {path}, which is {seconds} seconds long."
+msgstr ""
+
+msgid "{option} takes a whole number of at least {least}, not {value}."
+msgstr ""
+
+msgid "a sheet holds at most {most} frames, and these times ask for more. Take a longer --every, or fewer --at times."
+msgstr ""
+
+msgid "could not put the frames together into one picture."
 msgstr ""
 
 msgid "needs ffmpeg first"
@@ -1235,4 +1247,36 @@ msgstr ""
 
 #. argparse formats this text with %
 msgid "which moment to save"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "save several frames of a video, with their times, as one picture"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "save several frames of a video, with their times, as one picture."
+msgstr ""
+
+#. argparse formats this text with %
+msgid "the video to take the frames from"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "take a frame every SECONDS, from the start"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "take the frames on screen at these moments, like 1,4.5,9"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "show only this rectangle of each frame: its top-left corner at X,Y, W pixels wide and H high"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "each frame's width (default: {width}, or less if the frame is narrower)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "how many frames side by side (default: {columns})"
 msgstr ""

@@ -497,8 +497,8 @@ msgstr "{name}: NÃO ESTÁ PRONTO"
 msgid "{name}: ready"
 msgstr "{name}: pronto"
 
-msgid "edit, trim, caption, join, card, motion and poster"
-msgstr "edit, trim, caption, join, card, motion e poster"
+msgid "edit, trim, caption, join, card, motion, poster and sheet"
+msgstr "edit, trim, caption, join, card, motion, poster e sheet"
 
 msgid "text on a card or a caption"
 msgstr "texto num cartão ou numa legenda"
@@ -1302,3 +1302,47 @@ msgstr "não foi possível recortar o retângulo de --region da imagem."
 #. argparse formats this text with %
 msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
 msgstr "mantém só este retângulo da imagem: o canto superior esquerdo em X,Y, com W pixels de largura e H de altura"
+
+msgid "--at {time} is not inside {path}, which is {seconds} seconds long."
+msgstr "--at {time} não está dentro de {path}, que tem {seconds} segundos."
+
+msgid "{option} takes a whole number of at least {least}, not {value}."
+msgstr "{option} recebe um número inteiro de pelo menos {least}, não {value}."
+
+msgid "a sheet holds at most {most} frames, and these times ask for more. Take a longer --every, or fewer --at times."
+msgstr "uma folha comporta no máximo {most} quadros, e esses tempos pedem mais. Use um --every mais longo ou menos tempos em --at."
+
+msgid "could not put the frames together into one picture."
+msgstr "não foi possível juntar os quadros em uma única imagem."
+
+#. argparse formats this text with %
+msgid "save several frames of a video, with their times, as one picture"
+msgstr "salva vários quadros de um vídeo, com seus tempos, como uma única imagem"
+
+#. argparse formats this text with %
+msgid "save several frames of a video, with their times, as one picture."
+msgstr "salva vários quadros de um vídeo, com seus tempos, como uma única imagem."
+
+#. argparse formats this text with %
+msgid "the video to take the frames from"
+msgstr "o vídeo de onde pegar os quadros"
+
+#. argparse formats this text with %
+msgid "take a frame every SECONDS, from the start"
+msgstr "pega um quadro a cada SECONDS, desde o início"
+
+#. argparse formats this text with %
+msgid "take the frames on screen at these moments, like 1,4.5,9"
+msgstr "pega os quadros que estão na tela nesses momentos, como 1,4.5,9"
+
+#. argparse formats this text with %
+msgid "show only this rectangle of each frame: its top-left corner at X,Y, W pixels wide and H high"
+msgstr "mostra só este retângulo de cada quadro: o canto superior esquerdo em X,Y, com W pixels de largura e H de altura"
+
+#. argparse formats this text with %
+msgid "each frame's width (default: {width}, or less if the frame is narrower)"
+msgstr "a largura de cada quadro (padrão: {width}, ou menos se o quadro for mais estreito)"
+
+#. argparse formats this text with %
+msgid "how many frames side by side (default: {columns})"
+msgstr "quantos quadros lado a lado (padrão: {columns})"

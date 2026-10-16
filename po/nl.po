@@ -497,8 +497,8 @@ msgstr "{name}: NIET GEREED"
 msgid "{name}: ready"
 msgstr "{name}: gereed"
 
-msgid "edit, trim, caption, join, card, motion and poster"
-msgstr "edit, trim, caption, join, card, motion en poster"
+msgid "edit, trim, caption, join, card, motion, poster and sheet"
+msgstr "edit, trim, caption, join, card, motion, poster en sheet"
 
 msgid "text on a card or a caption"
 msgstr "tekst op een kaart of als ondertitel"
@@ -1302,3 +1302,47 @@ msgstr "kon de rechthoek van --region niet uit de afbeelding knippen."
 #. argparse formats this text with %
 msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
 msgstr "alleen deze rechthoek van de afbeelding houden: linkerbovenhoek op X,Y, W pixels breed en H hoog"
+
+msgid "--at {time} is not inside {path}, which is {seconds} seconds long."
+msgstr "--at {time} ligt niet binnen {path}, dat {seconds} seconden duurt."
+
+msgid "{option} takes a whole number of at least {least}, not {value}."
+msgstr "{option} verwacht een geheel getal van minstens {least}, niet {value}."
+
+msgid "a sheet holds at most {most} frames, and these times ask for more. Take a longer --every, or fewer --at times."
+msgstr "een overzichtsblad bevat hoogstens {most} beelden, en deze tijden vragen om meer. Neem een langere --every, of minder tijden bij --at."
+
+msgid "could not put the frames together into one picture."
+msgstr "kon de beelden niet samenvoegen tot één afbeelding."
+
+#. argparse formats this text with %
+msgid "save several frames of a video, with their times, as one picture"
+msgstr "meerdere beelden van een video, met hun tijden, als één afbeelding opslaan"
+
+#. argparse formats this text with %
+msgid "save several frames of a video, with their times, as one picture."
+msgstr "meerdere beelden van een video, met hun tijden, als één afbeelding opslaan."
+
+#. argparse formats this text with %
+msgid "the video to take the frames from"
+msgstr "de video om de beelden uit te halen"
+
+#. argparse formats this text with %
+msgid "take a frame every SECONDS, from the start"
+msgstr "elke SECONDS een beeld nemen, vanaf het begin"
+
+#. argparse formats this text with %
+msgid "take the frames on screen at these moments, like 1,4.5,9"
+msgstr "de beelden nemen die op deze momenten in beeld zijn, zoals 1,4.5,9"
+
+#. argparse formats this text with %
+msgid "show only this rectangle of each frame: its top-left corner at X,Y, W pixels wide and H high"
+msgstr "alleen deze rechthoek van elk beeld tonen: linkerbovenhoek op X,Y, W pixels breed en H hoog"
+
+#. argparse formats this text with %
+msgid "each frame's width (default: {width}, or less if the frame is narrower)"
+msgstr "de breedte van elk beeld (standaard: {width}, of minder als het beeld smaller is)"
+
+#. argparse formats this text with %
+msgid "how many frames side by side (default: {columns})"
+msgstr "hoeveel beelden naast elkaar (standaard: {columns})"

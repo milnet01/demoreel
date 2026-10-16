@@ -497,8 +497,8 @@ msgstr "{name}: НЕ ГОТОВО"
 msgid "{name}: ready"
 msgstr "{name}: готово"
 
-msgid "edit, trim, caption, join, card, motion and poster"
-msgstr "edit, trim, caption, join, card, motion и poster"
+msgid "edit, trim, caption, join, card, motion, poster and sheet"
+msgstr "edit, trim, caption, join, card, motion, poster и sheet"
 
 msgid "text on a card or a caption"
 msgstr "текст на карточке или в подписи"
@@ -1308,3 +1308,47 @@ msgstr "не удалось вырезать прямоугольник --region
 #. argparse formats this text with %
 msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
 msgstr "оставлять только этот прямоугольник изображения: левый верхний угол в X,Y, ширина W пикселей и высота H"
+
+msgid "--at {time} is not inside {path}, which is {seconds} seconds long."
+msgstr "--at {time} не попадает внутрь {path}, длина которого {seconds} с."
+
+msgid "{option} takes a whole number of at least {least}, not {value}."
+msgstr "{option} принимает целое число не меньше {least}, а не {value}."
+
+msgid "a sheet holds at most {most} frames, and these times ask for more. Take a longer --every, or fewer --at times."
+msgstr "на лист помещается не больше {most} кадров, а эти моменты требуют больше. Возьмите --every подлиннее или меньше моментов в --at."
+
+msgid "could not put the frames together into one picture."
+msgstr "не удалось собрать кадры в одно изображение."
+
+#. argparse formats this text with %
+msgid "save several frames of a video, with their times, as one picture"
+msgstr "сохранить несколько кадров видео с их временем как одно изображение"
+
+#. argparse formats this text with %
+msgid "save several frames of a video, with their times, as one picture."
+msgstr "сохранить несколько кадров видео с их временем как одно изображение."
+
+#. argparse formats this text with %
+msgid "the video to take the frames from"
+msgstr "видео, из которого нужно взять кадры"
+
+#. argparse formats this text with %
+msgid "take a frame every SECONDS, from the start"
+msgstr "брать кадр каждые SECONDS с начала"
+
+#. argparse formats this text with %
+msgid "take the frames on screen at these moments, like 1,4.5,9"
+msgstr "взять кадры, которые на экране в эти моменты, например 1,4.5,9"
+
+#. argparse formats this text with %
+msgid "show only this rectangle of each frame: its top-left corner at X,Y, W pixels wide and H high"
+msgstr "показывать только этот прямоугольник каждого кадра: левый верхний угол в X,Y, ширина W пикселей и высота H"
+
+#. argparse formats this text with %
+msgid "each frame's width (default: {width}, or less if the frame is narrower)"
+msgstr "ширина каждого кадра (по умолчанию: {width} или меньше, если кадр уже)"
+
+#. argparse formats this text with %
+msgid "how many frames side by side (default: {columns})"
+msgstr "сколько кадров в ряд (по умолчанию: {columns})"

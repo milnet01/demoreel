@@ -11,7 +11,7 @@
 # pass by hand to get past a red gate.
 #
 # ./ci.sh --finishing runs only the checks for the finishing commands (edit,
-# trim, caption, join, card, motion, poster), which need no display and take
+# trim, caption, join, card, motion, poster, sheet), which need no display and take
 # seconds. The full gate runs the same checks, from the same function.
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -906,7 +906,7 @@ FINISHING_ONLY=false
 
 step() { printf '\n=== %s ===\n' "$1"; }
 
-# The finishing commands (edit, trim, caption, join, card, motion, poster), held
+# The finishing commands (edit, trim, caption, join, card, motion, poster, sheet), held
 # to README.md § "Finishing a recording". One definition, run by the full gate
 # and alone by `./ci.sh --finishing`. Every input is made by ffmpeg from a
 # generated source, so nothing here needs a display and it takes seconds.
@@ -1768,6 +1768,77 @@ JSONPY
     expect_refused "poster without -t"
     assert_absent "poster without -t" "$ft/out/notime.png"
     echo "poster refused the wrong endings, a late time and a missing -t"
+
+    # ---- sheet ------------------------------------------------------------
+    }
+    sheet_cut() {  # sheet crop out: one rectangle of a sheet, as a picture
+        ffmpeg -v error -y -i "$1" -vf "crop=$2" "$3"
+    }
+    fin_s11s() {
+    # README: "Takes the frames on screen at the moments `--every` or `--at`
+    # names, the way `poster` takes one, and lays them out in rows ... Under
+    # each frame is the time that frame appears". A's frames are 320 wide, so
+    # a tile is the frame as it is, and its band is 43 pixels.
+    run sheet A.mp4 --every 2 -o "$ft/out/s1.png"
+    expect_ok "sheet --every 2 -o .png"
+    expect_stdout_path "sheet" "$ft/out/s1.png"
+    assert_eq "sheet --every 2: three frames in a row, with a band under them" "png,960,283" \
+        "$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height -of csv=p=0 "$ft/out/s1.png")"
+    for n in 0 1 2; do
+        sheet_cut "$ft/out/s1.png" "320:240:$((n * 320)):0" "$ft/out/s1-$n.png"
+        assert_is_frame "sheet --every 2, tile $n" "$ft/out/s1-$n.png" 0 "$ft/A.mp4" $((n * 20))
+    done
+    run sheet A.mp4 --at 2.55,0.33 --columns 1 -o "$ft/out/s2.jpg"
+    expect_ok "sheet --at 2.55,0.33 --columns 1 -o .jpg"
+    assert_eq "sheet --columns 1: two frames, one under the other" "mjpeg,320,566" \
+        "$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height -of csv=p=0 "$ft/out/s2.jpg")"
+    sheet_cut "$ft/out/s2.jpg" "320:240:0:0" "$ft/out/s2-0.png"
+    assert_is_frame "sheet --at 2.55, first tile" "$ft/out/s2-0.png" 0 "$ft/A.mp4" 25
+    sheet_cut "$ft/out/s2.jpg" "320:240:0:283" "$ft/out/s2-1.png"
+    assert_is_frame "sheet --at 0.33, second tile, in the order asked" "$ft/out/s2-1.png" 0 "$ft/A.mp4" 3
+    # The time printed is the frame's start: 2.55 and 2.5 print the same
+    # 2.500, and 2.6 prints another.
+    for t in 2.5 2.55 2.6; do
+        run sheet A.mp4 --at "$t" -o "$ft/out/l$t.png"
+        expect_ok "sheet --at $t"
+        sheet_cut "$ft/out/l$t.png" "320:43:0:240" "$ft/out/band$t.png"
+    done
+    assert_eq "sheet: 2.55's label is 2.5's" "0.00" "$(px diff "$ft/out/band2.55.png" 0 "$ft/out/band2.5.png" 0)"
+    assert_cmp "sheet: 2.6's label differs from 2.5's" "$(px diff "$ft/out/band2.6.png" 0 "$ft/out/band2.5.png" 0)" ">" 0.3
+    assert_cmp "sheet: the band holds a label" "$(px mean "$ft/out/band2.5.png" 0)" ">" 5
+    run sheet A.mp4 --at 1,2 --width 160 -o "$ft/out/s3.png"
+    expect_ok "sheet --width 160"
+    assert_eq "sheet --width 160: frames scaled to 160 wide" "320,141" \
+        "$(ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0 "$ft/out/s3.png")"
+    run sheet A.mp4 --at 1 --region 0,0,160,120 -o "$ft/out/s4.png"
+    expect_ok "sheet --region"
+    assert_eq "sheet --region 0,0,160,120: the rectangle, not scaled up" "160,141" \
+        "$(ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0 "$ft/out/s4.png")"
+    echo "sheet laid out the frames asked for, in order, each over its own time"
+
+    }
+    fin_s12s() {
+    # README: "One of `--every` and `--at` is required" ... "A sheet holds at
+    # most 100 frames" ... "A time past the end is an error."
+    run sheet A.mp4 --at 1 -o "$ft/out/ok.png"
+    expect_ok "control: sheet --at 1"
+    for bad in "--at 6.5" "--at 1,x" "--every 0" "--every -1" "--every 0.05" \
+               "--at 1 --every 1" "" "--at 1 --width 40" "--at 1 --columns 0" \
+               "--at 1 --region 200,0,160,240"; do
+        # shellcheck disable=SC2086 # each case is several words
+        run sheet A.mp4 $bad -o "$ft/out/bad.png"
+        expect_refused "sheet $bad"
+        assert_absent "sheet $bad" "$ft/out/bad.png"
+    done
+    run sheet A.mp4 --every 0.05 -o "$ft/out/bad.png"
+    grep -q 'at most 100 frames' "$fe" \
+        || fail "sheet --every 0.05: expected 'at most 100 frames', actual: $(cat "$fe")"
+    for bad in p.bmp p.mp4; do
+        run sheet A.mp4 --at 1 -o "$ft/out/$bad"
+        expect_refused "sheet with -o $bad"
+        assert_absent "sheet -o $bad" "$ft/out/$bad"
+    done
+    echo "sheet refused late and malformed times, too many frames and bad sizes"
 
     # ---- join -------------------------------------------------------------
     }
@@ -3465,6 +3536,8 @@ CASES
     fin_step "a --to set to motion's last change ends the clip on the last new picture" fin_s10
     fin_step "poster saves the frame on screen at -t, as .png or .jpg" fin_s11
     fin_step "poster refuses other endings and a time past the end" fin_s12
+    fin_step "sheet lays out the frames asked for, each over its own time" fin_s11s
+    fin_step "sheet refuses bad times, too many frames and bad sizes" fin_s12s
     fin_step "join adds the lengths, less the overlap at each crossfade" fin_s13
     fin_step "join gives the first clip's size and rate, and refuses another shape" fin_s14
     fin_step "card: size, rate and length come from -d, --like, -s and -r" fin_s15
@@ -3554,7 +3627,7 @@ step "documented flags exist"
 # and a commit that breaks it necessarily touches code, which is exactly the
 # push a documentation-only check would never see.
 help=$(./demoreel record --help; ./demoreel shot --help; ./demoreel stop --help;
-      for sub in edit trim caption join card motion poster; do
+      for sub in edit trim caption join card motion poster sheet; do
           ./demoreel "$sub" --help
       done
       ./demoreel --help)

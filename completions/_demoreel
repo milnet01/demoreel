@@ -79,6 +79,7 @@ _demoreel() {
         'card:make a clip from a picture, or from text'
         'motion:report how smooth a video is and where it stands still'
         'poster:save one frame of a video as a picture'
+        'sheet:save several frames of a video, with their times, as one picture'
       )
       _describe -t commands 'demoreel command' cmds ;;
     argument)
@@ -148,12 +149,22 @@ _demoreel() {
             '--from=[look from here]:seconds:' \
             '--to=[look up to here]:seconds:' \
             '--still=[report a stretch with no change longer than this]:seconds:' \
+            '--region=[look only at this rectangle of the picture]:x,y,w,h:' \
             '--json[print the report as one JSON object]' \
             '1:video:_files' ;;
         poster)
           _arguments -S $finish \
             {-o+,--output=}'[picture file to write]:file:_files' \
             {-t+,--time=}'[which moment to save]:seconds:' \
+            '1:video:_files' ;;
+        sheet)
+          _arguments -S $finish \
+            {-o+,--output=}'[picture file to write]:file:_files' \
+            '(--at)--every=[take a frame every so many seconds]:seconds:' \
+            '(--every)--at=[take the frames at these times]:seconds,...:' \
+            '--region=[show only this rectangle of each frame]:x,y,w,h:' \
+            '--width=[each frame'"'"'s width]:pixels:' \
+            '--columns=[how many frames side by side]:n:' \
             '1:video:_files' ;;
       esac ;;
   esac

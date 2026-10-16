@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=214 -->
+<!-- ants-roadmap-id-high-water: DEMO=216 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -732,13 +732,18 @@ simplest case, and a gate proves it still records.
   Source: peer-request-2026-10-16 ants-projects-hub-website via claude-config.
   Lanes: motion.
 
-- 💭 [DEMO-0212] **Consider a frame sheet: several frames of a video, with their times, as one picture.**
+- ✅ [DEMO-0212] **Consider a frame sheet: several frames of a video, with their times, as one picture.**
   Asked for as video_frames {path, every_s | at[], crop?, scale}.
   Needs the user's word: README § What it will never do lets demoreel
   take a frame from a video, and says nothing of tiling several into one
   picture. The motion --region item above answers the same need in text,
   which costs a session far less; build that first and ask whether this
   is still wanted.
+  User 2026-10-16: build it; it will be needed when demoreel becomes a
+  full video editor, and adding a feature to README needs no review.
+  Shipped as `demoreel sheet`: --every or --at, --region, --width,
+  --columns, at most 100 frames, .png or .jpg, each frame's start time
+  under it.
   **Layman:** One picture showing a video's frames side by side, each labelled with its time.
   Kind: feature.
   Source: peer-request-2026-10-16 ants-projects-hub-website via claude-config.
@@ -764,6 +769,30 @@ simplest case, and a gate proves it still records.
   Kind: chore.
   Source: in-session-2026-10-16 DEMO-0205.
   Lanes: po.
+
+- 📋 [DEMO-0215] **Second-model pass over DEMO-0212's new sheet messages.**
+  Twelve new msgids and one changed one (the check line now ends
+  "motion, poster and sheet") went in as drafts with DEMO-0212.
+  DeepSeek for zh_CN, zh_TW, ja and ko; Gemini for the rest. Look at
+  the word chosen for "a sheet" in the at-most-100 message: zh drafts
+  use 拼图/拼圖, de Übersichtsbild. A pass improves a draft; it does
+  not confirm one (docs/specs/DEMO-0060).
+  **Layman:** The new frame-sheet sentences in every language still need a second check by another AI.
+  Kind: doc-fix.
+  Source: in-session-2026-10-16 DEMO-0212.
+  Lanes: po.
+
+- 📋 [DEMO-0216] **ci.sh --summary names the last step, not the failed one, on a --finishing run.**
+  Seen 2026-10-16: ./ci.sh --finishing failed in "sheet lays out the
+  frames asked for" and went on to the end, as the finishing checks
+  do. --summary then printed "stopped in:" the memory-cap step, which
+  passed, and not the FAIL line. CLAUDE.md says it prints only the
+  step that failed. Reproduce: make one finishing assertion fail, run
+  ./ci.sh --finishing to a log, then ./ci.sh --summary <log>.
+  **Layman:** The short report of a failed test run pointed at the wrong test.
+  Kind: fix.
+  Source: in-session-2026-10-16 DEMO-0212.
+  Lanes: ci.
 
 ## Standing chores
 

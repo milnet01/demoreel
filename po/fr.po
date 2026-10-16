@@ -497,8 +497,8 @@ msgstr "{name} : PAS PRÊT"
 msgid "{name}: ready"
 msgstr "{name} : prêt"
 
-msgid "edit, trim, caption, join, card, motion and poster"
-msgstr "edit, trim, caption, join, card, motion et poster"
+msgid "edit, trim, caption, join, card, motion, poster and sheet"
+msgstr "edit, trim, caption, join, card, motion, poster et sheet"
 
 msgid "text on a card or a caption"
 msgstr "du texte sur un carton ou une légende"
@@ -1302,3 +1302,47 @@ msgstr "impossible de découper le rectangle de --region dans l'image."
 #. argparse formats this text with %
 msgid "keep only this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
 msgstr "ne garder que ce rectangle de l'image : son coin supérieur gauche en X,Y, W pixels de large et H de haut"
+
+msgid "--at {time} is not inside {path}, which is {seconds} seconds long."
+msgstr "--at {time} n'est pas dans {path}, qui dure {seconds} secondes."
+
+msgid "{option} takes a whole number of at least {least}, not {value}."
+msgstr "{option} prend un nombre entier d'au moins {least}, et non {value}."
+
+msgid "a sheet holds at most {most} frames, and these times ask for more. Take a longer --every, or fewer --at times."
+msgstr "une planche contient au plus {most} images, et ces moments en demandent davantage. Prenez un --every plus long, ou moins de moments --at."
+
+msgid "could not put the frames together into one picture."
+msgstr "impossible d'assembler les images en une seule image."
+
+#. argparse formats this text with %
+msgid "save several frames of a video, with their times, as one picture"
+msgstr "enregistrer plusieurs images d'une vidéo, avec leurs moments, dans une seule image"
+
+#. argparse formats this text with %
+msgid "save several frames of a video, with their times, as one picture."
+msgstr "enregistrer plusieurs images d'une vidéo, avec leurs moments, dans une seule image."
+
+#. argparse formats this text with %
+msgid "the video to take the frames from"
+msgstr "la vidéo d'où prendre les images"
+
+#. argparse formats this text with %
+msgid "take a frame every SECONDS, from the start"
+msgstr "prendre une image toutes les SECONDS, depuis le début"
+
+#. argparse formats this text with %
+msgid "take the frames on screen at these moments, like 1,4.5,9"
+msgstr "prendre les images à l'écran à ces moments, comme 1,4.5,9"
+
+#. argparse formats this text with %
+msgid "show only this rectangle of each frame: its top-left corner at X,Y, W pixels wide and H high"
+msgstr "n'afficher que ce rectangle de chaque image : son coin supérieur gauche en X,Y, W pixels de large et H de haut"
+
+#. argparse formats this text with %
+msgid "each frame's width (default: {width}, or less if the frame is narrower)"
+msgstr "la largeur de chaque image (par défaut : {width}, ou moins si l'image est plus étroite)"
+
+#. argparse formats this text with %
+msgid "how many frames side by side (default: {columns})"
+msgstr "combien d'images côte à côte (par défaut : {columns})"
