@@ -249,8 +249,8 @@ way. It waits for the app to draw, for up to `--settle` seconds — 10 unless yo
 say otherwise. Then it runs your `-a` steps, saves one `.png`, closes the app,
 and prints the path. For three pictures, run it three times.
 
-It takes the options `record` takes, less the ones about time: no `-d`, no `-r`,
-and no `-n`. There is nothing to `stop`, so a `shot` has no name. It keeps its
+It takes the options `record` takes, less `-d`, `-r`, `-n` and `--audio`, and
+adds `--region`. There is nothing to `stop`, so a `shot` has no name. It keeps its
 private screen's files in a folder of its own, removed when it succeeds and kept
 when it fails, like the logs below, and writes nothing `stop` reads — so it can run beside recordings and other shots. The one
 thing they can share is the default filename, the app and the time to the
@@ -265,10 +265,13 @@ Code session to read.
 
 The picture is always checked, even if the app has closed itself: an app that
 has gone leaves only an empty screen. A picture that is one flat colour fails
-the run, and so does not being able to look at the screen at all. With
-`--region`, the check looks at the whole screen, not the rectangle: a plain
-rectangle may be what you asked for. A failed run prints no path, and keeps
-any picture it had saved.
+the run, and so does not being able to look at the screen at all. A failed run
+prints no path, and keeps any picture it had saved.
+
+With `--region`, the whole screen is saved in the shot's own folder and
+checked there, since a plain rectangle may be what you asked for. Only a
+picture that passes is cut to the rectangle and written to `-o`. A failed run
+writes nothing to `-o`, and its folder keeps the whole screen.
 
 ## Finishing a recording
 
