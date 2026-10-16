@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=208 -->
+<!-- ants-roadmap-id-high-water: DEMO=209 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -194,7 +194,7 @@ simplest case, and a gate proves it still records.
   Kind: feature.
   Source: user-decision-2026-10-01.
 
-- 📋 [DEMO-0165] **A stop issued straight after launching a run once missed it, on a busy machine.**
+- ✅ [DEMO-0165] **A stop issued straight after launching a run once missed it, on a busy machine.**
   The gate step `stop ends a run started with -d 0` failed once at about
   12:56 on 2026-10-02: `no recording named 'gatestop' is running`. It
   passed on the run before and the run after. Measured afterwards:
@@ -217,6 +217,13 @@ simplest case, and a gate proves it still records.
   The native run of the same gate passed the step minutes earlier. Load
   at the start of the gate was 1.35; iostat and uptime were not captured
   at the miss.
+  Fixed 2026-10-16. Cause shown: an ffmpeg 3s slow to list its encoders
+  made a stop sent straight after launch miss the run, as in the gate.
+  record now asks ffmpeg about libx264 and pulse input after the run is
+  stoppable, not before. New gate step "stop finds a run whose ffmpeg is
+  slow to answer" fails on the old order and passes on the new. The user
+  chose (2026-10-16) to fix this rather than move the step out of the
+  push gate, as claude-config had asked.
   **Layman:** Once, the automatic checks asked a recording to stop so quickly that it was not found; it has not happened again.
   Kind: investigate.
   Source: in-session-2026-10-02.
@@ -654,6 +661,20 @@ simplest case, and a gate proves it still records.
   Kind: chore.
   Source: user-request-2026-10-15.
   Lanes: po.
+
+- 📋 [DEMO-0209] **The gate's closed-terminal step deletes every new shot folder, another session's included.**
+  ci.sh step "a closed terminal finishes the video and leaves nothing
+  running" removes each shot-* folder that appeared during its own shot.
+  A shot another session takes at the same time makes one too, and the
+  step removes it under that run. Found while fixing the same step's
+  Xvfb count, which matched other sessions' servers by name and failed
+  the gate on 2026-10-16 (now matched by process ancestry). Not seen
+  failing. A fix: remove only the folder the step's own shot names in
+  its output, which the step already reads from the terminal.
+  **Layman:** A test that tidies up after itself could delete a screenshot's working folder belonging to another session running at the same moment.
+  Kind: fix.
+  Source: in-session-2026-10-16 DEMO-0165.
+  Lanes: ci.
 
 ## Standing chores
 

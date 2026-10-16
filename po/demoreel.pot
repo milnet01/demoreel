@@ -230,12 +230,6 @@ msgstr ""
 msgid "missing required program(s): {programs}"
 msgstr ""
 
-msgid "this ffmpeg cannot encode H.264 with libx264, which every recording uses."
-msgstr ""
-
-msgid "--audio needs an ffmpeg that can read from a sound server, and this one has no pulse input."
-msgstr ""
-
 msgid "--cursor is not available with record --gpu: that backend records the compositor's picture, which never has the pointer in it."
 msgstr ""
 
@@ -374,6 +368,12 @@ msgid "ffprobe could not read it."
 msgstr ""
 
 msgid "{seconds}s of video, {size}"
+msgstr ""
+
+msgid "this ffmpeg cannot encode H.264 with libx264, which every recording uses."
+msgstr ""
+
+msgid "--audio needs an ffmpeg that can read from a sound server, and this one has no pulse input."
 msgstr ""
 
 msgid "recording {display} to {output} (until stopped)"

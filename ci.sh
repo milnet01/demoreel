@@ -4747,6 +4747,28 @@ wait "$recorder" || { echo "the stopped run exited non-zero" >&2; exit 1; }
 [ -f "$tmp/app.log" ] || { echo "--app-log wrote no file" >&2; exit 1; }
 echo "stop ended the run, and --app-log wrote its file"
 
+step "stop finds a run whose ffmpeg is slow to answer"
+# DEMO-0165. A run asked ffmpeg for its encoders before it could be stopped,
+# and on a loaded machine a stop sent then gave up after STOP_GRACE. An
+# ffmpeg 3s slow to list them, against STOP_GRACE's 1s, makes that certain.
+mkdir -p "$tmp/slowstop"
+printf '#!/bin/sh\ncase "$*" in *-encoders*) sleep 3 ;; esac\nexec %s "$@"\n' \
+    "$(command -v ffmpeg)" >"$tmp/slowstop/ffmpeg"
+chmod +x "$tmp/slowstop/ffmpeg"
+PATH="$tmp/slowstop:$PATH" ./demoreel record -o "$tmp/slowstop.mp4" -d 0 \
+    -n gateslow -s 640x480 -- xclock >/dev/null 2>"$tmp/slowstop.err" &
+recorder=$!
+gate_pids="$gate_pids $recorder"
+stopped=$(./demoreel stop gateslow) || {
+    echo "stop missed a run still asking ffmpeg for its encoders" >&2
+    kill "$recorder"; wait "$recorder"; exit 1; }
+wait "$recorder" || {
+    echo "the run stopped while ffmpeg was slow exited non-zero:" >&2
+    cat "$tmp/slowstop.err" >&2; exit 1; }
+[ "$stopped" = "$tmp/slowstop.mp4" ] && ffprobe -v error "$tmp/slowstop.mp4" || {
+    echo "stop printed '$stopped', and it is not a finished video" >&2; exit 1; }
+echo "stop found a run while ffmpeg was still listing its encoders"
+
 step "Ctrl+C finishes a recording, and the blank check still runs"
 # DEMO-0054. A terminal sends Ctrl+C's SIGINT to the whole foreground process
 # group. Xvfb was in that group and went down with it, so the app died too and
@@ -4802,13 +4824,23 @@ from pathlib import Path
 tmp = sys.argv[1]
 
 
-def servers(marker):
-    ps = subprocess.run(["pgrep", "-a", "-x", "Xvfb"], capture_output=True,
-                        text=True).stdout.splitlines()
-    return [line.split()[0] for line in ps if marker in line]
+def servers(root):
+    """The Xvfb servers started under `root`. Other sessions run demoreel
+    too, so one matched by name alone may be theirs and outlive this run."""
+    def ancestors(pid):
+        while pid > 1:
+            try:
+                stat = Path(f"/proc/{pid}/stat").read_text()
+            except OSError:
+                return
+            pid = int(stat.rsplit(")", 1)[1].split()[1])
+            yield pid
+    ps = subprocess.run(["pgrep", "-x", "Xvfb"], capture_output=True,
+                        text=True).stdout.split()
+    return [pid for pid in ps if root in ancestors(int(pid))]
 
 
-def hang_up(args, marker, ready):
+def hang_up(args, ready):
     master, slave = pty.openpty()
     run = subprocess.Popen(["./demoreel", *args], stdout=subprocess.PIPE,
                            stderr=slave, start_new_session=True)
@@ -4826,7 +4858,7 @@ def hang_up(args, marker, ready):
         run.kill()
         raise SystemExit(f"never saw {ready!r}:\n{seen.decode(errors='replace')}")
     time.sleep(1)
-    started = servers(marker)
+    started = servers(run.pid)
     os.close(master)                 # the terminal goes away...
     os.killpg(run.pid, signal.SIGHUP)  # ...and its session is hung up
     out, _ = run.communicate(timeout=60)
@@ -4839,7 +4871,7 @@ def hang_up(args, marker, ready):
 
 video = f"{tmp}/hup.mp4"
 status, out = hang_up(["record", "-n", "gate", "-o", video, "-d", "0", "-s",
-                       "320x240", "--", "xclock"], "gate.Xvfb", b"recording :")
+                       "320x240", "--", "xclock"], b"recording :")
 readable = subprocess.run(["ffprobe", "-v", "error", video],
                           capture_output=True).returncode == 0
 if status != 0 or out != video or not readable:
@@ -4848,7 +4880,7 @@ if status != 0 or out != video or not readable:
 state = Path(os.environ.get("XDG_RUNTIME_DIR") or "/tmp") / f"demoreel-{os.getuid()}"
 before = set(state.glob("shot-*"))
 hang_up(["shot", "-o", f"{tmp}/hup.png", "-s", "320x240", "--startup-timeout",
-         "1", "--settle", "30", "--", "sleep", "60"], "/shot-", b"no window")
+         "1", "--settle", "30", "--", "sleep", "60"], b"no window")
 for kept in set(state.glob("shot-*")) - before:
     shutil.rmtree(kept)
 print("a hung-up run finishes a playable video, and nothing is left running")

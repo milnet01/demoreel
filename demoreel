@@ -1946,23 +1946,17 @@ def required_programs(gpu, recording):
 
 def prepare(a, suffix):
     """What `record` and `shot` both check before starting anything: the tools,
-    the app command, the size, and where the output and the app log go."""
+    the app command, the size, and where the output and the app log go.
+    Nothing here runs ffmpeg: `record` asks it once the run can be stopped."""
     recording = suffix == ".mp4"
     missing = [t for t in required_programs(a.gpu, recording)
                if shutil.which(t) is None]
     if missing:
         die(tr("missing required program(s): {programs}", programs=", ".join(missing))
             + install_hint(missing))
-    if recording and has_libx264() is False:
-        die(tr("this ffmpeg cannot encode H.264 with libx264, which every "
-               "recording uses.") + x264_advice(distro_family()))
-    if getattr(a, "audio", False):
-        if shutil.which("pactl") is None:
-            die(tr("missing required program(s): {programs}", programs="pactl")
-                + install_hint(["pactl"]))
-        if not has_pulse_input():
-            die(tr("--audio needs an ffmpeg that can read from a sound server, "
-                   "and this one has no pulse input."))
+    if getattr(a, "audio", False) and shutil.which("pactl") is None:
+        die(tr("missing required program(s): {programs}", programs="pactl")
+            + install_hint(["pactl"]))
     if recording and a.gpu and a.cursor:
         die(tr("--cursor is not available with record --gpu: that backend records "
                "the compositor's picture, which never has the pointer in it."))
@@ -2399,6 +2393,14 @@ def cmd_record(a):
     checks = Checks()
     try:
         write_state(statefile, state)
+        # Only now: asking ffmpeg took up to 0.2s at load 21, before the run
+        # could be stopped, and a stop sent in that time missed it (DEMO-0165).
+        if has_libx264() is False:
+            die(tr("this ffmpeg cannot encode H.264 with libx264, which every "
+                   "recording uses.") + x264_advice(distro_family()))
+        if a.audio and not has_pulse_input():
+            die(tr("--audio needs an ffmpeg that can read from a sound server, "
+                   "and this one has no pulse input."))
         sound = private_sound(a.audio, a.name)
         server, app, display, auth, env, wayland = launch(
             a, command, width, height, state_dir() / a.name, displaylog, appout,
