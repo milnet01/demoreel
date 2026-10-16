@@ -667,7 +667,7 @@ simplest case, and a gate proves it still records.
   Source: user-request-2026-10-15.
   Lanes: po.
 
-- 📋 [DEMO-0209] **The gate's closed-terminal step deletes every new shot folder, another session's included.**
+- ✅ [DEMO-0209] **The gate's closed-terminal step deletes every new shot folder, another session's included.**
   ci.sh step "a closed terminal finishes the video and leaves nothing
   running" removes each shot-* folder that appeared during its own shot.
   A shot another session takes at the same time makes one too, and the
@@ -676,6 +676,9 @@ simplest case, and a gate proves it still records.
   the gate on 2026-10-16 (now matched by process ancestry). Not seen
   failing. A fix: remove only the folder the step's own shot names in
   its output, which the step already reads from the terminal.
+  Fixed 2026-10-16. The step reads its own shot's folder from its Xvfb's
+  -auth path and removes that one alone. Shown: a folder made while the
+  step's shot ran was deleted by the old step and kept by the new one.
   **Layman:** A test that tidies up after itself could delete a screenshot's working folder belonging to another session running at the same moment.
   Kind: fix.
   Source: in-session-2026-10-16 DEMO-0165.

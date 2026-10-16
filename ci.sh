@@ -4859,6 +4859,11 @@ def hang_up(args, ready):
         raise SystemExit(f"never saw {ready!r}:\n{seen.decode(errors='replace')}")
     time.sleep(1)
     started = servers(run.pid)
+    # Each server's -auth file sits in its run's folder.
+    folders = []
+    for pid in started:
+        argv = Path(f"/proc/{pid}/cmdline").read_bytes().decode().split("\0")
+        folders.append(Path(argv[argv.index("-auth") + 1]).parent)
     os.close(master)                 # the terminal goes away...
     os.killpg(run.pid, signal.SIGHUP)  # ...and its session is hung up
     out, _ = run.communicate(timeout=60)
@@ -4866,22 +4871,24 @@ def hang_up(args, ready):
     left = [pid for pid in started if os.path.exists(f"/proc/{pid}")]
     if not started or left:
         raise SystemExit(f"{args[0]}: Xvfb {started}, still running after: {left}")
-    return run.returncode, out.decode().strip()
+    return run.returncode, out.decode().strip(), folders
 
 
 video = f"{tmp}/hup.mp4"
-status, out = hang_up(["record", "-n", "gate", "-o", video, "-d", "0", "-s",
+status, out, _ = hang_up(["record", "-n", "gate", "-o", video, "-d", "0", "-s",
                        "320x240", "--", "xclock"], b"recording :")
 readable = subprocess.run(["ffprobe", "-v", "error", video],
                           capture_output=True).returncode == 0
 if status != 0 or out != video or not readable:
     raise SystemExit(f"record: exit {status}, stdout {out!r}, playable {readable}")
-# A failed shot keeps its folder, and here nobody could read where: remove it.
-state = Path(os.environ.get("XDG_RUNTIME_DIR") or "/tmp") / f"demoreel-{os.getuid()}"
-before = set(state.glob("shot-*"))
-hang_up(["shot", "-o", f"{tmp}/hup.png", "-s", "320x240", "--startup-timeout",
-         "1", "--settle", "30", "--", "sleep", "60"], b"no window")
-for kept in set(state.glob("shot-*")) - before:
+# A failed shot keeps its folder, and here nobody could read where: remove
+# it. Only its own: another session's shot may be using a folder made since
+# (DEMO-0209).
+_, _, folders = hang_up(["shot", "-o", f"{tmp}/hup.png", "-s", "320x240",
+                         "--startup-timeout", "1", "--settle", "30", "--",
+                         "sleep", "60"], b"no window")
+for kept in folders:
+    assert kept.name.startswith("shot-"), kept
     shutil.rmtree(kept)
 print("a hung-up run finishes a playable video, and nothing is left running")
 HUPPY
