@@ -503,6 +503,9 @@ msgstr "edit وtrim وcaption وjoin وcard وmotion وposter"
 msgid "text on a card or a caption"
 msgstr "نص على بطاقة أو في تعليق"
 
+msgid "could not tell whether this ffmpeg can read from a sound server: asking it took over {seconds}s."
+msgstr "تعذّر معرفة ما إذا كان ffmpeg هذا يستطيع القراءة من خادم صوت: استغرق الاستعلام عنه أكثر من {seconds} ثانية."
+
 msgid "a private display did not start: {reason}"
 msgstr "لم تبدأ شاشة خاصة: {reason}"
 

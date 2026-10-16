@@ -5094,9 +5094,10 @@ step "check says when it could not tell whether ffmpeg has libx264"
 # DEMO-0202. A probe that times out used to read as "has libx264", so on a
 # loaded machine check printed ready without knowing. An ffmpeg that is slow
 # to list its encoders, under a one-second timeout, must give neither the
-# ready line nor the no-libx264 one, but say it could not tell.
+# ready line nor the no-libx264 one, but say it could not tell. DEMO-0203:
+# the same for listing its devices, which is how --audio's line asks.
 mkdir -p "$tmp/slowx264"
-printf '#!/bin/sh\ncase "$*" in *-encoders*) sleep 3 ;;\n*) exec %s "$@" ;; esac\n' \
+printf '#!/bin/sh\ncase "$*" in *-encoders*|*-devices*) sleep 3 ;;\n*) exec %s "$@" ;; esac\n' \
     "$(command -v ffmpeg)" >"$tmp/slowx264/ffmpeg"
 chmod +x "$tmp/slowx264/ffmpeg"
 PATH="$tmp/slowx264:$PATH" python3 - 2>"$tmp/check-slow.err" <<'SLOWPY' || true
@@ -5117,6 +5118,16 @@ SLOWPY
     cat "$tmp/check-slow.err" >&2
     exit 1
 }
+# Without pactl the --audio line stops at naming it, before asking ffmpeg.
+if command -v pactl >/dev/null; then
+    ! grep -q -- '--audio: ready' "$tmp/check-slow.err" \
+        && grep -q 'could not tell whether this ffmpeg can read from a sound server' \
+            "$tmp/check-slow.err" || {
+        echo "check did not say it could not tell whether ffmpeg reads sound:" >&2
+        cat "$tmp/check-slow.err" >&2
+        exit 1
+    }
+fi
 echo "check says it could not tell when ffmpeg is too slow to answer"
 
 # DEMO-0106 INV-8. check says whether --audio can record, and like --gpu's

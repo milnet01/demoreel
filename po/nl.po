@@ -503,6 +503,9 @@ msgstr "edit, trim, caption, join, card, motion en poster"
 msgid "text on a card or a caption"
 msgstr "tekst op een kaart of als ondertitel"
 
+msgid "could not tell whether this ffmpeg can read from a sound server: asking it took over {seconds}s."
+msgstr "kon niet vaststellen of deze ffmpeg van een geluidsserver kan lezen: het navragen duurde langer dan {seconds}s."
+
 msgid "a private display did not start: {reason}"
 msgstr "een privéscherm is niet gestart: {reason}"
 

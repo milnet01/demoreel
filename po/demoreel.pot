@@ -432,6 +432,9 @@ msgstr ""
 msgid "text on a card or a caption"
 msgstr ""
 
+msgid "could not tell whether this ffmpeg can read from a sound server: asking it took over {seconds}s."
+msgstr ""
+
 msgid "a private display did not start: {reason}"
 msgstr ""
 

@@ -1693,13 +1693,16 @@ def private_sound(audio, name):
 
 
 def has_pulse_input():
-    """Whether this ffmpeg can read from a sound server; True if it cannot
-    tell, so a run is not stopped on a guess."""
+    """Whether this ffmpeg can read from a sound server; None if it was too
+    slow to say. A run goes ahead on None, as on has_libx264's; `check` says
+    it could not tell, never ready (DEMO-0203)."""
     try:
         devices = subprocess.run(["ffmpeg", "-hide_banner", "-devices"],
                                  capture_output=True, text=True,
                                  timeout=CALL_TIMEOUT, check=False).stdout
-    except (OSError, subprocess.TimeoutExpired):
+    except subprocess.TimeoutExpired:
+        return None
+    except OSError:
         return True
     return re.search(r"^ D\S* +pulse\b", devices, re.MULTILINE) is not None
 
@@ -2398,7 +2401,7 @@ def cmd_record(a):
         if has_libx264() is False:
             die(tr("this ffmpeg cannot encode H.264 with libx264, which every "
                    "recording uses.") + x264_advice(distro_family()))
-        if a.audio and not has_pulse_input():
+        if a.audio and has_pulse_input() is False:
             die(tr("--audio needs an ffmpeg that can read from a sound server, "
                    "and this one has no pulse input."))
         sound = private_sound(a.audio, a.name)
@@ -2605,7 +2608,12 @@ def audio_problems():
     if shutil.which("pactl") is None:
         return [tr("missing {programs}", programs="pactl") + install_hint(["pactl"])]
     problems = []
-    if not has_pulse_input():
+    pulse = has_pulse_input()
+    if pulse is None:
+        problems.append(tr("could not tell whether this ffmpeg can read from a sound "
+                           "server: asking it took over {seconds}s.",
+                           seconds=CALL_TIMEOUT))
+    elif not pulse:
         problems.append(tr("--audio needs an ffmpeg that can read from a sound server, "
                            "and this one has no pulse input."))
     try:

@@ -503,6 +503,9 @@ msgstr "edit、trim、caption、join、card、motion、poster"
 msgid "text on a card or a caption"
 msgstr "カードや字幕のテキスト"
 
+msgid "could not tell whether this ffmpeg can read from a sound server: asking it took over {seconds}s."
+msgstr "この ffmpeg がサウンドサーバーから読み取れるか判断できませんでした。問い合わせに {seconds}秒以上かかりました。"
+
 msgid "a private display did not start: {reason}"
 msgstr "非公開ディスプレイが起動しませんでした: {reason}"
 

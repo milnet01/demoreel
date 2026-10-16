@@ -578,12 +578,17 @@ simplest case, and a gate proves it still records.
   Source: in-session-2026-10-14 DEMO-0199 push.
   Lanes: check.
 
-- 📋 [DEMO-0203] **On a slow machine, check says --audio is ready when it could not tell whether ffmpeg reads from a sound server.**
+- ✅ [DEMO-0203] **On a slow machine, check says --audio is ready when it could not tell whether ffmpeg reads from a sound server.**
   DEMO-0202's shape, one probe over: has_pulse_input() returns True when
   `ffmpeg -devices` times out, and audio_problems() then reports
   "--audio: ready". Found while fixing DEMO-0202, not seen failing. The
   fix is the same: a third answer for check, while record --audio still
   goes ahead on it.
+  Fixed 2026-10-16. has_pulse_input() answers None on a timeout; check's
+  --audio line says it could not tell, and record --audio goes ahead on
+  it. The check step's slow ffmpeg is now slow on -devices too, and
+  check printed "--audio: ready" under it before the fix. The new line's
+  16 translations are drafts, not yet checked by DeepSeek or Gemini.
   **Layman:** On a very busy computer, the setup check can say sound recording is ready when it actually ran out of time checking.
   Kind: fix.
   Source: in-session-2026-10-15 DEMO-0202.

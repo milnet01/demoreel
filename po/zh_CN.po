@@ -503,6 +503,9 @@ msgstr "edit、trim、caption、join、card、motion 和 poster"
 msgid "text on a card or a caption"
 msgstr "卡片或字幕上的文字"
 
+msgid "could not tell whether this ffmpeg can read from a sound server: asking it took over {seconds}s."
+msgstr "无法判断此 ffmpeg 能否从声音服务器读取：查询用时超过 {seconds} 秒。"
+
 msgid "a private display did not start: {reason}"
 msgstr "私有显示屏未能启动：{reason}"
 

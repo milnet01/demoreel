@@ -503,6 +503,9 @@ msgstr "edit, trim, caption, join, card, motion и poster"
 msgid "text on a card or a caption"
 msgstr "текст на карточке или в подписи"
 
+msgid "could not tell whether this ffmpeg can read from a sound server: asking it took over {seconds}s."
+msgstr "не удалось определить, умеет ли этот ffmpeg читать со звукового сервера: запрос занял больше {seconds} с."
+
 msgid "a private display did not start: {reason}"
 msgstr "закрытый экран не запустился: {reason}"
 

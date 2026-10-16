@@ -503,6 +503,9 @@ msgstr "edit, trim, caption, join, card, motion e poster"
 msgid "text on a card or a caption"
 msgstr "testo su un cartello o una didascalia"
 
+msgid "could not tell whether this ffmpeg can read from a sound server: asking it took over {seconds}s."
+msgstr "impossibile stabilire se questo ffmpeg può leggere da un server audio: chiederglielo ha richiesto più di {seconds}s."
+
 msgid "a private display did not start: {reason}"
 msgstr "uno schermo privato non si è avviato: {reason}"
 
