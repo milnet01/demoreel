@@ -584,6 +584,18 @@ pkg_container_script() {
 set -euo pipefail
 distro=$1 build=$2 v=$3
 fail() { echo "FAIL ($distro): $*" >&2; exit 1; }
+# DEMO-0277: keep what the package manager downloads. packages_check mounts a
+# folder per distro at its cache, so a later run fetches only what changed.
+# What the repositories offer is still read afresh every run. Arch's pacman
+# keeps its downloads already.
+if command -v apt-get >/dev/null; then
+    rm -f /etc/apt/apt.conf.d/docker-clean
+    mkdir -p /var/cache/apt/archives/partial
+elif command -v dnf >/dev/null; then
+    printf 'keepcache=True\nmetadata_expire=0\n' >> /etc/dnf/dnf.conf
+elif command -v zypper >/dev/null; then
+    zypper -q modifyrepo --all --keep-packages >/dev/null
+fi
 mkdir -p /tmp/src && tar -xzf /w/demoreel-"$v".tar.gz -C /tmp/src
 src=/tmp/src/demoreel-$v
 # The layout every format must install: install.sh's own (INV-1).
@@ -899,13 +911,23 @@ for distro, family in (("debian", "apt"), ("ubuntu", "apt"), ("fedora", "dnf"),
 DEPSPY
     # Two waves: the distros that build a format, then those that only install
     # one built in the first. Each container is a clean image, pulled again
-    # when its tag has moved, so a renamed dependency fails here first.
+    # when its tag has moved, so a renamed dependency fails here first. Only
+    # the downloaded packages carry over, one folder per distro (DEMO-0277);
+    # no wave holds a distro twice, so no two containers share a folder.
+    local cache=${XDG_CACHE_HOME:-$HOME/.cache}/demoreel-ci at
     run_wave() {
         pids=() names=()
         while [ $# -gt 0 ]; do
             distro=$1 image=$2 build=$3; shift 3
             name=$distro; [ "$build" = source ] && name=$distro-source
-            podman run --rm --pull=newer -v "$work:/w:z" "$image" \
+            case $distro in
+            debian|ubuntu) at=/var/cache/apt/archives ;;
+            fedora)        at=/var/cache/libdnf5 ;;
+            opensuse)      at=/var/cache/zypp/packages ;;
+            arch)          at=/var/cache/pacman/pkg ;;
+            esac
+            mkdir -p "$cache/$distro"
+            podman run --rm --pull=newer -v "$work:/w:z" -v "$cache/$distro:$at:z" "$image" \
                 bash /w/test.sh "$distro" "$build" "$v" > "$work/$name.log" 2>&1 &
             pids+=($!) names+=("$name")
         done
@@ -924,6 +946,10 @@ DEPSPY
     # A third wave: the install from source, in a clean container of each distro.
     [ "$failed" = 0 ] && run_wave debian "$PKG_DEBIAN" source ubuntu "$PKG_UBUNTU" source \
         fedora "$PKG_FEDORA" source opensuse "$PKG_OPENSUSE" source arch "$PKG_ARCH" source
+    # Downloads no run has read for 30 days. Through podman unshare, because a
+    # package manager's own download user owns some of what it leaves there.
+    podman unshare find "$cache" -type f -atime +30 -delete \
+        || echo "note: could not prune $cache" >&2
     if [ "$failed" = 0 ] && [ -n "$out" ]; then
         mkdir -p "$out"
         cp "$work/demoreel_$v-1_all.deb" "$work/demoreel-$v-1.noarch.rpm" \
