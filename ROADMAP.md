@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=277 -->
+<!-- ants-roadmap-id-high-water: DEMO=278 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -5072,7 +5072,7 @@ covers both display backends and the Flatpak invocation.
   Kind: fix.
   Source: in-session-2026-10-13.
 
-- 📋 [DEMO-0277] **Time each gate step, then speed up the slowest ones.**
+- ✅ [DEMO-0277] **Time each gate step, then speed up the slowest ones.**
   The user asked to speed up ./ci.sh. step() prints a heading
   but no time, so no log says where the time goes. First make each
   step print its elapsed seconds and have ./ci.sh --summary list the
@@ -5111,9 +5111,29 @@ covers both display backends and the Flatpak invocation.
   fast-mirror day. Cache: about 1.2 GB under ~/.cache/demoreel-ci.
   Next: 4 (./ci.sh --parity-build; the image was 16 days old on
   2026-10-19), then 3 (translation step).
+  2026-10-19: speed-ups 4 and 3 shipped. 4: Ubuntu image rebuilt
+  (localhost/demoreel-ci:8f0fcb5162b8); the gate then passed, 769s
+  start to end, load up to 10. 3 (5c03ff7): same_stdout runs the
+  committed languages four at a time, each in its own directory under
+  its own -n. All 16 languages back to back: 48s before, 14s after.
+  Translation step 82.6s before; 49.1s and 47.1s after, load under 10.
+  Gate start to end 669s on the passing run. One run at load 29 failed
+  in the Ubuntu leg's zsh completion (timeout 20), not this change.
   **Layman:** The checks that run before every push take too long; first measure which parts are slow, then fix those.
   Kind: perf.
   Source: user-request-2026-10-16.
+  Lanes: ci.
+
+- 📋 [DEMO-0278] **The tab completion step stops the gate without a word when zsh times out.**
+  offered() runs zsh under `timeout 20` inside a $(...) pipeline. On
+  2026-10-19, at load 29, the Ubuntu leg's log ended at "bash: ... all
+  match" with no message: the likely cause is that timeout, failing the
+  assignment under set -e. Unverified: the leg's own exit code was not
+  kept. Make a timeout name itself (shell and line), and consider a
+  longer limit; reproduce under load before changing the number.
+  **Layman:** Under heavy machine load one check can fail without saying why, which makes the failure hard to read.
+  Kind: fix.
+  Source: gate-run-2026-10-19.
   Lanes: ci.
 
 ## 1.1.0 — A window for people who want one
