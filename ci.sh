@@ -4232,6 +4232,9 @@ cleanup() {
             kill "$xv" 2>/dev/null || true
         fi
     done
+    # The Ubuntu leg runs beside the packages step, so a failure there leaves
+    # it running. Stopped by name: the container outlives the podman client.
+    [ -z "${parity_name:-}" ] || podman rm -f -t 0 "$parity_name" >/dev/null 2>&1 || true
     rm -rf "$tmp"
 }
 trap cleanup EXIT
@@ -6729,6 +6732,24 @@ if grep -rnE 'opensuse\.org|obs-submit|OBS_|\bosc\b' .github/workflows/ >&2; the
 fi
 echo "no workflow names OBS"
 
+# The Ubuntu leg starts here, before the packages step, and the two run side by
+# side: the packages step spends most of its time waiting on mirrors. Its own
+# step, after the packages, waits for it (DEMO-0277). It runs the files as they
+# are here -- tracked and new, not ignored -- which is what the checks above
+# just ran. Four cores, as on GitHub's runner: x264 sizes its threads from the
+# cores it may use, and that is what differed last time.
+parity_pid='' parity_name=''
+if [ -z "${GITHUB_ACTIONS:-}" ] && [ -z "${DEMOREEL_PARITY_INSIDE:-}" ] \
+   && command -v podman >/dev/null && podman image exists "$PARITY_IMAGE"; then
+    parity_name=demoreel-parity-$$
+    git ls-files -coz --exclude-standard | tar --null -T - -cf - \
+        | timeout 900 podman run --rm -i --name "$parity_name" \
+            -e DEMOREEL_PARITY_INSIDE=1 "$PARITY_IMAGE" \
+            bash -c 'mkdir w && tar -xf - -C w && cd w && taskset -c 0-3 ./ci.sh' \
+        > "$tmp/parity.log" 2>&1 &
+    parity_pid=$!
+fi
+
 step "the packages, on every distro they target"
 # Slow, so near the end. GitHub runs it in its own job, and the Ubuntu leg below
 # is a copy of this run, so neither runs it again.
@@ -6743,12 +6764,10 @@ fi
 
 step "the same gate on GitHub's Ubuntu"
 # Last, because it is the slow one and everything above is cheaper to fail on.
-# It runs the files as they are here -- tracked and new, not ignored -- which is
-# what the checks above just ran. Four cores, as on GitHub's runner: x264 sizes
-# its threads from the cores it may use, and that is what differed last time.
+# Started before the packages step; this waits for it.
 if [ -n "${GITHUB_ACTIONS:-}" ] || [ -n "${DEMOREEL_PARITY_INSIDE:-}" ]; then
     echo "not applicable: this run already is on that Ubuntu"
-elif ! podman image exists "$PARITY_IMAGE"; then
+elif [ -z "$parity_pid" ]; then
     gate_end 'checks passed; the Ubuntu leg was SKIPPED: its image is not built'
     echo "build it once (a few minutes): ./ci.sh --parity-build"
     exit 0
@@ -6763,10 +6782,9 @@ else
         echo "note: the image is $age_days days old, and GitHub's packages may have moved on."
         echo "      rebuild it: ./ci.sh --parity-build"
     fi
-    git ls-files -coz --exclude-standard | tar --null -T - -cf - \
-        | timeout 900 podman run --rm -i -e DEMOREEL_PARITY_INSIDE=1 "$PARITY_IMAGE" \
-            bash -c 'mkdir w && tar -xf - -C w && cd w && taskset -c 0-3 ./ci.sh' \
-        > "$tmp/parity.log" 2>&1 || {
+    rc=0; wait "$parity_pid" || rc=$?
+    parity_name=''
+    [ "$rc" = 0 ] || {
         echo "the gate failed on $PARITY_BASE; its output:" >&2
         cat "$tmp/parity.log" >&2
         exit 1; }
