@@ -6509,31 +6509,41 @@ MOVEPY
 # recording still prints the bare path, and a failing command the same
 # status. The failing command's message must differ from the English one,
 # which is what shows the catalog was used at all. Run on the pseudo copy
-# first, so the check is seen to work while po/ holds no catalog.
+# first, so the check is seen to work while po/ holds no catalog. The
+# languages run four at a time (DEMO-0277), each in a directory of its own
+# under a -n of its own, so a recording's path differs from C's by that
+# directory and nothing else.
 # same_stdout SCRIPT CODE...
 same_stdout() {
     python3 - "$tr_out" "$@" <<'LANGPY'
 import os, subprocess, sys
+from concurrent.futures import ThreadPoolExecutor
 here, script, *codes = sys.argv[1:]
 plain = {k: v for k, v in os.environ.items() if k not in ("LC_ALL", "LC_MESSAGES")}
-RECORD = ["record", "-n", "gatelang", "-d", "1", "-s", "320x240", "-o", "lang.mp4",
-          "--", "xclock"]
-FAIL = ["trim", "clip.mp4", "-o", "lang-trim.mp4"]
-def run(argv, env):
-    return subprocess.run([script, *argv], cwd=here, env=env, capture_output=True,
+FAIL = ["trim", "../clip.mp4", "-o", "lang-trim.mp4"]
+def run(argv, env, where):
+    return subprocess.run([script, *argv], cwd=where, env=env, capture_output=True,
                           text=True, timeout=120)
+def both(code, env):
+    where = os.path.join(here, f"lang-{code}")
+    os.makedirs(where, exist_ok=True)
+    record = ["record", "-n", f"gatelang-{code}", "-d", "1", "-s", "320x240",
+              "-o", "lang.mp4", "--", "xclock"]
+    return where, run(record, env, where), run(FAIL, env, where)
 english = {**plain, "LC_ALL": "C"}
-c_rec, c_fail = run(RECORD, english), run(FAIL, english)
+c_where, c_rec, c_fail = both("C", english)
 bad = []
-if c_rec.returncode or not c_rec.stdout.endswith("lang.mp4\n") or not c_fail.returncode:
+if c_rec.returncode or c_rec.stdout != f"{c_where}/lang.mp4\n" or not c_fail.returncode:
     bad.append(f"under C: record {c_rec.returncode} {c_rec.stdout!r}, trim {c_fail.returncode}")
-for code in codes:
-    env = {**plain, "LANGUAGE": code, "LANG": "de_DE.UTF-8"}
-    rec, fail = run(RECORD, env), run(FAIL, env)
+with ThreadPoolExecutor(max_workers=4) as pool:
+    runs = list(pool.map(lambda code: both(code, {**plain, "LANGUAGE": code,
+                                                  "LANG": "de_DE.UTF-8"}), codes))
+for code, (where, rec, fail) in zip(codes, runs):
     for what, a, b in (("record", c_rec, rec), ("a failing trim", c_fail, fail)):
-        if (a.returncode, a.stdout) != (b.returncode, b.stdout):
+        want = a.stdout.replace(c_where, where)
+        if (a.returncode, want) != (b.returncode, b.stdout):
             bad.append(f"{code}: {what} gave {b.returncode} {b.stdout!r:.200}, "
-                       f"not {a.returncode} {a.stdout!r:.200}")
+                       f"not {a.returncode} {want!r:.200}")
     if fail.stderr == c_fail.stderr or "could not be read" in rec.stderr + fail.stderr:
         bad.append(f"{code}: its catalog was not used: {fail.stderr!r:.300}")
 for line in bad:
