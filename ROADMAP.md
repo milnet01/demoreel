@@ -5104,6 +5104,13 @@ covers both display backends and the Flatpak invocation.
      under load), so measure: each language needs its own -n and
      directory, and run the changed gate repeatedly.
   4. Rebuild the Ubuntu image (./ci.sh --parity-build): 14 days old.
+  2026-10-19: speed-ups 1 and 2 shipped (f7907d7, a414509). Full gate,
+  steps summed: 1188s at bd6abb5, 905s after both. Ubuntu leg now
+  waits 166s after the packages step instead of taking 283s alone.
+  Packages: 261s before; --packages alone 168s cold, 111s warm, on a
+  fast-mirror day. Cache: about 1.2 GB under ~/.cache/demoreel-ci.
+  Next: 4 (./ci.sh --parity-build; the image was 16 days old on
+  2026-10-19), then 3 (translation step).
   **Layman:** The checks that run before every push take too long; first measure which parts are slow, then fix those.
   Kind: perf.
   Source: user-request-2026-10-16.
