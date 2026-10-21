@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=279 -->
+<!-- ants-roadmap-id-high-water: DEMO=280 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -653,6 +653,19 @@ simplest case, and a gate proves it still records.
   **Layman:** Tab completion after `demoreel stop` asks demoreel which recordings are running, and each shell's file holds its own copy of that question.
   Kind: review-fix.
   Source: review-readability completions/ 2026-10-21.
+
+- 📋 [DEMO-0280] **ci.sh has shellcheck findings that nothing checks.**
+  `shellcheck -x ci.sh` on 2026-10-21 reported warnings SC2046 (unquoted
+  command substitution), SC2154 and SC2034, and notes SC2086, SC2016,
+  SC2015 and SC2059. Many SC2086 sites look like deliberate word
+  splitting (a variable holding several ffmpeg arguments), so each needs
+  a judgement: quote it, use an array, or disable it with a reason, as
+  the existing `# shellcheck disable=SC2086 # each case is several
+  words` lines do. Then add a gate step that runs shellcheck on ci.sh,
+  the hooks and packaging/ scripts, so the count stays at zero.
+  **Layman:** The script that tests demoreel has warnings from a shell-checking tool, and nothing runs that tool on it, so new ones can creep in.
+  Kind: fix.
+  Source: user-request-2026-10-21 (fix or file pre-existing warnings).
 
 ## Standing chores
 
