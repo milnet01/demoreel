@@ -681,7 +681,7 @@ simplest case, and a gate proves it still records.
 Recurring work with no finished state. It is checked on a schedule and never
 closes, so it sits outside every version heading.
 
-- 📋 [DEMO-0010] **Keep the two pinned versions in step with their latest releases.**
+- 📋 [DEMO-0010] **Keep CI's pinned versions in step with their latest releases.**
   CI pins ruff and the checkout action. Both are pinned AT their latest
   release rather than held below one, so no hold-ledger entry is owed
   under the dependency standard -- a pin at latest is not a hold.
@@ -714,6 +714,13 @@ closes, so it sits outside every version heading.
   check . demoreel` clean with it, and the parity image rebuilt for the
   new pin. actions/checkout is still v7.0.1, its latest. The item stays
   open as the standing chore.
+  Checked (2026-10-21): ruff moved 0.16.10 -> 0.17.1, its latest
+  release, in ci.sh and in the machine's pipx install together; tried
+  first in a throwaway venv, `ruff check . demoreel` clean, parity
+  image rebuilt, full gate green. actions/checkout is still v7.0.1,
+  its latest. A third pin now falls under this item: actions/attest in
+  release.yml (DEMO-0084), at v4.2.2, its latest; both SHAs resolve to
+  their commented tags. The item stays open as the standing chore.
   **Layman:** Two version numbers are written down in CI and will go stale unless someone bumps them.
   Kind: chore.
   Source: user-request-2026-09-07.
