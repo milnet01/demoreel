@@ -469,7 +469,16 @@ offered() {  # shell, command line -> the candidates, one per line
         read -ra COMP_WORDS <<< "$1"; [[ $1 == *" " ]] && COMP_WORDS+=("")
         COMP_CWORD=$((${#COMP_WORDS[@]} - 1))
         _demoreel 2>/dev/null; printf "%s\n" "${COMPREPLY[@]}"' _ "$2" ;;
-    zsh) timeout 20 zsh "$tmp/zcomp.zsh" "$PWD/completions" "$2" ;;
+    # A caller's $(...) under set -e stops the gate on a failure here, with
+    # nothing said unless this says it (DEMO-0278).
+    zsh) timeout 20 zsh "$tmp/zcomp.zsh" "$PWD/completions" "$2" || {
+            local rc=$?
+            if [ "$rc" -eq 124 ]; then
+                echo "zsh's tab completion after \"$2\" did not finish in 20 seconds" >&2
+            else
+                echo "zsh's tab completion after \"$2\" failed with exit status $rc" >&2
+            fi
+            return "$rc"; } ;;
     fish) fish -c 'source completions/demoreel.fish
         complete -C $argv[1] | cut -f1' "$2" ;;
     esac
@@ -559,7 +568,7 @@ for command in commands:
             places.append((where, None))
             continue
         got = subprocess.run(["bash", "-c", 'offered "$@"', "_", shell,
-                              f"demoreel {command} -"], capture_output=True,
+                              f"demoreel {command} -"], stdout=subprocess.PIPE,
                              text=True, stdin=subprocess.DEVNULL).stdout
         places.append((where, option in (o.strip("'\" ") for o in got.splitlines())))
     # A section may name the option by its other spelling: the finishing

@@ -5131,13 +5131,20 @@ covers both display backends and the Flatpak invocation.
   Source: user-request-2026-10-16.
   Lanes: ci.
 
-- 📋 [DEMO-0278] **The tab completion step stops the gate without a word when zsh times out.**
+- ✅ [DEMO-0278] **The tab completion step stops the gate without a word when zsh times out.**
   offered() runs zsh under `timeout 20` inside a $(...) pipeline. On
   2026-10-19, at load 29, the Ubuntu leg's log ended at "bash: ... all
   match" with no message: the likely cause is that timeout, failing the
   assignment under set -e. Unverified: the leg's own exit code was not
   kept. Make a timeout name itself (shell and line), and consider a
   longer limit; reproduce under load before changing the number.
+  Shipped 2026-10-21. offered() now names a zsh failure on stderr: the
+  command line, and either "did not finish in 20 seconds" or the exit
+  status. --option-places lets that message through instead of reading
+  the timeout as MISSING. Red then green on a copy with the limit at
+  0.05s: the step's shape exited 124 silently, now with the message.
+  The limit stays 20: load 29 cannot be made on demand, and the next
+  such failure will now say whether the timeout was its cause.
   **Layman:** Under heavy machine load one check can fail without saying why, which makes the failure hard to read.
   Kind: fix.
   Source: gate-run-2026-10-19.
