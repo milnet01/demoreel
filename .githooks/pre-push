@@ -6,9 +6,10 @@
 #     git config core.hooksPath .githooks
 #
 # Without that, a fresh clone has ci.sh and nothing that runs it, and nothing
-# says a gate was ever expected. That was true of this project until now: the
-# gate reached it through core.hooksPath and ants.gate.command set on one
-# machine, neither of which is cloned.
+# says a gate was ever expected. The maintainer's machine sets core.hooksPath
+# to its machine-wide hook instead, which reaches ./ci.sh through
+# ants.gate.command; neither setting is cloned, so this file is every other
+# clone's gate.
 #
 # For one push, deliberately:  git push --no-verify
 set -Eeuo pipefail
@@ -19,9 +20,10 @@ cd "$(git rev-parse --show-toplevel)"
 [ -x ./ci.sh ] || { say 'no ./ci.sh here — nothing to run'; exit 0; }
 
 # git feeds one line per ref: <local ref> <local sha> <remote ref> <remote sha>.
-# The push is decided from that range, never from the working tree: the two are
-# the same only when the tree is clean, and an uncommitted fix turns the run
-# green for commits that will go red.
+# The commits are tested from that range, never from the working tree: the two
+# are the same only when the tree is clean, and an uncommitted fix turns the run
+# green for commits that will go red. Which gate runs is decided by the working
+# tree's ./ci.sh --docs-mode, so an uncommitted edit to its DOCS_GLOB counts.
 ZERO=0000000000000000000000000000000000000000
 changed=""
 tips=()

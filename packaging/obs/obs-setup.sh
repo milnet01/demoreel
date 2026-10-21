@@ -8,11 +8,12 @@
 #   packaging/obs/obs-setup.sh             apply the project and package
 #   packaging/obs/obs-setup.sh --print     print what it would apply
 #
-# Needs osc, logged in. Override with OBS_API, OBS_PROJECT and OBS_USER.
+# Needs osc, logged in. Override with OBS_API, OBS_PROJECT and OBS_PACKAGE
+# (obs-env.sh), and OBS_USER.
 set -euo pipefail
 
-api=${OBS_API:-https://api.opensuse.org}
-project=${OBS_PROJECT:-home:milnet:demoreel}
+# shellcheck source=packaging/obs/obs-env.sh
+. "$(dirname "$0")/obs-env.sh"
 user=${OBS_USER:-milnet}
 here=$(cd "$(dirname "$0")" && pwd)
 
@@ -40,7 +41,7 @@ EOF
 
 package_meta() {
     cat <<EOF
-<package name="demoreel" project="$project">
+<package name="$package" project="$project">
   <title>demoreel</title>
   <description>Record a GUI app on a private virtual display.</description>
 </package>
@@ -59,5 +60,5 @@ trap 'rm -rf "$tmp"' EXIT
 project_meta > "$tmp/project.xml"
 package_meta > "$tmp/package.xml"
 osc -A "$api" meta prj "$project" -F "$tmp/project.xml"
-osc -A "$api" meta pkg "$project" demoreel -F "$tmp/package.xml"
-echo "obs-setup: $project/demoreel is ready. Next, after a release: packaging/obs/obs-submit.sh"
+osc -A "$api" meta pkg "$project" "$package" -F "$tmp/package.xml"
+echo "obs-setup: $project/$package is ready. Next, after a release: packaging/obs/obs-submit.sh"

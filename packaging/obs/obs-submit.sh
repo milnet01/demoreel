@@ -17,15 +17,15 @@
 # from the tarball's demoreel, filled in here; no file in the tree holds one
 # (INV-7).
 #
-# Override with OBS_API, OBS_PROJECT and OBS_WORKDIR. The osc checkout lives
-# in OBS_WORKDIR, by default build-obs/ in the tree, which git ignores.
+# Override with OBS_API, OBS_PROJECT and OBS_PACKAGE (obs-env.sh), and
+# OBS_WORKDIR. The osc checkout lives in OBS_WORKDIR, by default build-obs/ in
+# the tree, which git ignores.
 set -euo pipefail
 
 die() { echo "obs-submit: $*" >&2; exit 1; }
 
-api=${OBS_API:-https://api.opensuse.org}
-project=${OBS_PROJECT:-home:milnet:demoreel}
-package=demoreel
+# shellcheck source=packaging/obs/obs-env.sh
+. "$(dirname "$0")/obs-env.sh"
 root=$(cd "$(dirname "$0")/../.." && pwd)
 workdir=${OBS_WORKDIR:-$root/build-obs}
 
@@ -39,8 +39,7 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-v=$(sed -n 's/^__version__ = "\(.*\)"$/\1/p' "$root/demoreel")
-[ -n "$v" ] || die "could not read __version__ from demoreel"
+v=$("$root/ci.sh" --tool-version) || die "could not read __version__ from demoreel"
 tag=v$v
 
 # INV-12: the files OBS builds from are the tag's. The rest of what it builds
@@ -74,6 +73,8 @@ grep -q "^sha256sums=('$sum')$" "$stage/PKGBUILD" \
 
 # The .rpm recipe, with the version it otherwise gets from rpmbuild --define.
 { printf '%%define ver %s\n' "$v"; cat "$root/packaging/demoreel.spec"; } > "$stage/demoreel.spec"
+# Optional, and absent on purpose: openSUSE's rpmlint scores the package
+# below its limit without one (DEMO-0068 loop log, row impl-obs).
 [ -e "$root/packaging/obs/demoreel-rpmlintrc" ] \
     && cp "$root/packaging/obs/demoreel-rpmlintrc" "$stage/"
 
@@ -92,9 +93,10 @@ fill "$root/packaging/obs/debian/changelog" > "$stage/debian/changelog"
         Maintainer "$maintainer" Homepage "$(field Homepage)"
     printf 'Build-Depends: debhelper-compat (= 13)\nStandards-Version: 4.7.0\n'
     printf 'Rules-Requires-Root: no\n\n'
-    # The binary stanza: debian-control's fields that belong in one. Its
-    # Version and Maintainer do not; the changelog and the stanza above
-    # carry those.
+    # The binary stanza. The pattern below is an allow-list: a field
+    # debian-control gains reaches the OBS .deb only once it is named
+    # there. Version and Maintainer stay out; the changelog and the stanza
+    # above carry those.
     awk '/^(Package|Architecture|Section|Depends|Recommends): /
          /^Description: / { d = 1; print; next }
          d && /^ / { print; next }

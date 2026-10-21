@@ -5,13 +5,12 @@
 # It exits non-zero on a failed build or a timeout, so neither reads as a
 # success.
 #
-# Override with OBS_API, OBS_PROJECT, OBS_PACKAGE, POLL_SECS (default 45) and MAX_POLLS
-# (default 80).
+# Override with OBS_API, OBS_PROJECT and OBS_PACKAGE (obs-env.sh), POLL_SECS
+# (default 45) and MAX_POLLS (default 80).
 set -euo pipefail
 
-api=${OBS_API:-https://api.opensuse.org}
-project=${OBS_PROJECT:-home:milnet:demoreel}
-package=${OBS_PACKAGE:-demoreel}
+# shellcheck source=packaging/obs/obs-env.sh
+. "$(dirname "$0")/obs-env.sh"
 poll=${POLL_SECS:-45}
 max=${MAX_POLLS:-80}
 
@@ -38,6 +37,8 @@ for ((i = 1; i <= max; i++)); do
         case $status in *\*) waiting=1; continue ;; esac
         pending "$status" && waiting=1
     done <<<"$results"
+    # An empty reply, from a failed osc or a package OBS does not list yet,
+    # has no row to set waiting, so it must not read as every target done.
     grep -qw -- "$package" <<<"$results" && [ "$waiting" = 0 ] && break
     echo "[poll $i] still building"
     sleep "$poll"

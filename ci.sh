@@ -386,6 +386,20 @@ if [ "${1:-}" = "--docs-glob" ]; then
     exit 0
 fi
 
+# demoreel's version, read from its __version__ line: the one place that line's
+# shape is known. packaging/obs/obs-submit.sh asks with --tool-version.
+tool_version() {
+    local v
+    v=$(sed -n 's/^__version__ = "\(.*\)"$/\1/p' demoreel)
+    [ -n "$v" ] || { echo "could not read __version__ from demoreel" >&2; return 1; }
+    printf '%s\n' "$v"
+}
+
+if [ "${1:-}" = "--tool-version" ]; then
+    tool_version
+    exit
+fi
+
 # ./ci.sh --summary LOG reads a gate's saved output and prints only what a
 # reader needs: how many steps ran, the slowest, every step that skipped, the
 # last line, and, when the gate did not pass, the output of the step that
@@ -648,7 +662,7 @@ if [ "${1:-}" = "--version-lockstep" ]; then
     # place the version is written has to say the same thing. Same shape as
     # --ruff-version and --docs-glob above -- the caller asks this script
     # rather than restating what it would have to keep in step by hand.
-    tool=$(sed -n 's/^__version__ = "\(.*\)"$/\1/p' demoreel)
+    tool=$(tool_version)
     # The newest DATED section. `[Unreleased]` cannot match: the pattern needs
     # a digit first, and that is what keeps this from passing on an uncut
     # changelog.
@@ -982,7 +996,7 @@ verify_tag() {
 packages_check() {
     local out=$1 v work tree rev distro image pids=() names=() failed=0 i
     command -v podman >/dev/null || { echo "podman is not installed" >&2; return 1; }
-    v=$(sed -n 's/^__version__ = "\(.*\)"$/\1/p' demoreel)
+    v=$(tool_version)
     work=$(mktemp -d)
     # The tree as it stands, tracked and new files alike, as the parity leg runs
     # it. On a clean tree that is HEAD's, and then HEAD is archived, so a
@@ -1087,7 +1101,7 @@ fi
 # full gate does not run it.
 if [ "${1:-}" = "--obs-check" ]; then
     command -v podman >/dev/null || { echo "podman is not installed" >&2; exit 1; }
-    v=$(sed -n 's/^__version__ = "\(.*\)"$/\1/p' demoreel)
+    v=$(tool_version)
     work=$(mktemp -d)
     trap 'rm -rf "$work"' EXIT
     # INV-3 compares the installed script with the release's own tarball.
