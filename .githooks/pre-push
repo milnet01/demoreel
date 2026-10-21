@@ -59,7 +59,9 @@ fi
 # failed one.
 worktree=""
 cleanup() {
-    [ -n "$worktree" ] && git worktree remove --force "$worktree" 2>/dev/null
+    # A failed `git worktree add` leaves the mktemp folder but no worktree.
+    [ -n "$worktree" ] && { git worktree remove --force "$worktree" 2>/dev/null \
+        || rm -rf -- "$worktree"; }
     return 0
 }
 trap cleanup EXIT

@@ -25,6 +25,7 @@ pending() {
 }
 
 results=''
+waiting=1    # MAX_POLLS=0 polls nothing, which is a timeout, not a pass
 for ((i = 1; i <= max; i++)); do
     results=$(osc -A "$api" results "$project" "$package" 2>/dev/null || true)
     waiting=0
