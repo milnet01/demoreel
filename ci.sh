@@ -496,7 +496,9 @@ offered() {  # shell, command line -> the candidates, one per line
                 echo "zsh's tab completion after \"$2\" failed with exit status $rc" >&2
             fi
             return "$rc"; } ;;
-    fish) fish -c 'source completions/demoreel.fish
+    fish)
+        # shellcheck disable=SC2016  # $argv belongs to fish, not to us
+        fish -c 'source completions/demoreel.fish
         complete -C $argv[1] | cut -f1' "$2" ;;
     esac
 }
@@ -613,7 +615,7 @@ fi
 # The Ubuntu packages the gate needs, owned here for the same reason as the ruff
 # version: the workflow installs `./ci.sh --ci-packages`, and the parity image
 # below is built from the same list, so the two cannot disagree about it.
-CI_PACKAGES='ffmpeg xvfb xdotool x11-apps x11-utils x11-xkb-utils xterm zsh fish'
+CI_PACKAGES='ffmpeg xvfb xdotool x11-apps x11-utils x11-xkb-utils xterm zsh fish shellcheck'
 
 if [ "${1:-}" = "--ci-packages" ]; then
     printf '%s\n' "$CI_PACKAGES"
@@ -1352,6 +1354,7 @@ finishing_checks() {
             assert_eq "$what: sound stream codec, rate and channels" "aac,48000,2" \
                 "$(ffprobe -v error -select_streams a -show_entries \
                      stream=codec_name,sample_rate,channels -of csv=p=0 "$f")"
+            # shellcheck disable=SC2046  # its numbers are meant as separate words
             set -- $(ffprobe -v error -show_entries stream=codec_type,start_time,duration \
                        -of csv=p=0 "$f" | awk -F, '{ print $1, $2, $2 + $3 }' | sort | tr '\n' ' ')
             # audio START END video START END, sorted by type
@@ -1678,11 +1681,11 @@ def main(argv):
 main(sys.argv[1:])
 FINPY
     ff() { ffmpeg -v error -y "$@"; }
-    x264="-c:v libx264 -pix_fmt yuv420p -movflags +faststart"
+    x264=(-c:v libx264 -pix_fmt yuv420p -movflags +faststart)
     ff -f lavfi -i "testsrc2=s=320x240:r=10:d=6" -f lavfi -i "sine=d=6" \
        -f lavfi -i "color=c=white:s=16x240:r=10:d=6" \
        -filter_complex "[0:v]hue=h='floor(t)*60'[b];[b][2:v]overlay=x='mod(n*5,300)':y=0,format=yuv420p[v]" \
-       -map '[v]' -map 1:a -c:a aac -shortest $x264 "$ft/A.mp4"
+       -map '[v]' -map 1:a -c:a aac -shortest "${x264[@]}" "$ft/A.mp4"
     ff -f lavfi -i "testsrc2=s=320x240:r=10:d=8" \
        -vf "select=eq(n\\,77),hue=h=120" -frames:v 1 "$ft/still1.png"
     ff -f lavfi -i "testsrc2=s=320x240:r=10:d=8" \
@@ -1692,30 +1695,30 @@ FINPY
        -f lavfi -i "testsrc2=s=320x240:r=10:d=2" \
        -loop 1 -framerate 10 -t 2 -i "$ft/still2.png" \
        -filter_complex "[0:v]setsar=1,format=yuv420p[a];[1:v]fps=10,setsar=1,format=yuv420p[b];[2:v]hue=h=200,setsar=1,format=yuv420p[c];[3:v]fps=10,setsar=1,format=yuv420p[d];[a][b][c][d]concat=n=4:v=1:a=0[v]" \
-       -map '[v]' $x264 "$ft/C.mp4"
-    ff -f lavfi -i "testsrc=s=320x240:r=15:d=4" $x264 "$ft/B.mp4"
-    ff -f lavfi -i "testsrc2=s=640x240:r=10:d=3" $x264 "$ft/W.mp4"
-    ff -f lavfi -i "testsrc2=s=320x480:r=10:d=3" $x264 "$ft/T.mp4"
-    ff -f lavfi -i "testsrc=s=320x240:r=3:d=3" -r 30 $x264 "$ft/S.mp4"
+       -map '[v]' "${x264[@]}" "$ft/C.mp4"
+    ff -f lavfi -i "testsrc=s=320x240:r=15:d=4" "${x264[@]}" "$ft/B.mp4"
+    ff -f lavfi -i "testsrc2=s=640x240:r=10:d=3" "${x264[@]}" "$ft/W.mp4"
+    ff -f lavfi -i "testsrc2=s=320x480:r=10:d=3" "${x264[@]}" "$ft/T.mp4"
+    ff -f lavfi -i "testsrc=s=320x240:r=3:d=3" -r 30 "${x264[@]}" "$ft/S.mp4"
     # Left half moving, right half one grey: DEMO-0211's motion --region.
     ff -f lavfi -i "testsrc2=s=160x240:r=10:d=3" -f lavfi -i "color=c=#808080:s=160x240:r=10:d=3" \
-       -filter_complex hstack $x264 "$ft/H.mp4"
-    ff -f lavfi -i "color=c=#808080:s=320x240:r=10:d=4" $x264 "$ft/G.mp4"
+       -filter_complex hstack "${x264[@]}" "$ft/H.mp4"
+    ff -f lavfi -i "color=c=#808080:s=320x240:r=10:d=4" "${x264[@]}" "$ft/G.mp4"
     # A tenth of a second of 3 kHz, which a_onsets finds: DEMO-0186's sound.
     ff -f lavfi -i "sine=f=3000:d=0.1" "$ft/click.wav"
     ff -f lavfi -i "color=c=#00C000:s=800x800" -frames:v 1 "$ft/sq.png"
     # F: 30 a second, a new picture on each frame up to number 40, then still.
     # N: 29.97 a second, where no frame starts on a whole second.
     ff -f lavfi -i "testsrc2=s=320x240:r=30:d=3" \
-       -vf "select='lte(n,40)',tpad=stop_mode=clone:stop_duration=2,fps=30" -t 3 $x264 "$ft/F.mp4"
-    ff -f lavfi -i "testsrc2=s=320x240:r=30000/1001:d=4" $x264 "$ft/N.mp4"
+       -vf "select='lte(n,40)',tpad=stop_mode=clone:stop_duration=2,fps=30" -t 3 "${x264[@]}" "$ft/F.mp4"
+    ff -f lavfi -i "testsrc2=s=320x240:r=30000/1001:d=4" "${x264[@]}" "$ft/N.mp4"
     printf 'this is not a video\n' > "$ft/bad.mp4"
     # K: black at 10 a second, white for 0.2 s at 2.0 and 4.0 s with a 3 kHz
     # beep at the same moments. The sound checks and the speed checks use it.
     ff -f lavfi -i "color=c=black:s=320x240:r=10:d=6" \
        -f lavfi -i "aevalsrc='sin(2*PI*3000*t)*(between(t,2,2.1)+between(t,4,4.1))':s=48000:d=6" \
        -filter_complex "[0:v]format=yuv420p,geq=lum='if(between(T,2,2.15)+between(T,4,4.15),235,16)':cb=128:cr=128[v]" \
-       -map '[v]' -map 1:a -c:a aac $x264 "$ft/K.mp4"
+       -map '[v]' -map 1:a -c:a aac "${x264[@]}" "$ft/K.mp4"
     # Pictures for cards.
     ff -f lavfi -i "testsrc2=s=100x80:r=10:d=1" -vf "select=eq(n\\,3)" -frames:v 1 "$ft/small.png"
     ff -f lavfi -i "testsrc2=s=800x400:r=10:d=1" -vf "select=eq(n\\,3)" -frames:v 1 "$ft/wide.png"
@@ -1847,6 +1850,7 @@ SHIM
     expect_ok "trim --to 6 (the length of a 6 s file)"
     assert_eq "trim --to <length>: frames (means the last frame)" 60 "$(v_frames "$ft/out/e1.mp4")"
     for args in "--to 6.5" "--to 99" "--from 6.5" "--from 99 --to 100"; do
+        # shellcheck disable=SC2086  # each case is several words
         run trim A.mp4 -o "$ft/out/e2.mp4" $args
         expect_refused "trim $args on a 6 s file"
         assert_absent "trim $args" "$ft/out/e2.mp4"
@@ -1873,11 +1877,11 @@ SHIM
     before=$(snap)
     for what in "trim A.mp4 --to 99" "trim bad.mp4 --to 1" "caption bad.mp4 --text hi" \
                 "join A.mp4 W.mp4" "join A.mp4 bad.mp4" "join A.mp4"; do
-        # shellcheck disable=SC2086
+        # shellcheck disable=SC2086  # each case is several words
         run ${what%% *} ${what#* } -o "$ft/out/keep.mp4"
         expect_refused "$what, -o an existing file"
         assert_eq "$what: the file already at -o" "$keep" "$(sha256sum < "$ft/out/keep.mp4")"
-        # shellcheck disable=SC2086
+        # shellcheck disable=SC2086  # each case is several words
         run ${what%% *} ${what#* } -o "$ft/out/nothing.mp4"
         expect_refused "$what"
         assert_absent "$what" "$ft/out/nothing.mp4"
@@ -1985,7 +1989,7 @@ SHIM
     expect_ok "motion --from 6 --to 9"
     assert_near "motion --from 6 --to 9: duration is the part looked at" 3 "$(sed -n 's/^duration: //p' "$fo")" 0.06
     sl=$(grep '^still:' "$fo" | tail -1)
-    read -r _ a3 _ b3 _ <<<"$sl"
+    read -r _ a3 _ _ _ <<<"$sl"
     assert_near "motion --from 6 --to 9: the still starts at its time in the file, not in the part" 7 "$a3" 0.25
     # README: "A file can be stored at 30 frames a second and show three new ones."
     run motion S.mp4
@@ -2263,10 +2267,12 @@ JSONPY
     card k2.mp4 -d 1 --background '#204060'
     assert_colour "card --background #204060" "$ft/out/k2.mp4" 5 0.05 0.05 32 64 96 8
     card k3.mp4 -d 1 --text 'Saving'
+    # shellcheck disable=SC2046  # its numbers are meant as separate words
     set -- $(px minmax "$ft/out/k3.mp4" 5 topband)
     [ "$2" -lt 60 ] || fail "card title on a dark card, no picture: the top stays plain
     expected: brightest pixel in the top band under 60
     actual:   $2"
+    # shellcheck disable=SC2046  # its numbers are meant as separate words
     set -- $(px minmax "$ft/out/k3.mp4" 5 centre)
     [ "$2" -ge 200 ] || fail "card title on a dark card: white text in the middle
     expected: brightest pixel in the middle band at least 200
@@ -2281,11 +2287,13 @@ JSONPY
     assert_between "card --text-size 14 is twice the height of the default 7" 1.6 2.5 \
         "$(awk -v a="$h_default" -v b="$(echo "$bb2" | awk '{ print $4 - $2 }')" 'BEGIN { print b / a }')"
     card k5.mp4 -d 1 --text 'Saving' --background '#f0f0f0'
+    # shellcheck disable=SC2046  # its numbers are meant as separate words
     set -- $(px minmax "$ft/out/k5.mp4" 5 centre)
     [ "$1" -le 70 ] || fail "card title on a light card: near-black text
     expected: darkest pixel in the middle band at most 70
     actual:   $1"
     card k6.mp4 -d 1 small.png --text 'Saving'
+    # shellcheck disable=SC2046  # its numbers are meant as separate words
     set -- $(px minmax "$ft/out/k6.mp4" 5 topband)
     [ "$2" -ge 200 ] || fail "card title with a picture: text near the top
     expected: brightest pixel in the top band at least 200
@@ -2300,12 +2308,14 @@ JSONPY
     card m1.mp4 -d 1 small.png
     bb=$(px bbox "$ft/out/m1.mp4" 5 '#101418')
     [ "$bb" != none ] || fail "card with small.png: nothing but background on the card"
+    # shellcheck disable=SC2086  # its numbers are meant as separate words
     set -- $bb
     assert_near "small 100x80 picture on 320x240: left edge (110/320)" 0.344 "$1" 0.05
     assert_near "small picture: top edge (80/240)" 0.333 "$2" 0.05
     assert_near "small picture: right edge (210/320)" 0.656 "$3" 0.05
     assert_near "small picture: bottom edge (160/240)" 0.667 "$4" 0.05
     card m2.mp4 -d 1 wide.png
+    # shellcheck disable=SC2046  # its numbers are meant as separate words
     set -- $(px bbox "$ft/out/m2.mp4" 5 '#101418')
     assert_near "wide 800x400 picture: left edge (fits the width)" 0 "$1" 0.05
     assert_near "wide picture: right edge" 1 "$3" 0.05
@@ -2393,6 +2403,7 @@ JSONPY
     run caption A.mp4 -o "$ft/out/r0.mp4" --text one --from 1 --to 3
     expect_ok "control: caption with one text"
     for args in "--from 1 --text one" "--to 3 --text one" "--text-size 8 --text one"; do
+        # shellcheck disable=SC2086  # each case is several words
         run caption A.mp4 -o "$ft/out/r1.mp4" $args
         expect_refused "caption $args"
         assert_absent "caption $args" "$ft/out/r1.mp4"
@@ -2494,9 +2505,11 @@ SCRIPT
     assert_is_frame "edit scene 1 (clip A from 1): frame 20 is A's frame 30" "$ft/out/E1.mp4" 20 "$ft/A.mp4" 30
     text_on  "edit scene 1: its text, 1.5 to 2.5 in the clip, on screen at 0.5 of the film" "$ft/out/E1.mp4" 10 "$ft/A.mp4" 20
     text_off "edit scene 1: its text is gone at the clip's 2.5" "$ft/out/E1.mp4" 16 "$ft/A.mp4" 26
+    # shellcheck disable=SC2046  # its numbers are meant as separate words
     set -- $(px minmax "$ft/out/E1.mp4" 32 topband)
     [ "$2" -lt 60 ] || fail "edit scene 2 (a card): the top of the card should be plain background
     actual: brightest pixel in the top band $2"
+    # shellcheck disable=SC2046  # its numbers are meant as separate words
     set -- $(px minmax "$ft/out/E1.mp4" 32 centre)
     [ "$2" -ge 200 ] || fail "edit scene 2: the card's title (with a # in it) should be white in the middle
     actual: brightest pixel in the middle band $2"
@@ -2514,6 +2527,7 @@ SCRIPT
     printf 'card 1\n  text "say \\"hi\\""\n' > "$ft/q.txt"
     run edit q.txt -o "$ft/out/E3.mp4" -s 320x240 -r 10
     expect_ok "edit: a text with \\\" inside double quotes"
+    # shellcheck disable=SC2046  # its numbers are meant as separate words
     set -- $(px minmax "$ft/out/E3.mp4" 5 centre)
     [ "$2" -ge 200 ] || fail "edit: the quoted text should be on the card; brightest middle pixel $2"
     echo "edit made the four scenes in order in one encode, from a file and from stdin"
@@ -2929,6 +2943,7 @@ E
     # bottom. Without one, the text sits a twentieth of the frame's height in
     # from that edge." Sizes are read off the drawn pixels, to within a few
     # percent, because the letters' own spacing differs from font to font.
+    local -A text_top text_bottom
     for at in top middle bottom; do
         ed_ok "p-$at.mp4" <<E
 card 2
@@ -2936,14 +2951,14 @@ card 2
 E
         read -r n x0 y0 x1 y1 <<<"$(px find "$ft/out/p-$at.mp4" 5 '#FFFFFF:60')"
         assert_cmp "at $at, no band: the text is drawn (white pixels)" "${n:-0}" '>=' 200
-        eval "ty0_$at=$y0 ty1_$at=$y1"
+        text_top[$at]=$y0 text_bottom[$at]=$y1
     done
-    assert_cmp "at top, no band: the top of the text is about a twentieth of the height in" "$ty0_top" '>=' 0.03
-    assert_cmp "at top, no band: the top of the text is about a twentieth of the height in" "$ty0_top" '<=' 0.12
-    assert_cmp "at middle, no band: the text's centre is the frame's" "($ty0_middle + $ty1_middle) / 2" '>=' 0.44
-    assert_cmp "at middle, no band: the text's centre is the frame's" "($ty0_middle + $ty1_middle) / 2" '<=' 0.56
-    assert_cmp "at bottom, no band: the bottom of the text is about a twentieth of the height in" "$ty1_bottom" '<=' 0.96
-    assert_cmp "at bottom, no band: the bottom of the text is about a twentieth of the height in" "$ty1_bottom" '>=' 0.88
+    assert_cmp "at top, no band: the top of the text is about a twentieth of the height in" "${text_top[top]}" '>=' 0.03
+    assert_cmp "at top, no band: the top of the text is about a twentieth of the height in" "${text_top[top]}" '<=' 0.12
+    assert_cmp "at middle, no band: the text's centre is the frame's" "(${text_top[middle]} + ${text_bottom[middle]}) / 2" '>=' 0.44
+    assert_cmp "at middle, no band: the text's centre is the frame's" "(${text_top[middle]} + ${text_bottom[middle]}) / 2" '<=' 0.56
+    assert_cmp "at bottom, no band: the bottom of the text is about a twentieth of the height in" "${text_bottom[bottom]}" '<=' 0.96
+    assert_cmp "at bottom, no band: the bottom of the text is about a twentieth of the height in" "${text_bottom[bottom]}" '>=' 0.88
     # With a band: a flat grey card, so the band is the dark pixels.
     for at in top middle bottom; do
         ed_ok "q-$at.mp4" <<E
@@ -2954,7 +2969,7 @@ E
         assert_cmp "at $at, band: a band is there (dark pixels)" "${n:-0}" '>=' 2000
         assert_cmp "at $at, band: it runs across the frame (left edge)" "$x0" '<=' 0.01
         assert_cmp "at $at, band: it runs across the frame (right edge)" "$x1" '>=' 0.99
-        read -r tn tx0 ty0 tx1 ty1 <<<"$(px find "$ft/out/q-$at.mp4" 5 light:200)"
+        read -r tn _ ty0 _ ty1 <<<"$(px find "$ft/out/q-$at.mp4" 5 light:200)"
         assert_cmp "at $at, band: the text is drawn (white pixels)" "${tn:-0}" '>=' 200
         assert_cmp "at $at, band: the text is inside the band (its top is not above the band's)" "${ty0:-0}" '>=' "$y0"
         assert_cmp "at $at, band: the text is inside the band (its bottom is not below the band's)" "${ty1:-1}" '<=' "$y1"
@@ -3180,14 +3195,14 @@ E
     expect_ok "control: card -d 1 --text hi"
     for opt in "--font Sans" "--colour #FFD040" "--outline #000000" "--shadow #000000" \
                "--band off" "--at top" "--text-fade-in 0.5" "--text-fade-out 0.5"; do
-        # shellcheck disable=SC2086
+        # shellcheck disable=SC2086  # each case is several words
         run caption A.mp4 -o "$ft/out/sc2.mp4" --text hi --from 1 --to 2 $opt
         expect_refused "caption ... $opt"
         grep -q -- "${opt%% *}" "$fe" || fail "caption ... $opt: the refusal should name the option
     expected: '${opt%% *}' on stderr
     actual:   $(cat "$fe")"
         assert_absent "caption ... $opt" "$ft/out/sc2.mp4"
-        # shellcheck disable=SC2086
+        # shellcheck disable=SC2086  # each case is several words
         run card -o "$ft/out/sc3.mp4" -d 1 -s 320x240 -r 10 --text hi $opt
         expect_refused "card ... $opt"
         grep -q -- "${opt%% *}" "$fe" || fail "card ... $opt: the refusal should name the option
@@ -3264,7 +3279,7 @@ E
     # its sound a low tone that ends 0.4 s before its picture. Three cards of
     # 1.04 s each keep 10 frames, so adding up `length` would run 0.12 s ahead.
     ff -f lavfi -i "color=c=#404040:s=320x240:r=10:d=2" \
-       -f lavfi -i "sine=f=200:d=1.6" -map 0:v -map 1:a -c:a aac $x264 "$ft/Q.mp4"
+       -f lavfi -i "sine=f=200:d=1.6" -map 0:v -map 1:a -c:a aac "${x264[@]}" "$ft/Q.mp4"
     printf 'card 1.04\ncard 1.04\ncard 1.04\nclip Q.mp4\nclip K.mp4 from 1.3 to 5 crossfade 0.5\n' > "$ft/st1.txt"
     run edit st1.txt -o "$ft/out/st1.mp4"
     expect_ok "edit: cards, a short-sound clip, then K with a crossfade"
@@ -3273,11 +3288,14 @@ E
     # silencedetect also reports the film's own end; only a beep counts.
     beeps=$(a_onsets "$ft/out/st1.mp4" \
               | awk -v end="$(v_dur "$ft/out/st1.mp4")" '$1 < end - 0.05' | tr '\n' ' ')
+    # shellcheck disable=SC2086  # its numbers are meant as separate words
     set -- $flashes
     assert_eq "the film shows K's two flashes" 2 "$#"
+    # shellcheck disable=SC2086  # its numbers are meant as separate words
     set -- $beeps
     assert_eq "the film plays K's two beeps (found at: $beeps)" 2 "$#"
     i=0
+    # shellcheck disable=SC2086  # its numbers are meant as separate words
     for frame in $flashes; do
         i=$((i + 1))
         beep=$(printf '%s\n' $beeps | sed -n "${i}p")
@@ -3310,6 +3328,7 @@ E
     expect_ok "edit: A with fade-in, fade-out and fade-at"
     full=$(a_mean "$ft/out/sf1.mp4" 1.95 2.05)
     for span in "0 0.1 fade-in" "2.95 3.05 fade-at" "5.9 6.0 fade-out"; do
+        # shellcheck disable=SC2086  # each case is several words
         set -- $span
         assert_cmp "the $3 fades the sound: $1-$2 s against 2.0 s" \
             "$(a_mean "$ft/out/sf1.mp4" "$1" "$2")" "<=" "$full - 20"
@@ -3338,6 +3357,7 @@ E
     # DEMO-0177 INV-6 and INV-7.
     tones
     for case in "loud.wav -30" "quiet.wav -30" "loud.wav -20"; do
+        # shellcheck disable=SC2086  # each case is several words
         set -- $case
         printf 'card 9\nmusic %s level %s\n' "$1" "$2" | ed_ok "mu-$1$2.mp4"
         assert_finished "$ft/out/mu-$1$2.mp4" "music $1 at level $2" 1
@@ -3399,7 +3419,7 @@ E
     grep -q "would peak above" "$fe" || fail "a lowered level should say so on stderr
     actual:   $(cat "$fe")"
     ff -f lavfi -i "color=c=gray:s=320x240:r=10:d=3" -f lavfi -i "sine=f=440:d=3" \
-       -filter_complex "[1:a]volume=8[a]" -map 0:v -map '[a]' -c:a aac $x264 "$ft/FS.mp4"
+       -filter_complex "[1:a]volume=8[a]" -map 0:v -map '[a]' -c:a aac "${x264[@]}" "$ft/FS.mp4"
     printf 'clip FS.mp4 volume 6\n' > "$ft/mp2.txt"
     run edit mp2.txt -o "$ft/out/mp2.mp4"
     expect_ok "a clip at full scale turned up 6 dB"
@@ -3417,10 +3437,10 @@ E
     n=0
     while IFS='|' read -r want script; do
         n=$((n + 1))
-        printf "$script" > "$ft/bm$n.txt"
+        printf '%b' "$script" > "$ft/bm$n.txt"
         : > "$ft/log/ffmpeg.calls"
         FIN_PATH="$ft/shim:$PATH" run edit "bm$n.txt" -o "$ft/out/bm$n.mp4"
-        refused_naming_line "edit refuses: $(printf "$script" | tr '\n' '|')" "bm$n.mp4" "$want"
+        refused_naming_line "edit refuses: $(printf '%b' "$script" | tr '\n' '|')" "bm$n.mp4" "$want"
         assert_eq "edit refuses ($script): no encode started" 0 \
             "$(grep -cw 'libx264' "$ft/log/ffmpeg.calls" || true)"
     done <<'CASES'
@@ -3454,6 +3474,7 @@ CASES
     printf 'card 1\n  sound click.wav at 0.3\nclip G.mp4 from 0.5 speed 2 crossfade 0.5\n  sound click.wav at 2.5 volume -6\n' \
         | ed_ok sx1.mp4
     assert_finished "$ft/out/sx1.mp4" "sounds alone give a film a sound track" 1
+    # shellcheck disable=SC2046  # its numbers are meant as separate words
     set -- $(a_onsets "$ft/out/sx1.mp4" | tr '\n' ' ')
     assert_near "the card's sound starts at 0.3" 0.3 "${1:-none}" 0.04
     assert_near "the clip's sound starts at 1.5" 1.5 "${2:-none}" 0.04
@@ -3483,10 +3504,10 @@ CASES
     n=0
     while IFS='|' read -r want script; do
         n=$((n + 1))
-        printf "$script" > "$ft/bs$n.txt"
+        printf '%b' "$script" > "$ft/bs$n.txt"
         : > "$ft/log/ffmpeg.calls"
         FIN_PATH="$ft/shim:$PATH" run edit "bs$n.txt" -o "$ft/out/bs$n.mp4"
-        refused_naming_line "edit refuses: $(printf "$script" | tr '\n' '|')" "bs$n.mp4" "$want"
+        refused_naming_line "edit refuses: $(printf '%b' "$script" | tr '\n' '|')" "bs$n.mp4" "$want"
         assert_eq "edit refuses ($script): no encode started" 0 \
             "$(grep -cw 'libx264' "$ft/log/ffmpeg.calls" || true)"
     done <<'CASES'
@@ -3578,6 +3599,7 @@ CAPPY
     ff -f lavfi -i "sine=d=2" "$ft/two.wav"
     ff -f lavfi -i "sine=d=600" "$ft/ten.wav"
     for case in "two.wav 60" "ten.wav 3"; do
+        # shellcheck disable=SC2086  # each case is several words
         set -- $case
         printf 'card %s\nmusic %s\n' "$2" "$1" > "$ft/me.txt"
         rc=0
@@ -3607,10 +3629,12 @@ CAPPY
     # speed 2 from 1 they come at 0.5 and 1.5, together. The text's times are
     # K's own, so its 4 to 5 is the scene's 1.5 to 2.
     printf 'clip K.mp4 from 1 to 5 speed 2\ntext "late" from 4 to 5\n' | ed_ok sp6.mp4
+    # shellcheck disable=SC2046  # its numbers are meant as separate words
     set -- $(px onsets "$ft/out/sp6.mp4" 128)
     assert_eq "speed 2: K's flashes at frames 5 and 15" "5 15" "$*"
     beeps=$(a_onsets "$ft/out/sp6.mp4" \
               | awk -v end="$(v_dur "$ft/out/sp6.mp4")" '$1 < end - 0.05' | tr '\n' ' ')
+    # shellcheck disable=SC2086  # its numbers are meant as separate words
     set -- $beeps
     assert_eq "speed 2: K's two beeps (found at: $beeps)" 2 "$#"
     assert_near "speed 2: the first beep with its flash" 0.5 "$1" 0.040
@@ -3627,7 +3651,9 @@ CAPPY
     ff -f lavfi -i "color=white:s=200x100:d=0.1" -frames:v 1 "$ft/logo.png"
     printf 'card 2 logo.png reveal 0.9 background #000000\n' | ed_ok rv1.mp4
     for case in "2 182" "15 200"; do
+        # shellcheck disable=SC2086  # each case is several words
         set -- $case
+        # shellcheck disable=SC2046  # its numbers are meant as separate words
         set -- "$1" "$2" $(px find "$ft/out/rv1.mp4" "$1" light:20)
         assert_near "reveal 0.9, frame $1: the picture's width" "$2" \
             "$(awk -v a="$4" -v b="$6" 'BEGIN { print (b - a) * 320 }')" 4
@@ -3646,6 +3672,7 @@ CAPPY
     bbox_near() {  # what file idx colour x0 y0 x1 y1 tol
         local what=$1 tol=$9 got edge want
         got=$(px bbox "$2" "$3" "$4")
+        # shellcheck disable=SC2086  # its numbers are meant as separate words
         set -- $got "$5" "$6" "$7" "$8"
         for edge in left top right bottom; do
             want=$5
@@ -3766,7 +3793,7 @@ CASES
     # z follows smoothstep between 1 and 3 s: 1.156 at 1.5 s (a steady zoom
     # would be 1.25, and an edge at 0.388), 1.5 at 2 s, 2 from 3 s on.
     ff -f lavfi -i "color=c=white:s=320x240:r=10:d=4,drawbox=x=160:y=0:w=160:h=240:c=black:t=fill" \
-        $x264 "$ft/H.mp4"
+        "${x264[@]}" "$ft/H.mp4"
     printf 'clip H.mp4 window 100\n  zoom 2 x 100 y 50 from 1 to 3\n' | ed_ok zm1.mp4
     edge() { px find "$ft/out/zm1.mp4" "$1" light:200 | awk '{ print ($1 ? $4 : 0) }'; }
     assert_near "zoom: before it starts, half the window is white" 0.5 "$(edge 5)" 0.01
@@ -3814,6 +3841,7 @@ CASES
     read -r _ x0 y0 x1 y1 <<<"$(px find "$ft/out/st1.mp4" 2 '#FFFFFF:40')"
     read -r _ X0 Y0 X1 Y1 <<<"$(px find "$ft/out/st1.mp4" 10 '#FFFFFF:40')"
     for e in "x0 $x0 $X0" "y0 $y0 $Y0" "x1 $x1 $X1" "y1 $y1 $Y1"; do
+        # shellcheck disable=SC2086  # each case is several words
         set -- $e
         assert_near "stack: Heading's $1 stays put when Second arrives" "$3" "$2" 0.003
     done
@@ -4019,6 +4047,7 @@ help=$(./demoreel record --help; ./demoreel shot --help; ./demoreel stop --help;
       done
       ./demoreel --help)
 undocumented=0
+# shellcheck disable=SC2016  # the backticks are the README text searched for
 for flag in $(grep -oE '`-{1,2}[a-z-]+`' README.md | tr -d '`' | sort -u); do
     # Flags belonging to other programs the caller invokes THROUGH demoreel:
     # flatpak's sockets, and the -geometry demoreel forwards to Xwayland.
@@ -4275,14 +4304,14 @@ fi
 
 step "required programs"
 missing=()
-for prog in ruff python3 ffmpeg Xvfb xauth xdotool xclock xterm xprop; do
+for prog in ruff shellcheck python3 ffmpeg Xvfb xauth xdotool xclock xterm xprop; do
     command -v "$prog" >/dev/null || missing+=("$prog")
 done
 if [ ${#missing[@]} -gt 0 ]; then
     echo "missing: ${missing[*]}" >&2
     echo "xclock comes from x11-apps, xterm from its own package and xprop" >&2
-    echo "from x11-utils; the gate uses them to build its targets. The rest" >&2
-    echo "are named in README.md." >&2
+    echo "from x11-utils; the gate uses them to build its targets. shellcheck" >&2
+    echo "checks the gate's own scripts. The rest are named in README.md." >&2
     exit 1
 fi
 actual=$(ruff --version | awk '{print $2}')
@@ -4311,6 +4340,17 @@ if [[ $'\n'$selected$'\n' != *$'\n'$PWD/demoreel$'\n'* ]]; then
     exit 1
 fi
 echo "ruff analysed demoreel"
+
+step "shellcheck"
+# DEMO-0280. The gate's own script, the pre-push hook and packaging's scripts.
+# A finding that is deliberate is disabled on its line, with the reason.
+# PKGBUILD is left out: makepkg reads it, and shellcheck has no dialect for it.
+# SC2015 is off for the whole run. Checks here are written `test && test || {
+# fail; }`, where the block is meant to run when any test fails. The 0.9
+# release Ubuntu ships flags lines of that shape that 0.11 accepts.
+shell_scripts=(ci.sh .githooks/pre-push packaging/install.sh packaging/obs/*.sh)
+shellcheck -x --exclude=SC2015 "${shell_scripts[@]}"
+echo "shellcheck passed ${shell_scripts[*]}"
 
 step "parse"
 python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("demoreel").read_text())'
@@ -5145,6 +5185,7 @@ step "--settle waits for the app's first picture"
 # its cursor alone keeps it under the blank threshold. So without --settle the
 # halfway sample finds the display blank and the run fails; with it the
 # recording starts once the rows are drawn, and its first frame shows them.
+# shellcheck disable=SC2016  # $i belongs to the inner sh, not to us
 late_app=(xterm -bg black -fg black -cr black -b 0 -e sh -c
     'printf "\033[?25l"; sleep 4; i=0; while [ $i -lt 30 ]; do printf "\033[47m%80s\033[0m\n" " "; i=$((i+1)); done; sleep 60')
 if ./demoreel record -n gate -o "$tmp/unsettled.mp4" -d 3 -s 640x480 \
@@ -5163,6 +5204,7 @@ step "an app that makes the display chatter does not freeze it"
 # and once the pipe filled the server blocked mid-write: the display froze,
 # and so did demoreel, with no timeout reaching it. GIMP hit this in this gate.
 # Sixty keymap loads fill the pipe several times over.
+# shellcheck disable=SC2016  # $i belongs to the inner sh, not to us
 timeout 60 ./demoreel record -o "$tmp/chatter.mp4" -d 1 -s 320x240 \
     -n gatechatter -- sh -c \
     'i=0; while [ $i -lt 60 ]; do setxkbmap us; i=$((i+1)); done; exec xclock' \
@@ -5878,6 +5920,7 @@ step "the virtual display refuses a client with no cookie"
 # Xvfb also listens on an abstract socket, which has none.
 # The app itself probes first: the lock must already be in force when the app
 # starts, not only by the time the gate looks (DEMO-0113).
+# shellcheck disable=SC2016  # $? and $1 belong to the inner sh, not to us
 ./demoreel record -o "$tmp/cookie.mp4" -d 0 -n gatecookie -s 640x480 \
     -- sh -c 'XAUTHORITY=/dev/null xdotool getdisplaygeometry >/dev/null 2>&1
               echo $? >"$1"; exec xclock' sh "$tmp/cookie.atstart" \
@@ -6181,6 +6224,7 @@ for shell in bash zsh fish; do
         # a lone - or -- is the separator, not an option.
         got=$(XDG_RUNTIME_DIR="$tmp/xdg" PATH="$PWD:$PATH" offered "$shell" "$line" \
               </dev/null | sed "s/^['\"]//; s/ *\$//; /^-\{0,2\}\$/d" | sort -u | xargs)
+        # shellcheck disable=SC2086  # the expected list is meant as separate words
         want=$(printf '%s\n' $want | sort -u | xargs)
         [ "$got" = "$want" ] || {
             printf '%s offers for "%s":\n  %s\nbut demoreel accepts:\n  %s\n' \
@@ -6483,6 +6527,7 @@ catalog_check placeholders "$cat_base"
 refused placeholders "$cat_base" "a renamed placeholder" \
     '"⟦the video cannot be played: {output}⟧"' '"⟦the video cannot be played: {ouput}⟧"' \
     "its placeholders, or its %, are not the English ones"
+# shellcheck disable=SC2016  # the backticks are catalog text, not a command
 refused placeholders "$cat_base" "a translated flag" \
     '"⟦`demoreel check` says whether --gpu has what it needs.⟧"' \
     '"⟦`demoreel check` says whether --grafik has what it needs.⟧"' \

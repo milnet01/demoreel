@@ -654,7 +654,7 @@ simplest case, and a gate proves it still records.
   Kind: review-fix.
   Source: review-readability completions/ 2026-10-21.
 
-- 📋 [DEMO-0280] **ci.sh has shellcheck findings that nothing checks.**
+- ✅ [DEMO-0280] **ci.sh has shellcheck findings that nothing checks.**
   `shellcheck -x ci.sh` on 2026-10-21 reported warnings SC2046 (unquoted
   command substitution), SC2154 and SC2034, and notes SC2086, SC2016,
   SC2015 and SC2059. Many SC2086 sites look like deliberate word
@@ -663,6 +663,15 @@ simplest case, and a gate proves it still records.
   the existing `# shellcheck disable=SC2086 # each case is several
   words` lines do. Then add a gate step that runs shellcheck on ci.sh,
   the hooks and packaging/ scripts, so the count stays at zero.
+  Shipped 2026-10-21. Real fixes: the x264 options are an array, an eval
+  became an associative array, unused read targets are `_`, and
+  printf takes '%b' instead of a variable format. Deliberate word
+  splitting and literal dollars are disabled on their line with the
+  reason. New gate step "shellcheck" over ci.sh, .githooks/pre-push,
+  packaging/install.sh and packaging/obs/*.sh, with shellcheck in
+  CI_PACKAGES. SC2015 is excluded for the run: the gate's `test &&
+  test || { fail; }` shape is intended, and Ubuntu's 0.9 flags lines
+  of it that 0.11 accepts. PKGBUILD is left out.
   **Layman:** The script that tests demoreel has warnings from a shell-checking tool, and nothing runs that tool on it, so new ones can creep in.
   Kind: fix.
   Source: user-request-2026-10-21 (fix or file pre-existing warnings).
