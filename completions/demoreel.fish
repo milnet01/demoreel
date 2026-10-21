@@ -1,6 +1,12 @@
 # fish completion for demoreel (DEMO-0056).
 # Install it as ~/.config/fish/completions/demoreel.fish, or
 # /usr/share/fish/vendor_completions.d/demoreel.fish.
+#
+# demoreel.bash and _demoreel beside this file hold their own copies of the
+# same commands and options. The gate checks the commands, the options of
+# record and shot, the -a steps and stop's run names, in all three shells.
+# Nothing checks the other commands' options: after changing one, run
+# ./ci.sh --option-places OPTION COMMAND, which asks each shell.
 
 # The names of recordings still running, for `demoreel stop`. Asked of
 # demoreel's own live_runs(), the test `stop` itself uses: every run leaves its
@@ -17,9 +23,10 @@ sys.stdout.write("".join(e["name"] + "\n" for e in d.live_runs()))' \
         $exe 2>/dev/null
 end
 
-# True once `--` is on the line: everything after it is the app's own command.
+# True once `--` follows record or shot: everything after it is the app's own
+# command. The other commands start no app.
 function __demoreel_in_app
-    contains -- -- (commandline -opc)
+    contains -- -- (commandline -opc); and __fish_seen_subcommand_from record shot
 end
 
 # Complete the app's command line as fish would on its own. Not
@@ -42,6 +49,9 @@ complete -c demoreel -n __demoreel_in_app -x -a '(__demoreel_app)'
 
 complete -c demoreel -n __fish_use_subcommand -s h -l help -d 'show help'
 complete -c demoreel -n __fish_use_subcommand -l version -d 'show the version'
+# Each command's description is its help in demoreel's build_parser(). A new
+# command also joins the -h line below and, if it takes files, the finishing
+# commands' line further down.
 complete -c demoreel -n __fish_use_subcommand -a record -d 'record an app and write a video file'
 complete -c demoreel -n __fish_use_subcommand -a shot -d 'take one picture of an app and write a PNG'
 complete -c demoreel -n __fish_use_subcommand -a check -d 'test whether this machine can record, without recording'

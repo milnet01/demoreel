@@ -1,6 +1,16 @@
 # bash completion for demoreel (DEMO-0056).
 # Load it from ~/.bashrc:   source /path/to/demoreel/completions/demoreel.bash
 # or install it as /usr/share/bash-completion/completions/demoreel.
+#
+# demoreel.fish and _demoreel beside this file hold their own copies of the
+# same commands and options. The gate checks the commands, the options of
+# record and shot, the -a steps and stop's run names, in all three shells.
+# Nothing checks the other commands' options: after changing one, run
+# ./ci.sh --option-places OPTION COMMAND, which asks each shell.
+
+# Every command, and the finishing ones, which take files.
+_demoreel_finishing="edit trim caption join card motion poster sheet"
+_demoreel_commands="record shot check stop $_demoreel_finishing"
 
 # The names of recordings still running, for `demoreel stop`. Asked of
 # demoreel's own live_runs(), the test `stop` itself uses: every run leaves its
@@ -23,14 +33,13 @@ _demoreel() {
     local i sub=
     for ((i = 1; i < COMP_CWORD; i++)); do
         case ${COMP_WORDS[i]} in
-            record | shot | check | stop | edit | trim | caption | join | \
-                card | motion | poster | sheet)
-                [[ -z $sub ]] && sub=${COMP_WORDS[i]} ;;
             --)
                 # Everything after -- is the app's own command line.
                 if [[ $sub == record || $sub == shot ]]; then
                     if declare -F _command_offset >/dev/null; then
                         _command_offset $((i + 1))
+                    # Without the bash-completion package there is no
+                    # _command_offset: offer command names, then files.
                     elif ((COMP_CWORD == i + 1)); then
                         mapfile -t COMPREPLY < <(compgen -c -- "$cur")
                     else
@@ -39,9 +48,14 @@ _demoreel() {
                     fi
                     return
                 fi ;;
+            *)
+                [[ -z $sub && " $_demoreel_commands " == *" ${COMP_WORDS[i]} "* ]] &&
+                    sub=${COMP_WORDS[i]} ;;
         esac
     done
 
+    # An option that takes a value is in this case as well as in its
+    # command's words below; without it, Tab after the option offers options.
     case $prev in
         -o | --output | --steps | --app-log | --like | --music)
             compopt -o default
@@ -74,8 +88,7 @@ _demoreel() {
             if [[ $cur == -* ]]; then
                 words="-h --help --version"
             else
-                words="record shot check stop edit trim caption join card
-                    motion poster sheet"
+                words=$_demoreel_commands
             fi ;;
         record) words="-o --output -d --duration -s --size -r --framerate
                 -n --name -a --action --steps --app-log --settle --gpu --cursor
@@ -106,7 +119,7 @@ _demoreel() {
             fi ;;
     esac
     # The finishing commands take files: a script, videos, a picture.
-    if [[ $cur != -* && $sub == @(edit|trim|caption|join|card|motion|poster|sheet) ]]; then
+    if [[ $cur != -* && -n $sub && " $_demoreel_finishing " == *" $sub "* ]]; then
         compopt -o default
         COMPREPLY=()
         return

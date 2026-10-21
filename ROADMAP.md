@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=278 -->
+<!-- ants-roadmap-id-high-water: DEMO=279 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -640,6 +640,19 @@ simplest case, and a gate proves it still records.
   Kind: feature.
   Source: peer-request-2026-10-16 ants-projects-hub-website via claude-config.
   Lanes: poster.
+
+- 📋 [DEMO-0279] **The three completion scripts each carry the same Python that lists running recordings.**
+  completions/demoreel.bash, demoreel.fish and _demoreel each load the
+  demoreel script as a module and call live_runs(), five identical lines
+  with the same comment above them. A change to live_runs() needs all
+  three edited. The gate's `demoreel stop |gatelive` line covers each
+  shell, so a missed copy fails there; that is why this was queued, not
+  fixed. The remedy the review proposed, a way for demoreel itself to
+  print the running names, adds to the command line, which is a design
+  decision rather than a readability fix.
+  **Layman:** Tab completion after `demoreel stop` asks demoreel which recordings are running, and each shell's file holds its own copy of that question.
+  Kind: review-fix.
+  Source: review-readability completions/ 2026-10-21.
 
 ## Standing chores
 

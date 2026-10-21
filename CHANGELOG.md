@@ -23,6 +23,16 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **zsh tab completion no longer leaves `music` and `nosound` variables in your shell**
+  Pressing Tab after a finishing command such as `demoreel trim` set
+  those two names in the zsh session itself, over any variable of your
+  own with the same name. They now stay inside the completion.
+
+- **fish offers program names after `--` only for `record` and `shot`**
+  After `demoreel trim --`, fish offered commands to run, though only
+  `record` and `shot` start an app. bash and zsh already behaved this
+  way.
+
 - **`demoreel stop` finds a recording started a moment before it, on a busy computer** (DEMO-0165)
   A recording asked ffmpeg two slow questions before it could be
   stopped. A stop sent straight after it could say no recording was
