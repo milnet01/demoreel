@@ -484,11 +484,14 @@ offered() {  # shell, command line -> the candidates, one per line
         COMP_CWORD=$((${#COMP_WORDS[@]} - 1))
         _demoreel 2>/dev/null; printf "%s\n" "${COMPREPLY[@]}"' _ "$2" ;;
     # A caller's $(...) under set -e stops the gate on a failure here, with
-    # nothing said unless this says it (DEMO-0278).
-    zsh) timeout 20 zsh "$tmp/zcomp.zsh" "$PWD/completions" "$2" || {
+    # nothing said unless this says it (DEMO-0278). The limit catches a hang:
+    # an answer takes under a second, and 20 seconds was not enough on a
+    # machine at load 17 (2026-10-21).
+    zsh) local limit=60
+        timeout "$limit" zsh "$tmp/zcomp.zsh" "$PWD/completions" "$2" || {
             local rc=$?
             if [ "$rc" -eq 124 ]; then
-                echo "zsh's tab completion after \"$2\" did not finish in 20 seconds" >&2
+                echo "zsh's tab completion after \"$2\" did not finish in $limit seconds" >&2
             else
                 echo "zsh's tab completion after \"$2\" failed with exit status $rc" >&2
             fi
