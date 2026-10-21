@@ -36,6 +36,12 @@ that skipped and, on a failure, only the step that failed.
 `./ci.sh --option-places OPTION COMMAND...` lists every file that must name an
 option of those commands, each present or missing.
 
+To give a new message its drafts in every language, run `./ci.sh
+--add-message DRAFTS.json` after `./ci.sh --pot`. It checks each language
+with `msgfmt -c` and the gate's catalog checks, and names the ones that fail.
+It writes `po/` only when all pass. The file's shape is in the comment above
+it in `ci.sh`.
+
 The full gate ends by running itself again in a local `ubuntu:24.04` image
 built from the same package list the workflow installs (`./ci.sh
 --ci-packages`), so a difference in GitHub's older packages fails here first.

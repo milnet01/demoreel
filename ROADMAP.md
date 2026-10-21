@@ -4977,12 +4977,19 @@ covers both display backends and the Flatpak invocation.
   Source: in-session-2026-10-16 DEMO-0205.
   Lanes: ci.
 
-- 📋 [DEMO-0214] **A helper that adds one message's drafts to all 16 catalogs and checks each.**
+- ✅ [DEMO-0214] **A helper that adds one message's drafts to all 16 catalogs and checks each.**
   Each new msgid meant a python heredoc appending to 16 catalogs, then
   msgfmt -c, then the gate's code-token check 138 steps into ./ci.sh,
   which today caught three drafts with a flag joined to a word. The
   helper appends, runs msgfmt and CODE_TOKEN_RE per language, and names
   the ones that fail at once.
+  Shipped 2026-10-21 as ./ci.sh --add-message DRAFTS.json. Each catalog
+  is built in a scratch directory and checked with msgfmt -c and the
+  gate's reads and placeholders checks; po/ is written only when all 16
+  pass. Tested on a copy: a stripped message re-added byte-identical; a
+  joined flag (de) and a changed flag (zh_CN) named; a stray newline
+  caught by msgfmt (it); a missing draft, a wrong plural count, a message
+  not in the template and one already present each refused.
   **Layman:** Adding a new sentence in every language becomes one step that also checks each language straight away.
   Kind: chore.
   Source: in-session-2026-10-16 DEMO-0205.

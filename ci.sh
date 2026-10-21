@@ -270,6 +270,104 @@ if [ "${1:-}" = "--catalog-digest" ]; then
     exec python3 -c "$CATALOG_PY" print-digest po/demoreel.pot "$catalog"
 fi
 
+# ./ci.sh --add-message DRAFTS adds one message's drafts to every catalog
+# (DEMO-0214). DRAFTS is a JSON file:
+#   {"msgid": "...", "plural": "..." or absent,
+#    "drafts": {"af": "...", "ar": ["form 0", ..., "form 5"], ...}}
+# one draft per catalog in po/, a list of nplurals forms for a plural. The
+# message must already be in the template (./ci.sh --pot). Each catalog is
+# built in a scratch directory and checked there with msgfmt -c and the gate's
+# own reads and placeholders checks; po/ is written only when every language
+# passes, so a failed run is fixed in DRAFTS and run again.
+if [ "${1:-}" = "--add-message" ]; then
+    [ $# -eq 2 ] || { echo "usage: ./ci.sh --add-message DRAFTS.json" >&2; exit 2; }
+    case $2 in /*) drafts=$2 ;; *) drafts=$OLDPWD/$2 ;; esac
+    command -v msgfmt >/dev/null || { echo "--add-message needs msgfmt, from gettext" >&2; exit 2; }
+    scratch=$(mktemp -d)
+    trap 'rm -rf "$scratch"' EXIT
+    python3 - "$drafts" "$scratch" <<'ADDPY'
+import importlib.machinery, importlib.util, json, pathlib, re, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+drafts_path, scratch = sys.argv[1:]
+try:
+    given = json.loads(pathlib.Path(drafts_path).read_text(encoding="utf-8"))
+    msgid, plural, drafts = given["msgid"], given.get("plural"), given["drafts"]
+except (OSError, ValueError, KeyError, TypeError) as exc:
+    sys.exit(f"{drafts_path}: not a drafts file ({exc!r})")
+def q(text):
+    # As pot_text's q: a string holding \n is split after each one.
+    text = (text.replace("\\", "\\\\").replace('"', '\\"').replace("\t", "\\t")
+            .replace("\n", "\\n"))
+    parts = re.findall(r".*?\\n|.+$", text)
+    return f'"{text}"' if len(parts) < 2 else '""\n' + "\n".join(f'"{p}"' for p in parts)
+pot = pathlib.Path("po/demoreel.pot").read_text(encoding="utf-8").split("\n")
+entry = next((e for e in d.read_po("\n".join(pot))
+              if (e["msgid"], e["plural"]) == (msgid, plural)), None)
+if entry is None:
+    sys.exit("the template has no such message: add it to demoreel, then run ./ci.sh --pot")
+# The template's own lines for the message: its #. comments, its msgid and
+# its msgid_plural, as they stand there.
+start = end = entry["line"] - 1
+while start > 0 and pot[start - 1].startswith("#."):
+    start -= 1
+while not pot[end].startswith("msgstr"):
+    end += 1
+head = pot[start:end]
+catalogs = sorted(pathlib.Path("po").glob("*.po"))
+codes = {path.stem for path in catalogs}
+problems = [f"{code}: there is no draft for it" for code in sorted(codes - set(drafts))]
+problems += [f"{code}: there is no po/{code}.po for this draft" for code in sorted(set(drafts) - codes)]
+for path in (path for path in catalogs if path.stem in drafts):
+    text, draft = path.read_text(encoding="utf-8"), drafts[path.stem]
+    entries = d.read_po(text)
+    if any((e["msgid"], e["plural"]) == (msgid, plural) for e in entries):
+        problems.append(f"{path}: it already has this message")
+        continue
+    if plural is None:
+        if not isinstance(draft, str):
+            problems.append(f"{path.stem}: the draft must be one string")
+            continue
+        tail = [f"msgstr {q(draft)}"]
+    else:
+        head_fields = next(e for e in entries if not e["msgid"])["forms"][0]
+        nplurals = int(re.search(r"nplurals\s*=\s*([0-9]+)", head_fields)[1])
+        if not (isinstance(draft, list) and len(draft) == nplurals
+                and all(isinstance(form, str) for form in draft)):
+            problems.append(f"{path.stem}: the draft must be a list of {nplurals} strings")
+            continue
+        tail = [f"msgstr[{n}] {q(form)}" for n, form in enumerate(draft)]
+    pathlib.Path(scratch, path.name).write_text(
+        text.rstrip("\n") + "\n\n" + "\n".join(head + tail) + "\n", encoding="utf-8")
+for line in problems:
+    print(line, file=sys.stderr)
+sys.exit(1 if problems else 0)
+ADDPY
+    failing=()
+    for catalog in "$scratch"/*.po; do
+        code=$(basename "$catalog" .po)
+        # msgfmt warns that four header fields demoreel never reads are absent.
+        if ! out=$(msgfmt -c -o /dev/null "$catalog" 2>&1 \
+                   && python3 -c "$CATALOG_PY" reads po/demoreel.pot "$catalog" 2>&1 \
+                   && python3 -c "$CATALOG_PY" placeholders po/demoreel.pot "$catalog" 2>&1); then
+            failing+=("$code")
+            printf '%s\n' "$out" | grep -v "warning: header field '.*' missing in header" \
+                | sed "s|$scratch/|po/|g" >&2 || true
+        fi
+    done
+    if [ ${#failing[@]} -gt 0 ]; then
+        echo "nothing written: these languages failed: ${failing[*]}" >&2
+        exit 1
+    fi
+    for catalog in "$scratch"/*.po; do
+        cp "$catalog" "po/$(basename "$catalog").tmp"
+        mv "po/$(basename "$catalog").tmp" "po/$(basename "$catalog")"
+    done
+    echo "added the message to every catalog in po/"
+    exit 0
+fi
+
 # The one definition of what counts as documentation here. The machine-wide
 # pre-push hook reads it with `./ci.sh --docs-glob` and does its own matching.
 # The GitHub workflow does not: it pipes the changed paths into
