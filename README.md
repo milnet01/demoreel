@@ -996,8 +996,9 @@ rather than handing you a blank video afterwards.
 Why they are needed, briefly. A Flatpak runs in a sandbox and cannot see the
 private screen unless it is told to. `--socket=x11` and
 `--filesystem=/tmp/.X11-unix` are what let it through. `--nosocket=wayland` is
-the one people miss: given the choice, the app prefers the other display system
-and ignores the private screen entirely, so this removes the choice.
+a spare guard. Given the choice, the app prefers the other display system and
+ignores the private screen entirely. demoreel already hides that choice from
+it, and this flag hides it a second time.
 
 It is a warning rather than a refusal, because an app that never offered that
 choice does not need `--nosocket=wayland`, and knowing which is which would mean

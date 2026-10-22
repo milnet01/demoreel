@@ -301,7 +301,10 @@ of the sandbox: finbreak's manifest is `sockets=fallback-x11;wayland`, and
 socket present the app never looks at X11, so the virtual display goes unused.
 Under demoreel's empty `WAYLAND_DISPLAY` no socket arrives anyway. Measured
 2026-10-22: Flatpak gave the sandbox a Wayland socket when the host's variable
-was `wayland-0` or unset, and none when it was empty or a made-up name.
+was `wayland-0` or unset, and none when it was empty or a made-up name. So
+`--nosocket=wayland` is a spare guard, kept by the user's decision
+(2026-10-22): it costs nothing, and holds if demoreel's environment changes.
+Do not drop it from the recipe or the warning as dead.
 
 **Do not swap it for `QT_QPA_PLATFORM=xcb`**, which is the fix most search
 results suggest. Two reasons, and the first is the one that matters here: it is

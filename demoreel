@@ -53,11 +53,13 @@ TYPE_SECONDS_PER_CHAR = 0.05
 # Both backends need this. Unset, wl_display_connect() falls back to the
 # hardcoded $XDG_RUNTIME_DIR/wayland-0, which exists on a Wayland session — so
 # the app connects to the user's REAL compositor, renders there, and the
-# private display records black while every signal says success. A name that
-# cannot resolve fails the connection instead, and the toolkit falls back to
-# X11. It is the non-Flatpak twin of --nosocket=wayland, and unlike
-# QT_QPA_PLATFORM=xcb it does not need to know the app's toolkit.
-NO_WAYLAND = "demoreel-no-wayland"
+# private display records black while every signal says success. An empty
+# value fails the connection instead, and the toolkit falls back to X11. A
+# made-up name does too, but winit reads any non-empty value as "use Wayland"
+# and never falls back, so it stopped every winit app at start (DEMO-0281).
+# Unlike QT_QPA_PLATFORM=xcb it does not need to know the app's toolkit.
+# main() removes WAYLAND_SOCKET, which libwayland reads ahead of this.
+NO_WAYLAND = ""
 
 # An Event, not a flag, so a wait on it ends the moment a stop arrives. A
 # plain sleep resumes after the handler runs (PEP 475), and a stop landed up
@@ -5172,6 +5174,11 @@ def main():
     # The language is chosen before the parser exists: argparse translates its
     # group titles as the parser is built (§ 4.6).
     use_languages(chosen_languages(os.environ))
+    # An inherited WAYLAND_SOCKET names a connection libwayland takes ahead
+    # of WAYLAND_DISPLAY, and winit when that is empty. Every process demoreel
+    # starts must go without it: with it, a winit app aborted at start and
+    # `record --gpu` failed before recording (DEMO-0281).
+    os.environ.pop("WAYLAND_SOCKET", None)
     if _catalogs:
         argparse._ = _argparse_gettext
         argparse.ngettext = _argparse_ngettext

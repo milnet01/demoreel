@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=283 -->
+<!-- ants-roadmap-id-high-water: DEMO=284 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -5213,7 +5213,7 @@ covers both display backends and the Flatpak invocation.
   Source: gate-run-2026-10-19.
   Lanes: ci.
 
-- 📋 [DEMO-0281] **A winit app (egui, Bevy, Alacritty) exits at start under demoreel, because it reads any WAYLAND_DISPLAY as Wayland.**
+- ✅ [DEMO-0281] **A winit app (egui, Bevy, Alacritty) exits at start under demoreel, because it reads any WAYLAND_DISPLAY as Wayland.**
   winit 0.30 chooses Wayland whenever WAYLAND_DISPLAY is non-empty
   (platform_impl/linux/mod.rs, EventLoop::new) and never falls back
   to X11. NO_WAYLAND is non-empty, so a winit probe panicked with
@@ -5226,6 +5226,14 @@ covers both display backends and the Flatpak invocation.
   change: --gpu with vkcube, a Flatpak, SDL and Electron. It rewrites
   the CLAUDE.md WAYLAND_DISPLAY trap, README's verified fact and
   gpu-backend.md, so rule 14's trigger fires.
+  2026-10-22: NO_WAYLAND is now "", and main() removes an inherited
+  WAYLAND_SOCKET from every process demoreel starts. The rule change was
+  gated first (docs/reviews/claude-md-loop-log.md rows 7-9,
+  readme-loop-log.md rows 25-27). Red then green: a winit probe now
+  starts and takes a key on Xvfb and --gpu; `env WAYLAND_SOCKET=3
+  demoreel record --gpu -- vkcube` now records. ci.sh checks the app
+  gets an empty WAYLAND_DISPLAY and no WAYLAND_SOCKET.
+  --nosocket=wayland stays as a spare guard (user, 2026-10-22).
   **Layman:** Apps built with Rust's common window library cannot be recorded at all unless the caller works around it.
   Kind: fix.
   Source: in-session-2026-10-22 DEMO-0206.
@@ -5246,6 +5254,18 @@ covers both display backends and the Flatpak invocation.
   Kind: fix.
   Source: in-session-2026-10-22 DEMO-0281.
   Lanes: display.
+
+- 📋 [DEMO-0284] **The Flatpak flags warning says a missing flag can send the app to the real compositor, which DEMO-0281 made untrue.**
+  warn_if_flatpak_underflagged prints "A missing one can send it to
+  your real compositor instead". With WAYLAND_DISPLAY empty, a Flatpak
+  gets no Wayland socket, with or without --nosocket=wayland (measured
+  2026-10-22). A missing --socket=x11 or --filesystem leaves the app
+  unable to reach the private screen instead. Reword the message and
+  its docstring, then ./ci.sh --pot and --add-message for every
+  language. The user kept the flag itself (2026-10-22).
+  **Layman:** A warning about Flatpak flags overstates the risk now, and its translations need the same fix.
+  Kind: fix.
+  Source: in-session-2026-10-22 DEMO-0281 review.
 
 ## 1.1.0 — A window for people who want one
 
