@@ -704,6 +704,14 @@ simplest case, and a gate proves it still records.
   (unfinished file) beside the package builds, then pass alone. So the
   warm-up is not enough: the container checks' fixed limits fail under
   host load. Not closed.
+  2026-10-22, bc9031e: run_check asks demoreel check up to three times
+  after a time limit. Pushed through the gate, but no retry fired on
+  either push run (load had fallen to ~6), so the fix is not yet seen
+  working under load. One of those runs failed instead on
+  download.opensuse.org timing out in the opensuse-source container, a
+  mirror fault; the next passed. Still open: the Ubuntu leg's smoke
+  recording failing under load (unfinished file). Close once a push
+  under load shows a retry note and passes.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
