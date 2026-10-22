@@ -23,6 +23,17 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **Apps built with winit (egui, Bevy, Alacritty) now start under demoreel** (DEMO-0281)
+  demoreel gave the app a made-up Wayland display name to keep it off
+  your real desktop. winit took any name as "use Wayland" and quit.
+  The name is now empty, which keeps every toolkit off your desktop
+  and lets winit use the private screen.
+
+- **Scripted `key` and `type` steps now reach winit apps** (DEMO-0206)
+  No window on the private screen had the keyboard. GTK and Qt apps
+  took key presses anyway, but a winit app ignored them. demoreel now
+  gives the app's window the keyboard.
+
 - **zsh tab completion no longer leaves `music` and `nosound` variables in your shell**
   Pressing Tab after a finishing command such as `demoreel trim` set
   those two names in the zsh session itself, over any variable of your
