@@ -2099,12 +2099,15 @@ def place_window(env, app, a, width, height, picture):
 
 
 def fill_frame(env, window, width, height):
-    """Move the window to the corner and size it to the frame."""
-    # No window manager runs here, so no windowactivate: the only
-    # window already has focus.
+    """Move the window to the corner, size it to the frame and focus it."""
     xdotool(env, "windowmove", window, 0, 0)
     xdotool(env, "windowsize", window, width, height)
     wait_for_size(env, window, width * height)
+    # No window manager runs here, so windowactivate has nothing to ask, but
+    # the window still needs the keyboard. GTK and Qt take key presses without
+    # it; a winit app waits for a focus event first, and ignored every `key`
+    # and `type` step until it got one (DEMO-0206).
+    xdotool(env, "windowfocus", "--sync", window)
 
 
 def blank_causes(gpu):

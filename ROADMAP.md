@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=280 -->
+<!-- ants-roadmap-id-high-water: DEMO=281 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -4972,12 +4972,18 @@ covers both display backends and the Flatpak invocation.
   Source: in-session-2026-10-16 DEMO-0212.
   Lanes: po.
 
-- 📋 [DEMO-0206] **Find out why -a key presses did not reach an egui/winit app, while type and click did.**
+- ✅ [DEMO-0206] **Find out why -a key presses did not reach an egui/winit app, while type and click did.**
   Reported second-hand by rusty-psn: `-a 'key ctrl+s'` had no effect on
   an egui/winit app on the private display. Not yet reproduced. First
   step: reproduce with a small winit app on both backends. A known cause
   to test: winit reads keys through XKB/XInput2, and xdotool key sends
   XTEST events that can miss there when no keymap or focus is set.
+  Cause (2026-10-22): no window had X input focus, since no window
+  manager runs. GTK and Qt take keys anyway; a winit 0.30 probe saw
+  clicks but no `key` or `type` step until focused. fill_frame now calls
+  `xdotool windowfocus --sync`; the probe received every step on Xvfb
+  and --gpu. ci.sh's actions step checks the window has the keyboard.
+  Separately, winit cannot start under NO_WAYLAND at all: DEMO-0281.
   **Layman:** One app ignored the scripted key presses, such as Ctrl+S, though typed text and clicks reached it.
   Kind: investigate.
   Source: peer-report-2026-10-15 rusty-psn via ants-terminal-95.
@@ -5195,6 +5201,24 @@ covers both display backends and the Flatpak invocation.
   Kind: fix.
   Source: gate-run-2026-10-19.
   Lanes: ci.
+
+- 📋 [DEMO-0281] **A winit app (egui, Bevy, Alacritty) exits at start under demoreel, because it reads any WAYLAND_DISPLAY as Wayland.**
+  winit 0.30 chooses Wayland whenever WAYLAND_DISPLAY is non-empty
+  (platform_impl/linux/mod.rs, EventLoop::new) and never falls back
+  to X11. NO_WAYLAND is non-empty, so a winit probe panicked with
+  NoCompositor before opening a window (measured 2026-10-22). With
+  `env WAYLAND_DISPLAY=` on the app's command line it ran on Xvfb.
+  An empty value may be the toolkit-neutral fix: winit reads empty as
+  unset, and libwayland connects to "$XDG_RUNTIME_DIR/", not wayland-0.
+  Measured 2026-10-22 with an empty value: gtk4-demo and kcalc still
+  recorded on Xvfb, not the real desktop. Still to measure before the
+  change: --gpu with vkcube, a Flatpak, SDL and Electron. It rewrites
+  the CLAUDE.md WAYLAND_DISPLAY trap, README's verified fact and
+  gpu-backend.md, so rule 14's trigger fires.
+  **Layman:** Apps built with Rust's common window library cannot be recorded at all unless the caller works around it.
+  Kind: fix.
+  Source: in-session-2026-10-22 DEMO-0206.
+  Lanes: display.
 
 ## 1.1.0 — A window for people who want one
 

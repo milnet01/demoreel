@@ -1192,8 +1192,8 @@ points the app at a Wayland display that does not exist, so it uses the private
 screen instead of your real one.
 
 **Nothing manages windows on the private screen.** None is needed to record one
-app, and adding one is a dependency for no gain — the single window already has
-focus, so demoreel does not try to give it any. An app whose dialogs need
+app, and adding one is a dependency for no gain. demoreel gives the app's window
+the keyboard itself, which needs no window manager. An app whose dialogs need
 arranging may misbehave; if that ever comes up the answer is a minimal window
 manager, not more code here.
 

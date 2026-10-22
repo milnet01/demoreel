@@ -4916,15 +4916,23 @@ step "scripted actions reach the app"
 # dropped the quotes, collapsed the spaces and died on the apostrophe
 # (DEMO-0101).
 typed="it's \"quoted\" 'twice'  here"
+# The shell also names the window holding the keyboard. xterm takes keys
+# without focus, but a winit app takes none (DEMO-0206). Unfocused, X answers
+# PointerRoot, which has no name.
 ./demoreel record -n gate -o "$tmp/actions.mp4" -d 12 -s 640x480 \
     -a 'wait 2' -a "type $typed" -a 'key Return' \
-    -- xterm -e sh -c "read line; printf '%s' \"\$line\" > $tmp/typed.txt" >/dev/null
+    -- xterm -e sh -c "read line; printf '%s' \"\$line\" > $tmp/typed.txt;
+        xdotool getwindowfocus getwindowname > $tmp/focus.txt 2>/dev/null" >/dev/null
 got=$(cat "$tmp/typed.txt" 2>/dev/null || true)
 [ "$got" = "$typed" ] || {
     echo "the app received '$got', not '$typed' -- scripted actions did not land" >&2
     exit 1
 }
-echo "wait, type and key all reached the app"
+[ -s "$tmp/focus.txt" ] || {
+    echo "the app's window did not have the keyboard -- fill_frame no longer focuses it" >&2
+    exit 1
+}
+echo "wait, type and key all reached the app, and its window had the keyboard"
 
 step "--steps reaches the app and keeps typed text off the command line"
 # DEMO-0025. -a puts typed text in demoreel's own command line, which any

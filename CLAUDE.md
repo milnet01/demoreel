@@ -250,8 +250,11 @@ something behaves unexpectedly:
   (DEMO-0043). Do not widen it to every visible window either: that list holds
   a nameless display-sized window that would win on size.
 - **No window manager runs on the virtual display**, and none should be added —
-  one app needs no WM. So `xdotool windowactivate` is skipped; the only window
-  already has focus. An app whose dialogs need stacking or positioning may
+  one app needs no WM. So `xdotool windowactivate` is skipped, and
+  `fill_frame` sets focus with `windowfocus`, which needs no WM. Do not drop
+  it as redundant: GTK and Qt take keys without it, but a winit app ignores
+  every `key` and `type` step until it is focused (DEMO-0206). An app whose
+  dialogs need stacking or positioning may
   misbehave; the answer would be a minimal WM, not more code here.
 - **Every message goes through `tr`, `trn` or `tr_help`, and never at import
   time.** The language is chosen in `main()`, so a message translated at
