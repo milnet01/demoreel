@@ -1242,8 +1242,10 @@ Checked by running them, not assumed. This section is for maintainers.
   and does not fall back, so a made-up name stopped it at start. Measured
   2026-10-22: with the variable empty, the window appears for GTK3, GTK4, Qt,
   SDL, winit and Flatpak apps, and for `vkcube` and `glxgears` on `--gpu`.
-  This is why demoreel sets that variable empty rather than clearing it or
-  naming a display.
+  This is why demoreel sets that variable empty rather than unsetting it or
+  naming a display. It also removes an inherited `WAYLAND_SOCKET`, which
+  libwayland and winit read first: with it set, a winit app stopped at start
+  under the empty value.
 - A blank frame is measurable, and the margin is wide. On an empty 1280x800
   `Xvfb`, 99.994% of the frame is one grey level; a window only 200x100 brings
   that to 98%. Refusing above 99.9% separates the two without a threshold that
