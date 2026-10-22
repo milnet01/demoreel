@@ -5266,7 +5266,7 @@ covers both display backends and the Flatpak invocation.
   Source: in-session-2026-10-22 DEMO-0281.
   Lanes: display.
 
-- 📋 [DEMO-0284] **The Flatpak flags warning says a missing flag can send the app to the real compositor, which DEMO-0281 made untrue.**
+- ✅ [DEMO-0284] **The Flatpak flags warning says a missing flag can send the app to the real compositor, which DEMO-0281 made untrue.**
   warn_if_flatpak_underflagged prints "A missing one can send it to
   your real compositor instead". With WAYLAND_DISPLAY empty, a Flatpak
   gets no Wayland socket, with or without --nosocket=wayland (measured
@@ -5274,6 +5274,15 @@ covers both display backends and the Flatpak invocation.
   unable to reach the private screen instead. Reword the message and
   its docstring, then ./ci.sh --pot and --add-message for every
   language. The user kept the flag itself (2026-10-22).
+  2026-10-22, b85b743: wider than filed. A plain `flatpak run` records
+  (finbreak, PeaZip, VICE, no flags), so the warning is removed rather
+  than reworded, by the user's decision; README keeps the three flags as
+  the fallback. Open until the review-contract gate on README.md and
+  CLAUDE.md, batched with DEMO-0283, converges.
+  2026-10-22: no review-contract gate after all. The user ruled the
+  change a clarification of how a Flatpak is recorded, not a change to
+  README's or CLAUDE.md's purpose. b85b743's "gate owed" lines are
+  superseded by this ruling.
   **Layman:** A warning about Flatpak flags overstates the risk now, and its translations need the same fix.
   Kind: fix.
   Source: in-session-2026-10-22 DEMO-0281 review.
