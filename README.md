@@ -1188,8 +1188,8 @@ Checked with `kcalc`: an empty folder gave labels too dark to read, and the
 copied `kdeglobals` fixed them.
 
 **A Qt app may print `Failed to create wl_display`.** That is expected. demoreel
-points the app at a Wayland display that does not exist, so it uses the private
-screen instead of your real one.
+gives the app an empty Wayland display name, so it uses the private screen
+instead of your real one.
 
 **Nothing manages windows on the private screen.** None is needed to record one
 app, and adding one is a dependency for no gain. demoreel gives the app's window
@@ -1237,8 +1237,13 @@ Checked by running them, not assumed. This section is for maintainers.
   inherited, no window on `Xvfb`; with it unset, still no window on `Xvfb`;
   with it set to a name that cannot resolve, the window appears. `Xvfb` records
   black in the first two cases and the run otherwise looks entirely successful.
-  This is why demoreel sets that variable to a name that cannot exist rather
-  than clearing it.
+- Setting `WAYLAND_DISPLAY` empty also keeps a client off the real compositor,
+  and lets a winit app start. winit reads any non-empty value as "use Wayland"
+  and does not fall back, so a made-up name stopped it at start. Measured
+  2026-10-22: with the variable empty, the window appears for GTK3, GTK4, Qt,
+  SDL, winit and Flatpak apps, and for `vkcube` and `glxgears` on `--gpu`.
+  This is why demoreel sets that variable empty rather than clearing it or
+  naming a display.
 - A blank frame is measurable, and the margin is wide. On an empty 1280x800
   `Xvfb`, 99.994% of the frame is one grey level; a window only 200x100 brings
   that to 98%. Refusing above 99.9% separates the two without a threshold that

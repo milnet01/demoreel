@@ -168,7 +168,11 @@ something behaves unexpectedly:
 - `/run/user/1000/wayland-0` exists on this session, and that is what makes
   clearing `WAYLAND_DISPLAY` useless — see the trap below. Measured with GTK4:
   inherited → no window on Xvfb; unset → no window on Xvfb; set to an
-  unresolvable name → window appears.
+  unresolvable name → window appears. Measured 2026-10-22, set empty → window
+  appears for GTK3, GTK4, Qt, SDL (`ffplay`), a winit app, a Flatpak with and
+  without `--nosocket=wayland`, and `vkcube` and `glxgears` on `--gpu`.
+  `strace` shows libwayland then connecting to `/run/user/1000/`, which
+  refuses.
 - An empty 1280x800 Xvfb is 99.994% one grey level; a 200x100 window drops that
   to 98%. That gap is what the blank-recording check is calibrated against.
 - **demoreel's process name is `python3`, not `demoreel`.** It is a script run
@@ -191,12 +195,16 @@ something behaves unexpectedly:
   gate's three tones to the real output. Do not "tidy" `Sound.env` down to
   one. A probe that plays sound outside demoreel needs both too.
 
-- **`WAYLAND_DISPLAY` is set to a name that cannot resolve, not unset — and
-  that is the whole fix, not a stylistic choice.** `wl_display_connect(NULL)`
+- **`WAYLAND_DISPLAY` is set empty, not unset and not to a made-up name —
+  and that is the whole fix, not a stylistic choice.** `wl_display_connect(NULL)`
   falls back to the hardcoded `$XDG_RUNTIME_DIR/wayland-0` when the variable is
   absent, so `env.pop()` sends the app straight to the user's real compositor;
   `Xvfb` then records black, `ffmpeg` exits 0 and every signal says success.
-  Do not "tidy" it back to a `pop()`. Do not neutralise `XDG_RUNTIME_DIR`
+  An empty value is not absent to libwayland: the connection fails, and the
+  toolkit falls back to X11. A made-up name does that too, but winit reads any
+  non-empty value as "use Wayland" and never falls back, so it stopped every
+  winit app at start (DEMO-0281). Do not "tidy" it back to a `pop()` or to a
+  name. Do not neutralise `XDG_RUNTIME_DIR`
   instead: that variable also carries the D-Bus and PipeWire socket paths.
   Do not reach for `QT_QPA_PLATFORM=xcb` — same objection as the Flatpak note
   below, it is Qt-only.

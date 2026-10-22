@@ -29,7 +29,7 @@ are load-bearing and none is obvious:
   speaks Wayland, so an app left to choose renders natively on it. The recorder
   would see that window, but finding the window, sizing it, the scripted steps
   and the blank check all work through X. `vkcube` picks `wayland` there unless
-  told otherwise. The app gets the same unresolvable `WAYLAND_DISPLAY` as on
+  told otherwise. The app gets the same empty `WAYLAND_DISPLAY` as on
   the `Xvfb` path.
 - **`wf-recorder` needs `-D`, `-y`, `-r`, `-c libx264` and `-x yuv420p`.**
   Without `-D` it asks for a frame only when the screen changes, and ignores
