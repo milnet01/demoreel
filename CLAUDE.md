@@ -284,29 +284,30 @@ something behaves unexpectedly:
   runs, with `env -u LC_ALL`, or it passes without testing anything. A changed
   English message also needs `./ci.sh --pot`, or the template step fails.
 
-## Flatpak targets need three extra flags
+## Flatpak targets: plain first, three flags as the fallback
 
-A Flatpak does not inherit an arbitrary `DISPLAY`: a manifest's
-`--socket=fallback-x11` binds the *session's* X socket, not one named later, so
-the app starts with an empty `DISPLAY` and Qt aborts with
-`qt.qpa.xcb: could not connect to display`. The caller passes the override:
+A plain `flatpak run <app-id>` records. Under demoreel's empty
+`WAYLAND_DISPLAY`, Flatpak gives the sandbox no Wayland socket, so a
+`sockets=fallback-x11;wayland` manifest binds X11, and to the private display
+named in `DISPLAY`. Measured 2026-10-22 with finbreak and PeaZip (fallback-x11)
+and VICE (x11 only), no flags, each drawing. Before DEMO-0281 the made-up name
+counted as Wayland present, so fallback-x11 bound nothing and the flags were
+required. A Chromium Flatpak is the known exception (DEMO-0283).
+
+README keeps the three flags as the fallback for an app the plain command does
+not bring up:
 
     demoreel record -o demo.mp4 -- \
       flatpak run --socket=x11 --nosocket=wayland --filesystem=/tmp/.X11-unix <app-id>
 
-Verified working. `--filesystem=/tmp/.X11-unix` is what lets the sandbox see
-the socket itself. `--nosocket=wayland` keeps the session's Wayland socket out
-of the sandbox: finbreak's manifest is `sockets=fallback-x11;wayland`, and
-*fallback*-x11 means X11 is bound only when Wayland is absent. With the Wayland
-socket present the app never looks at X11, so the virtual display goes unused.
-Under demoreel's empty `WAYLAND_DISPLAY` no socket arrives anyway. Measured
-2026-10-22: Flatpak gave the sandbox a Wayland socket when the host's variable
-was `wayland-0` or unset, and none when it was empty or a made-up name. So
-`--nosocket=wayland` is a spare guard, kept by the user's decision
-(2026-10-22): it costs nothing, and holds if demoreel's environment changes.
-Do not drop it from the recipe or the warning as dead.
+`--socket=x11` and `--filesystem=/tmp/.X11-unix` grant X11 to a manifest that
+lacks it. `--nosocket=wayland` is a spare guard, kept in the recipe by the
+user's decision (2026-10-22): it costs nothing, and holds if demoreel's
+environment changes. Do not drop it from the recipe as dead. demoreel no
+longer warns about missing flags (DEMO-0284, user's decision 2026-10-22): the
+warning fired on plain commands that work.
 
-**Do not swap it for `QT_QPA_PLATFORM=xcb`**, which is the fix most search
+**Do not swap the flags for `QT_QPA_PLATFORM=xcb`**, which is the fix most search
 results suggest. Two reasons, and the first is the one that matters here: it is
 Qt-only, so a GTK target ignores it and the tool would need to know each app's
 toolkit — per-app knowledge this tool exists not to carry. It is also unstable

@@ -231,16 +231,6 @@ msgstr ""
 "非公開の音声出力を作成できなかったため、アプリの音がスピーカーから鳴るかもしれません。\n"
 "  {reason}"
 
-msgid "this is a Flatpak target and the command is missing: {flags}"
-msgstr "これは Flatpak のアプリですが、コマンドに次が足りません: {flags}"
-
-msgid ""
-"A missing one can send it to your real compositor instead, leaving this\n"
-"recording empty. README.md says what each flag is for."
-msgstr ""
-"足りないと、アプリが実際のコンポジターに表示されてしまい、この録画は\n"
-"空になることがあります。各フラグの役割は README.md にあります。"
-
 msgid ""
 "openSUSE's own ffmpeg leaves it out. Install ffmpeg from the Packman repository,\n"
 "  which has it."
@@ -349,13 +339,6 @@ msgstr ""
 
 msgid "The app ran but drew nothing here. Two causes account for most of it:"
 msgstr "アプリは動きましたが、ここには何も描画しませんでした。原因はほとんどの場合、次の 2 つです:"
-
-msgid ""
-"It rendered somewhere else. A Flatpak needs --nosocket=wayland on\n"
-"    its command line; see README.md."
-msgstr ""
-"別の場所に描画した。Flatpak ではコマンドラインに\n"
-"    --nosocket=wayland が必要です。README.md を参照してください。"
 
 msgid "--settle could not sample the display, so it cannot tell when the app has drawn."
 msgstr "--settle がディスプレイを調べられなかったため、アプリが描画したかどうかを判断できません。"
@@ -941,10 +924,6 @@ msgid "an app that needs the graphics card (OpenGL, Vulkan)"
 msgstr "グラフィックカードが必要なアプリ (OpenGL、Vulkan)"
 
 #. argparse formats this text with %
-msgid "a Flatpak app, which needs three flags on its own command line"
-msgstr "Flatpak アプリ。そのコマンドラインに 3 つのフラグが必要です"
-
-#. argparse formats this text with %
 msgid "examples:"
 msgstr "例:"
 
@@ -1340,3 +1319,14 @@ msgstr "各フレームの幅 (既定値: {width}。フレームがそれより�
 #. argparse formats this text with %
 msgid "how many frames side by side (default: {columns})"
 msgstr "横に並べるフレームの数 (既定値: {columns})"
+
+msgid ""
+"It rendered somewhere else. For a Flatpak, try the three flags in README.md,\n"
+"    § Recording a Flatpak app."
+msgstr ""
+"別の場所に描画した。Flatpak の場合は、README.md の\n"
+"    § Recording a Flatpak app にある 3 つのフラグを試してください。"
+
+#. argparse formats this text with %
+msgid "a Flatpak app"
+msgstr "Flatpak アプリ"

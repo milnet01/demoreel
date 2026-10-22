@@ -231,16 +231,6 @@ msgstr ""
 "geen privaat klankuitset kon gemaak word nie, so die toep se klank kan dalk op u luidsprekers speel.\n"
 "  {reason}"
 
-msgid "this is a Flatpak target and the command is missing: {flags}"
-msgstr "dit is 'n Flatpak-teiken en die opdrag kort: {flags}"
-
-msgid ""
-"A missing one can send it to your real compositor instead, leaving this\n"
-"recording empty. README.md says what each flag is for."
-msgstr ""
-"As een ontbreek, kan dit eerder na u regte saamsteller gestuur word, wat\n"
-"hierdie opname leeg laat. README.md sê waarvoor elke vlag is."
-
 msgid ""
 "openSUSE's own ffmpeg leaves it out. Install ffmpeg from the Packman repository,\n"
 "  which has it."
@@ -349,13 +339,6 @@ msgstr ""
 
 msgid "The app ran but drew nothing here. Two causes account for most of it:"
 msgstr "Die toep het geloop maar niks hier geteken nie. Twee oorsake verklaar die meeste gevalle:"
-
-msgid ""
-"It rendered somewhere else. A Flatpak needs --nosocket=wayland on\n"
-"    its command line; see README.md."
-msgstr ""
-"Dit het êrens anders geteken. 'n Flatpak het --nosocket=wayland op\n"
-"    sy opdragreël nodig; sien README.md."
 
 msgid "--settle could not sample the display, so it cannot tell when the app has drawn."
 msgstr "--settle kon nie 'n monster van die skerm neem nie, so dit kan nie sê wanneer die toep geteken het nie."
@@ -947,10 +930,6 @@ msgid "an app that needs the graphics card (OpenGL, Vulkan)"
 msgstr "'n toep wat die grafiese kaart nodig het (OpenGL, Vulkan)"
 
 #. argparse formats this text with %
-msgid "a Flatpak app, which needs three flags on its own command line"
-msgstr "'n Flatpak-toep, wat drie vlae op sy eie opdragreël nodig het"
-
-#. argparse formats this text with %
 msgid "examples:"
 msgstr "voorbeelde:"
 
@@ -1346,3 +1325,14 @@ msgstr "elke raam se breedte (verstek: {width}, of minder as die raam smaller is
 #. argparse formats this text with %
 msgid "how many frames side by side (default: {columns})"
 msgstr "hoeveel rame langs mekaar (verstek: {columns})"
+
+msgid ""
+"It rendered somewhere else. For a Flatpak, try the three flags in README.md,\n"
+"    § Recording a Flatpak app."
+msgstr ""
+"Dit het êrens anders geteken. Probeer vir 'n Flatpak die drie vlae in README.md,\n"
+"    § Recording a Flatpak app."
+
+#. argparse formats this text with %
+msgid "a Flatpak app"
+msgstr "'n Flatpak-toep"

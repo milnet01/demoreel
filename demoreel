@@ -1735,37 +1735,6 @@ def loudest(output):
     return float(found[1]) if found else None
 
 
-FLATPAK_FLAGS = ("--socket=x11", "--nosocket=wayland", "--filesystem=/tmp/.X11-unix")
-
-
-def warn_if_flatpak_underflagged(command):
-    """Say up front when a Flatpak target is missing the flags it needs.
-
-    Without them the app renders on the user's real compositor, the virtual
-    display stays empty, and the run fails the blank check with a message
-    listing two possible causes. We can tell which one it is before spending
-    the recording on it.
-
-    A warning, not an error: a manifest with no wayland socket does not need
-    --nosocket=wayland, and refusing would break an invocation that works. This
-    reads the caller's own command line and knows nothing about any
-    application, which is what keeps it out of per-app profile territory.
-    """
-    if Path(command[0]).name != "flatpak" or "run" not in command:
-        return
-    missing = [f for f in FLATPAK_FLAGS
-               if not any(arg.startswith(f) for arg in command)]
-    if missing:
-        note(tr("this is a Flatpak target and the command is missing: {flags}",
-                flags=", ".join(missing)))
-        # One sentence over two lines, each a note of its own. Splitting it is
-        # layout: nothing reads a meaning out of the parts.
-        for line in tr("A missing one can send it to your real compositor instead, "
-                       "leaving this\nrecording empty. README.md says what each "
-                       "flag is for.").split("\n"):
-            note(f"  {line}")
-
-
 # Which package gives each program, per package manager, looked up in each
 # distro's own package index on 2026-09-27 (DEMO-0051): openSUSE from rpm on
 # this machine, the rest with apt-file, dnf repoquery and pacman -F in their
@@ -1992,7 +1961,6 @@ def prepare(a, suffix):
     if not command:
         die(tr("give the app to run after `--`, e.g. {example}",
                example=f"demoreel {a.cmd} -- xclock"))
-    warn_if_flatpak_underflagged(command)
 
     match = SIZE_RE.match(a.size)
     if not match:
@@ -2136,8 +2104,8 @@ def blank_causes(gpu):
     return ("  " + tr("The app ran but drew nothing here. Two causes account for most "
                       "of it:")
             + "\n  - " + first
-            + "\n  - " + tr("It rendered somewhere else. A Flatpak needs "
-                            "--nosocket=wayland on\n    its command line; see README.md."))
+            + "\n  - " + tr("It rendered somewhere else. For a Flatpak, try the three "
+                            "flags in README.md,\n    § Recording a Flatpak app."))
 
 
 class Checks:
@@ -4865,10 +4833,8 @@ RECORD_EXAMPLES = [
      "  -a 'wait 2' -a 'click 400 300' -a 'type hello' -a 'key Return' -- kate"),
     ("an app that needs the graphics card (OpenGL, Vulkan)",
      "demoreel record -o cube.mp4 -d 10 --gpu -- vkcube"),
-    ("a Flatpak app, which needs three flags on its own command line",
-     "demoreel record -o demo.mp4 -d 20 -- \\\n"
-     "  flatpak run --socket=x11 --nosocket=wayland \\\n"
-     "  --filesystem=/tmp/.X11-unix org.kde.kate"),
+    ("a Flatpak app",
+     "demoreel record -o demo.mp4 -d 20 -- flatpak run org.kde.kate"),
 ]
 
 

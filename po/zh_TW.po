@@ -231,16 +231,6 @@ msgstr ""
 "無法建立私人聲音輸出，因此應用程式的聲音可能會從您的喇叭播出。\n"
 "  {reason}"
 
-msgid "this is a Flatpak target and the command is missing: {flags}"
-msgstr "這是 Flatpak 目標，但指令中缺少：{flags}"
-
-msgid ""
-"A missing one can send it to your real compositor instead, leaving this\n"
-"recording empty. README.md says what each flag is for."
-msgstr ""
-"缺少其中任何一個，都可能讓它改到您真實的合成器上執行，\n"
-"使這段錄影一片空白。README.md 說明了每個旗標的用途。"
-
 msgid ""
 "openSUSE's own ffmpeg leaves it out. Install ffmpeg from the Packman repository,\n"
 "  which has it."
@@ -349,13 +339,6 @@ msgstr ""
 
 msgid "The app ran but drew nothing here. Two causes account for most of it:"
 msgstr "應用程式有執行，但在這裡什麼都沒有畫出來。大多數情況是以下兩個原因之一："
-
-msgid ""
-"It rendered somewhere else. A Flatpak needs --nosocket=wayland on\n"
-"    its command line; see README.md."
-msgstr ""
-"它畫到別的地方去了。Flatpak 需要在指令列加上 --nosocket=wayland 選項；\n"
-"    請參閱 README.md。"
 
 msgid "--settle could not sample the display, so it cannot tell when the app has drawn."
 msgstr "--settle 無法取樣螢幕，所以無法判斷應用程式何時已經畫好。"
@@ -941,10 +924,6 @@ msgid "an app that needs the graphics card (OpenGL, Vulkan)"
 msgstr "需要顯示卡的應用程式（OpenGL、Vulkan）"
 
 #. argparse formats this text with %
-msgid "a Flatpak app, which needs three flags on its own command line"
-msgstr "Flatpak 應用程式，它自己的指令列需要加上三個旗標"
-
-#. argparse formats this text with %
 msgid "examples:"
 msgstr "範例："
 
@@ -1340,3 +1319,14 @@ msgstr "每個影格的寬度（預設：{width}，影格較窄時則更小）"
 #. argparse formats this text with %
 msgid "how many frames side by side (default: {columns})"
 msgstr "並排幾個影格（預設：{columns}）"
+
+msgid ""
+"It rendered somewhere else. For a Flatpak, try the three flags in README.md,\n"
+"    § Recording a Flatpak app."
+msgstr ""
+"它畫到別的地方去了。如果是 Flatpak，請試試 README.md 中\n"
+"    § Recording a Flatpak app 一節裡的三個旗標。"
+
+#. argparse formats this text with %
+msgid "a Flatpak app"
+msgstr "Flatpak 應用程式"

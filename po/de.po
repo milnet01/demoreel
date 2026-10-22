@@ -231,16 +231,6 @@ msgstr ""
 "es ließ sich keine private Tonausgabe anlegen, daher kann der Ton der App über Ihre Lautsprecher laufen.\n"
 "  {reason}"
 
-msgid "this is a Flatpak target and the command is missing: {flags}"
-msgstr "dies ist ein Flatpak-Ziel, und dem Befehl fehlt: {flags}"
-
-msgid ""
-"A missing one can send it to your real compositor instead, leaving this\n"
-"recording empty. README.md says what each flag is for."
-msgstr ""
-"Fehlt eine davon, kann die App stattdessen auf Ihrem echten Compositor landen, und diese\n"
-"Aufnahme bleibt leer. README.md sagt, wofür jede Option da ist."
-
 msgid ""
 "openSUSE's own ffmpeg leaves it out. Install ffmpeg from the Packman repository,\n"
 "  which has it."
@@ -349,13 +339,6 @@ msgstr ""
 
 msgid "The app ran but drew nothing here. Two causes account for most of it:"
 msgstr "Die App lief, hat hier aber nichts gezeichnet. Meistens hat es eine von zwei Ursachen:"
-
-msgid ""
-"It rendered somewhere else. A Flatpak needs --nosocket=wayland on\n"
-"    its command line; see README.md."
-msgstr ""
-"Sie hat woanders gezeichnet. Ein Flatpak braucht --nosocket=wayland in\n"
-"    seiner Befehlszeile; siehe README.md."
 
 msgid "--settle could not sample the display, so it cannot tell when the app has drawn."
 msgstr "--settle konnte den Bildschirm nicht abtasten und kann daher nicht erkennen, wann die App gezeichnet hat."
@@ -947,10 +930,6 @@ msgid "an app that needs the graphics card (OpenGL, Vulkan)"
 msgstr "eine App, die die Grafikkarte braucht (OpenGL, Vulkan)"
 
 #. argparse formats this text with %
-msgid "a Flatpak app, which needs three flags on its own command line"
-msgstr "eine Flatpak-App, die drei Optionen in ihrer eigenen Befehlszeile braucht"
-
-#. argparse formats this text with %
 msgid "examples:"
 msgstr "Beispiele:"
 
@@ -1346,3 +1325,14 @@ msgstr "die Breite jedes Bildes (Standard: {width}, oder weniger, wenn das Bild 
 #. argparse formats this text with %
 msgid "how many frames side by side (default: {columns})"
 msgstr "wie viele Bilder nebeneinander (Standard: {columns})"
+
+msgid ""
+"It rendered somewhere else. For a Flatpak, try the three flags in README.md,\n"
+"    § Recording a Flatpak app."
+msgstr ""
+"Sie hat woanders gezeichnet. Versuchen Sie bei einem Flatpak die drei Optionen aus README.md,\n"
+"    § Recording a Flatpak app."
+
+#. argparse formats this text with %
+msgid "a Flatpak app"
+msgstr "eine Flatpak-App"

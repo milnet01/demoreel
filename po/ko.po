@@ -231,16 +231,6 @@ msgstr ""
 "비공개 소리 출력을 만들 수 없어서, 앱의 소리가 스피커로 재생될 수 있습니다.\n"
 "  {reason}"
 
-msgid "this is a Flatpak target and the command is missing: {flags}"
-msgstr "Flatpak 대상인데 명령에 다음이 빠져 있습니다: {flags}"
-
-msgid ""
-"A missing one can send it to your real compositor instead, leaving this\n"
-"recording empty. README.md says what each flag is for."
-msgstr ""
-"하나라도 빠지면 앱이 실제 컴포지터로 가 버려 이\n"
-"녹화가 비게 될 수 있습니다. 각 플래그의 용도는 README.md에 있습니다."
-
 msgid ""
 "openSUSE's own ffmpeg leaves it out. Install ffmpeg from the Packman repository,\n"
 "  which has it."
@@ -349,13 +339,6 @@ msgstr ""
 
 msgid "The app ran but drew nothing here. Two causes account for most of it:"
 msgstr "앱은 실행되었지만 여기에 아무것도 그리지 않았습니다. 대부분 두 가지 원인 때문입니다:"
-
-msgid ""
-"It rendered somewhere else. A Flatpak needs --nosocket=wayland on\n"
-"    its command line; see README.md."
-msgstr ""
-"다른 곳에 렌더링했습니다. Flatpak은 명령줄에 --nosocket=wayland가\n"
-"    필요합니다. README.md를 참고하십시오."
 
 msgid "--settle could not sample the display, so it cannot tell when the app has drawn."
 msgstr "--settle이 디스플레이를 샘플링할 수 없어 앱이 언제 그렸는지 알 수 없습니다."
@@ -941,10 +924,6 @@ msgid "an app that needs the graphics card (OpenGL, Vulkan)"
 msgstr "그래픽 카드가 필요한 앱 (OpenGL, Vulkan)"
 
 #. argparse formats this text with %
-msgid "a Flatpak app, which needs three flags on its own command line"
-msgstr "자체 명령줄에 플래그 세 개가 필요한 Flatpak 앱"
-
-#. argparse formats this text with %
 msgid "examples:"
 msgstr "예:"
 
@@ -1340,3 +1319,14 @@ msgstr "각 프레임의 너비 (기본값: {width}, 프레임이 더 좁으면 
 #. argparse formats this text with %
 msgid "how many frames side by side (default: {columns})"
 msgstr "나란히 놓을 프레임 수 (기본값: {columns})"
+
+msgid ""
+"It rendered somewhere else. For a Flatpak, try the three flags in README.md,\n"
+"    § Recording a Flatpak app."
+msgstr ""
+"다른 곳에 렌더링했습니다. Flatpak이라면 README.md의\n"
+"    § Recording a Flatpak app에 있는 플래그 세 개를 사용해 보십시오."
+
+#. argparse formats this text with %
+msgid "a Flatpak app"
+msgstr "Flatpak 앱"

@@ -31,6 +31,12 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   The name is now empty, which keeps every toolkit off your desktop
   and lets winit use the private screen.
 
+- **A Flatpak app records with a plain `flatpak run`** (DEMO-0284)
+  Since the fix above, a Flatpak reaches the private screen with no
+  extra flags. demoreel no longer warns when the three Flatpak flags
+  are missing, because the warning fired on commands that work. The
+  flags stay in README as the thing to try if an app does not appear.
+
 - **Scripted `key` and `type` steps now reach winit apps** (DEMO-0206)
   No window on the private screen had the keyboard. GTK and Qt apps
   took key presses anyway, but a winit app ignored them. demoreel now

@@ -6003,55 +6003,22 @@ esac
 }
 echo "a client with no cookie cannot reach the display, from the app's start on"
 
-step "a Flatpak target missing its flags is warned about"
-# Without the flags a Flatpak renders on the real compositor and the run fails
-# the blank check with a message naming two possible causes. Saying which one it
-# is costs nothing and saves the recording.
-#
-# A stub named flatpak stands in for the real one: what is under test is the
-# reading of the caller's command line, not flatpak itself, and the stub keeps
-# the step working on a runner with no Flatpak installed.
-mkdir -p "$tmp/bin"
-printf '#!/bin/sh\nexec xclock\n' > "$tmp/bin/flatpak"
-chmod +x "$tmp/bin/flatpak"
-PATH="$tmp/bin:$PATH" ./demoreel record -n gate -o "$tmp/fp.mp4" -d 3 -s 640x480 \
-    -- flatpak run org.example.App >/dev/null 2>"$tmp/fp.err"
-grep -q -- '--nosocket=wayland' "$tmp/fp.err" || {
-    echo "an under-flagged Flatpak target drew no warning:" >&2
-    cat "$tmp/fp.err" >&2
-    exit 1
-}
-# And a fully-flagged one must stay quiet, or the warning is noise.
-PATH="$tmp/bin:$PATH" ./demoreel record -n gate -o "$tmp/fp-ok.mp4" -d 3 -s 640x480 \
-    -- flatpak run --socket=x11 --nosocket=wayland --filesystem=/tmp/.X11-unix \
-    org.example.App >/dev/null 2>"$tmp/fp-ok.err"
-! grep -q 'is missing' "$tmp/fp-ok.err" || {
-    echo "a correctly-flagged Flatpak target was warned about anyway" >&2
-    exit 1
-}
-echo "the missing flags are named, and a complete command is left alone"
-
-step "a real Flatpak records with the three flags README documents"
-# DEMO-0007. The step above tests demoreel's reading of a Flatpak command line,
-# against a stub that is not Flatpak at all. Nothing tested the recipe itself,
-# so the three flags README prints could stop working -- a Flatpak release
-# changing what `--socket=x11` binds would do it -- and the gate would stay
-# green.
+step "a real Flatpak records with no flags, and with README's three"
+# DEMO-0007, DEMO-0284. Nothing else tests a Flatpak itself, so a Flatpak
+# release changing what it binds could break both commands README prints and
+# the gate would stay green. The plain command works because demoreel's empty
+# WAYLAND_DISPLAY gives the sandbox no Wayland socket, so a fallback-x11
+# manifest binds X11, to the private display. The three flags are README's
+# fallback for an app the plain command does not bring up.
 #
 # GIMP, deliberately not finbreak: a startup dialog and single-instance handover
 # are the two traps README names, and a gate step is the wrong place to meet
 # them. It is a plain GTK application, installed from Flathub, and it reaches
 # the private display in about five seconds.
 #
-# What this proves is that a real Flatpak draws on the private display through
-# those three flags. It is NOT a check that GIMP finished starting: at three
-# seconds the window in frame is its splash, which is what a recording that
-# short honestly shows.
-#
-# The negative case -- the same app WITHOUT --nosocket=wayland -- is deliberately
-# not run here. Without it the app reaches the user's real compositor, which
-# means opening a window on their desktop, and a gate that runs before every
-# push must not do that. The stub step above covers the warning.
+# What this proves is that a real Flatpak draws on the private display. It is
+# NOT a check that GIMP finished starting: at three seconds the window in frame
+# is its splash, which is what a recording that short honestly shows.
 flatpak_app=org.gimp.GIMP
 if ! command -v flatpak >/dev/null; then
     echo "skipped: this machine has no flatpak"
@@ -6063,15 +6030,17 @@ elif flatpak ps --columns=application 2>/dev/null | grep -qx "$flatpak_app"; the
     # demoreel's. Skipping says which it is.
     echo "skipped: $flatpak_app is already running, so a launch would hand over"
 else
-    ./demoreel record -n gateflatpak -o "$tmp/real-fp.mp4" -d 3 -s 800x600 \
-        --startup-timeout 60 \
-        -- flatpak run --socket=x11 --nosocket=wayland \
-           --filesystem=/tmp/.X11-unix "$flatpak_app" >/dev/null
-    [ -s "$tmp/real-fp.mp4" ] || {
-        echo "no video written for $flatpak_app" >&2; exit 1; }
-    assert_frame_drawn "$tmp/real-fp.mp4" 45 \
-        "$flatpak_app never reached the private display with the documented flags"
-    echo "$flatpak_app drew on the private display with the three flags"
+    for flags in "" "--socket=x11 --nosocket=wayland --filesystem=/tmp/.X11-unix"; do
+        # shellcheck disable=SC2086  # $flags is a list of words, or none
+        ./demoreel record -n gateflatpak -o "$tmp/real-fp.mp4" -d 3 -s 800x600 \
+            --startup-timeout 60 -- flatpak run $flags "$flatpak_app" >/dev/null
+        [ -s "$tmp/real-fp.mp4" ] || {
+            echo "no video written for flatpak run $flags $flatpak_app" >&2; exit 1; }
+        assert_frame_drawn "$tmp/real-fp.mp4" 45 \
+            "flatpak run ${flags:-with no flags} never reached the private display"
+        rm "$tmp/real-fp.mp4"
+    done
+    echo "$flatpak_app drew on the private display with no flags, and with the three"
 fi
 
 step "the state directory must be one we own"

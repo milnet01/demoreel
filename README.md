@@ -983,7 +983,18 @@ flat frame there fails the run as a blank screen does.
 
 ## Recording a Flatpak app
 
-A Flatpak needs three extra flags on **its own** command line:
+Most Flatpak apps record like any other:
+
+```sh
+demoreel record -o demo.mp4 -d 20 -- flatpak run io.github.milnet01.finbreak
+```
+
+demoreel keeps every app away from your real desktop's display system, and a
+Flatpak's sandbox follows suit: it lets the app reach the private screen
+instead. Measured with finbreak, PeaZip and VICE.
+
+If a Flatpak app does not appear in the video, give its own command line three
+flags:
 
 ```sh
 demoreel record -o demo.mp4 -d 20 -- \
@@ -991,19 +1002,10 @@ demoreel record -o demo.mp4 -d 20 -- \
   io.github.milnet01.finbreak
 ```
 
-If you leave one out, demoreel tells you which one before it starts recording,
-rather than handing you a blank video afterwards.
-
-Why they are needed, briefly. A Flatpak runs in a sandbox and cannot see the
-private screen unless it is told to. `--socket=x11` and
-`--filesystem=/tmp/.X11-unix` are what let it through. `--nosocket=wayland` is
-a spare guard. Given the choice, the app prefers the other display system and
-ignores the private screen entirely. demoreel already hides that choice from
-it, and this flag hides it a second time.
-
-It is a warning rather than a refusal, because an app that never offered that
-choice does not need `--nosocket=wayland`, and knowing which is which would mean
-knowing each app.
+`--socket=x11` and `--filesystem=/tmp/.X11-unix` let the app through to the
+private screen even where its own permissions would not. `--nosocket=wayland`
+keeps the other display system out of the sandbox, a second time over what
+demoreel already does.
 
 You may see `QT_QPA_PLATFORM=xcb` suggested instead. Prefer the flags above.
 That setting only works for Qt apps, so a GTK app ignores it — and relying on it
@@ -1014,10 +1016,6 @@ planned*.
 
 This is the case the whole tool was built for. Flathub wants to see the Flatpak
 running, not a source checkout.
-
-**An ordinary, non-Flatpak app needs the same nudge, and demoreel does it for
-you** — no flags, nothing to remember. It applies to every target that is not
-sandboxed away from its environment.
 
 ## Install from source
 
@@ -1354,8 +1352,7 @@ Working. One file, `demoreel`, Python 3 and the standard library only.
 
 Verified by recording: a plain app, scripted typing, ending a run early with
 `stop`, two concurrent recordings landing on different displays, and every
-failure path leaving no stray `Xvfb` behind. Flatpak targets work too, with the
-three flags shown above.
+failure path leaving no stray `Xvfb` behind. Flatpak targets work too.
 
 `--gpu` verified the same way, by looking at the frames: `vkcube` recorded as a
 hardware-rendered spinning cube, an ordinary app sized to fill the frame,
@@ -1401,9 +1398,8 @@ that samples a frame and fails if the app never reached the picture; its
 counterpart, a run made to draw nothing, which must be refused rather than
 returned; a run whose scripted `wait`, `type` and `key` must arrive, checked by
 having the app itself write back what it received; a `-d 0` run ended with
-`stop`; a check that a client with no auth cookie cannot reach the display; a
-Flatpak command missing a flag, which must be named; and a run-state directory
-we do not own, which must be refused. `.github/workflows/ci.yml` installs the
+`stop`; a check that a client with no auth cookie cannot reach the display;
+and a run-state directory we do not own, which must be refused. `.github/workflows/ci.yml` installs the
 programs and runs that same script, and takes the linter version and the
 documentation-only decision from it rather than restating them. Add a check to
 `ci.sh`, never to the workflow.
@@ -1427,7 +1423,8 @@ option.
 `--gpu -- vkcube` and needs a graphics card with `cage`, `Xwayland`,
 `wf-recorder` and `wlr-randr`, and an ffmpeg library under `wf-recorder` that
 has libx264; another
-records a real Flatpak and needs that application installed. Both print why
+records a real Flatpak, with no flags and with the three, and needs that
+application installed. Both print why
 they skipped otherwise, and both skip on GitHub — so the checks GitHub runs
 still cover the ordinary backend alone. And a green step is not the same as a
 good recording: the check can tell a flat colour from a picture, nothing more,

@@ -231,16 +231,6 @@ msgstr ""
 "не вдалося створити приватний звуковий вихід, тому звук програми може грати через ваші динаміки.\n"
 "  {reason}"
 
-msgid "this is a Flatpak target and the command is missing: {flags}"
-msgstr "це програма Flatpak, а в команді бракує: {flags}"
-
-msgid ""
-"A missing one can send it to your real compositor instead, leaving this\n"
-"recording empty. README.md says what each flag is for."
-msgstr ""
-"Без будь-якого з них програма може потрапити до вашого справжнього\n"
-"композитора, і запис буде порожнім. README.md пояснює, для чого кожен прапорець."
-
 msgid ""
 "openSUSE's own ffmpeg leaves it out. Install ffmpeg from the Packman repository,\n"
 "  which has it."
@@ -349,13 +339,6 @@ msgstr ""
 
 msgid "The app ran but drew nothing here. Two causes account for most of it:"
 msgstr "Програма запустилася, але нічого тут не намалювала. Найчастіше причин дві:"
-
-msgid ""
-"It rendered somewhere else. A Flatpak needs --nosocket=wayland on\n"
-"    its command line; see README.md."
-msgstr ""
-"Вона малювала деінде. Програмі Flatpak потрібен --nosocket=wayland\n"
-"    у її командному рядку; див. README.md."
 
 msgid "--settle could not sample the display, so it cannot tell when the app has drawn."
 msgstr "--settle не зміг узяти зразок екрана, тому не може визначити, коли програма щось намалювала."
@@ -953,10 +936,6 @@ msgid "an app that needs the graphics card (OpenGL, Vulkan)"
 msgstr "програма, якій потрібна відеокарта (OpenGL, Vulkan)"
 
 #. argparse formats this text with %
-msgid "a Flatpak app, which needs three flags on its own command line"
-msgstr "програма Flatpak, якій потрібні три прапорці в її власному командному рядку"
-
-#. argparse formats this text with %
 msgid "examples:"
 msgstr "приклади:"
 
@@ -1352,3 +1331,14 @@ msgstr "ширина кожного кадру (типово: {width} або м�
 #. argparse formats this text with %
 msgid "how many frames side by side (default: {columns})"
 msgstr "скільки кадрів поруч (типово: {columns})"
+
+msgid ""
+"It rendered somewhere else. For a Flatpak, try the three flags in README.md,\n"
+"    § Recording a Flatpak app."
+msgstr ""
+"Вона малювала деінде. Для програми Flatpak спробуйте три прапорці з README.md,\n"
+"    § Recording a Flatpak app."
+
+#. argparse formats this text with %
+msgid "a Flatpak app"
+msgstr "програма Flatpak"

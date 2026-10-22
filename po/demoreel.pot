@@ -193,14 +193,6 @@ msgid ""
 "  {reason}"
 msgstr ""
 
-msgid "this is a Flatpak target and the command is missing: {flags}"
-msgstr ""
-
-msgid ""
-"A missing one can send it to your real compositor instead, leaving this\n"
-"recording empty. README.md says what each flag is for."
-msgstr ""
-
 msgid ""
 "openSUSE's own ffmpeg leaves it out. Install ffmpeg from the Packman repository,\n"
 "  which has it."
@@ -288,8 +280,8 @@ msgid "The app ran but drew nothing here. Two causes account for most of it:"
 msgstr ""
 
 msgid ""
-"It rendered somewhere else. A Flatpak needs --nosocket=wayland on\n"
-"    its command line; see README.md."
+"It rendered somewhere else. For a Flatpak, try the three flags in README.md,\n"
+"    § Recording a Flatpak app."
 msgstr ""
 
 msgid ""
@@ -904,7 +896,7 @@ msgid "an app that needs the graphics card (OpenGL, Vulkan)"
 msgstr ""
 
 #. argparse formats this text with %
-msgid "a Flatpak app, which needs three flags on its own command line"
+msgid "a Flatpak app"
 msgstr ""
 
 #. argparse formats this text with %

@@ -231,16 +231,6 @@ msgstr ""
 "تعذّر إنشاء مخرج صوت خاص، لذا قد يُسمَع صوت التطبيق من مكبّرات الصوت لديك.\n"
 "  {reason}"
 
-msgid "this is a Flatpak target and the command is missing: {flags}"
-msgstr "الهدف تطبيق Flatpak، وينقص الأمرَ ما يلي: {flags}"
-
-msgid ""
-"A missing one can send it to your real compositor instead, leaving this\n"
-"recording empty. README.md says what each flag is for."
-msgstr ""
-"غياب أيٍّ منها قد يرسله إلى المُركِّب الحقيقي لديك بدلًا من ذلك، فيبقى هذا\n"
-"التسجيل فارغًا. يشرح README.md الغرض من كل خيار."
-
 msgid ""
 "openSUSE's own ffmpeg leaves it out. Install ffmpeg from the Packman repository,\n"
 "  which has it."
@@ -349,13 +339,6 @@ msgstr ""
 
 msgid "The app ran but drew nothing here. Two causes account for most of it:"
 msgstr "عمل التطبيق لكنه لم يرسم شيئًا هنا. أغلب الحالات تعود إلى أحد سببين:"
-
-msgid ""
-"It rendered somewhere else. A Flatpak needs --nosocket=wayland on\n"
-"    its command line; see README.md."
-msgstr ""
-"رسم في مكان آخر. يحتاج تطبيق Flatpak إلى --nosocket=wayland في\n"
-"    سطر أوامره؛ راجع README.md."
 
 msgid "--settle could not sample the display, so it cannot tell when the app has drawn."
 msgstr "تعذّر على --settle أخذ عيّنة من الشاشة، لذا لا يستطيع معرفة متى رسم التطبيق."
@@ -971,10 +954,6 @@ msgid "an app that needs the graphics card (OpenGL, Vulkan)"
 msgstr "تطبيق يحتاج إلى بطاقة الرسوميات (OpenGL، Vulkan)"
 
 #. argparse formats this text with %
-msgid "a Flatpak app, which needs three flags on its own command line"
-msgstr "تطبيق Flatpak، ويحتاج إلى ثلاثة خيارات في سطر أوامره"
-
-#. argparse formats this text with %
 msgid "examples:"
 msgstr "أمثلة:"
 
@@ -1370,3 +1349,14 @@ msgstr "عرض كل إطار (الافتراضي: {width}، أو أقل إن ك�
 #. argparse formats this text with %
 msgid "how many frames side by side (default: {columns})"
 msgstr "عدد الإطارات جنبًا إلى جنب (الافتراضي: {columns})"
+
+msgid ""
+"It rendered somewhere else. For a Flatpak, try the three flags in README.md,\n"
+"    § Recording a Flatpak app."
+msgstr ""
+"رسم في مكان آخر. مع تطبيق Flatpak، جرّب الخيارات الثلاثة في README.md،\n"
+"    § Recording a Flatpak app."
+
+#. argparse formats this text with %
+msgid "a Flatpak app"
+msgstr "تطبيق Flatpak"
