@@ -204,9 +204,10 @@ something behaves unexpectedly:
   toolkit falls back to X11. A made-up name does that too, but winit reads any
   non-empty value as "use Wayland" and never falls back, so it stopped every
   winit app at start (DEMO-0281). An inherited `WAYLAND_SOCKET` is removed
-  too: libwayland and winit read it ahead of `WAYLAND_DISPLAY`, and with it
-  set a winit app aborted at start under the empty value (measured
-  2026-10-22). Do not "tidy" `WAYLAND_DISPLAY` back to a `pop()` or to a
+  from every process demoreel starts: libwayland reads it ahead of
+  `WAYLAND_DISPLAY`, and winit when that is empty. With it set, a winit app
+  aborted at start under the empty value, and `record --gpu` failed before
+  recording (measured 2026-10-22). Do not "tidy" `WAYLAND_DISPLAY` back to a `pop()` or to a
   name. Do not neutralise `XDG_RUNTIME_DIR` instead: that variable also
   carries the D-Bus and PipeWire socket paths.
   Do not reach for `QT_QPA_PLATFORM=xcb` — same objection as the Flatpak note
