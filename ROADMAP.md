@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=281 -->
+<!-- ants-roadmap-id-high-water: DEMO=282 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -679,6 +679,17 @@ simplest case, and a gate proves it still records.
   **Layman:** The script that tests demoreel has warnings from a shell-checking tool, and nothing runs that tool on it, so new ones can creep in.
   Kind: fix.
   Source: user-request-2026-10-21 (fix or file pre-existing warnings).
+
+- 📋 [DEMO-0282] **The pre-push gate failed once on 948579c, then passed unchanged; the failing step is unknown.**
+  2026-10-22: ./ci.sh passed on the tree, the push's gate failed, and
+  a second push's gate passed with no change. Only the last five lines
+  were kept: a blank-display message, which several steps print on
+  purpose. Ants Terminal's gate ran at the same time, so load is
+  likely but unproven. Next time, push under cc-job so the log stays,
+  and run ./ci.sh --summary on it to name the step.
+  **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
+  Kind: investigate.
+  Source: in-session-2026-10-22 DEMO-0206.
 
 ## Standing chores
 
