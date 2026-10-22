@@ -166,7 +166,7 @@ something behaves unexpectedly:
   Wayland applies to the user's real session, not to a virtual X display where
   every client is an X client.
 - `/run/user/1000/wayland-0` exists on this session, and that is what makes
-  clearing `WAYLAND_DISPLAY` useless — see the trap below. Measured with GTK4:
+  unsetting `WAYLAND_DISPLAY` useless — see the trap below. Measured with GTK4:
   inherited → no window on Xvfb; unset → no window on Xvfb; set to an
   unresolvable name → window appears. Measured 2026-10-22, set empty → window
   appears for GTK3, GTK4, Qt, SDL (`ffplay`), a winit app, a Flatpak with and
