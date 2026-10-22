@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=282 -->
+<!-- ants-roadmap-id-high-water: DEMO=283 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -5229,6 +5229,22 @@ covers both display backends and the Flatpak invocation.
   **Layman:** Apps built with Rust's common window library cannot be recorded at all unless the caller works around it.
   Kind: fix.
   Source: in-session-2026-10-22 DEMO-0206.
+  Lanes: display.
+
+- 📋 [DEMO-0283] **A Chromium Flatpak (Brave) exits at start under demoreel, even with README's three Flatpak flags.**
+  Measured 2026-10-22: `flatpak run --socket=x11 --nosocket=wayland
+  --filesystem=/tmp/.X11-unix com.brave.Browser` exits 1 with "Failed
+  to initialize Wayland platform", under demoreel's made-up
+  WAYLAND_DISPLAY and under an empty one alike. Adding
+  `--ozone-platform=x11` to Brave's own arguments made it record.
+  Chromium's ozone picks Wayland itself and does not fall back. Find
+  what makes it pick Wayland (the Flatpak's wrapper, XDG_SESSION_TYPE,
+  or its own default), whether a toolkit-neutral setting covers it,
+  and otherwise say in README that a Chromium or Electron app needs
+  --ozone-platform=x11. Electron natively is untested: none installed.
+  **Layman:** Browsers and Electron apps installed as Flatpaks cannot be recorded with the documented command.
+  Kind: fix.
+  Source: in-session-2026-10-22 DEMO-0281.
   Lanes: display.
 
 ## 1.1.0 — A window for people who want one
