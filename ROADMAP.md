@@ -687,6 +687,14 @@ simplest case, and a gate proves it still records.
   purpose. Ants Terminal's gate ran at the same time, so load is
   likely but unproven. Next time, push under cc-job so the log stays,
   and run ./ci.sh --summary on it to name the step.
+  2026-10-22, a second push gate failed, log kept: the ubuntu
+  from-source container's `demoreel check` said "could not tell whether
+  this ffmpeg has libx264: asking it took over 10s", while five
+  containers ran at once. ci.sh now starts ffmpeg once untimed before
+  that check. ./ci.sh --packages then passed all ten runs; the race was
+  not reproduced on demand, so the fix is not proven. Whether the first
+  failure (on 948579c) had the same cause is unknown. Close this if no
+  push gate fails this way again.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.

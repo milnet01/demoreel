@@ -764,6 +764,11 @@ if [ "$build" = source ]; then
     [ "$(sha256sum </usr/local/share/demoreel/demoreel)" = "$(sha256sum <"$src"/demoreel)" ] \
         || fail "the installed script was changed"
     # Text is left out: README's line brings no font, and says check reports it.
+    # check gives ffmpeg 10 s to list its encoders, and says "could not tell"
+    # past that. A first ffmpeg start in one of five containers installing at
+    # once took longer (2026-10-22), so start it once untimed first: this
+    # step tests the install line, not how fast a cold ffmpeg starts.
+    ffmpeg -hide_banner -encoders >/dev/null 2>&1 || true
     rc=0; out=$(demoreel check 2>&1) || rc=$?
     case $distro in
     fedora)   [ "$rc" = 1 ] && grep -q 'dnf swap ffmpeg-free ffmpeg' <<<"$out" ;;
