@@ -4948,20 +4948,23 @@ got=$(cat "$tmp/typed.txt" 2>/dev/null || true)
 }
 echo "wait, type and key all reached the app, and its window had the keyboard"
 
-step "the app gets an empty WAYLAND_DISPLAY and no WAYLAND_SOCKET"
+step "the app gets an empty WAYLAND_DISPLAY, no WAYLAND_SOCKET and an x11 session"
 # DEMO-0281. Empty, not unset: unset sends libwayland to the real desktop's
 # wayland-0. Empty, not a made-up name: winit takes any name as Wayland and
 # never falls back. And no WAYLAND_SOCKET, which libwayland reads first.
-env WAYLAND_SOCKET=3 ./demoreel record -n gate -o "$tmp/wayland.mp4" -d 2 \
-    -s 640x480 -- sh -c "printf '[%s][%s]' \"\${WAYLAND_DISPLAY-unset}\" \
-        \"\${WAYLAND_SOCKET-unset}\" > $tmp/wayland.txt; exec xterm" \
+# DEMO-0283: XDG_SESSION_TYPE=wayland made Chromium pick Wayland and exit.
+env WAYLAND_SOCKET=3 XDG_SESSION_TYPE=wayland ./demoreel record -n gate \
+    -o "$tmp/wayland.mp4" -d 2 -s 640x480 -- sh -c \
+    "printf '[%s][%s][%s]' \"\${WAYLAND_DISPLAY-unset}\" \
+        \"\${WAYLAND_SOCKET-unset}\" \"\${XDG_SESSION_TYPE-unset}\" \
+        > $tmp/wayland.txt; exec xterm" \
     >/dev/null
 got=$(cat "$tmp/wayland.txt" 2>/dev/null || true)
-[ "$got" = "[][unset]" ] || {
-    echo "the app got WAYLAND_DISPLAY and WAYLAND_SOCKET as $got, not [][unset]" >&2
+[ "$got" = "[][unset][x11]" ] || {
+    echo "the app got WAYLAND_DISPLAY, WAYLAND_SOCKET and XDG_SESSION_TYPE as $got, not [][unset][x11]" >&2
     exit 1
 }
-echo "the app got an empty WAYLAND_DISPLAY and no WAYLAND_SOCKET"
+echo "the app got an empty WAYLAND_DISPLAY, no WAYLAND_SOCKET and an x11 session"
 
 step "--steps reaches the app and keeps typed text off the command line"
 # DEMO-0025. -a puts typed text in demoreel's own command line, which any

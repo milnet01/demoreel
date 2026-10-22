@@ -991,7 +991,7 @@ demoreel record -o demo.mp4 -d 20 -- flatpak run io.github.milnet01.finbreak
 
 demoreel keeps every app away from your real desktop's display system, and a
 Flatpak's sandbox follows suit: it lets the app reach the private screen
-instead. Measured with finbreak, PeaZip and VICE.
+instead. Measured with finbreak, PeaZip, VICE and the Brave browser.
 
 If a Flatpak app does not appear in the video, give its own command line three
 flags:
@@ -1248,6 +1248,12 @@ Checked by running them, not assumed. This section is for maintainers.
   `WAYLAND_DISPLAY`, and winit reads it when `WAYLAND_DISPLAY` is empty. With
   it set, a winit app stopped at start under the empty value, and `record
   --gpu` failed before recording.
+- Chromium, and so Electron, chooses Wayland when `XDG_SESSION_TYPE` is
+  `wayland`, and exits when it cannot connect rather than falling back.
+  Measured 2026-10-22: a Brave Flatpak stopped at start with "Failed to
+  initialize Wayland platform", with or without the three Flatpak flags. With
+  `XDG_SESSION_TYPE=x11` it recorded on both backends. demoreel tells every
+  app `x11`, which is true of the private display, and names no toolkit.
 - A blank frame is measurable, and the margin is wide. On an empty 1280x800
   `Xvfb`, 99.994% of the frame is one grey level; a window only 200x100 brings
   that to 98%. Refusing above 99.9% separates the two without a threshold that

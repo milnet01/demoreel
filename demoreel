@@ -61,6 +61,13 @@ TYPE_SECONDS_PER_CHAR = 0.05
 # main() removes WAYLAND_SOCKET, which libwayland reads ahead of this.
 NO_WAYLAND = ""
 
+# What the app is told its session is. Chromium, and so Electron, chooses
+# Wayland when the inherited value says "wayland", and exits when it cannot
+# connect rather than falling back: a Brave Flatpak stopped at start with
+# "Failed to initialize Wayland platform" (DEMO-0283). On either backend the
+# app's display is X11, so this is true, and no toolkit has to be named.
+SESSION_TYPE = "x11"
+
 # An Event, not a flag, so a wait on it ends the moment a stop arrives. A
 # plain sleep resumes after the handler runs (PEP 475), and a stop landed up
 # to one sleep late: a median 107 ms, measured, all of it in the video
@@ -2034,7 +2041,8 @@ def launch(a, command, width, height, base, displaylog, appout, sound):
         server, display, auth = start_xvfb(width, height, base, displaylog)
         wayland = None
     env = dict(os.environ, DISPLAY=display, WAYLAND_DISPLAY=NO_WAYLAND,
-               XAUTHORITY=str(auth), **(sound.env() if sound else {}))
+               XDG_SESSION_TYPE=SESSION_TYPE, XAUTHORITY=str(auth),
+               **(sound.env() if sound else {}))
     park_pointer(env, width, height)
     try:
         app = subprocess.Popen(command, env=env, start_new_session=True,

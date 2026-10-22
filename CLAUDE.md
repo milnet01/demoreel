@@ -212,6 +212,14 @@ something behaves unexpectedly:
   carries the D-Bus and PipeWire socket paths.
   Do not reach for `QT_QPA_PLATFORM=xcb` — same objection as the Flatpak note
   below, it is Qt-only.
+- **The app is told `XDG_SESSION_TYPE=x11`, and that is what lets a Chromium
+  or Electron app start.** Chromium picks Wayland when the inherited value is
+  `wayland`, then exits when it cannot connect instead of falling back: a
+  Brave Flatpak stopped at start with "Failed to initialize Wayland platform"
+  (DEMO-0283). The value is true on both backends, since the app's display is
+  X11 on each. Do not drop it as redundant beside the empty
+  `WAYLAND_DISPLAY`, and do not swap it for `--ozone-platform=x11`, which is
+  per-app knowledge.
 - **stdout carries the finished path and nothing else.** The app's own output
   goes to our stderr, or to `--app-log`, never to stdout — a caller writing
   `out=$(demoreel record ...)` collects whatever the app printed otherwise.
@@ -292,7 +300,8 @@ A plain `flatpak run <app-id>` records. Under demoreel's empty
 named in `DISPLAY`. Measured 2026-10-22 with finbreak and PeaZip (fallback-x11)
 and VICE (x11 only), no flags, each drawing. Before DEMO-0281 the made-up name
 counted as Wayland present, so fallback-x11 bound nothing and the flags were
-required. A Chromium Flatpak is the known exception (DEMO-0283).
+required. A Brave Flatpak, which needed `XDG_SESSION_TYPE=x11` as well,
+records plain since DEMO-0283, on both backends.
 
 README keeps the three flags as the fallback for an app the plain command does
 not bring up:
