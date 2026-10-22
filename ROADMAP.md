@@ -712,6 +712,9 @@ simplest case, and a gate proves it still records.
   mirror fault; the next passed. Still open: the Ubuntu leg's smoke
   recording failing under load (unfinished file). Close once a push
   under load shows a retry note and passes.
+  2026-10-22: bc9031e's GitHub run failed before ci.sh started. The
+  apt install step hit its 15-minute limit on a slow Ubuntu mirror. It
+  says nothing about the retry; the next push's run is the first test.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
@@ -5267,7 +5270,7 @@ covers both display backends and the Flatpak invocation.
   Source: in-session-2026-10-22 DEMO-0206.
   Lanes: display.
 
-- 📋 [DEMO-0283] **A Chromium Flatpak (Brave) exits at start under demoreel, even with README's three Flatpak flags.**
+- ✅ [DEMO-0283] **A Chromium Flatpak (Brave) exits at start under demoreel, even with README's three Flatpak flags.**
   Measured 2026-10-22: `flatpak run --socket=x11 --nosocket=wayland
   --filesystem=/tmp/.X11-unix com.brave.Browser` exits 1 with "Failed
   to initialize Wayland platform", under demoreel's made-up
@@ -5278,6 +5281,12 @@ covers both display backends and the Flatpak invocation.
   or its own default), whether a toolkit-neutral setting covers it,
   and otherwise say in README that a Chromium or Electron app needs
   --ozone-platform=x11. Electron natively is untested: none installed.
+  2026-10-22, 55425ee: the cause is XDG_SESSION_TYPE=wayland, inherited
+  from the user's session; Chromium's ozone reads it and picks Wayland.
+  demoreel now gives the app XDG_SESSION_TYPE=x11, true of the private
+  display on both backends. A plain `flatpak run com.brave.Browser`
+  records on Xvfb and --gpu (frames checked). No README recipe needed.
+  Electron natively is still untested: none installed.
   **Layman:** Browsers and Electron apps installed as Flatpaks cannot be recorded with the documented command.
   Kind: fix.
   Source: in-session-2026-10-22 DEMO-0281.
