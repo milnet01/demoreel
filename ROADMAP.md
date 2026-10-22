@@ -680,7 +680,7 @@ simplest case, and a gate proves it still records.
   Kind: fix.
   Source: user-request-2026-10-21 (fix or file pre-existing warnings).
 
-- 📋 [DEMO-0282] **The pre-push gate failed once on 948579c, then passed unchanged; the failing step is unknown.**
+- 📋 [DEMO-0282] **The pre-push gate fails under host load: the package containers' demoreel check hits its 10s limits.**
   2026-10-22: ./ci.sh passed on the tree, the push's gate failed, and
   a second push's gate passed with no change. Only the last five lines
   were kept: a blank-display message, which several steps print on
@@ -695,6 +695,15 @@ simplest case, and a gate proves it still records.
   not reproduced on demand, so the fix is not proven. Whether the first
   failure (on 948579c) had the same cause is unknown. Close this if no
   push gate fails this way again.
+  2026-10-22, push of b85b743, log kept (cc-job push284): failed again
+  after ddc3c3c's warm-up. In the packages step, debian and arch
+  `demoreel check` said "could not tell whether this ffmpeg has libx264:
+  asking it took over 10s" and "Xvfb did not start"; fedora passed.
+  Load average ~15 from another session's C++ container build. The same
+  day a full ./ci.sh had its Ubuntu leg fail its first smoke recording
+  (unfinished file) beside the package builds, then pass alone. So the
+  warm-up is not enough: the container checks' fixed limits fail under
+  host load. Not closed.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
