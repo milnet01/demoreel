@@ -291,10 +291,13 @@ the app starts with an empty `DISPLAY` and Qt aborts with
       flatpak run --socket=x11 --nosocket=wayland --filesystem=/tmp/.X11-unix <app-id>
 
 Verified working. `--filesystem=/tmp/.X11-unix` is what lets the sandbox see
-the socket itself. `--nosocket=wayland` is load-bearing, not belt-and-braces:
-finbreak's manifest is `sockets=fallback-x11;wayland`, and *fallback*-x11 means
-X11 is bound only when Wayland is absent. With the Wayland socket present the
-app never looks at X11, so the virtual display goes unused.
+the socket itself. `--nosocket=wayland` keeps the session's Wayland socket out
+of the sandbox: finbreak's manifest is `sockets=fallback-x11;wayland`, and
+*fallback*-x11 means X11 is bound only when Wayland is absent. With the Wayland
+socket present the app never looks at X11, so the virtual display goes unused.
+Under demoreel's empty `WAYLAND_DISPLAY` no socket arrives anyway. Measured
+2026-10-22: Flatpak gave the sandbox a Wayland socket when the host's variable
+was `wayland-0` or unset, and none when it was empty or a made-up name.
 
 **Do not swap it for `QT_QPA_PLATFORM=xcb`**, which is the fix most search
 results suggest. Two reasons, and the first is the one that matters here: it is
