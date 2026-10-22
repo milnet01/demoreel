@@ -641,7 +641,7 @@ simplest case, and a gate proves it still records.
   Source: peer-request-2026-10-16 ants-projects-hub-website via claude-config.
   Lanes: poster.
 
-- 📋 [DEMO-0279] **The three completion scripts each carry the same Python that lists running recordings.**
+- 🚫 [DEMO-0279] **The three completion scripts each carry the same Python that lists running recordings.**
   completions/demoreel.bash, demoreel.fish and _demoreel each load the
   demoreel script as a module and call live_runs(), five identical lines
   with the same comment above them. A change to live_runs() needs all
@@ -650,6 +650,10 @@ simplest case, and a gate proves it still records.
   fixed. The remedy the review proposed, a way for demoreel itself to
   print the running names, adds to the command line, which is a design
   decision rather than a readability fix.
+  Dropped at the user's decision (2026-10-22). The gate's `demoreel stop
+  |gatelive` line already fails on a missed copy, and the remedy, a new
+  option to print running names, costs documentation, translations and a
+  test for a few repeated lines.
   **Layman:** Tab completion after `demoreel stop` asks demoreel which recordings are running, and each shell's file holds its own copy of that question.
   Kind: review-fix.
   Source: review-readability completions/ 2026-10-21.
