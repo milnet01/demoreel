@@ -195,17 +195,20 @@ something behaves unexpectedly:
   gate's three tones to the real output. Do not "tidy" `Sound.env` down to
   one. A probe that plays sound outside demoreel needs both too.
 
-- **`WAYLAND_DISPLAY` is set empty, not unset and not to a made-up name —
-  and that is the whole fix, not a stylistic choice.** `wl_display_connect(NULL)`
+- **`WAYLAND_DISPLAY` is set empty, not unset and not to a made-up name,
+  and that is not a stylistic choice.** `wl_display_connect(NULL)`
   falls back to the hardcoded `$XDG_RUNTIME_DIR/wayland-0` when the variable is
   absent, so `env.pop()` sends the app straight to the user's real compositor;
   `Xvfb` then records black, `ffmpeg` exits 0 and every signal says success.
   An empty value is not absent to libwayland: the connection fails, and the
   toolkit falls back to X11. A made-up name does that too, but winit reads any
   non-empty value as "use Wayland" and never falls back, so it stopped every
-  winit app at start (DEMO-0281). Do not "tidy" it back to a `pop()` or to a
-  name. Do not neutralise `XDG_RUNTIME_DIR`
-  instead: that variable also carries the D-Bus and PipeWire socket paths.
+  winit app at start (DEMO-0281). An inherited `WAYLAND_SOCKET` is removed
+  too: libwayland and winit read it ahead of `WAYLAND_DISPLAY`, and with it
+  set a winit app aborted at start under the empty value (measured
+  2026-10-22). Do not "tidy" `WAYLAND_DISPLAY` back to a `pop()` or to a
+  name. Do not neutralise `XDG_RUNTIME_DIR` instead: that variable also
+  carries the D-Bus and PipeWire socket paths.
   Do not reach for `QT_QPA_PLATFORM=xcb` — same objection as the Flatpak note
   below, it is Qt-only.
 - **stdout carries the finished path and nothing else.** The app's own output
@@ -264,8 +267,8 @@ something behaves unexpectedly:
   every `key` and `type` step until it is focused (DEMO-0206). An app whose
   dialogs need stacking or positioning may
   misbehave; the answer would be a minimal WM, not more code here.
-- **Every message goes through `tr`, `trn` or `tr_help`, and never at import
-  time.** The language is chosen in `main()`, so a message translated at
+- **Every message goes through `tr`, `trn`, `tr_help` or `tr_listed`, and
+  never at import time.** The language is chosen in `main()`, so a message translated at
   import is always English, and passes every check that runs in English. The
   gate refuses one (DEMO-0060 INV-15). A message is one or more whole
   sentences; never join translated fragments, because word order differs
