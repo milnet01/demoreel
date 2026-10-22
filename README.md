@@ -833,9 +833,10 @@ the recording is going:
 
 - `wait 2` — pause for two seconds
 - `move 400 300` — move the pointer
-- `click 400 300` — click there, or just `click` where it already is. The
-  pointer starts in the bottom-right corner, so it lights up nothing before
-  your first step.
+- `click 400 300` — click there, or just `click` where it already is. End
+  with `right` or `middle` for that button, as in `click 400 300 right` to
+  open a menu. The pointer starts in the bottom-right corner, so it lights up
+  nothing before your first step.
 - `type hello there` — type some text. Everything after `type` and one space is
   typed exactly as written, quotes and spaces included. Only your own shell's
   quoting around the whole step is removed.
@@ -845,8 +846,8 @@ the recording is going:
 - `drag 200 300 600 300` — press the button at the first point, slide to the
   second over half a second, and let go: a song dragged into order, say, or a
   pane widened. A fifth number sets the seconds, as in
-  `drag 200 300 600 300 1`. Like a held key, the button is let go however the
-  step ends.
+  `drag 200 300 600 300 1`. End with `right` or `middle` to drag with that
+  button instead. Like a held key, the button is let go however the step ends.
 
 **Typing something private? Use `--steps`, not `-a`.** Anything you put on the
 command line can be read by other people using that computer, for as long as the

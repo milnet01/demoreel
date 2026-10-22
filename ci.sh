@@ -5539,6 +5539,7 @@ step "a drag presses, slides in steps and lets go, a stop included"
 # press, each move with the button down, and each release. A drag must give
 # one press, several moves heading right, and a release; a drag cut short by
 # a stop must still give the release, or the button stays down for the run.
+# DEMO-0207: a click or a drag ending in `right` presses the right button.
 python3 - "$tmp" <<'DRAGPY'
 import importlib.machinery, importlib.util, os, signal, subprocess, sys, threading, time
 
@@ -5551,7 +5552,8 @@ signal.signal(signal.SIGUSR1, demoreel._request_stop)
 
 
 def reports(path):
-    """(kind, column) for each X10 mouse report: ESC [ M, then button, x, y."""
+    """(kind, column, button) for each X10 mouse report: ESC [ M, then
+    button, x, y. The button is 0 for left and 2 for right, on a press."""
     data = open(path, "rb").read()
     out = []
     for i in range(len(data) - 5):
@@ -5559,7 +5561,7 @@ def reports(path):
             button, column = data[i + 3] - 32, data[i + 4] - 32
             kind = ("release" if button & 3 == 3 else
                     "move" if button & 32 else "press")
-            out.append((kind, column))
+            out.append((kind, column, button & 3))
     return out
 
 
@@ -5579,25 +5581,35 @@ try:
     demoreel.run_action("drag 20 40 400 40", env)
     time.sleep(0.5)
     whole = reports(mouse)
+    # Before the stop below, which stays set and would cut this drag short.
+    demoreel.run_action("click 30 40 right", env)
+    demoreel.run_action("drag 20 40 400 40 right", env)
+    time.sleep(0.5)
+    right = reports(mouse)[len(whole):]
     threading.Timer(0.3, lambda: os.kill(os.getpid(), signal.SIGUSR1)).start()
     demoreel.run_action("drag 20 80 400 80 30", env)
     time.sleep(0.5)
-    cut = reports(mouse)[len(whole):]
+    cut = reports(mouse)[len(whole) + len(right):]
 finally:
     demoreel.end_process(app, group=True)
     demoreel.end_server(proc)
     auth.unlink(missing_ok=True)
     displaylog.unlink(missing_ok=True)
-kinds = [k for k, _ in whole]
-columns = [c for k, c in whole if k == "move"]
+kinds = [k for k, _, _ in whole]
+columns = [c for k, c, _ in whole if k == "move"]
 if kinds[:1] != ["press"] or kinds[-1:] != ["release"] or len(columns) < 5:
     raise SystemExit(f"a drag should be a press, several moves and a release: {kinds}")
 if columns != sorted(columns) or columns[-1] - columns[0] < 30:
     raise SystemExit(f"the moves did not slide right across the xterm: {columns}")
-if [k for k, _ in cut][-1:] != ["release"]:
-    raise SystemExit(f"a stop left the button down: {[k for k, _ in cut]}")
+if [k for k, _, _ in cut][-1:] != ["release"]:
+    raise SystemExit(f"a stop left the button down: {[k for k, _, _ in cut]}")
+presses = [b for k, _, b in right if k == "press"]
+if presses != [2, 2] or [k for k, _, _ in right][-1:] != ["release"]:
+    raise SystemExit(f"a right click and a right drag should press button 3 "
+                     f"twice and let go: {right}")
 print(f"press, {len(columns)} moves from column {columns[0]} to "
-      f"{columns[-1]}, release; a stopped drag still released")
+      f"{columns[-1]}, release; a stopped drag still released; right "
+      "click and drag pressed the right button")
 DRAGPY
 
 step "a missing program, or an ffmpeg without libx264, says what to install"

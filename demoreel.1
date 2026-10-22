@@ -433,8 +433,9 @@ Pause.
 .BI "move " "x y"
 Move the pointer.
 .TP
-.BR click " [\fIx y\fR]"
-Click there, or where the pointer already is.
+.BR click " [\fIx y\fR] [\fBright\fR|\fBmiddle\fR]"
+Click there, or where the pointer already is,
+with the left button unless the step names another.
 The pointer starts in the bottom-right corner.
 .TP
 .BI "type " text
@@ -454,8 +455,8 @@ or
 Hold a key down.
 It is let go however the step ends.
 .TP
-.BI "drag " "x1 y1 x2 y2" " \fR[\fPseconds\fR]\fP"
-Press the left button at
+.BI "drag " "x1 y1 x2 y2" " \fR[\fPseconds\fR] [\fBright\fR|\fBmiddle\fR]\fP"
+Press the left button, or the one named, at
 .IR "x1 y1" ,
 slide to
 .I "x2 y2"

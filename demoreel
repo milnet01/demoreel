@@ -1030,6 +1030,9 @@ ACTION_EXAMPLES = {"wait": "wait 2", "move": "move 400 300",
                    "click": "click 400 300", "type": "type some text",
                    "key": "key Return", "hold": "hold w 3",
                    "drag": "drag 200 300 600 300"}
+# The buttons a click or a drag may end by naming, as xdotool numbers them.
+# Left is the default, so a step that names none presses button 1.
+BUTTONS = {"left": "1", "middle": "2", "right": "3"}
 # How long a drag takes when its step does not say, and how many times a
 # second it moves the pointer on the way: often enough to look smooth.
 DRAG_SECONDS = 0.5
@@ -1060,6 +1063,9 @@ def parse_step(spec):
     if verb not in ACTION_EXAMPLES:
         die(tr("unknown action {action}. The steps are: {steps}.", action=repr(verb),
                steps=", ".join(repr(e) for e in ACTION_EXAMPLES.values())))
+    button = "1"
+    if verb in ("click", "drag") and args[-1:] and args[-1] in BUTTONS:
+        button = BUTTONS[args.pop()]
     # A malformed step used to reach float() or args[1] unchecked and end
     # the run with a Python traceback.
     try:
@@ -1074,8 +1080,14 @@ def parse_step(spec):
             if not 0 <= seconds < math.inf:
                 raise ValueError
             return verb, {"from": (int(args[0]), int(args[1])),
-                          "to": (int(args[2]), int(args[3])), "seconds": seconds}
-        if verb == "move" or (verb == "click" and args):
+                          "to": (int(args[2]), int(args[3])), "seconds": seconds,
+                          "button": button}
+        if verb == "click":
+            if len(args) not in (0, 2):
+                raise IndexError
+            at = (str(int(args[0])), str(int(args[1]))) if args else None
+            return verb, {"at": at, "button": button}
+        if verb == "move":
             return verb, {"at": (str(int(args[0])), str(int(args[1])))}
         if verb == "key" and not args:
             raise IndexError
@@ -1113,7 +1125,7 @@ def run_action(spec, env):
     elif verb == "click":
         if v["at"]:
             xdotool(env, "mousemove", "--sync", *v["at"])
-        xdotool(env, "click", "1")
+        xdotool(env, "click", v["button"])
     elif verb == "type":
         # --file - takes the text on stdin. As an argument it sits in the
         # process list, readable by any other local user, for as long as the
@@ -1137,7 +1149,7 @@ def run_action(spec, env):
         steps = max(1, round(v["seconds"] * DRAG_STEPS_PER_SECOND))
         started = time.monotonic()
         # The button comes up however the drag ends, as a held key does.
-        xdotool(env, "mousedown", "1")
+        xdotool(env, "mousedown", v["button"])
         try:
             for i in range(1, steps + 1):
                 # Each move is timed from the start, so a slow xdotool shortens
@@ -1150,7 +1162,7 @@ def run_action(spec, env):
                 xdotool(env, "mousemove", str(round(x1 + (x2 - x1) * i / steps)),
                         str(round(y1 + (y2 - y1) * i / steps)))
         finally:
-            xdotool(env, "mouseup", "1")
+            xdotool(env, "mouseup", v["button"])
 
 
 # How ffmpeg encodes every video demoreel writes with it: the recording on
@@ -4910,9 +4922,9 @@ def build_parser():
                                   "(default: default)"))
     rec.add_argument("-a", "--action", action="append", default=[], metavar="ACTION",
                      help=tr_help("scripted step, repeatable and run in order: "
-                                  "{steps}", steps="'wait 2', 'move X Y', 'click [X Y]', "
-                                  "'type some text', 'key Return', 'hold w 3', "
-                                  "'drag X1 Y1 X2 Y2'"))
+                                  "{steps}", steps="'wait 2', 'move X Y', "
+                                  "'click [X Y] [right]', 'type some text', 'key Return', "
+                                  "'hold w 3', 'drag X1 Y1 X2 Y2'"))
     rec.add_argument("--steps", metavar="FILE",
                      help=tr_help("read the scripted steps from FILE, one per line, "
                                   "or from standard input for -; keeps typed text "
@@ -4958,9 +4970,9 @@ def build_parser():
     shot.add_argument("-a", "--action", action="append", default=[],
                       metavar="ACTION",
                       help=tr_help("scripted step run before the picture, repeatable: "
-                                   "{steps}", steps="'wait 2', 'move X Y', 'click [X Y]', "
-                                   "'type some text', 'key Return', 'hold w 3', "
-                                   "'drag X1 Y1 X2 Y2'"))
+                                   "{steps}", steps="'wait 2', 'move X Y', "
+                                   "'click [X Y] [right]', 'type some text', 'key Return', "
+                                   "'hold w 3', 'drag X1 Y1 X2 Y2'"))
     shot.add_argument("--steps", metavar="FILE",
                       help=tr_help("read the scripted steps from FILE, one per line, "
                                    "or from standard input for -. Not with -a"))
