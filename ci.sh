@@ -710,6 +710,20 @@ pkg_container_script() {
 set -euo pipefail
 distro=$1 build=$2 v=$3
 fail() { echo "FAIL ($distro): $*" >&2; exit 1; }
+# demoreel check, into $out and $rc. Its time limits catch a hang, and up to
+# six containers share the host with the Ubuntu leg and other sessions: at a
+# load near 15, asking ffmpeg for its encoders took over 10s and Xvfb over 15s
+# (DEMO-0282). These steps test the install, not the host's speed, so a check
+# that hit a limit is asked again. One that fails three times fails the step.
+run_check() {
+    local try
+    for try in 1 2 3; do
+        rc=0; out=$(demoreel check 2>&1) || rc=$?
+        grep -qE 'took over [0-9]+s|private display did not start' <<<"$out" || return 0
+        echo "note: demoreel check hit a time limit (try $try of 3)" >&2
+        sleep 5
+    done
+}
 # DEMO-0277: keep what the package manager downloads. packages_check mounts a
 # folder per distro at its cache, so a later run fetches only what changed.
 # What the repositories offer is still read afresh every run. Arch's pacman
@@ -764,12 +778,7 @@ if [ "$build" = source ]; then
     [ "$(sha256sum </usr/local/share/demoreel/demoreel)" = "$(sha256sum <"$src"/demoreel)" ] \
         || fail "the installed script was changed"
     # Text is left out: README's line brings no font, and says check reports it.
-    # check gives ffmpeg 10 s to list its encoders, and says "could not tell"
-    # past that. A first ffmpeg start in one of five containers installing at
-    # once took longer (2026-10-22), so start it once untimed first: this
-    # step tests the install line, not how fast a cold ffmpeg starts.
-    ffmpeg -hide_banner -encoders >/dev/null 2>&1 || true
-    rc=0; out=$(demoreel check 2>&1) || rc=$?
+    run_check
     case $distro in
     fedora)   [ "$rc" = 1 ] && grep -q 'dnf swap ffmpeg-free ffmpeg' <<<"$out" ;;
     opensuse) [ "$rc" = 1 ] && grep -q 'Packman' <<<"$out" ;;
@@ -947,7 +956,7 @@ if [ "$distro" != arch ] && [ "$build" != obs ]; then
 fi
 # INV-6: it can record where the distro's ffmpeg has libx264, and says how to
 # get one where it has not.
-rc=0; out=$(demoreel check 2>&1) || rc=$?
+run_check
 # Leap 16.0's own ffmpeg has no drawtext; Packman's, which check names there,
 # has it (INV-6's one exception, OBS only).
 grep -q 'text on a card or a caption: ready' <<<"$out" \
