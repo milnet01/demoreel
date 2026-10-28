@@ -91,6 +91,9 @@ msgstr ""
 msgid "`demoreel check` tests this on its own."
 msgstr ""
 
+msgid "the GPU display did not lock: a client without its auth cookie could still connect, or none could."
+msgstr ""
+
 msgid "the display did not lock: a client without its auth cookie could still connect, or none could."
 msgstr ""
 
@@ -101,9 +104,6 @@ msgid "The end of its log:"
 msgstr ""
 
 msgid "`demoreel check` says whether --gpu has what it needs."
-msgstr ""
-
-msgid "the GPU display did not lock: a client without its auth cookie could still connect, or none could."
 msgstr ""
 
 msgid "the private display {display} stopped answering: `xdotool {command}` did not return within {seconds}s."

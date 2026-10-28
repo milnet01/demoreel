@@ -716,38 +716,55 @@ def start_xvfb(width, height, base, logfile):
     number = buf.decode(errors="replace").strip()
     if not number.isdigit():
         proc.kill()
-        auth.unlink(missing_ok=True)
         proc.wait()
+        auth.unlink(missing_ok=True)
         stderr = Path(logfile).read_text(errors="replace").strip()
         die(tr("Xvfb did not start, so there is no private display to record.")
             + ("\n  " + tr("It said: {text}", text=stderr) if stderr else "")
             + "\n  " + tr("`demoreel check` tests this start on its own."))
 
     display = f":{number}"
-    cookie = secrets.token_hex(16)
-    added = subprocess.run(["xauth", "-f", str(auth), "add",
-                            display, "MIT-MAGIC-COOKIE-1", cookie],
-                           capture_output=True, text=True, check=False)
-    if added.returncode != 0:
-        proc.kill()
-        auth.unlink(missing_ok=True)
-        die(tr("could not write the display's auth cookie, so the display "
-               "cannot be made private.")
-            + ("\n  " + tr("xauth said: {text}", text=added.stderr.strip())
-               if added.stderr.strip() else "")
-            + "\n  " + tr("`demoreel check` tests this on its own."))
-    proc.send_signal(signal.SIGHUP)  # the server re-reads its auth file on reset
+    lock_display(proc, display, auth, gpu=False)
+    return proc, display, auth
 
-    # Do not report success until the cookie is actually in force. A client
-    # holding the cookie connects before the lock as well as after it
-    # (measured), so it alone proves nothing (DEMO-0113).
-    if wait_until_locked(display, auth):
-        return proc, display, auth
-    proc.kill()
-    auth.unlink(missing_ok=True)
-    die(tr("the display did not lock: a client without its auth cookie "
-           "could still connect, or none could."))
-    return None  # unreachable; die() exits
+
+def lock_display(proc, display, auth, gpu):
+    """Write the display's cookie and prove it is in force.
+
+    Any way out of here but success ends the server first: a refused cookie,
+    a lock that never holds, and an xdotool in wait_until_locked that dies
+    because the display stopped answering. The caller has no server to end
+    yet, so whatever is not ended here is leaked.
+    """
+    try:
+        try:
+            added = subprocess.run(["xauth", "-f", str(auth), "add", display,
+                                    "MIT-MAGIC-COOKIE-1", secrets.token_hex(16)],
+                                   capture_output=True, text=True, check=False,
+                                   timeout=CALL_TIMEOUT)
+            said = added.stderr.strip() if added.returncode else None
+        except subprocess.TimeoutExpired:
+            said = ""
+        if said is not None:
+            die(tr("could not write the display's auth cookie, so the display "
+                   "cannot be made private.")
+                + ("\n  " + tr("xauth said: {text}", text=said) if said else "")
+                + "\n  " + tr("`demoreel check` tests this on its own."))
+        if not gpu:
+            # Xvfb re-reads its auth file on reset; Xwayland needs no signal.
+            proc.send_signal(signal.SIGHUP)
+        # Do not report success until the cookie is actually in force. A client
+        # holding the cookie connects before the lock as well as after it
+        # (measured), so it alone proves nothing (DEMO-0113).
+        if not wait_until_locked(display, auth):
+            die(tr("the GPU display did not lock: a client without its auth "
+                   "cookie could still connect, or none could.") if gpu else
+                tr("the display did not lock: a client without its auth cookie "
+                   "could still connect, or none could."))
+    except BaseException:
+        end_server(proc)
+        auth.unlink(missing_ok=True)
+        raise
 
 
 def wait_until_locked(display, auth):
@@ -836,25 +853,8 @@ def start_gpu_display(width, height, base, logfile):
             + "\n  " + tr("`demoreel check` says whether --gpu has what it needs."))
 
     display = f":{number}"
-    added = subprocess.run(["xauth", "-f", str(auth), "add", display,
-                            "MIT-MAGIC-COOKIE-1", secrets.token_hex(16)],
-                           capture_output=True, text=True, check=False)
-    if added.returncode != 0:
-        end_process(proc, group=True)
-        auth.unlink(missing_ok=True)
-        die(tr("could not write the display's auth cookie, so the display "
-               "cannot be made private.")
-            + ("\n  " + tr("xauth said: {text}", text=added.stderr.strip())
-               if added.stderr.strip() else "")
-            + "\n  " + tr("`demoreel check` tests this on its own."))
-
-    if wait_until_locked(display, auth):
-        return proc, display, auth, wayland
-    end_process(proc, group=True)
-    auth.unlink(missing_ok=True)
-    die(tr("the GPU display did not lock: a client without its auth cookie "
-           "could still connect, or none could."))
-    return None  # unreachable; die() exits
+    lock_display(proc, display, auth, gpu=True)
+    return proc, display, auth, wayland
 
 
 def xdotool(env, *args, check=False, stdin_text=None):
