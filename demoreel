@@ -1399,13 +1399,20 @@ def finish_part(output, logfile, inputs):
     part = partial_video(output)
     if not part.exists():
         return
-    copy = subprocess.run(  # noqa: PLW1510 - a failed copy is handled below
-        ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
-         *inputs, "-movflags", "+faststart", "-y", str(output)],
-        capture_output=True, timeout=6 * CALL_TIMEOUT)
-    if copy.returncode != 0:
+    try:
+        copy = subprocess.run(  # noqa: PLW1510 - a failed copy is handled below
+            ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
+             *inputs, "-movflags", "+faststart", "-y", str(output)],
+            capture_output=True, timeout=6 * CALL_TIMEOUT)
+        failed, said = copy.returncode != 0, copy.stderr
+    except subprocess.TimeoutExpired as exc:
+        # A long recording's copy can outlast the bound. It runs in cmd_record's
+        # finally block, where a traceback would hide the kept part file.
+        failed, said = True, (exc.stderr or b"") + (
+            f"\nffmpeg did not finish within {exc.timeout:g}s\n".encode())
+    if failed:
         with open(logfile, "ab") as log:
-            log.write(copy.stderr)
+            log.write(said)
         die(tr("could not finish the video: turning the recording into {name}"
                " failed.\n  What was recorded is kept in {part}, and {log}"
                " says why.", name=output.name, part=part, log=logfile))
@@ -1573,6 +1580,7 @@ def stop_recorder(proc):
             proc.wait(timeout=5)
         except subprocess.TimeoutExpired:
             proc.kill()
+            proc.wait()
 
 
 def end_process(proc, group=False):
@@ -1592,6 +1600,9 @@ def end_process(proc, group=False):
                 proc.kill()
         except (ProcessLookupError, PermissionError):
             pass
+        # Reap it, or it lingers as a zombie for the rest of the run.
+        with contextlib.suppress(subprocess.TimeoutExpired):
+            proc.wait(timeout=5)
 
 
 # Every record and shot gives its app a sound output of its own, a null sink
