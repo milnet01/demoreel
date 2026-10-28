@@ -3162,7 +3162,8 @@ def parse_script(text):
             die(tr("{where} cannot be read: {reason}.", where=where, reason=exc)
                 + f"\n  {line}")
         verb, rest = words[0], words[1:]
-        if verb in ("text", "zoom") and above in ("music", "level"):
+        # A zoom has its own check below, which names a zoom.
+        if verb == "text" and above in ("music", "level"):
             die(tr("{where}: a text belongs to the scene above it, and the line "
                    "above is a music or level line.", where=where))
         if verb == "music":
