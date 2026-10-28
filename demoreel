@@ -4597,7 +4597,8 @@ def cmd_motion(a):
     whole = info["duration"]
     start = a.start or 0.0
     end = whole if a.end is None else min(a.end, whole)
-    if (a.end is not None and a.end > whole + TIME_SLACK) or start >= end:
+    # Written so a NaN fails it too: every comparison with one is false.
+    if (a.end is not None and a.end > whole + TIME_SLACK) or not 0 <= start < end:
         die(tr("--from and --to must be inside {path}, which is "
                "{seconds} seconds long, with --from before --to.", path=a.input,
                seconds=f"{whole:.3f}"))
@@ -4860,6 +4861,21 @@ RECORD_EXAMPLES = [
 ]
 
 
+def seconds(text):
+    """argparse's type for a SECONDS option: a finite number, not below 0.
+
+    float() alone takes nan, inf and -1. A NaN passes every range check
+    written with < and >, since each comparison with it is false, and reached
+    ffmpeg's arguments or a subprocess timeout as a traceback. An edit script
+    already refuses these; its shortcuts now refuse them too. The name is
+    what argparse shows: "invalid seconds value".
+    """
+    value = float(text)
+    if not (value >= 0 and math.isfinite(value)):
+        raise ValueError(text)
+    return value
+
+
 def tr_listed(msgid):
     """tr_help for a message held in a table the template extraction reads by
     name -- EXAMPLES, RECORD_EXAMPLES -- where no call can name it as a
@@ -4896,7 +4912,7 @@ def build_parser():
     rec.add_argument("-o", "--output",
                      help=tr_help("video file to write (default: "
                                   "./<app>-<timestamp>.mp4)"))
-    rec.add_argument("-d", "--duration", type=float, default=30,
+    rec.add_argument("-d", "--duration", type=seconds, default=30,
                      help=tr_help("seconds to record, counted from when the -a steps "
                                   "finish; 0 means until `demoreel stop` "
                                   "(default: 30)"))
@@ -4922,7 +4938,7 @@ def build_parser():
                                   "to this terminal's stderr. Useful when the app prints "
                                   "whether it drew the real thing, which no recording "
                                   "check here can tell"))
-    rec.add_argument("--settle", type=float, default=0, metavar="SECONDS",
+    rec.add_argument("--settle", type=seconds, default=0, metavar="SECONDS",
                      help=tr_help("wait up to SECONDS for the app to draw its first "
                                   "frame before recording starts, instead of filming "
                                   "its startup black screen (default: 0, don't wait)"))
@@ -4938,7 +4954,7 @@ def build_parser():
                      help=tr_help("put the app's own sound in the video. Off by "
                                   "default; either way the app's sound never plays "
                                   "on your speakers. Needs pactl"))
-    rec.add_argument("--startup-timeout", type=float, default=20, metavar="SECONDS",
+    rec.add_argument("--startup-timeout", type=seconds, default=20, metavar="SECONDS",
                      help=tr_help("how long to wait for the app's window (default: 20)"))
     rec.add_argument("command", nargs=argparse.REMAINDER,
                      help=tr_help("-- followed by the command that starts the app"))
@@ -4967,7 +4983,7 @@ def build_parser():
     shot.add_argument("--app-log", metavar="PATH",
                       help=tr_help("keep the app's own output in PATH; otherwise it "
                                    "goes to this terminal's stderr"))
-    shot.add_argument("--settle", type=float, default=10, metavar="SECONDS",
+    shot.add_argument("--settle", type=seconds, default=10, metavar="SECONDS",
                       help=tr_help("wait up to SECONDS for the app to draw before the "
                                    "steps and the picture (default: 10)"))
     shot.add_argument("--gpu", action="store_true",
@@ -4979,7 +4995,7 @@ def build_parser():
     shot.add_argument("--region", metavar="X,Y,W,H",
                       help=tr_help("keep only this rectangle of the picture: its "
                                    "top-left corner at X,Y, W pixels wide and H high"))
-    shot.add_argument("--startup-timeout", type=float, default=20,
+    shot.add_argument("--startup-timeout", type=seconds, default=20,
                       metavar="SECONDS",
                       help=tr_help("how long to wait for the app's window (default: 20)"))
     shot.add_argument("command", nargs=argparse.REMAINDER,
@@ -5011,9 +5027,9 @@ def build_parser():
         return p
 
     def fades(p):
-        p.add_argument("--fade-in", type=float, default=0, metavar="SECONDS",
+        p.add_argument("--fade-in", type=seconds, default=0, metavar="SECONDS",
                        help=tr_help("start black; the picture arrives over SECONDS"))
-        p.add_argument("--fade-out", type=float, default=0, metavar="SECONDS",
+        p.add_argument("--fade-out", type=seconds, default=0, metavar="SECONDS",
                        help=tr_help("go to black over the last SECONDS"))
 
     # The music line's words, and sound off on every clip (DEMO-0177 § 4.2).
@@ -5024,10 +5040,10 @@ def build_parser():
         p.add_argument("--music-level", type=float, metavar="DB",
                        help=tr_help("the level the music averages, in dB "
                                     "(default: {level})", level=f"{MUSIC_LEVEL:g}"))
-        p.add_argument("--music-fade-in", type=float, metavar="SECONDS",
+        p.add_argument("--music-fade-in", type=seconds, metavar="SECONDS",
                        help=tr_help("the music arrives over SECONDS (default: "
                                     "{seconds})", seconds=MUSIC_FADE_IN))
-        p.add_argument("--music-fade-out", type=float, metavar="SECONDS",
+        p.add_argument("--music-fade-out", type=seconds, metavar="SECONDS",
                        help=tr_help("the music goes over the last SECONDS "
                                     "(default: {seconds})", seconds=f"{MUSIC_FADE_OUT:g}"))
         if clips:
@@ -5047,17 +5063,17 @@ def build_parser():
     trim = finishing("trim", tr_help("cut the start and the end off a video"),
                      tr_help("cut the start and the end off a video."))
     trim.add_argument("input", help=tr_help("the video to cut"))
-    trim.add_argument("--from", dest="start", type=float, metavar="SECONDS",
+    trim.add_argument("--from", dest="start", type=seconds, metavar="SECONDS",
                       help=tr_help("where the kept part starts (default: the start)"))
-    trim.add_argument("--to", dest="end", type=float, metavar="SECONDS",
+    trim.add_argument("--to", dest="end", type=seconds, metavar="SECONDS",
                       help=tr_help("the last moment kept (default: the end)"))
     fades(trim)
     sound(trim)
-    trim.add_argument("--fade-at", type=float, action="append", default=[],
+    trim.add_argument("--fade-at", type=seconds, action="append", default=[],
                       metavar="SECONDS",
                       help=tr_help("fade to black and back around this moment; "
                                    "repeatable"))
-    trim.add_argument("--fade-length", type=float, default=FADE_LENGTH,
+    trim.add_argument("--fade-length", type=seconds, default=FADE_LENGTH,
                       metavar="SECONDS",
                       help=tr_help("how long each half of a --fade-at takes "
                                    "(default: {seconds})", seconds=FADE_LENGTH))
@@ -5074,7 +5090,8 @@ def build_parser():
             ("--to", "end", tr_help("for the --text before it: when it goes")),
             ("--text-size", "size", tr_help("for the --text before it: its height, as "
                                             "a percentage of the frame's"))):
-        caption.add_argument(flag, action=_CaptionField, dest=key, type=float,
+        caption.add_argument(flag, action=_CaptionField, dest=key,
+                             type=float if key == "size" else seconds,
                              metavar="PERCENT" if key == "size" else "SECONDS",
                              help=about)
     fades(caption)
@@ -5085,7 +5102,7 @@ def build_parser():
                      tr_help("put videos end to end."))
     join.add_argument("inputs", nargs="+", metavar="input",
                       help=tr_help("two or more videos, in order"))
-    join.add_argument("--crossfade", type=float, default=0, metavar="SECONDS",
+    join.add_argument("--crossfade", type=seconds, default=0, metavar="SECONDS",
                       help=tr_help("fade from each video into the next over SECONDS "
                                    "(default: a plain cut)"))
     fades(join)
@@ -5096,7 +5113,7 @@ def build_parser():
                      tr_help("make a clip from a picture, or from text."))
     card.add_argument("image", nargs="?", help=tr_help("a picture to show; a .gif or "
                                                        "an animated .png plays"))
-    card.add_argument("-d", "--duration", type=float, required=True,
+    card.add_argument("-d", "--duration", type=seconds, required=True,
                       help=tr_help("how many seconds the card lasts"))
     card.add_argument("--text", metavar="WORDS", help=tr_help("one line of text"))
     card.add_argument("--text-size", type=float, metavar="PERCENT",
@@ -5121,11 +5138,11 @@ def build_parser():
                        tr_help("report how smooth a video is and where it stands "
                                "still."), output=None)
     motion.add_argument("input", help=tr_help("the video to look at"))
-    motion.add_argument("--from", dest="start", type=float, metavar="SECONDS",
+    motion.add_argument("--from", dest="start", type=seconds, metavar="SECONDS",
                         help=tr_help("look from here (default: the start)"))
-    motion.add_argument("--to", dest="end", type=float, metavar="SECONDS",
+    motion.add_argument("--to", dest="end", type=seconds, metavar="SECONDS",
                         help=tr_help("look up to here (default: the end)"))
-    motion.add_argument("--still", type=float, default=1.0, metavar="SECONDS",
+    motion.add_argument("--still", type=seconds, default=1.0, metavar="SECONDS",
                         help=tr_help("report a stretch with no change longer than "
                                      "this (default: 1)"))
     motion.add_argument("--region", metavar="X,Y,W,H",
@@ -5140,7 +5157,7 @@ def build_parser():
                        tr_help("save one frame of a video as a picture."),
                        output=tr_help("picture file to write, ending in .png or .jpg"))
     poster.add_argument("input", help=tr_help("the video to take the frame from"))
-    poster.add_argument("-t", "--time", type=float, required=True,
+    poster.add_argument("-t", "--time", type=seconds, required=True,
                         metavar="SECONDS", help=tr_help("which moment to save"))
     poster.set_defaults(func=cmd_poster)
 
@@ -5151,7 +5168,7 @@ def build_parser():
                       output=tr_help("picture file to write, ending in .png or .jpg"))
     sheet.add_argument("input", help=tr_help("the video to take the frames from"))
     times = sheet.add_mutually_exclusive_group(required=True)
-    times.add_argument("--every", type=float, metavar="SECONDS",
+    times.add_argument("--every", type=seconds, metavar="SECONDS",
                        help=tr_help("take a frame every SECONDS, from the start"))
     times.add_argument("--at", metavar="SECONDS,...",
                        help=tr_help("take the frames on screen at these moments, "
