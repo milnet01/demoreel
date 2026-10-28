@@ -1420,9 +1420,11 @@ def finish_part(output, logfile, inputs):
 
 
 def last_said(stderr, lines=3):
-    """The last few non-empty lines of a program's captured stderr, indented to
-    sit under a message."""
-    said = [ln for ln in stderr.decode(errors="replace").splitlines() if ln.strip()]
+    """The last few non-empty lines of a program's captured stderr, as bytes or
+    text, indented to sit under a message."""
+    if isinstance(stderr, bytes):
+        stderr = stderr.decode(errors="replace")
+    said = [ln for ln in stderr.splitlines() if ln.strip()]
     return "\n  ".join(said[-lines:])
 
 
@@ -3410,10 +3412,9 @@ def text_size(textfile, fontsize, font=None, border=0):
         raise TextUnavailable(tr("drawing a line of text took over {seconds}s.",
                                  seconds=CALL_TIMEOUT), checked=False) from None
     if drawn.returncode != 0:
-        lines = [ln for ln in drawn.stderr.splitlines() if ln.strip()]
         raise TextUnavailable(tr("this machine cannot draw text on a video: ffmpeg "
                                  "needs its drawtext filter and a font.")
-                              + "\n  " + "\n  ".join(lines[-2:]), checked=True)
+                              + "\n  " + last_said(drawn.stderr, lines=2), checked=True)
     boxes = re.findall(r" w:(\d+) h:(\d+) ", drawn.stderr)
     return (int(boxes[-1][0]), int(boxes[-1][1])) if boxes else (0, 0)
 
@@ -4464,9 +4465,10 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
                    size=f"{cap / 1024 ** 3:.1f}"))
         unreadable = None if made.returncode else video_error(part)
         if made.returncode or unreadable:
-            lines = [ln for ln in made.stderr.splitlines() if ln.strip()]
+            # A killed ffmpeg says nothing, and then the file is the witness.
             die(tr("ffmpeg could not make the film.") + "\n  "
-                + ("\n  ".join(lines[-4:]) or unreadable))
+                + (last_said(made.stderr, lines=4) or unreadable
+                   or video_error(part) or ""))
         peak = loudest(part) if mixed else None
         if peak is not None and peak >= FULL_SCALE:
             note(tr("the film's sound reaches full scale, so it may be distorted. "
@@ -4627,9 +4629,8 @@ def cmd_motion(a):
     new = [start + float(t) for t in
            re.findall(r"showinfo@new .* pts_time:([0-9.]+)", seen.stderr)]
     if seen.returncode != 0 or not every or not new:
-        lines = [ln for ln in seen.stderr.splitlines() if ln.strip()]
         die(tr("could not read the frames of {path}.", path=a.input) + "\n  "
-            + "\n  ".join(lines[-2:]))
+            + last_said(seen.stderr, lines=2))
     stills = [(before, after) for before, after in itertools.pairwise([*new, end])
               if after - before > a.still]
     report = {"duration": round(end - start, 3), "frames": len(every),
@@ -4679,10 +4680,9 @@ def grab_frame(path, moment, info, picture, look=None):
     except subprocess.TimeoutExpired:
         die(tr("taking the frame took over {seconds}s.", seconds=6 * CALL_TIMEOUT))
     if grab.returncode != 0 or not picture.exists() or not picture.stat().st_size:
-        lines = [ln for ln in grab.stderr.splitlines() if ln.strip()]
+        said = last_said(grab.stderr, lines=2)
         die(tr("could not take the frame at {time} from {path}.",
-               time=f"{moment:g}", path=path)
-            + ("\n  " + "\n  ".join(lines[-2:]) if lines else ""))
+               time=f"{moment:g}", path=path) + (f"\n  {said}" if said else ""))
 
 
 def cmd_poster(a):
@@ -4795,9 +4795,9 @@ def cmd_sheet(a):
         except subprocess.TimeoutExpired:
             made = subprocess.CompletedProcess([], 1, "", "")
         if made.returncode != 0 or not part.exists() or not part.stat().st_size:
-            lines = [ln for ln in made.stderr.splitlines() if ln.strip()]
+            said = last_said(made.stderr, lines=2)
             die(tr("could not put the frames together into one picture.")
-                + ("\n  " + "\n  ".join(lines[-2:]) if lines else ""))
+                + (f"\n  {said}" if said else ""))
         os.replace(part, output)
     finally:
         part.unlink(missing_ok=True)
