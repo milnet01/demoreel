@@ -1419,6 +1419,13 @@ def finish_part(output, logfile, inputs):
     part.unlink()
 
 
+def last_said(stderr, lines=3):
+    """The last few non-empty lines of a program's captured stderr, indented to
+    sit under a message."""
+    said = [ln for ln in stderr.decode(errors="replace").splitlines() if ln.strip()]
+    return "\n  ".join(said[-lines:])
+
+
 class SampleError(Exception):
     """The display could not be sampled, so whether it is blank is unknown."""
 
@@ -1451,9 +1458,7 @@ def display_is_blank(env, display, width, height):
                              "{seconds}s; it has stopped answering",
                              seconds=CALL_TIMEOUT)) from None
     if grab.returncode != 0 or len(grab.stdout) != width * height:
-        lines = [ln for ln in grab.stderr.decode(errors="replace").splitlines()
-                 if ln.strip()]
-        raise SampleError("\n  ".join(lines[-3:])
+        raise SampleError(last_said(grab.stderr)
                           or tr("ffmpeg exited {status} with no frame",
                                 status=grab.returncode))
     return frame_is_flat(grab.stdout)
@@ -1479,9 +1484,7 @@ def video_is_blank(output, at, width, height):
         raise SampleError(tr("reading a frame of {path} took over {seconds}s",
                              path=output, seconds=CALL_TIMEOUT)) from None
     if grab.returncode != 0 or len(grab.stdout) != width * height:
-        lines = [ln for ln in grab.stderr.decode(errors="replace").splitlines()
-                 if ln.strip()]
-        raise SampleError("\n  ".join(lines[-3:])
+        raise SampleError(last_said(grab.stderr)
                           or tr("no frame of {path} could be read", path=output))
     return frame_is_flat(grab.stdout)
 
@@ -2477,8 +2480,7 @@ def take_picture(env, display, width, height, cursor, output, gpu):
          "-frames:v", "1", "-y", str(output)],
         env=env, capture_output=True, timeout=CALL_TIMEOUT)
     if grab.returncode != 0 or not output.exists():
-        tail = grab.stderr.decode(errors="replace").strip().splitlines()[-3:]
-        return tr("could not take the picture.") + "\n  " + "\n  ".join(tail)
+        return tr("could not take the picture.") + "\n  " + last_said(grab.stderr)
     gray = subprocess.run(  # noqa: PLW1510 - a failed read is handled below
         ["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(output),
          "-pix_fmt", "gray", "-f", "rawvideo", "-"],
@@ -2523,9 +2525,8 @@ def cut_region(screen, region, output):
         capture_output=True, timeout=CALL_TIMEOUT)
     if cut.returncode != 0 or not output.exists():
         output.unlink(missing_ok=True)
-        tail = cut.stderr.decode(errors="replace").strip().splitlines()[-3:]
-        return tr("could not cut the --region rectangle out of the picture.") + (
-            "\n  " + "\n  ".join(tail))
+        return (tr("could not cut the --region rectangle out of the picture.")
+                + "\n  " + last_said(cut.stderr))
     return None
 
 
@@ -2739,7 +2740,9 @@ def cmd_stop(a):
 
     for found in live:
         entry = wait_until_recording(found)
-        os.kill(entry["pid"], signal.SIGUSR1)
+        # It may have ended on its own since; run_succeeded reads how.
+        with contextlib.suppress(ProcessLookupError):
+            os.kill(entry["pid"], signal.SIGUSR1)
         if not run_succeeded(entry):
             die(tr("the recording failed after it was stopped, so there is no "
                    "video to hand back.\n  Its own error message says why."))
