@@ -731,6 +731,11 @@ simplest case, and a gate proves it still records.
   load ~10) passed. So the packages step's own containers are enough
   load to fail it; running the two side by side (DEMO-0277) is the
   likely cause.
+  2026-10-29, a88e583: the Ubuntu leg now runs after the packages step,
+  in the foreground, not beside it. Its push gate (cc-job push-0029c,
+  load ~8) passed: packages 178s, then the Ubuntu leg 271s. One pass
+  proves little; close once a few more push gates pass with no Ubuntu
+  leg failure.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
