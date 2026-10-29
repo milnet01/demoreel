@@ -715,6 +715,15 @@ simplest case, and a gate proves it still records.
   2026-10-22: bc9031e's GitHub run failed before ci.sh started. The
   apt install step hit its 15-minute limit on a slow Ubuntu mirror. It
   says nothing about the retry; the next push's run is the first test.
+  2026-10-29, gate on PR #1 (cc-job pr1-gate): every host step passed,
+  then the Ubuntu leg's first smoke recording failed with "ffmpeg could
+  not start recording" and no ffmpeg output, beside the package builds.
+  Re-run alone (cc-job pr1-parity) it failed later instead, at --cursor:
+  "the display did not give up a frame within 10s". Load average 31:
+  another session's Vestige C++ build, a semgrep run, and two KDE
+  filenamesearch kioworkers at ~70% CPU each for 30 minutes. So the
+  fixed limits inside the Ubuntu leg fail under load too, not only the
+  package containers'. The PR does not touch either path.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
