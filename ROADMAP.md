@@ -724,6 +724,13 @@ simplest case, and a gate proves it still records.
   filenamesearch kioworkers at ~70% CPU each for 30 minutes. So the
   fixed limits inside the Ubuntu leg fail under load too, not only the
   package containers'. The PR does not touch either path.
+  2026-10-29, later: the push gate (cc-job push-0029b) started at load
+  5.4 and failed the same way as 2026-10-22: the Ubuntu leg's first
+  smoke recording left an unfinished file while the packages step ran
+  beside it. The Ubuntu leg alone on the same tree (cc-job parity-main,
+  load ~10) passed. So the packages step's own containers are enough
+  load to fail it; running the two side by side (DEMO-0277) is the
+  likely cause.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
