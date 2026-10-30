@@ -311,8 +311,14 @@ demoreel thumbnail film.mp4 -t 14.9 --text "Saving a file" -o thumb.jpg
 
 What they share:
 
-- **`-o` is required by every command that writes a file**, and it may not be
-  one of the files being read. A command never writes over its own input.
+- **Without `-o`, a command writes to the current folder**, named after the
+  file it works from and the time, like `demo-20261030-143000.mp4`. `join` is
+  named after its first video, `edit` after its script, or `film` for a script
+  on standard input, and `card` after its picture, or `card` if it has none. A
+  name already taken gets a number, so nothing is written over. A picture is a
+  `.png`, and `thumbnail`'s a `.jpg`.
+- **`-o` may not be one of the files being read.** A command never writes over
+  its own input.
 - **Every command that writes a video writes an H.264 `.mp4` with its index
   at the front**, and `-o` must end in `.mp4`; any other ending is refused. So
   one command's output can be another's input. A clip keeps its own sound; a
@@ -613,7 +619,7 @@ demoreel card -o title.mp4 -d 3 --like demo.mp4 --text 'Saving a file'
 - `join` takes two or more videos. `--crossfade` applies at every join;
   without it each join is a plain cut. `--fade-in` is for the first clip and
   `--fade-out` for the last.
-- `card` takes `-d` for its length, which is required. A picture is given as
+- `card` takes `-d` for its length, 3 seconds unless you say. A picture is given as
   a bare file name, as in the script: `demoreel card -o spin.mp4 -d 6.9
   spin.png`. It also takes `--text`, `--text-size`, `--background`,
   `--fade-in` and `--fade-out`. Its size and
@@ -725,6 +731,7 @@ its top and bottom, and a wider one at its sides. Then it is scaled to
 ```sh
 demoreel sheet demo.mp4 --every 2 -o sheet.png
 demoreel sheet demo.mp4 --at 1,4.5,9 --region 0,0,400,60 -o sheet.jpg
+demoreel sheet demo.mp4
 ```
 
 Takes the frames on screen at the moments `--every` or `--at` names, the way
@@ -734,7 +741,8 @@ can be given to `poster -t` or a clip's `from`, and picks the same frame.
 
 - `--every SECONDS` takes a frame every so many seconds, from the start.
 - `--at` takes the frames at the times listed, separated by commas.
-- One of `--every` and `--at` is required. A time past the end is an error.
+- With neither, it takes 12 frames spread evenly over the video, or every
+  frame of a video with fewer. A time past the end is an error.
 - `--region x,y,w,h` shows only that rectangle of each frame, in the form
   `shot --region` takes.
 - `--width` is each frame's width in pixels, at least 80: 320 unless you

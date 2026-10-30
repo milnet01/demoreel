@@ -1052,8 +1052,8 @@ msgid "which run to stop (default: the only one running)"
 msgstr "멈출 실행 (기본값: 실행 중인 단 하나)"
 
 #. argparse formats this text with %
-msgid "video file to write, ending in .mp4"
-msgstr "쓸 동영상 파일, .mp4로 끝나야 함"
+msgid "video file to write, ending in .mp4 (default: ./<input>-<timestamp>.mp4)"
+msgstr "쓸 동영상 파일, .mp4로 끝나야 함 (기본값: ./<input>-<timestamp>.mp4)"
 
 #. argparse formats this text with %
 msgid "start black; the picture arrives over SECONDS"
@@ -1188,8 +1188,8 @@ msgid "a picture to show; a .gif or an animated .png plays"
 msgstr "보여 줄 그림. .gif나 애니메이션 .png는 재생됨"
 
 #. argparse formats this text with %
-msgid "how many seconds the card lasts"
-msgstr "카드가 지속되는 초"
+msgid "how many seconds the card lasts (default: {seconds})"
+msgstr "카드가 지속되는 초 (기본값: {seconds})"
 
 #. argparse formats this text with %
 msgid "one line of text"
@@ -1252,8 +1252,8 @@ msgid "save one frame of a video as a picture."
 msgstr "동영상의 프레임 하나를 그림으로 저장합니다."
 
 #. argparse formats this text with %
-msgid "picture file to write, ending in .png or .jpg"
-msgstr "쓸 그림 파일, .png 또는 .jpg로 끝나야 함"
+msgid "picture file to write, ending in .png or .jpg (default: ./<input>-<timestamp>{ending})"
+msgstr "쓸 그림 파일, .png 또는 .jpg로 끝나야 함 (기본값: ./<input>-<timestamp>{ending})"
 
 #. argparse formats this text with %
 msgid "the video to take the frame from"
@@ -1301,8 +1301,8 @@ msgid "the video to take the frames from"
 msgstr "프레임들을 가져올 동영상"
 
 #. argparse formats this text with %
-msgid "take a frame every SECONDS, from the start"
-msgstr "처음부터 SECONDS초마다 프레임 하나를 가져옴"
+msgid "take a frame every SECONDS, from the start (default: {frames} frames, spread evenly over the video)"
+msgstr "처음부터 SECONDS초마다 프레임 하나를 가져옴 (기본값: 영상 전체에 고르게 {frames}프레임)"
 
 #. argparse formats this text with %
 msgid "take the frames on screen at these moments, like 1,4.5,9"
@@ -1348,3 +1348,7 @@ msgstr "썸네일이 {size}MB가 되는데, YouTube는 2MB까지만 받습니다
 
 msgid "the title {words} is {wide} pixels wide, and the thumbnail has room for {room}. Shorten it."
 msgstr "제목 {words}은(는) 너비가 {wide}픽셀인데, 썸네일에는 {room}픽셀만큼의 공간이 있습니다. 줄이세요."
+
+#. argparse formats this text with %
+msgid "The words a script can use are in README.md and in man demoreel, under EDIT SCRIPT."
+msgstr "스크립트에 쓸 수 있는 단어는 README.md와 man demoreel의 EDIT SCRIPT에 있습니다."

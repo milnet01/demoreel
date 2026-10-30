@@ -1052,8 +1052,8 @@ msgid "which run to stop (default: the only one running)"
 msgstr "停止する実行 (既定値: 実行中の唯一のもの)"
 
 #. argparse formats this text with %
-msgid "video file to write, ending in .mp4"
-msgstr "書き出す動画ファイル。.mp4 で終わる名前"
+msgid "video file to write, ending in .mp4 (default: ./<input>-<timestamp>.mp4)"
+msgstr "書き出す動画ファイル。.mp4 で終わる名前 (既定値: ./<input>-<timestamp>.mp4)"
 
 #. argparse formats this text with %
 msgid "start black; the picture arrives over SECONDS"
@@ -1188,8 +1188,8 @@ msgid "a picture to show; a .gif or an animated .png plays"
 msgstr "表示する画像。.gif やアニメーション .png は再生されます"
 
 #. argparse formats this text with %
-msgid "how many seconds the card lasts"
-msgstr "カードを表示する秒数"
+msgid "how many seconds the card lasts (default: {seconds})"
+msgstr "カードを表示する秒数 (既定値: {seconds})"
 
 #. argparse formats this text with %
 msgid "one line of text"
@@ -1252,8 +1252,8 @@ msgid "save one frame of a video as a picture."
 msgstr "動画の 1 フレームを画像として保存します。"
 
 #. argparse formats this text with %
-msgid "picture file to write, ending in .png or .jpg"
-msgstr "書き出す画像ファイル。.png か .jpg で終わる名前"
+msgid "picture file to write, ending in .png or .jpg (default: ./<input>-<timestamp>{ending})"
+msgstr "書き出す画像ファイル。.png か .jpg で終わる名前 (既定値: ./<input>-<timestamp>{ending})"
 
 #. argparse formats this text with %
 msgid "the video to take the frame from"
@@ -1301,8 +1301,8 @@ msgid "the video to take the frames from"
 msgstr "フレームを取り出す動画"
 
 #. argparse formats this text with %
-msgid "take a frame every SECONDS, from the start"
-msgstr "先頭から SECONDS 秒ごとにフレームを取り出します"
+msgid "take a frame every SECONDS, from the start (default: {frames} frames, spread evenly over the video)"
+msgstr "先頭から SECONDS 秒ごとにフレームを取り出します (既定値: 動画全体に均等に {frames} フレーム)"
 
 #. argparse formats this text with %
 msgid "take the frames on screen at these moments, like 1,4.5,9"
@@ -1348,3 +1348,7 @@ msgstr "サムネイルは {size} MB になりますが、YouTube が受け付�
 
 msgid "the title {words} is {wide} pixels wide, and the thumbnail has room for {room}. Shorten it."
 msgstr "タイトル {words} は幅 {wide} ピクセルですが、サムネイルの余裕は {room} です。短くしてください。"
+
+#. argparse formats this text with %
+msgid "The words a script can use are in README.md and in man demoreel, under EDIT SCRIPT."
+msgstr "スクリプトで使える語は README.md と man demoreel の EDIT SCRIPT にあります。"

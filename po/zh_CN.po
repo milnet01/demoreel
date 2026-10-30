@@ -1052,8 +1052,8 @@ msgid "which run to stop (default: the only one running)"
 msgstr "要停止哪一次运行（默认：唯一正在运行的那个）"
 
 #. argparse formats this text with %
-msgid "video file to write, ending in .mp4"
-msgstr "要写入的视频文件，以 .mp4 结尾"
+msgid "video file to write, ending in .mp4 (default: ./<input>-<timestamp>.mp4)"
+msgstr "要写入的视频文件，以 .mp4 结尾（默认：./<input>-<timestamp>.mp4）"
 
 #. argparse formats this text with %
 msgid "start black; the picture arrives over SECONDS"
@@ -1188,8 +1188,8 @@ msgid "a picture to show; a .gif or an animated .png plays"
 msgstr "要显示的图片；.gif 或动画 .png 会播放"
 
 #. argparse formats this text with %
-msgid "how many seconds the card lasts"
-msgstr "卡片持续的秒数"
+msgid "how many seconds the card lasts (default: {seconds})"
+msgstr "卡片持续的秒数（默认：{seconds}）"
 
 #. argparse formats this text with %
 msgid "one line of text"
@@ -1252,8 +1252,8 @@ msgid "save one frame of a video as a picture."
 msgstr "将视频的一帧保存为图片。"
 
 #. argparse formats this text with %
-msgid "picture file to write, ending in .png or .jpg"
-msgstr "要写入的图片文件，以 .png 或 .jpg 结尾"
+msgid "picture file to write, ending in .png or .jpg (default: ./<input>-<timestamp>{ending})"
+msgstr "要写入的图片文件，以 .png 或 .jpg 结尾（默认：./<input>-<timestamp>{ending}）"
 
 #. argparse formats this text with %
 msgid "the video to take the frame from"
@@ -1301,8 +1301,8 @@ msgid "the video to take the frames from"
 msgstr "要从中取帧的视频"
 
 #. argparse formats this text with %
-msgid "take a frame every SECONDS, from the start"
-msgstr "从开头起每隔 SECONDS 秒取一帧"
+msgid "take a frame every SECONDS, from the start (default: {frames} frames, spread evenly over the video)"
+msgstr "从开头起每隔 SECONDS 秒取一帧（默认：在视频中均匀取 {frames} 帧）"
 
 #. argparse formats this text with %
 msgid "take the frames on screen at these moments, like 1,4.5,9"
@@ -1348,3 +1348,7 @@ msgstr "缩略图会有 {size} MB，而 YouTube 最多接受 2 MB。同一帧存
 
 msgid "the title {words} is {wide} pixels wide, and the thumbnail has room for {room}. Shorten it."
 msgstr "标题 {words} 宽 {wide} 像素，而缩略图只容得下 {room}。请缩短它。"
+
+#. argparse formats this text with %
+msgid "The words a script can use are in README.md and in man demoreel, under EDIT SCRIPT."
+msgstr "脚本可用的词语见 README.md 和 man demoreel 的 EDIT SCRIPT 部分。"

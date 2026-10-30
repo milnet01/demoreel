@@ -1064,8 +1064,8 @@ msgid "which run to stop (default: the only one running)"
 msgstr "какой запуск остановить (по умолчанию: единственный идущий)"
 
 #. argparse formats this text with %
-msgid "video file to write, ending in .mp4"
-msgstr "видеофайл для записи, с окончанием .mp4"
+msgid "video file to write, ending in .mp4 (default: ./<input>-<timestamp>.mp4)"
+msgstr "видеофайл для записи, с окончанием .mp4 (по умолчанию: ./<input>-<timestamp>.mp4)"
 
 #. argparse formats this text with %
 msgid "start black; the picture arrives over SECONDS"
@@ -1200,8 +1200,8 @@ msgid "a picture to show; a .gif or an animated .png plays"
 msgstr "изображение для показа; .gif или анимированный .png воспроизводится"
 
 #. argparse formats this text with %
-msgid "how many seconds the card lasts"
-msgstr "сколько секунд длится карточка"
+msgid "how many seconds the card lasts (default: {seconds})"
+msgstr "сколько секунд длится карточка (по умолчанию: {seconds})"
 
 #. argparse formats this text with %
 msgid "one line of text"
@@ -1264,8 +1264,8 @@ msgid "save one frame of a video as a picture."
 msgstr "сохранить один кадр видео как изображение."
 
 #. argparse formats this text with %
-msgid "picture file to write, ending in .png or .jpg"
-msgstr "файл изображения для записи, с окончанием .png или .jpg"
+msgid "picture file to write, ending in .png or .jpg (default: ./<input>-<timestamp>{ending})"
+msgstr "файл изображения для записи, с окончанием .png или .jpg (по умолчанию: ./<input>-<timestamp>{ending})"
 
 #. argparse formats this text with %
 msgid "the video to take the frame from"
@@ -1313,8 +1313,8 @@ msgid "the video to take the frames from"
 msgstr "видео, из которого нужно взять кадры"
 
 #. argparse formats this text with %
-msgid "take a frame every SECONDS, from the start"
-msgstr "брать кадр каждые SECONDS с начала"
+msgid "take a frame every SECONDS, from the start (default: {frames} frames, spread evenly over the video)"
+msgstr "брать кадр каждые SECONDS с начала (по умолчанию: {frames} кадров, равномерно по всему видео)"
 
 #. argparse formats this text with %
 msgid "take the frames on screen at these moments, like 1,4.5,9"
@@ -1360,3 +1360,7 @@ msgstr "миниатюра заняла бы {size} МБ, а YouTube прини�
 
 msgid "the title {words} is {wide} pixels wide, and the thumbnail has room for {room}. Shorten it."
 msgstr "заголовок {words} имеет ширину {wide} пикселей, а на миниатюре есть место для {room}. Сократите его."
+
+#. argparse formats this text with %
+msgid "The words a script can use are in README.md and in man demoreel, under EDIT SCRIPT."
+msgstr "Слова, которые может использовать сценарий, есть в README.md и в man demoreel, в разделе EDIT SCRIPT."

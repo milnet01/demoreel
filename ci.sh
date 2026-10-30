@@ -2452,13 +2452,62 @@ lines" "A title far too long to fit across a thumbnail at its size"; do
     echo "sheet laid out the frames asked for, in order, each over its own time"
 
     }
+    fin_no_output() {
+    # README: "Without `-o`, a command writes to the current folder, named after
+    # the file it works from and the time" ... "A name already taken gets a
+    # number, so nothing is written over." These are docs/cli-steps.md's commands.
+    local spec stem ending words got
+    printf 'clip A.mp4 from 0 to 1\n' >"$ft/no-o.txt"
+    run poster A.mp4 -t 1 -o "$ft/no-o.png"
+    expect_ok "control: poster -o"
+    for spec in 'A|.mp4|trim A.mp4 --to 1' 'A|.mp4|caption A.mp4 --text Hello' \
+                'A|.mp4|join A.mp4 A.mp4' 'card|.mp4|card --text Title' \
+                'no-o|.mp4|card -d 1 no-o.png' 'no-o|.mp4|edit no-o.txt' \
+                'A|.png|poster A.mp4 -t 1' 'A|.jpg|thumbnail A.mp4 -t 1' \
+                'A|.png|sheet A.mp4'; do
+        IFS='|' read -r stem ending words <<<"$spec"
+        # shellcheck disable=SC2086 # each case is several words
+        run $words
+        expect_ok "$words"
+        got=$(cat "$fo")
+        case $got in
+            "$ft/$stem"-[0-9]*"$ending") ;;
+            *) fail "$words: expected $ft/$stem-<time>$ending, actual: $got" ;;
+        esac
+        [ -s "$got" ] || fail "$words: printed $got, and it is not there"
+        rm -f "$got"
+    done
+    run edit - <"$ft/no-o.txt"
+    expect_ok "edit - without -o"
+    got=$(cat "$fo")
+    case $got in "$ft/film-"[0-9]*.mp4) rm -f "$got" ;;
+        *) fail "edit - : expected a film-<time>.mp4, actual: $got" ;;
+    esac
+    # The clock is held still here, since a second's boundary would hide this.
+    ( cd "$ft/out" && python3 - "$DR" <<'NOOPY'
+import importlib.machinery, importlib.util, pathlib, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", sys.argv[1])
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+d.time.strftime = lambda _: "NOW"
+names = []
+for _ in range(3):
+    path = d.timestamped_output("taken", ".png")
+    names.append(path.name)
+    path.touch()
+assert names == ["taken-NOW.png", "taken-NOW-2.png", "taken-NOW-3.png"], names
+NOOPY
+    ) || fail "a name already taken did not get a number"
+    echo "every command named its file after what it worked from, and a taken name got a number"
+
+    }
     fin_s12s() {
-    # README: "One of `--every` and `--at` is required" ... "A sheet holds at
+    # README: "A sheet holds at
     # most 100 frames" ... "A time past the end is an error."
     run sheet A.mp4 --at 1 -o "$ft/out/ok.png"
     expect_ok "control: sheet --at 1"
     for bad in "--at 6.5" "--at 1,x" "--every 0" "--every -1" "--every 0.05" \
-               "--at 1 --every 1" "" "--at 1 --width 40" "--at 1 --columns 0" \
+               "--at 1 --every 1" "--at 1 --width 40" "--at 1 --columns 0" \
                "--at 1 --region 200,0,160,240"; do
         # shellcheck disable=SC2086 # each case is several words
         run sheet A.mp4 $bad -o "$ft/out/bad.png"
@@ -2474,6 +2523,24 @@ lines" "A title far too long to fit across a thumbnail at its size"; do
         assert_absent "sheet -o $bad" "$ft/out/$bad"
     done
     echo "sheet refused late and malformed times, too many frames and bad sizes"
+    # README: "With neither, it takes 12 frames spread evenly over the video, or
+    # every frame of a video with fewer." A has 60 frames; a tile and its band
+    # are 320x283.
+    run sheet A.mp4 -o "$ft/out/s12.png"
+    expect_ok "sheet with neither --every nor --at"
+    assert_eq "sheet with neither: 12 frames in rows of 4" "png,1280,849" \
+        "$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height -of csv=p=0 "$ft/out/s12.png")"
+    sheet_cut "$ft/out/s12.png" "320:240:320:0" "$ft/out/s12-1.png"
+    assert_is_frame "sheet with neither, second tile" "$ft/out/s12-1.png" 0 "$ft/A.mp4" 5
+    sheet_cut "$ft/out/s12.png" "320:240:960:566" "$ft/out/s12-11.png"
+    assert_is_frame "sheet with neither, last tile" "$ft/out/s12-11.png" 0 "$ft/A.mp4" 55
+    run card -o "$ft/out/five.mp4" -d 0.5 -r 10 -s 320x240
+    expect_ok "control: a clip of five frames"
+    run sheet "$ft/out/five.mp4" -o "$ft/out/s5.png"
+    expect_ok "sheet of a clip with fewer frames than 12"
+    assert_eq "sheet with neither, five frames: all five" "png,1280,566" \
+        "$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height -of csv=p=0 "$ft/out/s5.png")"
+    echo "sheet with neither spread 12 frames evenly, or took all of a shorter video"
 
     # ---- join -------------------------------------------------------------
     }
@@ -2522,7 +2589,7 @@ lines" "A title far too long to fit across a thumbnail at its size"; do
     # ---- card -------------------------------------------------------------
     }
     fin_s15() {
-    # README: "`card` takes `-d` for its length, which is required." "Its size
+    # README: "`card` takes `-d` for its length, 3 seconds unless you say." "Its size
     # and frame rate come from `--like FILE`; `-s` and `-r` set them by hand and
     # win over `--like`. With none of them it is 1600x1000 at 30."
     run card -o "$ft/out/c1.mp4" -d 2 --like B.mp4
@@ -2539,8 +2606,8 @@ lines" "A title far too long to fit across a thumbnail at its size"; do
     assert_eq "card with none of them: size" 1600x1000 "$(v_size "$ft/out/c3.mp4")"
     assert_eq "card with none of them: rate" 30.00 "$(v_rate "$ft/out/c3.mp4")"
     run card -o "$ft/out/c4.mp4"
-    expect_refused "card without -d"
-    assert_absent "card without -d" "$ft/out/c4.mp4"
+    expect_ok "card without -d"
+    assert_len "card without -d" "$ft/out/c4.mp4" 90 30
     echo "card took its shape from --like, -s and -r, and the defaults"
 
     }
@@ -4283,6 +4350,7 @@ CASES
     fin_step "thumbnail refuses other endings, a late time, bad titles and over 2 MB" fin_s12t
     fin_step "sheet lays out the frames asked for, each over its own time" fin_s11s
     fin_step "sheet refuses bad times, too many frames and bad sizes" fin_s12s
+    fin_step "without -o, a command names its file and writes nothing over" fin_no_output
     fin_step "join adds the lengths, less the overlap at each crossfade" fin_s13
     fin_step "join gives the first clip's size and rate, and refuses another shape" fin_s14
     fin_step "card: size, rate and length come from -d, --like, -s and -r" fin_s15

@@ -25,6 +25,11 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 - **`click` and `drag` steps can use the right or middle button** (DEMO-0207)
   End the step with `right` or `middle`, as in `click 400 300 right`, to open a right-click menu in a recording. A `click` given three numbers is now refused with an example; it used to ignore the third.
 
+### Changed
+
+- **The finishing commands need fewer options** (DEMO-0263)
+  `-o` is now optional on `edit`, `trim`, `caption`, `join`, `card`, `poster`, `thumbnail` and `sheet`: the file lands in the current folder, named after what it was made from and the time. `card` lasts 3 seconds unless you say, and `sheet` with neither `--every` nor `--at` takes 12 frames spread over the video. `edit --help` now says where a script's words are listed.
+
 ### Fixed
 
 - **A long film no longer needs more memory for every scene** (DEMO-0252)

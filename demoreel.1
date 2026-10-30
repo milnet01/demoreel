@@ -23,8 +23,8 @@ demoreel \- record a GUI app on a private virtual display
 .br
 .B demoreel edit
 .I script
-.B \-o
-.I film.mp4
+.RB [ \-o
+.IR film.mp4 ]
 .RI [ options ]
 .br
 .B demoreel trim
@@ -35,8 +35,8 @@ demoreel \- record a GUI app on a private virtual display
 |
 .B card
 .RI [ options ]
-.B \-o
-.I out.mp4
+.RB [ \-o
+.IR out.mp4 ]
 .RI [ input ...]
 .br
 .B demoreel motion
@@ -47,8 +47,8 @@ demoreel \- record a GUI app on a private virtual display
 .I video
 .B \-t
 .I seconds
-.B \-o
-.I picture
+.RB [ \-o
+.IR picture ]
 .br
 .B demoreel thumbnail
 .I video
@@ -56,17 +56,17 @@ demoreel \- record a GUI app on a private virtual display
 .I seconds
 .RB [ \-\-text
 .IR words ]
-.B \-o
-.I picture
+.RB [ \-o
+.IR picture ]
 .br
 .B demoreel sheet
 .I video
-.RB ( \-\-every
+.RB [ \-\-every
 .IR seconds " | " \-\-at
-.IR seconds,... )
+.IR seconds,... ]
 .RI [ options ]
-.B \-o
-.I picture
+.RB [ \-o
+.IR picture ]
 .br
 .B demoreel
 .RB [ \-\-version ]
@@ -175,8 +175,10 @@ For
 and
 .B shot
 the default is the current directory, named after the app and the time.
-The finishing commands require it:
-a video must end in
+The finishing commands default to the current directory too,
+named after the file they work from and the time.
+A name already taken gets a number.
+A video must end in
 .BR .mp4 ,
 a
 .BR poster ,
@@ -197,7 +199,7 @@ records until
 or until the app closes itself.
 For
 .BR card ,
-how long the card lasts; required.
+how long the card lasts (default 3).
 .TP
 .BR \-s ", " \-\-size " \fIW\fBx\fIH\fR"
 The size of the picture (default 1600x1000).
@@ -418,6 +420,9 @@ which moment to save; required.
 .BI \-\-every " seconds"
 .BR sheet :
 take a frame every so many seconds, from the start.
+With neither this nor
+.BR \-\-at ,
+take 12 frames spread evenly over the video.
 .TP
 .BI \-\-at " seconds,..."
 .BR sheet :

@@ -1999,14 +1999,27 @@ def prepare(a, suffix):
     if a.output:
         output = own_path(a.output, "output")
     else:
-        stem = re.sub(r"[^A-Za-z0-9._-]", "_", Path(command[0]).name) or "demo"
-        output = Path.cwd() / f"{stem}-{time.strftime('%Y%m%d-%H%M%S')}{suffix}"
+        output = timestamped_output(Path(command[0]).name, suffix)
     output.parent.mkdir(parents=True, exist_ok=True)
 
     applog = own_path(a.app_log, "app log") if a.app_log else None
     if applog:
         applog.parent.mkdir(parents=True, exist_ok=True)
     return command, width, height, output, applog
+
+
+def timestamped_output(name, suffix):
+    """Where a run writes without -o: this folder, named after `name` and the
+    time. Short commands can finish inside one second, so a name already taken
+    gets a number rather than the file being written over."""
+    stem = re.sub(r"[^A-Za-z0-9._-]", "_", name) or "demo"
+    when = time.strftime("%Y%m%d-%H%M%S")
+    output = Path.cwd() / f"{stem}-{when}{suffix}"
+    taken = 1
+    while output.exists():
+        taken += 1
+        output = Path.cwd() / f"{stem}-{when}-{taken}{suffix}"
+    return output
 
 
 def own_path(raw, what):
@@ -2812,6 +2825,7 @@ def wait_until_recording(entry):
 # Defaults of the finishing commands (README, Finishing a recording).
 FADE_LENGTH = 0.5
 CARD_TEXT_SIZE = 7
+CARD_SECONDS = 3
 CAPTION_TEXT_SIZE = 5
 CARD_BACKGROUND = "#101418"
 
@@ -4348,6 +4362,11 @@ def finishing_output(raw, inputs, endings):
     return output
 
 
+def output_or_default(a, source, suffix=".mp4"):
+    """The -o given, or a name made from the file the command works from."""
+    return a.output or timestamped_output(Path(source).stem, suffix)
+
+
 def finishing_tools():
     """What every finishing command needs installed."""
     missing = [t for t in ("ffmpeg", "ffprobe") if shutil.which(t) is None]
@@ -4658,7 +4677,8 @@ def cmd_edit(a):
         die(tr("could not read the script {path}: {reason}.", path=a.script,
                reason=getattr(exc, "strerror", None) or exc))
     scenes, music = parse_script(text)
-    make_film(scenes, a.output, a.size, a.framerate, music=music)
+    make_film(scenes, output_or_default(a, "film" if a.script == "-" else a.script),
+              a.size, a.framerate, music=music)
 
 
 def shortcut_music(a):
@@ -4706,14 +4726,16 @@ def cmd_trim(a):
     scene = one_clip(a.input, a)
     scene.start, scene.end = a.start or 0.0, a.end
     scene.fade_at, scene.fade_length = a.fade_at, a.fade_length
-    make_film(without_sound([scene], a), a.output, music=shortcut_music(a))
+    make_film(without_sound([scene], a), output_or_default(a, a.input),
+              music=shortcut_music(a))
 
 
 def cmd_caption(a):
     """One clip, whole, with its texts."""
     scene = one_clip(a.input, a)
     scene.texts = a.texts
-    make_film(without_sound([scene], a), a.output, music=shortcut_music(a))
+    make_film(without_sound([scene], a), output_or_default(a, a.input),
+              music=shortcut_music(a))
 
 
 def cmd_join(a):
@@ -4727,7 +4749,8 @@ def cmd_join(a):
         scene.crossfade = a.crossfade if scenes else 0.0
         scenes.append(scene)
     scenes[0].fade_in, scenes[-1].fade_out = a.fade_in, a.fade_out
-    make_film(without_sound(scenes, a), a.output, music=shortcut_music(a))
+    make_film(without_sound(scenes, a), output_or_default(a, a.inputs[0]),
+              music=shortcut_music(a))
 
 
 def cmd_card(a):
@@ -4745,7 +4768,8 @@ def cmd_card(a):
         like = probe(a.like, "--like")
         size = size or f"{like['width']}x{like['height']}"
         rate = rate or like["rate"] or None
-    make_film([scene], a.output, size, rate, [a.like] if a.like else [],
+    make_film([scene], output_or_default(a, a.image or "card"), size, rate,
+              [a.like] if a.like else [],
               music=shortcut_music(a))
 
 
@@ -4863,7 +4887,8 @@ def check_time(a, info):
 def cmd_poster(a):
     """The frame on screen at -t, as a picture."""
     finishing_tools()
-    output = finishing_output(a.output, [a.input], (".png", ".jpg"))
+    output = finishing_output(output_or_default(a, a.input, ".png"), [a.input],
+                              (".png", ".jpg"))
     info = probe(a.input, Path(a.input).name)
     check_time(a, info)
     part = output.with_name(f".{output.stem}.demoreel-part{output.suffix}")
@@ -4892,7 +4917,8 @@ def cmd_thumbnail(a):
     padded: a 16:10 frame loses a strip at the top and the bottom, and a wider
     one at the sides."""
     finishing_tools()
-    output = finishing_output(a.output, [a.input], (".png", ".jpg"))
+    output = finishing_output(output_or_default(a, a.input, ".jpg"), [a.input],
+                              (".png", ".jpg"))
     info = probe(a.input, Path(a.input).name)
     check_time(a, info)
     width, height = info["width"], info["height"]
@@ -4956,12 +4982,19 @@ def title_filter(words, workdir):
 SHEET_WIDTH = 320
 SHEET_COLUMNS = 4
 SHEET_FRAMES = 100
+# With neither --every nor --at: three rows at the default columns.
+SHEET_SPREAD = 12
 SHEET_LEAST_WIDTH = 80
 
 
 def sheet_times(a, info):
-    """The moments --every or --at asks for, each checked against the video."""
+    """The moments --every or --at asks for, each checked against the video, or
+    with neither, moments spread evenly over it."""
     whole = info["duration"]
+    if a.every is None and a.at is None:
+        frame, step = frame_on_screen(whole, info)
+        count = min(SHEET_SPREAD, frame + 1)
+        return [i * (frame + 1) * step / count for i in range(count)]
     if a.every is not None:
         if not (a.every > 0 and math.isfinite(a.every)):
             die(tr("{option} takes a number of seconds, not {value}.",
@@ -4992,7 +5025,8 @@ def cmd_sheet(a):
     picks the same frame in both, and the time printed is that frame's start:
     given to poster -t or a clip's from, it picks the frame again."""
     finishing_tools()
-    output = finishing_output(a.output, [a.input], (".png", ".jpg"))
+    output = finishing_output(output_or_default(a, a.input, ".png"), [a.input],
+                              (".png", ".jpg"))
     info = probe(a.input, Path(a.input).name)
     for flag, value, least in (("--width", a.width, SHEET_LEAST_WIDTH),
                                ("--columns", a.columns, 1)):
@@ -5265,10 +5299,15 @@ def build_parser():
     def finishing(name, summary, description, output=True):
         p = sub.add_parser(name, help=summary, description=description)
         if output is True:
-            output = tr_help("video file to write, ending in .mp4")
+            output = tr_help("video file to write, ending in .mp4 (default: "
+                             "./<input>-<timestamp>.mp4)")
         if output:
-            p.add_argument("-o", "--output", required=True, help=output)
+            p.add_argument("-o", "--output", help=output)
         return p
+
+    def picture_output(ending):
+        return tr_help("picture file to write, ending in .png or .jpg (default: "
+                       "./<input>-<timestamp>{ending})", ending=ending)
 
     def fades(p):
         p.add_argument("--fade-in", type=seconds, default=0, metavar="SECONDS",
@@ -5296,6 +5335,8 @@ def build_parser():
 
     edit = finishing("edit", tr_help("make a film from a script of scenes"),
                      tr_help("make a film from a script of scenes."))
+    edit.epilog = tr_help("The words a script can use are in README.md and in man "
+                          "demoreel, under EDIT SCRIPT.")
     edit.add_argument("script", help=tr_help("the script file, or - for standard input"))
     edit.add_argument("-s", "--size", help=tr_help("the film's picture size, like "
                                                    "1280x800 (default: the first clip's)"))
@@ -5357,8 +5398,9 @@ def build_parser():
                      tr_help("make a clip from a picture, or from text."))
     card.add_argument("image", nargs="?", help=tr_help("a picture to show; a .gif or "
                                                        "an animated .png plays"))
-    card.add_argument("-d", "--duration", type=seconds, required=True,
-                      help=tr_help("how many seconds the card lasts"))
+    card.add_argument("-d", "--duration", type=seconds, default=CARD_SECONDS,
+                      help=tr_help("how many seconds the card lasts (default: "
+                                   "{seconds})", seconds=CARD_SECONDS))
     card.add_argument("--text", metavar="WORDS", help=tr_help("one line of text"))
     card.add_argument("--text-size", type=float, metavar="PERCENT",
                       help=tr_help("the text's height, as a percentage of the "
@@ -5399,7 +5441,7 @@ def build_parser():
 
     poster = finishing("poster", tr_help("save one frame of a video as a picture"),
                        tr_help("save one frame of a video as a picture."),
-                       output=tr_help("picture file to write, ending in .png or .jpg"))
+                       output=picture_output(".png"))
     poster.add_argument("input", help=tr_help("the video to take the frame from"))
     poster.add_argument("-t", "--time", type=seconds, required=True,
                         metavar="SECONDS", help=tr_help("which moment to save"))
@@ -5410,8 +5452,7 @@ def build_parser():
                           tr_help("save one frame of a video as a YouTube "
                                   "thumbnail: 1280x720, cut to 16:9, with a "
                                   "title if you give one."),
-                          output=tr_help("picture file to write, ending in .png "
-                                         "or .jpg"))
+                          output=picture_output(".jpg"))
     thumbnail.add_argument("input", help=tr_help("the video to take the frame from"))
     thumbnail.add_argument("-t", "--time", type=seconds, required=True,
                            metavar="SECONDS", help=tr_help("which moment to save"))
@@ -5424,11 +5465,13 @@ def build_parser():
                                        "times, as one picture"),
                       tr_help("save several frames of a video, with their times, "
                               "as one picture."),
-                      output=tr_help("picture file to write, ending in .png or .jpg"))
+                      output=picture_output(".png"))
     sheet.add_argument("input", help=tr_help("the video to take the frames from"))
-    times = sheet.add_mutually_exclusive_group(required=True)
+    times = sheet.add_mutually_exclusive_group()
     times.add_argument("--every", type=seconds, metavar="SECONDS",
-                       help=tr_help("take a frame every SECONDS, from the start"))
+                       help=tr_help("take a frame every SECONDS, from the start "
+                                    "(default: {frames} frames, spread evenly "
+                                    "over the video)", frames=SHEET_SPREAD))
     times.add_argument("--at", metavar="SECONDS,...",
                        help=tr_help("take the frames on screen at these moments, "
                                     "like 1,4.5,9"))

@@ -1058,8 +1058,8 @@ msgid "which run to stop (default: the only one running)"
 msgstr "watter lopie om te stop (verstek: die enigste een wat loop)"
 
 #. argparse formats this text with %
-msgid "video file to write, ending in .mp4"
-msgstr "videolêer om te skryf, wat op .mp4 eindig"
+msgid "video file to write, ending in .mp4 (default: ./<input>-<timestamp>.mp4)"
+msgstr "videolêer om te skryf, wat op .mp4 eindig (verstek: ./<input>-<timestamp>.mp4)"
 
 #. argparse formats this text with %
 msgid "start black; the picture arrives over SECONDS"
@@ -1194,8 +1194,8 @@ msgid "a picture to show; a .gif or an animated .png plays"
 msgstr "'n prent om te wys; 'n .gif of 'n geanimeerde .png speel"
 
 #. argparse formats this text with %
-msgid "how many seconds the card lasts"
-msgstr "hoeveel sekondes die kaart duur"
+msgid "how many seconds the card lasts (default: {seconds})"
+msgstr "hoeveel sekondes die kaart duur (verstek: {seconds})"
 
 #. argparse formats this text with %
 msgid "one line of text"
@@ -1258,8 +1258,8 @@ msgid "save one frame of a video as a picture."
 msgstr "stoor een raam van 'n video as 'n prent."
 
 #. argparse formats this text with %
-msgid "picture file to write, ending in .png or .jpg"
-msgstr "prentlêer om te skryf, wat op .png of .jpg eindig"
+msgid "picture file to write, ending in .png or .jpg (default: ./<input>-<timestamp>{ending})"
+msgstr "prentlêer om te skryf, wat op .png of .jpg eindig (verstek: ./<input>-<timestamp>{ending})"
 
 #. argparse formats this text with %
 msgid "the video to take the frame from"
@@ -1307,8 +1307,8 @@ msgid "the video to take the frames from"
 msgstr "die video om die rame uit te neem"
 
 #. argparse formats this text with %
-msgid "take a frame every SECONDS, from the start"
-msgstr "neem elke SECONDS 'n raam, van die begin af"
+msgid "take a frame every SECONDS, from the start (default: {frames} frames, spread evenly over the video)"
+msgstr "neem elke SECONDS 'n raam, van die begin af (verstek: {frames} rame, eweredig oor die video versprei)"
 
 #. argparse formats this text with %
 msgid "take the frames on screen at these moments, like 1,4.5,9"
@@ -1354,3 +1354,7 @@ msgstr "die duimnael sou {size} MB wees, en YouTube neem een van hoogstens 2 MB.
 
 msgid "the title {words} is {wide} pixels wide, and the thumbnail has room for {room}. Shorten it."
 msgstr "die titel {words} is {wide} pieksels breed, en die duimnael het plek vir {room}. Maak dit korter."
+
+#. argparse formats this text with %
+msgid "The words a script can use are in README.md and in man demoreel, under EDIT SCRIPT."
+msgstr "Die woorde wat 'n skrip kan gebruik, is in README.md en in man demoreel, onder EDIT SCRIPT."

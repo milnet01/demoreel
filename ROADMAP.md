@@ -749,6 +749,12 @@ simplest case, and a gate proves it still records.
   with no Ubuntu-leg limit failure. Its failed runs before that push were a
   check of mine: an amix subtraction that reads -22 dB for a file against
   itself on ffmpeg 6.1.1, not this item's fault. Third full gate since a88e583.
+  2026-10-30, push of e48d561 (cc-job push-0030c, load about 14 at the
+  start, from another session's C++ build): the full push gate passed,
+  the Ubuntu leg with it (305 s), with no Ubuntu-leg limit failure. One
+  step skipped: the real-Flatpak step, because GIMP was open. Fourth
+  full gate since a88e583, and the first of them under real load. GitHub
+  CI also passed for 1b24baf.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
@@ -5189,12 +5195,22 @@ covers both display backends and the Flatpak invocation.
   Kind: perf.
   Source: user-request-2026-10-16.
 
-- 📋 [DEMO-0263] **Count the steps for the common command-line tasks, cut the ones that can go, and check every feature is easy to find from --help.**
+- ✅ [DEMO-0263] **Count the steps for the common command-line tasks, cut the ones that can go, and check every feature is easy to find from --help.**
   List the common tasks (record an app, trim, caption, join, make a
   poster), write down the shortest command for each and how many
   options it needs, and remove any step a sensible default could do.
   Check each command and option is reachable from `demoreel --help` in
   one step. The counts are the baseline later versions compare against.
+  2026-10-30: the counts are in docs/cli-steps.md. User decisions the
+  same day: -o is optional on every finishing command, card lasts 3
+  seconds unless told, and sheet with neither --every nor --at takes 12
+  frames spread evenly. poster and thumbnail keep -t, since their frame
+  is what gets published. No review-contract on README's change: the
+  user was asked and said none. Every command is in --help and every
+  option in COMMAND --help. An edit script's words are not, so edit
+  --help now says where they are listed. Limit: two runs started in the
+  same second from one input, by the same stem, can still pick one
+  default name, since the check for a taken name is not atomic.
   **Layman:** Recording and finishing a video takes as few commands and options as possible, and every feature can be found in the help.
   Kind: ux.
   Source: user-request-2026-10-16.

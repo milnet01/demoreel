@@ -1036,7 +1036,11 @@ msgid "which run to stop (default: the only one running)"
 msgstr ""
 
 #. argparse formats this text with %
-msgid "video file to write, ending in .mp4"
+msgid "video file to write, ending in .mp4 (default: ./<input>-<timestamp>.mp4)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "picture file to write, ending in .png or .jpg (default: ./<input>-<timestamp>{ending})"
 msgstr ""
 
 #. argparse formats this text with %
@@ -1073,6 +1077,10 @@ msgstr ""
 
 #. argparse formats this text with %
 msgid "make a film from a script of scenes."
+msgstr ""
+
+#. argparse formats this text with %
+msgid "The words a script can use are in README.md and in man demoreel, under EDIT SCRIPT."
 msgstr ""
 
 #. argparse formats this text with %
@@ -1172,7 +1180,7 @@ msgid "a picture to show; a .gif or an animated .png plays"
 msgstr ""
 
 #. argparse formats this text with %
-msgid "how many seconds the card lasts"
+msgid "how many seconds the card lasts (default: {seconds})"
 msgstr ""
 
 #. argparse formats this text with %
@@ -1236,10 +1244,6 @@ msgid "save one frame of a video as a picture."
 msgstr ""
 
 #. argparse formats this text with %
-msgid "picture file to write, ending in .png or .jpg"
-msgstr ""
-
-#. argparse formats this text with %
 msgid "the video to take the frame from"
 msgstr ""
 
@@ -1272,7 +1276,7 @@ msgid "the video to take the frames from"
 msgstr ""
 
 #. argparse formats this text with %
-msgid "take a frame every SECONDS, from the start"
+msgid "take a frame every SECONDS, from the start (default: {frames} frames, spread evenly over the video)"
 msgstr ""
 
 #. argparse formats this text with %
