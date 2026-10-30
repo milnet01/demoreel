@@ -32,6 +32,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **A stop can no longer hang a recording for good** (DEMO-0094)
+  A stop landing at the wrong instant could freeze the run while it kept recording, and `demoreel stop` then waited for ever.
 - **A long `type` step no longer fails as "stopped answering"** (DEMO-0094)
   Text over about 1000 characters ran out its time while it was still being typed.
 - **An app whose window title is not UTF-8 no longer ends the run in a Python error** (DEMO-0094)

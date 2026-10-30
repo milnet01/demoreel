@@ -6565,6 +6565,38 @@ if worst > 0.05:
 print(f"a stop is noticed within {worst * 1000:.1f} ms")
 STOPPY
 
+step "a stop arriving during a wait cannot hang the run"
+# DEMO-0094. threading.Event is not safe in a signal handler: a signal landing
+# while the main thread holds the Event's lock, inside wait, made the handler
+# block on that lock for good. The recording then ran on, and stop waited on it
+# for ever. Measured: signals landing at random against wait(0) hung three runs
+# of three. So one signal at a time for a few seconds, under a time limit.
+set +e
+timeout -s KILL 20 python3 - <<'STORMPY'
+import importlib.machinery, importlib.util, random, signal, time
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+signal.signal(signal.SIGALRM, d._request_stop)
+end = time.monotonic() + 8
+rounds = 0
+while time.monotonic() < end:
+    d._stop.clear()
+    signal.setitimer(signal.ITIMER_REAL, random.uniform(0.00001, 0.0002))
+    while not d._stop.is_set():
+        d._stop.wait(0)
+    if not d._stop.wait(1):
+        raise SystemExit("wait did not see the stop")
+    rounds += 1
+print(f"{rounds} signals landed on a wait, and none hung it")
+STORMPY
+storm_status=$?
+set -e
+[ "$storm_status" -eq 0 ] || {
+    echo "the stop handler hung the run, or the check failed (exit $storm_status)" >&2
+    exit 1
+}
+
 step "an app that cannot be started leaves no display behind"
 # DEMO-0094. A script with no shebang fails to start with ENOEXEC, which was
 # not one of the two errors caught. The run ended in a traceback, and its Xvfb

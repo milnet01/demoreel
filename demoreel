@@ -71,11 +71,42 @@ NO_WAYLAND = ""
 # app's display is X11, so this is true, and no toolkit has to be named.
 SESSION_TYPE = "x11"
 
-# An Event, not a flag, so a wait on it ends the moment a stop arrives. A
-# plain sleep resumes after the handler runs (PEP 475), and a stop landed up
-# to one sleep late: a median 107 ms, measured, all of it in the video
-# (DEMO-0075).
-_stop = threading.Event()
+class StopRequest:
+    """Whether a stop has been asked for, set from a signal handler.
+
+    A wait on it ends the moment a stop arrives. A plain sleep resumes after
+    the handler runs (PEP 475), and a stop landed up to one sleep late: a
+    median 107 ms, measured, all of it in the video (DEMO-0075).
+
+    It is not a threading.Event, which holds a lock that wait() also takes. A
+    signal landing while wait() held it blocked the handler on its own thread
+    for good, and the run hung while recording (DEMO-0094). A byte in a pipe
+    takes no lock, and select sees it however late the wait began.
+    """
+
+    def __init__(self):
+        self._requested = False
+        self._read, self._write = os.pipe()
+
+    def is_set(self):
+        return self._requested
+
+    def set(self):
+        if not self._requested:
+            self._requested = True
+            os.write(self._write, b".")
+
+    def clear(self):
+        if self._requested:
+            os.read(self._read, 1)
+            self._requested = False
+
+    def wait(self, timeout):
+        select.select([self._read], [], [], timeout)
+        return self._requested
+
+
+_stop = StopRequest()
 
 # Set once a call to the display has timed out (DEMO-0079): the run has failed
 # and hands back no video. The recorder and the display are then ended at
