@@ -32,6 +32,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **A failed `--gpu` or `--audio` run no longer touches a part file an earlier killed run left** (DEMO-0094)
+  It could overwrite `-o` from that file and delete it, or say the file could not be finished in place of what really went wrong.
 - **A long `-d 0` recording no longer grows in memory for as long as it runs** (DEMO-0094)
 - **A stop can no longer hang a recording for good** (DEMO-0094)
   A stop landing at the wrong instant could freeze the run while it kept recording, and `demoreel stop` then waited for ever.

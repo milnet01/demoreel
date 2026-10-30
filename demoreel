@@ -2559,6 +2559,7 @@ def cmd_record(a):
     appout = open(applog, "wb") if applog else sys.stderr  # noqa: SIM115
     server = app = recorder = log = auth = sound = None
     checks = Checks()
+    ran_through = False
     try:
         write_state(statefile, state)
         # Only now: asking ffmpeg took up to 0.2s at load 21, before the run
@@ -2595,6 +2596,7 @@ def cmd_record(a):
         stop_recorder(recorder)
         checks.stopped_early = early or server.poll() is not None
         check_at_end(env, app, window, display, width, height, checks)
+        ran_through = True
     finally:
         # Order matters: finish the video before the app and display go away,
         # or the last frames catch a half-dead app.
@@ -2610,10 +2612,20 @@ def cmd_record(a):
         end_server(server)
         if auth is not None:
             auth.unlink(missing_ok=True)
-        if a.gpu:
-            finish_gpu_video(output, logpath)
-        elif a.audio:
-            finish_audio_video(output, logpath)
+        # Only what this run recorded: a part file a killed run left is not
+        # ours, and the run may have failed before it wrote one of its own.
+        if recorder is not None:
+            try:
+                if a.gpu:
+                    finish_gpu_video(output, logpath)
+                elif a.audio:
+                    finish_audio_video(output, logpath)
+            except SystemExit as exc:
+                if ran_through:
+                    raise
+                # What went wrong first is what the run ends on. This one still
+                # says where the recording is kept.
+                note(str(exc.code).removeprefix("demoreel: "))
 
     vouch_for(a, output, logpath, width, height, checks)
     if a.audio:

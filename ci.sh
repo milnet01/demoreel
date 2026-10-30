@@ -6709,6 +6709,65 @@ for early in recorder display; do
 done
 echo "a run cut short by its recorder or its display fails, and prints no path"
 
+step "a run finishes only what it recorded, and keeps its first error"
+# DEMO-0094. Finishing ran in a finally whether or not this run had recorded
+# anything. A part file a killed run left was finished by a later run that had
+# failed at start, which overwrote -o and deleted the part; one that could not
+# be finished replaced the real error with its own. Measured with both.
+if [ -z "$(./demoreel check 2>&1 | sed -n '/--gpu: ready/p')" ]; then
+    echo "skipped: demoreel check says --gpu is not ready"
+else
+    stale="$tmp/.stale.demoreel-part.mp4"
+    ffmpeg -nostdin -y -v error -f lavfi -i testsrc=d=1 -c:v libx264 "$stale"
+    stale_sum=$(sha256sum <"$stale")
+    set +e
+    ./demoreel record --gpu -n gatestale -o "$tmp/stale.mp4" -s 320x240 -- sh -c 'exit 3' \
+        >/dev/null 2>"$tmp/stale.err"
+    stale_status=$?
+    set -e
+    [ "$stale_status" -ne 0 ] && [ ! -e "$tmp/stale.mp4" ] || {
+        echo "a run that failed at start finished another run's part file" >&2
+        cat "$tmp/stale.err" >&2
+        exit 1
+    }
+    [ "$(sha256sum <"$stale")" = "$stale_sum" ] && grep -q 'exited with status 3' "$tmp/stale.err" || {
+        echo "the part file was touched, or the app's failure was not what was said:" >&2
+        cat "$tmp/stale.err" >&2
+        exit 1
+    }
+    head -c 5000 /dev/urandom >"$stale"
+    set +e
+    ./demoreel record --gpu -n gatestale -o "$tmp/stale.mp4" -s 320x240 -- sh -c 'exit 3' \
+        >/dev/null 2>"$tmp/stale.err"
+    set -e
+    grep -q 'exited with status 3' "$tmp/stale.err" || {
+        echo "an unfinishable part file replaced the app's failure:" >&2
+        cat "$tmp/stale.err" >&2
+        exit 1
+    }
+    # A run that did record and failed mid-way still says why first.
+    mkdir -p "$tmp/noremux"
+    cat >"$tmp/noremux/ffmpeg" <<SHIM
+#!/bin/sh
+case "\$*" in *demoreel-part*) exit 1 ;; esac
+exec $(command -v ffmpeg) "\$@"
+SHIM
+    chmod +x "$tmp/noremux/ffmpeg"
+    set +e
+    PATH="$tmp/noremux:$PATH" ./demoreel record --gpu -n gatestale -o "$tmp/midway.mp4" -s 320x240 \
+        -a 'key Bogus_Key' -- xclock >/dev/null 2>"$tmp/midway.err"
+    midway_status=$?
+    set -e
+    [ "$midway_status" -ne 0 ] \
+        && sed -n '/^demoreel:/p' "$tmp/midway.err" | tail -n 1 | grep -q 'key step failed' \
+        && grep -q 'could not finish the video' "$tmp/midway.err" || {
+        echo "the run's first error was not what it ended on (exit $midway_status):" >&2
+        cat "$tmp/midway.err" >&2
+        exit 1
+    }
+    echo "a stale part file is left alone, and the first error is the one said last"
+fi
+
 step "the recorder's reports do not pile up in memory"
 # DEMO-0094. The thread keeping ffmpeg's pipe drained used read(), which keeps
 # everything until the pipe ends, so a -d 0 recording grew for as long as it
