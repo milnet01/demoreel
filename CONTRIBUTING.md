@@ -119,6 +119,17 @@ key that file lists. The release recipe runs it before anything is bumped,
 and the release workflow attaches nothing to a release whose tag is
 unsigned.
 
+Before cutting one, on a quiet machine, check that nothing has grown costly:
+
+```sh
+./ci.sh --perf
+```
+
+It fails when a command's CPU time or peak memory is over 1.5 times
+`docs/perf-baseline.tsv`. Find out why. If the cost is worth it, run
+`./ci.sh --perf-baseline` and commit the file. The figures belong to the
+machine and ffmpeg the file's header names.
+
 Once the files are attached, check the release as a user would:
 
 ```sh

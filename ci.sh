@@ -13,6 +13,9 @@
 # ./ci.sh --finishing runs only the checks for the finishing commands (edit,
 # trim, caption, join, card, motion, poster, thumbnail, sheet), which need no display and take
 # seconds. The full gate runs the same checks, from the same function.
+#
+# ./ci.sh --perf measures what each command costs against docs/perf-baseline.tsv,
+# by hand before a release. The gate does not run it.
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -1205,6 +1208,201 @@ if [ "${1:-}" = "--release-check" ]; then
     git fetch --quiet --no-tags origin "+refs/tags/$tag:refs/tags/$tag"
     verify_tag "$tag"
     echo "$tag: every file matches SHA256SUMS and has a build record, and the tag is signed"
+    exit 0
+fi
+
+# DEMO-0252: what each command costs, against the figures in PERF_BASELINE.
+# ./ci.sh --perf measures and compares, and fails on CPU time or peak memory
+# over 1.5 times the baseline. Wall time is recorded and never judged: it moves
+# with whatever else the machine is doing. Run by hand before a release; the
+# gate does not run it, since it takes minutes and needs a quiet machine.
+# ./ci.sh --perf-baseline measures and replaces the figures. Do that only when a
+# change has been accepted as worth its cost, and commit the file.
+# ./ci.sh --perf-compare BASELINE RESULTS is the comparison alone.
+#
+# The figures belong to one machine and one ffmpeg, which the file's header
+# names, because ffmpeg's threads and so its memory follow the core count.
+PERF_BASELINE=docs/perf-baseline.tsv
+
+perf_compare() {  # baseline results; exit 1 when a figure is over the limit
+    python3 - "$1" "$2" <<'PERFPY'
+import sys
+
+LIMIT = 1.5
+
+def read(path):
+    notes, rows = {}, {}
+    for line in open(path, encoding="utf-8"):
+        line = line.rstrip("\n")
+        if line.startswith("#"):
+            key, _, value = line[1:].partition(":")
+            notes[key.strip()] = value.strip()
+        elif line and not line.startswith("case\t"):
+            case, wall, cpu, peak = line.split("\t")
+            rows[case] = (float(wall), float(cpu), float(peak))
+    return notes, rows
+
+(base_notes, base), (now_notes, now) = read(sys.argv[1]), read(sys.argv[2])
+for key in ("machine", "ffmpeg"):
+    if base_notes.get(key) != now_notes.get(key):
+        print(f"note: the baseline's {key} is {base_notes.get(key)}, this run's is "
+              f"{now_notes.get(key)}, so the comparison means less")
+print(f"{'case':<12} {'wall s':>7} {'CPU s':>7} {'was':>7} {'peak MB':>8} {'was':>7}")
+over = []
+for case, (wall, cpu, peak) in now.items():
+    if case not in base:
+        print(f"{case:<12} {wall:7.1f} {cpu:7.1f} {'-':>7} {peak:8.0f} {'-':>7}  no baseline")
+        continue
+    _, cpu_was, peak_was = base[case]
+    print(f"{case:<12} {wall:7.1f} {cpu:7.1f} {cpu_was:7.1f} {peak:8.0f} {peak_was:7.0f}")
+    for what, value, was, unit in (("CPU time", cpu, cpu_was, "s"),
+                                   ("peak memory", peak, peak_was, "MB")):
+        if value > LIMIT * was:
+            over.append(f"OVER: {case}: {what} {value:.1f} {unit} is more than "
+                        f"{LIMIT} times the baseline's {was:.1f} {unit}")
+for case in base:
+    if case not in now:
+        print(f"not measured: {case}")
+print("\n".join(over) if over else f"nothing is over {LIMIT} times the baseline")
+if over:
+    print("Other work on the machine can do this to a short command: run --perf again "
+          "before looking for a cause. A real rise repeats.")
+sys.exit(1 if over else 0)
+PERFPY
+}
+
+perf_measure() {  # results file. Refuses on a busy machine, whose figures mean nothing
+    local work; work=$(mktemp -d)
+    python3 - "$PWD/demoreel" "$work" "$1" <<'PERFPY' || { rm -rf "$work"; return 1; }
+import os, platform, shutil, statistics, subprocess, sys, time
+
+DR, work, results = sys.argv[1:]
+RUNS, BUSY_LOAD = 3, 10
+checkout = os.getcwd()
+
+load = os.getloadavg()[0]
+if load >= BUSY_LOAD:
+    sys.exit(f"the load average is {load:.1f}, and these figures need it below "
+             f"{BUSY_LOAD}. Try again when the machine is quiet.")
+for tool in ("ffmpeg", "xterm"):
+    if not shutil.which(tool):
+        sys.exit(f"missing: {tool}")
+os.chdir(work)
+
+# Every input comes from ffmpeg, so a figure does not depend on what an app drew.
+subprocess.run(["ffmpeg", "-loglevel", "error", "-f", "lavfi", "-i",
+                "testsrc2=size=1600x1000:rate=30:duration=20", "-c:v", "libx264",
+                "-pix_fmt", "yuv420p", "rec.mp4"], stdin=subprocess.DEVNULL, check=True)
+with open("film.txt", "w", encoding="utf-8") as f:
+    f.write('''card 3 background #0f766e,#6d28d9,#9f1239 fade-in 0.5
+  text "A title"
+clip rec.mp4 from 1 to 9 window 80 push 4 crossfade 0.5
+  text "Look at this" from 2 to 7 fade-in 0.3 fade-out 0.3
+clip rec.mp4 from 9 to 17 window 80 crossfade 0.5 wipeleft
+  zoom 2 x 60 y 40 from 10 to 13
+card 2 fade-out 0.5
+  text "The end"
+''')
+# Peak memory once grew with a film's scenes, and this is the case that shows it.
+with open("film24.txt", "w", encoding="utf-8") as f:
+    f.writelines(f"clip rec.mp4 from {i % 9 * 2} to {i % 9 * 2 + 2} window 80\n"
+                 for i in range(24))
+
+CASES = [
+    ("check", ["check"]),
+    ("record", ["record", "-n", "perf", "-o", "out.mp4", "-d", "10", "--", "xterm"]),
+    ("record-gpu", ["record", "--gpu", "-n", "perf", "-o", "out.mp4", "-d", "10", "--", "xterm"]),
+    ("shot", ["shot", "-o", "out.png", "--", "xterm"]),
+    ("trim", ["trim", "rec.mp4", "-o", "out.mp4", "--from", "2", "--to", "18"]),
+    ("caption", ["caption", "rec.mp4", "-o", "out.mp4", "--text", "Hello there",
+                 "--from", "2", "--to", "8"]),
+    ("join", ["join", "rec.mp4", "rec.mp4", "-o", "out.mp4", "--crossfade", "0.5"]),
+    ("card", ["card", "-o", "out.mp4", "-d", "5", "--text", "A title"]),
+    ("edit", ["edit", "film.txt", "-o", "out.mp4"]),
+    ("edit-24", ["edit", "film24.txt", "-o", "out.mp4"]),
+    ("motion", ["motion", "rec.mp4"]),
+    ("poster", ["poster", "rec.mp4", "-o", "out.png", "-t", "5"]),
+    ("thumbnail", ["thumbnail", "rec.mp4", "-o", "out.png", "-t", "5", "--text", "A title"]),
+    ("sheet", ["sheet", "rec.mp4", "-o", "out.png", "--every", "2"]),
+]
+GPU_TOOLS = ("cage", "Xwayland", "wlr-randr", "wf-recorder")
+
+def once(name, args):
+    """One run: wall s, CPU s (user + system, children included) and peak MB.
+
+    ru_maxrss is the largest single process among the command and the children
+    it waited for, not their sum, and it is the figure GNU time prints.
+    """
+    for leftover in ("out.mp4", "out.png"):
+        if os.path.exists(leftover):
+            os.remove(leftover)
+    with open("stderr", "w") as err:
+        begun = time.monotonic()
+        proc = subprocess.Popen([DR, *args], stdin=subprocess.DEVNULL,
+                                stdout=subprocess.DEVNULL, stderr=err)
+        _, status, used = os.wait4(proc.pid, 0)
+        wall = time.monotonic() - begun
+        proc.returncode = os.waitstatus_to_exitcode(status)
+    if proc.returncode:
+        with open("stderr") as err:
+            tail = err.read()[-1000:]
+        sys.exit(f"{name} failed with exit status {proc.returncode}:\n{tail}")
+    return wall, used.ru_utime + used.ru_stime, used.ru_maxrss / 1024
+
+def first_line(*argv):
+    done = subprocess.run(argv, cwd=checkout, capture_output=True, text=True,
+                          stdin=subprocess.DEVNULL)
+    return (done.stdout.splitlines() or ["unknown"])[0]
+
+model = next((line.split(":", 1)[1].strip() for line in open("/proc/cpuinfo")
+              if line.startswith("model name")), platform.machine())
+rows = []
+for name, args in CASES:
+    missing = [t for t in GPU_TOOLS if name == "record-gpu" and not shutil.which(t)]
+    if missing:
+        print(f"skipped {name}: missing {', '.join(missing)}", flush=True)
+        continue
+    print(f"measuring {name}, {RUNS} runs", flush=True)
+    runs = [once(name, args) for _ in range(RUNS)]
+    rows.append((name, *(statistics.median(column) for column in zip(*runs))))
+
+with open(results, "w", encoding="utf-8") as f:
+    f.write("# demoreel's figures for ./ci.sh --perf, the median of "
+            f"{RUNS} runs. Made by ./ci.sh --perf-baseline.\n"
+            f"# date: {time.strftime('%Y-%m-%d')}\n"
+            f"# commit: {first_line('git', 'rev-parse', '--short', 'HEAD')}\n"
+            f"# machine: {model}, {os.cpu_count()} threads\n"
+            f"# ffmpeg: {first_line('ffmpeg', '-version')}\n"
+            "# wall_s and cpu_s are seconds, cpu_s user + system with children. "
+            "peak_mb is the largest single process.\n"
+            "case\twall_s\tcpu_s\tpeak_mb\n")
+    for name, wall, cpu, peak in rows:
+        f.write(f"{name}\t{wall:.2f}\t{cpu:.2f}\t{peak:.0f}\n")
+PERFPY
+    rm -rf "$work"
+}
+
+if [ "${1:-}" = "--perf-compare" ]; then
+    perf_compare "${2:?usage: ./ci.sh --perf-compare BASELINE RESULTS}" \
+        "${3:?usage: ./ci.sh --perf-compare BASELINE RESULTS}"
+    exit
+fi
+
+if [ "${1:-}" = "--perf" ]; then
+    [ -f "$PERF_BASELINE" ] || { echo "no $PERF_BASELINE: make it with ./ci.sh --perf-baseline" >&2; exit 2; }
+    perf_now=$(mktemp)
+    trap 'rm -f "$perf_now"' EXIT
+    perf_measure "$perf_now"
+    perf_compare "$PERF_BASELINE" "$perf_now"
+    exit
+fi
+
+if [ "${1:-}" = "--perf-baseline" ]; then
+    perf_now=$(mktemp)
+    trap 'rm -f "$perf_now"' EXIT
+    perf_measure "$perf_now"
+    cp "$perf_now" "$PERF_BASELINE"
+    echo "wrote $PERF_BASELINE; commit it"
     exit 0
 fi
 
@@ -4168,6 +4366,46 @@ if [ -n "$configured" ] && [ "$configured" != "$DOCS_GLOB" ]; then
     exit 1
 fi
 echo "docs glob: $DOCS_GLOB"
+
+step "--perf judges CPU and memory at 1.5 times the baseline, and never wall time"
+perf_t=$(mktemp -d)
+perf_rows() {  # the file's name, then its rows
+    local out=$perf_t/$1; shift
+    { echo '# machine: same'; printf 'case\twall_s\tcpu_s\tpeak_mb\n'; printf '%s\n' "$@"; } >"$out"
+}
+perf_rows base $'trim\t1\t10\t100' $'join\t1\t10\t100' $'gone\t1\t1\t1'
+# At the limit passes; a wall time 50 times over does not count; a new case is
+# named, and so is one no longer measured.
+perf_rows even $'trim\t50\t15\t150' $'join\t1\t10\t100' $'new\t1\t1\t1'
+perf_rows cpu $'trim\t1\t15.1\t100' $'join\t1\t10\t100'
+perf_rows mem $'trim\t1\t10\t100' $'join\t1\t10\t151'
+perf_out=$("$0" --perf-compare "$perf_t/base" "$perf_t/even") || {
+    echo "--perf failed a run at the limit:" >&2; echo "$perf_out" >&2; exit 1; }
+case $perf_out in *"new "*"no baseline"*"not measured: gone"*) ;;
+    *) echo "--perf did not name the new and the unmeasured case:" >&2
+       echo "$perf_out" >&2; exit 1 ;;
+esac
+for perf_case in "cpu:OVER: trim: CPU time" "mem:OVER: join: peak memory"; do
+    if perf_out=$("$0" --perf-compare "$perf_t/base" "$perf_t/${perf_case%%:*}"); then
+        echo "--perf passed ${perf_case%%:*} over the limit:" >&2; echo "$perf_out" >&2; exit 1
+    fi
+    case $perf_out in *"${perf_case#*:}"*) ;;
+        *) echo "--perf did not name ${perf_case#*:}:" >&2; echo "$perf_out" >&2; exit 1 ;;
+    esac
+done
+rm -rf "$perf_t"
+echo "--perf passed at the limit and failed just over it, on each of the two figures"
+
+step "--perf's baseline has a figure for every command that does work"
+# stop only signals a run that is already going.
+perf_cmds=$(./demoreel --help | sed -n 's/.*{\(record,.*\)}.*/\1/p;T;q')
+[ -n "$perf_cmds" ] || { echo "could not read the commands from --help" >&2; exit 1; }
+for perf_cmd in ${perf_cmds//,/ }; do
+    [ "$perf_cmd" = stop ] || grep -q "^$perf_cmd"$'\t' "$PERF_BASELINE" || {
+        echo "$PERF_BASELINE has no row for $perf_cmd: add a case to perf_measure," >&2
+        echo "then run ./ci.sh --perf-baseline" >&2; exit 1; }
+done
+echo "every command but stop has a row: $perf_cmds"
 
 step "--summary names the step that failed, not the last one"
 # The finishing checks print every step, so a failed one sits mid-log with a

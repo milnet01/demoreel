@@ -36,6 +36,13 @@ that skipped and, on a failure, only the step that failed.
 `./ci.sh --option-places OPTION COMMAND...` lists every file that must name an
 option of those commands, each present or missing.
 
+`./ci.sh --perf` measures what each command costs and fails on CPU time or peak
+memory over 1.5 times `docs/perf-baseline.tsv`. Wall time is recorded, not
+judged. Run it by hand before a release: it takes minutes, refuses a load of 10
+or more, and the gate does not run it. `./ci.sh --perf-baseline` replaces the
+figures. They belong to the machine and ffmpeg the file's header names. Peak
+memory is the largest single process, not the sum.
+
 To give a new message its drafts in every language, run `./ci.sh
 --add-message DRAFTS.json` after `./ci.sh --pot`. It checks each language
 with `msgfmt -c` and the gate's catalog checks, and names the ones that fail.

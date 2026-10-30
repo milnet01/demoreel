@@ -5134,7 +5134,7 @@ covers both display backends and the Flatpak invocation.
   Source: in-session-2026-10-16 DEMO-0205.
   Lanes: po.
 
-- 📋 [DEMO-0252] **Measure the time, CPU and peak memory of record, edit and every finishing command, and fix the worst before 1.0.**
+- ✅ [DEMO-0252] **Measure the time, CPU and peak memory of record, edit and every finishing command, and fix the worst before 1.0.**
   Baselines for every later version's performance item to compare
   against. Measure on a quiet machine (load below 10), several runs
   each. memory_cap already bounds a film's ffmpeg; this finds what
@@ -5170,6 +5170,21 @@ covers both display backends and the Flatpak invocation.
   thread per clip did not explain it.
   Still open: the baseline file and ./ci.sh --perf, as decided above. Its
   figures must be taken again, since edit's have changed.
+  2026-10-30: the baseline is docs/perf-baseline.tsv, made by ./ci.sh
+  --perf-baseline; ./ci.sh --perf compares against it, as decided above. The
+  inputs are now made by ffmpeg (testsrc2, 1600x1000 at 30/s, 20 s), so the
+  figures do not rest on what glxgears drew, and record and shot use xterm.
+  Taken at load below 10 at the start, with other sessions' builds running.
+  CPU s and peak MB agree with the first measurements where the case is the
+  same: trim 13.8/352, caption 16.0/353, join 38.6/526, motion 3.0/149. edit
+  is 42.9/852, and 24 windowed scenes 121/808. Peak is lower than the 1.13 GB
+  above because the input differs. Peak MB is the largest single process (read
+  from wait4, the figure GNU time prints). GNU time on card gave 248-283 MB
+  against the baseline's 261.
+  card is the noisy row: its CPU s was 2.4, 3.5 and 3.0 in three --perf
+  measurements, and it was flagged once at 3.5, so its limit of 3.5 is near
+  what other work can cause. The cause of that spread is not established. The
+  over-limit message says to run --perf again first; a second run passed.
   **Layman:** Know how fast and how memory-hungry demoreel is today, and fix the slowest parts before 1.0.
   Kind: perf.
   Source: user-request-2026-10-16.
