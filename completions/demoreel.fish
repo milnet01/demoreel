@@ -63,9 +63,10 @@ complete -c demoreel -n __fish_use_subcommand -a join -d 'put videos end to end'
 complete -c demoreel -n __fish_use_subcommand -a card -d 'make a clip from a picture, or from text'
 complete -c demoreel -n __fish_use_subcommand -a motion -d 'report how smooth a video is and where it stands still'
 complete -c demoreel -n __fish_use_subcommand -a poster -d 'save one frame of a video as a picture'
+complete -c demoreel -n __fish_use_subcommand -a thumbnail -d 'save one frame of a video as a YouTube thumbnail'
 complete -c demoreel -n __fish_use_subcommand -a sheet -d 'save several frames of a video, with their times, as one picture'
 
-complete -c demoreel -n '__demoreel_on record shot check stop edit trim caption join card motion poster sheet' -s h -l help -d 'show help'
+complete -c demoreel -n '__demoreel_on record shot check stop edit trim caption join card motion poster thumbnail sheet' -s h -l help -d 'show help'
 
 complete -c demoreel -n '__demoreel_on record' -s o -l output -r -F -d 'video file to write'
 complete -c demoreel -n '__demoreel_on shot' -s o -l output -r -F -d 'picture file to write'
@@ -87,9 +88,9 @@ complete -c demoreel -n '__demoreel_on record shot' -l startup-timeout -x -d "ho
 complete -c demoreel -n '__demoreel_on stop' -a '(__demoreel_running)' -d 'running recording'
 
 # The finishing commands take files: a script, videos, a picture.
-complete -c demoreel -n '__demoreel_on edit trim caption join card motion poster sheet' -F
+complete -c demoreel -n '__demoreel_on edit trim caption join card motion poster thumbnail sheet' -F
 complete -c demoreel -n '__demoreel_on edit trim caption join card' -s o -l output -r -F -d 'video file to write'
-complete -c demoreel -n '__demoreel_on poster sheet' -s o -l output -r -F -d 'picture file to write'
+complete -c demoreel -n '__demoreel_on poster thumbnail sheet' -s o -l output -r -F -d 'picture file to write'
 complete -c demoreel -n '__demoreel_on edit card' -s s -l size -x -d 'the picture size'
 complete -c demoreel -n '__demoreel_on edit card' -s r -l framerate -x -d 'frames per second'
 complete -c demoreel -n '__demoreel_on trim caption motion' -l from -x -d 'where it starts'
@@ -111,7 +112,8 @@ complete -c demoreel -n '__demoreel_on card' -l background -x -d 'the background
 complete -c demoreel -n '__demoreel_on card' -l like -r -F -d 'take the size and frame rate from this video'
 complete -c demoreel -n '__demoreel_on motion' -l still -x -d 'report a stretch with no change longer than this'
 complete -c demoreel -n '__demoreel_on motion' -l json -d 'print the report as one JSON object'
-complete -c demoreel -n '__demoreel_on poster' -s t -l time -x -d 'which moment to save'
+complete -c demoreel -n '__demoreel_on poster thumbnail' -s t -l time -x -d 'which moment to save'
+complete -c demoreel -n '__demoreel_on thumbnail' -l text -x -d 'a title of one line'
 complete -c demoreel -n '__demoreel_on motion' -l region -x -d 'look only at this rectangle of the picture'
 complete -c demoreel -n '__demoreel_on sheet' -l every -x -d 'take a frame every so many seconds'
 complete -c demoreel -n '__demoreel_on sheet' -l at -x -d 'take the frames at these times'

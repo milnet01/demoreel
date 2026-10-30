@@ -480,8 +480,8 @@ msgstr "{name}: NICHT BEREIT"
 msgid "{name}: ready"
 msgstr "{name}: bereit"
 
-msgid "edit, trim, caption, join, card, motion, poster and sheet"
-msgstr "edit, trim, caption, join, card, motion, poster und sheet"
+msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet"
+msgstr "edit, trim, caption, join, card, motion, poster, thumbnail und sheet"
 
 msgid "text on a card or a caption"
 msgstr "Text auf einer Karte oder als Untertitel"
@@ -1336,3 +1336,21 @@ msgstr ""
 #. argparse formats this text with %
 msgid "a Flatpak app"
 msgstr "eine Flatpak-App"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a YouTube thumbnail"
+msgstr "ein Bild eines Videos als YouTube-Vorschaubild speichern"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a YouTube thumbnail: 1280x720, cut to 16:9, with a title if you give one."
+msgstr "ein Bild eines Videos als YouTube-Vorschaubild speichern: 1280x720, auf 16:9 zugeschnitten, mit einem Titel, wenn Sie einen angeben."
+
+#. argparse formats this text with %
+msgid "a title of one line, drawn large near the bottom"
+msgstr "ein einzeiliger Titel, groß unten im Bild"
+
+msgid "the thumbnail would be {size} MB, and YouTube takes one of at most 2 MB. The same frame as a .jpg is smaller."
+msgstr "das Vorschaubild wäre {size} MB groß, und YouTube nimmt höchstens 2 MB an. Dasselbe Bild als .jpg ist kleiner."
+
+msgid "the title {words} is {wide} pixels wide, and the thumbnail has room for {room}. Shorten it."
+msgstr "der Titel {words} ist {wide} Pixel breit, und das Vorschaubild hat Platz für {room}. Kürzen Sie ihn."

@@ -87,6 +87,7 @@ _demoreel() {
         'card:make a clip from a picture, or from text'
         'motion:report how smooth a video is and where it stands still'
         'poster:save one frame of a video as a picture'
+        'thumbnail:save one frame of a video as a YouTube thumbnail'
         'sheet:save several frames of a video, with their times, as one picture'
       )
       _describe -t commands 'demoreel command' cmds ;;
@@ -164,6 +165,12 @@ _demoreel() {
           _arguments -S $help_opt \
             {-o+,--output=}'[picture file to write]:file:_files' \
             {-t+,--time=}'[which moment to save]:seconds:' \
+            '1:video:_files' ;;
+        thumbnail)
+          _arguments -S $help_opt \
+            {-o+,--output=}'[picture file to write]:file:_files' \
+            {-t+,--time=}'[which moment to save]:seconds:' \
+            '--text=[a title of one line, drawn large near the bottom]:words:' \
             '1:video:_files' ;;
         sheet)
           _arguments -S $help_opt \

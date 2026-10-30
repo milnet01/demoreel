@@ -2646,7 +2646,7 @@ def cmd_check(a):
     # exit status: that still says only whether the default backend records.
     videos, words = finishing_problems()
     for name, problem in ((tr("edit, trim, caption, join, card, motion, "
-                              "poster and sheet"), videos),
+                              "poster, thumbnail and sheet"), videos),
                           (tr("text on a card or a caption"), words)):
         note(tr("{name}: NOT READY", name=name) + "\n  - "
              + problem.replace("\n", "\n    ") if problem
@@ -4687,16 +4687,21 @@ def grab_frame(path, moment, info, picture, look=None):
                time=f"{moment:g}", path=path) + (f"\n  {said}" if said else ""))
 
 
-def cmd_poster(a):
-    """The frame on screen at -t, as a picture."""
-    finishing_tools()
-    output = finishing_output(a.output, [a.input], (".png", ".jpg"))
-    info = probe(a.input, Path(a.input).name)
+def check_time(a, info):
+    """Die unless -t is a moment inside the video."""
     whole = info["duration"]
     if a.time < 0 or a.time > whole + TIME_SLACK:
         die(tr("-t {time} is not inside {path}, which is {seconds} "
                "seconds long.", time=f"{a.time:g}", path=a.input,
                seconds=f"{whole:.3f}"))
+
+
+def cmd_poster(a):
+    """The frame on screen at -t, as a picture."""
+    finishing_tools()
+    output = finishing_output(a.output, [a.input], (".png", ".jpg"))
+    info = probe(a.input, Path(a.input).name)
+    check_time(a, info)
     part = output.with_name(f".{output.stem}.demoreel-part{output.suffix}")
     try:
         grab_frame(a.input, a.time, info, part)
@@ -4704,6 +4709,80 @@ def cmd_poster(a):
     finally:
         part.unlink(missing_ok=True)
     print(output)
+
+
+# A YouTube thumbnail is 16:9 at 1280x720, and YouTube takes one of at most
+# 2 MB from a phone (its limits as checked 2026-10-30, DEMO-0175). A frame of
+# noise at that size measured 0.9 MB as a .jpg and 2.6 MB as a .png, so only
+# a .png can be refused for its size. The title is THUMB_TEXT_SIZE percent of
+# the height, white with a dark outline, CARD_MARGIN of the height above the
+# bottom edge.
+THUMB_WIDTH, THUMB_HEIGHT = 1280, 720
+THUMB_MOST_BYTES = 2_000_000
+THUMB_TEXT_SIZE = 12
+
+
+def cmd_thumbnail(a):
+    """The frame on screen at -t, cut to 16:9 and sized as YouTube asks, with
+    a title near the bottom if --text gives one. The frame is cut, never
+    padded: a 16:10 frame loses a strip at the top and the bottom, and a wider
+    one at the sides."""
+    finishing_tools()
+    output = finishing_output(a.output, [a.input], (".png", ".jpg"))
+    info = probe(a.input, Path(a.input).name)
+    check_time(a, info)
+    width, height = info["width"], info["height"]
+    if width * 9 > height * 16:
+        crop = f"crop={round(height * 16 / 9)}:{height}"
+    else:
+        crop = f"crop={width}:{round(width * 9 / 16)}"
+    look = [crop, f"scale={THUMB_WIDTH}:{THUMB_HEIGHT}", "setsar=1"]
+    workdir = Path(tempfile.mkdtemp(prefix="thumbnail-", dir=state_dir()))
+    part = output.with_name(f".{output.stem}.demoreel-part{output.suffix}")
+    try:
+        if a.text is not None:
+            look.append(title_filter(a.text, workdir))
+        grab_frame(a.input, a.time, info, part, ",".join(look))
+        size = part.stat().st_size
+        if size > THUMB_MOST_BYTES:
+            die(tr("the thumbnail would be {size} MB, and YouTube takes one of "
+                   "at most 2 MB. The same frame as a .jpg is smaller.",
+                   size=f"{size / 1_000_000:.1f}"))
+        os.replace(part, output)
+    finally:
+        part.unlink(missing_ok=True)
+        shutil.rmtree(workdir, ignore_errors=True)
+    print(output)
+
+
+def title_filter(words, workdir):
+    """The drawtext filter putting a thumbnail's title near its bottom edge,
+    or die saying why the words cannot be one."""
+    if not words.strip():
+        die(tr("{where}: a text is one line of words, and this one is empty.",
+               where="--text"))
+    if "\n" in words:
+        die(tr("{where}: a text is one line of words, and this one is more "
+               "than one line.", where="--text"))
+    fontsize = round(THUMB_TEXT_SIZE / 100 * THUMB_HEIGHT)
+    font = text_font()
+    border = max(1, round(fontsize * OUTLINE_SHARE))
+    textfile = workdir / "title.txt"
+    textfile.write_text(words, encoding="utf-8")
+    try:
+        wide, _ = text_size(textfile, fontsize, font, border)
+    except TextUnavailable as exc:
+        die(exc.reason + ("\n  " + tr("`demoreel check` tests this on its own.")
+                          if exc.checked else ""))
+    room = THUMB_WIDTH - 2 * round(CARD_MARGIN * THUMB_WIDTH)
+    if wide > room:
+        die(tr("the title {words} is {wide} pixels wide, and the thumbnail has "
+               "room for {room}. Shorten it.", words=repr(words), wide=wide,
+               room=room))
+    return (f"drawtext=textfile='{textfile}':expansion=none:{font}:"
+            f"fontsize={fontsize}:fontcolor=white:borderw={border}:"
+            f"bordercolor=0x{CARD_BACKGROUND[1:]}:x=(w-text_w)/2:"
+            f"y=h-text_h-{round(CARD_MARGIN * THUMB_HEIGHT)}")
 
 
 # A frame sheet's frames are SHEET_WIDTH pixels wide unless --width says, or
@@ -5161,6 +5240,21 @@ def build_parser():
     poster.add_argument("-t", "--time", type=seconds, required=True,
                         metavar="SECONDS", help=tr_help("which moment to save"))
     poster.set_defaults(func=cmd_poster)
+
+    thumbnail = finishing("thumbnail", tr_help("save one frame of a video as a "
+                                               "YouTube thumbnail"),
+                          tr_help("save one frame of a video as a YouTube "
+                                  "thumbnail: 1280x720, cut to 16:9, with a "
+                                  "title if you give one."),
+                          output=tr_help("picture file to write, ending in .png "
+                                         "or .jpg"))
+    thumbnail.add_argument("input", help=tr_help("the video to take the frame from"))
+    thumbnail.add_argument("-t", "--time", type=seconds, required=True,
+                           metavar="SECONDS", help=tr_help("which moment to save"))
+    thumbnail.add_argument("--text", metavar="WORDS",
+                           help=tr_help("a title of one line, drawn large near "
+                                        "the bottom"))
+    thumbnail.set_defaults(func=cmd_thumbnail)
 
     sheet = finishing("sheet", tr_help("save several frames of a video, with their "
                                        "times, as one picture"),

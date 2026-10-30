@@ -11,7 +11,7 @@
 # pass by hand to get past a red gate.
 #
 # ./ci.sh --finishing runs only the checks for the finishing commands (edit,
-# trim, caption, join, card, motion, poster, sheet), which need no display and take
+# trim, caption, join, card, motion, poster, thumbnail, sheet), which need no display and take
 # seconds. The full gate runs the same checks, from the same function.
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -1256,7 +1256,7 @@ step() {
 }
 gate_end() { step_end; printf '\n=== %s ===\n' "$1"; }
 
-# The finishing commands (edit, trim, caption, join, card, motion, poster, sheet), held
+# The finishing commands (edit, trim, caption, join, card, motion, poster, thumbnail, sheet), held
 # to README.md § "Finishing a recording". One definition, run by the full gate
 # and alone by `./ci.sh --finishing`. Every input is made by ffmpeg from a
 # generated source, so nothing here needs a display and it takes seconds.
@@ -2128,6 +2128,83 @@ JSONPY
     expect_refused "poster without -t"
     assert_absent "poster without -t" "$ft/out/notime.png"
     echo "poster refused the wrong endings, a late time and a missing -t"
+
+    # ---- thumbnail --------------------------------------------------------
+    }
+    # Frame N of a video cut to WxH at the centre and scaled to 1280x720: what
+    # a thumbnail of it should be. Stretched instead of cut, it differs.
+    thumb_ref() {  # src n crop out
+        ff -i "$1" -vf "select=eq(n\\,$2),$3,scale=1280:720" -frames:v 1 "$4"
+    }
+    # A thumbnail is near its reference, and nearer it than a stretched frame.
+    assert_cut() {  # what thumb src n crop
+        local ref bent near far
+        ref="$ft/out/ref-${2##*/}.png"; bent="$ft/out/bent-${2##*/}.png"
+        thumb_ref "$3" "$4" "$5" "$ref"
+        thumb_ref "$3" "$4" "null" "$bent"
+        near=$(px diff "$2" 0 "$ref" 0); far=$(px diff "$2" 0 "$bent" 0)
+        awk -v n="$near" -v f="$far" 'BEGIN { exit !(n < 3 && f > 3 * n) }' \
+            || fail "$1: the thumbnail should be frame $4 cut with $5, not stretched
+    expected: under 3 from the cut frame, and over three times that from the stretched one
+    actual:   $near from the cut frame, $far from the stretched one"
+    }
+    fin_s11t() {
+    # README: "a frame of the video at 1280x720 ... cut to 16:9, never
+    # padded: a 16:10 frame loses a strip at its top and bottom, and a
+    # wider one at its sides." A is 320x240, W is 640x240.
+    run thumbnail A.mp4 -t 2.5 -o "$ft/out/th1.png"
+    expect_ok "thumbnail -t 2.5 -o .png"
+    expect_stdout_path "thumbnail" "$ft/out/th1.png"
+    assert_eq "thumbnail .png: codec, size" "png,1280,720" \
+        "$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height -of csv=p=0 "$ft/out/th1.png")"
+    assert_cut "thumbnail of a 4:3 frame" "$ft/out/th1.png" "$ft/A.mp4" 25 "crop=320:180"
+    # Compared as a .png: a .jpg's own blur puts it 5 from its reference,
+    # where the next frame is 7 away.
+    run thumbnail W.mp4 --time 1.2 -o "$ft/out/th2.png"
+    expect_ok "thumbnail --time 1.2"
+    assert_cut "thumbnail of a frame wider than 16:9" "$ft/out/th2.png" "$ft/W.mp4" 12 "crop=427:240"
+    run thumbnail W.mp4 -t 1.2 -o "$ft/out/th2.jpg"
+    expect_ok "thumbnail -o .jpg"
+    assert_eq "thumbnail .jpg: codec, size" "mjpeg,1280,720" \
+        "$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height -of csv=p=0 "$ft/out/th2.jpg")"
+    # README: "--text draws a title of one line, large, near the bottom".
+    run thumbnail A.mp4 -t 2.5 --text "Saving a file" -o "$ft/out/th3.png"
+    expect_ok "thumbnail --text"
+    text_on "thumbnail --text" "$ft/out/th3.png" 0 "$ft/out/th1.png" 0
+    assert_eq "thumbnail --text leaves the top alone" 0.00 \
+        "$(px diff "$ft/out/th3.png" 0 "$ft/out/th1.png" 0 top)"
+    echo "thumbnail cut a 4:3 and a wide frame to 1280x720, and drew a title"
+
+    }
+    fin_s12t() {
+    # README: "-o ends in .jpg or .png", "A time past the end is an error",
+    # a title is one line that fits, and a picture over 2 MB is refused.
+    run thumbnail A.mp4 -t 1 -o "$ft/out/ok.jpg"
+    expect_ok "control: thumbnail -t 1"
+    for bad in t.bmp t.jpeg t.mp4; do
+        run thumbnail A.mp4 -t 1 -o "$ft/out/$bad"
+        expect_refused "thumbnail with -o $bad"
+        assert_absent "thumbnail -o $bad" "$ft/out/$bad"
+    done
+    run thumbnail A.mp4 -t 6.5 -o "$ft/out/late.jpg"
+    expect_refused "thumbnail -t 6.5 on a 6 s file"
+    assert_absent "thumbnail -t 6.5" "$ft/out/late.jpg"
+    for words in "" "  " "two
+lines" "A title far too long to fit across a thumbnail at its size"; do
+        run thumbnail A.mp4 -t 1 --text "$words" -o "$ft/out/words.jpg"
+        expect_refused "thumbnail --text $(printf %q "$words")"
+        assert_absent "thumbnail --text $(printf %q "$words")" "$ft/out/words.jpg"
+    done
+    # A frame of noise is 2.6 MB as a .png and 0.9 MB as a .jpg (DEMO-0175).
+    ff -f lavfi -i "nullsrc=s=1280x720:r=10:d=0.2,geq=random(1)*255:random(2)*255:random(3)*255" \
+       -crf 18 "${x264[@]}" "$ft/noise.mp4"
+    run thumbnail noise.mp4 -t 0 -o "$ft/out/noise.png"
+    expect_refused "thumbnail of noise as a .png, over 2 MB"
+    grep -q "2 MB" "$fe" || fail "thumbnail over 2 MB: the refusal should name the limit: $(cat "$fe")"
+    assert_absent "thumbnail over 2 MB" "$ft/out/noise.png"
+    run thumbnail noise.mp4 -t 0 -o "$ft/out/noise.jpg"
+    expect_ok "thumbnail of noise as a .jpg, under 2 MB"
+    echo "thumbnail refused the wrong endings, a late time, bad titles and a picture over 2 MB"
 
     # ---- sheet ------------------------------------------------------------
     }
@@ -3920,6 +3997,8 @@ CASES
     fin_step "a --to set to motion's last change ends the clip on the last new picture" fin_s10
     fin_step "poster saves the frame on screen at -t, as .png or .jpg" fin_s11
     fin_step "poster refuses other endings and a time past the end" fin_s12
+    fin_step "thumbnail cuts the frame to 16:9 at 1280x720, with a title if asked" fin_s11t
+    fin_step "thumbnail refuses other endings, a late time, bad titles and over 2 MB" fin_s12t
     fin_step "sheet lays out the frames asked for, each over its own time" fin_s11s
     fin_step "sheet refuses bad times, too many frames and bad sizes" fin_s12s
     fin_step "join adds the lengths, less the overlap at each crossfade" fin_s13
@@ -4056,7 +4135,7 @@ step "documented flags exist"
 # and a commit that breaks it necessarily touches code, which is exactly the
 # push a documentation-only check would never see.
 help=$(./demoreel record --help; ./demoreel shot --help; ./demoreel stop --help;
-      for sub in edit trim caption join card motion poster sheet; do
+      for sub in edit trim caption join card motion poster thumbnail sheet; do
           ./demoreel "$sub" --help
       done
       ./demoreel --help)

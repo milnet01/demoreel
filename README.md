@@ -277,8 +277,8 @@ writes nothing to `-o`, and its folder keeps the whole screen.
 
 A recording is rarely what you publish. `demoreel edit` takes a short script,
 a list of scenes in plain words, and makes the finished film from it.
-Shortcuts do the one-step jobs without a script, and `motion`, `poster` and
-`sheet` look at a video without changing it.
+Shortcuts do the one-step jobs without a script, and `motion`, `poster`,
+`thumbnail` and `sheet` look at a video without changing it.
 
 Each of these works on video files, not on an app. So it starts no private
 screen, takes no `-n` name, and can run beside recordings.
@@ -304,6 +304,9 @@ EOF
 
 # the still picture a website shows before the film plays
 demoreel poster film.mp4 -t 14.9 -o poster.jpg
+
+# the small picture YouTube shows for the film
+demoreel thumbnail film.mp4 -t 14.9 --text "Saving a file" -o thumb.jpg
 ```
 
 What they share:
@@ -696,6 +699,26 @@ demoreel poster demo.mp4 -t 14.9 -o poster.jpg
 Saves the frame on screen at `-t`, or `--time`, as a picture. `-t` is
 required. `-o` ends in `.png` or `.jpg`. `shot` photographs an app; `poster` photographs the video, so the
 picture is a frame of the very file you publish.
+
+### `thumbnail`: a YouTube thumbnail
+
+```sh
+demoreel thumbnail demo.mp4 -t 14.9 -o thumb.jpg
+demoreel thumbnail demo.mp4 -t 14.9 --text "Saving a file" -o thumb.jpg
+```
+
+Saves the frame on screen at `-t` as YouTube asks for a thumbnail: 1280x720,
+16:9. The frame is cut to 16:9, never padded: a 16:10 frame loses a strip at
+its top and bottom, and a wider one at its sides. Then it is scaled to
+1280x720.
+
+- `--text` draws a title of one line, large, near the bottom, in white with
+  a dark outline. A title too wide for the picture is refused.
+- `-t` is required, and a time past the end is an error. `-o` ends in `.jpg`
+  or `.png`.
+- YouTube takes a thumbnail of at most 2 MB from a phone, so a bigger
+  picture is refused and nothing is written. A `.jpg` stays well under it; a
+  `.png` of a busy frame can go over.
 
 ### `sheet`: several frames in one picture
 

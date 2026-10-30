@@ -427,7 +427,7 @@ msgstr ""
 msgid "{name}: ready"
 msgstr ""
 
-msgid "edit, trim, caption, join, card, motion, poster and sheet"
+msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet"
 msgstr ""
 
 msgid "text on a card or a caption"
@@ -842,6 +842,12 @@ msgstr ""
 msgid "-t {time} is not inside {path}, which is {seconds} seconds long."
 msgstr ""
 
+msgid "the thumbnail would be {size} MB, and YouTube takes one of at most 2 MB. The same frame as a .jpg is smaller."
+msgstr ""
+
+msgid "the title {words} is {wide} pixels wide, and the thumbnail has room for {room}. Shorten it."
+msgstr ""
+
 msgid "--at {time} is not inside {path}, which is {seconds} seconds long."
 msgstr ""
 
@@ -1239,6 +1245,18 @@ msgstr ""
 
 #. argparse formats this text with %
 msgid "which moment to save"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a YouTube thumbnail"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a YouTube thumbnail: 1280x720, cut to 16:9, with a title if you give one."
+msgstr ""
+
+#. argparse formats this text with %
+msgid "a title of one line, drawn large near the bottom"
 msgstr ""
 
 #. argparse formats this text with %

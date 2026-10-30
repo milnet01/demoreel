@@ -480,8 +480,8 @@ msgstr "{name}: לא מוכן"
 msgid "{name}: ready"
 msgstr "{name}: מוכן"
 
-msgid "edit, trim, caption, join, card, motion, poster and sheet"
-msgstr "edit, trim, caption, join, card, motion, poster ו־sheet"
+msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet"
+msgstr "edit, trim, caption, join, card, motion, poster, thumbnail ו־sheet"
 
 msgid "text on a card or a caption"
 msgstr "טקסט על כרטיס או בכיתוב"
@@ -1336,3 +1336,21 @@ msgstr ""
 #. argparse formats this text with %
 msgid "a Flatpak app"
 msgstr "יישום Flatpak"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a YouTube thumbnail"
+msgstr "שמירת פריים אחד מסרטון כתמונה ממוזערת ל־YouTube"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a YouTube thumbnail: 1280x720, cut to 16:9, with a title if you give one."
+msgstr "שמירת פריים אחד מסרטון כתמונה ממוזערת ל־YouTube: 1280x720, חתוכה ל־16:9, עם כותרת אם נותנים אחת."
+
+#. argparse formats this text with %
+msgid "a title of one line, drawn large near the bottom"
+msgstr "כותרת של שורה אחת, בגדול ליד התחתית"
+
+msgid "the thumbnail would be {size} MB, and YouTube takes one of at most 2 MB. The same frame as a .jpg is smaller."
+msgstr "התמונה הממוזערת תהיה {size} MB, ו־YouTube מקבל לכל היותר 2 MB. אותו פריים כ־.jpg קטן יותר."
+
+msgid "the title {words} is {wide} pixels wide, and the thumbnail has room for {room}. Shorten it."
+msgstr "רוחב הכותרת {words} הוא {wide} פיקסלים, ובתמונה הממוזערת יש מקום ל־{room}. יש לקצר אותה."

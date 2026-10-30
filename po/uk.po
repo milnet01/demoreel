@@ -480,8 +480,8 @@ msgstr "{name}: НЕ ГОТОВО"
 msgid "{name}: ready"
 msgstr "{name}: готово"
 
-msgid "edit, trim, caption, join, card, motion, poster and sheet"
-msgstr "edit, trim, caption, join, card, motion, poster і sheet"
+msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet"
+msgstr "edit, trim, caption, join, card, motion, poster, thumbnail і sheet"
 
 msgid "text on a card or a caption"
 msgstr "текст на картці або підпис"
@@ -1342,3 +1342,21 @@ msgstr ""
 #. argparse formats this text with %
 msgid "a Flatpak app"
 msgstr "програма Flatpak"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a YouTube thumbnail"
+msgstr "зберегти один кадр відео як мініатюру для YouTube"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a YouTube thumbnail: 1280x720, cut to 16:9, with a title if you give one."
+msgstr "зберегти один кадр відео як мініатюру для YouTube: 1280x720, обрізану до 16:9, із заголовком, якщо його задано."
+
+#. argparse formats this text with %
+msgid "a title of one line, drawn large near the bottom"
+msgstr "заголовок в один рядок, великий, біля нижнього краю"
+
+msgid "the thumbnail would be {size} MB, and YouTube takes one of at most 2 MB. The same frame as a .jpg is smaller."
+msgstr "мініатюра мала б {size} МБ, а YouTube приймає не більше 2 МБ. Той самий кадр у .jpg менший."
+
+msgid "the title {words} is {wide} pixels wide, and the thumbnail has room for {room}. Shorten it."
+msgstr "заголовок {words} має ширину {wide} пікселів, а на мініатюрі є місце для {room}. Скоротіть його."

@@ -50,6 +50,15 @@ demoreel \- record a GUI app on a private virtual display
 .B \-o
 .I picture
 .br
+.B demoreel thumbnail
+.I video
+.B \-t
+.I seconds
+.RB [ \-\-text
+.IR words ]
+.B \-o
+.I picture
+.br
 .B demoreel sheet
 .I video
 .RB ( \-\-every
@@ -144,6 +153,15 @@ Save the frame on screen at
 .B \-t
 as a picture.
 .TP
+.B thumbnail
+Save the frame on screen at
+.B \-t
+as a YouTube thumbnail: 1280x720, cut to 16:9 and never padded,
+with a title near the bottom if
+.B \-\-text
+gives one.
+A picture over 2 MB is refused.
+.TP
 .B sheet
 Save several frames of a video as one picture, in rows, each with the time
 it appears written under it.
@@ -161,7 +179,8 @@ The finishing commands require it:
 a video must end in
 .BR .mp4 ,
 a
-.B poster
+.BR poster ,
+.B thumbnail
 or
 .B sheet
 picture in
@@ -363,6 +382,8 @@ One line of text.
 repeatable, shown on a dark band at the bottom.
 .BR card :
 the card's title.
+.BR thumbnail :
+a title drawn large near the bottom, in white with a dark outline.
 .TP
 .BI \-\-text\-size " percent"
 The text's height as a percentage of the frame's
@@ -389,7 +410,9 @@ report a stretch with no change longer than this (default 1).
 print the report as one JSON object.
 .TP
 .BR \-t ", " \-\-time " \fIseconds\fR"
-.BR poster :
+.B poster
+and
+.BR thumbnail :
 which moment to save; required.
 .TP
 .BI \-\-every " seconds"
@@ -711,6 +734,7 @@ demoreel motion demo.mp4
 demoreel trim demo.mp4 \-o short.mp4 \-\-to 29.8
 demoreel edit film.txt \-o film.mp4
 demoreel poster film.mp4 \-t 14.9 \-o poster.jpg
+demoreel thumbnail film.mp4 \-t 14.9 \-\-text \(aqSaving a file\(aq \-o thumb.jpg
 demoreel sheet demo.mp4 \-\-every 2 \-o sheet.png
 .fi
 .SH SEE ALSO

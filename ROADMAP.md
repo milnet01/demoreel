@@ -5069,7 +5069,7 @@ covers both display backends and the Flatpak invocation.
   Kind: feature.
   Source: claude-config relay of an album-builder field report, 2026-10-15.
 
-- 📋 [DEMO-0175] **Make a YouTube thumbnail from a recording.**
+- ✅ [DEMO-0175] **Make a YouTube thumbnail from a recording.**
   Asked by the user 2026-10-10. Close to `poster`, which saves one
   frame at the recording's own size (1600x1000, 16:10, by default).
   YouTube asks for 16:9, 1280x720 recommended, as JPG or PNG under its
@@ -5081,6 +5081,17 @@ covers both display backends and the Flatpak invocation.
   single line of large title text; a 16:10 frame is fitted to 16:9 by
   trimming the top and bottom, never with bars; built after the 0.9.0
   packaging work.
+  Decided (user, 2026-10-30): a command of its own, `demoreel thumbnail
+  VIDEO -t SECONDS [--text WORDS] -o OUT`, not an option on poster. The
+  title is large bold white with a dark outline near the bottom, with no
+  options for place or size. YouTube's limits, checked 2026-10-30 in
+  third-party guides citing YouTube Help: 1280x720 at 16:9, JPG or PNG,
+  2 MB uploading from a phone and 50 MB from a computer; the 2 MB one is
+  the target.
+  Shipped 2026-10-30: `demoreel thumbnail VIDEO -t SECONDS [--text WORDS]
+  -o OUT.jpg|.png`. Gate steps "thumbnail cuts the frame to 16:9..." and
+  "thumbnail refuses other endings...". The new messages' translations
+  are drafts, for DEMO-0172 and DEMO-0096.
   **Layman:** Make the small picture YouTube shows for a video, in the size and file limits YouTube asks for.
   Kind: feature.
   Source: user-request-2026-10-10.

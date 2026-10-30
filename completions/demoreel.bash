@@ -9,7 +9,7 @@
 # ./ci.sh --option-places OPTION COMMAND, which asks each shell.
 
 # Every command, and the finishing ones, which take files.
-_demoreel_finishing="edit trim caption join card motion poster sheet"
+_demoreel_finishing="edit trim caption join card motion poster thumbnail sheet"
 _demoreel_commands="record shot check stop $_demoreel_finishing"
 
 # The names of recordings still running, for `demoreel stop`. Asked of
@@ -108,6 +108,7 @@ _demoreel() {
                 -h --help" ;;
         motion) words="--from --to --still --region --json -h --help" ;;
         poster) words="-o --output -t --time -h --help" ;;
+        thumbnail) words="-o --output -t --time --text -h --help" ;;
         sheet) words="-o --output --every --at --region --width --columns -h --help" ;;
         stop)
             if [[ $cur == -* ]]; then

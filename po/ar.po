@@ -480,8 +480,8 @@ msgstr "{name}: غير جاهز"
 msgid "{name}: ready"
 msgstr "{name}: جاهز"
 
-msgid "edit, trim, caption, join, card, motion, poster and sheet"
-msgstr "edit وtrim وcaption وjoin وcard وmotion وposter وsheet"
+msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet"
+msgstr "edit وtrim وcaption وjoin وcard وmotion وposter وthumbnail وsheet"
 
 msgid "text on a card or a caption"
 msgstr "نص على بطاقة أو في تعليق"
@@ -1360,3 +1360,21 @@ msgstr ""
 #. argparse formats this text with %
 msgid "a Flatpak app"
 msgstr "تطبيق Flatpak"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a YouTube thumbnail"
+msgstr "احفظ إطارًا واحدًا من فيديو كصورة مصغّرة لـ YouTube"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a YouTube thumbnail: 1280x720, cut to 16:9, with a title if you give one."
+msgstr "احفظ إطارًا واحدًا من فيديو كصورة مصغّرة لـ YouTube: 1280x720، مقصوصة إلى 16:9، مع عنوان إن أعطيت واحدًا."
+
+#. argparse formats this text with %
+msgid "a title of one line, drawn large near the bottom"
+msgstr "عنوان من سطر واحد، يُرسم كبيرًا قرب الأسفل"
+
+msgid "the thumbnail would be {size} MB, and YouTube takes one of at most 2 MB. The same frame as a .jpg is smaller."
+msgstr "ستكون الصورة المصغّرة {size} ميغابايت، وYouTube يقبل صورة لا تزيد على 2 ميغابايت. الإطار نفسه بصيغة .jpg أصغر."
+
+msgid "the title {words} is {wide} pixels wide, and the thumbnail has room for {room}. Shorten it."
+msgstr "عرض العنوان {words} هو {wide} بكسل، والصورة المصغّرة تتسع لـ {room}. اختصره."

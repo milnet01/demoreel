@@ -20,6 +20,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   It says when that part of the picture changes and where it stands still, in the same few lines of text, so a session need not look at frames to find out.
 - **`demoreel sheet` puts several frames of a video in one picture** (DEMO-0212)
   Pick the frames with `--every` or `--at`. The time each frame appears is written under it, and picks the same frame again in `poster` or a clip's `from`. `--region` shows one rectangle of each frame.
+- **`demoreel thumbnail` makes a YouTube thumbnail from a video** (DEMO-0175)
+  It saves one frame at 1280x720, cut to 16:9 rather than padded, and `--text` draws a title near the bottom. A picture over YouTube's 2 MB limit is refused.
 - **`click` and `drag` steps can use the right or middle button** (DEMO-0207)
   End the step with `right` or `middle`, as in `click 400 300 right`, to open a right-click menu in a recording. A `click` given three numbers is now refused with an example; it used to ignore the third.
 

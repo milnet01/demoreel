@@ -480,8 +480,8 @@ msgstr "{name}: NIE GEREED NIE"
 msgid "{name}: ready"
 msgstr "{name}: gereed"
 
-msgid "edit, trim, caption, join, card, motion, poster and sheet"
-msgstr "edit, trim, caption, join, card, motion, poster en sheet"
+msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet"
+msgstr "edit, trim, caption, join, card, motion, poster, thumbnail en sheet"
 
 msgid "text on a card or a caption"
 msgstr "teks op 'n kaart of 'n onderskrif"
@@ -1336,3 +1336,21 @@ msgstr ""
 #. argparse formats this text with %
 msgid "a Flatpak app"
 msgstr "'n Flatpak-toep"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a YouTube thumbnail"
+msgstr "stoor een raam van 'n video as 'n YouTube-duimnael"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a YouTube thumbnail: 1280x720, cut to 16:9, with a title if you give one."
+msgstr "stoor een raam van 'n video as 'n YouTube-duimnael: 1280x720, tot 16:9 gesny, met 'n titel as jy een gee."
+
+#. argparse formats this text with %
+msgid "a title of one line, drawn large near the bottom"
+msgstr "'n titel van een reël, groot onderaan geteken"
+
+msgid "the thumbnail would be {size} MB, and YouTube takes one of at most 2 MB. The same frame as a .jpg is smaller."
+msgstr "die duimnael sou {size} MB wees, en YouTube neem een van hoogstens 2 MB. Dieselfde raam as 'n .jpg is kleiner."
+
+msgid "the title {words} is {wide} pixels wide, and the thumbnail has room for {room}. Shorten it."
+msgstr "die titel {words} is {wide} pieksels breed, en die duimnael het plek vir {room}. Maak dit korter."

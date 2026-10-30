@@ -480,8 +480,8 @@ msgstr "{name}：尚未就緒"
 msgid "{name}: ready"
 msgstr "{name}：就緒"
 
-msgid "edit, trim, caption, join, card, motion, poster and sheet"
-msgstr "edit、trim、caption、join、card、motion、poster 和 sheet"
+msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet"
+msgstr "edit、trim、caption、join、card、motion、poster、thumbnail 和 sheet"
 
 msgid "text on a card or a caption"
 msgstr "卡片或字幕上的文字"
@@ -1330,3 +1330,21 @@ msgstr ""
 #. argparse formats this text with %
 msgid "a Flatpak app"
 msgstr "Flatpak 應用程式"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a YouTube thumbnail"
+msgstr "將影片的一個影格儲存成 YouTube 縮圖"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a YouTube thumbnail: 1280x720, cut to 16:9, with a title if you give one."
+msgstr "將影片的一個影格儲存成 YouTube 縮圖：1280x720，裁成 16:9，有給標題時加上標題。"
+
+#. argparse formats this text with %
+msgid "a title of one line, drawn large near the bottom"
+msgstr "一行標題，以大字畫在靠近底部處"
+
+msgid "the thumbnail would be {size} MB, and YouTube takes one of at most 2 MB. The same frame as a .jpg is smaller."
+msgstr "縮圖會有 {size} MB，而 YouTube 最多接受 2 MB。同一個影格存成 .jpg 會比較小。"
+
+msgid "the title {words} is {wide} pixels wide, and the thumbnail has room for {room}. Shorten it."
+msgstr "標題 {words} 寬 {wide} 像素，但縮圖只容得下 {room}。請縮短它。"

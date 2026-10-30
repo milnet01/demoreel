@@ -480,8 +480,8 @@ msgstr "{name}: 準備できていません"
 msgid "{name}: ready"
 msgstr "{name}: 準備完了"
 
-msgid "edit, trim, caption, join, card, motion, poster and sheet"
-msgstr "edit、trim、caption、join、card、motion、poster、sheet"
+msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet"
+msgstr "edit、trim、caption、join、card、motion、poster、thumbnail、sheet"
 
 msgid "text on a card or a caption"
 msgstr "カードや字幕のテキスト"
@@ -1330,3 +1330,21 @@ msgstr ""
 #. argparse formats this text with %
 msgid "a Flatpak app"
 msgstr "Flatpak アプリ"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a YouTube thumbnail"
+msgstr "動画の 1 フレームを YouTube のサムネイルとして保存します"
+
+#. argparse formats this text with %
+msgid "save one frame of a video as a YouTube thumbnail: 1280x720, cut to 16:9, with a title if you give one."
+msgstr "動画の 1 フレームを YouTube のサムネイルとして保存します。1280x720 で 16:9 に切り取り、タイトルを指定すれば入れます。"
+
+#. argparse formats this text with %
+msgid "a title of one line, drawn large near the bottom"
+msgstr "1 行のタイトル。下の方に大きく描きます"
+
+msgid "the thumbnail would be {size} MB, and YouTube takes one of at most 2 MB. The same frame as a .jpg is smaller."
+msgstr "サムネイルは {size} MB になりますが、YouTube が受け付けるのは 2 MB までです。同じフレームでも .jpg なら小さくなります。"
+
+msgid "the title {words} is {wide} pixels wide, and the thumbnail has room for {room}. Shorten it."
+msgstr "タイトル {words} は幅 {wide} ピクセルですが、サムネイルの余裕は {room} です。短くしてください。"
