@@ -736,6 +736,11 @@ simplest case, and a gate proves it still records.
   load ~8) passed: packages 178s, then the Ubuntu leg 271s. One pass
   proves little; close once a few more push gates pass with no Ubuntu
   leg failure.
+  2026-10-30: GitHub CI passed for a88e583 (ci and packages jobs) and
+  for f1a854a (ci; packages skipped, a roadmap-only change). GitHub has
+  no local Ubuntu leg, and f1a854a's push ran the docs-only gate, so
+  neither counts toward closing: the count of passing full push gates
+  since a88e583 is still one.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
