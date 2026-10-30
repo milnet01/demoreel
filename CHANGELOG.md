@@ -32,6 +32,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **A recording cut short by its recorder or its private screen now fails** (DEMO-0094)
+  A `-d 30` run whose recorder stopped early could hand back a 2-second video and report success.
 - **An app that cannot start no longer leaves a private screen running** (DEMO-0094)
   A script with no `#!` line, for one, ended the run in a Python error with the screen left behind. It now gets the usual "could not run" message.
 - **An app closing just as a recording ends no longer fails the run** (DEMO-0282)

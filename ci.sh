@@ -6358,7 +6358,7 @@ for _ in range(10):
     threading.Timer(random.uniform(0.05, 0.3), lambda: (
         sent.append(time.monotonic()), os.kill(os.getpid(), signal.SIGUSR1))).start()
     demoreel.run_countdown(types.SimpleNamespace(action=[], duration=0), {},
-                           Running(), None, ":0", Running(), 2, 2, "log",
+                           Running(), None, ":0", Running(), 2, 2,
                            time.monotonic(), demoreel.Checks())
     worst = max(worst, time.monotonic() - sent[0])
 if worst > 0.05:
@@ -6438,6 +6438,45 @@ grep -q 'the video cannot be played' "$tmp/killed.err" || {
     exit 1
 }
 echo "a run whose recorder was killed fails, and prints no path"
+
+step "a recorder or a display that ends early fails the run"
+# DEMO-0094. A stray SIGTERM makes ffmpeg finish its file, so a -d 8 run came
+# back with a playable 2-second video, exit 0 and a printed path. A display that
+# died took the app with it, and the run took that for an app that closed: the
+# same result, measured.
+for early in recorder display; do
+    set +e
+    ./demoreel record -n gateearly -o "$tmp/early.mp4" -d 20 -s 320x240 -- xclock \
+        >"$tmp/early.out" 2>"$tmp/early.err" &
+    early_rec=$!
+    gate_pids="$gate_pids $early_rec"
+    for _ in $(seq 1 100); do
+        [ -n "$(sed -n '/recording :/p' "$tmp/early.err")" ] && break
+        sleep 0.1
+    done
+    sleep 1
+    if [ "$early" = recorder ]; then
+        pkill -TERM -f "^ffmpeg .*$tmp/early.mp4"
+    else
+        for server in $(pgrep -u "$(id -u)" -x Xvfb); do
+            tr '\0' ' ' <"/proc/$server/cmdline" | grep -q "/gateearly\." && kill -KILL "$server"
+        done
+    fi
+    wait "$early_rec"
+    early_status=$?
+    set -e
+    [ "$early_status" -ne 0 ] && [ ! -s "$tmp/early.out" ] || {
+        echo "a run whose $early ended early exited $early_status and printed" \
+             "'$(cat "$tmp/early.out")'" >&2
+        exit 1
+    }
+    grep -q 'the recorder stopped early' "$tmp/early.err" || {
+        echo "the run failed, but did not say the recorder stopped:" >&2
+        cat "$tmp/early.err" >&2
+        exit 1
+    }
+done
+echo "a run cut short by its recorder or its display fails, and prints no path"
 
 step "stop fails when the run it stopped fails"
 # DEMO-0047. A -d 0 run that is blank when stopped fails its end-of-run check,

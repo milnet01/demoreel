@@ -2196,9 +2196,12 @@ class Checks:
     None means the end of the video.
     moved: how the window stopped filling the frame, said once.
     put_back: whether the window was sized to the frame again mid-run.
+    stopped_early: whether the recorder or the display ended before the run
+    asked them to, so the video stops short of what was asked for.
     """
 
     def __init__(self):
+        self.stopped_early = False
         self.blank = None
         self.unsampled = None
         self.sampled = []
@@ -2273,7 +2276,7 @@ def start_recorder(a, env, display, wayland, width, height, output, logpath,
 
 
 def run_countdown(a, env, app, window, display, recorder, width, height,
-                  logpath, started, checks):
+                  started, checks):
     """Play the scripted actions, then record until the run should end.
 
     It ends at the -d deadline, on a stop request, when the recorder or the
@@ -2309,7 +2312,6 @@ def run_countdown(a, env, app, window, display, recorder, width, height,
                     if checks.failed():
                         break
             if recorder.poll() is not None:
-                note(tr("the recorder stopped early; see {log}", log=logpath))
                 break
             if deadline:
                 progress(tr("recording, {seconds}s left",
@@ -2357,6 +2359,8 @@ def vouch_for(a, output, logpath, width, height, checks):
             + f"\n  {unreadable}\n  "
             + tr("The recorder most likely stopped before it finished the file. "
                  "See {log}", log=logpath))
+    if checks.stopped_early:
+        die(tr("the recorder stopped early; see {log}", log=logpath))
     if checks.blank == "halfway":
         die(tr("the virtual display was blank halfway, so at least half of it is a "
                "flat colour: {output}", output=output) + "\n" + blank_causes(a.gpu))
@@ -2490,8 +2494,14 @@ def cmd_record(a):
                 display=display, output=output, seconds=a.duration))
 
         run_countdown(a, env, app, window, display, recorder, width, height,
-                      logpath, started, checks)
+                      started, checks)
+        # Nothing has asked the recorder to stop yet, so if it has gone it went
+        # on its own. A display that died takes the app with it, which looks
+        # like an app that closed, so that is asked too, and last: the app can
+        # see the connection go before the server can be seen to have ended.
+        early = recorder.poll() is not None
         stop_recorder(recorder)
+        checks.stopped_early = early or server.poll() is not None
         check_at_end(env, app, window, display, width, height, checks)
     finally:
         # Order matters: finish the video before the app and display go away,
