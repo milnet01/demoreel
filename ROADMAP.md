@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=286 -->
+<!-- ants-roadmap-id-high-water: DEMO=289 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -810,6 +810,28 @@ simplest case, and a gate proves it still records.
   **Layman:** Choose which of the other effects in the website's own trailer script demoreel should take over.
   Kind: feature.
   Source: peer-request-2026-10-30 APHW-0030.
+
+- 📋 [DEMO-0287] **On Ubuntu 24.04's xdotool, two clicks at one spot end the run as a display that stopped answering.**
+  Found while fixing DEMO-0094. On xdotool 3.20160805.1, a second
+  `mousemove --sync` to the same spot with a window under it never returns
+  (measured). Likely fix: skip --sync when the pointer is already there.
+  This predates DEMO-0094.
+  **Layman:** A script that clicks the same place twice can fail on Ubuntu.
+  Kind: fix.
+  Source: review-code-2026-10-30 DEMO-0094.
+
+- 📋 [DEMO-0288] **Find out whether Ctrl+C during a shot prints a traceback.**
+  Seen while fixing DEMO-0094, unmeasured: `shot` has no SIGINT handler.
+  **Layman:** Pressing Ctrl+C while taking a picture may show an ugly error.
+  Kind: investigate.
+  Source: review-code-2026-10-30 DEMO-0094.
+
+- 📋 [DEMO-0289] **A wrapper script whose first process exits ends the recording at once, though its child still draws.**
+  Seen while fixing DEMO-0094, not changed. The run reads the leader's
+  exit as the app closing. Decide whether the group's life should count.
+  **Layman:** Recording an app through a launcher script can stop straight away.
+  Kind: investigate.
+  Source: review-code-2026-10-30 DEMO-0094.
 
 ## Standing chores
 
@@ -5274,6 +5296,17 @@ covers both display backends and the Flatpak invocation.
   `review-code` lane briefed on SECURITY.md's trust boundaries. Fix every
   verified finding. Bring SECURITY.md up to date, including the
   supported-versions line, which changes at 1.0.
+  2026-10-30, in progress. check-code ran clean beyond calibrated rules.
+  review-code ran; its reports and the findings ledger are kept outside
+  this public repository until the fixes land (user, 2026-10-30), then
+  go to docs/reviews/review-code-2026-10-30/. Subjects closed: the
+  display lock, and how a run starts, fails and ends. Subjects left, one
+  worktree each: output paths, untrusted text and media, the release
+  chain and completions, the gate's own weak checks, then SECURITY.md in
+  full. User rulings, 2026-10-30: edit scripts, media, fonts and file
+  names are untrusted; a --steps file is as trusted as the command, with
+  a key-name check; the lock checks are added rather than the claim
+  narrowed.
   **Layman:** Before calling it finished, have the code checked end to end for security holes and fix any found.
   Kind: audit-fix.
   Source: user-request-2026-09-25.
