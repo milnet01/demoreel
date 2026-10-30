@@ -745,6 +745,10 @@ simplest case, and a gate proves it still records.
   gate passed, Ubuntu leg included. One step skipped: the real-Flatpak
   step, because GIMP was open on the desktop. Passing full push gates
   since a88e583: two.
+  2026-10-30: 1b24baf's full push gate passed, the Ubuntu leg with it (301 s),
+  with no Ubuntu-leg limit failure. Its failed runs before that push were a
+  check of mine: an amix subtraction that reads -22 dB for a file against
+  itself on ffmpeg 6.1.1, not this item's fault. Third full gate since a88e583.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
