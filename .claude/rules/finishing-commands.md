@@ -6,10 +6,33 @@ paths:
 # The finishing commands
 
 `README.md` § Finishing a recording is their contract. One renderer,
-`make_film`, turns a list of scenes into one ffmpeg run; `edit` reads the
+`make_film`, turns a list of scenes into one film; `edit` reads the
 scenes from a script and each shortcut builds them from its options. Add a
 behaviour to the renderer, never to one shortcut, or the two ways of asking
 stop agreeing.
+
+- **The picture is drawn in pieces, and the sound in one graph after it.**
+  Drawn by one ffmpeg, 24 windowed scenes at 1600x1000 peaked at 4.6 GB; in
+  pieces of about `PIECE_SCENES` they peak at 1.13 GB (measured 2026-10-30).
+  The last ffmpeg
+  joins the pieces with `-c:v copy`, so each frame is encoded once. Never let
+  it encode them again.
+- **A piece starts on the frame its scene starts on in the whole film.**
+  `xfade` rounds its offset to the nearest frame, half a frame up, and a cut
+  starts where the scene before ends. `scene_frames` works that out. A piece
+  placed by adding up seconds came out a frame off at its joins, against
+  the sound. `ci.sh` compares a film in pieces with the same film in one.
+- **A crossfade over a join is drawn in the later piece.** That piece starts
+  with the last frames of the scene before, from where the crossfade begins,
+  and the earlier piece stops there.
+- **A piece's frames are counted, because ffmpeg's exit status is not
+  enough.** Out of memory, it logged a scaler error, wrote 9 frames of 25 and
+  exited 0 (measured 2026-10-30, under `ulimit -v`). `run_film_ffmpeg` compares
+  the count in the file's index with the count planned.
+- **A sound line's moment is written on its timestamps, never with `adelay`.**
+  Followed by `atrim` and mixed, `adelay` lost its delay or kept it according
+  to the order ffmpeg asked for frames in: a sound at 1.5 played at 0 once the
+  sound had a graph of its own.
 
 - **Every stream in the filter graph must end.** An input that never ends is
   buffered without limit by whatever is waiting for it. An animated `.png` read

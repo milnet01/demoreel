@@ -331,8 +331,8 @@ What they share:
 - **A command that fails leaves nothing at `-o`.** A file already there is
   left as it was.
 - **The picture is encoded again each time a video is written, and each encode
-  loses a little.** `edit` encodes once however many scenes the film has,
-  which is the reason to use it for anything more than one step.
+  loses a little.** `edit` encodes each frame once however many scenes the film
+  has, which is the reason to use it for anything more than one step.
 - **They need `ffmpeg` and nothing new**, and read any video it can read.
   Text also needs an `ffmpeg` built to draw text, and a font on the machine.
   `demoreel check` draws a line of text to find out, and reports the finishing

@@ -2580,11 +2580,16 @@ SCRIPT
     assert_near "edit: length (3 + 2 + 3 + 2.9 - 0.5)" 10.4 "$(v_dur "$ft/out/E1.mp4")" 0.15
     assert_eq "edit: size is the first clip's" 320x240 "$(v_size "$ft/out/E1.mp4")"
     assert_eq "edit: rate is the first clip's" 10.00 "$(v_rate "$ft/out/E1.mp4")"
-    # README: "`edit` encodes once however many scenes the film has."
-    # Counted by the encoder's own name, as a whole word. A bare "264" also
-    # matched digits in a temporary path, which failed this step at random.
+    # README: "`edit` encodes each frame once however many scenes the film
+    # has." The picture is drawn in pieces, so several runs encode, and none
+    # of them may read what another encoded. Found by the encoder's own name,
+    # as a whole word. A bare "264" also matched digits in a temporary path,
+    # which failed this step at random.
     encodes=$(grep -cw 'libx264' "$ft/log/ffmpeg.calls" || true)
-    assert_eq "edit: number of ffmpeg runs that encode H.264 (four scenes)" 1 "$encodes"
+    assert_cmp "edit: ffmpeg runs that encode H.264 (four scenes)" "$encodes" ">=" 1
+    again=$(grep -w 'libx264' "$ft/log/ffmpeg.calls" \
+              | grep -cE -- '-i [^ ]*(demoreel-piece|pieces\.txt)' || true)
+    assert_eq "edit: runs that encode a piece again" 0 "$again"
     # README: "the plan goes to stderr" - each scene, and where it ends.
     [ "$(grep -c . "$fe")" -ge 4 ] || fail "edit: the plan on stderr should list each of the 4 scenes
     expected: at least 4 lines on stderr
@@ -3667,6 +3672,85 @@ CAPPY
     assert_absent "a film over its memory cap leaves no film" "$ft/out/cap.mp4"
     echo "a film's ffmpeg over its cap is stopped and the run says why"
     }
+    fin_s69() {
+    # DEMO-0252. A film's picture is drawn in pieces of a few scenes, so its
+    # memory does not grow with its length. Drawn by one ffmpeg, 16 windowed
+    # scenes were refused under 6 GB of address space; in pieces they are made
+    # under 4.5 GB (measured 2026-10-30, twelve cores). The crossfades are 2.5
+    # frames, so xfade rounds where each starts: 139 frames is what one ffmpeg
+    # drew of this film. Counting them matters: out of memory, ffmpeg can exit
+    # 0 with a short file.
+    { echo "clip A.mp4 to 1 window 80"
+      for _ in $(seq 15); do echo "clip A.mp4 to 1 window 80 crossfade 0.25"; done
+    } > "$ft/pc1.txt"
+    rc=0
+    ( ulimit -v 5500000; cd "$ft" && "$DR" edit pc1.txt -o "$ft/out/pc1.mp4" ) \
+        >"$fo" 2>"$fe" || rc=$?
+    expect_ok "16 windowed scenes with crossfades, inside 5.5 GB"
+    assert_eq "16 windowed scenes: frames" 139 "$(v_frames "$ft/out/pc1.mp4")"
+    # The same film from pieces and from one piece: the same frames, each
+    # within x264's noise, and the same sound. Cuts, cards, holds and
+    # crossfades of whole and part frames meet the joins between pieces.
+    ff -f lavfi -i "sine=f=220:d=3" "$ft/pcm.wav"
+    cat > "$ft/pc2.txt" <<'PIECES'
+music pcm.wav level -12
+card 1.5 fade-in 0.5
+  text "Title"
+clip A.mp4 from 0.5 to 3 crossfade 0.4
+  text "one" from 1 to 2
+clip A.mp4 from 1 to 4 window 70 push 4 fade-at 2
+clip A.mp4 from 2 to 3 speed 2 hold 1 crossfade 0.25 wipeleft
+card 1
+  text "middle"
+clip A.mp4 to 2 window 80 crossfade 0.5
+  zoom 2 from 0.5 to 1.5
+clip A.mp4 from 3 to 5 volume -6
+clip A.mp4 to 1.5 crossfade 0.35
+card 1 fade-out 0.5
+  text "end"
+PIECES
+    cat > "$ft/onepiece.py" <<'ONEPY'
+import importlib.machinery, importlib.util, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", sys.argv[1])
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+d.PIECE_SCENES = 1000
+sys.argv = ["demoreel", *sys.argv[2:]]
+d.main()
+ONEPY
+    run edit pc2.txt -o "$ft/out/pc2.mp4"
+    expect_ok "a mixed film, in pieces"
+    rc=0
+    ( cd "$ft" && python3 onepiece.py "$DR" edit pc2.txt -o "$ft/out/pc2-one.mp4" ) \
+        >"$fo" 2>"$fe" || rc=$?
+    expect_ok "a mixed film, in one piece"
+    assert_eq "a mixed film: frames in pieces and in one" \
+        "$(v_frames "$ft/out/pc2-one.mp4")" "$(v_frames "$ft/out/pc2.mp4")"
+    worst=$(ffmpeg -v error -i "$ft/out/pc2-one.mp4" -i "$ft/out/pc2.mp4" \
+        -lavfi "[0:v][1:v]psnr=stats_file=$ft/pc2.psnr" -f null - \
+        && awk '{ split($6, v, ":"); p = v[2] == "inf" ? 99 : v[2] + 0
+                  if (NR == 1 || p < m) m = p } END { print m }' "$ft/pc2.psnr")
+    assert_cmp "a mixed film: its worst frame in pieces against one piece (PSNR dB)" "$worst" ">" 35
+    # The samples themselves. Subtracting one track from the other with amix
+    # read -22 dB on ffmpeg 6.1.1 for a file against itself.
+    for f in pc2 pc2-one; do
+        ff -i "$ft/out/$f.mp4" -map 0:a -f s16le "$ft/$f.pcm"
+    done
+    cmp -s "$ft/pc2.pcm" "$ft/pc2-one.pcm" \
+        || fail "a mixed film: its sound in pieces is not its sound in one piece"
+    # A piece short of its frames fails the run, whatever ffmpeg's exit status
+    # says, and a failed run leaves no piece behind.
+    sed 's/^d.PIECE_SCENES = 1000$/d.stored_frames = lambda path: 1/' \
+        "$ft/onepiece.py" > "$ft/shortpiece.py"
+    rc=0
+    ( cd "$ft" && python3 shortpiece.py "$DR" edit pc2.txt -o "$ft/out/pc3.mp4" ) \
+        >"$fo" 2>"$fe" || rc=$?
+    expect_refused "a film with a piece short of its frames"
+    assert_absent "a film with a piece short of its frames leaves no film" "$ft/out/pc3.mp4"
+    leftovers=$(find "$ft/out" -name '*demoreel-piece*' | wc -l)
+    assert_eq "a failed film leaves no piece behind" 0 "$leftovers"
+    echo "a long windowed film fits in 5.5 GB, and pieces make the film one ffmpeg would"
+    }
     fin_s50() {
     # DEMO-0177 INV-12: README's "the shortcuts do exactly what the script
     # would", for the music options and --no-sound.
@@ -4057,6 +4141,7 @@ CASES
     fin_step "a sound line plays its file at its moment, at its volume" fin_s66
     fin_step "edit refuses a bad sound line" fin_s67
     fin_step "a film's ffmpeg is held to the memory it uses, not the address space it reserves" fin_s68
+    fin_step "a long windowed film fits in 5.5 GB, and pieces make the film one ffmpeg would" fin_s69
     fin_run
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }

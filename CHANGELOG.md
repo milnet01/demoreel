@@ -27,6 +27,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **A long film no longer needs more memory for every scene** (DEMO-0252)
+  `edit` now draws a film a few scenes at a time, so a 24-scene film of windowed clips at 1600x1000 peaks at about 1.1 GB rather than 4.6 GB, and fits on a smaller machine. The film comes out the same, each frame is still encoded once, and it takes about 15% more CPU time.
 - **Apps built with winit (egui, Bevy, Alacritty) now start under demoreel** (DEMO-0281)
   demoreel gave the app a made-up Wayland display name to keep it off
   your real desktop. winit took any name as "use Wayland" and quit.

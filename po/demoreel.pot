@@ -766,6 +766,12 @@ msgstr ""
 msgid "-o is {output}, which is also a file this command reads. demoreel never writes over its own input."
 msgstr ""
 
+msgid "ffmpeg used more than {size} GB of memory making the film, half this machine's, so it was stopped."
+msgstr ""
+
+msgid "ffmpeg could not make the film."
+msgstr ""
+
 msgid "this ffmpeg cannot encode H.264 with libx264, which every video uses."
 msgstr ""
 
@@ -792,12 +798,6 @@ msgid "  sound {name} at {start}"
 msgstr ""
 
 msgid "making {output}, {seconds} seconds at {size}"
-msgstr ""
-
-msgid "ffmpeg used more than {size} GB of memory making the film, half this machine's, so it was stopped."
-msgstr ""
-
-msgid "ffmpeg could not make the film."
 msgstr ""
 
 msgid "the film's sound reaches full scale, so it may be distorted. Turn the music, a clip or a sound down to keep it clean."

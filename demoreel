@@ -11,6 +11,7 @@ import codecs
 import contextlib
 import ctypes
 import fcntl
+import fractions
 import itertools
 import json
 import math
@@ -4082,11 +4083,16 @@ def sound_graph(entry, input_number, number, total):
     """The chain that makes `[e<number>]`: a sound line's file at its
     volume, starting at its moment in the film. It is silent before and after,
     so it lasts the film, and cut where the film ends."""
-    chain = [SOUND_FORMAT, "asetpts=N/SR/TB"]
+    # Its moment is written on its timestamps, and aresample fills the time
+    # before them with silence. Not adelay: followed by atrim and mixed, it
+    # lost its delay or kept it according to the order ffmpeg asked for frames
+    # in (measured 2026-10-30 on 9.0.2: a sound at 1.5 played at 0).
+    chain = [SOUND_FORMAT,
+             f"asetpts=(N+{round(entry['film_at'] * SOUND_RATE)})/SR/TB",
+             f"aresample={SOUND_RATE}:async=1:first_pts=0"]
     if entry["volume"]:
         chain.append(f"volume={entry['volume']:.4f}dB")
-    chain += [f"adelay=delays={round(entry['film_at'] * SOUND_RATE)}S:all=1",
-              f"apad=whole_dur={total:.6f}", f"atrim=duration={total:.6f}"]
+    chain += [f"apad=whole_dur={total:.6f}", f"atrim=duration={total:.6f}"]
     return f"[{input_number}:a:0]{','.join(chain)}[e{number}]"
 
 
@@ -4104,6 +4110,16 @@ def plan_music(music):
         note(tr("  level {level} dB from {start} to {end}",
                 level=f"{entry['level']:g}", start=f"{entry['start']:.3f}",
                 end=f"{entry['end']:.3f}"))
+
+
+def clip_input(scene):
+    """The ffmpeg input that reads a clip scene's part of its file. The
+    picture and the sound read it alike, so they start together."""
+    inputs = ["-ss", f"{scene.seek:.6f}"]
+    read = scene.read_sound if keeps_sound(scene) else scene.read
+    if read is not None:
+        inputs += ["-t", f"{read:.6f}"]
+    return [*inputs, "-i", str(scene.path)]
 
 
 def scene_graph(scene, length, number, first_input, width, height, rate):
@@ -4125,11 +4141,7 @@ def scene_graph(scene, length, number, first_input, width, height, rate):
     tail = f",{tail}" if tail else ""
     out = f"[v{number}]"
     if scene.kind == "clip":
-        inputs = ["-ss", f"{scene.seek:.6f}"]
-        read = scene.read_sound if keeps_sound(scene) else scene.read
-        if read is not None:
-            inputs += ["-t", f"{read:.6f}"]
-        inputs += ["-i", str(scene.path)]
+        inputs = clip_input(scene)
         pts = "PTS-STARTPTS" if scene.speed == 1 else f"(PTS-STARTPTS)/{scene.speed:.9g}"
         if scene.window is None:
             return inputs, [f"[{first_input}:v]setpts={pts},{shape}{tail}{out}"]
@@ -4344,8 +4356,142 @@ def finishing_tools():
             + install_hint(missing))
 
 
+# About the most scenes one ffmpeg draws at once. A film drawn by one ffmpeg
+# grew with each scene: about 170 MB resident for each windowed scene at
+# 1600x1000, 4.6 GB for 24 of them, and one decoder thread per clip saved under
+# 10% (DEMO-0252, measured 2026-10-30). The picture is drawn in pieces of about
+# this many, and the pieces are joined without encoding them again.
+PIECE_SCENES = 4
+
+
+def scene_frames(scenes, frames, starts, rate):
+    """The frame each scene starts on in the film one ffmpeg would draw, and
+    the frame after its last.
+
+    A cut starts a scene where the one before ends. A crossfade starts it on
+    xfade's offset, `starts` written to four places as the graph writes it,
+    which xfade rounds to the nearest frame, half a frame up: offset 0.85 at
+    10 a second starts on frame 9. So a crossfade that is not a whole number
+    of frames leaves no scene between frames, and each piece of the film can
+    start on a frame of its own.
+    """
+    per_second = fractions.Fraction(rate_text(rate))
+    firsts, end = [], 0
+    for scene, count, begins in zip(scenes, frames, starts, strict=True):
+        if scene.crossfade:
+            micro = round(float(f"{begins:.4f}") * 1_000_000)
+            end = math.floor(micro * per_second / 1_000_000 + fractions.Fraction(1, 2))
+        firsts.append(end)
+        end += count
+    return firsts, end
+
+
+def film_pieces(scenes, frames, firsts, rate):
+    """The film's picture as pieces, each a list of (scene number, first
+    frame, frame count) drawn by one ffmpeg, about PIECE_SCENES to a piece.
+
+    A piece that starts with a crossfade starts with the frames of the scene
+    before from where the crossfade begins, and the piece before ends without
+    them. So the crossfade is drawn whole, in one piece, as one ffmpeg would
+    draw it. A piece starts only where the scene before has a frame of its
+    own after the crossfade into it, so a piece can run longer to reach one.
+    """
+    starts = [0]
+    for number in range(1, len(scenes)):
+        own = (firsts[number] - firsts[number - 1]
+               - math.ceil(scenes[number - 1].crossfade * rate - 1e-9))
+        if number - starts[-1] >= PIECE_SCENES - 1 and own > 0:
+            starts.append(number)
+    pieces = []
+    for start, end in zip(starts, [*starts[1:], len(scenes)], strict=True):
+        parts = []
+        if start and scenes[start].crossfade:
+            first = firsts[start] - firsts[start - 1]
+            parts.append((start - 1, first, frames[start - 1] - first))
+        for number in range(start, end):
+            before_next = number == end - 1 and end < len(scenes)
+            count = firsts[end] - firsts[number] if before_next else frames[number]
+            parts.append((number, 0, count))
+        pieces.append(parts)
+    return pieces
+
+
+def piece_graph(piece, scenes, frames, firsts, width, height, rate):
+    """(ffmpeg inputs, filter chains, the picture's label) for one piece of
+    the film's picture. Each crossfade starts on the frame it starts on in the
+    whole film (scene_frames), counted from the piece's first frame."""
+    number, first, _ = piece[0]
+    origin = firsts[number] + first
+    inputs, chains, film = [], [], ""
+    for position, (number, first, count) in enumerate(piece):
+        scene = scenes[number]
+        more, graph = scene_graph(scene, frames[number] / rate, number,
+                                  inputs.count("-i"), width, height, rate)
+        inputs += more
+        chains += graph
+        label = f"[v{number}]"
+        if first or count < frames[number]:
+            chains.append(f"{label}trim=start_frame={first}:end_frame={first + count},"
+                          f"setpts=PTS-STARTPTS[cut{number}]")
+            label = f"[cut{number}]"
+        # The scene a piece starts with does not fade from anything in it.
+        if not position:
+            film = label
+        elif scene.crossfade:
+            offset = (firsts[number] - origin) / rate
+            chains.append(f"{film}{label}xfade=transition={scene.transition}:"
+                          f"duration={scene.crossfade:.4f}:offset={offset:.4f}[f{number}]")
+            film = f"[f{number}]"
+        else:
+            # concat hands on a microsecond timebase, and xfade refuses two
+            # inputs whose timebases differ; fps puts the film's back.
+            chains.append(f"{film}{label}concat=n=2:v=1:a=0,"
+                          f"fps={rate_text(rate)}[f{number}]")
+            film = f"[f{number}]"
+    return inputs, chains, film
+
+
+def stored_frames(path):
+    """How many frames a video's index says it holds; None if it says none.
+    Read from the index, so nothing is decoded."""
+    try:
+        said = subprocess.run(
+            ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
+             "stream=nb_frames", "-of", "csv=p=0", str(path)],
+            capture_output=True, text=True, timeout=CALL_TIMEOUT, check=False)
+        return int(said.stdout.strip())
+    except (subprocess.TimeoutExpired, ValueError):
+        return None
+
+
+def run_film_ffmpeg(cmd, seconds, cap, made_file, frames=None):
+    """Run one of the ffmpegs that make a film, under `cap`, and die saying
+    why if it fails, `made_file` is not a video afterwards, or it holds other
+    than `frames` frames.
+
+    The count is the check that matters for a piece. Out of memory partway,
+    ffmpeg logged that it could not set up a scaler, wrote a piece with 9 of
+    its 25 frames and exited 0, and the film came out 82 frames of 139
+    (measured 2026-10-30, under ulimit -v).
+    """
+    made, stopped = run_capped(cmd, 60 + 20 * seconds, cap)
+    if stopped:
+        die(tr("ffmpeg used more than {size} GB of memory making the film, "
+               "half this machine's, so it was stopped.",
+               size=f"{cap / 1024 ** 3:.1f}"))
+    unreadable = None if made.returncode else video_error(made_file)
+    short = (not made.returncode and not unreadable and frames is not None
+             and stored_frames(made_file) != frames)
+    if made.returncode or unreadable or short:
+        # A killed ffmpeg says nothing, and then the file is the witness.
+        die(tr("ffmpeg could not make the film.") + "\n  "
+            + (last_said(made.stderr, lines=4) or unreadable
+               or video_error(made_file) or ""))
+
+
 def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None):
-    """Check every scene, then encode the film once and print its path.
+    """Check every scene, then encode the film and print its path: the
+    picture in pieces (film_pieces), then the sound over the joined pieces.
 
     Everything is checked before ffmpeg is started, so a mistake in the last
     scene costs nothing. The film is written beside its output and moved into
@@ -4362,6 +4508,7 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
         (".mp4",))
     workdir = Path(tempfile.mkdtemp(prefix="edit-", dir=state_dir()))
     part = partial_video(output)
+    piece_files = []
     try:
         width, height, rate = film_shape(scenes, size, rate)
         inputs, chains, lengths = [], [], []
@@ -4392,33 +4539,25 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
                            "seconds does not fit: the two scenes overlap for "
                            "that long, and one of them is shorter.",
                            where=scene.where, seconds=f"{scene.crossfade:g}"))
+        # The sound is made in one graph, after the picture. Its inputs are
+        # counted from 1: input 0 is the picture.
         clip_sound = any(keeps_sound(scene) for scene in scenes)
-        film, sound, total, effects = "[v0]", "[a0]", 0.0, []
+        sound, total, effects, starts = "[a0]", 0.0, [], []
         for number, (scene, length) in enumerate(zip(scenes, lengths, strict=True)):
-            first_input = inputs.count("-i")
-            more, graph = scene_graph(scene, length, number, first_input,
-                                      width, height, rate)
-            inputs += more
-            chains += graph
-            if clip_sound:
-                chains.append(scene_sound(scene, length, number, first_input))
+            if keeps_sound(scene):
+                chains.append(scene_sound(scene, length, number, inputs.count("-i") + 1))
+                inputs += ["-vn", *clip_input(scene)]
+            elif clip_sound:
+                chains.append(scene_sound(scene, length, number, None))
             begins = total - scene.crossfade
-            if scene.crossfade:
-                chains.append(f"{film}[v{number}]xfade=transition={scene.transition}:"
-                              f"duration={scene.crossfade:.4f}:"
-                              f"offset={begins:.4f}[f{number}]")
-                if clip_sound:
-                    chains.append(f"{sound}[a{number}]acrossfade="
-                                  f"d={scene.crossfade:.6f}[g{number}]")
-            elif number:
-                # concat hands on a microsecond timebase, and xfade refuses two
-                # inputs whose timebases differ; fps puts the film's back.
-                chains.append(f"{film}[v{number}]concat=n=2:v=1:a=0,"
-                              f"fps={rate_text(rate)}[f{number}]")
-                if clip_sound:
-                    chains.append(f"{sound}[a{number}]concat=n=2:v=0:a=1[g{number}]")
+            if clip_sound and scene.crossfade:
+                chains.append(f"{sound}[a{number}]acrossfade="
+                              f"d={scene.crossfade:.6f}[g{number}]")
+            elif clip_sound and number:
+                chains.append(f"{sound}[a{number}]concat=n=2:v=0:a=1[g{number}]")
             if number:
-                film, sound = f"[f{number}]", f"[g{number}]"
+                sound = f"[g{number}]"
+            starts.append(begins)
             total = begins + length
             name = scene.path.name if scene.path else tr("text")
             # translators: {kind} is clip or card, in English; {name} is a file name, or the
@@ -4433,11 +4572,11 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
             effects += scene.sounds
         if music:
             check_music(music, total)
-            chains.append(music_graph(music, inputs.count("-i"), total))
+            chains.append(music_graph(music, inputs.count("-i") + 1, total))
             inputs += ["-i", str(music.path)]
             plan_music(music)
         for number, entry in enumerate(effects):
-            chains.append(sound_graph(entry, inputs.count("-i"), number, total))
+            chains.append(sound_graph(entry, inputs.count("-i") + 1, number, total))
             inputs += ["-i", str(entry["path"])]
         mixed = [*([sound] if clip_sound else []), *(["[m]"] if music else []),
                  *(f"[e{number}]" for number in range(len(effects)))]
@@ -4453,23 +4592,46 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
         note(tr("making {output}, {seconds} seconds at {size}", output=output,
                 seconds=f"{total:.3f}", size=f"{width}x{height}"))
         cap = memory_cap()
-        made, stopped = run_capped(
-            ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
-             *inputs, "-filter_complex", ";".join(chains), "-map", film,
-             # The film ends at its planned length even if a stream does not.
-             "-t", f"{total + 0.5 / rate:.4f}",
-             *audio, *ENCODER, "-y", str(part)],
-            60 + 20 * total, cap)
-        if stopped:
-            die(tr("ffmpeg used more than {size} GB of memory making the film, "
-                   "half this machine's, so it was stopped.",
-                   size=f"{cap / 1024 ** 3:.1f}"))
-        unreadable = None if made.returncode else video_error(part)
-        if made.returncode or unreadable:
-            # A killed ffmpeg says nothing, and then the file is the witness.
-            die(tr("ffmpeg could not make the film.") + "\n  "
-                + (last_said(made.stderr, lines=4) or unreadable
-                   or video_error(part) or ""))
+        frames = [round(length * rate) for length in lengths]
+        firsts, end = scene_frames(scenes, frames, starts, rate)
+        pieces = film_pieces(scenes, frames, firsts, rate)
+        # A film of one piece and no sound is that piece; any other is put
+        # together from its pieces by one more ffmpeg, which adds the sound.
+        if len(pieces) == 1 and not mixed:
+            piece_files = [part]
+        else:
+            piece_files = [output.with_name(f".{output.stem}.demoreel-piece{i}.mp4")
+                           for i in range(len(pieces))]
+        # The frame each piece starts on: its first scene's, and later by the
+        # frames of it the piece before drew. The film ends half a frame
+        # after its planned length at the latest, even if a stream does not.
+        planned = math.ceil(total * rate + 0.5 - 1e-6)
+        origins = [firsts[number] + first for number, first, _ in
+                   (piece[0] for piece in pieces)] + [min(end, planned)]
+        for i, (piece, piece_file) in enumerate(zip(pieces, piece_files, strict=True)):
+            more, graph, film = piece_graph(piece, scenes, frames, firsts,
+                                            width, height, rate)
+            count = origins[i + 1] - origins[i]
+            run_film_ffmpeg(
+                ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
+                 *more, "-filter_complex", ";".join(graph), "-map", film,
+                 "-frames:v", str(count), "-t", f"{(count + 0.5) / rate:.4f}",
+                 "-an", *ENCODER, "-y", str(piece_file)],
+                count / rate, cap, piece_file, count)
+        if piece_files != [part]:
+            listing = workdir / "pieces.txt"
+            listing.write_text("".join(
+                "file '{}'\n".format(str(f).replace("'", "'\\''")) for f in piece_files))
+            picture = (["-i", str(piece_files[0])] if len(pieces) == 1 else
+                       ["-f", "concat", "-safe", "0", "-i", str(listing)])
+            run_film_ffmpeg(
+                ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
+                 *picture, *inputs,
+                 *(["-filter_complex", ";".join(chains)] if chains else []),
+                 "-map", "0:v", "-c:v", "copy", *audio,
+                 "-t", f"{total + 0.5 / rate:.4f}", "-movflags", "+faststart",
+                 "-y", str(part)],
+                total, cap, part, origins[-1])
         peak = loudest(part) if mixed else None
         if peak is not None and peak >= FULL_SCALE:
             note(tr("the film's sound reaches full scale, so it may be distorted. "
@@ -4480,6 +4642,8 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
                "its length, so it was stopped."))
     finally:
         part.unlink(missing_ok=True)
+        for piece_file in piece_files:
+            piece_file.unlink(missing_ok=True)
         shutil.rmtree(workdir, ignore_errors=True)
     summarise(output)
     print(output)

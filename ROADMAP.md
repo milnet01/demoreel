@@ -5136,6 +5136,36 @@ covers both display backends and the Flatpak invocation.
   each. memory_cap already bounds a film's ffmpeg; this finds what
   else costs most. Record the figures in a file the gate can read, so a
   later change that makes one much worse is noticed.
+  2026-10-30, first measurements, load about 1, three runs each, 1600x1000
+  at 30/s inputs (a 20 s glxgears recording). GNU time: wall s, CPU s
+  (user+sys, children), peak MB of the largest one process.
+  check 0.9/0.9/60. record -d 10 xterm 11.0/5-7/270; record --gpu -d 10
+  xterm 11.8/12/160 (twice Xvfb's CPU). trim 16 s 4.5/14/366. caption
+  6.0/18/360. join 2x20 s crossfade 9.9/40/530. card 5 s 0.8/1.9/275.
+  edit (4 scenes, 2 windowed) 8.8/42/865. motion 0.65/2.9/150. poster
+  0.45/1.0/157. thumbnail 0.57/1.2/157. sheet 10 frames 2.8/8/151 (one
+  ffmpeg per frame, expected). glxgears adds about 30 CPU s to a 10 s
+  Xvfb record: the app, not demoreel.
+  Worst: edit's peak memory grows with scenes. 2-second clips, plain /
+  window 80: 2 scenes 0.5/0.8 GB, 6: 0.7/1.5, 12: 1.1/2.5, 24: 1.7/4.6.
+  About 170 MB per windowed scene, so an 8 GB machine's cap (4 GB)
+  refuses a 24-scene windowed film. One decoder thread per clip input
+  saved under 10%: the cost is the single graph holding every scene.
+  User decisions 2026-10-30: (1) make the film in pieces, joined without
+  re-encoding, so memory stays flat with length; (2) the baseline is
+  checked by a separate ./ci.sh --perf, run by hand before a release,
+  flagging CPU or peak memory over 1.5x baseline; wall time recorded,
+  not judged.
+  2026-10-30: the worst is fixed: a film's picture is drawn in pieces.
+  24 windowed scenes at 1600x1000: 4.6 GB peak before, 1.13 GB after, and 6
+  scenes also 1.13 GB. CPU about 15% more (107 s to 123 s, load about 10),
+  from drawing a crossfade's frames a second time. Compared with the old
+  code at 10, 24, 30, 60 and 29.97 frames a second: same frame counts, every
+  frame 38 dB or better, same sound. Why memory grew with scenes is not
+  established; only that it stops growing in pieces, and that one decoder
+  thread per clip did not explain it.
+  Still open: the baseline file and ./ci.sh --perf, as decided above. Its
+  figures must be taken again, since edit's have changed.
   **Layman:** Know how fast and how memory-hungry demoreel is today, and fix the slowest parts before 1.0.
   Kind: perf.
   Source: user-request-2026-10-16.
