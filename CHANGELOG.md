@@ -32,6 +32,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **A second SIGTERM while `shot` is ending no longer leaves a private screen running** (DEMO-0094)
+  And `check` no longer reads a SIGTERM as "the display did not start".
 - **A Ctrl+C landing just as a recording checks its picture no longer fails the run** (DEMO-0094)
 - **`shot` in a terminal's background no longer stops and fails** (DEMO-0094)
   Its ffmpeg asked to change the terminal's settings and was stopped for it, and the run blamed the display.

@@ -6824,6 +6824,88 @@ SHIM
     echo "a stale part file is left alone, and the first error is the one said last"
 fi
 
+step "a signal while a display starts or ends leaves none behind"
+# DEMO-0094. shot and check exit through die() on SIGTERM. Landing while Xvfb
+# started, or in the finally that ends it, that skipped the code ending it, and
+# check also took it for "the display did not start". The state directory is
+# this step's own, so the only servers it can match are these. A stand-in Xvfb
+# says when it has begun, and starts the real one a moment later.
+mkdir -p "$tmp/sigshim" "$tmp/sigstate"
+cat >"$tmp/sigshim/Xvfb" <<SHIM
+#!/bin/sh
+touch "$tmp/xvfb-begun"
+sleep 1
+exec $(command -v Xvfb) "\$@"
+SHIM
+chmod +x "$tmp/sigshim/Xvfb"
+cat >"$tmp/stubborn.sh" <<'STUBBORN'
+#!/bin/sh
+trap '' TERM
+xclock &
+exec sleep 60
+STUBBORN
+chmod +x "$tmp/stubborn.sh"
+PATH="$tmp/sigshim:$PATH" XDG_RUNTIME_DIR="$tmp/sigstate" python3 - "$tmp" <<'SIGPY'
+import os, signal, subprocess, sys, time
+from pathlib import Path
+tmp = Path(sys.argv[1])
+begun, shim_path = tmp / "xvfb-begun", os.environ["PATH"]
+plain_path = shim_path.split(":", 1)[1]
+
+
+def servers():
+    found = subprocess.run(["pgrep", "-f", f"^[^ ]*Xvfb .*{tmp}/sigstate"],
+                           capture_output=True, text=True).stdout.split()
+    return [pid for pid in found if pid != str(os.getpid())]
+
+
+def end_servers():
+    for pid in servers():
+        os.kill(int(pid), signal.SIGKILL)
+
+
+def wait_for(path):
+    for _ in range(300):
+        if path.exists():
+            return
+        time.sleep(0.05)
+    raise SystemExit(f"{path} never appeared")
+
+
+def try_case(name, args, marker, env_path):
+    begun.unlink(missing_ok=True)
+    err = tmp / f"sig-{name}.err"
+    with open(err, "w") as errfile:
+        run = subprocess.Popen(["./demoreel", *args], stdout=subprocess.DEVNULL,
+                               stderr=errfile, start_new_session=True,
+                               env=dict(os.environ, PATH=env_path))
+        wait_for(marker)
+        time.sleep(0.3)
+        run.send_signal(signal.SIGTERM)
+        run.wait(timeout=60)
+    time.sleep(1.5)  # long enough for a stand-in Xvfb to become the real one
+    left = servers()
+    end_servers()
+    if left:
+        raise SystemExit(f"{name}: SIGTERM left a display running:\n{err.read_text()}")
+    return run.returncode, err.read_text()
+
+
+status, said = try_case("shot-start", ["shot", "-o", str(tmp / "sig.png"), "-s", "320x240",
+                                       "--", "xclock"], begun, shim_path)
+if status == 0 or "ended by SIGTERM" not in said:
+    raise SystemExit(f"shot: SIGTERM at start was not reported (exit {status}):\n{said}")
+
+status, said = try_case("check", ["check"], begun, shim_path)
+if status == 0 or "ended by SIGTERM" not in said or "did not start" in said:
+    raise SystemExit(f"check: SIGTERM at start was not reported (exit {status}):\n{said}")
+
+picture = tmp / "sigend.png"
+try_case("shot-end", ["shot", "-o", str(picture), "-s", "320x240", "--settle", "20",
+                      "--", str(tmp / "stubborn.sh")], picture, plain_path)
+print("SIGTERM while a display starts or ends leaves none behind")
+SIGPY
+
 step "the sampling ffmpeg survives a Ctrl+C"
 # DEMO-0094. A terminal's Ctrl+C goes to the whole foreground group, and the
 # ffmpeg grabbing a sample was in it, so a clean stop landing on a sample failed

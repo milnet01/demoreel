@@ -120,13 +120,45 @@ def _request_stop(signum, frame):
     _stop.set()
 
 
+# Whether _exit_on_signal is to wait, and what arrived while it did.
+_signals_held = False
+_signal_held = None
+
+
 def _exit_on_signal(signum, frame):
     """SIGTERM or SIGHUP anywhere but a recording: exit through die(), so the
     finally blocks that end the display and the app still run. Left at their
     default, either signal ended Python on the spot and leaked Xvfb, which
     holds its display number for good (DEMO-0115)."""
+    global _signal_held  # noqa: PLW0603 - a signal handler has nowhere else
+    if _signals_held:
+        _signal_held = signum
+        return
     die(tr("ended by {signal} before it finished, so there is nothing to hand back.",
            signal=signal.Signals(signum).name))
+
+
+def hold_signals():
+    """From here on _exit_on_signal only notes a signal. For the code that ends
+    a display: leaving that part way leaves the display running, which nothing
+    else would then end (DEMO-0094)."""
+    global _signals_held  # noqa: PLW0603 - a signal handler reads it
+    _signals_held = True
+
+
+@contextlib.contextmanager
+def signals_held():
+    """Hold signals while a display starts, and act on one afterwards. In the
+    gap between starting a process and holding its handle, no code could end
+    it. The longest wait is the display's own start-up timeouts."""
+    global _signals_held  # noqa: PLW0603 - a signal handler reads it
+    hold_signals()
+    try:
+        yield
+    finally:
+        _signals_held = False
+    if _signal_held is not None:
+        _exit_on_signal(_signal_held, None)
 
 
 _progress_line = ""
@@ -2792,10 +2824,11 @@ def cmd_shot(a):
     displaylog = rundir / "display.log"
     server = app = auth = sound = None
     try:
-        sound = private_sound(False, "shot")
-        server, app, display, auth, env, _ = launch(a, command, width, height,
-                                                    rundir / "shot", displaylog,
-                                                    appout, sound)
+        with signals_held():
+            sound = private_sound(False, "shot")
+            server, app, display, auth, env, _ = launch(a, command, width, height,
+                                                        rundir / "shot", displaylog,
+                                                        appout, sound)
         window = place_window(env, app, a, width, height, picture=True)
         try:
             drawn = wait_until_drawn(env, display, width, height, a.settle)
@@ -2826,6 +2859,7 @@ def cmd_shot(a):
         raise SystemExit(f"{exc.code}\n  "
                          + tr("Its display log is kept in {folder}", folder=rundir)) from None
     finally:
+        hold_signals()
         if appout is not sys.stderr:
             appout.close()
         end_process(app)
@@ -2923,16 +2957,19 @@ def display_problem():
     """Start and end a private display, the way a run does; [] if that works."""
     base = Path(tempfile.mkdtemp(prefix="check-", dir=state_dir()))
     server = auth = None
-    try:
-        server, _, auth = start_xvfb(320, 240, base / "check", base / "display.log")
-    except SystemExit as exc:
-        reason = str(exc.code).removeprefix("demoreel: ")
-        return [tr("a private display did not start: {reason}", reason=reason)]
-    finally:
-        end_server(server)
-        if auth is not None:
-            auth.unlink(missing_ok=True)
-        shutil.rmtree(base, ignore_errors=True)
+    # Held over the whole of it, or a signal here is taken for the display
+    # failing to start, and so reads as "not ready".
+    with signals_held():
+        try:
+            server, _, auth = start_xvfb(320, 240, base / "check", base / "display.log")
+        except SystemExit as exc:
+            reason = str(exc.code).removeprefix("demoreel: ")
+            return [tr("a private display did not start: {reason}", reason=reason)]
+        finally:
+            end_server(server)
+            if auth is not None:
+                auth.unlink(missing_ok=True)
+            shutil.rmtree(base, ignore_errors=True)
     return []
 
 
