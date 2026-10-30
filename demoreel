@@ -828,8 +828,9 @@ def start_gpu_display(width, height, base, logfile):
     pointer where park_pointer puts it, as on Xvfb (DEMO-0103).
 
     The file holds the cookie before anything starts, as on Xvfb, so no client
-    can connect first and stay: nothing resets Xwayland to throw it off. The entry for the real number goes in once -displayfd reports it,
-    and Xwayland re-reads the changed file without being signalled. The lock is
+    can connect first and stay: nothing resets Xwayland to throw it off. The
+    entry for the real number goes in once -displayfd reports it, and Xwayland
+    re-reads the changed file without being signalled. The lock is
     proven by a client without the cookie being refused while one holding it
     connects, since a dead display refuses both.
     """
@@ -2098,18 +2099,24 @@ def launch(a, command, width, height, base, displaylog, appout, sound):
     env = dict(os.environ, DISPLAY=display, WAYLAND_DISPLAY=NO_WAYLAND,
                XDG_SESSION_TYPE=SESSION_TYPE, XAUTHORITY=str(auth),
                **(sound.env() if sound else {}))
-    park_pointer(env, width, height)
+    # The caller has no server to end until this returns, so whatever is not
+    # ended here is leaked: a display that hangs on the first xdotool, and any
+    # way the command cannot start, a script with no shebang among them.
     try:
-        app = subprocess.Popen(command, env=env, start_new_session=True,
-                               stdout=appout, stderr=subprocess.STDOUT)
-    except (FileNotFoundError, PermissionError) as exc:
+        park_pointer(env, width, height)
+        try:
+            app = subprocess.Popen(command, env=env, start_new_session=True,
+                                   stdout=appout, stderr=subprocess.STDOUT)
+        except OSError as exc:
+            die(tr("could not run {command}: {reason}.\n"
+                   "  Check that the command after `--` is installed and spelled as you "
+                   "would type it.", command=repr(command[0]), reason=exc.strerror))
+    except BaseException:
         if sound:
             sound.unload()
         end_server(server)
         auth.unlink(missing_ok=True)
-        die(tr("could not run {command}: {reason}.\n"
-               "  Check that the command after `--` is installed and spelled as you "
-               "would type it.", command=repr(command[0]), reason=exc.strerror))
+        raise
     return server, app, display, auth, env, wayland
 
 

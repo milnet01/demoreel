@@ -4913,6 +4913,16 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Whether a server this run name started is still running. Matched on the auth
+# file, which carries the name, so another session's display is never counted.
+server_left() {
+    local server
+    for server in $(pgrep -u "$(id -u)" -x Xvfb 2>/dev/null || true); do
+        tr '\0' ' ' <"/proc/$server/cmdline" 2>/dev/null | grep -q "/$1\." && return 0
+    done
+    return 1
+}
+
 # One definition of "sample a frame and prove something was drawn in it", used
 # by every step that records something: this smoke test, the --gpu backend and
 # the real Flatpak target. The threshold and its comparator still live in
@@ -6355,6 +6365,49 @@ if worst > 0.05:
     raise SystemExit(f"a stop took {worst * 1000:.0f} ms to be noticed")
 print(f"a stop is noticed within {worst * 1000:.1f} ms")
 STOPPY
+
+step "an app that cannot be started leaves no display behind"
+# DEMO-0094. A script with no shebang fails to start with ENOEXEC, which was
+# not one of the two errors caught. The run ended in a traceback, and its Xvfb
+# ran on holding its number, since the caller has no server to end until
+# launch returns. Anything else between the server and the app leaks the same
+# way, so that gap is tried too: park_pointer dies when the display hangs.
+printf 'echo hi\n' >"$tmp/noshebang"
+chmod +x "$tmp/noshebang"
+set +e
+./demoreel record -n gatenoexec -o "$tmp/noexec.mp4" -d 1 -s 320x240 -- "$tmp/noshebang" \
+    >"$tmp/noexec.out" 2>"$tmp/noexec.err"
+noexec_status=$?
+set -e
+if server_left gatenoexec; then
+    echo "an app that could not start left its display running" >&2
+    exit 1
+fi
+[ "$noexec_status" -ne 0 ] && grep -q 'could not run' "$tmp/noexec.err" \
+    && ! grep -q Traceback "$tmp/noexec.err" || {
+    echo "the failure was not named (exit $noexec_status):" >&2
+    cat "$tmp/noexec.err" >&2
+    exit 1
+}
+python3 - <<'PARKPY'
+import importlib.machinery, importlib.util, sys, types
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+d.park_pointer = lambda *_: d.die("stopped answering")
+try:
+    d.launch(types.SimpleNamespace(gpu=False), ["xclock"], 320, 240,
+             d.state_dir() / "gatepark", d.state_dir() / "gatepark.display.log",
+             sys.stderr, None)
+except SystemExit:
+    pass
+(d.state_dir() / "gatepark.display.log").unlink(missing_ok=True)
+PARKPY
+if server_left gatepark; then
+    echo "a display that hung before the app started was left running" >&2
+    exit 1
+fi
+echo "an app that cannot start, or a display that hangs first, ends the display"
 
 step "a recorder killed mid-run fails the run"
 # DEMO-0116. A killed ffmpeg leaves an mp4 with no index. The file is there

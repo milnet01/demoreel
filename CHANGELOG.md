@@ -32,6 +32,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **An app that cannot start no longer leaves a private screen running** (DEMO-0094)
+  A script with no `#!` line, for one, ended the run in a Python error with the screen left behind. It now gets the usual "could not run" message.
 - **An app closing just as a recording ends no longer fails the run** (DEMO-0282)
   Its window goes a moment before its process, so a check landing between the two reported a blank recording. demoreel now gives a blank display's app 2 seconds to finish closing.
 - **A long film no longer needs more memory for every scene** (DEMO-0252)
