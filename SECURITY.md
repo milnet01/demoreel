@@ -44,7 +44,8 @@ permissions would not have fixed it — `Xvfb` also listens on an abstract socke
 which has none. The gate covers this.
 
 **The run-state directory.** `state_dir()` uses `XDG_RUNTIME_DIR` when it is
-set, and `/tmp/demoreel-<uid>` when it is not. The fallback name is predictable,
+set, then `/run/user/<uid>` if the caller owns it, and `/tmp/demoreel-<uid>`
+otherwise. That last name is predictable,
 so on a shared machine another user can create that path first. demoreel checks
 before using it: `lstat` rather than `stat`, so a planted symlink is seen rather
 than followed, and the run stops unless the path is a directory the caller owns.
@@ -69,7 +70,8 @@ from a file or from stdin instead, so they are in no command line at all. The
 gate checks this: a canary typed through `--steps -` reaches the app and is
 absent from demoreel's command line (DEMO-0025). Use `--steps` for a password
 or a token, from a file only you can read; a shell line that pipes the steps
-in holds them itself.
+in holds them itself. Only `type` text stays off a command line: `key` and
+`hold` steps are on `xdotool`'s, even under `--steps`.
 
 **Translation catalogs.** A message demoreel shows may come from a `.po` file
 in the `po/` folder beside the script, written by a translator a reviewer may
