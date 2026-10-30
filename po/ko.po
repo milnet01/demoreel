@@ -1360,3 +1360,6 @@ msgid ""
 msgstr ""
 "{verb} 단계가 실패했습니다.\n"
 "  xdotool 출력: {text}"
+
+msgid "could not write to {path}: {reason}."
+msgstr "{path}에 쓸 수 없습니다: {reason}."

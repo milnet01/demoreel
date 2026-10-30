@@ -6824,6 +6824,153 @@ SHIM
     echo "a stale part file is left alone, and the first error is the one said last"
 fi
 
+step "the sampling ffmpeg survives a Ctrl+C"
+# DEMO-0094. A terminal's Ctrl+C goes to the whole foreground group, and the
+# ffmpeg grabbing a sample was in it, so a clean stop landing on a sample failed
+# as "could not sample". A stand-in says when the sample has begun, and takes a
+# moment over it, so the Ctrl+C lands there every time.
+mkdir -p "$tmp/sampleshim"
+cat >"$tmp/sampleshim/ffmpeg" <<SHIM
+#!/bin/sh
+case "\$*" in
+    *x11grab*"-pix_fmt gray"*) touch "$tmp/sampling"; sleep 1 ;;
+esac
+exec $(command -v ffmpeg) "\$@"
+SHIM
+chmod +x "$tmp/sampleshim/ffmpeg"
+PATH="$tmp/sampleshim:$PATH" python3 - "$tmp" <<'SAMPLESTOPPY'
+import os, signal, subprocess, sys, time
+from pathlib import Path
+tmp = Path(sys.argv[1])
+err = tmp / "sampling.err"
+with open(err, "w") as errfile:
+    run = subprocess.Popen(
+        ["./demoreel", "record", "-n", "gatesampling", "-o", str(tmp / "sampling.mp4"),
+         "-d", "6", "-s", "320x240", "--", "xclock"],
+        stdout=subprocess.PIPE, stderr=errfile, start_new_session=True)
+    for _ in range(300):
+        if (tmp / "sampling").exists():
+            break
+        time.sleep(0.05)
+    else:
+        run.kill()
+        raise SystemExit("no sample ever began:\n" + err.read_text())
+    time.sleep(0.2)
+    os.killpg(run.pid, signal.SIGINT)
+    out, _ = run.communicate(timeout=60)
+if run.returncode != 0 or out.decode().strip() != str(tmp / "sampling.mp4"):
+    raise SystemExit(f"Ctrl+C on a sample failed the run (exit {run.returncode}):\n"
+                     + err.read_text())
+print("a Ctrl+C landing on a sample finishes the video")
+SAMPLESTOPPY
+
+step "a background run does not stop on the terminal"
+# DEMO-0094. Four ffmpeg calls lacked the -nostdin their siblings have. Started
+# in the background of a terminal, such an ffmpeg asks to change the terminal's
+# settings and is stopped for it (measured: "Stopped (tty output)"), and the run
+# ended with a message blaming the display. A real background job, on a real
+# pseudo-terminal, covers the sample, the picture, its read-back and the cut.
+if ! command -v script >/dev/null; then
+    echo "skipped: this machine has no script"
+else
+    cat >"$tmp/bgshot.sh" <<BG
+set -m
+./demoreel shot -o "$tmp/bgshot.png" -s 320x240 --region 0,0,100,100 --settle 20 \
+    -- xclock >"$tmp/bgshot.out" 2>"$tmp/bgshot.err" &
+wait \$!
+echo \$? >"$tmp/bgshot.status"
+BG
+    script -qec "bash --noprofile --norc $tmp/bgshot.sh" /dev/null </dev/null >/dev/null
+    [ "$(cat "$tmp/bgshot.status")" = 0 ] && [ -s "$tmp/bgshot.png" ] || {
+        echo "a shot in a terminal's background failed (exit $(cat "$tmp/bgshot.status")):" >&2
+        cat "$tmp/bgshot.err" >&2
+        exit 1
+    }
+    echo "a shot in a terminal's background takes its picture"
+fi
+
+step "the log of a recorder that ended is whole, and written as it goes"
+# DEMO-0094. wf-recorder's output reached the log only when the pipe ended, on a
+# thread that could write after the run closed the file. That lost the log,
+# which is what a failure's message points at, and printed a thread's traceback.
+# A stand-in leaves a child holding the pipe past its own exit, so that happens
+# every time.
+mkdir -p "$tmp/logshim"
+cat >"$tmp/logshim/wf-recorder" <<'SHIM'
+#!/bin/sh
+echo "Output #0"
+echo midway
+(sleep 1; echo the last line) &
+exit 0
+SHIM
+chmod +x "$tmp/logshim/wf-recorder"
+PATH="$tmp/logshim:$PATH" python3 - "$tmp" <<'LOGPY'
+import importlib.machinery, importlib.util, os, sys, time
+from pathlib import Path
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+tmp = Path(sys.argv[1])
+path = tmp / "wf.log"
+proc, log = d.start_wf_recorder(dict(os.environ), "w", 1, tmp / "wf.mp4", path)
+proc.wait()
+time.sleep(0.2)
+if "midway" not in path.read_text():
+    raise SystemExit(f"the log was not written as it went: {path.read_text()!r}")
+log.close()
+if "the last line" not in path.read_text():
+    raise SystemExit(f"closing the log lost the end of it: {path.read_text()!r}")
+print("the log is written as the recorder talks, and closing waits for its end")
+LOGPY
+
+step "stop says what happened when the signal is refused"
+# DEMO-0094. A pid reused by another user between the check and the signal
+# raised PermissionError, a traceback. The race cannot be forced, so the refusal
+# is faked: it must reach the same message as a run that ended on its own.
+python3 - <<'REFUSEDPY'
+import importlib.machinery, importlib.util, os, types
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+d.live_runs = lambda: [{"name": "x", "pid": 1, "recording": True}]
+d.run_succeeded = lambda entry: False
+def refuse(pid, sig):
+    raise PermissionError
+os.kill = refuse
+try:
+    d.cmd_stop(types.SimpleNamespace(name="x"))
+except PermissionError:
+    raise SystemExit("a refused signal ended stop in a traceback") from None
+except SystemExit as exc:
+    assert "the recording failed after it was stopped" in str(exc.code), exc.code
+print("a refused signal is reported as a run that is no longer ours")
+REFUSEDPY
+
+step "a path that cannot be written is said, not a traceback"
+# DEMO-0094. -o or --app-log under a folder that cannot be made ended in a
+# Python traceback from mkdir or open.
+for args in "-o /proc/nope/x.mp4" "--app-log /proc/nope/x.log" "--app-log /proc/nope.log"; do
+    for cmd in record shot; do
+        output="$tmp/unwritable.mp4"
+        [ "$cmd" = shot ] && output="$tmp/unwritable.png"
+        run_name=()
+        [ "$cmd" = record ] && run_name=(-n gateunwritable)
+        set +e
+        # shellcheck disable=SC2086  # each case is several words
+        ./demoreel "$cmd" "${run_name[@]}" -o "$output" -s 320x240 $args -- xclock \
+            2>"$tmp/unwritable.err"
+        unwritable_status=$?
+        set -e
+        [ "$unwritable_status" -ne 0 ] && grep -q 'could not write to /proc/nope' "$tmp/unwritable.err" \
+            && ! grep -q Traceback "$tmp/unwritable.err" || {
+            echo "$cmd $args was not refused in words (exit $unwritable_status):" >&2
+            cat "$tmp/unwritable.err" >&2
+            exit 1
+        }
+    done
+done
+echo "an unwritable -o or --app-log is refused with its reason"
+
 step "the recorder's reports do not pile up in memory"
 # DEMO-0094. The thread keeping ffmpeg's pipe drained used read(), which keeps
 # everything until the pipe ends, so a -d 0 recording grew for as long as it

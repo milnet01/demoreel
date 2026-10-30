@@ -1390,3 +1390,6 @@ msgid ""
 msgstr ""
 "فشلت خطوة {verb}.\n"
 "  قال xdotool: {text}"
+
+msgid "could not write to {path}: {reason}."
+msgstr "تعذّرت الكتابة إلى {path}: {reason}."

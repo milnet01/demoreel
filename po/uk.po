@@ -1372,3 +1372,6 @@ msgid ""
 msgstr ""
 "крок {verb} не вдався.\n"
 "  xdotool повідомив: {text}"
+
+msgid "could not write to {path}: {reason}."
+msgstr "не вдалося записати до {path}: {reason}."

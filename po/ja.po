@@ -1360,3 +1360,6 @@ msgid ""
 msgstr ""
 "{verb} ステップが失敗しました。\n"
 "  xdotool の出力: {text}"
+
+msgid "could not write to {path}: {reason}."
+msgstr "{path} に書き込めませんでした: {reason}。"

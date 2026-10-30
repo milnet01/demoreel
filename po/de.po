@@ -1366,3 +1366,6 @@ msgid ""
 msgstr ""
 "ein {verb}-Schritt ist fehlgeschlagen.\n"
 "  xdotool meldete: {text}"
+
+msgid "could not write to {path}: {reason}."
+msgstr "{path} konnte nicht geschrieben werden: {reason}."

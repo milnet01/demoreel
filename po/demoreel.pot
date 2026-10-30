@@ -245,6 +245,9 @@ msgid ""
 "  Try {size}."
 msgstr ""
 
+msgid "could not write to {path}: {reason}."
+msgstr ""
+
 msgid ""
 "the app log {path} is a symbolic link another user made, so demoreel\n"
 "  will not write through it: it could point at a file of yours.\n"

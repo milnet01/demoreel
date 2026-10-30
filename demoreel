@@ -1402,6 +1402,30 @@ def partial_video(output):
     return output.with_name(f".{output.stem}.demoreel-part.mp4")
 
 
+class CopiedLog:
+    """wf-recorder's log, with the thread that keeps copying its output there,
+    or it blocks once the pipe fills. Written as it comes, and closed only once
+    the copying has ended: the log is what a failure's message points at."""
+
+    def __init__(self, proc, log):
+        self.log = log
+        self.copying = threading.Thread(target=self.copy, args=(proc.stdout,),
+                                        daemon=True)
+        self.copying.start()
+
+    def copy(self, pipe):
+        while chunk := pipe.read(4096):
+            self.log.write(chunk)
+            self.log.flush()
+
+    def close(self):
+        """A child still holding the pipe gets a moment; then the file is left
+        for the exit to close, since closing it now would fail the thread."""
+        self.copying.join(timeout=5)
+        if not self.copying.is_alive():
+            self.log.close()
+
+
 def start_wf_recorder(env, wayland, framerate, output, logfile, monitor=None):
     """Record cage's own output, for record --gpu (DEMO-0111).
 
@@ -1457,10 +1481,7 @@ def start_wf_recorder(env, wayland, framerate, output, logfile, monitor=None):
             die(tr("wf-recorder could not start recording.")
                 + ("\n  " + tr("It said: {text}", text=tail) if tail else "")
                 + "\n  " + tr("`demoreel check` says whether --gpu has what it needs."))
-    # Keep copying its output to the log, or it blocks once the pipe fills.
-    threading.Thread(target=lambda: log.write(proc.stdout.read()),
-                     daemon=True).start()
-    return proc, log
+    return proc, CopiedLog(proc, log)
 
 
 def finish_gpu_video(output, logfile):
@@ -1586,11 +1607,14 @@ def display_is_blank(env, display, width, height):
     """
     try:
         grab = subprocess.run(  # noqa: PLW1510 - a failed grab is handled below
-            ["ffmpeg", "-hide_banner", "-loglevel", "error",
+            ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
              "-f", "x11grab", "-video_size", f"{width}x{height}",
              "-i", f"{display}.0", "-frames:v", "1",
              "-pix_fmt", "gray", "-f", "rawvideo", "-"],
-            env=env, capture_output=True, timeout=CALL_TIMEOUT)
+            env=env, capture_output=True, timeout=CALL_TIMEOUT,
+            # Its own session, or a terminal's Ctrl+C, which finishes the video,
+            # kills the sample and fails the run as "could not sample".
+            start_new_session=True)
     except subprocess.TimeoutExpired:
         _display_gone.set()
         raise SampleError(tr("the display did not give up a frame within "
@@ -2148,12 +2172,31 @@ def prepare(a, suffix):
         output = own_path(a.output, "output")
     else:
         output = timestamped_output(Path(command[0]).name, suffix)
-    output.parent.mkdir(parents=True, exist_ok=True)
+    make_parent(output)
 
     applog = own_path(a.app_log, "app log") if a.app_log else None
     if applog:
-        applog.parent.mkdir(parents=True, exist_ok=True)
+        make_parent(applog)
     return command, width, height, output, applog
+
+
+def make_parent(path):
+    """The folder `path` goes in, or die saying why it cannot be made."""
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        die(tr("could not write to {path}: {reason}.", path=path, reason=exc.strerror))
+
+
+def open_app_log(applog):
+    """Where the app's output goes: --app-log's file, else our stderr. Never our
+    stdout, which carries the finished path and nothing else."""
+    if not applog:
+        return sys.stderr
+    try:
+        return open(applog, "wb")  # closed by the run's finally
+    except OSError as exc:
+        die(tr("could not write to {path}: {reason}.", path=applog, reason=exc.strerror))
 
 
 def timestamped_output(name, suffix):
@@ -2584,8 +2627,7 @@ def cmd_record(a):
     # chatter along with it. Worth keeping somewhere when the app says whether
     # what it drew was the real thing — a wrong-but-not-blank recording passes
     # every check this tool can make.
-    # Deliberate: as above - closed in the finally block, not here.
-    appout = open(applog, "wb") if applog else sys.stderr  # noqa: SIM115
+    appout = open_app_log(applog)
     server = app = recorder = log = auth = sound = None
     checks = Checks()
     ran_through = False
@@ -2678,7 +2720,7 @@ def take_picture(env, display, width, height, cursor, output, gpu):
     recording.
     """
     grab = subprocess.run(  # noqa: PLW1510 - a failed grab is handled below
-        ["ffmpeg", "-hide_banner", "-loglevel", "error",
+        ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
          "-f", "x11grab", "-draw_mouse", "1" if cursor else "0",
          "-video_size", f"{width}x{height}", "-i", f"{display}.0",
          "-frames:v", "1", "-y", str(output)],
@@ -2686,7 +2728,7 @@ def take_picture(env, display, width, height, cursor, output, gpu):
     if grab.returncode != 0 or not output.exists():
         return tr("could not take the picture.") + "\n  " + last_said(grab.stderr)
     gray = subprocess.run(  # noqa: PLW1510 - a failed read is handled below
-        ["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(output),
+        ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error", "-i", str(output),
          "-pix_fmt", "gray", "-f", "rawvideo", "-"],
         capture_output=True, timeout=CALL_TIMEOUT)
     if gray.returncode != 0 or len(gray.stdout) != width * height:
@@ -2724,7 +2766,7 @@ def cut_region(screen, region, output):
     """
     x, y, w, h = region
     cut = subprocess.run(  # noqa: PLW1510 - a failed cut is handled below
-        ["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(screen),
+        ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error", "-i", str(screen),
          "-vf", f"crop={w}:{h}:{x}:{y}", "-frames:v", "1", "-y", str(output)],
         capture_output=True, timeout=CALL_TIMEOUT)
     if cut.returncode != 0 or not output.exists():
@@ -2745,10 +2787,9 @@ def cmd_shot(a):
     """
     command, width, height, output, applog = prepare(a, ".png")
     region = shot_region(a.region, width, height)
+    appout = open_app_log(applog)
     rundir = Path(tempfile.mkdtemp(prefix="shot-", dir=state_dir()))
     displaylog = rundir / "display.log"
-    # Deliberate: closed in the finally block, as in cmd_record.
-    appout = open(applog, "wb") if applog else sys.stderr  # noqa: SIM115
     server = app = auth = sound = None
     try:
         sound = private_sound(False, "shot")
@@ -2945,7 +2986,8 @@ def cmd_stop(a):
     for found in live:
         entry = wait_until_recording(found)
         # It may have ended on its own since; run_succeeded reads how.
-        with contextlib.suppress(ProcessLookupError):
+        # PermissionError: the pid has gone to another user since the check.
+        with contextlib.suppress(ProcessLookupError, PermissionError):
             os.kill(entry["pid"], signal.SIGUSR1)
         if not run_succeeded(entry):
             die(tr("the recording failed after it was stopped, so there is no "

@@ -32,6 +32,12 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **A Ctrl+C landing just as a recording checks its picture no longer fails the run** (DEMO-0094)
+- **`shot` in a terminal's background no longer stops and fails** (DEMO-0094)
+  Its ffmpeg asked to change the terminal's settings and was stopped for it, and the run blamed the display.
+- **An `-o` or `--app-log` that cannot be written gets a message, not a Python error** (DEMO-0094)
+- **A `--gpu` run's recorder log is written as it goes, and whole** (DEMO-0094)
+  It reached the file only at the end, and could be lost there, with a Python error, when the run closed the file first.
 - **`demoreel stop` finds a recording from a session without `XDG_RUNTIME_DIR`, such as cron or plain SSH** (DEMO-0094)
   It looked in `/tmp` and said nothing was running. Where the variable is unset, demoreel now looks in `/run/user/<uid>` first.
 - **What an app started now ends with the run, even after the app itself has exited** (DEMO-0094)

@@ -1360,3 +1360,6 @@ msgid ""
 msgstr ""
 "{verb} 步驟失敗。\n"
 "  xdotool 的輸出：{text}"
+
+msgid "could not write to {path}: {reason}."
+msgstr "無法寫入 {path}：{reason}。"

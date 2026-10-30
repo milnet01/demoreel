@@ -1366,3 +1366,6 @@ msgid ""
 msgstr ""
 "ha fallado un paso {verb}.\n"
 "  xdotool dijo: {text}"
+
+msgid "could not write to {path}: {reason}."
+msgstr "no se pudo escribir en {path}: {reason}."

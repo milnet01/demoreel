@@ -1366,3 +1366,6 @@ msgid ""
 msgstr ""
 "een {verb}-stap is mislukt.\n"
 "  xdotool meldde: {text}"
+
+msgid "could not write to {path}: {reason}."
+msgstr "kan niet schrijven naar {path}: {reason}."
