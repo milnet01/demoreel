@@ -6095,7 +6095,7 @@ try:
     time.sleep(1.5)
     after = os.path.getsize(keys)
 finally:
-    demoreel.end_process(app, group=True)
+    demoreel.end_process(app)
     demoreel.end_server(proc)
     auth.unlink(missing_ok=True)
     displaylog.unlink(missing_ok=True)
@@ -6165,7 +6165,7 @@ try:
     time.sleep(0.5)
     cut = reports(mouse)[len(whole) + len(right):]
 finally:
-    demoreel.end_process(app, group=True)
+    demoreel.end_process(app)
     demoreel.end_server(proc)
     auth.unlink(missing_ok=True)
     displaylog.unlink(missing_ok=True)
@@ -6708,6 +6708,55 @@ for early in recorder display; do
     }
 done
 echo "a run cut short by its recorder or its display fails, and prints no path"
+
+step "an app's children go with it, after it has exited too"
+# DEMO-0094. The app's process group was skipped once its leader had exited, so
+# a wrapper script's children outlived the run, and those ignoring SIGTERM got
+# no SIGKILL. A survivor's sound moves to the real output once the sink goes,
+# against DEMO-0106 INV-9. Measured: both sleeps here were still running.
+cat >"$tmp/wrapper.sh" <<'WRAP'
+#!/bin/sh
+sleep 7771 &
+(trap '' TERM; exec sleep 7772) &
+xclock &
+sleep 2
+exit 0
+WRAP
+chmod +x "$tmp/wrapper.sh"
+# The stray sleeps of a run that failed this step, found by this step's group.
+wrapper_left() {
+    local p
+    for p in $(pgrep -u "$(id -u)" -f '^sleep 777[12]$' || true); do
+        if grep -qz '^XAUTHORITY=.*/gatewrapper\.' "/proc/$p/environ" 2>/dev/null; then
+            echo "$p"
+        fi
+    done
+}
+./demoreel record -n gatewrapper -o "$tmp/wrapper.mp4" -d 8 -s 320x240 -- "$tmp/wrapper.sh" \
+    >/dev/null 2>"$tmp/wrapper.err" || { cat "$tmp/wrapper.err" >&2; exit 1; }
+left=$(wrapper_left)
+if [ -n "$left" ]; then
+    echo "processes the app started outlived the run: $(echo "$left" | tr '\n' ' ')" >&2
+    # shellcheck disable=SC2086  # each pid is its own word
+    kill -KILL $left
+    exit 1
+fi
+# A group number can be reused once its leader is reaped and the group is empty,
+# so a number some process now holds is left alone. This cannot be forced.
+python3 - <<'REUSEPY'
+import importlib.machinery, importlib.util, os, subprocess
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+done = subprocess.Popen(["true"], start_new_session=True)
+done.wait()
+signalled = []
+os.killpg = lambda *a: signalled.append(a)
+d.proc_stat = lambda pid, field: "S"  # the number is held by a process again
+d.end_process(done)
+assert not signalled, f"signalled a reused group: {signalled}"
+print("a run's children go with it, and a reused number is left alone")
+REUSEPY
 
 step "a run finishes only what it recorded, and keeps its first error"
 # DEMO-0094. Finishing ran in a finally whether or not this run had recorded

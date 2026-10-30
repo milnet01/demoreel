@@ -32,6 +32,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **What an app started now ends with the run, even after the app itself has exited** (DEMO-0094)
+  A wrapper script's children outlived the run, and their sound could then reach the speakers.
 - **A failed `--gpu` or `--audio` run no longer touches a part file an earlier killed run left** (DEMO-0094)
   It could overwrite `-o` from that file and delete it, or say the file could not be finished in place of what really went wrong.
 - **A long `-d 0` recording no longer grows in memory for as long as it runs** (DEMO-0094)

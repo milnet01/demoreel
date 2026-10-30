@@ -904,7 +904,7 @@ def start_gpu_display(width, height, base, logfile):
     wayland = lines[0].strip()
     number = lines[1].strip() if len(lines) > 1 else ""
     if not wayland or not number.isdigit():
-        end_process(proc, group=True)
+        end_process(proc)
         auth.unlink(missing_ok=True)
         tail = "\n  ".join(Path(logfile).read_text(errors="replace")
                            .strip().splitlines()[-3:])
@@ -1707,26 +1707,38 @@ def stop_recorder(proc):
             proc.wait()
 
 
-def end_process(proc, group=False):
-    if proc is None or proc.poll() is not None:
-        return
+def signal_group(proc, sig):
+    """Send `sig` to the process group `proc` leads. False once the group has gone.
+
+    The group's number is its leader's pid, since everything ended this way
+    leads a session of its own. The leader may be gone while the group lives on:
+    a wrapper script's children outlive it. The kernel keeps the number while
+    any of them lives, so once the leader has been reaped a process holding that
+    pid is a stranger who was given a free number, and its group is not ours.
+    """
+    if proc.poll() is not None and proc_stat(proc.pid, 3) is not None:
+        return False
     try:
-        if group:
-            os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
-        else:
-            proc.terminate()
-        proc.wait(timeout=5)
-    except (subprocess.TimeoutExpired, ProcessLookupError, PermissionError):
-        try:
-            if group:
-                os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
-            else:
-                proc.kill()
-        except (ProcessLookupError, PermissionError):
-            pass
-        # Reap it, or it lingers as a zombie for the rest of the run.
-        with contextlib.suppress(subprocess.TimeoutExpired):
-            proc.wait(timeout=5)
+        os.killpg(proc.pid, sig)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        pass  # a member that changed user; the rest are signalled regardless
+    return True
+
+
+def end_process(proc):
+    """End everything in the group `proc` leads: SIGTERM, then SIGKILL for what
+    is left after a moment. The wait is on the group, not on its leader, or a
+    child ignoring SIGTERM gets away once the leader has gone."""
+    if proc is None:
+        return
+    for sig in (signal.SIGTERM, signal.SIGKILL):
+        signal_group(proc, sig)
+        # signal 0 only asks; polling also reaps the leader once it exits.
+        if poll(lambda: not signal_group(proc, 0), 5, interval=0.01, grow=1.5,
+                ceiling=0.2):
+            return
 
 
 # Every record and shot gives its app a sound output of its own, a null sink
@@ -2215,14 +2227,13 @@ def launch(a, command, width, height, base, displaylog, appout, sound):
 def end_server(server):
     """End the display. Both servers run in a session of their own, and the
     group goes, so on --gpu Xwayland goes with cage."""
-    if server is None or server.poll() is not None:
+    if server is None:
         return
     if _display_gone.is_set():  # a hung server may not act on SIGTERM
-        with contextlib.suppress(ProcessLookupError, PermissionError):
-            os.killpg(os.getpgid(server.pid), signal.SIGKILL)
+        signal_group(server, signal.SIGKILL)
         server.wait()
         return
-    end_process(server, group=True)
+    end_process(server)
 
 
 def place_window(env, app, a, width, height, picture):
@@ -2606,7 +2617,7 @@ def cmd_record(a):
             log.close()
         if appout is not sys.stderr:
             appout.close()
-        end_process(app, group=True)
+        end_process(app)
         if sound is not None:
             sound.unload()
         end_server(server)
@@ -2758,7 +2769,7 @@ def cmd_shot(a):
     finally:
         if appout is not sys.stderr:
             appout.close()
-        end_process(app, group=True)
+        end_process(app)
         if sound is not None:
             sound.unload()
         end_server(server)
