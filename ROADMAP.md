@@ -772,6 +772,13 @@ simplest case, and a gate proves it still records.
   step skipped: the real-Flatpak step, because GIMP was open. Passing
   full push gates since a88e583: five, with one failure (a003a3d, the
   closing-app race, since fixed).
+  2026-10-30, push of 4aa2a50 (cc-job push-0030f, load about 3): the
+  full push gate passed, the Ubuntu leg with it (345 s). One step
+  skipped: the real-Flatpak step, because GIMP was open. Passing full
+  push gates since a88e583: six, with one failure (a003a3d). A full
+  ./ci.sh in a worktree earlier the same day failed in its own new step
+  on the Ubuntu leg, a fault in that check, fixed in 234f2ef; it was not
+  a push gate and is not counted.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
