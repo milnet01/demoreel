@@ -2146,6 +2146,13 @@ def blank_causes(gpu):
                             "flags in README.md,\n    § Recording a Flatpak app."))
 
 
+# How long an app found on a blank display gets to finish closing. Its window
+# goes first and its process a moment later, so a sample between the two finds
+# a blank display and an app still running (DEMO-0282: `xterm -e sleep`, with
+# the sleep ending as the recording did).
+CLOSING_GRACE = 2
+
+
 class Checks:
     """What the display samples found during a run, read after teardown.
 
@@ -2169,12 +2176,18 @@ class Checks:
     def failed(self):
         return self.blank is not None or self.unsampled is not None
 
-    def sample(self, when, at, env, display, width, height):
-        """Sample the display now, and record what was found."""
+    def sample(self, when, at, app, env, display, width, height):
+        """Sample the display now, and record what was found. A blank display
+        with the app gone a moment later is an app that closed itself, which
+        is not taken as a sample at all."""
         self.sampled.append((when, at))
         try:
             if display_is_blank(env, display, width, height):
-                self.blank = when
+                try:
+                    app.wait(timeout=CLOSING_GRACE)
+                    self.sampled.pop()
+                except subprocess.TimeoutExpired:
+                    self.blank = when
         except SampleError as exc:
             self.unsampled = str(exc)
 
@@ -2259,7 +2272,7 @@ def run_countdown(a, env, app, window, display, recorder, width, height,
                 if app.poll() is None:
                     checks.look_at_window(env, window, width, height,
                                           now - started)
-                    checks.sample("halfway", now - started, env, display,
+                    checks.sample("halfway", now - started, app, env, display,
                                   width, height)
                     if checks.failed():
                         break
@@ -2298,7 +2311,7 @@ def check_at_end(env, app, window, display, width, height, checks):
         return
     checks.look_at_window(env, window, width, height)
     if not checks.failed():
-        checks.sample("at the end", None, env, display, width, height)
+        checks.sample("at the end", None, app, env, display, width, height)
 
 
 def vouch_for(a, output, logpath, width, height, checks):

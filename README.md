@@ -795,7 +795,8 @@ your own programs: anything running as you can read that file.
 6. Look at the private screen one last time. If the app is still running and
    the screen is a single flat colour, that is an error, not a video — the run
    stops and prints no path, leaving the part-written file on disk. Both looks
-   are skipped if the app closed itself first: it left an empty screen behind,
+   are skipped if the app closed itself first, or within 2 seconds of a blank
+   look: it left an empty screen behind,
    and that recording is fine. With `-d 0` there is no halfway point, so only
    this last look happens. If demoreel cannot look at the screen at all,
    that is an error too, with the same result: it cannot vouch for the video,

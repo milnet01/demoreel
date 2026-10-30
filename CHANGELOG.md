@@ -32,6 +32,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **An app closing just as a recording ends no longer fails the run** (DEMO-0282)
+  Its window goes a moment before its process, so a check landing between the two reported a blank recording. demoreel now gives a blank display's app 2 seconds to finish closing.
 - **A long film no longer needs more memory for every scene** (DEMO-0252)
   `edit` now draws a film a few scenes at a time, so a 24-scene film of windowed clips at 1600x1000 peaks at about 1.1 GB rather than 4.6 GB, and fits on a smaller machine. The film comes out the same, each frame is still encoded once, and it takes about 15% more CPU time.
 - **Apps built with winit (egui, Bevy, Alacritty) now start under demoreel** (DEMO-0281)

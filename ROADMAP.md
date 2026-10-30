@@ -755,6 +755,18 @@ simplest case, and a gate proves it still records.
   step skipped: the real-Flatpak step, because GIMP was open. Fourth
   full gate since a88e583, and the first of them under real load. GitHub
   CI also passed for 1b24baf.
+  2026-10-30, push of a003a3d (cc-job push-0030d, load about 7 at the
+  start, 11 to 12 later): the Ubuntu leg failed at --cursor, "blank at
+  the end". Its xterm ran `sleep 10`, so a slow start-up can end the
+  sleep as the recording ends. A sweep of sleep lengths on this machine
+  reproduced it once in 11 runs, at 3.9 s with -d 3. Whether that is
+  what happened in the leg is inferred: the log has no timings. This is
+  a real demoreel race, not only a fixture: an app's window goes before
+  its process, and a sample between the two reads blank with the app
+  still running. Fixed: a blank sample gives the app CLOSING_GRACE to
+  exit, and the fixture sleeps 60 s. The sweep then failed 0 of 21. This
+  run does not count toward closing; the count stays at four, with this
+  one failure, now of a different cause from the side-by-side one.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.

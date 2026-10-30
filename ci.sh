@@ -5646,6 +5646,27 @@ where=$(grep -E '^[XY]=' "$tmp/pointer.txt" 2>/dev/null | tr '\n' ' ')
 }
 echo "the pointer started in the corner"
 
+step "a blank sample of an app that is closing is not a blank recording"
+# Its window goes before its process, so a sample can fall between the two.
+python3 - <<'CLOSINGPY'
+import importlib.machinery, importlib.util, subprocess
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+d.display_is_blank = lambda *_: True
+d.CLOSING_GRACE = 1
+closing, staying = subprocess.Popen(["sleep", "0.2"]), subprocess.Popen(["sleep", "30"])
+gone = d.Checks()
+gone.sample("at the end", None, closing, None, None, 1, 1)
+assert gone.blank is None and gone.sampled == [], (gone.blank, gone.sampled)
+stays = d.Checks()
+stays.sample("at the end", None, staying, None, None, 1, 1)
+staying.kill()
+staying.wait()
+assert stays.blank == "at the end" and stays.sampled == [("at the end", None)], stays.blank
+print("the closing app passed, and the one still running on a blank display failed")
+CLOSINGPY
+
 step "--cursor draws the pointer, and the default leaves it out"
 # Two recordings of the same static app, one with --cursor and one without.
 # Only a VISIBLE change counts: a pixel whose grey level moved by more than
@@ -5658,15 +5679,16 @@ step "--cursor draws the pointer, and the default leaves it out"
 #
 # xterm running `sleep`, not xclock: a clock has a moving second hand, and a
 # test that compares two frames cannot tell a moving hand from a drawn pointer.
+# The sleep outlasts any start-up under load, and the run's end kills it.
 #
 # The upper bound earns its place. "The frames differ" alone would pass if the
 # two recordings differed for any unrelated reason; a pointer is a small local
 # change, so a large difference means something else moved and the test has
 # stopped measuring what it claims to.
 ./demoreel record -n gate -o "$tmp/nocursor.mp4" -d 3 -s 400x300 -a 'move 200 150' \
-    -- xterm -e sleep 10 >/dev/null
+    -- xterm -e sleep 60 >/dev/null
 ./demoreel record -n gate -o "$tmp/cursor.mp4" -d 3 -s 400x300 --cursor -a 'move 200 150' \
-    -- xterm -e sleep 10 >/dev/null
+    -- xterm -e sleep 60 >/dev/null
 for f in nocursor cursor; do
     ffmpeg -v error -i "$tmp/$f.mp4" -vf 'select=eq(n\,30)' -vframes 1 \
         -f rawvideo -pix_fmt gray "$tmp/$f.raw" -y

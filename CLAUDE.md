@@ -252,7 +252,8 @@ something behaves unexpectedly:
   more than 99.9% one colour. Blank at halfway means at least half the
   countdown is empty, and the run stops there (DEMO-0008). A `-d 0` run has no
   halfway point. Each sample is skipped when the app has already exited: it
-  left an empty display behind, and that video is fine. The check exists
+  left an empty display behind, and that video is fine. So is a blank sample
+  with the app gone within `CLOSING_GRACE`: its window goes before its process. The check exists
   because the failure it catches is silent: a valid file, exit 0, and nothing
   in the picture. Do not downgrade it to a warning. A sample that fails is a
   third answer, "could not tell", and it fails the run too (`SampleError`).
