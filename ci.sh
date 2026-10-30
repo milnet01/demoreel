@@ -6431,7 +6431,7 @@ err = f"{tmp}/stepstop.err"
 with open(err, "w") as errfile:
     run = subprocess.Popen(
         ["./demoreel", "record", "-n", "gatestepstop", "-o", f"{tmp}/stepstop.mp4",
-         "-d", "0", "-s", "320x240", *["-a", "click 5 5"] * 500, "--", "xclock"],
+         "-d", "0", "-s", "320x240", *["-a", "click"] * 500, "--", "xclock"],
         stdout=subprocess.PIPE, stderr=errfile, start_new_session=True)
     for _ in range(300):
         time.sleep(0.1)
@@ -6511,13 +6511,23 @@ fi
     exit 1
 }
 python3 - <<'CHAINPY'
-import importlib.machinery, importlib.util, re, subprocess
+import importlib.machinery, importlib.util, os, re, subprocess
 loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
 d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
 loader.exec_module(d)
-said = subprocess.run(["xdotool", "help"], capture_output=True, text=True, check=True)
-commands = re.findall(r"^\s+(\w+)", said.stdout, re.M)
-assert len(commands) > 40, said.stdout
+# Ubuntu's older xdotool will not even list them without a display.
+log = d.state_dir() / "gatehelp.display.log"
+proc, display, auth = d.start_xvfb(320, 240, "gatehelp", log)
+try:
+    said = subprocess.run(["xdotool", "help"], capture_output=True, text=True, check=False,
+                          env=dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth)))
+finally:
+    proc.kill()
+    proc.wait()
+    auth.unlink(missing_ok=True)
+    log.unlink(missing_ok=True)
+commands = re.findall(r"^\s+(\w+)", said.stdout + said.stderr, re.M)
+assert len(commands) > 40, said
 refused = [f"key {c}" for c in commands] + [f"key {c.upper()}" for c in commands]
 refused += [f"hold {c} 1" for c in commands]
 refused += ["key --window 1 a", "key --delay 5 a", "key a;b", "key a\\ b", "key +",
