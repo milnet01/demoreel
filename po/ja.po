@@ -1352,3 +1352,11 @@ msgstr "タイトル {words} は幅 {wide} ピクセルですが、サムネイ�
 #. argparse formats this text with %
 msgid "The words a script can use are in README.md and in man demoreel, under EDIT SCRIPT."
 msgstr "スクリプトで使える語は README.md と man demoreel の EDIT SCRIPT にあります。"
+
+#. translators: {verb} is the step's first word, such as click or key.
+msgid ""
+"a {verb} step failed.\n"
+"  xdotool said: {text}"
+msgstr ""
+"{verb} ステップが失敗しました。\n"
+"  xdotool の出力: {text}"

@@ -1364,3 +1364,11 @@ msgstr "заголовок {words} має ширину {wide} пікселів, 
 #. argparse formats this text with %
 msgid "The words a script can use are in README.md and in man demoreel, under EDIT SCRIPT."
 msgstr "Слова, які може використовувати сценарій, є в README.md і в man demoreel, у розділі EDIT SCRIPT."
+
+#. translators: {verb} is the step's first word, such as click or key.
+msgid ""
+"a {verb} step failed.\n"
+"  xdotool said: {text}"
+msgstr ""
+"крок {verb} не вдався.\n"
+"  xdotool повідомив: {text}"

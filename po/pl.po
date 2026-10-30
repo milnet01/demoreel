@@ -1364,3 +1364,11 @@ msgstr "tytuł {words} ma {wide} pikseli szerokości, a na miniaturze jest miejs
 #. argparse formats this text with %
 msgid "The words a script can use are in README.md and in man demoreel, under EDIT SCRIPT."
 msgstr "Słowa, których może używać skrypt, są w README.md i w man demoreel, w sekcji EDIT SCRIPT."
+
+#. translators: {verb} is the step's first word, such as click or key.
+msgid ""
+"a {verb} step failed.\n"
+"  xdotool said: {text}"
+msgstr ""
+"krok {verb} się nie powiódł.\n"
+"  xdotool zgłosił: {text}"

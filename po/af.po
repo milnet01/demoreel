@@ -1358,3 +1358,11 @@ msgstr "die titel {words} is {wide} pieksels breed, en die duimnael het plek vir
 #. argparse formats this text with %
 msgid "The words a script can use are in README.md and in man demoreel, under EDIT SCRIPT."
 msgstr "Die woorde wat 'n skrip kan gebruik, is in README.md en in man demoreel, onder EDIT SCRIPT."
+
+#. translators: {verb} is the step's first word, such as click or key.
+msgid ""
+"a {verb} step failed.\n"
+"  xdotool said: {text}"
+msgstr ""
+"'n {verb}-stap het misluk.\n"
+"  xdotool het gesê: {text}"

@@ -140,6 +140,12 @@ msgstr ""
 msgid "could not read the steps file {path}: {reason}."
 msgstr ""
 
+#. translators: {verb} is the step's first word, such as click or key.
+msgid ""
+"a {verb} step failed.\n"
+"  xdotool said: {text}"
+msgstr ""
+
 msgid "ffmpeg could not start recording."
 msgstr ""
 
@@ -297,9 +303,6 @@ msgid ""
 "  If the app takes longer to show its first picture, raise --settle."
 msgstr ""
 
-msgid "the recorder stopped early; see {log}"
-msgstr ""
-
 msgid "recording, {seconds}s left"
 msgstr ""
 
@@ -319,6 +322,9 @@ msgid "the video cannot be played: {output}"
 msgstr ""
 
 msgid "The recorder most likely stopped before it finished the file. See {log}"
+msgstr ""
+
+msgid "the recorder stopped early; see {log}"
 msgstr ""
 
 msgid "the virtual display was blank halfway, so at least half of it is a flat colour: {output}"

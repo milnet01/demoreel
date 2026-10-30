@@ -1382,3 +1382,11 @@ msgstr "عرض العنوان {words} هو {wide} بكسل، والصورة ال
 #. argparse formats this text with %
 msgid "The words a script can use are in README.md and in man demoreel, under EDIT SCRIPT."
 msgstr "الكلمات التي يمكن للسيناريو استخدامها موجودة في README.md وفي man demoreel، ضمن EDIT SCRIPT."
+
+#. translators: {verb} is the step's first word, such as click or key.
+msgid ""
+"a {verb} step failed.\n"
+"  xdotool said: {text}"
+msgstr ""
+"فشلت خطوة {verb}.\n"
+"  قال xdotool: {text}"

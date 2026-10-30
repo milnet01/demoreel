@@ -1358,3 +1358,11 @@ msgstr "der Titel {words} ist {wide} Pixel breit, und das Vorschaubild hat Platz
 #. argparse formats this text with %
 msgid "The words a script can use are in README.md and in man demoreel, under EDIT SCRIPT."
 msgstr "Die Wörter, die ein Skript verwenden kann, stehen in README.md und in man demoreel unter EDIT SCRIPT."
+
+#. translators: {verb} is the step's first word, such as click or key.
+msgid ""
+"a {verb} step failed.\n"
+"  xdotool said: {text}"
+msgstr ""
+"ein {verb}-Schritt ist fehlgeschlagen.\n"
+"  xdotool meldete: {text}"

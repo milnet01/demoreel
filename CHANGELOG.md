@@ -32,6 +32,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **A scripted step that did nothing now fails the run** (DEMO-0094)
+  A mistyped key name such as `key Retrun` used to leave a video with the key press missing, and report success.
 - **`wait inf` is refused before the recording starts** (DEMO-0094)
   It used to end the run in a Python error partway through. `hold` is the same, and a negative time is refused too.
 - **A recording cut short by its recorder or its private screen now fails** (DEMO-0094)

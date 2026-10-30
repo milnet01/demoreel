@@ -1352,3 +1352,11 @@ msgstr "제목 {words}은(는) 너비가 {wide}픽셀인데, 썸네일에는 {ro
 #. argparse formats this text with %
 msgid "The words a script can use are in README.md and in man demoreel, under EDIT SCRIPT."
 msgstr "스크립트에 쓸 수 있는 단어는 README.md와 man demoreel의 EDIT SCRIPT에 있습니다."
+
+#. translators: {verb} is the step's first word, such as click or key.
+msgid ""
+"a {verb} step failed.\n"
+"  xdotool said: {text}"
+msgstr ""
+"{verb} 단계가 실패했습니다.\n"
+"  xdotool 출력: {text}"

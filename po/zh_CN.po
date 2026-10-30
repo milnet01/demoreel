@@ -1352,3 +1352,11 @@ msgstr "标题 {words} 宽 {wide} 像素，而缩略图只容得下 {room}。请
 #. argparse formats this text with %
 msgid "The words a script can use are in README.md and in man demoreel, under EDIT SCRIPT."
 msgstr "脚本可用的词语见 README.md 和 man demoreel 的 EDIT SCRIPT 部分。"
+
+#. translators: {verb} is the step's first word, such as click or key.
+msgid ""
+"a {verb} step failed.\n"
+"  xdotool said: {text}"
+msgstr ""
+"{verb} 步骤失败。\n"
+"  xdotool 的输出：{text}"

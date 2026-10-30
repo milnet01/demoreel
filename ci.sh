@@ -6331,6 +6331,59 @@ set -e
 }
 echo "a malformed step is refused before the display starts, with an example"
 
+step "a step xdotool rejects fails the run"
+# DEMO-0094. Every step's result was thrown away, so a step that did nothing
+# was simply missing from a video that exited 0. A mistyped key is the common
+# case, and xdotool exits 0 for it: it only says so on stderr (measured).
+for rejected in 'key Bogus_Key' 'hold Bogus_Key 0.1'; do
+    set +e
+    ./demoreel record -n gaterejected -o "$tmp/rejected.mp4" -d 2 -s 320x240 \
+        -a "$rejected" -- xclock >"$tmp/rejected.out" 2>"$tmp/rejected.err"
+    rejected_status=$?
+    set -e
+    [ "$rejected_status" -ne 0 ] && [ ! -s "$tmp/rejected.out" ] \
+        && grep -q "${rejected%% *} step failed" "$tmp/rejected.err" \
+        && grep -q 'No such key name' "$tmp/rejected.err" || {
+        echo "'$rejected' was not reported (exit $rejected_status):" >&2
+        cat "$tmp/rejected.err" >&2
+        exit 1
+    }
+    if server_left gaterejected; then
+        echo "'$rejected' left its display running" >&2
+        exit 1
+    fi
+done
+echo "a key xdotool does not know fails the run and ends the display"
+
+step "a stop during the steps is not a failed step"
+# A terminal's Ctrl+C goes to the whole foreground group. xdotool in that group
+# dies with it, and a step's result now counts, so it must have a session of its
+# own, as the recorder and the display do.
+python3 - "$tmp" <<'STEPSTOPPY'
+import os, signal, subprocess, sys, time
+tmp = sys.argv[1]
+err = f"{tmp}/stepstop.err"
+with open(err, "w") as errfile:
+    run = subprocess.Popen(
+        ["./demoreel", "record", "-n", "gatestepstop", "-o", f"{tmp}/stepstop.mp4",
+         "-d", "0", "-s", "320x240", *["-a", "click 5 5"] * 500, "--", "xclock"],
+        stdout=subprocess.PIPE, stderr=errfile, start_new_session=True)
+    for _ in range(300):
+        time.sleep(0.1)
+        if "recording :" in open(err).read():
+            break
+    else:
+        run.kill()
+        raise SystemExit("the run never started recording:\n" + open(err).read())
+    time.sleep(0.5)
+    os.killpg(run.pid, signal.SIGINT)
+    out, _ = run.communicate(timeout=60)
+if run.returncode != 0 or out.decode().strip() != f"{tmp}/stepstop.mp4":
+    raise SystemExit(f"Ctrl+C in the steps failed the run (exit {run.returncode}):\n"
+                     + open(err).read())
+print("Ctrl+C during a run of steps finishes the video")
+STEPSTOPPY
+
 step "a time in a step is one the clock can hold"
 # DEMO-0094. `drag` refused an endless time and `wait` and `hold` did not, so
 # `wait inf` passed "every step is readable" and raised OverflowError in the

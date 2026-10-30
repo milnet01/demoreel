@@ -1358,3 +1358,11 @@ msgstr "רוחב הכותרת {words} הוא {wide} פיקסלים, ובתמונ
 #. argparse formats this text with %
 msgid "The words a script can use are in README.md and in man demoreel, under EDIT SCRIPT."
 msgstr "המילים שתסריט יכול להשתמש בהן נמצאות ב-README.md וב-man demoreel, תחת EDIT SCRIPT."
+
+#. translators: {verb} is the step's first word, such as click or key.
+msgid ""
+"a {verb} step failed.\n"
+"  xdotool said: {text}"
+msgstr ""
+"צעד {verb} נכשל.\n"
+"  xdotool אמר: {text}"

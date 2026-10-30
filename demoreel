@@ -896,7 +896,10 @@ def xdotool(env, *args, check=False, stdin_text=None):
     try:
         return subprocess.run(["xdotool", *[str(a) for a in args]], env=env,
                               input=stdin_text, capture_output=True, text=True,
-                              check=check, timeout=timeout)
+                              check=check, timeout=timeout,
+                              # Its own session, so a terminal's Ctrl+C, which
+                              # finishes the video, does not fail a step too.
+                              start_new_session=True)
     except subprocess.TimeoutExpired:
         _display_gone.set()
         die(tr("the private display {display} stopped answering: "
@@ -1192,38 +1195,47 @@ def run_action(spec, env):
     if step is None:
         return
     verb, v = step
+
+    def act(*args, stdin_text=None):
+        # A step that did not happen is missing from a video that looks fine.
+        # xdotool exits 0 for a key it does not know, and says so on stderr.
+        done = xdotool(env, *args, stdin_text=stdin_text)
+        if done.returncode != 0 or "No such key name" in done.stderr:
+            # translators: {verb} is the step's first word, such as click or key.
+            die(tr("a {verb} step failed.\n  xdotool said: {text}", verb=verb,
+                   text=last_said(done.stderr) or f"exit {done.returncode}"))
+
     if verb == "wait":
         _stop.wait(v["seconds"])  # a stop ends the wait, as it ends the run
     elif verb == "move":
-        xdotool(env, "mousemove", "--sync", *v["at"])
+        act("mousemove", "--sync", *v["at"])
     elif verb == "click":
         if v["at"]:
-            xdotool(env, "mousemove", "--sync", *v["at"])
-        xdotool(env, "click", v["button"])
+            act("mousemove", "--sync", *v["at"])
+        act("click", v["button"])
     elif verb == "type":
         # --file - takes the text on stdin. As an argument it sits in the
         # process list, readable by any other local user, for as long as the
         # typing lasts — and at 60ms a keystroke that is seconds. A demo that
         # types into a login form is the obvious thing to script.
-        xdotool(env, "type", "--delay", "60", "--file", "-",
-                stdin_text=v["text"])
+        act("type", "--delay", "60", "--file", "-", stdin_text=v["text"])
     elif verb == "key":
-        xdotool(env, "key", *v["keys"])
+        act("key", *v["keys"])
     elif verb == "hold":
         # The keyup runs however the hold ends -- time up, a stop, an error --
         # or the key stays down on the display for the rest of the run.
-        xdotool(env, "keydown", v["key"])
+        act("keydown", v["key"])
         try:
             _stop.wait(v["seconds"])
         finally:
             xdotool(env, "keyup", v["key"])
     elif verb == "drag":
         (x1, y1), (x2, y2) = v["from"], v["to"]
-        xdotool(env, "mousemove", "--sync", str(x1), str(y1))
+        act("mousemove", "--sync", str(x1), str(y1))
         steps = max(1, round(v["seconds"] * DRAG_STEPS_PER_SECOND))
         started = time.monotonic()
         # The button comes up however the drag ends, as a held key does.
-        xdotool(env, "mousedown", v["button"])
+        act("mousedown", v["button"])
         try:
             for i in range(1, steps + 1):
                 # Each move is timed from the start, so a slow xdotool shortens
@@ -1233,8 +1245,8 @@ def run_action(spec, env):
                     break
                 # No --sync: it waits for the pointer to move, and a short
                 # drag lands on the same pixel twice.
-                xdotool(env, "mousemove", str(round(x1 + (x2 - x1) * i / steps)),
-                        str(round(y1 + (y2 - y1) * i / steps)))
+                act("mousemove", str(round(x1 + (x2 - x1) * i / steps)),
+                    str(round(y1 + (y2 - y1) * i / steps)))
         finally:
             xdotool(env, "mouseup", v["button"])
 
