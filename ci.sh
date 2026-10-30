@@ -4913,6 +4913,14 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Where a run keeps its files, from demoreel itself: it is not only the variable.
+statedir=$(python3 -c '
+import importlib.machinery as m, importlib.util as u
+loader = m.SourceFileLoader("demoreel", "./demoreel")
+d = u.module_from_spec(u.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+print(d.state_dir())')
+
 # Whether a server this run name started is still running. Matched on the auth
 # file, which carries the name, so another session's display is never counted.
 server_left() {
@@ -5060,7 +5068,6 @@ sound_step() {
     step "$1"
     [ -z "$sound_skip" ] || { echo "skipped: $sound_skip"; return 1; }
 }
-sound_state="${XDG_RUNTIME_DIR:-/tmp}/demoreel-$(id -u)"
 # The sinks a demoreel process loaded and still has, one name per line.
 run_sinks() {
     pactl list short sinks | awk -v p="demoreel-$(id -u)-$1-" 'index($2, p) == 1 {print $2}'
@@ -5073,7 +5080,7 @@ wait_recording() {
         python3 -c 'import json, sys
 entry = json.load(open(sys.argv[1]))
 sys.exit(not (entry["pid"] == int(sys.argv[2]) and entry["recording"]))' \
-            "$sound_state/$1.json" "$2" 2>/dev/null && return 0
+            "$statedir/$1.json" "$2" 2>/dev/null && return 0
         sleep 0.1
     done
     echo "the run named $1 never started recording" >&2
@@ -6905,8 +6912,6 @@ step "stop refuses a state file whose process is not ours"
 # process held that number and sent it SIGUSR1, whose default action is to
 # terminate. Demonstrated at the time against a plain `sleep`, which died
 # reporting "User defined signal 1", while stop printed a path and exited 0.
-statedir="${XDG_RUNTIME_DIR:-/tmp}/demoreel-$(id -u)"
-mkdir -p "$statedir" && chmod 700 "$statedir"
 sleep 60 &
 victim=$!
 # A start time of 1 belongs to no real process: the field counts clock ticks
@@ -7080,6 +7085,45 @@ else
         rm "$tmp/real-fp.mp4"
     done
     echo "$flatpak_app drew on the private display with no flags, and with the three"
+fi
+
+step "a session without XDG_RUNTIME_DIR finds a run that has it"
+# DEMO-0094. cron, or SSH without PAM, has no XDG_RUNTIME_DIR, and looked in
+# /tmp: stop said no recording was running while one recorded, and a second run
+# could take the same name. Measured. Where logind keeps the directory, that is
+# what the variable would have said, so both ask there.
+runtime="/run/user/$(id -u)"
+if [ ! -d "$runtime" ] || [ ! -O "$runtime" ]; then
+    echo "skipped: this machine has no $runtime"
+else
+    XDG_RUNTIME_DIR="$runtime" ./demoreel record -n gatexdg -o "$tmp/xdg.mp4" -d 0 -s 320x240 \
+        -- xclock >/dev/null 2>"$tmp/xdg.err" &
+    xdg_rec=$!
+    gate_pids="$gate_pids $xdg_rec"
+    for _ in $(seq 1 100); do
+        [ -n "$(sed -n '/recording :/p' "$tmp/xdg.err")" ] && break
+        sleep 0.1
+    done
+    set +e
+    env -u XDG_RUNTIME_DIR ./demoreel record -n gatexdg -o "$tmp/xdg2.mp4" -d 1 -s 320x240 \
+        -- xclock >/dev/null 2>"$tmp/xdg2.err"
+    second_status=$?
+    xdg_stopped=$(env -u XDG_RUNTIME_DIR ./demoreel stop gatexdg 2>"$tmp/xdg-stop.err")
+    xdg_status=$?
+    set -e
+    # Finishes the video if stop could not find the run; a no-op if it did.
+    kill "$xdg_rec" 2>/dev/null || true
+    wait "$xdg_rec" || true
+    [ "$xdg_status" -eq 0 ] && [ "$xdg_stopped" = "$tmp/xdg.mp4" ] || {
+        echo "stop without the variable did not find the run (exit $xdg_status):" >&2
+        cat "$tmp/xdg-stop.err" >&2
+        exit 1
+    }
+    [ "$second_status" -ne 0 ] && grep -q 'already running' "$tmp/xdg2.err" || {
+        echo "a second run without the variable took the same name (exit $second_status)" >&2
+        exit 1
+    }
+    echo "stop and the name lock work across a missing XDG_RUNTIME_DIR"
 fi
 
 step "the state directory must be one we own"
@@ -7598,15 +7642,14 @@ pseudo_copy "$tr_out" zz
 ffmpeg -nostdin -loglevel error -f lavfi -i testsrc=s=320x200:r=30:d=2 \
     -pix_fmt yuv420p "$tr_out/clip.mp4"
 printf 'card 1\ntext "Hello"\nclip clip.mp4 to 1\n' > "$tr_out/film.txt"
-python3 - "$tr_out" <<'MOVEPY'
+python3 - "$tr_out" "$statedir" <<'MOVEPY'
 import json, os, pathlib, re, subprocess, sys
 here = pathlib.Path(sys.argv[1])
 script = str(here / "demoreel")
 plain = {k: v for k, v in os.environ.items() if k not in ("LC_ALL", "LC_MESSAGES")}
 english = {**plain, "LC_ALL": "C"}
 pseudo = {**plain, "LANGUAGE": "zz", "LANG": "de_DE.UTF-8"}
-state = (pathlib.Path(os.environ.get("XDG_RUNTIME_DIR") or "/tmp")
-         / f"demoreel-{os.getuid()}" / "gatetr.json")
+state = pathlib.Path(sys.argv[2]) / "gatetr.json"
 bad, checked = [], 0
 
 def run(argv, env):

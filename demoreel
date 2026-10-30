@@ -562,9 +562,27 @@ def poll(check, timeout, interval=0.05, grow=1.0, ceiling=None):
         interval = interval * grow if ceiling is None else min(interval * grow, ceiling)
 
 
+def runtime_dir():
+    """XDG_RUNTIME_DIR, or where logind keeps it for this user, or /tmp.
+
+    cron, and SSH without PAM, have no such variable. Looking in /tmp from
+    there, `stop` said nothing was running while a run recorded, and a second
+    run could hold the same name. The middle answer is what the variable would
+    have said, so those sessions and the desktop's agree.
+    """
+    named = os.environ.get("XDG_RUNTIME_DIR")
+    if named:
+        return Path(named)
+    logind = Path(f"/run/user/{os.getuid()}")
+    try:
+        st = os.lstat(logind)
+    except OSError:
+        return Path("/tmp")
+    return logind if stat.S_ISDIR(st.st_mode) and st.st_uid == os.getuid() else Path("/tmp")
+
+
 def state_dir():
-    base = Path(os.environ.get("XDG_RUNTIME_DIR") or "/tmp")
-    d = base / f"demoreel-{os.getuid()}"
+    d = runtime_dir() / f"demoreel-{os.getuid()}"
     try:
         d.mkdir(parents=True, exist_ok=True)
     except OSError as exc:

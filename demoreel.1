@@ -678,9 +678,11 @@ read the same in every locale.
 .SH FILES
 Run files live in
 .IR $XDG_RUNTIME_DIR/demoreel\-UID ,
-or
+or, when that variable is unset, in
+.IR /run/user/UID/demoreel\-UID
+where that folder is yours, and
 .I /tmp/demoreel\-UID
-when that variable is unset.
+where it is not.
 The directory must belong to you.
 .TP
 .IB name .lock

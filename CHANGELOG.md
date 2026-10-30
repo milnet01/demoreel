@@ -32,6 +32,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **`demoreel stop` finds a recording from a session without `XDG_RUNTIME_DIR`, such as cron or plain SSH** (DEMO-0094)
+  It looked in `/tmp` and said nothing was running. Where the variable is unset, demoreel now looks in `/run/user/<uid>` first.
 - **What an app started now ends with the run, even after the app itself has exited** (DEMO-0094)
   A wrapper script's children outlived the run, and their sound could then reach the speakers.
 - **A failed `--gpu` or `--audio` run no longer touches a part file an earlier killed run left** (DEMO-0094)
