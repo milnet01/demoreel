@@ -6331,6 +6331,94 @@ set -e
 }
 echo "a malformed step is refused before the display starts, with an example"
 
+step "a time in a step is one the clock can hold"
+# DEMO-0094. `drag` refused an endless time and `wait` and `hold` did not, so
+# `wait inf` passed "every step is readable" and raised OverflowError in the
+# middle of the recording.
+for bad in 'wait inf' 'wait -1' 'wait nan' 'wait 1e300' 'hold w inf' 'drag 1 1 2 2 1e300'; do
+    set +e
+    ./demoreel record -n gatetime -o "$tmp/time.mp4" -a "$bad" -- xclock 2>"$tmp/time.err"
+    time_status=$?
+    set -e
+    [ "$time_status" -ne 0 ] && grep -q 'write it like' "$tmp/time.err" \
+        && ! grep -q 'Traceback\|recording :' "$tmp/time.err" || {
+        echo "the step '$bad' was not refused up front (exit $time_status):" >&2
+        cat "$tmp/time.err" >&2
+        exit 1
+    }
+done
+echo "a time that is endless, negative or too long is refused before the display starts"
+
+step "a step that cannot be read does not print its text"
+# DEMO-0094. A mistyped line that has a quote in it, such as `Type pass'word`,
+# cannot be split, and the message printed the whole of it, secret included.
+set +e
+./demoreel record -n gatesecret -o "$tmp/secret.mp4" -a "Type hunter'2" -- xclock \
+    2>"$tmp/secret.err"
+secret_status=$?
+set -e
+[ "$secret_status" -ne 0 ] && grep -q "cannot read the step 'Type'" "$tmp/secret.err" || {
+    echo "the step was not refused by its first word (exit $secret_status):" >&2
+    cat "$tmp/secret.err" >&2
+    exit 1
+}
+if grep -q hunter "$tmp/secret.err"; then
+    echo "the message printed the text of the step" >&2
+    exit 1
+fi
+echo "the step is refused by its first word, and its text is not printed"
+
+step "a key step cannot chain xdotool commands"
+# DEMO-0094. xdotool reads a command's name anywhere among another's arguments,
+# whatever its case, as the start of the next command. Measured with xdotool
+# 4.20260303.1: `xdotool key a exec sh -c 'touch F'` makes F, `keydown` does
+# too, and `key Help` prints xdotool's help rather than pressing anything. A
+# --steps file is trusted as the command is, by the user's ruling of
+# 2026-10-30, but a key step takes keys and nothing else. The real xdotool's
+# own list is the one tried, so a command it gains fails here.
+set +e
+./demoreel record -n gatechain -o "$tmp/chain.mp4" -s 320x240 -d 1 \
+    -a "key a exec sh -c 'touch $tmp/chained'" -- xclock >/dev/null 2>"$tmp/chain.err"
+chain_status=$?
+set -e
+sleep 0.3
+if [ -e "$tmp/chained" ]; then
+    echo "a key step ran a command" >&2
+    exit 1
+fi
+[ "$chain_status" -ne 0 ] && grep -q "write it like 'key Return'" "$tmp/chain.err" \
+    && ! grep -q 'recording :' "$tmp/chain.err" || {
+    echo "the key step was not refused up front (exit $chain_status):" >&2
+    cat "$tmp/chain.err" >&2
+    exit 1
+}
+python3 - <<'CHAINPY'
+import importlib.machinery, importlib.util, re, subprocess
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+said = subprocess.run(["xdotool", "help"], capture_output=True, text=True, check=True)
+commands = re.findall(r"^\s+(\w+)", said.stdout, re.M)
+assert len(commands) > 40, said.stdout
+refused = [f"key {c}" for c in commands] + [f"key {c.upper()}" for c in commands]
+refused += [f"hold {c} 1" for c in commands]
+refused += ["key --window 1 a", "key --delay 5 a", "key a;b", "key a\\ b", "key +",
+            "key ctrl+", "key é", "key ?", "hold --delay 1", "hold a+ 1"]
+for step in refused:
+    try:
+        d.parse_step(step)
+    except SystemExit:
+        continue
+    raise SystemExit(f"{step!r} was accepted")
+for step in ("key Return", "key ctrl+a", "key ctrl+shift+Tab", "key F5 KP_1 XF86AudioPlay",
+             "key 0xff0d U00e9 a 1 plus", "key super+l", "hold w 3", "hold Shift_L 0.5"):
+    try:
+        d.parse_step(step)
+    except SystemExit as exc:
+        raise SystemExit(f"{step!r} was refused: {exc}") from None
+print(f"xdotool's {len(commands)} commands are refused as keys; key names are not")
+CHAINPY
+
 step "a stop is noticed at once"
 # DEMO-0075. The recording loop slept between checks, and a sleep resumes after
 # the signal handler runs, so a stop landed up to a fifth of a second late --

@@ -1071,6 +1071,42 @@ BUTTONS = {"left": "1", "middle": "2", "right": "3"}
 # second it moves the pointer on the way: often enough to look smooth.
 DRAG_SECONDS = 0.5
 DRAG_STEPS_PER_SECOND = 60
+# The longest time a step may name: far past any recording, and short of what
+# a wait on the clock can hold. `wait inf` raised OverflowError mid-recording.
+STEP_SECONDS_MAX = 1e9
+# What a key step may name: key names, joined by + for a combination. No key
+# name has anything else in it, so an xdotool option cannot pass for one.
+KEY_RE = re.compile(r"[A-Za-z0-9_]+(?:\+[A-Za-z0-9_]+)*\Z")
+# xdotool reads any of these, whatever its case, anywhere among another
+# command's arguments, as the start of the next command: `key a exec sh -c ...`
+# runs sh, measured. So no key step may name one, not even a real key such as
+# Help, which pressed nothing and ran `help`. From `xdotool help`, which ci.sh
+# checks this against.
+XDOTOOL_COMMANDS = frozenset((
+    "behave", "behave_screen_edge", "click", "exec", "get_desktop",
+    "get_desktop_for_window", "get_desktop_viewport", "get_num_desktops",
+    "getactivewindow", "getdisplaygeometry", "getmouselocation",
+    "getwindowclassname", "getwindowfocus", "getwindowgeometry", "getwindowname",
+    "getwindowpid", "help", "key", "keydown", "keyup", "mousedown", "mousemove",
+    "mousemove_relative", "mouseup", "search", "selectwindow", "set_desktop",
+    "set_desktop_for_window", "set_desktop_viewport", "set_num_desktops",
+    "set_window", "sleep", "type", "version", "windowactivate", "windowclose",
+    "windowfocus", "windowkill", "windowlower", "windowmap", "windowminimize",
+    "windowmove", "windowquit", "windowraise", "windowreparent", "windowsize",
+    "windowstate", "windowunmap"))
+
+
+def is_key(token):
+    """Whether a key or hold step may hand `token` to xdotool."""
+    return KEY_RE.match(token) is not None and token.lower() not in XDOTOOL_COMMANDS
+
+
+def step_seconds(text):
+    """The time a step names, or ValueError if no clock can wait that long."""
+    seconds = float(text)
+    if not 0 <= seconds <= STEP_SECONDS_MAX:
+        raise ValueError
+    return seconds
 
 
 def parse_step(spec):
@@ -1090,7 +1126,11 @@ def parse_step(spec):
     try:
         parts = shlex.split(spec)
     except ValueError as e:
-        die(tr("cannot read the step {step}: {reason}.", step=repr(spec), reason=e))
+        # The first word and no more: this may be a mistyped `type` step, and
+        # the rest of it the password it was to type.
+        die(tr("cannot read the step {step}: {reason}.",
+               step=repr(head if not re.search(r"""['"\\]""", head) else "..."),
+               reason=e))
     if not parts:
         return None
     verb, args = parts[0], parts[1:]
@@ -1104,15 +1144,15 @@ def parse_step(spec):
     # the run with a Python traceback.
     try:
         if verb == "wait":
-            return verb, {"seconds": float(args[0])}
+            return verb, {"seconds": step_seconds(args[0])}
         if verb == "hold":
-            return verb, {"key": args[0], "seconds": float(args[1])}
+            if not is_key(args[0]):
+                raise ValueError
+            return verb, {"key": args[0], "seconds": step_seconds(args[1])}
         if verb == "drag":
             if len(args) not in (4, 5):
                 raise IndexError
-            seconds = float(args[4]) if len(args) == 5 else DRAG_SECONDS
-            if not 0 <= seconds < math.inf:
-                raise ValueError
+            seconds = step_seconds(args[4]) if len(args) == 5 else DRAG_SECONDS
             return verb, {"from": (int(args[0]), int(args[1])),
                           "to": (int(args[2]), int(args[3])), "seconds": seconds,
                           "button": button}
@@ -1123,7 +1163,7 @@ def parse_step(spec):
             return verb, {"at": at, "button": button}
         if verb == "move":
             return verb, {"at": (str(int(args[0])), str(int(args[1])))}
-        if verb == "key" and not args:
+        if verb == "key" and not (args and all(map(is_key, args))):
             raise IndexError
     except (IndexError, ValueError):
         die(tr("cannot read the step {step}: write it like {example}.",
