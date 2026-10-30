@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=284 -->
+<!-- ants-roadmap-id-high-water: DEMO=286 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -775,6 +775,41 @@ simplest case, and a gate proves it still records.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
+
+- 📋 [DEMO-0285] **An edit scene that plays several videos at once as side-by-side slices, frame for frame.**
+  Asked for by the website session for the DOOM Ants trailer (APHW-0030),
+  on the user's behalf; sample at
+  /mnt/Games/Trailers/doom-ants-SAMPLE-B-same-view.mp4, reference code
+  split_sample.py beside its footage. Wants: N videos, frame N of each in
+  one output frame; refuse inputs differing in size, rate or frame count;
+  a chosen part of each; a timed eased slide between sets of slices;
+  borders; a label per slice, clipped to it; sound lines as now; 5 x 1080p
+  at 60 fps within memory, sources off /tmp.
+  README § What it will never do rules this out today: "Two clips are on
+  screen together only while one scene changes into the next", and only
+  the listed things may move. So it needs a scope lift through the review
+  gate first, as DEMO-0182 was, and the user's decision. Not to be built
+  before both.
+  User, 2026-10-30: take this after the security pass (DEMO-0094) and
+  before the whole-project audit (DEMO-0095). It starts with the scope
+  lift through the review gate, as DEMO-0182 did.
+  **Layman:** Show the same moment from several recordings next to each other, split by borders, for a comparison trailer.
+  Kind: feature.
+  Source: peer-request-2026-10-30 APHW-0030.
+
+- 📋 [DEMO-0286] **Decide the website session's other trailer asks: click rings, themed backgrounds, text at any position, full-frame zoom.**
+  From the same request. tools/trailer.py in the website session does these
+  today, and taking them would retire it. Crop is DEMO-0151 already (1.6.0).
+  README rules out cursor highlighting permanently and only the zoom,
+  background and text uses it lists; arrows and callouts are DEMO-0233
+  (1.2.0). Each needs the user's decision before any work.
+  User, 2026-10-30: take all four: full-frame zoom, text at any
+  position, click rings and themed backgrounds, in the same scope lift
+  as DEMO-0285. Click rings need README's cursor-highlighting line
+  reworded. Crop stays DEMO-0151.
+  **Layman:** Choose which of the other effects in the website's own trailer script demoreel should take over.
+  Kind: feature.
+  Source: peer-request-2026-10-30 APHW-0030.
 
 ## Standing chores
 
