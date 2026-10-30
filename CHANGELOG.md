@@ -32,6 +32,7 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **A long `-d 0` recording no longer grows in memory for as long as it runs** (DEMO-0094)
 - **A stop can no longer hang a recording for good** (DEMO-0094)
   A stop landing at the wrong instant could freeze the run while it kept recording, and `demoreel stop` then waited for ever.
 - **A long `type` step no longer fails as "stopped answering"** (DEMO-0094)

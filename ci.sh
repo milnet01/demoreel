@@ -6709,6 +6709,44 @@ for early in recorder display; do
 done
 echo "a run cut short by its recorder or its display fails, and prints no path"
 
+step "the recorder's reports do not pile up in memory"
+# DEMO-0094. The thread keeping ffmpeg's pipe drained used read(), which keeps
+# everything until the pipe ends, so a -d 0 recording grew for as long as it
+# ran. Waiting for that is the harm, so a stand-in ffmpeg sends 64 MB at once.
+mkdir -p "$tmp/drainshim"
+cat >"$tmp/drainshim/ffmpeg" <<SHIM
+#!/bin/sh
+echo frame=0
+head -c 67108864 /dev/zero
+touch "$tmp/drained"
+exec sleep 60
+SHIM
+chmod +x "$tmp/drainshim/ffmpeg"
+PATH="$tmp/drainshim:$PATH" python3 - "$tmp" <<'DRAINPY'
+import importlib.machinery, importlib.util, os, sys, time
+from pathlib import Path
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+tmp = Path(sys.argv[1])
+def resident():
+    return int(Path("/proc/self/statm").read_text().split()[1]) * os.sysconf("SC_PAGE_SIZE")
+before = resident()
+proc, log, _ = d.start_ffmpeg(dict(os.environ), ":0", 2, 2, 1, tmp / "drain.mp4",
+                              tmp / "drain.log", False)
+try:
+    if not d.poll(lambda: (tmp / "drained").exists(), 30):
+        raise SystemExit("the stand-in ffmpeg never got its 64 MB out")
+    grew = (resident() - before) / 1e6
+finally:
+    proc.kill()
+    proc.wait()
+    log.close()
+if grew > 16:
+    raise SystemExit(f"64 MB of reports grew demoreel by {grew:.0f} MB")
+print(f"64 MB of reports grew demoreel by {grew:.1f} MB")
+DRAINPY
+
 step "stop fails when the run it stopped fails"
 # DEMO-0047. A -d 0 run that is blank when stopped fails its end-of-run check,
 # and stop used to print its path anyway, so `out=$(demoreel stop ...)` held a

@@ -1367,8 +1367,13 @@ def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor
     now = time.time()
     found = re.search(rb"start: (\d+\.\d+)", Path(logfile).read_bytes())
     lag = now - float(found[1]) if found and spawned <= float(found[1]) <= now else 0.0
-    # Keep draining the reports, or ffmpeg blocks once the pipe fills.
-    threading.Thread(target=proc.stdout.read, daemon=True).start()
+    # Keep draining the reports, or ffmpeg blocks once the pipe fills. Read in
+    # pieces and thrown away: one read() keeps every report until the pipe ends,
+    # for as long as a -d 0 run lasts.
+    def drain():
+        while proc.stdout.read(65536):
+            pass
+    threading.Thread(target=drain, daemon=True).start()
     return proc, log, lag
 
 
