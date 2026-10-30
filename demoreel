@@ -46,10 +46,12 @@ BLANK_THRESHOLD = 0.999
 # How long one xdotool call or one frame grab may take before the display is
 # taken to have stopped answering (DEMO-0079). Each normally returns in a few
 # milliseconds -- a grab costs about 112ms of CPU on a 1600x1000 display -- so
-# this is a hang detector, not a performance budget. Typing is paced by xdotool
-# at 12ms a key, so a `type` step gets TYPE_SECONDS_PER_CHAR more per character.
+# this is a hang detector, not a performance budget. A `type` step is paced at
+# TYPE_DELAY_MS a key, so it gets twice that pace more per character: below the
+# pace itself, long text timed out while it was still being typed.
 CALL_TIMEOUT = 10
-TYPE_SECONDS_PER_CHAR = 0.05
+TYPE_DELAY_MS = 60
+TYPE_SECONDS_PER_CHAR = 2 * TYPE_DELAY_MS / 1000
 
 # Both backends need this. Unset, wl_display_connect() falls back to the
 # hardcoded $XDG_RUNTIME_DIR/wayland-0, which exists on a Wayland session — so
@@ -896,7 +898,9 @@ def xdotool(env, *args, check=False, stdin_text=None):
     try:
         return subprocess.run(["xdotool", *[str(a) for a in args]], env=env,
                               input=stdin_text, capture_output=True, text=True,
-                              check=check, timeout=timeout,
+                              # A window's title comes back as its bytes, in
+                              # whatever encoding the app wrote it.
+                              errors="replace", check=check, timeout=timeout,
                               # Its own session, so a terminal's Ctrl+C, which
                               # finishes the video, does not fail a step too.
                               start_new_session=True)
@@ -1216,9 +1220,9 @@ def run_action(spec, env):
     elif verb == "type":
         # --file - takes the text on stdin. As an argument it sits in the
         # process list, readable by any other local user, for as long as the
-        # typing lasts — and at 60ms a keystroke that is seconds. A demo that
-        # types into a login form is the obvious thing to script.
-        act("type", "--delay", "60", "--file", "-", stdin_text=v["text"])
+        # typing lasts, and at this pace that is seconds. A demo that types
+        # into a login form is the obvious thing to script.
+        act("type", "--delay", str(TYPE_DELAY_MS), "--file", "-", stdin_text=v["text"])
     elif verb == "key":
         act("key", *v["keys"])
     elif verb == "hold":

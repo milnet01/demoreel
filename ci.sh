@@ -5478,6 +5478,64 @@ got=$(cat "$tmp/steps.txt" 2>/dev/null || true)
 }
 echo "--steps typed its text, and the text was not in the process list"
 
+step "a window title that is not UTF-8 does not end the run"
+# DEMO-0094. xdotool prints a title as its bytes, and a Latin-1 WM_NAME failed
+# to decode as text, which ended the run in a traceback (measured: getwindowname
+# printed 0xE9). The title decides only "named or not", so it need not decode.
+python3 - <<'TITLEPY'
+import importlib.machinery, importlib.util, os, subprocess, time
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+log = d.state_dir() / "gatetitle.display.log"
+proc, display, auth = d.start_xvfb(320, 240, "gatetitle", log)
+env = dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth))
+app = subprocess.Popen(["xclock", "-title", "plain"], env=env, stderr=subprocess.DEVNULL)
+try:
+    window = d.poll(lambda: d.named_windows(env), 15)
+    assert window, "the fixture's window never appeared"
+    subprocess.run([b"xdotool", b"set_window", b"--name", b"caf\xe9", window[0].encode()],
+                   env=env, check=True)
+    raw = subprocess.run(["xdotool", "getwindowname", window[0]], env=env,
+                         capture_output=True, check=True).stdout
+    assert b"\xe9" in raw, f"the fixture did not set a Latin-1 title: {raw!r}"
+    try:
+        found = d.named_windows(env)
+    except UnicodeDecodeError as exc:
+        raise SystemExit(f"a Latin-1 title ended the run: {exc}") from None
+    assert found == window, (found, window)
+finally:
+    app.kill()
+    app.wait()
+    proc.kill()
+    proc.wait()
+    auth.unlink(missing_ok=True)
+    log.unlink(missing_ok=True)
+print("a window with a Latin-1 title is found")
+TITLEPY
+
+step "a long type step is given time for its pace"
+# DEMO-0094. A type step was allowed 50 ms a character and typed at 60, so text
+# over about 1000 characters ended the run with "stopped answering" while it was
+# typing happily (measured: 1100 characters, 65 s). Read from the call itself.
+python3 - <<'TYPEPY'
+import importlib.machinery, importlib.util, subprocess, types
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+calls = []
+def spy(argv, **kwargs):
+    calls.append((argv, kwargs["timeout"]))
+    return types.SimpleNamespace(returncode=0, stderr="", stdout="")
+d.subprocess = types.SimpleNamespace(run=spy, TimeoutExpired=subprocess.TimeoutExpired)
+d.run_action("type " + "x" * 5000, {})
+(argv, timeout), = calls
+delay = int(argv[argv.index("--delay") + 1]) / 1000
+if timeout < 5000 * delay:
+    raise SystemExit(f"5000 characters at {delay}s each are allowed only {timeout}s")
+print(f"5000 characters at {delay}s each are allowed {timeout}s")
+TYPEPY
+
 step "a window titled only by _NET_WM_NAME is found"
 # DEMO-0043. The window search read only the old WM_NAME, so an app setting
 # nothing but _NET_WM_NAME -- vkcube is one -- was never found: every run

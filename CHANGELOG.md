@@ -32,6 +32,9 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **A long `type` step no longer fails as "stopped answering"** (DEMO-0094)
+  Text over about 1000 characters ran out its time while it was still being typed.
+- **An app whose window title is not UTF-8 no longer ends the run in a Python error** (DEMO-0094)
 - **A scripted step that did nothing now fails the run** (DEMO-0094)
   A mistyped key name such as `key Retrun` used to leave a video with the key press missing, and report success.
 - **`wait inf` is refused before the recording starts** (DEMO-0094)
