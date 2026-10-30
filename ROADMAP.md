@@ -741,6 +741,10 @@ simplest case, and a gate proves it still records.
   no local Ubuntu leg, and f1a854a's push ran the docs-only gate, so
   neither counts toward closing: the count of passing full push gates
   since a88e583 is still one.
+  2026-10-30, push of 40cc7b6 (cc-job push-0030, load ~3): the full push
+  gate passed, Ubuntu leg included. One step skipped: the real-Flatpak
+  step, because GIMP was open on the desktop. Passing full push gates
+  since a88e583: two.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
