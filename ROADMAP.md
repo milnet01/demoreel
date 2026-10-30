@@ -767,6 +767,11 @@ simplest case, and a gate proves it still records.
   exit, and the fixture sleeps 60 s. The sweep then failed 0 of 21. This
   run does not count toward closing; the count stays at four, with this
   one failure, now of a different cause from the side-by-side one.
+  2026-10-30, push of 9c7b008 (cc-job push-0030e, load about 14 at the
+  start): the full push gate passed, the Ubuntu leg with it (317 s). One
+  step skipped: the real-Flatpak step, because GIMP was open. Passing
+  full push gates since a88e583: five, with one failure (a003a3d, the
+  closing-app race, since fixed).
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
