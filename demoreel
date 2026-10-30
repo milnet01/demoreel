@@ -662,12 +662,12 @@ def start_xvfb(width, height, base, logfile):
     geometry and grabs a frame of whatever is on the display. Socket permissions
     are no answer — Xvfb also listens on an abstract socket, which has none.
 
-    The number has to come first and the cookie is keyed to it, so the order is:
-    start with an empty auth file, learn the number, write the cookie for it,
-    and SIGHUP the server to re-read. Measured: Xvfb loads the file at its
-    first connection, and none is made before the cookie is written, so the
-    lock is on from the first. The SIGHUP covers a server that loaded the file
-    earlier, and wait_until_locked proves the lock rather than trusting either.
+    A client looks its cookie up by display number, and the number comes last.
+    The server takes any entry in the file. So the file holds the cookie before
+    the server starts, which locks the display from its first connection
+    (measured), and the entry a client needs is added once the number is known.
+    The SIGHUP then has the server re-read, and wait_until_locked proves the
+    lock rather than trusting either.
 
     The server's stderr goes to a file, never to a pipe. It writes there for
     the whole run — every keymap an app loads adds xkbcomp's warnings — and a
@@ -675,8 +675,7 @@ def start_xvfb(width, height, base, logfile):
     freezes, and so does every X call waiting on it: GIMP did this in the gate.
     """
     auth = Path(f"{base}.Xvfb.Xauthority")
-    auth.unlink(missing_ok=True)
-    auth.touch(mode=0o600)
+    cookie = new_auth_file(auth)
 
     read_fd, write_fd = os.pipe()
     os.set_inheritable(write_fd, True)
@@ -725,32 +724,58 @@ def start_xvfb(width, height, base, logfile):
             + "\n  " + tr("`demoreel check` tests this start on its own."))
 
     display = f":{number}"
-    lock_display(proc, display, auth, gpu=False)
+    lock_display(proc, display, auth, cookie, gpu=False)
     return proc, display, auth
 
 
-def lock_display(proc, display, auth, gpu):
+def write_cookie(auth, display, cookie):
+    """Add the display's cookie to the auth file, or end the run saying why.
+
+    It goes to xauth on stdin: a command line can be read by every local user,
+    and with the cookie and the display number they could pass the lock.
+    """
+    try:
+        added = subprocess.run(["xauth", "-f", str(auth), "source", "-"],
+                               input=f"add {display} MIT-MAGIC-COOKIE-1 {cookie}\n",
+                               capture_output=True, text=True, check=False,
+                               timeout=CALL_TIMEOUT)
+        said = added.stderr.strip() if added.returncode else None
+    except subprocess.TimeoutExpired:
+        said = ""
+    if said is not None:
+        die(tr("could not write the display's auth cookie, so the display "
+               "cannot be made private.")
+            + ("\n  " + tr("xauth said: {text}", text=said) if said else "")
+            + "\n  " + tr("`demoreel check` tests this on its own."))
+
+
+def new_auth_file(auth):
+    """Make the run's auth file, holding a fresh cookie, and return the cookie.
+
+    The entry's number does not matter to the server, and no client of this
+    file asks for :0 once it has its real display.
+    """
+    auth.unlink(missing_ok=True)
+    auth.touch(mode=0o600)
+    cookie = secrets.token_hex(16)
+    try:
+        write_cookie(auth, ":0", cookie)
+    except BaseException:
+        auth.unlink(missing_ok=True)
+        raise
+    return cookie
+
+
+def lock_display(proc, display, auth, cookie, gpu):
     """Write the display's cookie and prove it is in force.
 
-    Any way out of here but success ends the server first: a refused cookie,
+    Any way out of here but success ends the server first: a refused entry,
     a lock that never holds, and an xdotool in wait_until_locked that dies
     because the display stopped answering. The caller has no server to end
     yet, so whatever is not ended here is leaked.
     """
     try:
-        try:
-            added = subprocess.run(["xauth", "-f", str(auth), "add", display,
-                                    "MIT-MAGIC-COOKIE-1", secrets.token_hex(16)],
-                                   capture_output=True, text=True, check=False,
-                                   timeout=CALL_TIMEOUT)
-            said = added.stderr.strip() if added.returncode else None
-        except subprocess.TimeoutExpired:
-            said = ""
-        if said is not None:
-            die(tr("could not write the display's auth cookie, so the display "
-                   "cannot be made private.")
-                + ("\n  " + tr("xauth said: {text}", text=said) if said else "")
-                + "\n  " + tr("`demoreel check` tests this on its own."))
+        write_cookie(auth, display, cookie)
         if not gpu:
             # Xvfb re-reads its auth file on reset; Xwayland needs no signal.
             proc.send_signal(signal.SIGHUP)
@@ -802,14 +827,14 @@ def start_gpu_display(width, height, base, logfile):
     number, and both come back on one pipe, in that order. -noreset keeps the
     pointer where park_pointer puts it, as on Xvfb (DEMO-0103).
 
-    The cookie goes in after -displayfd reports the number, as on Xvfb, and
-    Xwayland re-reads the changed file without being signalled. So the lock is
+    The file holds the cookie before anything starts, as on Xvfb, so no client
+    can connect first and stay: nothing resets Xwayland to throw it off. The entry for the real number goes in once -displayfd reports it,
+    and Xwayland re-reads the changed file without being signalled. The lock is
     proven by a client without the cookie being refused while one holding it
-    connects: before the cookie both get in, and a dead display refuses both.
+    connects, since a dead display refuses both.
     """
     auth = Path(f"{base}.Xauthority")
-    auth.unlink(missing_ok=True)
-    auth.touch(mode=0o600)
+    cookie = new_auth_file(auth)
 
     read_fd, write_fd = os.pipe()
     os.set_inheritable(write_fd, True)
@@ -854,7 +879,7 @@ def start_gpu_display(width, height, base, logfile):
             + "\n  " + tr("`demoreel check` says whether --gpu has what it needs."))
 
     display = f":{number}"
-    lock_display(proc, display, auth, gpu=True)
+    lock_display(proc, display, auth, cookie, gpu=True)
     return proc, display, auth, wayland
 
 

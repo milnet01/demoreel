@@ -93,6 +93,11 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   The one address it gave was Tumbleweed's. The translated quick-start
   pages carry the same lines.
 
+### Security
+
+- **The private display's password no longer appears on a command line, and the display is locked before it starts.** (DEMO-0094)
+  Another local user could read the password from the process list while it was being set. Both backends now write it first and send it over stdin.
+
 ## [0.9.0] - 2026-10-14
 
 **Theme:** Installs like any other program.

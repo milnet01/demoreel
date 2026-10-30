@@ -5564,6 +5564,7 @@ step "the --gpu backend records an app that needs the card"
 # node to open. A skip prints why. It is not a pass, and it is not a licence to
 # change this path without recording on it.
 gpu_missing=()
+gpu_ready=0
 for prog in cage Xwayland wlr-randr wf-recorder vkcube; do
     command -v "$prog" >/dev/null || gpu_missing+=("$prog")
 done
@@ -5579,6 +5580,7 @@ elif ./demoreel check >/dev/null 2>"$tmp/gpu-check.err"
     echo "skipped: demoreel check says --gpu is not ready:"
     cat "$tmp/gpu-check.err"
 else
+    gpu_ready=1
     gpu_started=$SECONDS
     ./demoreel record --gpu -n gategpu -o "$tmp/gpu.mp4" -d 3 -s 640x480 \
         -- vkcube >/dev/null 2>"$tmp/gpu.err" || { cat "$tmp/gpu.err" >&2; exit 1; }
@@ -6457,55 +6459,119 @@ wait "$victim" 2>/dev/null || true
 rm -f "$statedir/gatestale.json"
 echo "stop left the unrelated process alone"
 
-step "the virtual display refuses a client with no cookie"
+step "the virtual display refuses a client with no cookie, and the cookie stays private"
 # The display is private or the tool has no point. Measured before this guard
 # existed: a client with no credential at all read the geometry and grabbed a
 # frame of whatever was on screen. Socket permissions cannot fix it, because
 # Xvfb also listens on an abstract socket, which has none.
 # The app itself probes first: the lock must already be in force when the app
-# starts, not only by the time the gate looks (DEMO-0113).
-# shellcheck disable=SC2016  # $? and $1 belong to the inner sh, not to us
-./demoreel record -o "$tmp/cookie.mp4" -d 0 -n gatecookie -s 640x480 \
-    -- sh -c 'XAUTHORITY=/dev/null xdotool getdisplaygeometry >/dev/null 2>&1
-              echo $? >"$1"; exec xclock' sh "$tmp/cookie.atstart" \
-    >/dev/null 2>"$tmp/cookie.err" &
-cookie_rec=$!
-gate_pids="$gate_pids $cookie_rec"
-disp=""
-for _ in $(seq 1 100); do
-    # sed, not grep: this script runs under pipefail, and grep exits 1 when it
-    # matches nothing, which kills the run silently while we are still waiting
-    # for the line to appear. sed exits 0 either way.
-    disp=$(sed -n 's/.*recording \(:[0-9][0-9]*\).*/\1/p' "$tmp/cookie.err" | head -1)
-    [ -n "$disp" ] && break
-    sleep 0.2
+# starts, not only by the time the gate looks (DEMO-0113). It also proves the
+# refusal is the lock and not a dead display, by getting in with the cookie.
+# xauth is wrapped to log its command line: any local user can read a command
+# line, so the cookie must never be in one (DEMO-0094).
+mkdir -p "$tmp/xauthspy"
+cat >"$tmp/xauthspy/xauth" <<SPY
+#!/bin/sh
+printf '%s\n' "\$*" >>"$tmp/xauth.argv"
+exec $(command -v xauth) "\$@"
+SPY
+chmod +x "$tmp/xauthspy/xauth"
+# The server is logged in the same place: the file must hold the cookie before
+# it starts, or a stranger can connect first and stay (DEMO-0094).
+for server in Xvfb cage; do
+    command -v "$server" >/dev/null || continue
+    cat >"$tmp/xauthspy/$server" <<SPY
+#!/bin/sh
+echo 'server starts' >>"$tmp/xauth.argv"
+exec $(command -v "$server") "\$@"
+SPY
+    chmod +x "$tmp/xauthspy/$server"
 done
-if [ -z "$disp" ]; then
-    # Stop the run before failing, or it outlives the gate holding a display,
-    # and the next run refuses the name it is still using.
-    ./demoreel stop gatecookie >/dev/null 2>&1 || kill "$cookie_rec" 2>/dev/null || true
-    echo "the run never reported its display:" >&2
-    cat "$tmp/cookie.err" >&2
-    exit 1
-fi
-set +e
-XAUTHORITY=/dev/null DISPLAY="$disp" xdotool getdisplaygeometry >/dev/null 2>&1
-uncredentialed=$?
-set -e
-./demoreel stop gatecookie >/dev/null
-wait "$cookie_rec" || true
-atstart=$(cat "$tmp/cookie.atstart" 2>/dev/null || echo missing)
-case "$atstart" in
-    missing|0)
-        echo "a client with no cookie was not refused when the app started" \
-             "(probe: $atstart) -- the lock was not yet in force" >&2
-        exit 1 ;;
-esac
-[ "$uncredentialed" -ne 0 ] || {
-    echo "a client with no cookie read $disp -- the display is not private" >&2
-    exit 1
+lock_check() {
+    local name=$1; shift
+    : >"$tmp/xauth.argv"
+    # shellcheck disable=SC2016  # $? and $1 belong to the inner sh, not to us
+    PATH="$tmp/xauthspy:$PATH" ./demoreel record -o "$tmp/$name.mp4" -d 0 -n "$name" \
+        -s 640x480 "$@" \
+        -- sh -c 'XAUTHORITY=/dev/null xdotool getdisplaygeometry >/dev/null 2>&1
+                  echo $? >"$1.atstart"
+                  xdotool getdisplaygeometry >/dev/null 2>&1
+                  echo $? >"$1.holder"
+                  stat -c %a "$XAUTHORITY" >"$1.mode"
+                  exec xclock' sh "$tmp/$name" \
+        >/dev/null 2>"$tmp/$name.err" &
+    local rec=$! disp=""
+    gate_pids="$gate_pids $rec"
+    for _ in $(seq 1 100); do
+        # sed, not grep: this script runs under pipefail, and grep exits 1 when
+        # it matches nothing, which kills the run silently while we are still
+        # waiting for the line to appear. sed exits 0 either way.
+        disp=$(sed -n 's/.*recording \(:[0-9][0-9]*\).*/\1/p' "$tmp/$name.err" | head -1)
+        [ -n "$disp" ] && break
+        sleep 0.2
+    done
+    if [ -z "$disp" ]; then
+        # Stop the run before failing, or it outlives the gate holding a display,
+        # and the next run refuses the name it is still using.
+        ./demoreel stop "$name" >/dev/null 2>&1 || kill "$rec" 2>/dev/null || true
+        echo "$name: the run never reported its display:" >&2
+        cat "$tmp/$name.err" >&2
+        exit 1
+    fi
+    set +e
+    XAUTHORITY=/dev/null DISPLAY="$disp" xdotool getdisplaygeometry >/dev/null 2>&1
+    local uncredentialed=$?
+    # -nolisten tcp: an X server's TCP port is 6000 plus its display number.
+    local port
+    port=$(printf '%04X' $((6000 + ${disp#:})))
+    awk -v p=":$port" '$4 == "0A" && $2 ~ p "$" { found = 1 } END { exit !found }' \
+        /proc/net/tcp /proc/net/tcp6 2>/dev/null
+    local listening=$?
+    set -e
+    ./demoreel stop "$name" >/dev/null
+    wait "$rec" || true
+    local atstart holder mode
+    atstart=$(cat "$tmp/$name.atstart" 2>/dev/null || echo missing)
+    holder=$(cat "$tmp/$name.holder" 2>/dev/null || echo missing)
+    mode=$(cat "$tmp/$name.mode" 2>/dev/null || echo missing)
+    case "$atstart" in
+        missing|0)
+            echo "$name: a client with no cookie was not refused when the app" \
+                 "started (probe: $atstart) -- the lock was not yet in force" >&2
+            exit 1 ;;
+    esac
+    [ "$holder" = 0 ] || {
+        echo "$name: the app, holding the cookie, could not reach its display" \
+             "(probe: $holder), so the refusal above proves nothing" >&2
+        exit 1
+    }
+    [ "$uncredentialed" -ne 0 ] || {
+        echo "$name: a client with no cookie read $disp -- the display is not private" >&2
+        exit 1
+    }
+    [ "$mode" = 600 ] || {
+        echo "$name: the auth file is mode $mode, not 600" >&2; exit 1; }
+    [ "$listening" -ne 0 ] || {
+        echo "$name: the X server for $disp is listening on TCP" >&2; exit 1; }
+    [ -s "$tmp/xauth.argv" ] || {
+        echo "$name: xauth was never called, so nothing checked its command line" >&2
+        exit 1
+    }
+    if grep -Eq '[0-9a-fA-F]{32}' "$tmp/xauth.argv"; then
+        echo "$name: the display's cookie was on xauth's command line" >&2; exit 1
+    fi
+    [ "$(head -1 "$tmp/xauth.argv")" != 'server starts' ] || {
+        echo "$name: the X server started before its auth file held a cookie" >&2
+        exit 1
+    }
+    echo "$name: no cookie, no way in, from the app's start on; 0600, no TCP, cookie in no command line"
 }
-echo "a client with no cookie cannot reach the display, from the app's start on"
+lock_check gatecookie
+if [ "$gpu_ready" = 1 ]; then
+    lock_check gatecookiegpu --gpu
+else
+    echo "skipped on --gpu: the --gpu step above did not run here"
+fi
 
 step "a real Flatpak records with no flags, and with README's three"
 # DEMO-0007, DEMO-0284. Nothing else tests a Flatpak itself, so a Flatpak

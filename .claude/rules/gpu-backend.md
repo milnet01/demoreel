@@ -19,7 +19,7 @@ are load-bearing and none is obvious:
   HEADLESS-1 --custom-mode WxH` resizes it, but an `Xwayland` already running
   keeps its first size. So `cage`'s one child is a step that resizes the
   output, then `exec`s `Xwayland -displayfd N -auth F -geometry WxH -fullscreen
-  -noreset -nolisten tcp`, with `F` an empty file at that point. The app
+  -noreset -nolisten tcp`, with `F` already holding the cookie. The app
   starts afterwards, as on the `Xvfb` path, so pointer parking happens before
   the app exists. `-noreset` is what keeps it parked, as on `Xvfb` (DEMO-0103):
   without it the server resets when the parking `xdotool` leaves. Do not go
@@ -65,16 +65,19 @@ are load-bearing and none is obvious:
   run's `env` rather than inheriting the session's** — otherwise they fail with
   `Cannot open display`, or silently sample an empty frame. Without a cookie a
   client with no credential can read the display, and socket permissions are no
-  substitute, because `Xvfb` also listens on an abstract socket. The cookie is
-  installed after `-displayfd` reports the number, since the cookie is keyed to
-  it: start with an empty auth file, then write the cookie. `Xvfb` is then sent
-  `SIGHUP` to re-read; do not "simplify" that ordering away. `Xwayland` re-reads
-  the changed file with no signal (measured: a client with no credential got in
-  before the cookie and was refused after). So on both backends the lock is
-  proven in force by a client *without* the cookie being refused while one with
-  it connects (`wait_until_locked`). A client holding the cookie gets in before
-  the lock as well as after, so it alone proves nothing (DEMO-0113); a dead
-  display refuses both, so the refusal alone proves nothing either.
+  substitute, because `Xvfb` also listens on an abstract socket. The server
+  takes any entry in its file, whatever the number, so the file holds the
+  cookie before the server starts: a client with no credential is refused from
+  the first connection on both backends (measured). Do not go back to an empty
+  file: nothing resets `Xwayland`, so as far as its code shows, a stranger who
+  connected in that gap would stay (not measured). A client looks the cookie up by number, so
+  the entry it needs is added after `-displayfd` reports it, and `Xvfb` is sent
+  `SIGHUP`. The cookie goes to `xauth` on stdin, never its command line, which
+  any local user can read. On both backends the lock is proven in force by a
+  client *without* the cookie being refused while one with it connects
+  (`wait_until_locked`). A client holding the cookie proves nothing alone
+  (DEMO-0113); a dead display refuses both, so the refusal proves nothing alone
+  either.
 
 `weston` is also installed, from testing this. Its headless backend falls back
 to software rendering here (`Failed to initialize glamor`,
