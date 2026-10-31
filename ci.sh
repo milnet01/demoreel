@@ -6712,6 +6712,10 @@ step "smoke: record an app and prove it reached the frame"
 # black recording passes every other test, so sample a frame and measure it.
 tmp=$(mktemp -d)
 
+# This gate's runs, and no one else's: the pid keeps a second gate, or another
+# session's -n gateway, out of the names, the locks and the sweep below.
+export GATE_RUN="gate$$-"
+
 # One teardown for the whole gate, not one per step.
 #
 # A -d 0 recording never ends by itself, so a step that fails between starting
@@ -6732,18 +6736,20 @@ cleanup() {
     # without tearing anything down, and a leaked Xvfb holds its display number
     # and poisons the pool for later runs.
     #
-    # Match on the auth file, which carries the run's name, and only for the
-    # gate's own `gate*` runs. Two sessions may record at once, so killing
-    # every Xvfb this user owns would end someone else's recording. Never
-    # widen this to the process name.
+    # Match on the auth file, which carries the run's name, and only for this
+    # gate's own prefix. Two sessions may record at once, or run this gate, or
+    # name a run gateway, so killing every Xvfb this user owns would end someone
+    # else's recording. Never widen this to the process name.
     for xv in $(pgrep -u "$(id -u)" -x Xvfb 2>/dev/null); do
         if tr '\0' ' ' < "/proc/$xv/cmdline" 2>/dev/null \
-           | grep -q "demoreel-$(id -u)/gate"; then
+           | grep -q "demoreel-$(id -u)/$GATE_RUN"; then
             kill "$xv" 2>/dev/null || true
             # A step may have stopped this server, and a signal waits on that.
             kill -CONT "$xv" 2>/dev/null || true
         fi
     done
+    # Every run leaves its files, and with the pid in their names they would pile up.
+    [ -z "${statedir:-}" ] || rm -rf "${statedir:?}/$GATE_RUN"*
     # An interrupted Ubuntu leg leaves its container running. Stopped by name:
     # the container outlives the podman client.
     [ -z "${parity_name:-}" ] || podman rm -f -t 0 "$parity_name" >/dev/null 2>&1 || true
@@ -6803,7 +6809,7 @@ if demoreel.frame_is_flat(raw):
 PY
 }
 
-out=$(./demoreel record -n gate -o "$tmp/smoke.mp4" -d 5 -s 640x480 -- xclock)
+out=$(./demoreel record -n "${GATE_RUN}main" -o "$tmp/smoke.mp4" -d 5 -s 640x480 -- xclock)
 [ -s "$out" ] || { echo "no video written" >&2; exit 1; }
 echo "wrote $out"
 
@@ -6841,7 +6847,7 @@ step "smoke: a blank recording is refused"
 # the end about 6.5s in, a second and a half either side of the kill at 5s.
 set +e
 # shellcheck disable=SC2016  # $! and $p belong to the inner sh, not to us
-blank_out=$(./demoreel record -n gate -o "$tmp/blank.mp4" -d 6 -s 640x480 \
+blank_out=$(./demoreel record -n "${GATE_RUN}main" -o "$tmp/blank.mp4" -d 6 -s 640x480 \
     -- sh -c 'xclock & p=$!; sleep 5; kill $p; sleep 10' 2>"$tmp/blank.err")
 blank_status=$?
 set -e
@@ -6865,7 +6871,7 @@ step "no sound server: record goes on, record --audio stops"
 # the app starts. Both sound servers are pointed at nothing, so this runs on
 # every machine, one with no pactl included.
 nosound=(env PULSE_SERVER=unix:/nonexistent PIPEWIRE_REMOTE="$tmp/no-pipewire")
-"${nosound[@]}" ./demoreel record -n gate-nosound -o "$tmp/nosound.mp4" -d 2 \
+"${nosound[@]}" ./demoreel record -n "${GATE_RUN}nosound" -o "$tmp/nosound.mp4" -d 2 \
     -s 640x480 -- xclock >/dev/null 2>"$tmp/nosound.err" || {
     echo "a run without --audio failed for want of a sound server:" >&2
     cat "$tmp/nosound.err" >&2; exit 1; }
@@ -6873,7 +6879,7 @@ grep -q "no private sound output could be made" "$tmp/nosound.err" || {
     echo "a run with no private sound output said nothing about it:" >&2
     cat "$tmp/nosound.err" >&2; exit 1; }
 set +e
-"${nosound[@]}" ./demoreel record --audio -n gate-nosound -o "$tmp/nosound-audio.mp4" \
+"${nosound[@]}" ./demoreel record --audio -n "${GATE_RUN}nosound" -o "$tmp/nosound-audio.mp4" \
     -d 2 -s 640x480 -- touch "$tmp/nosound-app-ran" >/dev/null 2>"$tmp/nosound-audio.err"
 nosound_status=$?
 set -e
@@ -6999,7 +7005,7 @@ if sound_step "--audio records the app's sound, whichever way it plays"; then
     # DEMO-0106 INV-2, INV-6 and INV-9. Three players, one per way to the
     # server, so a missing variable silences one tone: without PIPEWIRE_NODE,
     # aplay's goes to the speakers.
-    ./demoreel record --audio -n gate-sound -o "$tmp/sound.mp4" -d 8 -s 640x480 \
+    ./demoreel record --audio -n "${GATE_RUN}sound" -o "$tmp/sound.mp4" -d 8 -s 640x480 \
         -- xterm -e "$tmp/tones.sh" "$tmp/tones.pid" "$tmp/tone.wav" >/dev/null &
     sound_run=$!
     python3 "$tmp/watch-sinks.py" "$sound_run" "$tmp/tones.pid"
@@ -7044,10 +7050,10 @@ fi
 if sound_step "two --audio runs never hear each other"; then
     # DEMO-0106 INV-3. Started together, one playing and one silent. With one
     # name for every run's sink the second load fails its uniqueness check.
-    ./demoreel record --audio -n gate-sound-a -o "$tmp/sound-a.mp4" -d 8 -s 640x480 \
+    ./demoreel record --audio -n "${GATE_RUN}sound-a" -o "$tmp/sound-a.mp4" -d 8 -s 640x480 \
         -- xterm -e "$tmp/tones.sh" "$tmp/tones-a.pid" "$tmp/tone.wav" >/dev/null &
     run_a=$!
-    ./demoreel record --audio -n gate-sound-b -o "$tmp/sound-b.mp4" -d 8 -s 640x480 \
+    ./demoreel record --audio -n "${GATE_RUN}sound-b" -o "$tmp/sound-b.mp4" -d 8 -s 640x480 \
         -- xclock >/dev/null 2>"$tmp/sound-b.err" &
     run_b=$!
     wait "$run_a" || { echo "the playing run failed" >&2; exit 1; }
@@ -7067,19 +7073,19 @@ fi
 if sound_step "no run leaves a sound output behind"; then
     # DEMO-0106 INV-4. A finished run and a shot are checked in the step
     # above; here, a launch that fails, `stop`, Ctrl+C, SIGTERM and SIGHUP.
-    ./demoreel record -n gate-sound-fail -o "$tmp/sound-fail.mp4" -d 2 \
+    ./demoreel record -n "${GATE_RUN}sound-fail" -o "$tmp/sound-fail.mp4" -d 2 \
         -- "$tmp/no-such-app" >/dev/null 2>&1 &
     leak_run=$!
     if wait "$leak_run"; then echo "a run of a missing app succeeded" >&2; exit 1; fi
     [ -z "$(run_sinks "$leak_run")" ] || {
         echo "a launch that failed left its sink loaded" >&2; exit 1; }
     for how in stop INT TERM HUP; do
-        ./demoreel record -n gate-sound-end -o "$tmp/sound-end.mp4" -d 0 -s 640x480 \
+        ./demoreel record -n "${GATE_RUN}sound-end" -o "$tmp/sound-end.mp4" -d 0 -s 640x480 \
             -- xclock >/dev/null 2>&1 &
         leak_run=$!
-        wait_recording gate-sound-end "$leak_run"
+        wait_recording "${GATE_RUN}sound-end" "$leak_run"
         if [ "$how" = stop ]; then
-            ./demoreel stop gate-sound-end >/dev/null
+            ./demoreel stop "${GATE_RUN}sound-end" >/dev/null
         else
             kill -"$how" "$leak_run"
         fi
@@ -7089,10 +7095,10 @@ if sound_step "no run leaves a sound output behind"; then
     done
     # SIGKILL runs no cleanup at all, so the sink stays until the next run
     # sweeps it. The killed run's display and recorder are ended by hand.
-    ./demoreel record -n gate-sound-kill -o "$tmp/sound-killed.mp4" -d 0 -s 640x480 \
+    ./demoreel record -n "${GATE_RUN}sound-kill" -o "$tmp/sound-killed.mp4" -d 0 -s 640x480 \
         -- xclock >/dev/null 2>&1 &
     leak_run=$!
-    wait_recording gate-sound-kill "$leak_run"
+    wait_recording "${GATE_RUN}sound-kill" "$leak_run"
     kill -KILL "$leak_run"
     wait "$leak_run" 2>/dev/null || true
     [ -n "$(run_sinks "$leak_run")" ] || {
@@ -7101,7 +7107,7 @@ if sound_step "no run leaves a sound output behind"; then
     pkill -f -- "-y $tmp/\.demoreel-part-" || true
     for xv in $(pgrep -u "$(id -u)" -x Xvfb); do
         if tr '\0' ' ' <"/proc/$xv/cmdline" 2>/dev/null \
-           | grep -q "demoreel-$(id -u)/gate-sound-kill"; then
+           | grep -q "demoreel-$(id -u)/${GATE_RUN}sound-kill"; then
             kill "$xv" || true
         fi
     done
@@ -7150,7 +7156,7 @@ def flash():
 root.after(2000, flash)
 root.mainloop()
 PY
-    ./demoreel record --audio -n gate-sound-sync -o "$tmp/sync.mp4" -d 4 -s 640x480 \
+    ./demoreel record --audio -n "${GATE_RUN}sound-sync" -o "$tmp/sync.mp4" -d 4 -s 640x480 \
         -- python3 "$tmp/flash.py" >/dev/null
     python3 - "$tmp/sync.mp4" <<'PY'
 import re, subprocess, sys
@@ -7188,7 +7194,7 @@ step "a recording blank until its second half is refused"
 # can fail this run. 0.1.1 returns it with exit 0.
 set +e
 # shellcheck disable=SC2016  # $! and $p belong to the inner sh, not to us
-late_out=$(./demoreel record -n gate -o "$tmp/late.mp4" -d 8 -s 640x480 \
+late_out=$(./demoreel record -n "${GATE_RUN}main" -o "$tmp/late.mp4" -d 8 -s 640x480 \
     -- sh -c 'xclock & p=$!; sleep 1; kill $p; sleep 6; exec xclock' 2>"$tmp/late.err")
 late_status=$?
 set -e
@@ -7216,9 +7222,9 @@ demoreel = importlib.util.module_from_spec(
     importlib.util.spec_from_loader("demoreel", loader))
 loader.exec_module(demoreel)
 
-# The name starts with "gate" so the teardown's Xvfb sweep covers it.
-displaylog = demoreel.state_dir() / "gatesample.display.log"
-proc, display, auth = demoreel.start_xvfb(320, 240, "gatesample", displaylog)
+# The gate's prefix on the name puts it in the teardown's Xvfb sweep.
+displaylog = demoreel.state_dir() / f"{os.environ['GATE_RUN']}sample.display.log"
+proc, display, auth = demoreel.start_xvfb(320, 240, os.environ['GATE_RUN'] + "sample", displaylog)
 try:
     env = dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth))
     if demoreel.display_is_blank(env, display, 320, 240) is not True:
@@ -7255,7 +7261,7 @@ typed="it's \"quoted\" 'twice'  here"
 # The shell also names the window holding the keyboard. xterm takes keys
 # without focus, but a winit app takes none (DEMO-0206). Unfocused, X answers
 # PointerRoot, which has no name.
-./demoreel record -n gate -o "$tmp/actions.mp4" -d 12 -s 640x480 \
+./demoreel record -n "${GATE_RUN}main" -o "$tmp/actions.mp4" -d 12 -s 640x480 \
     -a 'wait 2' -a "type $typed" -a 'key Return' \
     -- xterm -e sh -c "read line; printf '%s' \"\$line\" > $tmp/typed.txt;
         xdotool getwindowfocus getwindowname > $tmp/focus.txt 2>/dev/null" >/dev/null
@@ -7275,7 +7281,7 @@ step "the app gets an empty WAYLAND_DISPLAY, no WAYLAND_SOCKET and an x11 sessio
 # wayland-0. Empty, not a made-up name: winit takes any name as Wayland and
 # never falls back. And no WAYLAND_SOCKET, which libwayland reads first.
 # DEMO-0283: XDG_SESSION_TYPE=wayland made Chromium pick Wayland and exit.
-env WAYLAND_SOCKET=3 XDG_SESSION_TYPE=wayland ./demoreel record -n gate \
+env WAYLAND_SOCKET=3 XDG_SESSION_TYPE=wayland ./demoreel record -n "${GATE_RUN}main" \
     -o "$tmp/wayland.mp4" -d 2 -s 640x480 -- sh -c \
     "printf '[%s][%s][%s]' \"\${WAYLAND_DISPLAY-unset}\" \
         \"\${WAYLAND_SOCKET-unset}\" \"\${XDG_SESSION_TYPE-unset}\" \
@@ -7295,7 +7301,7 @@ step "--steps reaches the app and keeps typed text off the command line"
 # The comment and the blank line are skipped, as in an edit script.
 secret="steps-canary-$$"
 printf 'wait 2\n# a comment\n\ntype %s\nkey Return\n' "$secret" |
-    ./demoreel record -n gate -o "$tmp/steps.mp4" -d 8 -s 640x480 --steps - \
+    ./demoreel record -n "${GATE_RUN}main" -o "$tmp/steps.mp4" -d 8 -s 640x480 --steps - \
     -- xterm -e sh -c "read line; printf '%s' \"\$line\" > $tmp/steps.txt" \
     >/dev/null &
 pid=$!
@@ -7328,8 +7334,8 @@ import importlib.machinery, importlib.util, os, subprocess, time
 loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
 d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
 loader.exec_module(d)
-log = d.state_dir() / "gatetitle.display.log"
-proc, display, auth = d.start_xvfb(320, 240, "gatetitle", log)
+log = d.state_dir() / f"{os.environ['GATE_RUN']}title.display.log"
+proc, display, auth = d.start_xvfb(320, 240, os.environ['GATE_RUN'] + "title", log)
 env = dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth))
 app = subprocess.Popen(["xclock", "-title", "plain"], env=env, stderr=subprocess.DEVNULL)
 try:
@@ -7384,7 +7390,7 @@ step "a window titled only by _NET_WM_NAME is found"
 # builds such a window without needing Vulkan: an xterm with an empty title,
 # whose own shell then sets _NET_WM_NAME. 0.1.1 says "no window appeared".
 # shellcheck disable=SC2016  # $WINDOWID belongs to xterm's shell, not to us
-./demoreel record -n gate -o "$tmp/netwm.mp4" -d 2 -s 640x480 --startup-timeout 5 \
+./demoreel record -n "${GATE_RUN}main" -o "$tmp/netwm.mp4" -d 2 -s 640x480 --startup-timeout 5 \
     -- xterm -T '' -e sh -c \
     'xprop -id "$WINDOWID" -f _NET_WM_NAME 8u -set _NET_WM_NAME gatewin; sleep 30' \
     >/dev/null 2>"$tmp/netwm.err"
@@ -7404,7 +7410,7 @@ step "an app that resizes itself after demoreel sizes it is warned about"
 # flat, and every check passed. This xterm keeps shrinking itself, as Vestige
 # did. 0.2.1 records it without a word.
 # shellcheck disable=SC2016  # $WINDOWID belongs to xterm's shell, not to us
-./demoreel record -n gate -o "$tmp/resized.mp4" -d 2 -s 640x480 -- xterm -e sh -c \
+./demoreel record -n "${GATE_RUN}main" -o "$tmp/resized.mp4" -d 2 -s 640x480 -- xterm -e sh -c \
     'while :; do sleep 0.3; xdotool windowsize "$WINDOWID" 300 200; done' \
     >/dev/null 2>"$tmp/resized.err"
 if ! grep -q 'resized its window to 300x200' "$tmp/resized.err"; then
@@ -7420,7 +7426,7 @@ step "an app that resizes itself once is put back to the frame size"
 # did, so the run says it was put back and gives no warning at the end. The
 # xterm above, which keeps shrinking itself, still gets the warning.
 # shellcheck disable=SC2016  # $WINDOWID belongs to xterm's shell, not to us
-./demoreel record -n gate -o "$tmp/putback.mp4" -d 4 -s 640x480 -- xterm -e sh -c \
+./demoreel record -n "${GATE_RUN}main" -o "$tmp/putback.mp4" -d 4 -s 640x480 -- xterm -e sh -c \
     'sleep 1; xdotool windowsize "$WINDOWID" 300 200; exec sleep 60' \
     >/dev/null 2>"$tmp/putback.err"
 if ! grep -q 'demoreel put it back to fill the 640x480 frame' "$tmp/putback.err" \
@@ -7491,7 +7497,7 @@ elif ./demoreel check >/dev/null 2>"$tmp/gpu-check.err"
 else
     gpu_ready=1
     gpu_started=$SECONDS
-    ./demoreel record --gpu -n gategpu -o "$tmp/gpu.mp4" -d 3 -s 640x480 \
+    ./demoreel record --gpu -n "${GATE_RUN}gpu" -o "$tmp/gpu.mp4" -d 3 -s 640x480 \
         -- vkcube >/dev/null 2>"$tmp/gpu.err" || { cat "$tmp/gpu.err" >&2; exit 1; }
     gpu_elapsed=$((SECONDS - gpu_started))
     # vkcube moves every frame and is light, so its video must not draw the
@@ -7520,7 +7526,7 @@ else
     echo "vkcube is in the frame, and the window was found in ${gpu_elapsed}s"
     # DEMO-0111. record --gpu records the compositor's picture, which never has
     # the pointer in it, so --cursor must be refused rather than ignored.
-    if ./demoreel record --gpu --cursor -n gategpu -o "$tmp/gpucur.mp4" -d 1 \
+    if ./demoreel record --gpu --cursor -n "${GATE_RUN}gpu" -o "$tmp/gpucur.mp4" -d 1 \
             -- vkcube >/dev/null 2>"$tmp/gpucur.err"; then
         echo "record --gpu --cursor recorded instead of refusing" >&2; exit 1
     fi
@@ -7530,7 +7536,7 @@ else
     echo "record --gpu refuses --cursor"
     # DEMO-0110. A blank --gpu run was told to "record it with --gpu instead".
     # Its advice must fit the backend that ran.
-    if ./demoreel record --gpu -n gategpu -o "$tmp/gpublank.mp4" -d 2 \
+    if ./demoreel record --gpu -n "${GATE_RUN}gpu" -o "$tmp/gpublank.mp4" -d 2 \
             -s 320x240 --startup-timeout 1 -- sleep 10 \
             >/dev/null 2>"$tmp/gpublank.err"; then
         echo "a blank --gpu recording was accepted" >&2; exit 1
@@ -7548,7 +7554,7 @@ step "the pointer starts in the corner, not over the app"
 # up whatever the app draws under it before any step runs, drawn or not. The
 # app itself reads where the pointer is as it starts. Xvfb once reset on its
 # last client leaving, which put a parked pointer straight back.
-./demoreel record -n gate -o "$tmp/pointer.mp4" -d 2 -s 400x300 \
+./demoreel record -n "${GATE_RUN}main" -o "$tmp/pointer.mp4" -d 2 -s 400x300 \
     -- sh -c "xdotool getmouselocation --shell > $tmp/pointer.txt; exec xterm -e sleep 10" >/dev/null
 where=$(grep -E '^[XY]=' "$tmp/pointer.txt" 2>/dev/null | tr '\n' ' ')
 [ "$where" = "X=399 Y=299 " ] || {
@@ -7596,9 +7602,9 @@ step "--cursor draws the pointer, and the default leaves it out"
 # two recordings differed for any unrelated reason; a pointer is a small local
 # change, so a large difference means something else moved and the test has
 # stopped measuring what it claims to.
-./demoreel record -n gate -o "$tmp/nocursor.mp4" -d 3 -s 400x300 -a 'move 200 150' \
+./demoreel record -n "${GATE_RUN}main" -o "$tmp/nocursor.mp4" -d 3 -s 400x300 -a 'move 200 150' \
     -- xterm -e sleep 60 >/dev/null
-./demoreel record -n gate -o "$tmp/cursor.mp4" -d 3 -s 400x300 --cursor -a 'move 200 150' \
+./demoreel record -n "${GATE_RUN}main" -o "$tmp/cursor.mp4" -d 3 -s 400x300 --cursor -a 'move 200 150' \
     -- xterm -e sleep 60 >/dev/null
 for f in nocursor cursor; do
     ffmpeg -v error -i "$tmp/$f.mp4" -vf 'select=eq(n\,30)' -vframes 1 \
@@ -7631,12 +7637,12 @@ step "--settle waits for the app's first picture"
 # shellcheck disable=SC2016  # $i belongs to the inner sh, not to us
 late_app=(xterm -bg black -fg black -cr black -b 0 -e sh -c
     'printf "\033[?25l"; sleep 4; i=0; while [ $i -lt 30 ]; do printf "\033[47m%80s\033[0m\n" " "; i=$((i+1)); done; sleep 60')
-if ./demoreel record -n gate -o "$tmp/unsettled.mp4" -d 3 -s 640x480 \
+if ./demoreel record -n "${GATE_RUN}main" -o "$tmp/unsettled.mp4" -d 3 -s 640x480 \
         -- "${late_app[@]}" >/dev/null 2>&1; then
     echo "the fixture was drawn before the halfway sample, so it cannot test --settle" >&2
     exit 1
 fi
-out=$(./demoreel record -n gate -o "$tmp/settled.mp4" -d 2 -s 640x480 --settle 20 \
+out=$(./demoreel record -n "${GATE_RUN}main" -o "$tmp/settled.mp4" -d 2 -s 640x480 --settle 20 \
     -- "${late_app[@]}")
 assert_frame_drawn "$out" 0 "--settle started recording before the app drew"
 echo "without --settle the run failed blank; with it the first frame is drawn"
@@ -7649,7 +7655,7 @@ step "an app that makes the display chatter does not freeze it"
 # Sixty keymap loads fill the pipe several times over.
 # shellcheck disable=SC2016  # $i belongs to the inner sh, not to us
 timeout 60 ./demoreel record -o "$tmp/chatter.mp4" -d 1 -s 320x240 \
-    -n gatechatter -- sh -c \
+    -n "${GATE_RUN}chatter" -- sh -c \
     'i=0; while [ $i -lt 60 ]; do setxkbmap us; i=$((i+1)); done; exec xclock' \
     >/dev/null 2>&1 || {
     echo "a run whose app loads many keymaps froze or failed (exit $?)" >&2
@@ -7661,7 +7667,7 @@ step "a display that stops answering fails the run instead of hanging it"
 # display that froze for any other reason hung the run with no timeout. This
 # freezes the Xvfb with SIGSTOP once recording starts; the next call at the
 # halfway point has to give up and fail the run. 0.2.1 hangs until `timeout`.
-./demoreel record -o "$tmp/frozen.mp4" -d 6 -s 320x240 -n gatefrozen \
+./demoreel record -o "$tmp/frozen.mp4" -d 6 -s 320x240 -n "${GATE_RUN}frozen" \
     -- xclock >/dev/null 2>"$tmp/frozen.err" &
 frozen_run=$!
 for _ in $(seq 100); do
@@ -7699,14 +7705,14 @@ echo "the frozen display was given up on in ${frozen_took}s, and the run failed 
 step "stop ends a run started with -d 0"
 # record -d 0 runs until told to stop, and stop is the only way to end it. It
 # is documented, and nothing proved either half worked.
-./demoreel record -o "$tmp/stopped.mp4" -d 0 -n gatestop -s 640x480 \
+./demoreel record -o "$tmp/stopped.mp4" -d 0 -n "${GATE_RUN}stop" -s 640x480 \
     --app-log "$tmp/app.log" -- xclock >/dev/null 2>&1 &
 recorder=$!
 # Straight after launching it, with no retry. DEMO-0034: a run used to be
 # unreachable until it was already recording, so this line said "no recording
 # named gatestop" while the run carried on. stop now finds a starting run and
 # waits for it to record.
-stopped=$(./demoreel stop gatestop) || {
+stopped=$(./demoreel stop "${GATE_RUN}stop") || {
     echo "stop could not find a run launched just before it" >&2; exit 1; }
 [ "$stopped" = "$tmp/stopped.mp4" ] || {
     echo "stop printed '$stopped', not the output path" >&2; exit 1; }
@@ -7730,9 +7736,9 @@ printf '#!/bin/sh\ncase "$*" in *-encoders*) sleep 3 ;; esac\nexec %s "$@"\n' \
     "$(command -v ffmpeg)" >"$tmp/slowstop/ffmpeg"
 chmod +x "$tmp/slowstop/ffmpeg"
 PATH="$tmp/slowstop:$PATH" ./demoreel record -o "$tmp/slowstop.mp4" -d 0 \
-    -n gateslow -s 640x480 -- xclock >/dev/null 2>"$tmp/slowstop.err" &
+    -n "${GATE_RUN}slow" -s 640x480 -- xclock >/dev/null 2>"$tmp/slowstop.err" &
 recorder=$!
-stopped=$(./demoreel stop gateslow) || {
+stopped=$(./demoreel stop "${GATE_RUN}slow") || {
     echo "stop missed a run still asking ffmpeg for its encoders" >&2
     kill "$recorder"; wait "$recorder"; exit 1; }
 wait "$recorder" || {
@@ -7758,7 +7764,7 @@ def ctrl_c(name, app, extra=()):
     err = f"{tmp}/{name}.err"
     with open(err, "w") as errfile:
         run = subprocess.Popen(
-            ["./demoreel", "record", "-n", "gate", "-o", f"{tmp}/{name}.mp4",
+            ["./demoreel", "record", "-n", os.environ['GATE_RUN'] + "main", "-o", f"{tmp}/{name}.mp4",
              "-d", "0", "-s", "320x240", *extra, "--", *app],
             stdout=subprocess.PIPE, stderr=errfile, start_new_session=True)
         for _ in range(300):
@@ -7849,7 +7855,7 @@ def hang_up(args, ready):
 
 
 video = f"{tmp}/hup.mp4"
-status, out, _ = hang_up(["record", "-n", "gate", "-o", video, "-d", "0", "-s",
+status, out, _ = hang_up(["record", "-n", os.environ['GATE_RUN'] + "main", "-o", video, "-d", "0", "-s",
                        "320x240", "--", "xclock"], b"recording :")
 readable = subprocess.run(["ffprobe", "-v", "error", video],
                           capture_output=True).returncode == 0
@@ -7875,7 +7881,7 @@ python3 - "$tmp" <<'TTYPY'
 import os, pty, subprocess, sys
 
 tmp = sys.argv[1]
-args = ["./demoreel", "record", "-n", "gate", "-d", "2", "-s", "320x240"]
+args = ["./demoreel", "record", "-n", os.environ['GATE_RUN'] + "main", "-d", "2", "-s", "320x240"]
 master, slave = pty.openpty()
 run = subprocess.Popen([*args, "-o", f"{tmp}/tty.mp4", "--", "xclock"],
                        stdout=subprocess.PIPE, stderr=slave)
@@ -7916,9 +7922,9 @@ demoreel = importlib.util.module_from_spec(
 loader.exec_module(demoreel)
 signal.signal(signal.SIGUSR1, demoreel._request_stop)
 
-# The name starts with "gate" so the teardown's Xvfb sweep covers it.
-displaylog = demoreel.state_dir() / "gatehold.display.log"
-proc, display, auth = demoreel.start_xvfb(320, 240, "gatehold", displaylog)
+# The gate's prefix on the name puts it in the teardown's Xvfb sweep.
+displaylog = demoreel.state_dir() / f"{os.environ['GATE_RUN']}hold.display.log"
+proc, display, auth = demoreel.start_xvfb(320, 240, os.environ['GATE_RUN'] + "hold", displaylog)
 env = dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth))
 keys = f"{tmp}/held.txt"
 app = subprocess.Popen(["xterm", "-e", "sh", "-c",
@@ -7979,9 +7985,9 @@ def reports(path):
     return out
 
 
-# The name starts with "gate" so the teardown's Xvfb sweep covers it.
-displaylog = demoreel.state_dir() / "gatedrag.display.log"
-proc, display, auth = demoreel.start_xvfb(640, 240, "gatedrag", displaylog)
+# The gate's prefix on the name puts it in the teardown's Xvfb sweep.
+displaylog = demoreel.state_dir() / f"{os.environ['GATE_RUN']}drag.display.log"
+proc, display, auth = demoreel.start_xvfb(640, 240, os.environ['GATE_RUN'] + "drag", displaylog)
 env = dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth))
 mouse = f"{tmp}/drag.bin"
 app = subprocess.Popen(["xterm", "-geometry", "80x10+0+0", "-e", "sh", "-c",
@@ -8040,7 +8046,7 @@ chmod +x "$tmp/nox264/ffmpeg"
 py=$(command -v python3)
 for case in noxdo nox264; do
     set +e
-    PATH="$tmp/$case" "$py" ./demoreel record -n gate -o "$tmp/$case.mp4" -- xclock \
+    PATH="$tmp/$case" "$py" ./demoreel record -n "${GATE_RUN}main" -o "$tmp/$case.mp4" -- xclock \
         2>"$tmp/$case.err"
     case_status=$?
     set -e
@@ -8217,7 +8223,7 @@ step "a malformed step is refused before anything starts"
 # and ended the run with a Python traceback, mid-recording when it was a late
 # step. Every step is now read first, and the error shows how to write it.
 set +e
-./demoreel record -n gate -o "$tmp/badstep.mp4" -a 'wait 1' -a 'move 5' -- xclock \
+./demoreel record -n "${GATE_RUN}main" -o "$tmp/badstep.mp4" -a 'wait 1' -a 'move 5' -- xclock \
     2>"$tmp/badstep.err"
 badstep_status=$?
 set -e
@@ -8235,7 +8241,7 @@ step "a step xdotool rejects fails the run"
 # case, and xdotool exits 0 for it: it only says so on stderr (measured).
 for rejected in 'key Bogus_Key' 'hold Bogus_Key 0.1'; do
     set +e
-    ./demoreel record -n gaterejected -o "$tmp/rejected.mp4" -d 2 -s 320x240 \
+    ./demoreel record -n "${GATE_RUN}rejected" -o "$tmp/rejected.mp4" -d 2 -s 320x240 \
         -a "$rejected" -- xclock >"$tmp/rejected.out" 2>"$tmp/rejected.err"
     rejected_status=$?
     set -e
@@ -8246,7 +8252,7 @@ for rejected in 'key Bogus_Key' 'hold Bogus_Key 0.1'; do
         cat "$tmp/rejected.err" >&2
         exit 1
     }
-    if server_left gaterejected; then
+    if server_left "${GATE_RUN}rejected"; then
         echo "'$rejected' left its display running" >&2
         exit 1
     fi
@@ -8263,7 +8269,7 @@ tmp = sys.argv[1]
 err = f"{tmp}/stepstop.err"
 with open(err, "w") as errfile:
     run = subprocess.Popen(
-        ["./demoreel", "record", "-n", "gatestepstop", "-o", f"{tmp}/stepstop.mp4",
+        ["./demoreel", "record", "-n", os.environ['GATE_RUN'] + "stepstop", "-o", f"{tmp}/stepstop.mp4",
          "-d", "0", "-s", "320x240", *["-a", "click"] * 500, "--", "xclock"],
         stdout=subprocess.PIPE, stderr=errfile, start_new_session=True)
     for _ in range(300):
@@ -8288,7 +8294,7 @@ step "a time in a step is one the clock can hold"
 # middle of the recording.
 for bad in 'wait inf' 'wait -1' 'wait nan' 'wait 1e300' 'hold w inf' 'drag 1 1 2 2 1e300'; do
     set +e
-    ./demoreel record -n gatetime -o "$tmp/time.mp4" -a "$bad" -- xclock 2>"$tmp/time.err"
+    ./demoreel record -n "${GATE_RUN}time" -o "$tmp/time.mp4" -a "$bad" -- xclock 2>"$tmp/time.err"
     time_status=$?
     set -e
     [ "$time_status" -ne 0 ] && grep -q 'write it like' "$tmp/time.err" \
@@ -8304,7 +8310,7 @@ step "a step that cannot be read does not print its text"
 # DEMO-0094. A mistyped line that has a quote in it, such as `Type pass'word`,
 # cannot be split, and the message printed the whole of it, secret included.
 set +e
-./demoreel record -n gatesecret -o "$tmp/secret.mp4" -a "Type hunter'2" -- xclock \
+./demoreel record -n "${GATE_RUN}secret" -o "$tmp/secret.mp4" -a "Type hunter'2" -- xclock \
     2>"$tmp/secret.err"
 secret_status=$?
 set -e
@@ -8328,7 +8334,7 @@ step "a key step cannot chain xdotool commands"
 # 2026-10-30, but a key step takes keys and nothing else. The real xdotool's
 # own list is the one tried, so a command it gains fails here.
 set +e
-./demoreel record -n gatechain -o "$tmp/chain.mp4" -s 320x240 -d 1 \
+./demoreel record -n "${GATE_RUN}chain" -o "$tmp/chain.mp4" -s 320x240 -d 1 \
     -a "key a exec sh -c 'touch $tmp/chained'" -- xclock >/dev/null 2>"$tmp/chain.err"
 chain_status=$?
 set -e
@@ -8349,8 +8355,8 @@ loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
 d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
 loader.exec_module(d)
 # Ubuntu's older xdotool will not even list them without a display.
-log = d.state_dir() / "gatehelp.display.log"
-proc, display, auth = d.start_xvfb(320, 240, "gatehelp", log)
+log = d.state_dir() / f"{os.environ['GATE_RUN']}help.display.log"
+proc, display, auth = d.start_xvfb(320, 240, os.environ['GATE_RUN'] + "help", log)
 try:
     said = subprocess.run(["xdotool", "help"], capture_output=True, text=True, check=False,
                           env=dict(os.environ, DISPLAY=display, XAUTHORITY=str(auth)))
@@ -8456,11 +8462,11 @@ step "an app that cannot be started leaves no display behind"
 printf 'echo hi\n' >"$tmp/noshebang"
 chmod +x "$tmp/noshebang"
 set +e
-./demoreel record -n gatenoexec -o "$tmp/noexec.mp4" -d 1 -s 320x240 -- "$tmp/noshebang" \
+./demoreel record -n "${GATE_RUN}noexec" -o "$tmp/noexec.mp4" -d 1 -s 320x240 -- "$tmp/noshebang" \
     >"$tmp/noexec.out" 2>"$tmp/noexec.err"
 noexec_status=$?
 set -e
-if server_left gatenoexec; then
+if server_left "${GATE_RUN}noexec"; then
     echo "an app that could not start left its display running" >&2
     exit 1
 fi
@@ -8471,6 +8477,7 @@ fi
     exit 1
 }
 python3 - <<'PARKPY'
+import os
 import importlib.machinery, importlib.util, sys, types
 loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
 d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
@@ -8478,13 +8485,13 @@ loader.exec_module(d)
 d.park_pointer = lambda *_: d.die("stopped answering")
 try:
     d.launch(types.SimpleNamespace(gpu=False), ["xclock"], 320, 240,
-             d.state_dir() / "gatepark", d.state_dir() / "gatepark.display.log",
+             d.state_dir() / f"{os.environ['GATE_RUN']}park", d.state_dir() / f"{os.environ['GATE_RUN']}park.display.log",
              sys.stderr, None)
 except SystemExit:
     pass
-(d.state_dir() / "gatepark.display.log").unlink(missing_ok=True)
+(d.state_dir() / f"{os.environ['GATE_RUN']}park.display.log").unlink(missing_ok=True)
 PARKPY
-if server_left gatepark; then
+if server_left "${GATE_RUN}park"; then
     echo "a display that hung before the app started was left running" >&2
     exit 1
 fi
@@ -8494,7 +8501,7 @@ step "a recorder killed mid-run fails the run"
 # DEMO-0116. A killed ffmpeg leaves an mp4 with no index. The file is there
 # and not empty, and the run used to print its path and exit 0.
 set +e
-./demoreel record -n gate -o "$tmp/killed.mp4" -d 6 -s 320x240 -- xclock \
+./demoreel record -n "${GATE_RUN}main" -o "$tmp/killed.mp4" -d 6 -s 320x240 -- xclock \
     >"$tmp/killed.out" 2>"$tmp/killed.err" &
 killed_rec=$!
 for _ in $(seq 1 100); do
@@ -8526,7 +8533,7 @@ step "a recorder or a display that ends early fails the run"
 # same result, measured.
 for early in recorder display; do
     set +e
-    ./demoreel record -n gateearly -o "$tmp/early.mp4" -d 20 -s 320x240 -- xclock \
+    ./demoreel record -n "${GATE_RUN}early" -o "$tmp/early.mp4" -d 20 -s 320x240 -- xclock \
         >"$tmp/early.out" 2>"$tmp/early.err" &
     early_rec=$!
     for _ in $(seq 1 100); do
@@ -8538,7 +8545,7 @@ for early in recorder display; do
         pkill -TERM -f "^ffmpeg .*-y $tmp/\.demoreel-part-"
     else
         for server in $(pgrep -u "$(id -u)" -x Xvfb); do
-            tr '\0' ' ' <"/proc/$server/cmdline" | grep -q "/gateearly\." && kill -KILL "$server"
+            tr '\0' ' ' <"/proc/$server/cmdline" | grep -q "/${GATE_RUN}early\." && kill -KILL "$server"
         done
     fi
     wait "$early_rec"
@@ -8575,12 +8582,12 @@ chmod +x "$tmp/wrapper.sh"
 wrapper_left() {
     local p
     for p in $(pgrep -u "$(id -u)" -f '^sleep 777[12]$' || true); do
-        if grep -qz '^XAUTHORITY=.*/gatewrapper\.' "/proc/$p/environ" 2>/dev/null; then
+        if grep -qz "^XAUTHORITY=.*/${GATE_RUN}wrapper\\." "/proc/$p/environ" 2>/dev/null; then
             echo "$p"
         fi
     done
 }
-./demoreel record -n gatewrapper -o "$tmp/wrapper.mp4" -d 8 -s 320x240 -- "$tmp/wrapper.sh" \
+./demoreel record -n "${GATE_RUN}wrapper" -o "$tmp/wrapper.mp4" -d 8 -s 320x240 -- "$tmp/wrapper.sh" \
     >/dev/null 2>"$tmp/wrapper.err" || { cat "$tmp/wrapper.err" >&2; exit 1; }
 left=$(wrapper_left)
 if [ -n "$left" ]; then
@@ -8620,7 +8627,7 @@ else
     ffmpeg -nostdin -y -v error -f lavfi -i testsrc=d=1 -c:v libx264 "$stale"
     stale_sum=$(sha256sum <"$stale")
     set +e
-    ./demoreel record --gpu -n gatestale -o "$tmp/stale.mp4" -s 320x240 -- sh -c 'exit 3' \
+    ./demoreel record --gpu -n "${GATE_RUN}stale" -o "$tmp/stale.mp4" -s 320x240 -- sh -c 'exit 3' \
         >/dev/null 2>"$tmp/stale.err"
     stale_status=$?
     set -e
@@ -8636,7 +8643,7 @@ else
     }
     head -c 5000 /dev/urandom >"$stale"
     set +e
-    ./demoreel record --gpu -n gatestale -o "$tmp/stale.mp4" -s 320x240 -- sh -c 'exit 3' \
+    ./demoreel record --gpu -n "${GATE_RUN}stale" -o "$tmp/stale.mp4" -s 320x240 -- sh -c 'exit 3' \
         >/dev/null 2>"$tmp/stale.err"
     set -e
     grep -q 'exited with status 3' "$tmp/stale.err" || {
@@ -8654,7 +8661,7 @@ SHIM
     chmod +x "$tmp/noremux/ffmpeg"
     set +e
     mkdir -p "$tmp/midway"
-    PATH="$tmp/noremux:$PATH" ./demoreel record --gpu -n gatestale -o "$tmp/midway/take.mp4" -s 320x240 \
+    PATH="$tmp/noremux:$PATH" ./demoreel record --gpu -n "${GATE_RUN}stale" -o "$tmp/midway/take.mp4" -s 320x240 \
         -a 'key Bogus_Key' -- xclock >/dev/null 2>"$tmp/midway.err"
     midway_status=$?
     set -e
@@ -8781,7 +8788,7 @@ tmp = Path(sys.argv[1])
 err = tmp / "sampling.err"
 with open(err, "w") as errfile:
     run = subprocess.Popen(
-        ["./demoreel", "record", "-n", "gatesampling", "-o", str(tmp / "sampling.mp4"),
+        ["./demoreel", "record", "-n", os.environ['GATE_RUN'] + "sampling", "-o", str(tmp / "sampling.mp4"),
          "-d", "6", "-s", "320x240", "--", "xclock"],
         stdout=subprocess.PIPE, stderr=errfile, start_new_session=True)
     for _ in range(300):
@@ -8890,7 +8897,7 @@ for args in "-o /proc/nope/x.mp4" "--app-log /proc/nope/x.log" "--app-log /proc/
         output="$tmp/unwritable.mp4"
         [ "$cmd" = shot ] && output="$tmp/unwritable.png"
         run_name=()
-        [ "$cmd" = record ] && run_name=(-n gateunwritable)
+        [ "$cmd" = record ] && run_name=(-n "${GATE_RUN}unwritable")
         set +e
         # shellcheck disable=SC2086  # each case is several words
         ./demoreel "$cmd" "${run_name[@]}" -o "$output" -s 320x240 $args -- xclock \
@@ -8949,10 +8956,10 @@ step "stop fails when the run it stopped fails"
 # DEMO-0047. A -d 0 run that is blank when stopped fails its end-of-run check,
 # and stop used to print its path anyway, so `out=$(demoreel stop ...)` held a
 # path for a failed run. sleep opens no window, so the display stays blank.
-./demoreel record -o "$tmp/blankstop.mp4" -d 0 -n gateblankstop -s 320x240 \
+./demoreel record -o "$tmp/blankstop.mp4" -d 0 -n "${GATE_RUN}blankstop" -s 320x240 \
     --startup-timeout 1 -- sleep 60 >/dev/null 2>&1 &
 recorder=$!
-if blankpath=$(./demoreel stop gateblankstop 2>/dev/null); then
+if blankpath=$(./demoreel stop "${GATE_RUN}blankstop" 2>/dev/null); then
     echo "stop succeeded for a run that failed, printing '$blankpath'" >&2
     exit 1
 fi
@@ -8968,10 +8975,10 @@ step "two runs started together under one name: one records, one is refused"
 # much later, so two runs launched together both passed it, both recorded, and
 # the later one's state file hid the earlier one from `stop`. Measured at the
 # time. A lock now makes the check atomic.
-./demoreel record -o "$tmp/race1.mp4" -d 3 -n gaterace -s 320x240 \
+./demoreel record -o "$tmp/race1.mp4" -d 3 -n "${GATE_RUN}race" -s 320x240 \
     -- xclock >/dev/null 2>"$tmp/race1.err" &
 race1=$!
-./demoreel record -o "$tmp/race2.mp4" -d 3 -n gaterace -s 320x240 \
+./demoreel record -o "$tmp/race2.mp4" -d 3 -n "${GATE_RUN}race" -s 320x240 \
     -- xclock >/dev/null 2>"$tmp/race2.err" &
 race2=$!
 set +e
@@ -8998,9 +9005,9 @@ victim=$!
 # A start time of 1 belongs to no real process: the field counts clock ticks
 # since boot, so anything running now is far past it. That is the recycled-pid
 # case -- right pid, wrong incarnation.
-printf '{"name":"gatestale","pid":%d,"starttime":"1","display":":9","output":"%s"}\n' \
-    "$victim" "$tmp/never.mp4" > "$statedir/gatestale.json"
-if ./demoreel stop gatestale >/dev/null 2>&1; then
+printf '{"name":"%s","pid":%d,"starttime":"1","display":":9","output":"%s"}\n' \
+    "${GATE_RUN}stale" "$victim" "$tmp/never.mp4" > "$statedir/${GATE_RUN}stale.json"
+if ./demoreel stop "${GATE_RUN}stale" >/dev/null 2>&1; then
     kill "$victim" 2>/dev/null || true
     echo "stop acted on a state file whose recorded start time does not match" >&2
     exit 1
@@ -9011,7 +9018,7 @@ if ! kill -0 "$victim" 2>/dev/null; then
 fi
 kill "$victim" 2>/dev/null || true
 wait "$victim" 2>/dev/null || true
-rm -f "$statedir/gatestale.json"
+rm -f "$statedir/${GATE_RUN}stale.json"
 echo "stop left the unrelated process alone"
 
 step "the virtual display refuses a client with no cookie, and the cookie stays private"
@@ -9120,9 +9127,9 @@ lock_check() {
     }
     echo "$name: no cookie, no way in, from the app's start on; 0600, no TCP, cookie in no command line"
 }
-lock_check gatecookie
+lock_check "${GATE_RUN}cookie"
 if [ "$gpu_ready" = 1 ]; then
-    lock_check gatecookiegpu --gpu
+    lock_check "${GATE_RUN}cookiegpu" --gpu
 else
     echo "skipped on --gpu: the --gpu step above did not run here"
 fi
@@ -9156,7 +9163,7 @@ elif flatpak ps --columns=application 2>/dev/null | grep -qx "$flatpak_app"; the
 else
     for flags in "" "--socket=x11 --nosocket=wayland --filesystem=/tmp/.X11-unix"; do
         # shellcheck disable=SC2086  # $flags is a list of words, or none
-        ./demoreel record -n gateflatpak -o "$tmp/real-fp.mp4" -d 3 -s 800x600 \
+        ./demoreel record -n "${GATE_RUN}flatpak" -o "$tmp/real-fp.mp4" -d 3 -s 800x600 \
             --startup-timeout 60 -- flatpak run $flags "$flatpak_app" >/dev/null
         [ -s "$tmp/real-fp.mp4" ] || {
             echo "no video written for flatpak run $flags $flatpak_app" >&2; exit 1; }
@@ -9176,7 +9183,7 @@ runtime="/run/user/$(id -u)"
 if [ ! -d "$runtime" ] || [ ! -O "$runtime" ]; then
     echo "skipped: this machine has no $runtime"
 else
-    XDG_RUNTIME_DIR="$runtime" ./demoreel record -n gatexdg -o "$tmp/xdg.mp4" -d 0 -s 320x240 \
+    XDG_RUNTIME_DIR="$runtime" ./demoreel record -n "${GATE_RUN}xdg" -o "$tmp/xdg.mp4" -d 0 -s 320x240 \
         -- xclock >/dev/null 2>"$tmp/xdg.err" &
     xdg_rec=$!
     for _ in $(seq 1 100); do
@@ -9184,10 +9191,10 @@ else
         sleep 0.1
     done
     set +e
-    env -u XDG_RUNTIME_DIR ./demoreel record -n gatexdg -o "$tmp/xdg2.mp4" -d 1 -s 320x240 \
+    env -u XDG_RUNTIME_DIR ./demoreel record -n "${GATE_RUN}xdg" -o "$tmp/xdg2.mp4" -d 1 -s 320x240 \
         -- xclock >/dev/null 2>"$tmp/xdg2.err"
     second_status=$?
-    xdg_stopped=$(env -u XDG_RUNTIME_DIR ./demoreel stop gatexdg 2>"$tmp/xdg-stop.err")
+    xdg_stopped=$(env -u XDG_RUNTIME_DIR ./demoreel stop "${GATE_RUN}xdg" 2>"$tmp/xdg-stop.err")
     xdg_status=$?
     set -e
     # Finishes the video if stop could not find the run; a no-op if it did.
@@ -9214,7 +9221,7 @@ step "the state directory must be one we own"
 mkdir -p "$tmp/fakerun"
 ln -s /tmp "$tmp/fakerun/demoreel-$(id -u)"
 set +e
-XDG_RUNTIME_DIR="$tmp/fakerun" ./demoreel record -n gate -o "$tmp/planted.mp4" \
+XDG_RUNTIME_DIR="$tmp/fakerun" ./demoreel record -n "${GATE_RUN}main" -o "$tmp/planted.mp4" \
     -d 3 -s 640x480 -- xclock >"$tmp/planted.out" 2>"$tmp/planted.err"
 planted_status=$?
 set -e
@@ -9380,7 +9387,7 @@ step "a recording is moved to -o when whole, and a failed retake leaves the last
 parts() { find "$1" -maxdepth 1 -name '.demoreel-*' | wc -l; }
 retake="$tmp/retake"
 mkdir -p "$retake"
-./demoreel record -d 0 -n gatepart -o "$retake/take.mp4" -s 320x240 -- xclock \
+./demoreel record -d 0 -n "${GATE_RUN}part" -o "$retake/take.mp4" -s 320x240 -- xclock \
     >/dev/null 2>"$retake/take.err" &
 take_rec=$!
 for _ in $(seq 1 100); do
@@ -9393,7 +9400,7 @@ done
     exit 1
 }
 sleep 1
-take_stopped=$(./demoreel stop gatepart) || true
+take_stopped=$(./demoreel stop "${GATE_RUN}part") || true
 wait "$take_rec" || true
 [ "$take_stopped" = "$retake/take.mp4" ] || {
     echo "stop did not print the finished path, but '$take_stopped':" >&2
@@ -9406,7 +9413,7 @@ good=$(sha256sum <"$retake/take.mp4")
 chmod 600 "$retake/take.mp4"
 # A retake that fails on the blank check.
 set +e
-./demoreel record -n gatepart -o "$retake/take.mp4" -d 1 -s 320x240 --settle 0 -- sleep 30 \
+./demoreel record -n "${GATE_RUN}part" -o "$retake/take.mp4" -d 1 -s 320x240 --settle 0 -- sleep 30 \
     >"$retake/blank.out" 2>"$retake/blank.err"
 retake_status=$?
 set -e
@@ -9423,7 +9430,7 @@ kept=$(find "$retake" -maxdepth 1 -name '.demoreel-part-*')
 rm "$kept"
 # A retake that fails before it records.
 set +e
-./demoreel record -n gatepart -o "$retake/take.mp4" -d 1 -s 320x240 -- sh -c 'exit 3' \
+./demoreel record -n "${GATE_RUN}part" -o "$retake/take.mp4" -d 1 -s 320x240 -- sh -c 'exit 3' \
     >/dev/null 2>"$retake/early.err"
 early_status=$?
 set -e
@@ -9443,7 +9450,7 @@ exec $(command -v ffmpeg) "\$@"
 SHIM
 chmod +x "$retake/norec/ffmpeg"
 set +e
-PATH="$retake/norec:$PATH" ./demoreel record -n gatepart -o "$retake/norec.mp4" -d 1 -s 320x240 \
+PATH="$retake/norec:$PATH" ./demoreel record -n "${GATE_RUN}part" -o "$retake/norec.mp4" -d 1 -s 320x240 \
     -- xclock >/dev/null 2>"$retake/norec.err"
 norec_status=$?
 set -e
@@ -9455,7 +9462,7 @@ set -e
 }
 # A first take that fails part-way leaves what it recorded at -o, as before.
 set +e
-./demoreel record -n gatepart -o "$retake/midway.mp4" -s 320x240 -a 'key Bogus_Key' -- xclock \
+./demoreel record -n "${GATE_RUN}part" -o "$retake/midway.mp4" -s 320x240 -a 'key Bogus_Key' -- xclock \
     >/dev/null 2>"$retake/midway.err"
 midway_status=$?
 set -e
@@ -9466,13 +9473,13 @@ set -e
     exit 1
 }
 # A retake that works replaces it, and keeps its mode.
-./demoreel record -n gatepart -o "$retake/take.mp4" -d 1 -s 320x240 -- xclock >/dev/null 2>&1
+./demoreel record -n "${GATE_RUN}part" -o "$retake/take.mp4" -d 1 -s 320x240 -- xclock >/dev/null 2>&1
 [ "$(sha256sum <"$retake/take.mp4")" != "$good" ] && [ "$(stat -c %a "$retake/take.mp4")" = 600 ] || {
     echo "a retake that worked did not replace the take, or did not keep its mode" >&2
     exit 1
 }
 # A new file takes the umask, and a chosen ending still picks the container.
-( umask 027; ./demoreel record -n gatepart -o "$retake/um.mkv" -d 1 -s 320x240 -- xclock >/dev/null 2>&1 )
+( umask 027; ./demoreel record -n "${GATE_RUN}part" -o "$retake/um.mkv" -d 1 -s 320x240 -- xclock >/dev/null 2>&1 )
 [ "$(stat -c %a "$retake/um.mkv")" = 640 ] || {
     echo "a new video did not take the caller's umask: $(stat -c %a "$retake/um.mkv")" >&2; exit 1; }
 case $(ffprobe -v error -show_entries format=format_name -of csv=p=0 "$retake/um.mkv") in
@@ -9481,13 +9488,13 @@ case $(ffprobe -v error -show_entries format=format_name -of csv=p=0 "$retake/um
 esac
 # The caller's own link keeps writing to its target.
 ln -s through-target.mp4 "$retake/through.mp4"
-[ "$(./demoreel record -n gatepart -o "$retake/through.mp4" -d 1 -s 320x240 -- xclock 2>/dev/null)" \
+[ "$(./demoreel record -n "${GATE_RUN}part" -o "$retake/through.mp4" -d 1 -s 320x240 -- xclock 2>/dev/null)" \
     = "$retake/through-target.mp4" ] && [ -L "$retake/through.mp4" ] || {
     echo "a recording through the caller's own link replaced it" >&2; exit 1; }
 # The default name, taken after the plan named it: the new name is what is printed.
 mkdir -p "$retake/default"
 dr_path="$PWD/demoreel"
-( cd "$retake/default" && exec "$dr_path" record -d 0 -n gatepart -s 320x240 -- xclock ) \
+( cd "$retake/default" && exec "$dr_path" record -d 0 -n "${GATE_RUN}part" -s 320x240 -- xclock ) \
     >"$retake/default.out" 2>"$retake/default.err" &
 take_rec=$!
 for _ in $(seq 1 100); do
@@ -9498,7 +9505,7 @@ planned=$(sed -n 's/.*recording :[0-9]* to \(.*\) (until stopped).*/\1/p' "$reta
 [ -n "$planned" ] || { cat "$retake/default.err" >&2; exit 1; }
 : >"$planned"
 sleep 1
-stopped=$(./demoreel stop gatepart)
+stopped=$(./demoreel stop "${GATE_RUN}part")
 wait "$take_rec"
 [ "$stopped" = "$(cat "$retake/default.out")" ] && [ "$stopped" != "$planned" ] \
     && [ -s "$stopped" ] && [ ! -s "$planned" ] && grep -qF "$planned was taken" "$retake/default.err" || {
@@ -10158,7 +10165,7 @@ script = str(here / "demoreel")
 plain = {k: v for k, v in os.environ.items() if k not in ("LC_ALL", "LC_MESSAGES")}
 english = {**plain, "LC_ALL": "C"}
 pseudo = {**plain, "LANGUAGE": "zz", "LANG": "de_DE.UTF-8"}
-state = pathlib.Path(sys.argv[2]) / "gatetr.json"
+state = pathlib.Path(sys.argv[2]) / f"{os.environ['GATE_RUN']}tr.json"
 bad, checked = [], 0
 
 def run(argv, env):
@@ -10185,7 +10192,7 @@ def whole(stderr, argv):
             bad.append(f"{argv}: a message not translated whole: {message!r}")
 
 RUNS = [
-    ["record", "-n", "gatetr", "-d", "1", "-s", "320x240", "-o", "rec.mp4", "--", "xclock"],
+    ["record", "-n", os.environ['GATE_RUN'] + "tr", "-d", "1", "-s", "320x240", "-o", "rec.mp4", "--", "xclock"],
     ["shot", "-s", "320x240", "-o", "shot.png", "--", "xclock"],
     ["trim", "clip.mp4", "-o", "trim.mp4", "--to", "1"],
     ["caption", "clip.mp4", "-o", "cap.mp4", "--text", "Hi", "--to", "1"],
@@ -10196,9 +10203,9 @@ RUNS = [
     ["motion", "clip.mp4"],
     ["motion", "clip.mp4", "--json"],
     ["--version"],
-    ["record", "-n", "gatetr", "-s", "301x200", "--", "xclock"],
+    ["record", "-n", os.environ['GATE_RUN'] + "tr", "-s", "301x200", "--", "xclock"],
     ["shot", "-s", "320x240"],
-    ["stop", "gatetr-nobody"],
+    ["stop", os.environ['GATE_RUN'] + "tr-nobody"],
     ["trim", "clip.mp4", "-o", "trim2.mp4"],
     ["caption", "clip.mp4", "-o", "clip.mp4", "--text", "Hi"],
     ["join", "clip.mp4", "-o", "join2.mp4"],
@@ -10223,10 +10230,10 @@ for argv in RUNS:
         bad.append(f"{argv}: C gave {seen[0]!r:.300}, the pseudo-locale {seen[1]!r:.300}")
 # stop prints a path too: a -d 0 run, stopped by name, in each language.
 for env in (english, pseudo):
-    rec = subprocess.Popen([script, "record", "-n", "gatetr", "-d", "0", "-s", "320x240",
+    rec = subprocess.Popen([script, "record", "-n", os.environ['GATE_RUN'] + "tr", "-d", "0", "-s", "320x240",
                             "-o", "stopped.mp4", "--", "xclock"], cwd=here, env=env,
                            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
-    r = run(["stop", "gatetr"], env)
+    r = run(["stop", os.environ['GATE_RUN'] + "tr"], env)
     rec.communicate(timeout=60)
     if (r.returncode, r.stdout) != (0, f"{here / 'stopped.mp4'}\n"):
         bad.append(f"stop under {env.get('LANGUAGE', 'C')}: {r.returncode} {r.stdout!r}")
@@ -10296,7 +10303,7 @@ def run(argv, env, where):
 def both(code, env):
     where = os.path.join(here, f"lang-{code}")
     os.makedirs(where, exist_ok=True)
-    record = ["record", "-n", f"gatelang-{code}", "-d", "1", "-s", "320x240",
+    record = ["record", "-n", f"{os.environ['GATE_RUN']}lang-{code}", "-d", "1", "-s", "320x240",
               "-o", "lang.mp4", "--", "xclock"]
     return where, run(record, env, where), run(FAIL, env, where)
 english = {**plain, "LC_ALL": "C"}
@@ -10549,7 +10556,7 @@ echo "a broken or hostile catalog costs its language, never the run"
 
 step "default output name"
 # -o is optional; without it the file is named from the app and a timestamp.
-( cd "$tmp" && "$OLDPWD/demoreel" record -n gatedefault -d 3 -s 640x480 -- xclock >/dev/null )
+( cd "$tmp" && "$OLDPWD/demoreel" record -n "${GATE_RUN}default" -d 3 -s 640x480 -- xclock >/dev/null )
 ls "$tmp"/xclock-*.mp4 >/dev/null
 
 step "only the release job can write to the repository"
