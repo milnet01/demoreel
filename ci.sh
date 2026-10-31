@@ -4116,8 +4116,11 @@ CLEANPY
     stderr_clean "an ordinary name" "$name"
     # What ffmpeg says repeats names and tags, so it is untrusted too.
     mkdir -p "$ft/tail"
-    printf '#!/bin/sh\nprintf "first\\ndemoreel: forged\\n\\033[31mred\\302\\233\\n" >&2\nexit 1\n' \
-        > "$ft/tail/ffmpeg"
+    {
+        # shellcheck disable=SC2016  # written into a script, which expands it
+        printf '#!/bin/sh\ncase "$*" in *-demuxers*) exec "%s" "$@" ;; esac\n' "$(command -v ffmpeg)"
+        printf 'printf "first\\ndemoreel: forged\\n\\033[31mred\\302\\233\\n" >&2\nexit 1\n'
+    } > "$ft/tail/ffmpeg"
     chmod +x "$ft/tail/ffmpeg"
     FIN_PATH="$ft/tail:$PATH" run poster A.mp4 -t 0.1 -o "$ft/out/tail.png"
     expect_refused "poster with an ffmpeg that fails"
