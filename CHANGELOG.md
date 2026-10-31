@@ -27,11 +27,30 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Changed
 
+- **A recording appears at `-o` only when it is whole** (DEMO-0094)
+  While it records, the video is a hidden file beside `-o`. A failed retake no longer destroys the take before it: that file stays, and the message says where the new video is. A file replaced keeps its permissions.
+- **`--name` takes plain letters, digits, dots, underscores and hyphens** (DEMO-0094)
+  Up to 64, starting with a letter, a digit or an underscore. `-n ../x` used to write outside demoreel's own folder. A name with a space or an accented letter is now refused.
+- **`-o` takes an ordinary file or nothing, and no control characters** (DEMO-0094)
+  A line break in the path broke the one line on stdout, and any long film.
 - **The finishing commands need fewer options** (DEMO-0263)
   `-o` is now optional on `edit`, `trim`, `caption`, `join`, `card`, `poster`, `thumbnail` and `sheet`: the file lands in the current folder, named after what it was made from and the time. `card` lasts 3 seconds unless you say, and `sheet` with neither `--every` nor `--at` takes 12 frames spread over the video. `edit --help` now says where a script's words are listed.
 
 ### Fixed
 
+- **Another user's link anywhere on a path is refused, not just at its end** (DEMO-0094)
+  Links are now checked on the way up and along a chain. Your own, and root's such as `/var/run`, still work.
+- **Another user's file or pipe at `-o` or `--app-log` is refused** (DEMO-0094)
+  They could read the video, or what the app printed. `--app-log /dev/null` still works.
+- **Hidden part files can no longer be planted or shared** (DEMO-0094)
+  Their names are now random and made with `O_EXCL`. Two runs to one `-o` no longer remove each other's.
+- **Two runs in one second no longer share a default name** (DEMO-0094)
+  The name is claimed when the file is ready, and takes a number if it has gone. `stop` prints the name it ended with.
+- **A failed `shot` leaves a picture already at `-o` alone** (DEMO-0094)
+- **A `%` in the name of a picture is just a character** (DEMO-0094)
+  `shot -o p%d.png` wrote `p1.png` and failed.
+- **`edit x.mp4 -o x.mp4` no longer writes over its script** (DEMO-0094)
+- **A file where a folder must go no longer gives a traceback on the finishing commands** (DEMO-0094)
 - **A second SIGTERM while `shot` is ending no longer leaves a private screen running** (DEMO-0094)
   And `check` no longer reads a SIGTERM as "the display did not start".
 - **A Ctrl+C landing just as a recording checks its picture no longer fails the run** (DEMO-0094)

@@ -136,7 +136,7 @@ uses) prints each input's wallclock start:
 This section is the Xvfb path's. `wf-recorder` logs no start times, so
 `--gpu --audio` keeps `finish_gpu_video`'s plain copy until § 13 is settled.
 
-So an Xvfb `--audio` run records into the part file `partial_video` names, and
+So an Xvfb `--audio` run records into a part file from `new_part`, and
 `finish_audio_video` remuxes it with the sound shifted by the gap and fitted
 to the picture's length (`<fit>` = the picture's duration minus the gap):
 
@@ -144,7 +144,7 @@ to the picture's length (`<fit>` = the picture's duration minus the gap):
 ffmpeg -i <part> -itsoffset <audio_start - video_start> -i <part> \
        -map 0:v -map 1:a -c:v copy \
        -af apad=whole_dur=<fit>,atrim=duration=<fit> \
-       -c:a aac -b:a 192k -ar 48000 -ac 2 -movflags +faststart -y <output>
+       -c:a aac -b:a 192k -ar 48000 -ac 2 -movflags +faststart -y <new part>
 ```
 
 The sound is fitted to the picture, never the picture to the sound. In a run

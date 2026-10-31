@@ -100,6 +100,7 @@ stop agreeing.
   stutter fixtures are `testsrc2`, whose movement has edges; `testsrc` moves a
   gradient and scores 39%. Do not lower the threshold for the note alone, and
   do not go back to `testsrc`. The measurements are beside the constant.
-- **The film is written beside `-o` and moved into place when whole**, which
-  is what makes "a failure leaves nothing at `-o`" true. Do not write to `-o`
-  directly.
+- **Everything is written to a `new_part` beside `-o` and moved there by
+  `move_into_place` when whole**, which is what makes "a failure leaves nothing
+  at `-o`" true. Do not write to `-o` directly, and do not name a part after the
+  output: another user could plant that name first, and two runs would share it.

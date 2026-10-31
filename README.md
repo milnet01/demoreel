@@ -252,10 +252,10 @@ and prints the path. For three pictures, run it three times.
 It takes the options `record` takes, less `-d`, `-r`, `-n` and `--audio`, and
 adds `--region`. There is nothing to `stop`, so a `shot` has no name. It keeps its
 private screen's files in a folder of its own, removed when it succeeds and kept
-when it fails, like the logs below, and writes nothing `stop` reads — so it can run beside recordings and other shots. The one
-thing they can share is the default filename, the app and the time to the
-second, so give simultaneous shots of one app their own `-o`. The size need not
-be even; that rule belongs to video.
+when it fails, like the logs below, and writes nothing `stop` reads — so it can run beside recordings and other shots. Without
+`-o` the name is the app and the time to the second, and a name already taken
+when the picture is ready gets a number. The size need not be even; that rule
+belongs to video.
 
 `--region x,y,w,h` keeps one rectangle of the picture: its top-left corner at
 `x,y`, counted in pixels from the top-left of the screen, and `w` wide by `h`
@@ -265,13 +265,13 @@ Code session to read.
 
 The picture is always checked, even if the app has closed itself: an app that
 has gone leaves only an empty screen. A picture that is one flat colour fails
-the run, and so does not being able to look at the screen at all. A failed run
-prints no path, and keeps any picture it had saved.
+the run, and so does not being able to look at the screen at all.
 
-With `--region`, the whole screen is saved in the shot's own folder and
-checked there, since a plain rectangle may be what you asked for. Only a
-picture that passes is cut to the rectangle and written to `-o`. A failed run
-writes nothing to `-o`, and its folder keeps the whole screen.
+The whole screen is saved in the shot's own folder and checked there, since a
+plain rectangle may be what you asked for. Only a picture that passes is cut to
+any `--region` and written to `-o`. A failed run prints no path and writes
+nothing to `-o`, so a picture already there stays. Its folder keeps the whole
+screen.
 
 ## Finishing a recording
 
@@ -794,7 +794,9 @@ your own programs: anything running as you can read that file.
    is empty, so the run stops there and fails as step 6 describes.
 6. Look at the private screen one last time. If the app is still running and
    the screen is a single flat colour, that is an error, not a video — the run
-   stops and prints no path, leaving the part-written file on disk. Both looks
+   stops and prints no path, leaving what it recorded at `-o`. If a file is
+   already there, that stays as it was, and the message names the hidden file
+   beside it that holds this run's video. Both looks
    are skipped if the app closed itself first, or within 2 seconds of a blank
    look: it left an empty screen behind,
    and that recording is fine. With `-d 0` there is no halfway point, so only
@@ -802,6 +804,12 @@ your own programs: anything running as you can read that file.
    that is an error too, with the same result: it cannot vouch for the video,
    so it does not hand it back.
 7. Close the app, remove the private screen, leave one video file behind.
+
+While it records, the video is a hidden file beside `-o`, named
+`.demoreel-part-` and some random letters. It moves to `-o` when it is whole, so
+nothing is at `-o` until then, and a retake replaces the last take only if it
+works. A run killed outright leaves that hidden file behind, and no later run
+uses it.
 
 Step 6 matters more than it sounds. A recording of nothing is still a perfectly
 valid video file that opens, plays, and reports success — so without that check
@@ -811,15 +819,15 @@ you would only find out by watching it.
 
 | Option | What it does |
 |---|---|
-| `-o`, `--output` | Where to write the video. Without it, the file lands in the current folder, named after the app and the time. |
+| `-o`, `--output` | Where to write the video. Without it, the file lands in the current folder, named after the app and the time. A link of your own at this path keeps writing to its target, and a file replaced keeps its permissions. Another user's link or file on the path is refused, as is anything that is not an ordinary file, and a path holding a line break. |
 | `-d`, `--duration` | How many seconds to record, counted from when the scripted steps finish — so a run with `-a` steps lasts longer than this. `-d 0` means "keep going until I say stop, or until the app closes itself, whichever comes first". |
 | `-s`, `--size` | The size of the picture, like `1280x800`. Both numbers must be even. |
 | `-r`, `--framerate` | Frames per second. |
-| `-n`, `--name` | A name for this run, so `demoreel stop` knows which one you mean. |
+| `-n`, `--name` | A name for this run, so `demoreel stop` knows which one you mean. Up to 64 plain letters, digits, dots, underscores and hyphens, starting with a letter, a digit or an underscore. |
 | `-a`, `--action` | A scripted step. Repeat it; they run in order. |
 | `--steps` | Read the scripted steps from a file, one per line, or from standard input with `--steps -`. Use it instead of `-a` when a step types something private. |
 | `--cursor` | Draw the mouse pointer. Off by default, because with no scripted clicks it just sits in the corner. Not available with `record --gpu`. |
-| `--app-log` | Save what the app printed to a file. |
+| `--app-log` | Save what the app printed to a file. Another user's link or file on the path is refused; `/dev/null` and a pipe of your own work. |
 | `--settle` | Wait for the app to draw something before starting to record. |
 | `--gpu` | For apps that need the graphics card. |
 | `--audio` | Put the app's own sound in the video. Off by default. `record` only. |

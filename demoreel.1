@@ -178,6 +178,8 @@ the default is the current directory, named after the app and the time.
 The finishing commands default to the current directory too,
 named after the file they work from and the time.
 A name already taken gets a number.
+Another user's link or file on the path is refused,
+as is anything that is not an ordinary file.
 A video must end in
 .BR .mp4 ,
 a
@@ -223,6 +225,8 @@ A name for this run, so
 .B demoreel stop
 can find it (default
 .BR default ).
+It takes up to 64 plain letters, digits, dots, underscores and hyphens,
+and starts with a letter, a digit or an underscore.
 Two runs with the same name cannot record at once; the second refuses.
 .B record
 only.
