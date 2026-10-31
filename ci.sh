@@ -6765,6 +6765,34 @@ d = u.module_from_spec(u.spec_from_loader("demoreel", loader))
 loader.exec_module(d)
 print(d.state_dir())')
 
+# A failed shot keeps its folder, and says where on stderr: this removes it. The
+# path comes from the code under test, so it is used only if it is a shot's folder
+# directly under the state directory, and an empty or wrong one fails the step.
+kept_shot_folder() {  # the file holding the shot's stderr
+    local kept
+    kept=$(sed -n 's/.*display log is kept in //p' "$1")
+    case $kept in
+        "$statedir"/shot-*) ;;
+        *) echo "a failed shot named '$kept' as its folder, not a shot-* folder in $statedir" >&2
+           return 1 ;;
+    esac
+    case ${kept#"$statedir"/} in
+        */* | *$'\n'*)
+            echo "a failed shot named '$kept', which is not directly in $statedir" >&2
+            return 1 ;;
+    esac
+    if [ ! -d "$kept" ] || [ -L "$kept" ]; then
+        echo "a failed shot named '$kept', which is not a folder" >&2
+        return 1
+    fi
+    printf '%s\n' "$kept"
+}
+remove_kept_shot_folder() {
+    local kept
+    kept=$(kept_shot_folder "$1") || return 1
+    rm -rf -- "$kept"
+}
+
 # Whether a server this run name started is still running. Matched on the auth
 # file, which carries the name, so another session's display is never counted.
 server_left() {
@@ -9533,7 +9561,7 @@ set -e
     cat "$shots/flat.err" >&2
     exit 1
 }
-rm -rf "$(sed -n 's/.*display log is kept in //p' "$shots/flat.err")"
+remove_kept_shot_folder "$shots/flat.err"
 mkdir -p "$shots/nocut"
 cat >"$shots/nocut/ffmpeg" <<SHIM
 #!/bin/sh
@@ -9553,7 +9581,7 @@ set -e
     cat "$shots/cut.err" >&2
     exit 1
 }
-rm -rf "$(sed -n 's/.*display log is kept in //p' "$shots/cut.err")"
+remove_kept_shot_folder "$shots/cut.err"
 shot=$(./demoreel shot -o "$shots/p%d.png" -s 320x240 -- xclock)
 [ "$shot" = "$shots/p%d.png" ] && [ -s "$shots/p%d.png" ] || {
     echo "a % in a shot's name did not reach the file: '$shot'" >&2; exit 1; }
@@ -9648,13 +9676,31 @@ for flag in -o --app-log; do
 done
 echo "-o and --app-log refuse a symlink another user made"
 
+step "the gate removes a failed shot's folder, and nothing else a message names"
+# DEMO-0094. The path comes from demoreel's stderr. Each of these must be refused;
+# this asks the part that decides, which removes nothing, whatever it answers.
+mkdir -p "$statedir/shot-${GATE_RUN}control/b"
+for said in '' "$statedir" "$statedir/" "$statedir/gate.json" "$statedir/../x" \
+            "$statedir/shot-${GATE_RUN}control/b" "$tmp/shot-a" /; do
+    printf 'Its display log is kept in %s\n' "$said" >"$tmp/said.err"
+    if ( kept_shot_folder "$tmp/said.err" ) >/dev/null 2>&1; then
+        echo "the gate would have removed '$said'" >&2; exit 1
+    fi
+done
+printf 'Its display log is kept in %s\n' "$statedir/shot-${GATE_RUN}control" >"$tmp/said.err"
+remove_kept_shot_folder "$tmp/said.err"
+[ ! -e "$statedir/shot-${GATE_RUN}control" ] || { echo "the control folder stayed" >&2; exit 1; }
+echo "only a shot-* folder directly in the state directory is removed"
+
 step "shot takes one picture, prints its path, and leaves nothing behind"
 # DEMO-0100. The picture is checked by reading the saved file back, with the
 # same frame_is_flat as a recording. An odd size is allowed: that rule is
 # H.264's. A shot writes no state file, so `stop` cannot see one, and its
-# private folder goes when it succeeds.
-before=$(find "$statedir" -maxdepth 1 -name "shot-*" | wc -l)
-shot=$(./demoreel shot -o "$tmp/clock.png" -s 321x241 -- xclock)
+# private folder goes when it succeeds. These shots keep their folders in a state
+# directory of their own, so another session's shot cannot change the count.
+own_shot_state="$tmp/shotstate"
+mkdir -m 700 "$own_shot_state"
+shot=$(XDG_RUNTIME_DIR="$own_shot_state" ./demoreel shot -o "$tmp/clock.png" -s 321x241 -- xclock)
 [ "$shot" = "$tmp/clock.png" ] || { echo "shot printed '$shot', not its path" >&2; exit 1; }
 python3 - "$tmp/clock.png" <<'PY'
 import importlib.machinery, importlib.util, subprocess, sys
@@ -9668,8 +9714,8 @@ raw = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", sys.argv[1],
 assert len(raw) == 321 * 241, len(raw)
 assert not dr.frame_is_flat(raw), "the picture is flat"
 PY
-after=$(find "$statedir" -maxdepth 1 -name "shot-*" | wc -l)
-[ "$after" -eq "$before" ] || { echo "a successful shot left its folder behind" >&2; exit 1; }
+[ -z "$(find "$own_shot_state" -mindepth 2 -maxdepth 2 -name "shot-*")" ] || {
+    echo "a successful shot left its folder behind" >&2; exit 1; }
 echo "one 321x241 picture of the app, its path on stdout, nothing left over"
 
 step "a flat picture is refused"
@@ -9679,7 +9725,7 @@ if out=$(./demoreel shot -o "$tmp/flat.png" -s 320x240 --settle 1 \
 fi
 [ -z "$out" ] || { echo "a refused shot still printed a path: $out" >&2; exit 1; }
 grep -q 'one flat colour' "$tmp/flat.err" || { cat "$tmp/flat.err" >&2; exit 1; }
-rm -rf "$(sed -n 's/.*display log is kept in //p' "$tmp/flat.err")"
+remove_kept_shot_folder "$tmp/flat.err"
 echo "a flat picture failed the run and printed no path"
 
 step "shot --region keeps one rectangle, and only of a checked screen"
@@ -9702,13 +9748,12 @@ assert len(raw) == 40 * 20, len(raw)
 assert min(raw) > 200, "the cut holds more than the box"
 PY
 # A real shot: the rectangle's size, its path, and no folder left behind.
-before=$(find "$statedir" -maxdepth 1 -name "shot-*" | wc -l)
-shot=$(./demoreel shot -o "$tmp/region.png" -s 321x241 --region 10,20,101,61 -- xclock)
+shot=$(XDG_RUNTIME_DIR="$own_shot_state" ./demoreel shot -o "$tmp/region.png" -s 321x241 --region 10,20,101,61 -- xclock)
 [ "$shot" = "$tmp/region.png" ] || { echo "shot printed '$shot', not its path" >&2; exit 1; }
 size=$(ffprobe -v error -show_entries stream=width,height -of csv=p=0 "$tmp/region.png")
 [ "$size" = "101,61" ] || { echo "--region 10,20,101,61 made a $size picture" >&2; exit 1; }
-after=$(find "$statedir" -maxdepth 1 -name "shot-*" | wc -l)
-[ "$after" -eq "$before" ] || { echo "a --region shot left its folder behind" >&2; exit 1; }
+[ -z "$(find "$own_shot_state" -mindepth 2 -maxdepth 2 -name "shot-*")" ] || {
+    echo "a --region shot left its folder behind" >&2; exit 1; }
 # A rectangle that cannot be kept stops the run before the app starts.
 for bad in 0,0,400,300 1,2,3 0,0,0,5; do
     if ./demoreel shot -o "$tmp/bad.png" -s 320x240 --region "$bad" -- \
@@ -9726,7 +9771,7 @@ if ./demoreel shot -o "$tmp/flatcut.png" -s 320x240 --region 0,0,100,100 \
 fi
 grep -q 'one flat colour' "$tmp/flatcut.err" || { cat "$tmp/flatcut.err" >&2; exit 1; }
 [ ! -e "$tmp/flatcut.png" ] || { echo "a failed --region shot wrote to -o" >&2; exit 1; }
-kept=$(sed -n 's/.*display log is kept in //p' "$tmp/flatcut.err")
+kept=$(kept_shot_folder "$tmp/flatcut.err")
 [ -s "$kept/screen.png" ] || { echo "the kept folder has no whole screen" >&2; exit 1; }
 rm -rf "$kept"
 echo "the rectangle is the one named; bad ones stop early; a flat screen still fails"
@@ -9739,8 +9784,7 @@ if ./demoreel shot -o "$tmp/none.png" -s 320x240 -- /nonexistent/app \
        >/dev/null 2>"$tmp/early.err"; then
     echo "a shot of an app that cannot start succeeded" >&2; exit 1
 fi
-kept=$(sed -n 's/.*display log is kept in //p' "$tmp/early.err")
-[ -n "$kept" ] && [ -d "$kept" ] || {
+kept=$(kept_shot_folder "$tmp/early.err") || {
     echo "an early shot failure did not name the folder it kept:" >&2
     cat "$tmp/early.err" >&2; exit 1; }
 rm -rf "$kept"
