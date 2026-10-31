@@ -19,6 +19,15 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# Several steps stand a root-owned file or link in for another user's. Run as
+# root those are the caller's own, so the guards let them through and a step
+# would write over a system file. Nothing runs this as root: GitHub's runner and
+# the parity image are ordinary users, and --packages' containers run no ci.sh.
+if [ "$(id -u)" -eq 0 ]; then
+    echo "ci.sh will not run as root: its steps would write over system files." >&2
+    exit 2
+fi
+
 # Every step below matches demoreel's English messages, so every step runs in
 # English whatever the developer's locale (docs/specs/DEMO-0060 § 4.8). A step
 # that tests a translation removes this for its own runs, with `env -u LC_ALL`.
@@ -7385,6 +7394,30 @@ grep -q 'not a directory you own' "$tmp/planted.err" || {
     exit 1
 }
 echo "a state directory we do not own is refused"
+
+step "the gate will not run as root"
+# DEMO-0094. Several steps stand a root-owned file or link in for another
+# user's. As root those are the caller's own, the guards let them through, and
+# a step would write over a system file. The refusal is the first thing ci.sh
+# does, so a stand-in for root is enough: no step behind it can run.
+mkdir -p "$tmp/rootshim"
+cat >"$tmp/rootshim/id" <<SHIM
+#!/bin/sh
+[ "\$1" = -u ] && { echo 0; exit 0; }
+exec $(command -v id) "\$@"
+SHIM
+chmod +x "$tmp/rootshim/id"
+set +e
+PATH="$tmp/rootshim:$PATH" ./ci.sh --docs >"$tmp/asroot.out" 2>"$tmp/asroot.err"
+asroot_status=$?
+set -e
+[ "$asroot_status" -ne 0 ] && grep -q 'will not run as root' "$tmp/asroot.err" \
+    && [ ! -s "$tmp/asroot.out" ] || {
+    echo "the gate ran as root (exit $asroot_status):" >&2
+    cat "$tmp/asroot.err" >&2
+    exit 1
+}
+echo "the gate stops before any step when run as root"
 
 step "an output path that is another user's symlink is refused"
 # DEMO-0082. demoreel resolves -o itself, so the kernel's protected_symlinks
