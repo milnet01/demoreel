@@ -1702,6 +1702,37 @@ step() {
 }
 gate_end() { step_end; printf '\n=== %s ===\n' "$1"; }
 
+# End what this shell started and still has running, for every way out of the
+# gate. It asks bash at the moment of asking, never a list kept along the way: a
+# pid from a list may have ended long ago and now be someone else's, and a signal
+# would reach them (a step below has stop refuse that same mistake). A finishing
+# worker leads a process group, so the group goes as well; anything else has no
+# group of that number. A run ends as `demoreel stop` would end it, so it gets
+# the time to finish its video and take its display down.
+stop_children() {
+    local pid pids left _
+    pids=$(jobs -rp)
+    for pid in $pids; do
+        kill "$pid" 2>/dev/null || true
+        kill -- "-$pid" 2>/dev/null || true
+    done
+    # A group outlasts its leader for a moment, while demoreel takes itself down.
+    for _ in $(seq 1 100); do
+        left=$(jobs -rp)
+        for pid in $pids; do
+            ! kill -0 -- "-$pid" 2>/dev/null || left=yes
+        done
+        [ -n "$left" ] || return 0
+        sleep 0.1
+    done
+    for pid in $pids; do
+        kill -KILL -- "-$pid" 2>/dev/null || true
+    done
+    for pid in $(jobs -rp); do
+        kill -KILL "$pid" 2>/dev/null || true
+    done
+}
+
 # The finishing commands (edit, trim, caption, join, card, motion, poster, thumbnail, sheet), held
 # to README.md § "Finishing a recording". One definition, run by the full gate
 # and alone by `./ci.sh --finishing`. Every input is made by ffmpeg from a
@@ -1799,7 +1830,7 @@ finishing_checks() {
     actual:   $2"; }
     assert_absent() { [ ! -e "$2" ] || fail "$1: expected nothing at $2, but it exists"; }
     assert_file() { [ -s "$2" ] || fail "$1: expected a file at $2, none there"; }
-    snap() { ( cd "$ft" && find . -type f -not -path './log/*' -print0 | sort -z \
+    snap() { ( cd "$ft" && find . -type f -not -path './log/*' -not -path './.xdg/*' -print0 | sort -z \
                  | xargs -0 -r sha256sum | sha256sum ); }
     px() { python3 "$ft/px.py" "$@"; }
     v_dur() { ffprobe -v error -show_entries format=duration -of csv=p=0 "$1"; }
@@ -1960,12 +1991,29 @@ finishing_checks() {
     fin_one() {  # index: run one check in a fresh copy of the inputs
         local w="$tmp/fin-steps/$1" t0=${EPOCHREALTIME/./}
         mkdir -p "$w"
+        # A run's edit-* folder goes under the check, not the real state directory.
+        mkdir -m 700 "$w/.xdg"
+        export XDG_RUNTIME_DIR="$w/.xdg"
         ( cd "$ft" && find . -mindepth 1 -maxdepth 1 ! -name out ! -name log \
               -exec cp -a {} "$w/" \; )
         mkdir -p "$w/out" "$w/log"
         ft=$w; fo="$w/log/stdout"; fe="$w/log/stderr"
         set +e; ( set -e; "${fin_funcs[$1]}" ); echo $? > "$w.rc"
         since "$t0" > "$w.time"
+    }
+    # A check that hangs fails, group and all, rather than hanging the gate. The
+    # slowest takes under a minute here, beside the others.
+    fin_watchdog() {  # the worker it watches
+        local limit=${FIN_CHECK_LIMIT:-600} _
+        for _ in $(seq 1 "$limit"); do
+            sleep 1
+            kill -0 "$1" 2>/dev/null || return 0
+        done
+        echo "FAIL: this check ran past its limit of $limit s"
+        trap '' TERM
+        kill -- "-$1" 2>/dev/null || true
+        sleep 5
+        kill -KILL -- "-$1" 2>/dev/null || true
     }
     fin_run() {
         local i jobs=${FIN_JOBS:-$(( $(nproc) < 4 ? $(nproc) : 4 ))}
@@ -1979,8 +2027,14 @@ finishing_checks() {
         step "finishing: the checks below, run side by side"
         for i in "${!fin_funcs[@]}"; do
             while [ "$(jobs -rp | wc -l)" -ge "$jobs" ]; do wait -n || true; done
-            ( renice -n 10 "$BASHPID" >/dev/null 2>&1 || true; fin_one "$i" ) \
-                > "$tmp/fin-steps/$i.log" 2>&1 &
+            # Job control for this launch alone: the worker leads a process group
+            # of its own, so stop_children reaches its demoreel and ffmpeg too.
+            set -m
+            ( renice -n 10 "$BASHPID" >/dev/null 2>&1 || true
+              worker=$BASHPID  # read here: in the line below it would be the watchdog's
+              fin_watchdog "$worker" &
+              fin_one "$i" ) > "$tmp/fin-steps/$i.log" 2>&1 < /dev/null &
+            set +m
         done
         wait || true
         step_end
@@ -4780,7 +4834,8 @@ for run in runs:
         if word == "-i" and at + 1 < len(run):
             name = run[at + 1]
             # What demoreel wrote itself, or not a file: its pieces, parts and lavfi.
-            own = "/.demoreel-" in name or "/out/" in name or not name.startswith(home)
+            own = ("/.demoreel-" in name or "/out/" in name or "/.xdg/" in name
+                   or not name.startswith(home))
             if not own:
                 seen += 1
                 before = run[since:at]
@@ -6199,7 +6254,7 @@ if $FINISHING_ONLY; then
         command -v "$prog" >/dev/null || { echo "missing: $prog" >&2; exit 1; }
     done
     tmp=$(mktemp -d)
-    trap 'rm -rf "$tmp"' EXIT
+    trap 'stop_children; rm -rf "$tmp"' EXIT
     finishing_checks
     gate_end 'finishing checks passed'
     exit 0
@@ -6656,24 +6711,13 @@ tmp=$(mktemp -d)
 # cleanup does not cover it: the branch most likely to fire is the assertion
 # that gives up on finding the run, and that is before the step's own stop.
 #
-# Each step that launches a recorder appends its pid here. demoreel handles
-# SIGTERM by finishing the video and running its own cleanup, so a leftover
-# ends the same way `demoreel stop` would end it -- including the window before
-# the run has written its state file, where stopping it by name cannot work.
-gate_pids=""
+# demoreel handles SIGTERM by finishing the video and running its own cleanup,
+# so a leftover ends the same way `demoreel stop` would end it -- including the
+# window before the run has written its state file, where stopping it by name
+# cannot work. stop_children gives each one a bounded chance at its own teardown,
+# which is what takes its Xvfb down with it.
 cleanup() {
-    for pid in $gate_pids; do
-        kill "$pid" 2>/dev/null || true
-    done
-    # Give each one a bounded chance to run its own teardown, which is what
-    # takes its Xvfb down with it.
-    for pid in $gate_pids; do
-        for _ in $(seq 1 50); do
-            kill -0 "$pid" 2>/dev/null || break
-            sleep 0.1
-        done
-        kill -KILL "$pid" 2>/dev/null || true
-    done
+    stop_children
     # Then sweep. A recorder signalled before it installed its handlers dies
     # without tearing anything down, and a leaked Xvfb holds its display number
     # and poisons the pool for later runs.
@@ -6686,6 +6730,8 @@ cleanup() {
         if tr '\0' ' ' < "/proc/$xv/cmdline" 2>/dev/null \
            | grep -q "demoreel-$(id -u)/gate"; then
             kill "$xv" 2>/dev/null || true
+            # A step may have stopped this server, and a signal waits on that.
+            kill -CONT "$xv" 2>/dev/null || true
         fi
     done
     # An interrupted Ubuntu leg leaves its container running. Stopped by name:
@@ -6946,7 +6992,6 @@ if sound_step "--audio records the app's sound, whichever way it plays"; then
     ./demoreel record --audio -n gate-sound -o "$tmp/sound.mp4" -d 8 -s 640x480 \
         -- xterm -e "$tmp/tones.sh" "$tmp/tones.pid" "$tmp/tone.wav" >/dev/null &
     sound_run=$!
-    gate_pids="$gate_pids $sound_run"
     python3 "$tmp/watch-sinks.py" "$sound_run" "$tmp/tones.pid"
     wait "$sound_run" || { echo "the --audio run failed" >&2; exit 1; }
     python3 - "$tmp/sound.mp4" <<'PY'
@@ -6995,7 +7040,6 @@ if sound_step "two --audio runs never hear each other"; then
     ./demoreel record --audio -n gate-sound-b -o "$tmp/sound-b.mp4" -d 8 -s 640x480 \
         -- xclock >/dev/null 2>"$tmp/sound-b.err" &
     run_b=$!
-    gate_pids="$gate_pids $run_a $run_b"
     wait "$run_a" || { echo "the playing run failed" >&2; exit 1; }
     wait "$run_b" || { echo "the silent run failed:" >&2; cat "$tmp/sound-b.err" >&2; exit 1; }
     level_a=$(loudest "$tmp/sound-a.mp4")
@@ -7023,7 +7067,6 @@ if sound_step "no run leaves a sound output behind"; then
         ./demoreel record -n gate-sound-end -o "$tmp/sound-end.mp4" -d 0 -s 640x480 \
             -- xclock >/dev/null 2>&1 &
         leak_run=$!
-        gate_pids="$gate_pids $leak_run"
         wait_recording gate-sound-end "$leak_run"
         if [ "$how" = stop ]; then
             ./demoreel stop gate-sound-end >/dev/null
@@ -7246,7 +7289,6 @@ printf 'wait 2\n# a comment\n\ntype %s\nkey Return\n' "$secret" |
     -- xterm -e sh -c "read line; printf '%s' \"\$line\" > $tmp/steps.txt" \
     >/dev/null &
 pid=$!
-gate_pids="$gate_pids $pid"
 # Read the command line for as long as the run lasts, not once at a guess:
 # the app exits after Return, which ends the run, and how soon that is
 # depends on the machine.
@@ -7650,7 +7692,6 @@ step "stop ends a run started with -d 0"
 ./demoreel record -o "$tmp/stopped.mp4" -d 0 -n gatestop -s 640x480 \
     --app-log "$tmp/app.log" -- xclock >/dev/null 2>&1 &
 recorder=$!
-gate_pids="$gate_pids $recorder"
 # Straight after launching it, with no retry. DEMO-0034: a run used to be
 # unreachable until it was already recording, so this line said "no recording
 # named gatestop" while the run carried on. stop now finds a starting run and
@@ -7681,7 +7722,6 @@ chmod +x "$tmp/slowstop/ffmpeg"
 PATH="$tmp/slowstop:$PATH" ./demoreel record -o "$tmp/slowstop.mp4" -d 0 \
     -n gateslow -s 640x480 -- xclock >/dev/null 2>"$tmp/slowstop.err" &
 recorder=$!
-gate_pids="$gate_pids $recorder"
 stopped=$(./demoreel stop gateslow) || {
     echo "stop missed a run still asking ffmpeg for its encoders" >&2
     kill "$recorder"; wait "$recorder"; exit 1; }
@@ -7778,7 +7818,8 @@ def hang_up(args, ready):
         if ready in seen:
             break
     else:
-        run.kill()
+        run.terminate()  # its own teardown takes its display down; a SIGKILL would not
+        run.wait(60)
         raise SystemExit(f"never saw {ready!r}:\n{seen.decode(errors='replace')}")
     time.sleep(1)
     started = servers(run.pid)
@@ -8446,7 +8487,6 @@ set +e
 ./demoreel record -n gate -o "$tmp/killed.mp4" -d 6 -s 320x240 -- xclock \
     >"$tmp/killed.out" 2>"$tmp/killed.err" &
 killed_rec=$!
-gate_pids="$gate_pids $killed_rec"
 for _ in $(seq 1 100); do
     # sed, not grep: see the cookie step -- grep's exit 1 kills a pipefail run.
     [ -n "$(sed -n '/recording :/p' "$tmp/killed.err")" ] && break
@@ -8479,7 +8519,6 @@ for early in recorder display; do
     ./demoreel record -n gateearly -o "$tmp/early.mp4" -d 20 -s 320x240 -- xclock \
         >"$tmp/early.out" 2>"$tmp/early.err" &
     early_rec=$!
-    gate_pids="$gate_pids $early_rec"
     for _ in $(seq 1 100); do
         [ -n "$(sed -n '/recording :/p' "$tmp/early.err")" ] && break
         sleep 0.1
@@ -8903,7 +8942,6 @@ step "stop fails when the run it stopped fails"
 ./demoreel record -o "$tmp/blankstop.mp4" -d 0 -n gateblankstop -s 320x240 \
     --startup-timeout 1 -- sleep 60 >/dev/null 2>&1 &
 recorder=$!
-gate_pids="$gate_pids $recorder"
 if blankpath=$(./demoreel stop gateblankstop 2>/dev/null); then
     echo "stop succeeded for a run that failed, printing '$blankpath'" >&2
     exit 1
@@ -8926,7 +8964,6 @@ race1=$!
 ./demoreel record -o "$tmp/race2.mp4" -d 3 -n gaterace -s 320x240 \
     -- xclock >/dev/null 2>"$tmp/race2.err" &
 race2=$!
-gate_pids="$gate_pids $race1 $race2"
 set +e
 wait "$race1"; s1=$?
 wait "$race2"; s2=$?
@@ -9009,7 +9046,6 @@ lock_check() {
                   exec xclock' sh "$tmp/$name" \
         >/dev/null 2>"$tmp/$name.err" &
     local rec=$! disp=""
-    gate_pids="$gate_pids $rec"
     for _ in $(seq 1 100); do
         # sed, not grep: this script runs under pipefail, and grep exits 1 when
         # it matches nothing, which kills the run silently while we are still
@@ -9133,7 +9169,6 @@ else
     XDG_RUNTIME_DIR="$runtime" ./demoreel record -n gatexdg -o "$tmp/xdg.mp4" -d 0 -s 320x240 \
         -- xclock >/dev/null 2>"$tmp/xdg.err" &
     xdg_rec=$!
-    gate_pids="$gate_pids $xdg_rec"
     for _ in $(seq 1 100); do
         [ -n "$(sed -n '/recording :/p' "$tmp/xdg.err")" ] && break
         sleep 0.1
@@ -9338,7 +9373,6 @@ mkdir -p "$retake"
 ./demoreel record -d 0 -n gatepart -o "$retake/take.mp4" -s 320x240 -- xclock \
     >/dev/null 2>"$retake/take.err" &
 take_rec=$!
-gate_pids="$gate_pids $take_rec"
 for _ in $(seq 1 100); do
     [ -n "$(sed -n '/recording :/p' "$retake/take.err")" ] && break
     sleep 0.1
@@ -9446,7 +9480,6 @@ dr_path="$PWD/demoreel"
 ( cd "$retake/default" && exec "$dr_path" record -d 0 -n gatepart -s 320x240 -- xclock ) \
     >"$retake/default.out" 2>"$retake/default.err" &
 take_rec=$!
-gate_pids="$gate_pids $take_rec"
 for _ in $(seq 1 100); do
     [ -n "$(sed -n '/recording :/p' "$retake/default.err")" ] && break
     sleep 0.1
@@ -9706,7 +9739,6 @@ step "tab completion offers what demoreel accepts, in bash, zsh and fish"
 # three cases, against a sleep standing in for a live run.
 sleep 300 &
 fake_run=$!
-gate_pids="$gate_pids $fake_run"
 expected=$(XDG_RUNTIME_DIR="$tmp/xdg" python3 - "$fake_run" <<'COMPLETIONPY'
 import argparse, importlib.machinery, importlib.util, json, sys
 loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
@@ -9771,6 +9803,48 @@ grep -q '^  present ' <<<"$places" && {
 echo "--option-places found --region in every place, and --not-an-option in none"
 
 finishing_checks
+
+step "a gate stopped by a signal leaves no finishing check running"
+# DEMO-0094. Workers, and the demoreel and ffmpeg under them, went on working
+# after a TERM to the gate alone, while its teardown removed their files. Every
+# process of that nested gate has this TMPDIR, so nothing else is counted.
+# The shim holds every later ffmpeg of a check, so a stray one is still there to
+# be seen rather than finishing while this looks.
+fin_kill="$tmp/fin-kill"
+mkdir "$fin_kill" "$tmp/fin-hold"
+cat >"$tmp/fin-hold/ffmpeg" <<SHIM
+#!/bin/sh
+[ -e "$tmp/fin-hold/now" ] && exec sleep 303
+exec $(command -v ffmpeg) "\$@"
+SHIM
+chmod +x "$tmp/fin-hold/ffmpeg"
+PATH="$tmp/fin-hold:$PATH" TMPDIR="$fin_kill" ./ci.sh --finishing >"$tmp/fin-kill.log" 2>&1 &
+nested=$!
+started=
+for _ in $(seq 1 600); do
+    # A worker's out folder comes once it has copied its inputs.
+    compgen -G "$fin_kill/tmp.*/fin-steps/4/out" >/dev/null && { started=yes; break; }
+    sleep 0.1
+done
+[ -n "$started" ] || { echo "the nested gate never started its checks:" >&2
+                       cat "$tmp/fin-kill.log" >&2; exit 1; }
+touch "$tmp/fin-hold/now"
+sleep 2
+kill "$nested"
+wait "$nested" || true
+# The gate's teardown has waited for its groups, so one look after a moment's
+# grace. demoreel's own time limits end a stray in seconds, so a later look, or a
+# loop of them, would find nothing and pass.
+sleep 1
+left=$(for p in $(pgrep -u "$(id -u)"); do
+           grep -qzx "TMPDIR=$fin_kill" "/proc/$p/environ" 2>/dev/null && echo "$p"
+       done || true)
+[ -z "$left" ] || { echo "still running after the gate was stopped:" >&2
+                    for p in $left; do tr '\0' ' ' <"/proc/$p/cmdline" >&2; echo >&2; done
+                    exit 1; }
+[ -z "$(ls -A "$fin_kill")" ] || { echo "the stopped gate left its files:" >&2
+                                   ls -A "$fin_kill" >&2; exit 1; }
+echo "a TERM to the gate ended every worker under it, and its files went with them"
 
 # The translation checks (docs/specs/DEMO-0060-translation-catalogs.md § 4.8).
 # No catalog ships yet, so they run against copies of demoreel beside catalogs
