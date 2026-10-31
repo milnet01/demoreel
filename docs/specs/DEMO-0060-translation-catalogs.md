@@ -164,8 +164,12 @@ demoreel: po/de.po could not be read (line 212: unknown escape sequence), so mes
 
 The note names the file, the line where there is one, and the kind of error,
 never the catalog's own bytes, which could be the control characters it is
-refusing. A file over 1 MiB is refused before it is read, so its note names no
-line.
+refusing. A keyword outside the grammar is the catalog's own bytes, so the note
+says only that one was found. A file over 1 MiB is refused without being read
+whole, so its note names no line. So is anything but a regular file, a link
+included, which also names no line: a link reads outside `po/`, `/dev/zero`
+never ends, and a named pipe waits for ever. A folder link above the file is
+not refused.
 
 ### 4.4 Choosing the language
 
@@ -289,10 +293,12 @@ argparse formats with `%` against a dict, which does no attribute lookup, and
 it does so to its own strings and to every `help=`, `description=` and epilog
 text. So every msgid argparse formats takes a second rule beside § 4.5's, at
 runtime and at the gate: its translation holds `%` only as `%%` or in a
-`%(name)s` or `%s` its English holds. `tr_help` and `tr_listed` apply it to
+`%(name)s` or `%s` its English holds, and a `%s` as many times as its English
+does. `tr_help` and `tr_listed` apply it to
 demoreel's own text, and the hook to argparse's. A bare `%` ("50 %") raises `TypeError` in
-`--help`, measured on Python 3.13, and an added `%(default)s` prints
-argparse's internal value. argparse's substituted
+`--help`, measured on Python 3.13, an added `%(default)s` prints
+argparse's internal value, and another number of `%s` raises `TypeError` on a
+usage error. argparse's substituted
 values get no isolation marks, since argparse, not `tr`, fills them; DEMO-0063's
 manual check covers how they read.
 
@@ -463,7 +469,7 @@ the same template.
 - **INV-8** — A catalog entry naming `{output.__class__}`, `{output[0]}`,
   `{output!r}` or `{unknown}`, alone or beside a valid `{output}`, never
   reaches the terminal, and nor does a translation of a msgid argparse formats
-  (§ 4.6) adding `%(x)s` or a bare `%`: the run prints the English message and completes with the same
+  (§ 4.6) adding `%(x)s` or a bare `%`, or holding `%s` another number of times: the run prints the English message and completes with the same
   exit status as under `LC_ALL=C`.
   *Test:* `ci.sh` step `translation: a bad catalog costs only the language` —
   a copy whose `po/zz.po` carries each of those in a message a failing run

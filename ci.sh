@@ -8774,6 +8774,59 @@ for what, text in hostile.items():
     expect(what, run(text, NOTHING), rc_nothing, NOTHING_MSG, note=True)
 expect("more than 1 MiB", run(good + "#" * (1024 * 1024) + "\n", NOTHING), rc_nothing,
        NOTHING_MSG, note=False)
+# A refusal's note holds none of the catalog's own bytes (§ 4.3), and a keyword
+# outside the grammar is the catalog's own bytes.
+for what, text in (("a control code as the first keyword", "\x1b]0;forged\x07\n" + good),
+                   ("a control code as a later keyword", good + "\n\x1b]0;forged\x07\n"),
+                   ("a keyword in the wrong place", good + '\nmsgid_plural "x"\n')):
+    r = run(text, NOTHING)
+    expect(what, r, rc_nothing, NOTHING_MSG, note=True)
+    if b"\x1b" in r.stderr or b"forged" in r.stderr or b"msgid_plural" in r.stderr:
+        bad.append(f"{what}: the note holds the catalog's own bytes: {r.stderr!r:.300}")
+# A catalog is a regular file of its own, or it costs its language: not a link,
+# which would read outside po/ (INV-9), and not a thing that never ends or never
+# answers. Limited, since a read of /dev/zero grows until memory runs out.
+import resource
+def small():
+    resource.setrlimit(resource.RLIMIT_AS, (2 << 30, 2 << 30))
+catalog = here / "po" / "zz.po"
+(top / "outside.po").write_text(good, encoding="utf-8")
+for what, place in (("a link to a good catalog", lambda: catalog.symlink_to(top / "outside.po")),
+                    ("a link to /dev/zero", lambda: catalog.symlink_to("/dev/zero")),
+                    ("a named pipe", lambda: os.mkfifo(catalog)),
+                    ("a folder", lambda: catalog.mkdir())):
+    catalog.rmdir() if catalog.is_dir() and not catalog.is_symlink() else catalog.unlink()
+    place()
+    try:
+        r = subprocess.run([str(here / "demoreel"), *NOTHING], cwd=here, env=pseudo,
+                           capture_output=True, timeout=30, preexec_fn=small)
+        expect(what, r, rc_nothing, NOTHING_MSG, note=False)
+    except subprocess.TimeoutExpired:
+        bad.append(f"{what}: the run hung")
+catalog.rmdir()
+# A folder link above the catalog is how an installed copy may be reached, and
+# it still works.
+(top / "linked" / "real-po").mkdir(parents=True)
+(top / "linked" / "demoreel").write_bytes((here / "demoreel").read_bytes())
+(top / "linked" / "demoreel").chmod(0o755)
+(top / "linked" / "real-po" / "zz.po").write_text(good, encoding="utf-8")
+(top / "linked" / "po").symlink_to("real-po")
+r = subprocess.run([str(top / "linked" / "demoreel"), *NOTHING], cwd=here, env=pseudo,
+                   capture_output=True, timeout=30)
+if "⟦" not in r.stderr.decode("utf-8", "replace"):
+    bad.append(f"a folder link above the catalog: not translated: {r.stderr!r:.300}")
+# § 4.6: argparse fills a positional %s with `%`, so a translation holding it
+# another number of times raises TypeError on any usage error.
+for what, msgid, argv in (
+        ("unrecognized arguments losing its %s", "unrecognized arguments: %s",
+         ["trim", "x.mp4", "--to", "1", "--no-such"]),
+        ("required arguments losing its %s", "the following arguments are required: %s",
+         ["trim"])):
+    for form in ('"⟦nothing⟧"', '"⟦%s %s⟧"'):
+        r = run(swap(msgid, form), argv)
+        err = r.stderr.decode("utf-8", "replace")
+        if r.returncode != 2 or "Traceback" in err or msgid.split(":")[0] not in err:
+            bad.append(f"{what} ({form}): status {r.returncode}: {err!r:.300}")
 # INV-8: a template reaching past plain substitution is not used -- refused
 # by the check on each translation, and, behind it, filled by a substitution
 # that cannot reach an attribute, an index or a conversion. Each defence is

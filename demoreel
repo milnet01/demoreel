@@ -314,7 +314,7 @@ def read_po(text):
                      "fuzzy": "fuzzy" in flags, "line": number}
             field, flags = entry["msgid"], set()
         elif entry is None or (entry["forms"] and keyword == "msgid_plural"):
-            raise CatalogError(f"{keyword} comes before its msgid", number)
+            raise CatalogError("a keyword comes before its msgid", number)
         elif keyword == "msgid_plural" and entry["plural"] is None:
             entry["plural"] = field = [po_string(rest, number)]
         elif (keyword == "msgstr" and entry["plural"] is None and not entry["forms"]) or (
@@ -322,7 +322,7 @@ def read_po(text):
             entry["forms"].append(po_string(rest, number))
             field = entry["forms"]
         else:
-            raise CatalogError(f"unexpected {keyword!r}", number)
+            raise CatalogError("an unexpected keyword", number)
     close()
     seen = set()
     for entry in entries:
@@ -355,6 +355,25 @@ def mo_image(entries):
             + struct.pack(f"<{4 * count}I", *id_table, *str_table) + bytes(data))
 
 
+def catalog_bytes(path):
+    """A catalog's bytes, at most one more than CATALOG_LIMIT, so a larger one
+    is refused without being read. It must be a regular file of its own: a link
+    reads outside po/ (INV-9), /dev/zero never ends, and a named pipe waits for
+    ever. A folder link above it is fine: O_NOFOLLOW looks at the last name."""
+    try:
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC)
+    except OSError as exc:
+        if exc.errno == errno.ELOOP:
+            raise CatalogError("it is not a regular file") from None
+        raise
+    try:
+        if not stat.S_ISREG(os.fstat(fd).st_mode):
+            raise CatalogError("it is not a regular file")
+        return os.read(fd, CATALOG_LIMIT + 1)
+    finally:
+        os.close(fd)
+
+
 def load_catalog(path, code):
     """(code, translations, messages, draft) for one catalog, or CatalogError.
 
@@ -366,7 +385,7 @@ def load_catalog(path, code):
     import gettext
     import io
 
-    data = path.read_bytes()
+    data = catalog_bytes(path)
     if len(data) > CATALOG_LIMIT:
         raise CatalogError("larger than 1 MiB")
     if data.startswith(b"\xef\xbb\xbf"):
@@ -479,6 +498,11 @@ def _usable(text, english, plural_form, argparse_formats):
     if argparse_formats:
         tokens = set(PERCENT_RE.findall(text)) - {"%%"}
         if "%" in PERCENT_RE.sub("", text) or not tokens <= set(PERCENT_RE.findall(english)):
+            return False
+        # A positional one is filled by position: another number of them makes
+        # argparse's own `%` raise TypeError on a usage error.
+        if (sorted(t for t in PERCENT_RE.findall(text) if t != "%%" and "(" not in t)
+                != sorted(t for t in PERCENT_RE.findall(english) if t != "%%" and "(" not in t)):
             return False
     return True
 
