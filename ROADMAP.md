@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=291 -->
+<!-- ants-roadmap-id-high-water: DEMO=294 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -853,6 +853,29 @@ simplest case, and a gate proves it still records.
   film" and nothing more. Older than DEMO-0094, which found it while
   closing the untrusted-input subject.
   **Layman:** A very short title card before a clip stops the film from being made, and the message does not say why.
+  Kind: fix.
+  Source: review-fix DEMO-0094 2026-10-31.
+
+- 📋 [DEMO-0292] **The next real release must prove the new release workflow works.**
+  DEMO-0094 split release.yml in two. Only a real release can prove: the
+  two jobs and the artifact handed between them; attest from the second job
+  with the same sourceRepositoryDigest; github.sha on a release event; the
+  refs/tags/ checkout; gh with the job tokens; concurrency; pulls of pinned
+  images on GitHub's runner. Before a release, run ./ci.sh --release-images.
+  Close after the first release's run and download checks pass.
+  **Layman:** The safer release steps can only be fully tested by doing a real release.
+  Kind: investigate.
+  Source: review-fix DEMO-0094 2026-10-31.
+
+- 📋 [DEMO-0293] **.githooks/pre-push makes its gate's worktree with mktemp -d on /tmp, which is RAM here.**
+  Older than DEMO-0094, which found it while editing the hook.
+  **Layman:** The check before a push keeps a copy of the project in memory rather than on disk.
+  Kind: fix.
+  Source: review-fix DEMO-0094 2026-10-31.
+
+- 📋 [DEMO-0294] **install.sh --uninstall leaves files a newer version dropped, and folders it made.**
+  It removes the list in the checkout it runs from. Left open by DEMO-0094's release-chain subject.
+  **Layman:** Removing a from-source install can leave a few old files behind.
   Kind: fix.
   Source: review-fix DEMO-0094 2026-10-31.
 
@@ -5338,6 +5361,8 @@ covers both display backends and the Flatpak invocation.
   catalogs, measurements, input formats and a film's limits. Left: the
   release chain and completions, the gate's own weak checks, then
   SECURITY.md in full.
+  2026-10-31: subject closed: the release chain and completions. Left:
+  the gate's own weak checks, then SECURITY.md in full.
   **Layman:** Before calling it finished, have the code checked end to end for security holes and fix any found.
   Kind: audit-fix.
   Source: user-request-2026-09-25.
