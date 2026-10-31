@@ -5771,8 +5771,31 @@ MODEPY
 # definition, run by the full gate and alone by `./ci.sh --release-chain`. They
 # need no display and no network: every outside program is a stand-in or a
 # scratch repository under $tmp, so none of them can reach a real remote.
+#
+# A scratch repository is not the commit a workflow is running on, so nothing of
+# GitHub's reaches it unless a check sets it on purpose. GITHUB_SHA reaching one
+# made --verify-release refuse for another reason, on GitHub alone. So every run
+# sets GitHub's variables to values that would mislead, here too, and chain_run
+# removes them: a check that reads one fails on this machine as well.
 chain_checks() {
-    local ct="$tmp/chain"
+    local name
+    local -A github=()
+    for name in $(compgen -e | grep '^GITHUB_' || true); do
+        github[$name]=${!name}
+    done
+    export GITHUB_ACTIONS=true GITHUB_REF=refs/heads/not-a-release GITHUB_REF_NAME=not-a-release \
+        GITHUB_REPOSITORY=nobody/nothing GITHUB_SHA=0000000000000000000000000000000000000000
+    chain_run
+    unset GITHUB_ACTIONS GITHUB_REF GITHUB_REF_NAME GITHUB_REPOSITORY GITHUB_SHA
+    for name in "${!github[@]}"; do
+        export "$name=${github[$name]}"
+    done
+}
+chain_run() {
+    local name ct="$tmp/chain"
+    for name in $(compgen -e | grep '^GITHUB_' || true); do
+        unset "$name"
+    done
     mkdir -p "$ct"
     chain_tab_checks "$ct/tab"
     if ! command -v git >/dev/null || ! command -v ssh-keygen >/dev/null; then
