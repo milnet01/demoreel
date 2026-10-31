@@ -10637,18 +10637,25 @@ else
     # which is what the checks above just ran. Four cores, as on GitHub's
     # runner: x264 sizes its threads from the cores it may use, and that is
     # what differed last time.
+    # PID 1 here is bash, which ignores TERM, so podman would wait on it for as long
+    # as it runs (measured): -k stops the client, and cleanup removes the container,
+    # which outlives it. A tracked file deleted from this tree has nothing to send.
     parity_name=demoreel-parity-$$
     rc=0
-    git ls-files -coz --exclude-standard | tar --null -T - -cf - \
-        | timeout 900 podman run --rm -i --name "$parity_name" \
+    git ls-files -coz --exclude-standard \
+        | while IFS= read -r -d '' name; do
+              if [ -e "$name" ] || [ -L "$name" ]; then printf '%s\0' "$name"; fi
+          done \
+        | tar --null -T - -cf - \
+        | timeout -k 30 900 podman run --rm -i --name "$parity_name" \
             -e DEMOREEL_PARITY_INSIDE=1 "$PARITY_IMAGE" \
             bash -c 'mkdir w && tar -xf - -C w && cd w && taskset -c 0-3 ./ci.sh' \
         > "$tmp/parity.log" 2>&1 || rc=$?
-    parity_name=''
     [ "$rc" = 0 ] || {
-        echo "the gate failed on $PARITY_BASE; its output:" >&2
+        echo "the gate failed on $PARITY_BASE (exit $rc); its output:" >&2
         cat "$tmp/parity.log" >&2
         exit 1; }
+    parity_name=''
     grep -q '^=== all checks passed ===$' "$tmp/parity.log" || {
         echo "the Ubuntu run exited 0 without finishing; its output:" >&2
         cat "$tmp/parity.log" >&2
