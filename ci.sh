@@ -1960,6 +1960,15 @@ finishing_checks() {
     # How many pixels of frame IDX match SPEC (see px.py `find`); the rest of the
     # words are the region, as fractions of the frame.
     n_of() { px find "$@" | awk '{ print $1 }'; }
+    # For a check under `ulimit -v`. Address space grows with the cores: x264 is held
+    # to four threads, but ffmpeg's decoders and filters take one each, and each
+    # thread reserves its stack and an arena. So a limit set on twelve cores failed a
+    # larger machine and let a runaway through on four. Measured, in pieces then all
+    # in one ffmpeg, 2026-10-31: 2.2 and 5.5 GB on ffmpeg 9.0, 4.1 and over 5 GB on
+    # Ubuntu's 6.1, at four cores. On one or two a runaway can stay under a limit.
+    four_cores() {
+        taskset -c "$(python3 -c 'import os; print(*sorted(os.sched_getaffinity(0))[:4], sep=",")')" "$@"
+    }
     # A comparison of two numbers, spelled out when it fails.
     assert_cmp() {  # what a op b, where a and b may be sums or joined tests
         [[ "$2 $4" =~ ^[-+*/().0-9eE\ \&\|\<\>=!]+$ ]] \
@@ -4275,16 +4284,18 @@ took = time.monotonic() - start
 assert stopped and done.returncode != 0, (stopped, done.returncode)
 # The program sleeps for 20 s, so anything well short of that was the cap.
 assert took < 15, f"stopped after {took:.1f} s"
-# Reserves 8 GB of address space and touches almost none of it, for long
-# enough to be looked at several times.
+# Reserves far more than the cap and touches almost none of it, for long enough
+# to be looked at several times. Half the machine's memory, so the kernel grants
+# it on a small machine too, and it is still many times the 200 MB cap.
+half = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES") // 2
 reserves = [sys.executable, "-c",
-            "import mmap, time; m = mmap.mmap(-1, 8 * 2**30); m[0] = 1; time.sleep(1.5)"]
+            f"import mmap, time; m = mmap.mmap(-1, {half}); m[0] = 1; time.sleep(1.5)"]
 done, stopped = d.run_capped(reserves, 60, 200 * MB)
 assert not stopped and done.returncode == 0, (stopped, done.returncode, done.stderr)
 done, stopped = d.run_capped([sys.executable, "-c", "print('ok')"], 60, 200 * MB)
 assert (stopped, done.returncode, done.stdout) == (False, 0, "ok\n"), (stopped, done)
 print(f"400 MB in use was stopped under a 100 MB cap in {took:.1f} s; "
-      "8 GB reserved and unused was not")
+      "half the machine reserved and unused was not")
 CAPPY
     # Through edit: a film whose ffmpeg passes the cap is refused, saying so.
     cat >"$ft/tinycap.py" <<'CAPPY'
@@ -4310,9 +4321,8 @@ CAPPY
     }
     fin_s69() {
     # DEMO-0252. A film's picture is drawn in pieces of a few scenes, so its
-    # memory does not grow with its length. Drawn by one ffmpeg, 16 windowed
-    # scenes were refused under 6 GB of address space; in pieces they are made
-    # under 4.5 GB (measured 2026-10-30, twelve cores). The crossfades are 2.5
+    # memory does not grow with its length: see four_cores for the measurements.
+    # The crossfades are 2.5
     # frames, so xfade rounds where each starts: 139 frames is what one ffmpeg
     # drew of this film. Counting them matters: out of memory, ffmpeg can exit
     # 0 with a short file.
@@ -4320,9 +4330,9 @@ CAPPY
       for _ in $(seq 15); do echo "clip A.mp4 to 1 window 80 crossfade 0.25"; done
     } > "$ft/pc1.txt"
     rc=0
-    ( ulimit -v 5500000; cd "$ft" && "$DR" edit pc1.txt -o "$ft/out/pc1.mp4" ) \
+    ( ulimit -v 4500000; cd "$ft" && four_cores "$DR" edit pc1.txt -o "$ft/out/pc1.mp4" ) \
         >"$fo" 2>"$fe" || rc=$?
-    expect_ok "16 windowed scenes with crossfades, inside 5.5 GB"
+    expect_ok "16 windowed scenes with crossfades, inside 4.5 GB on four cores"
     assert_eq "16 windowed scenes: frames" 139 "$(v_frames "$ft/out/pc1.mp4")"
     # The same film from pieces and from one piece: the same frames, each
     # within x264's noise, and the same sound. Cuts, cards, holds and
@@ -4385,7 +4395,7 @@ ONEPY
     assert_absent "a film with a piece short of its frames leaves no film" "$ft/out/pc3.mp4"
     leftovers=$(find "$ft/out" -name '.demoreel-*' | wc -l)
     assert_eq "a failed film leaves no piece behind" 0 "$leftovers"
-    echo "a long windowed film fits in 5.5 GB, and pieces make the film one ffmpeg would"
+    echo "a long windowed film fits in 4.5 GB, and pieces make the film one ffmpeg would"
     }
     fin_s70() {
     # README: "-o may not be one of the files being read." The script is read
@@ -5203,7 +5213,7 @@ CLAIMPY
         set -- $case
         printf 'card %s\nmusic %s\n' "$2" "$1" > "$ft/me.txt"
         rc=0
-        ( ulimit -v 2000000; cd "$ft" && "$DR" edit me.txt -o "$ft/out/me.mp4" -s 320x240 -r 10 ) \
+        ( ulimit -v 2000000; cd "$ft" && four_cores "$DR" edit me.txt -o "$ft/out/me.mp4" -s 320x240 -r 10 ) \
             >"$fo" 2>"$fe" || rc=$?
         expect_ok "music $1 under a $2 s card, inside 2 GB"
         assert_near "music $1 under a $2 s card: the film's length" "$2" "$(v_dur "$ft/out/me.mp4")" 0.06
@@ -5374,7 +5384,7 @@ CASES
     # The limit is virtual memory; this film's resident peak is near 120 MB.
     printf 'clip A.mp4 window 80\nclip B.mp4 crossfade 0.5\n' > "$ft/wn5.txt"
     rc=0
-    ( ulimit -v 3000000; cd "$ft" && "$DR" edit wn5.txt -o "$ft/out/wn5.mp4" ) \
+    ( ulimit -v 3000000; cd "$ft" && four_cores "$DR" edit wn5.txt -o "$ft/out/wn5.mp4" ) \
         >"$fo" 2>"$fe" || rc=$?
     expect_ok "a windowed clip then a crossfade, inside 3 GB"
     assert_near "a windowed clip then a crossfade: length" 9.5 "$(v_dur "$ft/out/wn5.mp4")" 0.15
@@ -5568,7 +5578,7 @@ CASES
     fin_step "a sound line plays its file at its moment, at its volume" fin_s66
     fin_step "edit refuses a bad sound line" fin_s67
     fin_step "a film's ffmpeg is held to the memory it uses, not the address space it reserves" fin_s68
-    fin_step "a long windowed film fits in 5.5 GB, and pieces make the film one ffmpeg would" fin_s69
+    fin_step "a long windowed film fits in 4.5 GB, and pieces make the film one ffmpeg would" fin_s69
     fin_step "edit's script is never written over, and a folder that cannot be made is said in words" fin_s70
     fin_step "a part file is this run's own, and the finished file takes the caller's mode" fin_s71
     fin_step "a file name, a script line or a program's words reach the terminal as text, and forge no line" fin_s72
