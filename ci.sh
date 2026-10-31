@@ -9259,7 +9259,65 @@ grep -q 'not a directory you own' "$tmp/planted.err" || {
     cat "$tmp/planted.err" >&2
     exit 1
 }
-echo "a state directory we do not own is refused"
+# The link above is the caller's own, so only the not-a-directory half trips on it.
+# The owner half is the one that stops another user who made the name first. It runs
+# on a stand-in for lstat, in place of a second user, and nothing here touches /tmp.
+python3 - "$tmp/stateowner" <<'STATEPY'
+import importlib.machinery, importlib.util, os, stat, sys
+from pathlib import Path
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+top = Path(sys.argv[1])
+top.mkdir()
+top = top.resolve()
+me = os.getuid()
+os.environ["XDG_RUNTIME_DIR"] = str(top)
+name = top / f"demoreel-{me}"
+logind = Path(f"/run/user/{me}")
+real_lstat = os.lstat
+owners = {}
+def lstat(path, **kw):
+    if owners.get(str(path)) == "absent":
+        raise FileNotFoundError(path)
+    st = real_lstat(path, **kw)
+    uid = owners.get(str(path))
+    return st if uid is None else os.stat_result((*st[:4], uid, *st[5:]))
+os.lstat = lstat
+def refused(said):
+    try:
+        got = d.state_dir()
+    except SystemExit as exc:
+        assert said in str(exc.code), exc.code
+        return
+    sys.exit(f"state_dir() took {got}, and should have said: {said}")
+# A real directory, another user's.
+name.mkdir(mode=0o755)
+owners[str(name)] = me + 1
+refused("not a directory you own")
+assert stat.S_IMODE(real_lstat(name).st_mode) == 0o755, "it changed the mode of a folder not its own"
+# The control: the same directory, the caller's, is taken and locked down.
+owners.clear()
+assert d.state_dir() == name
+assert stat.S_IMODE(real_lstat(name).st_mode) == 0o700
+name.rmdir()
+# A file at that name.
+name.write_text("")
+refused("could not use")
+name.unlink()
+# With no variable: logind's directory if it is ours, and otherwise /tmp.
+del os.environ["XDG_RUNTIME_DIR"]
+owners[str(logind)] = "absent"
+assert d.runtime_dir() == Path("/tmp"), d.runtime_dir()
+if logind.is_dir() and real_lstat(logind).st_uid == me:
+    owners[str(logind)] = me + 1
+    assert d.runtime_dir() == Path("/tmp"), d.runtime_dir()
+    owners.clear()
+    assert d.runtime_dir() == logind, d.runtime_dir()
+else:
+    print("skipped: this machine has no /run/user folder of the caller's, so taking one did not run")
+STATEPY
+echo "a state directory that is a link, a file or another user's is refused, and /tmp is the last resort"
 
 step "the gate will not run as root"
 # DEMO-0094. Several steps stand a root-owned file or link in for another
