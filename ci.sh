@@ -1718,6 +1718,11 @@ skipped() {
     echo "skipped: $*"
     echo "$*" >>"$tmp/skipped"
 }
+skipped_line() {  # how many parts skipped
+    local parts=parts
+    [ "$1" != 1 ] || parts=part
+    echo "all checks passed; $1 $parts SKIPPED, which ./ci.sh --summary lists"
+}
 
 # End what this shell started and still has running, for every way out of the
 # gate. It asks bash at the moment of asking, never a list kept along the way: a
@@ -6479,12 +6484,26 @@ cleanup() {
     done
     # Every run leaves its files, and with the pid in their names they would pile up.
     [ -z "${statedir:-}" ] || rm -rf "${statedir:?}/$GATE_RUN"*
+    for said in "$tmp"/real-shot-*.err; do
+        if [ -e "$said" ] && grep -q 'display log is kept in' "$said"; then
+            remove_kept_shot_folder "$said" "$statedir" || true
+        fi
+    done
     # An interrupted Ubuntu leg leaves its container running. Stopped by name:
     # the container outlives the podman client.
     [ -z "${parity_name:-}" ] || podman rm -f -t 0 "$parity_name" >/dev/null 2>&1 || true
     rm -rf "$tmp"
 }
 trap cleanup EXIT
+
+step "the last line counts what skipped, in words that read"
+for count in "1:1 part" "2:2 parts"; do
+    case $(skipped_line "${count%%:*}") in
+        "all checks passed; ${count#*:} SKIPPED, "*) ;;
+        *) echo "the last line for ${count%%:*} skip reads: $(skipped_line "${count%%:*}")" >&2; exit 1 ;;
+    esac
+done
+echo "one part, or several parts"
 
 step "gate wiring"
 # Runs in BOTH modes, and before the --docs exit on purpose: this is the check
@@ -6938,20 +6957,28 @@ d = u.module_from_spec(u.spec_from_loader("demoreel", loader))
 loader.exec_module(d)
 print(d.state_dir())')
 
-# A failed shot keeps its folder, and says where on stderr: this removes it. The
-# path comes from the code under test, so it is used only if it is a shot's folder
-# directly under the state directory, and an empty or wrong one fails the step.
-kept_shot_folder() {  # the file holding the shot's stderr
-    local kept
+# A failed shot keeps its folder in the state directory, so a shot here runs with
+# a state directory under $tmp, and the folder goes with $tmp however the gate
+# ends. Only a step needing the real sound server may not (real_shot_err).
+aside_xdg="$tmp/shots-aside"
+mkdir -m 700 "$aside_xdg"
+aside_state="$aside_xdg/demoreel-$(id -u)"
+shot_aside() { XDG_RUNTIME_DIR="$aside_xdg" ./demoreel shot "$@"; }
+
+# A failed shot says where its folder is, on stderr. The path comes from the code
+# under test, so it is used only if it is a shot's folder directly under the state
+# directory given, and an empty or wrong one fails the step.
+kept_shot_folder() {  # the file holding the shot's stderr, the state directory
+    local kept state=$2
     kept=$(sed -n 's/.*display log is kept in //p' "$1")
     case $kept in
-        "$statedir"/shot-*) ;;
-        *) echo "a failed shot named '$kept' as its folder, not a shot-* folder in $statedir" >&2
+        "$state"/shot-*) ;;
+        *) echo "a failed shot named '$kept' as its folder, not a shot-* folder in $state" >&2
            return 1 ;;
     esac
-    case ${kept#"$statedir"/} in
+    case ${kept#"$state"/} in
         */* | *$'\n'*)
-            echo "a failed shot named '$kept', which is not directly in $statedir" >&2
+            echo "a failed shot named '$kept', which is not directly in $state" >&2
             return 1 ;;
     esac
     if [ ! -d "$kept" ] || [ -L "$kept" ]; then
@@ -6960,11 +6987,14 @@ kept_shot_folder() {  # the file holding the shot's stderr
     fi
     printf '%s\n' "$kept"
 }
-remove_kept_shot_folder() {
+remove_kept_shot_folder() {  # as kept_shot_folder
     local kept
-    kept=$(kept_shot_folder "$1") || return 1
+    kept=$(kept_shot_folder "$1" "$2") || return 1
     rm -rf -- "$kept"
 }
+# Where a shot on the real state directory puts its stderr. cleanup removes the
+# folder each of these names, after stop_children has ended any still running.
+real_shot_err() { printf '%s\n' "$tmp/real-shot-$1.err"; }
 
 # Whether a server this run name started is still running. Matched on the auth
 # file, which carries the name, so another session's display is never counted.
@@ -7222,7 +7252,7 @@ if sound_step "the test tones play only on a run's private output"; then
     # Each variable alone, the other unset: either one missing lets a tone out.
     for one in PULSE_SINK PIPEWIRE_NODE; do
         env -u PULSE_SINK -u PIPEWIRE_NODE "${nosound[@]}" "$one=demoreel-$(id -u)-x" \
-            PATH="$tmp/noplay:$PATH" ./demoreel shot \
+            XDG_RUNTIME_DIR="$aside_xdg" PATH="$tmp/noplay:$PATH" ./demoreel shot \
             -o "$tmp/guard.png" -s 320x240 --startup-timeout 3 -a "wait 3" \
             -- xterm -e "$tmp/tones.sh" "$tmp/guard.pid" "$tmp/tone.wav" >/dev/null 2>&1 || true
         [ -e "$tmp/guard.pid.refused" ] || { echo "with $one alone the tone script never ran, or was not stopped" >&2; exit 1; }
@@ -7271,10 +7301,11 @@ PY
     # A shot gives its app the same private output. The wait keeps the app up
     # while it plays all three tones.
     ./demoreel shot -o "$tmp/sound.png" -s 640x480 -a "wait 7" \
-        -- xterm -e "$tmp/tones.sh" "$tmp/shot-tones.pid" "$tmp/tone.wav" >/dev/null &
+        -- xterm -e "$tmp/tones.sh" "$tmp/shot-tones.pid" "$tmp/tone.wav" \
+        >/dev/null 2>"$(real_shot_err tones)" &
     shot_run=$!
     python3 "$tmp/watch-sinks.py" "$shot_run" "$tmp/shot-tones.pid"
-    wait "$shot_run" || { echo "the shot failed" >&2; exit 1; }
+    wait "$shot_run" || { echo "the shot failed:" >&2; cat "$(real_shot_err tones)" >&2; exit 1; }
     [ -z "$(run_sinks "$shot_run")" ] || { echo "the shot left its sink loaded" >&2; exit 1; }
     echo "all three ways to play reach the run's own sink, on record and on shot"
 fi
@@ -7343,7 +7374,9 @@ if sound_step "no run leaves a sound output behind"; then
             kill "$xv" || true
         fi
     done
-    ./demoreel shot -o "$tmp/sound-sweep.png" -s 320x240 -- xclock >/dev/null
+    ./demoreel shot -o "$tmp/sound-sweep.png" -s 320x240 -- xclock \
+        >/dev/null 2>"$(real_shot_err sweep)" || {
+        echo "the shot after a killed run failed:" >&2; cat "$(real_shot_err sweep)" >&2; exit 1; }
     [ -z "$(run_sinks "$leak_run")" ] || {
         echo "the next run did not unload a SIGKILLed run's sink" >&2; exit 1; }
     echo "no exit leaves a sink behind, and the next run sweeps a killed run's"
@@ -8028,11 +8061,10 @@ step "a closed terminal finishes the video and leaves nothing running"
 # it, ffmpeg -- in the same group -- died without writing its index, and the
 # run printed the path of a file nothing could play. The run's stderr is a
 # pseudo-terminal that is closed first, as a real one would be.
-python3 - "$tmp" <<'HUPPY'
-import os, pty, shutil, signal, subprocess, sys, time
-from pathlib import Path
+python3 - "$tmp" "$aside_xdg" <<'HUPPY'
+import os, pty, signal, subprocess, sys, time
 
-tmp = sys.argv[1]
+tmp, aside_xdg = sys.argv[1:]
 
 
 def servers(root):
@@ -8051,10 +8083,10 @@ def servers(root):
     return [pid for pid in ps if root in ancestors(int(pid))]
 
 
-def hang_up(args, ready):
+def hang_up(args, ready, env=None):
     master, slave = pty.openpty()
     run = subprocess.Popen(["./demoreel", *args], stdout=subprocess.PIPE,
-                           stderr=slave, start_new_session=True)
+                           stderr=slave, start_new_session=True, env=env)
     os.close(slave)
     seen = b""
     for _ in range(300):
@@ -8071,11 +8103,6 @@ def hang_up(args, ready):
         raise SystemExit(f"never saw {ready!r}:\n{seen.decode(errors='replace')}")
     time.sleep(1)
     started = servers(run.pid)
-    # Each server's -auth file sits in its run's folder.
-    folders = []
-    for pid in started:
-        argv = Path(f"/proc/{pid}/cmdline").read_bytes().decode().split("\0")
-        folders.append(Path(argv[argv.index("-auth") + 1]).parent)
     os.close(master)                 # the terminal goes away...
     os.killpg(run.pid, signal.SIGHUP)  # ...and its session is hung up
     out, _ = run.communicate(timeout=60)
@@ -8083,25 +8110,21 @@ def hang_up(args, ready):
     left = [pid for pid in started if os.path.exists(f"/proc/{pid}")]
     if not started or left:
         raise SystemExit(f"{args[0]}: Xvfb {started}, still running after: {left}")
-    return run.returncode, out.decode().strip(), folders
+    return run.returncode, out.decode().strip()
 
 
 video = f"{tmp}/hup.mp4"
-status, out, _ = hang_up(["record", "-n", os.environ['GATE_RUN'] + "main", "-o", video, "-d", "0", "-s",
+status, out = hang_up(["record", "-n", os.environ['GATE_RUN'] + "main", "-o", video, "-d", "0", "-s",
                        "320x240", "--", "xclock"], b"recording :")
 readable = subprocess.run(["ffprobe", "-v", "error", video],
                           capture_output=True).returncode == 0
 if status != 0 or out != video or not readable:
     raise SystemExit(f"record: exit {status}, stdout {out!r}, playable {readable}")
-# A failed shot keeps its folder, and here nobody could read where: remove
-# it. Only its own: another session's shot may be using a folder made since
-# (DEMO-0209).
-_, _, folders = hang_up(["shot", "-o", f"{tmp}/hup.png", "-s", "320x240",
-                         "--startup-timeout", "1", "--settle", "30", "--",
-                         "sleep", "60"], b"no window")
-for kept in folders:
-    assert kept.name.startswith("shot-"), kept
-    shutil.rmtree(kept)
+# A failed shot keeps its folder, and nobody could read where here: it goes with
+# $tmp, so the state directory is the gate's own.
+hang_up(["shot", "-o", f"{tmp}/hup.png", "-s", "320x240",
+         "--startup-timeout", "1", "--settle", "30", "--", "sleep", "60"], b"no window",
+        {**os.environ, "XDG_RUNTIME_DIR": aside_xdg})
 print("a hung-up run finishes a playable video, and nothing is left running")
 HUPPY
 
@@ -9050,7 +9073,7 @@ if ! command -v script >/dev/null; then
 else
     cat >"$tmp/bgshot.sh" <<BG
 set -m
-./demoreel shot -o "$tmp/bgshot.png" -s 320x240 --region 0,0,100,100 --settle 20 \
+XDG_RUNTIME_DIR="$aside_xdg" ./demoreel shot -o "$tmp/bgshot.png" -s 320x240 --region 0,0,100,100 --settle 20 \
     -- xclock >"$tmp/bgshot.out" 2>"$tmp/bgshot.err" &
 wait \$!
 echo \$? >"$tmp/bgshot.status"
@@ -9811,10 +9834,10 @@ step "a shot lands whole, and a failed one leaves what was at -o"
 # -o with it. A % is a character of the name, not a frame number.
 shots="$tmp/shots"
 mkdir -p "$shots"
-./demoreel shot -o "$shots/keep.png" -s 320x240 -- xclock >/dev/null
+shot_aside -o "$shots/keep.png" -s 320x240 -- xclock >/dev/null
 keep_sum=$(sha256sum <"$shots/keep.png")
 set +e
-./demoreel shot -o "$shots/keep.png" -s 320x240 --settle 1 --startup-timeout 2 -- sleep 30 \
+shot_aside -o "$shots/keep.png" -s 320x240 --settle 1 --startup-timeout 2 -- sleep 30 \
     >/dev/null 2>"$shots/flat.err"
 flat_status=$?
 set -e
@@ -9824,7 +9847,6 @@ set -e
     cat "$shots/flat.err" >&2
     exit 1
 }
-remove_kept_shot_folder "$shots/flat.err"
 mkdir -p "$shots/nocut"
 cat >"$shots/nocut/ffmpeg" <<SHIM
 #!/bin/sh
@@ -9833,7 +9855,7 @@ exec $(command -v ffmpeg) "\$@"
 SHIM
 chmod +x "$shots/nocut/ffmpeg"
 set +e
-PATH="$shots/nocut:$PATH" ./demoreel shot -o "$shots/keep.png" -s 320x240 --region 0,0,100,100 \
+PATH="$shots/nocut:$PATH" shot_aside -o "$shots/keep.png" -s 320x240 --region 0,0,100,100 \
     -- xclock >/dev/null 2>"$shots/cut.err"
 cut_status=$?
 set -e
@@ -9844,15 +9866,14 @@ set -e
     cat "$shots/cut.err" >&2
     exit 1
 }
-remove_kept_shot_folder "$shots/cut.err"
-shot=$(./demoreel shot -o "$shots/p%d.png" -s 320x240 -- xclock)
+shot=$(shot_aside -o "$shots/p%d.png" -s 320x240 -- xclock)
 [ "$shot" = "$shots/p%d.png" ] && [ -s "$shots/p%d.png" ] || {
     echo "a % in a shot's name did not reach the file: '$shot'" >&2; exit 1; }
-( umask 027; ./demoreel shot -o "$shots/um.png" -s 320x240 -- xclock >/dev/null )
+( umask 027; shot_aside -o "$shots/um.png" -s 320x240 -- xclock >/dev/null )
 [ "$(stat -c %a "$shots/um.png")" = 640 ] || {
     echo "a new shot did not take the umask: $(stat -c %a "$shots/um.png")" >&2; exit 1; }
 ln -s lnk-target.png "$shots/lnk.png"
-[ "$(./demoreel shot -o "$shots/lnk.png" -s 320x240 -- xclock)" = "$shots/lnk-target.png" ] \
+[ "$(shot_aside -o "$shots/lnk.png" -s 320x240 -- xclock)" = "$shots/lnk-target.png" ] \
     && [ -L "$shots/lnk.png" ] || {
     echo "a shot through the caller's own link replaced it" >&2; exit 1; }
 echo "a shot lands whole, and a failed one leaves what was there"
@@ -9923,9 +9944,9 @@ foreign=$(find /usr/bin -maxdepth 1 -type l -user 0 -print -quit)
 for flag in -o --app-log; do
     set +e
     if [ "$flag" = -o ]; then
-        ./demoreel shot -o "$foreign" -s 320x240 -- xclock 2>"$tmp/foreign.err"
+        shot_aside -o "$foreign" -s 320x240 -- xclock 2>"$tmp/foreign.err"
     else
-        ./demoreel shot -o "$tmp/foreign.png" --app-log "$foreign" -s 320x240 \
+        shot_aside -o "$tmp/foreign.png" --app-log "$foreign" -s 320x240 \
             -- xclock 2>"$tmp/foreign.err"
     fi
     foreign_status=$?
@@ -9941,18 +9962,20 @@ echo "-o and --app-log refuse a symlink another user made"
 
 step "the gate removes a failed shot's folder, and nothing else a message names"
 # DEMO-0094. The path comes from demoreel's stderr. Each of these must be refused;
-# this asks the part that decides, which removes nothing, whatever it answers.
-mkdir -p "$statedir/shot-${GATE_RUN}control/b"
-for said in '' "$statedir" "$statedir/" "$statedir/gate.json" "$statedir/../x" \
-            "$statedir/shot-${GATE_RUN}control/b" "$tmp/shot-a" /; do
+# this asks the part that decides, which removes nothing, whatever it answers. It
+# works in a state directory of its own.
+said_state="$tmp/said-state"
+mkdir -p "$said_state/shot-control/b"
+for said in '' "$said_state" "$said_state/" "$said_state/gate.json" "$said_state/../x" \
+            "$said_state/shot-control/b" "$tmp/shot-a" /; do
     printf 'Its display log is kept in %s\n' "$said" >"$tmp/said.err"
-    if ( kept_shot_folder "$tmp/said.err" ) >/dev/null 2>&1; then
+    if ( kept_shot_folder "$tmp/said.err" "$said_state" ) >/dev/null 2>&1; then
         echo "the gate would have removed '$said'" >&2; exit 1
     fi
 done
-printf 'Its display log is kept in %s\n' "$statedir/shot-${GATE_RUN}control" >"$tmp/said.err"
-remove_kept_shot_folder "$tmp/said.err"
-[ ! -e "$statedir/shot-${GATE_RUN}control" ] || { echo "the control folder stayed" >&2; exit 1; }
+printf 'Its display log is kept in %s\n' "$said_state/shot-control" >"$tmp/said.err"
+remove_kept_shot_folder "$tmp/said.err" "$said_state"
+[ ! -e "$said_state/shot-control" ] || { echo "the control folder stayed" >&2; exit 1; }
 echo "only a shot-* folder directly in the state directory is removed"
 
 step "shot takes one picture, prints its path, and leaves nothing behind"
@@ -9982,13 +10005,12 @@ PY
 echo "one 321x241 picture of the app, its path on stdout, nothing left over"
 
 step "a flat picture is refused"
-if out=$(./demoreel shot -o "$tmp/flat.png" -s 320x240 --settle 1 \
+if out=$(shot_aside -o "$tmp/flat.png" -s 320x240 --settle 1 \
          --startup-timeout 2 -- sleep 30 2>"$tmp/flat.err"); then
     echo "a picture of nothing was accepted" >&2; exit 1
 fi
 [ -z "$out" ] || { echo "a refused shot still printed a path: $out" >&2; exit 1; }
 grep -q 'one flat colour' "$tmp/flat.err" || { cat "$tmp/flat.err" >&2; exit 1; }
-remove_kept_shot_folder "$tmp/flat.err"
 echo "a flat picture failed the run and printed no path"
 
 step "shot --region keeps one rectangle, and only of a checked screen"
@@ -10019,7 +10041,7 @@ size=$(ffprobe -v error -show_entries stream=width,height -of csv=p=0 "$tmp/regi
     echo "a --region shot left its folder behind" >&2; exit 1; }
 # A rectangle that cannot be kept stops the run before the app starts.
 for bad in 0,0,400,300 1,2,3 0,0,0,5; do
-    if ./demoreel shot -o "$tmp/bad.png" -s 320x240 --region "$bad" -- \
+    if shot_aside -o "$tmp/bad.png" -s 320x240 --region "$bad" -- \
            sh -c "touch '$tmp/started'" 2>"$tmp/bad.err"; then
         echo "--region $bad was accepted" >&2; exit 1
     fi
@@ -10028,29 +10050,27 @@ for bad in 0,0,400,300 1,2,3 0,0,0,5; do
 done
 # A flat screen fails even with --region: nothing at -o, and the folder
 # keeps the whole screen it judged.
-if ./demoreel shot -o "$tmp/flatcut.png" -s 320x240 --region 0,0,100,100 \
+if shot_aside -o "$tmp/flatcut.png" -s 320x240 --region 0,0,100,100 \
        --settle 1 --startup-timeout 2 -- sleep 30 >/dev/null 2>"$tmp/flatcut.err"; then
     echo "a --region picture of nothing was accepted" >&2; exit 1
 fi
 grep -q 'one flat colour' "$tmp/flatcut.err" || { cat "$tmp/flatcut.err" >&2; exit 1; }
 [ ! -e "$tmp/flatcut.png" ] || { echo "a failed --region shot wrote to -o" >&2; exit 1; }
-kept=$(kept_shot_folder "$tmp/flatcut.err")
+kept=$(kept_shot_folder "$tmp/flatcut.err" "$aside_state")
 [ -s "$kept/screen.png" ] || { echo "the kept folder has no whole screen" >&2; exit 1; }
-rm -rf "$kept"
 echo "the rectangle is the one named; bad ones stop early; a flat screen still fails"
 
 step "a shot that fails early names the folder it kept"
 # DEMO-0107. A failed shot keeps its private folder, and that folder lives
 # in RAM under /run/user. Only two failure paths said where it was, so one
 # failing before the picture left it behind unnamed.
-if ./demoreel shot -o "$tmp/none.png" -s 320x240 -- /nonexistent/app \
+if shot_aside -o "$tmp/none.png" -s 320x240 -- /nonexistent/app \
        >/dev/null 2>"$tmp/early.err"; then
     echo "a shot of an app that cannot start succeeded" >&2; exit 1
 fi
-kept=$(kept_shot_folder "$tmp/early.err") || {
+kept_shot_folder "$tmp/early.err" "$aside_state" >/dev/null || {
     echo "an early shot failure did not name the folder it kept:" >&2
     cat "$tmp/early.err" >&2; exit 1; }
-rm -rf "$kept"
 echo "the early failure named its folder"
 
 step "tab completion offers what demoreel accepts, in bash, zsh and fish"
@@ -10465,7 +10485,7 @@ pseudo_copy "$tr_out" zz
 ffmpeg -nostdin -loglevel error -f lavfi -i testsrc=s=320x200:r=30:d=2 \
     -pix_fmt yuv420p "$tr_out/clip.mp4"
 printf 'card 1\ntext "Hello"\nclip clip.mp4 to 1\n' > "$tr_out/film.txt"
-python3 - "$tr_out" "$statedir" <<'MOVEPY'
+python3 - "$tr_out" "$statedir" "$aside_xdg" <<'MOVEPY'
 import json, os, pathlib, re, subprocess, sys
 here = pathlib.Path(sys.argv[1])
 script = str(here / "demoreel")
@@ -10476,11 +10496,18 @@ state = pathlib.Path(sys.argv[2]) / f"{os.environ['GATE_RUN']}tr.json"
 bad, checked = [], 0
 
 def run(argv, env):
+    if argv[0] == "shot":  # a failed shot's folder goes with the gate's own
+        env = {**env, "XDG_RUNTIME_DIR": sys.argv[3]}
     return subprocess.run([script, *argv], cwd=here, env=env, capture_output=True,
                           text=True, timeout=180)
 
+# A translation of a few words inside another: a sentence built from fragments,
+# which reads wrongly wherever word order differs (INV-15).
+FRAGMENT = re.compile(r"⟦[^⟧\n]*⟦[^⟦⟧\n ]+(?: [^⟦⟧\n ]+){0,2}⟧")
+
 def whole(stderr, argv):
-    """Each message demoreel wrote must be one translation, ⟦ to ⟧."""
+    """Each message demoreel wrote must be one translation, ⟦ to ⟧, with no
+    fragment inside it."""
     global checked
     messages = []
     for line in stderr.splitlines():
@@ -10497,6 +10524,8 @@ def whole(stderr, argv):
         checked += 1
         if not (message.startswith("⟦") and message.endswith("⟧")):
             bad.append(f"{argv}: a message not translated whole: {message!r}")
+        if FRAGMENT.search(message):
+            bad.append(f"{argv}: a message holding a translated fragment: {message!r}")
 
 RUNS = [
     ["record", "-n", os.environ['GATE_RUN'] + "tr", "-d", "1", "-s", "320x240", "-o", "rec.mp4", "--", "xclock"],
@@ -10517,6 +10546,7 @@ RUNS = [
     ["caption", "clip.mp4", "-o", "clip.mp4", "--text", "Hi"],
     ["join", "clip.mp4", "-o", "join2.mp4"],
     ["card", "-d", "0", "-o", "card2.mp4"],
+    ["card", "-d", "1", "-s", "320x200", "--text", " ", "-o", "card3.mp4"],
     ["edit", "nofile.txt", "-o", "film2.mp4"],
     ["poster", "clip.mp4", "-o", "poster2.png", "-t", "9"],
     ["motion", "clip.mp4", "--from", "9"],
@@ -10982,7 +11012,7 @@ else
 fi
 
 if [ -s "$tmp/skipped" ]; then
-    gate_end "all checks passed; $(wc -l <"$tmp/skipped") parts SKIPPED, which ./ci.sh --summary lists"
+    gate_end "$(skipped_line "$(wc -l <"$tmp/skipped")")"
 else
     gate_end 'all checks passed'
 fi
