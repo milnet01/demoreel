@@ -6968,8 +6968,17 @@ loudest() {
 # PulseAudio, ALSA, and native PipeWire -- with silence between them.
 ffmpeg -v error -f lavfi -i "sine=frequency=880:duration=1" -ar 48000 -ac 2 \
     -y "$tmp/tone.wav"
+# It plays only on the run's own output. A run without --audio goes on when none
+# can be made, and then these tones would reach the speakers, with the watcher below
+# only finding out afterwards. Both variables, for the reason in CLAUDE.md's trap.
 cat >"$tmp/tones.sh" <<'SH'
 #!/bin/sh
+for out in "$PULSE_SINK" "$PIPEWIRE_NODE"; do
+    case $out in
+        "demoreel-$(id -u)-"*) ;;
+        *) : >"$1.refused"; exit 3 ;;
+    esac
+done
 echo $$ >"$1"
 sleep 2
 paplay "$2"
@@ -7028,6 +7037,28 @@ if wrong:
 if seen != {"pacat", "aplay", "pw-cat"}:
     sys.exit(f"expected a stream from paplay, aplay and pw-play, saw {sorted(seen)}")
 PY
+
+if sound_step "the test tones play only on a run's private output"; then
+    # A run with none, with the players stood in for, so a failure here is silent
+    # too. The run with one is the next step, which fails without its three tones.
+    mkdir "$tmp/noplay"
+    for player in paplay aplay pw-play; do
+        printf '#!/bin/sh\n: >"%s"\n' "$tmp/noplay/played" >"$tmp/noplay/$player"
+        chmod +x "$tmp/noplay/$player"
+    done
+    # Each variable alone, the other unset: either one missing lets a tone out.
+    for one in PULSE_SINK PIPEWIRE_NODE; do
+        env -u PULSE_SINK -u PIPEWIRE_NODE "${nosound[@]}" "$one=demoreel-$(id -u)-x" \
+            PATH="$tmp/noplay:$PATH" ./demoreel shot \
+            -o "$tmp/guard.png" -s 320x240 --startup-timeout 3 -a "wait 3" \
+            -- xterm -e "$tmp/tones.sh" "$tmp/guard.pid" "$tmp/tone.wav" >/dev/null 2>&1 || true
+        [ -e "$tmp/guard.pid.refused" ] || { echo "with $one alone the tone script never ran, or was not stopped" >&2; exit 1; }
+        [ ! -e "$tmp/guard.pid" ] && [ ! -e "$tmp/noplay/played" ] || {
+            echo "with $one alone the tone script went on past the guard" >&2; exit 1; }
+        rm "$tmp/guard.pid.refused"
+    done
+    echo "with no private output the tone script stops before any player"
+fi
 
 if sound_step "--audio records the app's sound, whichever way it plays"; then
     # DEMO-0106 INV-2, INV-6 and INV-9. Three players, one per way to the
