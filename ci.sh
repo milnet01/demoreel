@@ -40,6 +40,17 @@ fi
 # that tests a translation removes this for its own runs, with `env -u LC_ALL`.
 export LC_ALL=C
 unset LANGUAGE
+# Many steps rest on Python's assert, which this would remove.
+unset PYTHONOPTIMIZE
+# Steps paste these two paths into shell commands and small scripts, so anything
+# but plain characters is a false failure, or runs as code.
+for gate_path in "${TMPDIR:-/tmp}" "$(command -v ffmpeg || true)"; do
+    case $gate_path in
+        *[!A-Za-z0-9_./-]*)
+            echo "ci.sh needs TMPDIR and ffmpeg's path in plain characters, not: $gate_path" >&2
+            exit 2 ;;
+    esac
+done
 
 # The translation template: every message demoreel can show, extracted from
 # the source with ast (DEMO-0060 § 4.8). The first argument of each tr() and
@@ -1701,6 +1712,12 @@ step() {
     step_name=$1; step_t0=${EPOCHREALTIME/./}
 }
 gate_end() { step_end; printf '\n=== %s ===\n' "$1"; }
+# A part of a check that did not run here. It prints a line ./ci.sh --summary
+# lists, and it is counted for the gate's last line: a skip is not a pass.
+skipped() {
+    echo "skipped: $*"
+    echo "$*" >>"$tmp/skipped"
+}
 
 # End what this shell started and still has running, for every way out of the
 # gate. It asks bash at the moment of asking, never a list kept along the way: a
@@ -3867,7 +3884,7 @@ E
         d_bold=$(px changed "$ft/out/fa-b.mp4" 5 "$ft/out/fa-r.mp4" 5 full)
         assert_cmp "font \"$bolded:bold\" draws differently from \"$bolded\" (pixels that differ)" "$d_bold" '>=' 100
     else
-        echo "skipped: neither $fam1 nor $fam2 has a bold face here, so \":bold\" did not run"
+        skipped "neither $fam1 nor $fam2 has a bold face here, so \":bold\" did not run"
     fi
     # "A value with a `/` in it is a font file and is used as it is."
     file=$(fc-match -f '%{file}' "$fam1")
@@ -3877,7 +3894,7 @@ E
         d_file=$(px changed "$ft/out/fa-f.mp4" 5 "$ft/out/fa0.mp4" 5 full)
         assert_cmp "font FILE ($file) draws differently from the default (pixels that differ)" "$d_file" '>=' 200
     else
-        echo "skipped: fc-match gave no file for $fam1, so a font file did not run"
+        skipped "fc-match gave no file for $fam1, so a font file did not run"
     fi
     # Refused: a control that succeeds first, then a family the machine lacks, a
     # general name, and a value with a / that is not a file.
@@ -5603,7 +5620,7 @@ chain_checks() {
     chain_tab_checks "$ct/tab"
     if ! command -v git >/dev/null || ! command -v ssh-keygen >/dev/null; then
         step "the release chain's scratch repositories"
-        echo "skipped: they need git and ssh-keygen, so their checks did not run"
+        skipped "they need git and ssh-keygen, so their checks did not run"
         return 0
     fi
     chain_stand_ins "$ct/bin"
@@ -6225,7 +6242,7 @@ for i, name in enumerate(names):
 CHAINPY
     write_zcomp
     for shell in bash zsh fish; do
-        command -v "$shell" >/dev/null || { echo "skipped $shell: not installed"; continue; }
+        command -v "$shell" >/dev/null || { skipped "$shell is not installed"; continue; }
         rm -f "$canary"
         offered_names=$(cd "$at/folder" && XDG_RUNTIME_DIR="$at/xdg" PATH="$at/bin:$PATH" \
             offered "$shell" "demoreel stop " </dev/null)
@@ -6270,6 +6287,53 @@ if $FINISHING_ONLY; then
     exit 0
 fi
 
+tmp=$(mktemp -d)
+
+# This gate's runs, and no one else's: the pid keeps a second gate, or another
+# session's -n gateway, out of the names, the locks and the sweep below.
+export GATE_RUN="gate$$-"
+
+# One teardown for the whole gate, not one per step.
+#
+# A -d 0 recording never ends by itself, so a step that fails between starting
+# one and stopping it leaves the recorder alive. The next run then refuses that
+# name, and the failure it reports is the leftover rather than the defect --
+# measured during development, at a cost of two cycles to recognise. Per-step
+# cleanup does not cover it: the branch most likely to fire is the assertion
+# that gives up on finding the run, and that is before the step's own stop.
+#
+# demoreel handles SIGTERM by finishing the video and running its own cleanup,
+# so a leftover ends the same way `demoreel stop` would end it -- including the
+# window before the run has written its state file, where stopping it by name
+# cannot work. stop_children gives each one a bounded chance at its own teardown,
+# which is what takes its Xvfb down with it.
+cleanup() {
+    stop_children
+    # Then sweep. A recorder signalled before it installed its handlers dies
+    # without tearing anything down, and a leaked Xvfb holds its display number
+    # and poisons the pool for later runs.
+    #
+    # Match on the auth file, which carries the run's name, and only for this
+    # gate's own prefix. Two sessions may record at once, or run this gate, or
+    # name a run gateway, so killing every Xvfb this user owns would end someone
+    # else's recording. Never widen this to the process name.
+    for xv in $(pgrep -u "$(id -u)" -x Xvfb 2>/dev/null); do
+        if tr '\0' ' ' < "/proc/$xv/cmdline" 2>/dev/null \
+           | grep -q "demoreel-$(id -u)/$GATE_RUN"; then
+            kill "$xv" 2>/dev/null || true
+            # A step may have stopped this server, and a signal waits on that.
+            kill -CONT "$xv" 2>/dev/null || true
+        fi
+    done
+    # Every run leaves its files, and with the pid in their names they would pile up.
+    [ -z "${statedir:-}" ] || rm -rf "${statedir:?}/$GATE_RUN"*
+    # An interrupted Ubuntu leg leaves its container running. Stopped by name:
+    # the container outlives the podman client.
+    [ -z "${parity_name:-}" ] || podman rm -f -t 0 "$parity_name" >/dev/null 2>&1 || true
+    rm -rf "$tmp"
+}
+trap cleanup EXIT
+
 step "gate wiring"
 # Runs in BOTH modes, and before the --docs exit on purpose: this is the check
 # that catches the local glob having drifted, and the glob is what decides which
@@ -6283,7 +6347,8 @@ fi
 echo "docs glob: $DOCS_GLOB"
 
 step "--perf judges CPU and memory at 1.5 times the baseline, and never wall time"
-perf_t=$(mktemp -d)
+perf_t="$tmp/perf"
+mkdir "$perf_t"
 perf_rows() {  # the file's name, then its rows
     local out=$perf_t/$1; shift
     { echo '# machine: same'; printf 'case\twall_s\tcpu_s\tpeak_mb\n'; printf '%s\n' "$@"; } >"$out"
@@ -6308,7 +6373,6 @@ for perf_case in "cpu:OVER: trim: CPU time" "mem:OVER: join: peak memory"; do
         *) echo "--perf did not name ${perf_case#*:}:" >&2; echo "$perf_out" >&2; exit 1 ;;
     esac
 done
-rm -rf "$perf_t"
 echo "--perf passed at the limit and failed just over it, on each of the two figures"
 
 step "--perf's baseline has a figure for every command that does work"
@@ -6372,7 +6436,8 @@ step "documented flags exist"
 # flag it documents and the tool does not accept is a defect in the contract --
 # and a commit that breaks it necessarily touches code, which is exactly the
 # push a documentation-only check would never see.
-help=$(./demoreel record --help; ./demoreel shot --help; ./demoreel stop --help;
+help=$(set -e  # or only the last page's status would count
+      ./demoreel record --help; ./demoreel shot --help; ./demoreel stop --help
       for sub in edit trim caption join card motion poster thumbnail sheet; do
           ./demoreel "$sub" --help
       done
@@ -6427,7 +6492,8 @@ step "every --help example parses"
 # DEMO-0060 INV-17: the pages are printed again by a copy under the
 # pseudo-locale, and every example must come out byte for byte the same. A
 # command put inside a translated message would be translated with it.
-ex_tmp=$(mktemp -d)
+ex_tmp="$tmp/examples"
+mkdir "$ex_tmp"
 pseudo_copy "$ex_tmp" zz
 PSEUDO_COPY="$ex_tmp/demoreel" python3 - <<'EXAMPLESPY'
 import importlib.machinery, importlib.util, os, shlex, subprocess, sys
@@ -6467,26 +6533,27 @@ for page in (["--help"], ["record", "--help"]):
         print(f"demoreel {' '.join(page)} shows no examples", file=sys.stderr)
         bad += 1
     for example in examples:
-        argv = shlex.split(example)[1:]
-        if argv[-1:] == ["&"]:
-            argv.pop()
         try:
+            argv = shlex.split(example)[1:]
+            if argv[-1:] == ["&"]:
+                argv.pop()
             args = demoreel.build_parser().parse_args(argv)
             if args.cmd in ("record", "shot") and not [
                     c for c in args.command if c != "--"]:
                 sys.exit("it names no app to run")
             for step in getattr(args, "action", []):
                 demoreel.parse_step(step)
-        except SystemExit as e:
-            # argparse prints its own reason and exits with a number.
-            why = e.code if isinstance(e.code, str) else "argparse says why above"
+        except (SystemExit, ValueError) as e:
+            # argparse prints its own reason and exits with a number, and shlex
+            # says what it could not split.
+            code = getattr(e, "code", str(e))
+            why = code if isinstance(code, str) else "argparse says why above"
             print(f"this --help example does not parse: {example}\n  {why}",
                   file=sys.stderr)
             bad += 1
     print(f"demoreel {' '.join(page)}: {len(examples)} examples")
 sys.exit(1 if bad else 0)
 EXAMPLESPY
-rm -rf "$ex_tmp"
 echo "every example --help shows is one demoreel accepts, in every language"
 
 step "README's install lines are the ones demoreel check prints"
@@ -6710,52 +6777,6 @@ echo "no recording here uses the default name"
 step "smoke: record an app and prove it reached the frame"
 # The check that matters. A valid video file proves nothing on its own -- a
 # black recording passes every other test, so sample a frame and measure it.
-tmp=$(mktemp -d)
-
-# This gate's runs, and no one else's: the pid keeps a second gate, or another
-# session's -n gateway, out of the names, the locks and the sweep below.
-export GATE_RUN="gate$$-"
-
-# One teardown for the whole gate, not one per step.
-#
-# A -d 0 recording never ends by itself, so a step that fails between starting
-# one and stopping it leaves the recorder alive. The next run then refuses that
-# name, and the failure it reports is the leftover rather than the defect --
-# measured during development, at a cost of two cycles to recognise. Per-step
-# cleanup does not cover it: the branch most likely to fire is the assertion
-# that gives up on finding the run, and that is before the step's own stop.
-#
-# demoreel handles SIGTERM by finishing the video and running its own cleanup,
-# so a leftover ends the same way `demoreel stop` would end it -- including the
-# window before the run has written its state file, where stopping it by name
-# cannot work. stop_children gives each one a bounded chance at its own teardown,
-# which is what takes its Xvfb down with it.
-cleanup() {
-    stop_children
-    # Then sweep. A recorder signalled before it installed its handlers dies
-    # without tearing anything down, and a leaked Xvfb holds its display number
-    # and poisons the pool for later runs.
-    #
-    # Match on the auth file, which carries the run's name, and only for this
-    # gate's own prefix. Two sessions may record at once, or run this gate, or
-    # name a run gateway, so killing every Xvfb this user owns would end someone
-    # else's recording. Never widen this to the process name.
-    for xv in $(pgrep -u "$(id -u)" -x Xvfb 2>/dev/null); do
-        if tr '\0' ' ' < "/proc/$xv/cmdline" 2>/dev/null \
-           | grep -q "demoreel-$(id -u)/$GATE_RUN"; then
-            kill "$xv" 2>/dev/null || true
-            # A step may have stopped this server, and a signal waits on that.
-            kill -CONT "$xv" 2>/dev/null || true
-        fi
-    done
-    # Every run leaves its files, and with the pid in their names they would pile up.
-    [ -z "${statedir:-}" ] || rm -rf "${statedir:?}/$GATE_RUN"*
-    # An interrupted Ubuntu leg leaves its container running. Stopped by name:
-    # the container outlives the podman client.
-    [ -z "${parity_name:-}" ] || podman rm -f -t 0 "$parity_name" >/dev/null 2>&1 || true
-    rm -rf "$tmp"
-}
-trap cleanup EXIT
 
 # Where a run keeps its files, from demoreel itself: it is not only the variable.
 statedir=$(python3 -c '
@@ -6938,7 +6959,7 @@ else
 fi
 sound_step() {
     step "$1"
-    [ -z "$sound_skip" ] || { echo "skipped: $sound_skip"; return 1; }
+    [ -z "$sound_skip" ] || { skipped "$sound_skip"; return 1; }
 }
 # The sinks a demoreel process loaded and still has, one name per line.
 run_sinks() {
@@ -7543,15 +7564,15 @@ for prog in cage Xwayland wlr-randr wf-recorder vkcube; do
     command -v "$prog" >/dev/null || gpu_missing+=("$prog")
 done
 if [ ${#gpu_missing[@]} -gt 0 ]; then
-    echo "skipped: this machine has no ${gpu_missing[*]}"
+    skipped "this machine has no ${gpu_missing[*]}"
 elif ! compgen -G '/dev/dri/renderD*' >/dev/null; then
-    echo "skipped: no render node under /dev/dri, so there is no card to reach"
+    skipped "no render node under /dev/dri, so there is no card to reach"
 # DEMO-0171. The programs can all be there and still not record: wf-recorder
 # loads its own libavcodec, which may lack libx264 when ffmpeg's has it. check
 # decides that, and its exit status speaks only for the default backend.
 elif ./demoreel check >/dev/null 2>"$tmp/gpu-check.err"
      grep -q -- '--gpu: NOT READY' "$tmp/gpu-check.err"; then
-    echo "skipped: demoreel check says --gpu is not ready:"
+    skipped "demoreel check says --gpu is not ready:"
     cat "$tmp/gpu-check.err"
 else
     gpu_ready=1
@@ -8198,7 +8219,7 @@ grep -q -- '--audio: NOT READY' "$tmp/check-nosound.err" || {
     echo "check did not say --audio is not ready without a sound server:" >&2
     cat "$tmp/check-nosound.err" >&2; exit 1; }
 if [ -n "$sound_skip" ]; then
-    echo "the ready half skipped: $sound_skip"
+    skipped "the ready half: $sound_skip"
 else
     grep -q -- '--audio: ready' "$tmp/check.err" || {
         echo "check did not say --audio is ready on a machine with a sound server:" >&2
@@ -8680,7 +8701,7 @@ step "a run finishes only what it recorded, and keeps its first error"
 # name is random now, so no later run can find one: the file here is at the name
 # they used to have, and checks that stays true.
 if [ -z "$(./demoreel check 2>&1 | sed -n '/--gpu: ready/p')" ]; then
-    echo "skipped: demoreel check says --gpu is not ready"
+    skipped "demoreel check says --gpu is not ready"
 else
     stale="$tmp/.stale.demoreel-part.mp4"
     ffmpeg -nostdin -y -v error -f lavfi -i testsrc=d=1 -c:v libx264 "$stale"
@@ -8873,7 +8894,7 @@ step "a background run does not stop on the terminal"
 # ended with a message blaming the display. A real background job, on a real
 # pseudo-terminal, covers the sample, the picture, its read-back and the cut.
 if ! command -v script >/dev/null; then
-    echo "skipped: this machine has no script"
+    skipped "this machine has no script"
 else
     cat >"$tmp/bgshot.sh" <<BG
 set -m
@@ -9190,7 +9211,7 @@ lock_check "${GATE_RUN}cookie"
 if [ "$gpu_ready" = 1 ]; then
     lock_check "${GATE_RUN}cookiegpu" --gpu
 else
-    echo "skipped on --gpu: the --gpu step above did not run here"
+    skipped "on --gpu: the --gpu step above did not run here"
 fi
 
 step "a real Flatpak records with no flags, and with README's three"
@@ -9211,14 +9232,14 @@ step "a real Flatpak records with no flags, and with README's three"
 # is its splash, which is what a recording that short honestly shows.
 flatpak_app=org.gimp.GIMP
 if ! command -v flatpak >/dev/null; then
-    echo "skipped: this machine has no flatpak"
+    skipped "this machine has no flatpak"
 elif ! flatpak info "$flatpak_app" >/dev/null 2>&1; then
-    echo "skipped: $flatpak_app is not installed"
+    skipped "$flatpak_app is not installed"
 elif flatpak ps --columns=application 2>/dev/null | grep -qx "$flatpak_app"; then
     # A running copy takes the launch over on the real desktop and the private
     # display stays empty, so the step would fail for a reason that is not
     # demoreel's. Skipping says which it is.
-    echo "skipped: $flatpak_app is already running, so a launch would hand over"
+    skipped "$flatpak_app is already running, so a launch would hand over"
 else
     for flags in "" "--socket=x11 --nosocket=wayland --filesystem=/tmp/.X11-unix"; do
         # shellcheck disable=SC2086  # $flags is a list of words, or none
@@ -9240,7 +9261,7 @@ step "a session without XDG_RUNTIME_DIR finds a run that has it"
 # what the variable would have said, so both ask there.
 runtime="/run/user/$(id -u)"
 if [ ! -d "$runtime" ] || [ ! -O "$runtime" ]; then
-    echo "skipped: this machine has no $runtime"
+    skipped "this machine has no $runtime"
 else
     XDG_RUNTIME_DIR="$runtime" ./demoreel record -n "${GATE_RUN}xdg" -o "$tmp/xdg.mp4" -d 0 -s 320x240 \
         -- xclock >/dev/null 2>"$tmp/xdg.err" &
@@ -9345,9 +9366,10 @@ if logind.is_dir() and real_lstat(logind).st_uid == me:
     assert d.runtime_dir() == Path("/tmp"), d.runtime_dir()
     owners.clear()
     assert d.runtime_dir() == logind, d.runtime_dir()
-else:
-    print("skipped: this machine has no /run/user folder of the caller's, so taking one did not run")
 STATEPY
+if [ ! -d "/run/user/$(id -u)" ] || [ ! -O "/run/user/$(id -u)" ]; then
+    skipped "this machine has no /run/user folder of the caller's, so taking one did not run"
+fi
 echo "a state directory that is a link, a file or another user's is refused, and /tmp is the last resort"
 
 step "the gate will not run as root"
@@ -9916,7 +9938,7 @@ COMPLETIONPY
 write_zcomp
 completion_bad=0
 for shell in bash zsh fish; do
-    command -v "$shell" >/dev/null || { echo "skipped $shell: not installed"; continue; }
+    command -v "$shell" >/dev/null || { skipped "$shell is not installed"; continue; }
     bad_before=$completion_bad
     while IFS='|' read -r line want; do
         # Quotes and the trailing space are how a step is offered, not what;
@@ -10723,7 +10745,9 @@ step "no private key is in the repository"
 key_header="-----BEGIN OPENSSH"
 key_header="^$key_header PRIVATE KEY-----\$"
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    found=$(git grep -nE -- "$key_header" || true)
+    grep_status=0
+    found=$(git grep -nE -- "$key_header") || grep_status=$?
+    [ "$grep_status" -le 1 ] || { echo "git grep could not search (exit $grep_status)" >&2; exit 1; }
 else
     found=$(grep -rnE -- "$key_header" . || true)
 fi
@@ -10798,11 +10822,15 @@ else
         cat "$tmp/parity.log" >&2
         exit 1; }
     parity_name=''
-    grep -q '^=== all checks passed ===$' "$tmp/parity.log" || {
+    grep -q '^=== all checks passed\( ===$\|; \)' "$tmp/parity.log" || {
         echo "the Ubuntu run exited 0 without finishing; its output:" >&2
         cat "$tmp/parity.log" >&2
         exit 1; }
     echo "every check above also passed on $PARITY_BASE"
 fi
 
-gate_end 'all checks passed'
+if [ -s "$tmp/skipped" ]; then
+    gate_end "all checks passed; $(wc -l <"$tmp/skipped") parts SKIPPED, which ./ci.sh --summary lists"
+else
+    gate_end 'all checks passed'
+fi
