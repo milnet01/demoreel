@@ -8086,6 +8086,7 @@ step "a closed terminal finishes the video and leaves nothing running"
 # pseudo-terminal that is closed first, as a real one would be.
 python3 - "$tmp" "$aside_xdg" <<'HUPPY'
 import os, pty, signal, subprocess, sys, time
+from pathlib import Path
 
 tmp, aside_xdg = sys.argv[1:]
 
