@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=294 -->
+<!-- ants-roadmap-id-high-water: DEMO=298 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -788,6 +788,8 @@ simplest case, and a gate proves it still records.
   not counted.
   2026-10-31: d87f531's full push gate passed, Ubuntu leg included:
   eight passes, one failure since a88e583.
+  2026-10-31: 6dc5b52's full push gate passed, Ubuntu leg included: nine
+  passes, one failure since a88e583.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
@@ -887,6 +889,30 @@ simplest case, and a gate proves it still records.
   **Layman:** Removing a from-source install can leave a few old files behind.
   Kind: fix.
   Source: review-fix DEMO-0094 2026-10-31.
+
+- 📋 [DEMO-0295] **Failed shots keep their folders in the state directory for good, in RAM.**
+  A failed shot keeps its folder, now with its whole screen, so the caller can look. Nothing ever removes one. Removal needs a rule: a shot folder has no lock, so its age cannot prove no session is using it.
+  **Layman:** A screenshot that fails leaves a small folder in memory, and nothing ever clears it.
+  Kind: fix.
+  Source: review-code-2026-10-30.
+
+- 📋 [DEMO-0296] **`demoreel check` builds a message from the translated fragment "record and shot".**
+  A message is one or more whole sentences. The gate's fragment check does not reach it, because the translation step does not run `check`.
+  **Layman:** One message in `demoreel check` is put together from pieces, which reads wrongly in some languages.
+  Kind: fix.
+  Source: review-code-2026-10-30.
+
+- 📋 [DEMO-0297] **The refusal of a very wide line can overstate how many characters would fit.**
+  The refusal itself is correct. The measuring strip clips the line, so its "about N would fit" comes out too high.
+  **Layman:** When a line of text is too wide, the suggested length can be too long.
+  Kind: fix.
+  Source: review-code-2026-10-30.
+
+- 📋 [DEMO-0298] **spec_lint reports a missing plain-language header on the older specs.**
+  The layout is newer than those specs. Either add the header or record that older specs are exempt.
+  **Layman:** Older design documents lack a plain-language summary that newer ones have.
+  Kind: doc-fix.
+  Source: review-code-2026-10-30.
 
 ## Standing chores
 
