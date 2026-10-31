@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=289 -->
+<!-- ants-roadmap-id-high-water: DEMO=290 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -839,6 +839,14 @@ simplest case, and a gate proves it still records.
   **Layman:** Recording an app through a launcher script can stop straight away.
   Kind: investigate.
   Source: review-code-2026-10-30 DEMO-0094.
+
+- 📋 [DEMO-0290] **--app-log with process substitution fails: /dev/fd resolves to a pipe name that does not exist.**
+  `--app-log >(cmd)` fails, because the path resolves to `pipe:[..]`.
+  Older than DEMO-0094's path walk, and the walk keeps it. Found while
+  closing the output-paths subject.
+  **Layman:** Sending an app's output straight into another command, rather than a file, does not work.
+  Kind: fix.
+  Source: review-fix DEMO-0094 2026-10-31.
 
 ## Standing chores
 
@@ -5314,6 +5322,10 @@ covers both display backends and the Flatpak invocation.
   names are untrusted; a --steps file is as trusted as the command, with
   a key-name check; the lock checks are added rather than the claim
   narrowed.
+  2026-10-31: subject closed: output paths. A run's name, every written
+  path and part file, retakes, and the gate refusing root. Left:
+  untrusted text and media, the release chain and completions, the
+  gate's own weak checks, then SECURITY.md in full.
   **Layman:** Before calling it finished, have the code checked end to end for security holes and fix any found.
   Kind: audit-fix.
   Source: user-request-2026-09-25.
