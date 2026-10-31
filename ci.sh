@@ -1951,8 +1951,8 @@ finishing_checks() {
     # They also run side by side, FIN_JOBS at a time, each in its own copy of
     # the inputs: its own sc.txt, ffmpeg log, stdout and stderr, and its own
     # tree for `snap` to hash. That is safe here and not for the recording
-    # checks (DEMO-0042, DEMO-0120): nothing in these times anything, so a busy
-    # machine makes them slower, never wrong. Each runs at lower priority, so
+    # checks (DEMO-0042, DEMO-0120): their few time limits are far above what they
+    # measure, so a busy machine makes them slower, not wrong. Each runs at lower priority, so
     # the rest of the machine keeps its share, and its output is printed in
     # the list's order once all are done.
     fin_names=(); fin_funcs=()
@@ -1969,6 +1969,11 @@ finishing_checks() {
     }
     fin_run() {
         local i jobs=${FIN_JOBS:-$(( $(nproc) < 4 ? $(nproc) : 4 ))}
+        case $jobs in
+            '' | *[!0-9]* | 0)
+                echo "FIN_JOBS is how many checks run at once, a whole number above 0, not '$jobs'" >&2
+                exit 1 ;;
+        esac
         mkdir -p "$tmp/fin-steps"
         # The checks' own times overlap, so the batch is timed as a step too.
         step "finishing: the checks below, run side by side"
@@ -2027,7 +2032,8 @@ REGIONS = {"full": (0, 1), "top": (0, .7), "bottom": (.8, 1),
 
 
 def run(cmd):
-    return subprocess.run(cmd, capture_output=True, check=True).stdout
+    return subprocess.run(cmd, capture_output=True, check=True,
+                          stdin=subprocess.DEVNULL).stdout
 
 
 def size(f):
@@ -2039,7 +2045,7 @@ def size(f):
 
 
 def frames(f, w=80, h=50):
-    raw = run(["ffmpeg", "-v", "error", "-i", f, "-vf",
+    raw = run(["ffmpeg", "-nostdin", "-v", "error", "-i", f, "-vf",
                f"scale={w}:{h}:flags=area", "-fps_mode", "passthrough",
                "-f", "rawvideo", "-pix_fmt", "rgb24", "-"])
     n = w * h * 3
@@ -2182,13 +2188,15 @@ def main(argv):
                     break
                 n = int.from_bytes(head[:4], "big")
                 names.append(head[4:].decode("latin1"))
+                if n == 0:
+                    break
+                head_size = 8
                 if n == 1:
                     n = int.from_bytes(fh.read(8), "big")
-                    fh.seek(n - 16, 1)
-                elif n == 0:
-                    break
-                else:
-                    fh.seek(n - 8, 1)
+                    head_size = 16
+                if n < head_size:
+                    sys.exit(f"{argv[1]}: a box of {n} bytes cannot hold its own header")
+                fh.seek(n - head_size, 1)
         print(*names)
     else:
         sys.exit(f"px.py: unknown command {cmd}")
@@ -2196,7 +2204,9 @@ def main(argv):
 
 main(sys.argv[1:])
 FINPY
-    ff() { ffmpeg -v error -y "$@"; }
+    # -nostdin: ffmpeg 6.1 reads keys from whatever stdin it has, so a q shortens
+    # an input and a list on stdin loses letters (measured). 9.0 does not.
+    ff() { ffmpeg -nostdin -v error -y "$@"; }
     x264=(-c:v libx264 -pix_fmt yuv420p -movflags +faststart)
     ff -f lavfi -i "testsrc2=s=320x240:r=10:d=6" -f lavfi -i "sine=d=6" \
        -f lavfi -i "color=c=white:s=16x240:r=10:d=6" \
@@ -2712,7 +2722,7 @@ lines" "A title far too long to fit across a thumbnail at its size"; do
     # ---- sheet ------------------------------------------------------------
     }
     sheet_cut() {  # sheet crop out: one rectangle of a sheet, as a picture
-        ffmpeg -v error -y -i "$1" -vf "crop=$2" "$3"
+        ffmpeg -nostdin -v error -y -i "$1" -vf "crop=$2" "$3"
     }
     fin_s11s() {
     # README: "Takes the frames on screen at the moments `--every` or `--at`
@@ -3794,7 +3804,7 @@ E
         d_bold=$(px changed "$ft/out/fa-b.mp4" 5 "$ft/out/fa-r.mp4" 5 full)
         assert_cmp "font \"$bolded:bold\" draws differently from \"$bolded\" (pixels that differ)" "$d_bold" '>=' 100
     else
-        echo "note: neither $fam1 nor $fam2 has a bold face here, so \":bold\" was not exercised"
+        echo "skipped: neither $fam1 nor $fam2 has a bold face here, so \":bold\" did not run"
     fi
     # "A value with a `/` in it is a font file and is used as it is."
     file=$(fc-match -f '%{file}' "$fam1")
@@ -3804,7 +3814,7 @@ E
         d_file=$(px changed "$ft/out/fa-f.mp4" 5 "$ft/out/fa0.mp4" 5 full)
         assert_cmp "font FILE ($file) draws differently from the default (pixels that differ)" "$d_file" '>=' 200
     else
-        echo "note: fc-match gave no file for $fam1, so a font file was not exercised"
+        echo "skipped: fc-match gave no file for $fam1, so a font file did not run"
     fi
     # Refused: a control that succeeds first, then a family the machine lacks, a
     # general name, and a value with a / that is not a file.
@@ -4209,7 +4219,8 @@ start = time.monotonic()
 done, stopped = d.run_capped(uses, 60, 100 * MB)
 took = time.monotonic() - start
 assert stopped and done.returncode != 0, (stopped, done.returncode)
-assert took < 5, f"stopped after {took:.1f} s"
+# The program sleeps for 20 s, so anything well short of that was the cap.
+assert took < 15, f"stopped after {took:.1f} s"
 # Reserves 8 GB of address space and touches almost none of it, for long
 # enough to be looked at several times.
 reserves = [sys.executable, "-c",
@@ -4297,7 +4308,7 @@ ONEPY
     expect_ok "a mixed film, in one piece"
     assert_eq "a mixed film: frames in pieces and in one" \
         "$(v_frames "$ft/out/pc2-one.mp4")" "$(v_frames "$ft/out/pc2.mp4")"
-    worst=$(ffmpeg -v error -i "$ft/out/pc2-one.mp4" -i "$ft/out/pc2.mp4" \
+    worst=$(ffmpeg -nostdin -v error -i "$ft/out/pc2-one.mp4" -i "$ft/out/pc2.mp4" \
         -lavfi "[0:v][1:v]psnr=stats_file=$ft/pc2.psnr" -f null - \
         && awk '{ split($6, v, ":"); p = v[2] == "inf" ? 99 : v[2] + 0
                   if (NR == 1 || p < m) m = p } END { print m }' "$ft/pc2.psnr")
