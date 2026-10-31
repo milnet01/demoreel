@@ -10650,6 +10650,15 @@ cwd = top / "cwd"
 r = run(good, NOTHING, {**pseudo, "TEXTDOMAINDIR": str(cwd / "po")},
         script=pathlib.Path("demoreel").resolve(), cwd=cwd)
 expect("a catalog in the working directory", r, rc_nothing, NOTHING_MSG)
+# The route the environment really has: LANGUAGE is joined to po/ as a file's name,
+# and only the check on its shape stops a path. A dot ends a language's name, as in
+# de.UTF-8, so ../ falls apart on its own, and this path has none: run from here,
+# /proc/self/cwd/ is this folder. It reached the same catalog that po/zz.po holds.
+(here / "cwd").mkdir(exist_ok=True)
+(here / "cwd" / "zz.po").write_text(good, encoding="utf-8")
+for path in ("/proc/self/cwd/cwd/zz", "../cwd/zz"):
+    r = run(good, NOTHING, {**pseudo, "LANGUAGE": path})
+    expect(f"LANGUAGE={path}", r, rc_nothing, NOTHING_MSG)
 for line in bad:
     print(line, file=sys.stderr)
 sys.exit(1 if bad else 0)
