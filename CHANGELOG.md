@@ -38,6 +38,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Security
 
+- **`SECURITY.md` now says what demoreel trusts** (DEMO-0094)
+  Edit scripts, media files, fonts and file names are untrusted, a `--steps` file is as trusted as the command, and other processes of your own user are no boundary. It also lists every helper found through `PATH`, says what the gate really checks for each claim, and says only the latest release gets fixes.
 - **Checking a download now ties each file to the signed commit** (DEMO-0094)
   `SECURITY.md`'s `gh attestation verify` command gains `--source-digest`: without it, a tag moved to another commit for the build and moved back afterwards passed all three checks. The tag check now reads the key from the GitHub account rather than from the repository, and says what to read in its output, since git does not compare a signed tag's own name with the one you asked for. A release's tag must also name itself and its version.
 - **The release workflow builds the tag it checked, with less in reach** (DEMO-0094)

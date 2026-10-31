@@ -4,7 +4,7 @@ demoreel is a local command-line tool. It runs as the user who invokes it, gains
 no privilege, and opens no network listener. It does have trust boundaries, and
 they are listed below rather than dismissed: it starts an X display other local
 processes can reach, writes state under a path other local users can predict,
-and passes text on a command line.
+passes text on a command line, and reads files someone else may have made.
 
 `~/.claude/standards/security.md` owns what a trust boundary is and what
 defending one requires. This file is what an outside reader needs.
@@ -16,11 +16,26 @@ privileges and does not sandbox it. This is not a privilege boundary — the
 caller could run the same command directly — but it does mean demoreel is not a
 containment mechanism, and should not be used as one.
 
-**The `PATH` demoreel inherits.** The fixed helpers — `Xvfb`, `ffmpeg`,
-`xdotool`, `xauth`, and on `--gpu` `cage`, `Xwayland`, `wlr-randr` and
-`wf-recorder` — are started by name, so the caller's `PATH`
-decides which binaries run. So does `python3`, which the script's first line
-and the shells' tab completion both find there. This is deliberate. It is not a privilege boundary:
+**Other processes of the same user.** These are not a boundary. Any of them, the
+recorded app included, can read the display's auth file and rewrite a run's state
+file, and what `demoreel stop` reports rests on that file. Any of them can also
+list a run's private sound output and listen to it.
+
+**The `PATH` demoreel inherits.** demoreel starts its helpers by name, so the
+caller's `PATH` decides which binaries run:
+
+- `ffmpeg`, `ffprobe`, `xdotool` and `xauth`.
+- `Xvfb` by default, and on `--gpu` `cage`, `sh`, `Xwayland`, `wlr-randr` and
+  `wf-recorder`.
+- `pactl` for a run's private sound output.
+- `fc-match` for a font asked for by name.
+- `ldd` in `demoreel check`, which asks it which `libavcodec` the `wf-recorder`
+  on `PATH` loads. `check` then loads that library into demoreel itself through
+  `ctypes`, so `PATH` also chooses a library that runs inside demoreel.
+- `python3`, which the script's first line and the shells' tab completion both
+  find there.
+
+This is deliberate. It is not a privilege boundary:
 demoreel runs as the caller with no elevation, so anyone who can alter that
 `PATH` can already run code as them, and resolving the names to absolute paths
 would read the same `PATH` to do it. What it does mean is that demoreel inherits
@@ -34,34 +49,51 @@ tools, which flag these call sites on every run.
 are live, in whatever folder the shell is in. That folder may be a download or
 someone else's, so nothing in it is imported or run: `python3 -I` keeps it off
 the import path, a command typed with a path such as `./demoreel` is not run,
-and a run's name is text the shell does not expand. The gate covers each of
-these in bash, zsh and fish (DEMO-0094).
+and a run's name is text the shell does not expand. The gate plants a script,
+modules and hostile run names, and checks each of these in bash, zsh and fish.
+It reports a shell the machine lacks as skipped (DEMO-0094).
 
 **The virtual X display.** The whole point of the tool is that what the app
-draws is private to the run. Both backends now put the display behind an
+draws is private to the run. Both backends put the display behind an
 `MIT-MAGIC-COOKIE-1` cookie in an `Xauthority` file at mode 0600, handed to
-every client through `XAUTHORITY`. Both X servers are also started with
-`-nolisten tcp`: checked with `ss -ltn` before and during a `--gpu` run, no X
-server opened a TCP listener on any display port. On `--gpu` the compositor has
-a Wayland socket of its own, which the recorder reads the picture through; it
-lives in `XDG_RUNTIME_DIR` (mode 0700), so only the caller's own processes can
-reach it. A local process without the cookie is
-refused, which was measured before and after: it
-used to read the geometry and grab a frame of whatever was on screen. Socket
-permissions would not have fixed it — `Xvfb` also listens on an abstract socket,
-which has none. The gate covers this.
+every client through `XAUTHORITY`. The file holds a cookie before the X server
+starts, so no client can connect first and stay. The cookie reaches `xauth` on
+stdin, so it is on no command line. Both X servers are started with
+`-nolisten tcp`. A local process without the cookie is refused, which was
+measured before and after: it used to read the geometry and grab a frame of
+whatever was on screen. Socket permissions would not have fixed it — `Xvfb` also
+listens on an abstract socket, which has none.
 
-**The run-state directory.** `state_dir()` uses `XDG_RUNTIME_DIR` when it is
-set, then `/run/user/<uid>` if the caller owns it, and `/tmp/demoreel-<uid>`
-otherwise. That last name is predictable,
+The gate checks each of these on `Xvfb`, and on `--gpu` where the machine can run
+it, which GitHub cannot:
+
+- A client with no cookie is refused from the moment the app starts.
+- A client holding the cookie connects, so the refusal is not a dead display.
+- The auth file is at mode 0600 and holds a cookie before the server starts.
+- `xauth`'s command line never holds the cookie.
+- The display's TCP port has no listener.
+
+On `--gpu` the compositor also has a Wayland socket, which the recorder reads the
+picture through. It lives in `XDG_RUNTIME_DIR`, so that folder's mode decides who
+can reach it. A desktop session's is 0700, which leaves the caller's own
+processes. The gate does not check this socket.
+
+**The run-state directory.** `state_dir()` uses a folder `demoreel-<uid>` in
+`XDG_RUNTIME_DIR` when that is set, then in `/run/user/<uid>` if the caller owns
+it, and in `/tmp` otherwise. The name in `/tmp` is predictable,
 so on a shared machine another user can create that path first. demoreel checks
 before using it: `lstat` rather than `stat`, so a planted symlink is seen rather
 than followed, and the run stops unless the path is a directory the caller owns.
-A desktop session sets `XDG_RUNTIME_DIR`, so the fallback is the unusual path —
-which is why the hole would have gone unnoticed. A run's `--name` becomes file
+It then sets that directory to mode 0700.
+A desktop session sets `XDG_RUNTIME_DIR`, so the fallback is the unusual path.
+A run's `--name` becomes file
 names there, so it takes plain letters, digits, dots, underscores and hyphens,
 and cannot start with a dot or a hyphen: it cannot leave that directory, and two
-names cannot share a file. The gate covers this.
+names cannot share a file.
+
+The gate checks that a link or a file at that path is refused, which folder is
+chosen, and the names. It has one account, so another user's directory is a
+stand-in for `lstat`.
 
 **The paths demoreel writes: `-o` and `--app-log`.** Another local user can
 create a symlink at a name the caller will write to, most easily in `/tmp`.
@@ -103,12 +135,19 @@ file, and with real root-owned files. No second user has been run against it.
 is never in `xdotool`'s command line. Given with `-a`, it is in **demoreel's
 own**, and a command line is readable by other local users through the process
 list for the whole recording, not just the typing. `--steps` reads the steps
-from a file or from stdin instead, so they are in no command line at all. The
-gate checks this: a canary typed through `--steps -` reaches the app and is
+from a file or from stdin instead, so they are not in demoreel's command line.
+The gate checks this: a canary typed through `--steps -` reaches the app and is
 absent from demoreel's command line (DEMO-0025). Use `--steps` for a password
 or a token, from a file only you can read; a shell line that pipes the steps
-in holds them itself. Only `type` text stays off a command line: `key` and
-`hold` steps are on `xdotool`'s, even under `--steps`.
+in holds them itself. Only `type` text stays off every command line: `key` and
+`hold` steps are on `xdotool`'s, even under `--steps`, so put no secret in one.
+
+**A `--steps` file.** It is as trusted as the command. A step drives the app as
+someone at its keyboard could, so read a steps file from someone else before you
+run it. A `key` or `hold` step still takes key names and nothing else, because
+`xdotool` reads a command's name anywhere among another command's arguments. The
+gate tries a key step that would run a program, and refuses every command the
+real `xdotool` lists (DEMO-0094).
 
 **Translation catalogs.** A message demoreel shows may come from a `.po` file
 in the `po/` folder beside the script, written by a translator a reviewer may
@@ -125,14 +164,15 @@ A refused catalog costs its language and one English note, never the run, and
 under `LC_ALL=C` no catalog is opened at all. The gate covers each of these
 with hostile catalogs (DEMO-0083).
 
-**Files, names and scripts from someone else.** A finishing command may be given
-a media file, a font, a script or a file name it did not make, so:
+**Files, names and scripts from someone else.** Edit scripts, media files, fonts
+and file names are untrusted: a finishing command may be given one it did not
+make. So:
 
 - A name, a script line or a program's words reach the terminal as text: each
   value in a message is escaped, a line break too, and no line of them can pass
   for one of demoreel's own. Only stdout's path is left as it is.
-- A file is read from its absolute path, so its name is never a protocol or an
-  option, and only as a file. A format that opens other files on a file's say, a
+- A media file is read from its absolute path, so its name is never a protocol or
+  an option, and only as a file. A format that opens other files on a file's say, a
   playlist or a concat list, is refused.
 - A measurement is never read from text a file can write: a tag or a name cannot
   set a music's level or `motion`'s report.
@@ -140,9 +180,25 @@ a media file, a font, a script or a file name it did not make, so:
   its last part. A film is held to a longest length, a highest rate and a little
   free disk.
 
-The gate covers each of these with crafted files and names (DEMO-0094). A script
-can still name any file the caller can read and put it in the film, so read a
-script from someone else before publishing what it makes.
+The gate covers each of these with crafted files and names, and with stand-ins
+for a program that floods its output, a clip that claims a huge frame rate and a
+nearly full disk (DEMO-0094).
+
+A script holds scenes and nothing else. No line of one runs a program or says
+where the film is written. Each value is checked against what its word takes, and
+text reaches `ffmpeg` from a file, so no value becomes part of a filter. A font's
+path holding a character `ffmpeg`'s filters read is refused. No gate step tries to
+pass a filter through a script. These rest on the code, and on a probe of
+2026-10-31 that put a filter in a script's text, font, colour, transition and
+number values and got no file from it.
+
+Two limits are left:
+
+- demoreel does not sandbox `ffmpeg`. A flaw in how `ffmpeg` reads a file or a font
+  runs as the caller, so keep `ffmpeg` up to date. The gate tries a font's name and
+  path, and no crafted font.
+- A script can name any file the caller can read and put it in the film, so read a
+  script from someone else before publishing what it makes.
 
 **The video and the logs demoreel writes.** Whatever the app draws is in the
 video, and `--app-log` keeps whatever the app printed. Both are ordinary files
@@ -219,7 +275,9 @@ and nothing here defeats them.
 
 ## Supported versions
 
-Before 1.0, only the latest release. There are no maintenance branches.
+Only the latest release, while the version is below 1.0.0. A fix goes on `main`
+and ships in the next release. An older release gets no fix, and there are no
+maintenance branches. What 1.0.0 will support is not yet decided.
 
 ## Reporting a vulnerability
 
