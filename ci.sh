@@ -4520,6 +4520,133 @@ WATCHPY
     done
     echo "a playlist and a list were refused on every input, and said so"
     }
+    fin_s78() {
+    # DEMO-0094. Nothing bounded a film: `card 1e9` ran on with a timeout that
+    # grew with it until the disk beside -o was full, and `card 1e308` was a
+    # traceback. Every refusal comes before anything is written.
+    local line
+    for line in 'card 1e308' 'card 1e9' 'card 86401' 'card 50000|card 50000' \
+                'clip A.mp4 hold 1e9' 'clip A.mp4 hold 1e308' 'clip A.mp4 hold 86400'; do
+        tr '|' '\n' <<<"$line" > "$ft/s.txt"
+        run edit s.txt -o "$ft/out/long.mp4"
+        expect_refused "$line"
+        grep -q 'a film may last at most 86400 seconds' "$fe" || {
+            show_err; fail "$line: did not name the limit"; }
+        assert_absent "$line leaves nothing" "$ft/out/long.mp4"
+    done
+    run card -d 86401 -o "$ft/out/long.mp4"
+    expect_refused "card -d over the limit"
+    grep -q 'at most 86400 seconds' "$fe" || { show_err; fail "card -d: did not name the limit"; }
+    run card -d 1e308 -o "$ft/out/long.mp4"
+    expect_refused "card -d 1e308"
+    # What a real film may be: each limit on its own, at the limit.
+    python3 - "$DR" <<'LIMITPY' || exit 1
+import importlib.machinery, importlib.util, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", sys.argv[1])
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+assert d.FILM_SECONDS_MOST == 86400 and d.FILM_RATE_MOST == 1000
+d.check_length("x", 86400.0)
+assert d.film_shape([], "320x240", 1000.0) == (320, 240, 1000.0)
+LIMITPY
+    for line in 1001 1000000 0 -1; do
+        run card "--framerate=$line" -d 1 -o "$ft/out/fast.mp4"
+        expect_refused "--framerate $line"
+        assert_absent "--framerate $line leaves nothing" "$ft/out/fast.mp4"
+        grep -qE 'frame rate is at most 1000|--framerate takes a number above zero' "$fe" || {
+            show_err; fail "--framerate $line: did not say why"; }
+    done
+    # A clip whose own rate is what crafted the film's.
+    mkdir -p "$ft/fast"
+    cat >"$ft/fast/ffprobe" <<FASTPROBE
+#!/bin/sh
+case "\$*" in *v:0*-of\ json*)
+printf '{"streams":[{"width":320,"height":240,"avg_frame_rate":"1000000/1"}],"format":{"duration":"2.0","format_name":"mov"}}\n'
+exit 0 ;; esac
+exec "$(command -v ffprobe)" "\$@"
+FASTPROBE
+    chmod +x "$ft/fast/ffprobe"
+    FIN_PATH="$ft/fast:$PATH" run trim A.mp4 --to 1 -o "$ft/out/fast.mp4"
+    expect_refused "a clip claiming a million frames a second"
+    grep -q 'frame rate is at most 1000' "$fe" || { show_err; fail "the clip's rate: did not say why"; }
+    # -r sets the film's rate, so a clip claiming one still makes a film at the rate asked.
+    printf 'clip A.mp4 to 1\n' > "$ft/s.txt"
+    run edit s.txt -r 1000 -o "$ft/out/r1000.mp4"
+    expect_ok "a film at the highest rate"
+    assert_eq "a film at the highest rate" 1000/1 "$(ffprobe -v error -select_streams v:0 \
+        -show_entries stream=avg_frame_rate -of csv=p=0 "$ft/out/r1000.mp4")"
+    # A disk nearly full stops a film, with no part left and -o untouched. The
+    # free space is a stand-in: no gate may fill a real disk.
+    cat >"$ft/nearly.py" <<'FULLPY'
+import collections, importlib.machinery, importlib.util, os, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", sys.argv[1])
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+free = int(os.environ["FREE"])
+usage = collections.namedtuple("usage", "total used free")
+d.shutil.disk_usage = lambda path: usage(free * 2, free, free)
+sys.argv = ["demoreel", *sys.argv[2:]]
+d.main()
+FULLPY
+    rc=0
+    ( cd "$ft" && FREE=$((16 * 1024 * 1024 - 1)) python3 nearly.py "$DR" card -d 30 -o "$ft/out/full.mp4" ) \
+        >"$fo" 2>"$fe" || rc=$?
+    expect_refused "a film on a disk with under 16 MiB free"
+    grep -q 'is nearly full' "$fe" || { show_err; fail "a nearly full disk: did not say why"; }
+    assert_absent "a nearly full disk leaves no film" "$ft/out/full.mp4"
+    assert_eq "a nearly full disk leaves no part" 0 "$(find "$ft/out" -name '.demoreel-*' | wc -l)"
+    rc=0
+    ( cd "$ft" && FREE=$((16 * 1024 * 1024)) python3 nearly.py "$DR" card -d 1 -o "$ft/out/full.mp4" ) \
+        >"$fo" 2>"$fe" || rc=$?
+    expect_ok "a film on a disk with 16 MiB free"
+    assert_file "a film on a disk with 16 MiB free" "$ft/out/full.mp4"
+    echo "a film over a limit was refused before it started, and a full disk stopped one"
+    }
+    fin_s79() {
+    # DEMO-0094. A stream reporting no size divided by zero, and a very tall clip
+    # gave `s=0xN` and failed inside ffmpeg after the checks had passed.
+    local cmd size
+    mkdir -p "$ft/nosize"
+    cat >"$ft/nosize/ffprobe" <<NOSIZE
+#!/bin/sh
+case "\$*" in *v:0*-of\ json*)
+printf '{"streams":[{"width":%s,"height":%s,"avg_frame_rate":"10/1"}],"format":{"duration":"2.0","format_name":"mov"}}\n' "\$W" "\$H"
+exit 0 ;; esac
+exec "$(command -v ffprobe)" "\$@"
+NOSIZE
+    chmod +x "$ft/nosize/ffprobe"
+    printf 'card 1\nclip A.mp4 window 50\n' > "$ft/w.txt"
+    for cmd in "sheet A.mp4 --at 0.1 -o $ft/out/x.png" "thumbnail A.mp4 -t 0.1 -o $ft/out/x.jpg" \
+               "poster A.mp4 -t 0.1 -o $ft/out/x.png" "edit w.txt -o $ft/out/x.mp4" "motion A.mp4"; do
+        for size in "0 0" "0 240" "320 0"; do
+            # shellcheck disable=SC2086  # each case is several words
+            W=${size% *} H=${size#* } FIN_PATH="$ft/nosize:$PATH" run $cmd
+            expect_refused "$cmd, a stream sized $size"
+            grep -q 'not a video or picture ffmpeg can read' "$fe" || {
+                show_err; fail "$cmd, a stream sized $size: did not say why"; }
+            grep -q Traceback "$fe" && { show_err; fail "$cmd: a traceback"; }
+        done
+    done
+    # A clip so tall its window would be under 2 pixels across, and one so flat
+    # it would be under 2 high: said before anything is made.
+    ffmpeg -nostdin -v error -f lavfi -i testsrc=s=16x2000:r=5:d=1 -c:v libx264 -preset ultrafast \
+        -pix_fmt yuv420p -y "$ft/tall.mp4"
+    ffmpeg -nostdin -v error -f lavfi -i testsrc=s=4000x16:r=5:d=1 -c:v libx264 -preset ultrafast \
+        -pix_fmt yuv420p -y "$ft/flat.mp4"
+    for cmd in tall.mp4 flat.mp4; do
+        printf 'card 1\nclip %s window 20\n' "$cmd" > "$ft/s.txt"
+        run edit s.txt -s 1600x1000 -o "$ft/out/thin.mp4"
+        expect_refused "$cmd in a small window"
+        grep -q 'line 2:.*too narrow or too flat' "$fe" || { show_err; fail "$cmd: did not say why"; }
+        assert_absent "$cmd leaves nothing" "$ft/out/thin.mp4"
+        grep -q 'making ' "$fe" && { show_err; fail "$cmd: it started making the film first"; }
+    done
+    # The same clip in a window it fits still makes a film.
+    printf 'card 1\nclip tall.mp4 window 100\n' > "$ft/s.txt"
+    run edit s.txt -s 1600x1000 -o "$ft/out/fits.mp4"
+    expect_ok "a tall clip whose window holds it"
+    echo "a stream with no size and a window too thin were refused in words"
+    }
     fin_s71() {
     # DEMO-0094. A part's name was the output's, so it could be planted first:
     # the link's target was truncated, and the link itself moved to -o.
@@ -5077,6 +5204,8 @@ CASES
     fin_step "a program's output is bounded in memory, and every read of a file is under the memory cap" fin_s75
     fin_step "a file name is a name, on every input" fin_s76
     fin_step "a file that points at other files is refused, on every input" fin_s77
+    fin_step "a film has a longest length and a highest rate, and leaves the disk some room" fin_s78
+    fin_step "a stream with no size, and a clip too narrow for its window, are refused in words" fin_s79
     fin_run
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }

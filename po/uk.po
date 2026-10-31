@@ -1443,3 +1443,15 @@ msgstr "{where}: {path} — це список, що вказує на інші �
 
 msgid "ffmpeg did not say which formats it reads, so nothing was read."
 msgstr "ffmpeg не повідомив, які формати він читає, тому нічого не прочитано."
+
+msgid "{where}: this makes the film {seconds} seconds long, and a film may last at most {most} seconds, which is {hours} hours."
+msgstr "{where}: через це фільм триває {seconds} с, а фільм може тривати щонайбільше {most} с, тобто {hours} год."
+
+msgid "a film's frame rate is at most {most} a second, and this one would be {rate}."
+msgstr "частота кадрів фільму — щонайбільше {most} на секунду, а тут було б {rate}."
+
+msgid "the disk holding {path} is nearly full, so the film was stopped before it filled it."
+msgstr "диск із {path} майже заповнений, тому фільм зупинено, поки диск не заповнився."
+
+msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
+msgstr "{where}: {path} має розмір {size}, надто вузький або плаский для вікна такого розміру. Дайте йому більше вікно."

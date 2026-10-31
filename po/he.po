@@ -1437,3 +1437,15 @@ msgstr "{where}: {path} היא רשימה שמצביעה על קבצים אחר�
 
 msgid "ffmpeg did not say which formats it reads, so nothing was read."
 msgstr "ffmpeg לא ציין אילו תבניות הוא קורא, ולכן שום דבר לא נקרא."
+
+msgid "{where}: this makes the film {seconds} seconds long, and a film may last at most {most} seconds, which is {hours} hours."
+msgstr "{where}: כך הסרט יימשך {seconds} שניות, וסרט יכול להימשך לכל היותר {most} שניות, כלומר {hours} שעות."
+
+msgid "a film's frame rate is at most {most} a second, and this one would be {rate}."
+msgstr "קצב הפריימים של סרט הוא לכל היותר {most} בשנייה, וכאן הוא היה {rate}."
+
+msgid "the disk holding {path} is nearly full, so the film was stopped before it filled it."
+msgstr "הדיסק שמכיל את {path} כמעט מלא, ולכן הסרט הופסק לפני שמילא אותו."
+
+msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
+msgstr "{where}: {path} בגודל {size}, צר או שטוח מדי להצגה בחלון בגודל הזה. תן לו חלון גדול יותר."

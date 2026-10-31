@@ -650,6 +650,9 @@ msgstr ""
 msgid "this machine cannot draw text on a video: ffmpeg needs its drawtext filter and a font."
 msgstr ""
 
+msgid "{where}: this makes the film {seconds} seconds long, and a film may last at most {most} seconds, which is {hours} hours."
+msgstr ""
+
 #. translators: {word} is x or y, an edit-script word that stays in English.
 msgid "{where}: a zoom's {word} is a percentage of the picture, from 0 to 100, not {value}."
 msgstr ""
@@ -755,12 +758,18 @@ msgstr ""
 msgid "{where}: its texts leave no room for the picture between them. Give them a smaller size."
 msgstr ""
 
+msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
+msgstr ""
+
 msgid ""
 "a video's width and height must be even, since H.264 cannot encode an odd one, and this film would be {size}.\n"
 "  Set the size with -s {even}."
 msgstr ""
 
 msgid "--framerate takes a number above zero, not {rate}."
+msgstr ""
+
+msgid "a film's frame rate is at most {most} a second, and this one would be {rate}."
 msgstr ""
 
 msgid "{where}: {path} is not a file ffmpeg can read."
@@ -825,6 +834,9 @@ msgid "-o must end in {ending} or {other}, and {name} does not."
 msgstr ""
 
 msgid "-o is {output}, which is also a file this command reads. demoreel never writes over its own input."
+msgstr ""
+
+msgid "the disk holding {path} is nearly full, so the film was stopped before it filled it."
 msgstr ""
 
 msgid "ffmpeg used more than {size} GB of memory making the film, half this machine's, so it was stopped."

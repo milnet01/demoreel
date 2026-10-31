@@ -1431,3 +1431,15 @@ msgstr "{where}: {path}은(는) 재생 목록처럼 다른 파일을 가리키�
 
 msgid "ffmpeg did not say which formats it reads, so nothing was read."
 msgstr "ffmpeg이 읽을 수 있는 형식을 알려 주지 않아 아무것도 읽지 않았습니다."
+
+msgid "{where}: this makes the film {seconds} seconds long, and a film may last at most {most} seconds, which is {hours} hours."
+msgstr "{where}: 이렇게 하면 영상 길이가 {seconds}초가 되는데, 영상은 최대 {most}초({hours}시간)까지만 가능합니다."
+
+msgid "a film's frame rate is at most {most} a second, and this one would be {rate}."
+msgstr "영상의 프레임 속도는 초당 최대 {most}인데, 이 영상은 {rate}이 됩니다."
+
+msgid "the disk holding {path} is nearly full, so the film was stopped before it filled it."
+msgstr "{path}이(가) 있는 디스크가 거의 가득 차서, 가득 차기 전에 영상 제작을 중지했습니다."
+
+msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
+msgstr "{where}: {path}은(는) {size}로, 이 크기의 창에 표시하기에는 너무 좁거나 납작합니다. 창을 더 크게 하세요."

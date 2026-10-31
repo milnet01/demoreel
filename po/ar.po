@@ -1461,3 +1461,15 @@ msgstr "{where}: {path} قائمة تشير إلى ملفات أخرى، مثل 
 
 msgid "ffmpeg did not say which formats it reads, so nothing was read."
 msgstr "لم يذكر ffmpeg الصيغ التي يقرؤها، لذلك لم تُقرأ أي ملفات."
+
+msgid "{where}: this makes the film {seconds} seconds long, and a film may last at most {most} seconds, which is {hours} hours."
+msgstr "{where}: هذا يجعل الفيلم بطول {seconds} ثانية، ولا يمكن أن يتجاوز الفيلم {most} ثانية، أي {hours} ساعة."
+
+msgid "a film's frame rate is at most {most} a second, and this one would be {rate}."
+msgstr "لا يتجاوز معدل إطارات الفيلم {most} في الثانية، وسيكون هذا {rate}."
+
+msgid "the disk holding {path} is nearly full, so the film was stopped before it filled it."
+msgstr "القرص الذي يحوي {path} شبه ممتلئ، لذلك أُوقف الفيلم قبل أن يملأه."
+
+msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
+msgstr "{where}: {path} بحجم {size}، وهو ضيق جدًا أو مسطح جدًا لعرضه في نافذة بهذا الحجم. امنحه نافذة أكبر."

@@ -1437,3 +1437,15 @@ msgstr "{where}: {path} ist eine Liste, die auf andere Dateien verweist, etwa ei
 
 msgid "ffmpeg did not say which formats it reads, so nothing was read."
 msgstr "ffmpeg hat nicht gesagt, welche Formate es liest, deshalb wurde nichts gelesen."
+
+msgid "{where}: this makes the film {seconds} seconds long, and a film may last at most {most} seconds, which is {hours} hours."
+msgstr "{where}: Dadurch wird der Film {seconds} Sekunden lang, und ein Film darf höchstens {most} Sekunden dauern, also {hours} Stunden."
+
+msgid "a film's frame rate is at most {most} a second, and this one would be {rate}."
+msgstr "Die Bildrate eines Films beträgt höchstens {most} pro Sekunde, und diese wäre {rate}."
+
+msgid "the disk holding {path} is nearly full, so the film was stopped before it filled it."
+msgstr "Der Datenträger mit {path} ist fast voll, deshalb wurde der Film gestoppt, bevor er ihn füllte."
+
+msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
+msgstr "{where}: {path} ist {size}, zu schmal oder zu flach für ein Fenster dieser Größe. Gib ihm ein größeres Fenster."

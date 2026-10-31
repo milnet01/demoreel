@@ -1443,3 +1443,15 @@ msgstr "{where}: {path} to lista wskazująca inne pliki, na przykład lista odtw
 
 msgid "ffmpeg did not say which formats it reads, so nothing was read."
 msgstr "ffmpeg nie podał, jakie formaty odczytuje, więc nic nie zostało odczytane."
+
+msgid "{where}: this makes the film {seconds} seconds long, and a film may last at most {most} seconds, which is {hours} hours."
+msgstr "{where}: film trwałby wtedy {seconds} s, a film może trwać najwyżej {most} s, czyli {hours} godz."
+
+msgid "a film's frame rate is at most {most} a second, and this one would be {rate}."
+msgstr "liczba klatek filmu to najwyżej {most} na sekundę, a tutaj byłoby {rate}."
+
+msgid "the disk holding {path} is nearly full, so the film was stopped before it filled it."
+msgstr "dysk z {path} jest prawie pełny, więc film zatrzymano, zanim go zapełnił."
+
+msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
+msgstr "{where}: {path} ma rozmiar {size}, jest zbyt wąski lub zbyt płaski na okno tej wielkości. Daj mu większe okno."

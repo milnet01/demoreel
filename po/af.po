@@ -1437,3 +1437,15 @@ msgstr "{where}: {path} is 'n lys wat na ander lêers wys, soos 'n snitlys, en d
 
 msgid "ffmpeg did not say which formats it reads, so nothing was read."
 msgstr "ffmpeg het nie gesê watter formate dit lees nie, en dus is niks gelees nie."
+
+msgid "{where}: this makes the film {seconds} seconds long, and a film may last at most {most} seconds, which is {hours} hours."
+msgstr "{where}: dit maak die film {seconds} sekondes lank, en 'n film mag hoogstens {most} sekondes duur, dit is {hours} uur."
+
+msgid "a film's frame rate is at most {most} a second, and this one would be {rate}."
+msgstr "'n film se raamtempo is hoogstens {most} per sekonde, en hierdie een sou {rate} wees."
+
+msgid "the disk holding {path} is nearly full, so the film was stopped before it filled it."
+msgstr "die skyf met {path} is amper vol, en die film is dus gestop voordat dit dit volgemaak het."
+
+msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
+msgstr "{where}: {path} is {size}, te smal of te plat om in 'n venster van hierdie grootte te wys. Gee dit 'n groter venster."

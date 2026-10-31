@@ -3842,6 +3842,9 @@ def probe(path, where):
         stream = info["streams"][0]
         num, _, den = stream.get("avg_frame_rate", "0/1").partition("/")
         rate = float(num) / float(den) if float(den or 0) else 0.0
+        # A stream with no size is one a crafted file can claim, and sizes divide.
+        if int(stream["width"]) <= 0 or int(stream["height"]) <= 0:
+            raise ValueError
         return {"width": int(stream["width"]), "height": int(stream["height"]),
                 "rate": rate,
                 "duration": float(info["format"].get("duration") or 0),
@@ -4094,6 +4097,26 @@ def text_size(textfile, fontsize, font=None, border=0):
     return (int(boxes[-1][0]), int(boxes[-1][1])) if boxes else (0, 0)
 
 
+# The most a film may be, whoever asks: a script or a crafted file's claims. Well
+# past anything real, and low enough that nothing overflows. ffmpeg's own limits
+# do not stop one: a card lasting 1e9 seconds wrote until the disk was full.
+FILM_SECONDS_MOST = 24 * 60 * 60
+FILM_RATE_MOST = 1000
+# A film stops before it takes the disk beside it below this. A look comes every
+# 0.25 s, and a film writes less than this in that time, so ffmpeg is stopped
+# before it fails on a full disk, and other programs keep what is left.
+DISK_LEFT_LEAST = 16 * 1024 * 1024
+
+
+def check_length(where, seconds):
+    """Die if a film would pass FILM_SECONDS_MOST by this scene."""
+    if seconds > FILM_SECONDS_MOST:
+        die(tr("{where}: this makes the film {seconds} seconds long, and a film may "
+               "last at most {most} seconds, which is {hours} hours.", where=where,
+               seconds=f"{seconds:g}", most=FILM_SECONDS_MOST,
+               hours=FILM_SECONDS_MOST // 3600))
+
+
 # A clip's speed: below SPEED_LOW a slowed sound needs more than two atempo
 # stages, and above SPEED_HIGH most frames are dropped.
 SPEED_LOW = 0.25
@@ -4295,6 +4318,7 @@ def check_scene(scene, width, height, rate, workdir):
     if scene.kind == "card":
         if scene.seconds <= 0:
             die(tr("{where}: a card needs a length above zero.", where=where))
+        check_length(where, scene.seconds)
         if scene.path is not None:
             scene.info = probe(scene.path, where)
             scene.frames = picture_frames(scene, where)
@@ -4376,6 +4400,7 @@ def check_scene(scene, width, height, rate, workdir):
                    low=f"{SPEED_LOW:g}", high=f"{SPEED_HIGH:g}",
                    value=f"{scene.speed:g}"))
         length = length / scene.speed + scene.hold
+        check_length(where, length)
         for moment in scene.fade_at:
             if not (scene.fade_length <= scene_time(scene, moment)
                     <= length - scene.fade_length):
@@ -4406,6 +4431,10 @@ def check_scene(scene, width, height, rate, workdir):
                "Give them a smaller size.", where=where))
     if scene.window is not None:
         scene.box = window_box(scene, width, height)
+        if scene.box[2] < 2 or (scene.box[3] < 2 and not scene.texts):
+            die(tr("{where}: {path} is {size}, too narrow or too flat to show in a "
+                   "window of this size. Give it a larger window.", where=where,
+                   path=scene.path, size=f"{scene.info['width']}x{scene.info['height']}"))
         if scene.box[3] < 2:
             die(tr("{where}: its texts leave no room for the picture between them. "
                    "Give them a smaller size.", where=where))
@@ -4434,8 +4463,11 @@ def film_shape(scenes, size, rate):
                even=f"{width + width % 2}x{height + height % 2}"))
     if rate is None:
         rate = first["rate"] if first and first["rate"] else 30
-    if rate <= 0:
+    if not rate > 0:
         die(tr("--framerate takes a number above zero, not {rate}.", rate=f"{rate:g}"))
+    if rate > FILM_RATE_MOST:
+        die(tr("a film's frame rate is at most {most} a second, and this one would be "
+               "{rate}.", most=FILM_RATE_MOST, rate=f"{rate:g}"))
     return width, height, rate
 
 
@@ -5167,7 +5199,16 @@ def run_film_ffmpeg(cmd, seconds, cap, made_file, frames=None):
     its 25 frames and exited 0, and the film came out 82 frames of 139
     (measured 2026-10-30, under ulimit -v).
     """
-    made, stopped = run_capped(cmd, 60 + 20 * seconds, cap)
+    def disk_nearly_full():
+        try:
+            return "disk" if shutil.disk_usage(made_file.parent).free < DISK_LEFT_LEAST else False
+        except OSError:
+            return False
+
+    made, stopped = run_capped(cmd, 60 + 20 * seconds, cap, watch=disk_nearly_full)
+    if stopped == "disk":
+        die(tr("the disk holding {path} is nearly full, so the film was stopped "
+               "before it filled it.", path=made_file.parent))
     if stopped == "memory":
         die(tr("ffmpeg used more than {size} GB of memory making the film, "
                "half this machine's, so it was stopped.",
@@ -5253,6 +5294,7 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
                 sound = f"[g{number}]"
             starts.append(begins)
             total = begins + length
+            check_length(scene.where, total)
             name = scene.path.name if scene.path else tr("text")
             # translators: {kind} is clip or card, in English; {name} is a file name, or the
             # translation of "text".
