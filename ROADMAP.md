@@ -779,6 +779,13 @@ simplest case, and a gate proves it still records.
   ./ci.sh in a worktree earlier the same day failed in its own new step
   on the Ubuntu leg, a fault in that check, fixed in 234f2ef; it was not
   a push gate and is not counted.
+  2026-10-31, push of e327e89 (cc-job push-0031a, load about 4): the
+  full push gate passed, the Ubuntu leg with it. One step skipped: the
+  real-Flatpak step, because GIMP was open. Passing full push gates
+  since a88e583: seven, with one failure (a003a3d). The same day, a
+  worktree gate failed once on a sync check (57 ms against 40) at load
+  about 7 and passed unchanged on re-run; it was not a push gate and is
+  not counted.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
