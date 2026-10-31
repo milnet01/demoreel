@@ -187,8 +187,51 @@ def progress(text):
     _progress_line = text
 
 
+# The rule for what reaches a terminal (DEMO-0094). File names, script lines,
+# tags and whatever a program says are someone else's text. A terminal obeys
+# control codes in them, and a line break can forge a `demoreel:` line.
+#  - _fill escapes every value it is given, a line break too, so a name prints
+#    as one line. It never touches a template, which holds its own line breaks
+#    and, translated, its own direction marks.
+#  - Said marks the few values that are meant to be several lines: a program's
+#    own words, each line escaped and indented under the message by last_said.
+#  - to_terminal is the last line of defence, on whatever was added outside
+#    _fill. It leaves line breaks and the isolates _fill adds alone, and indents
+#    any later line that would start like one of demoreel's own.
+#  - stdout is never escaped: the path there is the contract.
+# An ordinary name in any language prints as it is, and a backslash is left
+# alone: this is for reading, not for parsing back.
+UNSAFE_IN_VALUE = re.compile(
+    "[\x00-\x1f\x7f-\x9f\u2028\u2029\u202a-\u202e\u2066-\u2069\ud800-\udfff]")
+UNSAFE_IN_MESSAGE = re.compile(
+    "[\x00-\x08\x0b-\x1f\x7f-\x9f\u2028\u2029\u202a-\u202e\ud800-\udfff]")
+
+
+def _escaped(match):
+    """One character as text: \\x1b, \\u202e, and a byte that is not UTF-8, which
+    Python holds as a surrogate, as that byte: \\xff."""
+    code = ord(match[0])
+    if 0xdc80 <= code <= 0xdcff:
+        code -= 0xdc00
+    return f"\\x{code:02x}" if code < 0x100 else f"\\u{code:04x}"
+
+
+class Said(str):
+    """Text that has been made safe and may hold line breaks; _fill leaves it."""
+
+
+def as_value(value):
+    """A value as a message prints it: one line of harmless text."""
+    return value if isinstance(value, Said) else UNSAFE_IN_VALUE.sub(_escaped, str(value))
+
+
+def to_terminal(msg):
+    """What is left of a message's own text that a terminal must not obey."""
+    return re.sub(r"\n(?=demoreel:)", "\n  ", UNSAFE_IN_MESSAGE.sub(_escaped, msg))
+
+
 def die(msg):
-    sys.exit(f"demoreel: {msg}")
+    sys.exit(f"demoreel: {to_terminal(msg)}")
 
 
 def note(msg):
@@ -197,7 +240,7 @@ def note(msg):
     the recording it was about (DEMO-0115)."""
     try:
         progress(None)
-        print(f"demoreel: {msg}", file=sys.stderr)
+        print(f"demoreel: {to_terminal(msg)}", file=sys.stderr)
     except OSError:
         # What failed to write is still buffered, and flushing it at exit
         # fails again and turns the exit status to 120. Nobody is reading.
@@ -533,9 +576,12 @@ def _lookup(singular, plural, count, argparse_formats):
 def _fill(text, values, marks):
     """Plain named substitution: nothing in a template can reach an attribute
     or an index. With `marks`, each value and each code token is isolated, the
-    marks outside a token and never inside it (§ 4.5)."""
+    marks outside a token and never inside it (§ 4.5). Every value is escaped
+    first; the template is not."""
+    values = {name: as_value(value) for name, value in values.items()}
+
     def plain(match):
-        return str(values[match[1]])
+        return values[match[1]]
 
     def isolated(match):
         return f"{FIRST_STRONG_ISOLATE}{values[match[1]]}{POP_DIRECTIONAL_ISOLATE}"
@@ -592,6 +638,15 @@ class Parser(argparse.ArgumentParser):
             text += "\n" + tr_help("This translation is a draft and has not yet been "
                                    "checked by a native speaker.") + "\n"
         return text
+
+    def error(self, message):
+        # argparse quotes what it was given, and a line break there would forge
+        # a line. What else it holds is for _print_message.
+        super().error(message.replace("\n", "\\x0a"))
+
+    def _print_message(self, message, file=None):
+        super()._print_message(UNSAFE_IN_MESSAGE.sub(_escaped, message) if message else message,
+                               file)
 
 
 def poll(check, timeout, interval=0.05, grow=1.0, ceiling=None):
@@ -842,7 +897,7 @@ def start_xvfb(width, height, base, logfile):
         proc.kill()
         proc.wait()
         auth.unlink(missing_ok=True)
-        stderr = Path(logfile).read_text(errors="replace").strip()
+        stderr = last_said(Path(logfile).read_text(errors="replace"), lines=None)
         die(tr("Xvfb did not start, so there is no private display to record.")
             + ("\n  " + tr("It said: {text}", text=stderr) if stderr else "")
             + "\n  " + tr("`demoreel check` tests this start on its own."))
@@ -863,7 +918,7 @@ def write_cookie(auth, display, cookie):
                                input=f"add {display} MIT-MAGIC-COOKIE-1 {cookie}\n",
                                capture_output=True, text=True, check=False,
                                timeout=CALL_TIMEOUT)
-        said = added.stderr.strip() if added.returncode else None
+        said = last_said(added.stderr, lines=None) if added.returncode else None
     except subprocess.TimeoutExpired:
         said = ""
     if said is not None:
@@ -997,8 +1052,7 @@ def start_gpu_display(width, height, base, logfile):
     if not wayland or not number.isdigit():
         end_process(proc)
         auth.unlink(missing_ok=True)
-        tail = "\n  ".join(Path(logfile).read_text(errors="replace")
-                           .strip().splitlines()[-3:])
+        tail = last_said(Path(logfile).read_text(errors="replace"))
         die(tr("the GPU display did not start, so there is nothing to record on.")
             + ("\n  " + tr("The end of its log:") + f"\n  {tail}" if tail else "")
             + "\n  " + tr("`demoreel check` says whether --gpu has what it needs."))
@@ -1108,7 +1162,7 @@ def changed_share(output, framerate):
         probe = subprocess.run(
             ["ffprobe", "-v", "error", "-show_entries", "format=duration",
              "-of", "csv=p=0", str(output)],
-            capture_output=True, text=True, timeout=CALL_TIMEOUT, check=True)
+            capture_output=True, text=True, errors="replace", timeout=CALL_TIMEOUT, check=True)
         duration = float(probe.stdout.strip())
         window = min(CHANGED_WINDOW, duration)
         count = subprocess.run(
@@ -1117,7 +1171,7 @@ def changed_share(output, framerate):
              "-i", str(output), "-vf", NEW_FRAME,
              "-f", "null", "-",
              "-progress", "pipe:1", "-nostats"],
-            capture_output=True, text=True, timeout=6 * CALL_TIMEOUT, check=True)
+            capture_output=True, text=True, errors="replace", timeout=6 * CALL_TIMEOUT, check=True)
     except (OSError, ValueError, subprocess.SubprocessError):
         return None
     kept = [ln for ln in count.stdout.splitlines() if ln.startswith("frame=")]
@@ -1443,9 +1497,9 @@ def start_ffmpeg(env, display, width, height, framerate, part, logfile, cursor,
         proc.kill()
         proc.wait()
         log.close()
-        tail = "\n".join(
+        tail = last_said("\n".join(
             line for line in Path(logfile).read_text(errors="replace").splitlines()
-            if not line.startswith("[info]")).strip()
+            if not line.startswith("[info]")), lines=None)
         die(tr("ffmpeg could not start recording.")
             + ("\n  " + tr("It said: {text}", text=tail) if tail else "")
             + "\n  " + tr("`demoreel check` tests the programs and the encoder it needs."))
@@ -1575,7 +1629,7 @@ def start_wf_recorder(env, wayland, framerate, part, logfile, monitor=None):
             proc.kill()
             proc.wait()
             log.close()
-            tail = Path(logfile).read_text(errors="replace").strip()
+            tail = last_said(Path(logfile).read_text(errors="replace"), lines=None)
             die(tr("wf-recorder could not start recording.")
                 + ("\n  " + tr("It said: {text}", text=tail) if tail else "")
                 + "\n  " + tr("`demoreel check` says whether --gpu has what it needs."))
@@ -1644,7 +1698,8 @@ def stream_length(path, stream):
         return float(subprocess.run(
             ["ffprobe", "-v", "error", "-select_streams", stream,
              "-show_entries", "stream=duration", "-of", "csv=p=0", str(path)],
-            capture_output=True, text=True, timeout=CALL_TIMEOUT, check=True).stdout)
+            capture_output=True, text=True, errors="replace", timeout=CALL_TIMEOUT,
+            check=True).stdout)
     except (subprocess.SubprocessError, ValueError):
         return None
 
@@ -1677,11 +1732,13 @@ def finish_part(part, output, logfile, inputs):
 
 def last_said(stderr, lines=3):
     """The last few non-empty lines of a program's captured stderr, as bytes or
-    text, indented to sit under a message."""
+    text, every line of them if `lines` is None: escaped, since a program
+    repeats file names and tags, and indented to sit under a message, so no line
+    can pass for one of demoreel's own."""
     if isinstance(stderr, bytes):
         stderr = stderr.decode(errors="replace")
-    said = [ln for ln in stderr.splitlines() if ln.strip()]
-    return "\n  ".join(said[-lines:])
+    said = [as_value(ln.strip()) for ln in stderr.splitlines() if ln.strip()]
+    return Said("\n  ".join(said if lines is None else said[-lines:]))
 
 
 class SampleError(Exception):
@@ -1909,7 +1966,7 @@ def pactl(*args):
     except OSError as exc:
         raise SoundUnavailable(exc.strerror) from None
     if done.returncode != 0:
-        said = (done.stderr or done.stdout).strip() or f"exit {done.returncode}"
+        said = last_said(done.stderr or done.stdout, lines=None) or f"exit {done.returncode}"
         raise SoundUnavailable(tr("pactl failed: {text}", text=said))
     return done.stdout
 
@@ -1995,9 +2052,9 @@ def private_sound(audio, name):
     except SoundUnavailable as exc:
         if audio:
             die(tr("--audio needs a private sound output, and none could be "
-                   "made.\n  {reason}", reason=exc))
+                   "made.\n  {reason}", reason=Said(exc)))
         note(tr("no private sound output could be made, so the app's sound may "
-                "play on your speakers.\n  {reason}", reason=exc))
+                "play on your speakers.\n  {reason}", reason=Said(exc)))
         return None
 
 
@@ -2007,7 +2064,7 @@ def has_pulse_input():
     it could not tell, never ready (DEMO-0203)."""
     try:
         devices = subprocess.run(["ffmpeg", "-hide_banner", "-devices"],
-                                 capture_output=True, text=True,
+                                 capture_output=True, text=True, errors="replace",
                                  timeout=CALL_TIMEOUT, check=False).stdout
     except subprocess.TimeoutExpired:
         return None
@@ -2022,7 +2079,7 @@ def loudest(output):
         done = subprocess.run(
             ["ffmpeg", "-nostdin", "-hide_banner", "-i", str(output), "-map", "0:a",
              "-af", "volumedetect", "-f", "null", "-"],
-            capture_output=True, text=True, timeout=6 * CALL_TIMEOUT, check=False)
+            capture_output=True, text=True, errors="replace", timeout=6 * CALL_TIMEOUT, check=False)
     except (OSError, subprocess.TimeoutExpired):
         return None
     found = re.search(r"max_volume: (-?[\d.]+|-inf) dB", done.stderr)
@@ -2156,7 +2213,7 @@ def has_libx264():
     could not tell, never ready (DEMO-0202)."""
     try:
         encoders = subprocess.run(["ffmpeg", "-hide_banner", "-encoders"],
-                                  capture_output=True, text=True,
+                                  capture_output=True, text=True, errors="replace",
                                   timeout=CALL_TIMEOUT, check=False).stdout
     except subprocess.TimeoutExpired:
         return None
@@ -2199,7 +2256,7 @@ def start_failure(program):
         return None
     if done.returncode == 0:
         return None
-    return (done.stderr or done.stdout).strip() or f"exit {done.returncode}"
+    return last_said(done.stderr or done.stdout, lines=None) or f"exit {done.returncode}"
 
 
 def has_encoder(library, encoder):
@@ -2813,14 +2870,13 @@ def video_error(output):
     """
     try:
         probe = subprocess.run(["ffprobe", "-v", "error", str(output)],
-                               capture_output=True, text=True,
+                               capture_output=True, text=True, errors="replace",
                                timeout=CALL_TIMEOUT, check=False)
     except subprocess.TimeoutExpired:
         return tr("reading it back took over {seconds}s.", seconds=CALL_TIMEOUT)
     if probe.returncode == 0:
         return None
-    lines = probe.stderr.strip().splitlines()
-    return lines[-1] if lines else tr("ffprobe could not read it.")
+    return last_said(probe.stderr, lines=1) or tr("ffprobe could not read it.")
 
 
 def summarise(output):
@@ -2830,7 +2886,7 @@ def summarise(output):
     try:
         seconds = float(subprocess.run(
             ["ffprobe", "-v", "error", "-show_entries", "format=duration",
-             "-of", "csv=p=0", str(output)], capture_output=True, text=True,
+             "-of", "csv=p=0", str(output)], capture_output=True, text=True, errors="replace",
             timeout=CALL_TIMEOUT, check=True).stdout)
     except (subprocess.SubprocessError, ValueError):
         return  # the video was already vouched for; this is only a courtesy
@@ -3190,7 +3246,7 @@ def display_problem():
         try:
             server, _, auth = start_xvfb(320, 240, base / "check", base / "display.log")
         except SystemExit as exc:
-            reason = str(exc.code).removeprefix("demoreel: ")
+            reason = Said(str(exc.code).removeprefix("demoreel: "))
             return [tr("a private display did not start: {reason}", reason=reason)]
         finally:
             end_server(server)
@@ -3385,7 +3441,7 @@ def text_font(name=None, where=None):
         try:
             answer = subprocess.run(
                 ["fc-match", "-f", "%{file}\n%{family}", pattern],
-                capture_output=True, text=True, timeout=CALL_TIMEOUT,
+                capture_output=True, text=True, errors="replace", timeout=CALL_TIMEOUT,
                 check=False).stdout
         except (OSError, subprocess.TimeoutExpired):
             answer = ""
@@ -3425,7 +3481,7 @@ def box_can_be_sized():
         try:
             told = subprocess.run(
                 ["ffmpeg", "-hide_banner", "-h", "filter=drawtext"],
-                capture_output=True, text=True, timeout=CALL_TIMEOUT,
+                capture_output=True, text=True, errors="replace", timeout=CALL_TIMEOUT,
                 check=False).stdout
         except (OSError, subprocess.TimeoutExpired):
             told = ""
@@ -3673,7 +3729,7 @@ def parse_script(text):
             words = shlex.split(line)
         except ValueError as exc:
             die(tr("{where} cannot be read: {reason}.", where=where, reason=exc)
-                + f"\n  {line}")
+                + f"\n  {as_value(line)}")
         verb, rest = words[0], words[1:]
         # A zoom has its own check below, which names a zoom.
         if verb == "text" and above in ("music", "level"):
@@ -3759,7 +3815,8 @@ def parse_script(text):
         else:
             # translators: {word} is the first word of the line, in quotes.
             die(tr("{where}: a line starts with clip, card, text, zoom, sound, music "
-                   "or level, not {word}.", where=where, word=repr(verb)) + f"\n  {line}")
+                   "or level, not {word}.", where=where, word=repr(verb))
+                + f"\n  {as_value(line)}")
         above = verb if verb not in ("text", "sound") else above
     if not scenes:
         die(tr("the script has no scenes in it. A scene is a line starting with "
@@ -3778,7 +3835,7 @@ def probe(path, where):
              "-show_entries",
              "stream=width,height,avg_frame_rate:format=duration,format_name",
              "-of", "json", str(path)],
-            capture_output=True, text=True, timeout=CALL_TIMEOUT, check=False)
+            capture_output=True, text=True, errors="replace", timeout=CALL_TIMEOUT, check=False)
     except subprocess.TimeoutExpired:
         die(tr("{where}: reading {path} took over {seconds}s.", where=where,
                path=path, seconds=CALL_TIMEOUT))
@@ -3792,9 +3849,9 @@ def probe(path, where):
                 "duration": float(info["format"].get("duration") or 0),
                 "format": info["format"].get("format_name", "")}
     except (KeyError, IndexError, ValueError):
-        lines = out.stderr.strip().splitlines()
+        said = last_said(out.stderr, lines=1)
         die(tr("{where}: {path} is not a video or picture ffmpeg can read.",
-               where=where, path=path) + (f"\n  {lines[-1]}" if lines else ""))
+               where=where, path=path) + (f"\n  {said}" if said else ""))
     return None  # unreachable; die() exits
 
 
@@ -3814,7 +3871,7 @@ def picture_frames(scene, where):
             ["ffprobe", "-v", "error", "-count_frames", "-select_streams",
              "v:0", "-show_entries", "stream=nb_read_frames", "-of",
              "csv=p=0", str(scene.path)],
-            capture_output=True, text=True, timeout=6 * CALL_TIMEOUT,
+            capture_output=True, text=True, errors="replace", timeout=6 * CALL_TIMEOUT,
             check=False)
         frames = int(counted.stdout.strip().split(",")[0])
     except (subprocess.TimeoutExpired, ValueError):
@@ -3864,7 +3921,7 @@ def run_capped(cmd, timeout, cap):
     raises subprocess.TimeoutExpired after `timeout` seconds."""
     deadline = time.monotonic() + timeout
     with subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE, text=True) as proc:
+                          stderr=subprocess.PIPE, text=True, errors="replace") as proc:
         try:
             while True:
                 try:
@@ -3921,7 +3978,7 @@ def text_size(textfile, fontsize, font=None, border=0):
                     f"fontcolor=white:borderw={border}:bordercolor=white:"
                     f"x={border}:y={border},bbox",
              "-frames:v", "1", "-f", "null", "-"],
-            capture_output=True, text=True, timeout=CALL_TIMEOUT, check=False)
+            capture_output=True, text=True, errors="replace", timeout=CALL_TIMEOUT, check=False)
     except subprocess.TimeoutExpired:
         raise TextUnavailable(tr("drawing a line of text took over {seconds}s.",
                                  seconds=CALL_TIMEOUT), checked=False) from None
@@ -4052,7 +4109,7 @@ def check_texts(scene, length, width, height, workdir):
         border = max(1, round(fontsize * OUTLINE_SHARE)) \
             if "outline" in text else 0
         textfile = workdir / f"text-{len(list(workdir.iterdir()))}.txt"
-        textfile.write_text(words, encoding="utf-8")
+        textfile.write_text(words, encoding="utf-8", errors="replace")
         try:
             wide, _ = text_size(textfile, fontsize, font, border)
         except TextUnavailable as exc:
@@ -4424,7 +4481,7 @@ def sound_info(path, where):
         out = subprocess.run(
             ["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries",
              "stream=index,duration:format=duration", "-of", "json", str(path)],
-            capture_output=True, text=True, timeout=CALL_TIMEOUT, check=False)
+            capture_output=True, text=True, errors="replace", timeout=CALL_TIMEOUT, check=False)
     except subprocess.TimeoutExpired:
         die(tr("{where}: reading {path} took over {seconds}s.", where=where,
                path=path, seconds=CALL_TIMEOUT))
@@ -4435,9 +4492,9 @@ def sound_info(path, where):
         return bool(streams), float(
             own or info.get("format", {}).get("duration") or 0)
     except (AttributeError, TypeError, ValueError):
-        lines = out.stderr.strip().splitlines()
+        said = last_said(out.stderr, lines=1)
         die(tr("{where}: {path} is not a file ffmpeg can read.", where=where,
-               path=path) + (f"\n  {lines[-1]}" if lines else ""))
+               path=path) + (f"\n  {said}" if said else ""))
     return None  # unreachable; die() exits
 
 
@@ -4448,7 +4505,7 @@ def music_loudness(music):
         done = subprocess.run(
             ["ffmpeg", "-nostdin", "-hide_banner", "-i", str(music.path), "-map",
              "0:a:0", "-af", f"{SOUND_FORMAT},volumedetect", "-f", "null", "-"],
-            capture_output=True, text=True, timeout=60 + music.length / 5,
+            capture_output=True, text=True, errors="replace", timeout=60 + music.length / 5,
             check=False)
     except subprocess.TimeoutExpired:
         die(tr("{where}: measuring the sound of {path} took too long, so it was "
@@ -4456,10 +4513,10 @@ def music_loudness(music):
     mean = re.search(r"mean_volume: (-?[\d.]+) dB", done.stderr)
     peak = re.search(r"max_volume: (-?[\d.]+) dB", done.stderr)
     if done.returncode or not mean or not peak:
-        lines = [ln for ln in done.stderr.splitlines() if ln.strip()]
+        said = last_said(done.stderr, lines=1)
         die(tr("{where}: ffmpeg could not measure the sound of {path}.",
                where=music.where, path=music.path)
-            + (f"\n  {lines[-1]}" if lines and done.returncode else ""))
+            + (f"\n  {said}" if said and done.returncode else ""))
     return float(mean[1]), float(peak[1])
 
 
@@ -4975,7 +5032,7 @@ def stored_frames(path):
         said = subprocess.run(
             ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
              "stream=nb_frames", "-of", "csv=p=0", str(path)],
-            capture_output=True, text=True, timeout=CALL_TIMEOUT, check=False)
+            capture_output=True, text=True, errors="replace", timeout=CALL_TIMEOUT, check=False)
         return int(said.stdout.strip())
     except (subprocess.TimeoutExpired, ValueError):
         return None
@@ -5141,7 +5198,8 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
         if piece_files != [part]:
             listing = workdir / "pieces.txt"
             listing.write_text("".join(
-                "file '{}'\n".format(str(f).replace("'", "'\\''")) for f in piece_files))
+                "file '{}'\n".format(str(f).replace("'", "'\\''")) for f in piece_files),
+                encoding="utf-8", errors="surrogateescape")
             picture = (["-i", str(piece_files[0])] if len(pieces) == 1 else
                        ["-f", "concat", "-safe", "0", "-i", str(listing)])
             run_film_ffmpeg(
@@ -5308,7 +5366,7 @@ def cmd_motion(a):
              "-vf", f"{crop}showinfo@every=checksum=0,{NEW_FRAME},"
                     "showinfo@new=checksum=0",
              "-an", "-f", "null", "-"],
-            capture_output=True, text=True, timeout=60 + 10 * (end - start),
+            capture_output=True, text=True, errors="replace", timeout=60 + 10 * (end - start),
             check=False)
     except subprocess.TimeoutExpired:
         die(tr("reading {path} took too long for its length, so it was "
@@ -5367,7 +5425,7 @@ def grab_frame(path, moment, info, picture, look=None):
              *(["-vf", look] if look else []),
              *(["-q:v", "3"] if picture.suffix.lower() == ".jpg" else []),
              *single_picture(picture), "-y", str(picture)],
-            capture_output=True, text=True, timeout=6 * CALL_TIMEOUT)
+            capture_output=True, text=True, errors="replace", timeout=6 * CALL_TIMEOUT)
     except subprocess.TimeoutExpired:
         die(tr("taking the frame took over {seconds}s.", seconds=6 * CALL_TIMEOUT))
     if grab.returncode != 0 or not has_data(picture):
@@ -5459,7 +5517,7 @@ def title_filter(words, workdir):
     font = text_font()
     border = max(1, round(fontsize * OUTLINE_SHARE))
     textfile = workdir / "title.txt"
-    textfile.write_text(words, encoding="utf-8")
+    textfile.write_text(words, encoding="utf-8", errors="replace")
     try:
         wide, _ = text_size(textfile, fontsize, font, border)
     except TextUnavailable as exc:
@@ -5571,7 +5629,7 @@ def cmd_sheet(a):
                  "-vf", f"tile={columns}x{rows}:color=black", "-frames:v", "1",
                  *(["-q:v", "3"] if output.suffix.lower() == ".jpg" else []),
                  *single_picture(part), "-y", str(part)],
-                capture_output=True, text=True, timeout=6 * CALL_TIMEOUT)
+                capture_output=True, text=True, errors="replace", timeout=6 * CALL_TIMEOUT)
         except subprocess.TimeoutExpired:
             made = subprocess.CompletedProcess([], 1, "", "")
         if made.returncode != 0 or not has_data(part):
@@ -5994,6 +6052,9 @@ def main():
     # The language is chosen before the parser exists: argparse translates its
     # group titles as the parser is built (§ 4.6).
     use_languages(chosen_languages(os.environ))
+    # The path on stdout is the file's own bytes, whether or not they are UTF-8.
+    if sys.stdout is not None:
+        sys.stdout.reconfigure(errors="surrogateescape")
     # An inherited WAYLAND_SOCKET names a connection libwayland takes ahead
     # of WAYLAND_DISPLAY, and winit when that is empty. Every process demoreel
     # starts must go without it: with it, a winit app aborted at start and

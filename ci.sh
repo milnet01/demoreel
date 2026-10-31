@@ -4044,6 +4044,153 @@ ONEPY
         || { show_err; fail "a folder that cannot be made: not said in words"; }
     echo "a script is not written over, and the folder's failure is one line"
     }
+    # stderr_clean WHAT [TEXT...]: stderr holds no raw control code, C1 code or
+    # bidi control, no line but demoreel's own first starts `demoreel: forged`,
+    # and each TEXT is there as it is.
+    stderr_clean() {
+        python3 - "$fe" "$@" <<'CLEANPY' || { show_err; exit 1; }
+import re, sys
+path, what, *wanted = sys.argv[1:]
+raw = open(path, "rb").read()
+problems = []
+if re.search(rb"[\x00-\x08\x0b-\x1f\x7f]", raw):
+    problems.append("a raw control code")
+if re.search(rb"\xc2[\x80-\x9f]|\xe2\x80[\xaa-\xae]|\xe2\x81[\xa6-\xa9]", raw):
+    problems.append("a raw C1 code or bidi control")
+if re.search(rb"^demoreel: forged", raw, re.MULTILINE):
+    problems.append("a forged demoreel: line")
+if b"Traceback" in raw:
+    problems.append("a traceback")
+for text in wanted:
+    if text.encode("utf-8", "surrogateescape") not in raw:
+        problems.append(f"no {text!r}")
+if problems:
+    sys.exit(f"FAIL: {what}: {'; '.join(problems)}")
+CLEANPY
+    }
+    fin_s72() {
+    # DEMO-0094. Every value a message fills is escaped, a line break too; a
+    # program's words are indented under the message, and nothing else moves.
+    local esc nl c1 rtl fsi name
+    esc=$(printf '\033'); c1=$(printf '\302\233'); rtl=$(printf '\342\200\256')
+    fsi=$(printf '\342\201\250')
+    nl=$'\n'
+    # A name that is not there, in each of the messages that quote it.
+    printf 'clip "e%s]52;c;eA==%sx.mp4"\n' "$esc" "$(printf '\007')" > "$ft/s.txt"
+    run edit s.txt -o "$ft/out/n.mp4"
+    expect_refused "a clip whose name holds ESC is not there"
+    stderr_clean "there is no file, ESC" '\x1b]52;c;eA==\x07x.mp4'
+    printf 'clip "a%sb%sc.mp4"\n' "$c1" "$rtl" > "$ft/s.txt"
+    run edit s.txt -o "$ft/out/n.mp4"
+    expect_refused "a clip whose name holds C1 and bidi is not there"
+    stderr_clean "there is no file, C1 and bidi" 'a\x9bb\''u202ec.mp4'
+    # A script's own line, quoted beside the refusal.
+    printf 'bogus %s[31mred%s\n' "$esc" "$fsi" > "$ft/s.txt"
+    run edit s.txt -o "$ft/out/n.mp4"
+    expect_refused "an unknown first word"
+    stderr_clean "the raw line" '\x1b[31mred'
+    printf 'clip "unclosed %s[31m%s\n' "$esc" "$fsi" > "$ft/s.txt"
+    run edit s.txt -o "$ft/out/n.mp4"
+    expect_refused "a line that cannot be split"
+    stderr_clean "the raw line that cannot be split" '\x1b[31m'
+    # A real file: a newline in its name would forge a line, on the path that works.
+    name="n${nl}demoreel: forged line.mp4"
+    cp A.mp4 "$ft/$name" 2>/dev/null || cp "$ft/A.mp4" "$ft/$name"
+    run trim "$name" --to 0.5 -o "$ft/out/forged.mp4"
+    expect_ok "a name holding a newline makes a film"
+    stderr_clean "the plan's note" 'n\x0ademoreel: forged line.mp4'
+    expect_stdout_path "the finished path" "$ft/out/forged.mp4"
+    assert_file "the film" "$ft/out/forged.mp4"
+    # A file that is not a video: ffprobe says so, naming the file.
+    printf 'not a video' > "$ft/$name"
+    run trim "$name" --to 0.5 -o "$ft/out/bad.mp4"
+    expect_refused "a name holding a newline that is not a video"
+    stderr_clean "the probe's refusal"
+    # An ordinary name in any language prints as it is, and a name with a
+    # backslash is not changed either.
+    name='été 映画 a\b.mp4'
+    cp "$ft/A.mp4" "$ft/$name"
+    run trim "$name" --to 0.5 -o "$ft/out/ordinary.mp4"
+    expect_ok "an ordinary name"
+    stderr_clean "an ordinary name" "$name"
+    # What ffmpeg says repeats names and tags, so it is untrusted too.
+    mkdir -p "$ft/tail"
+    printf '#!/bin/sh\nprintf "first\\ndemoreel: forged\\n\\033[31mred\\302\\233\\n" >&2\nexit 1\n' \
+        > "$ft/tail/ffmpeg"
+    chmod +x "$ft/tail/ffmpeg"
+    FIN_PATH="$ft/tail:$PATH" run poster A.mp4 -t 0.1 -o "$ft/out/tail.png"
+    expect_refused "poster with an ffmpeg that fails"
+    stderr_clean "ffmpeg's own words" '  demoreel: forged' '\x1b[31mred\x9b'
+    # argparse quotes what it was given.
+    run trim A.mp4 --to 1 "x${esc}[31m${nl}demoreel: forged"
+    [ "$rc" -eq 2 ] || fail "an unknown argument: exit $rc"
+    stderr_clean "argparse's error" '\x1b[31m'
+    # Each layer on its own, since through a message the next one hides it.
+    python3 - "$DR" <<'LAYERSPY' || exit 1
+import importlib.machinery, importlib.util, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", sys.argv[1])
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+bad = "\x1b\x7f\x9b\u202e\u2068\u2029\udcff\n"
+shown = r"\x1b\x7f\x9b" + "\\" + "u202e" + "\\" + "u2068" + "\\" + "u2029" + r"\xff\x0a"
+fsi, pdi = d.FIRST_STRONG_ISOLATE, d.POP_DIRECTIONAL_ISOLATE
+checks = [
+    ("a value", d._fill("a {x}", {"x": bad}, False), "a " + shown),
+    ("a value with marks", d._fill("a {x}", {"x": bad}, True), f"a {fsi}{shown}{pdi}"),
+    ("an ordinary value", d._fill("{x}", {"x": "été 映画 a\\b\u200f"}, False), "été 映画 a\\b\u200f"),
+    ("a template's own line break and marks", d._fill("a\n\u200f{x}", {"x": "b"}, False), "a\n\u200fb"),
+    ("Said is left alone", d._fill("{x}", {"x": d.Said("a\n  b")}, False), "a\n  b"),
+    ("the last pass", d.to_terminal("a\x1b\x9b\u202e\udcff\nb\tc\ndemoreel: d\u2068e\u2069"),
+     r"a\x1b\x9b" + "\\" + r"u202e\xff" + "\nb\tc\n  demoreel: d\u2068e\u2069"),
+    ("a program's words", d.last_said(b"one\ndemoreel: two\n\x1bthree\xff", lines=None),
+     "one\n  demoreel: two\n  \\x1bthree\ufffd"),
+    ("the last of them", d.last_said("one\ntwo\nthree", lines=2), "two\n  three"),
+]
+failed = [f"{what}: {got!r}, not {want!r}" for what, got, want in checks if got != want]
+if failed:
+    sys.exit("FAIL: " + "; ".join(failed))
+LAYERSPY
+    }
+    fin_s73() {
+    # DEMO-0094. A name that is not UTF-8 reaches Python as surrogates, and
+    # outside the C locale a strict stream raises on them.
+    local name out envs want
+    # The folder too: -o's folder is what the list of a film's pieces names.
+    name=$(printf 'b\377.mp4'); out="$ft/out/$(printf 'd\377')/$(printf 'o\377.mp4')"
+    cp "$ft/A.mp4" "$ft/$name"
+    for envs in C C.UTF-8; do
+        rc=0
+        ( cd "$ft" && LC_ALL=$envs "$DR" join "$name" "$name" -o "$out" ) >"$fo" 2>"$fe" || rc=$?
+        expect_ok "join under LC_ALL=$envs"
+        stderr_clean "the plan under LC_ALL=$envs" 'b\xff.mp4'
+        want=$(cat "$fo")
+        [ "$want" = "$out" ] || fail "stdout under LC_ALL=$envs is not the path's own bytes: $want"
+        assert_file "the film under LC_ALL=$envs" "$out"
+        rm -f "$out"
+        rc=0
+        ( cd "$ft" && LC_ALL=$envs "$DR" caption A.mp4 --text "$(printf 'x\377y')" \
+              -o "$ft/out/t.mp4" ) >"$fo" 2>"$fe" || rc=$?
+        expect_ok "caption --text under LC_ALL=$envs"
+        stderr_clean "caption under LC_ALL=$envs"
+        rc=0
+        ( cd "$ft" && LC_ALL=$envs "$DR" thumbnail A.mp4 -t 0.1 --text "$(printf 'x\377y')" \
+              -o "$ft/out/t.jpg" ) >"$fo" 2>"$fe" || rc=$?
+        expect_ok "thumbnail --text under LC_ALL=$envs"
+        stderr_clean "thumbnail under LC_ALL=$envs"
+        rc=0
+        ( cd "$ft" && LC_ALL=$envs "$DR" trim "$(printf 'gone\377.mp4')" --to 1 \
+              -o "$ft/out/g.mp4" ) >"$fo" 2>"$fe" || rc=$?
+        expect_refused "a name that is not there under LC_ALL=$envs"
+        stderr_clean "the refusal under LC_ALL=$envs" 'gone\xff.mp4'
+    done
+    # A locale whose stdout is strict: Python chooses that outside C and C.UTF-8.
+    rc=0
+    ( cd "$ft" && PYTHONIOENCODING=utf-8:strict "$DR" trim "$name" --to 0.5 -o "$out" ) \
+        >"$fo" 2>"$fe" || rc=$?
+    expect_ok "a strict stdout"
+    want=$(cat "$fo")
+    [ "$want" = "$out" ] || fail "stdout on a strict stream is not the path's own bytes: $want"
+    }
     fin_s71() {
     # DEMO-0094. A part's name was the output's, so it could be planted first:
     # the link's target was truncated, and the link itself moved to -o.
@@ -4595,6 +4742,8 @@ CASES
     fin_step "a long windowed film fits in 5.5 GB, and pieces make the film one ffmpeg would" fin_s69
     fin_step "edit's script is never written over, and a folder that cannot be made is said in words" fin_s70
     fin_step "a part file is this run's own, and the finished file takes the caller's mode" fin_s71
+    fin_step "a file name, a script line or a program's words reach the terminal as text, and forge no line" fin_s72
+    fin_step "a file name that is not UTF-8 makes a film, a note and its exact path" fin_s73
     fin_run
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }
