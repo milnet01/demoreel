@@ -1748,10 +1748,24 @@ finishing_checks() {
     expected: $2
     actual:   $got"
     }
-    assert_eq() { [ "$2" = "$3" ] || fail "$1
+    # Two measurements that both came back empty are not two that agree, and
+    # awk reads an empty or non-numeric value as 0, so "N/A" would pass for a
+    # sound that starts at 0. A measurement that failed is a failure.
+    assert_eq() {
+        [ -n "$2$3" ] || fail "$1: both sides are empty, so nothing was compared"
+        [ "$2" = "$3" ] || fail "$1
     expected: $2
-    actual:   $3"; }
+    actual:   $3"
+    }
+    assert_numbers() {  # what, then each value
+        local what=$1 value; shift
+        for value in "$@"; do
+            [[ $value =~ ^[-+]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][-+]?[0-9]+)?$ ]] \
+                || fail "$what: '$value' is not a number, so nothing was compared"
+        done
+    }
     assert_near() {  # what expected actual tolerance
+        assert_numbers "$1" "$2" "$3" "$4"
         awk -v e="$2" -v a="$3" -v t="$4" \
             'BEGIN { d = a - e; if (d < 0) d = -d; exit !(d <= t) }' \
             || fail "$1
@@ -1759,11 +1773,17 @@ finishing_checks() {
     actual:   $3"
     }
     assert_between() {  # what low high actual
+        assert_numbers "$1" "$2" "$3" "$4"
         awk -v lo="$2" -v hi="$3" -v a="$4" 'BEGIN { exit !(a >= lo && a <= hi) }' \
             || fail "$1
     expected: between $2 and $3
     actual:   $4"
     }
+    # For a measurement that means "nothing found", taken on its own line so its
+    # status stops the check: as an argument here, a failed one reads as empty.
+    assert_empty() { [ -z "$2" ] || fail "$1
+    expected nothing
+    actual:   $2"; }
     assert_absent() { [ ! -e "$2" ] || fail "$1: expected nothing at $2, but it exists"; }
     assert_file() { [ -s "$2" ] || fail "$1: expected a file at $2, none there"; }
     snap() { ( cd "$ft" && find . -type f -not -path './log/*' -print0 | sort -z \
@@ -1897,7 +1917,9 @@ finishing_checks() {
     # words are the region, as fractions of the frame.
     n_of() { px find "$@" | awk '{ print $1 }'; }
     # A comparison of two numbers, spelled out when it fails.
-    assert_cmp() {  # what a op b
+    assert_cmp() {  # what a op b, where a and b may be sums or joined tests
+        [[ "$2 $4" =~ ^[-+*/().0-9eE\ \&\|\<\>=!]+$ ]] \
+            || fail "$1: '$2' or '$4' is not a number, so nothing was compared"
         awk "BEGIN { exit !($2 $3 $4) }" || fail "$1
     expected: $2 $3 $4
     actual:   $2 = $(awk "BEGIN { print $2 }" 2>/dev/null), wanted $3 $4"
@@ -1957,6 +1979,27 @@ finishing_checks() {
     }
     fin_failed=0
 
+    fin_s0() {
+    # Each of these once passed as a measurement of 0, or as two that agreed.
+    accepted() { if ( "$@" ) 2>/dev/null; then fail "accepted, and should not: ${*:2}"; fi; }
+    accepted assert_near what 0 N/A 0.001
+    accepted assert_near what 0 '' 0.001
+    accepted assert_near what '' '' 1
+    accepted assert_between what 0 1 N/A
+    accepted assert_between what 0 1 ''
+    accepted assert_eq what '' ''
+    accepted assert_cmp what '' '>=' 0
+    accepted assert_cmp what N/A '>=' 0
+    accepted assert_cmp what inf '>=' 0
+    # The controls: real numbers, a sum and a joined test still compare.
+    assert_near "control: near" 1 1.04 0.05
+    assert_near "control: near, a negative with an exponent" -1e1 -10.5 1
+    assert_between "control: between" 0 1 .5
+    assert_eq "control: equal" same same
+    assert_cmp "control: a sum" "(1 + 2) / 2" '>=' 1
+    assert_cmp "control: a joined test" "3 - 1 >= 1 && 3 - 1" '<=' 2
+    echo "an empty or wordy measurement fails its check, and real numbers still compare"
+    }
     # ---- the pieces every check works from --------------------------------
     step "finishing: inputs are generated, not recorded"
     # A: 6 s, 320x240, 10/s, a different hue each second, a bar that moves so
@@ -3916,7 +3959,8 @@ E
     printf 'clip A.mp4 to 2\nclip A.mp4\n' > "$ft/st2.txt"
     run edit st2.txt -o "$ft/out/st2.mp4"
     expect_ok "edit: A to 2, then A"
-    assert_eq "no silence where A to 2 is cut to A" "" "$(a_gaps "$ft/out/st2.mp4")"
+    gaps=$(a_gaps "$ft/out/st2.mp4")
+    assert_empty "no silence where A to 2 is cut to A" "$gaps"
     # DEMO-0177 § 14: a sound stream that starts 0.5 s after its picture in its
     # own file keeps that gap. Its beep is at 1.5 s of its own, so 2.0 s here,
     # with the flash; lining the two streams' starts up puts it at 1.5.
@@ -3990,7 +4034,7 @@ E
     assert_finished "$ft/out/mr1.mp4" "2.5 s of music under a 9 s card" 1
     gaps=$(a_gaps "$ft/out/mr1.mp4" -60dB 0.05 \
              | awk '$1 > 0.1 && $1 < 8.5' | tr '\n' ' ')
-    assert_eq "music repeated to the end with no gap" "" "$gaps"
+    assert_empty "music repeated to the end with no gap" "$gaps"
     middle=$(a_mean "$ft/out/mr1.mp4" 2 5)
     assert_cmp "the music fades in" "$(a_mean "$ft/out/mr1.mp4" 0 0.1)" "<=" "$middle - 20"
     assert_cmp "the music fades out" "$(a_mean "$ft/out/mr1.mp4" 8.9 9)" "<=" "$middle - 20"
@@ -4006,7 +4050,7 @@ E
     assert_finished "$ft/out/mr3.mp4" "a video's 2.5 s of sound under a 5 s card" 1
     gaps=$(a_gaps "$ft/out/mr3.mp4" -60dB 0.05 \
              | awk '$1 > 0.1 && $1 < 4.9' | tr '\n' ' ')
-    assert_eq "a video's music repeated by its sound's length, not its picture's" "" "$gaps"
+    assert_empty "a video's music repeated by its sound's length, not its picture's" "$gaps"
     echo "2.5 s of music filled a 9 s film with no gap, and faded in and out unless told not to; a video's sound repeated by its own length"
     }
     fin_s47() {
@@ -5367,6 +5411,7 @@ CASES
     assert_cmp "a card's picture ($gt) starts below its stack at the top ($wb)" "$gt" ">=" "$wb"
     echo "a card's picture was fitted below a stack of two lines"
     }
+    fin_step "the checks' own comparisons refuse a measurement that came back empty or as words" fin_s0
     fin_step "trim keeps the frames from --from to --to, the last one included" fin_s1
     fin_step "every video a command writes is H.264, yuv420p, index first, with its clips' sound" fin_s2
     fin_step "-o may not be an input, and must end in .mp4" fin_s3
