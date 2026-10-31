@@ -1425,3 +1425,6 @@ msgid ""
 msgstr ""
 "ścieżka wyjściowa {path} zawiera znak sterujący, na przykład koniec wiersza, którego demoreel nie może bezpiecznie przekazać.\n"
 "  Wybierz inną ścieżkę."
+
+msgid "--name takes up to {most} plain letters, digits, dots, underscores and hyphens, starting with a letter, a digit or an underscore, not {name}."
+msgstr "--name przyjmuje do {most} zwykłych liter, cyfr, kropek, podkreśleń i myślników, zaczynając od litery, cyfry lub podkreślenia, a nie {name}."

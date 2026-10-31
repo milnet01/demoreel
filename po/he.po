@@ -1419,3 +1419,6 @@ msgid ""
 msgstr ""
 "נתיב הפלט {path} מכיל תו בקרה, כגון מעבר שורה, ש-demoreel לא יכול להעביר בבטחה.\n"
 "  יש לבחור נתיב אחר."
+
+msgid "--name takes up to {most} plain letters, digits, dots, underscores and hyphens, starting with a letter, a digit or an underscore, not {name}."
+msgstr "--name מקבל עד {most} אותיות לטיניות רגילות, ספרות, נקודות, קווים תחתונים ומקפים, בתחילה אות, ספרה או קו תחתון, ולא {name}."

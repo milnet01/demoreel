@@ -1419,3 +1419,6 @@ msgid ""
 msgstr ""
 "het uitvoerpad {path} bevat een besturingsteken, zoals een regeleinde, dat demoreel niet veilig kan doorgeven.\n"
 "  Kies een ander pad."
+
+msgid "--name takes up to {most} plain letters, digits, dots, underscores and hyphens, starting with a letter, a digit or an underscore, not {name}."
+msgstr "--name neemt tot {most} gewone letters, cijfers, punten, onderstrepingstekens en koppeltekens, beginnend met een letter, een cijfer of een onderstrepingsteken, niet {name}."

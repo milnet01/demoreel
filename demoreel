@@ -704,6 +704,22 @@ def write_state(statefile, entry):
     os.replace(tmp, statefile)
 
 
+# A run's name becomes file names in the state directory, so it has no slash and
+# does not start with a dot, which also rules out . and .., or with a hyphen, and
+# fits in a file name with what is added to it. A dot inside is fine: each file's
+# ending is fixed, so no two names can share a file.
+MOST_NAME = 64
+NAME_RE = re.compile(r"[A-Za-z0-9_][A-Za-z0-9._-]*")
+
+
+def check_name(name):
+    """Die unless `name` can name a run's files."""
+    if len(name) > MOST_NAME or not NAME_RE.fullmatch(name):
+        die(tr("--name takes up to {most} plain letters, digits, dots, underscores "
+               "and hyphens, starting with a letter, a digit or an underscore, not "
+               "{name}.", most=MOST_NAME, name=repr(name)))
+
+
 def claim_name(name):
     """Hold the name for this run's whole life, or die if a live run holds it.
 
@@ -758,7 +774,7 @@ def start_xvfb(width, height, base, logfile):
     pipe nobody drains fills, then blocks the server mid-write. The display
     freezes, and so does every X call waiting on it: GIMP did this in the gate.
     """
-    auth = Path(f"{base}.Xvfb.Xauthority")
+    auth = Path(f"{base}.Xauthority")
     cookie = new_auth_file(auth)
 
     read_fd, write_fd = os.pipe()
@@ -2710,6 +2726,7 @@ def summarise(output):
 
 
 def cmd_record(a):
+    check_name(a.name)
     command, width, height, output, applog = prepare(a, ".mp4")
 
     # SIGHUP is a closed terminal: finish the video as for Ctrl+C, rather

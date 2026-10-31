@@ -1443,3 +1443,6 @@ msgid ""
 msgstr ""
 "مسار الإخراج {path} يحتوي على محرف تحكم، مثل فاصل أسطر، لا يستطيع demoreel تمريره بأمان.\n"
 "  اختر مسارًا آخر."
+
+msgid "--name takes up to {most} plain letters, digits, dots, underscores and hyphens, starting with a letter, a digit or an underscore, not {name}."
+msgstr "يقبل --name حتى {most} من الأحرف اللاتينية العادية والأرقام والنقاط والشرطات السفلية والشرطات، ويبدأ بحرف أو رقم أو شرطة سفلية، لا {name}."

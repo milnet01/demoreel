@@ -1419,3 +1419,6 @@ msgid ""
 msgstr ""
 "der Ausgabepfad {path} enthält ein Steuerzeichen, etwa einen Zeilenumbruch, das demoreel nicht sicher weitergeben kann.\n"
 "  Wählen Sie einen anderen Pfad."
+
+msgid "--name takes up to {most} plain letters, digits, dots, underscores and hyphens, starting with a letter, a digit or an underscore, not {name}."
+msgstr "--name erwartet bis zu {most} einfache Buchstaben, Ziffern, Punkte, Unterstriche und Bindestriche, beginnend mit einem Buchstaben, einer Ziffer oder einem Unterstrich, nicht {name}."

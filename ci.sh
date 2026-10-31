@@ -7542,6 +7542,62 @@ d.open_app_log(Path("/dev/null")).close()
 print("links on the way up and along a chain, and other users' files, are checked")
 WALKPY
 
+step "a run's name stays inside the state directory"
+# DEMO-0094. A name becomes file names in the state directory, so ../x and /x
+# wrote lock, state and log outside it, and a/b was a traceback. The state
+# directory is this step's own, so anything written outside it is seen.
+mkdir -p "$tmp/namestate"
+for bad in ../gateescape /gateabs/x a/b . .. .hidden -x 'a b' 'é' '' $'a\n' \
+           "$(printf 'x%.0s' $(seq 1 65))"; do
+    set +e
+    XDG_RUNTIME_DIR="$tmp/namestate" ./demoreel record --name="$bad" -o "$tmp/name.mp4" -d 1 \
+        -s 320x240 -- sh -c "touch '$tmp/name-started'" >/dev/null 2>"$tmp/name.err"
+    name_status=$?
+    set -e
+    [ "$name_status" -ne 0 ] && grep -q -- '--name takes up to' "$tmp/name.err" \
+        && [ ! -e "$tmp/name-started" ] && ! grep -q Traceback "$tmp/name.err" || {
+        echo "--name '$bad' was not refused before the app started (exit $name_status):" >&2
+        cat "$tmp/name.err" >&2
+        exit 1
+    }
+done
+[ -z "$(find "$tmp/namestate" -mindepth 1 -maxdepth 1 ! -name "demoreel-$(id -u)")" ] || {
+    echo "a refused name wrote beside the state directory:" >&2
+    ls -la "$tmp/namestate" >&2
+    exit 1
+}
+python3 - "$tmp/namestate/x" <<'NAMEPY'
+import importlib.machinery, importlib.util, sys
+from pathlib import Path
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+# Every name the gate and README use, and the longest and the shortest.
+for good in ("default", "mydemo", "gate-sound-a", "a.b", "A_1", "_x", "7", "x" * 64):
+    d.check_name(good)
+# Two names must never share a file. Each backend's auth file is read off the
+# call that writes it, which stops there.
+class Stop(Exception):
+    pass
+def auth_path(start, base):
+    def stop(path):
+        raise Stop(str(path))
+    d.new_auth_file = stop
+    try:
+        start(320, 240, base, Path("/nonexistent"))
+    except Stop as said:
+        return str(said)
+    raise AssertionError("no auth file was asked for")
+names = ("a", "a.Xvfb", "a.gpu", "a.Xauthority", "a.json", "a.lock", "a.display", "a.ffmpeg")
+seen = {}
+for name in names:
+    for path in {auth_path(d.start_xvfb, f"/s/{name}"), auth_path(d.start_gpu_display, f"/s/{name}"),
+                 f"/s/{name}.json", f"/s/{name}.lock", f"/s/{name}.ffmpeg.log",
+                 f"/s/{name}.display.log"}:
+        assert seen.setdefault(path, name) == name, (path, name, seen[path])
+print("a name stays in the state directory, and no two names share a file")
+NAMEPY
+
 step "an output path that is another user's symlink is refused"
 # DEMO-0082. demoreel resolves -o itself, so the kernel's protected_symlinks
 # never sees the link: a planted /tmp/demo.mp4 had its target overwritten. A

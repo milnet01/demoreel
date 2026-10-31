@@ -1419,3 +1419,6 @@ msgid ""
 msgstr ""
 "die uitvoerpad {path} bevat 'n beheerkarakter, soos 'n reëlbreuk, wat demoreel nie veilig kan deurgee nie.\n"
 "  Kies 'n ander pad."
+
+msgid "--name takes up to {most} plain letters, digits, dots, underscores and hyphens, starting with a letter, a digit or an underscore, not {name}."
+msgstr "--name neem tot {most} gewone letters, syfers, punte, onderstrepe en koppeltekens, wat met 'n letter, 'n syfer of 'n onderstreep begin, nie {name} nie."

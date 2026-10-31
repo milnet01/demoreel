@@ -1413,3 +1413,6 @@ msgid ""
 msgstr ""
 "출력 경로 {path}에 줄바꿈 같은 제어 문자가 있어 demoreel이 안전하게 전달할 수 없습니다.\n"
 "  다른 경로를 고르십시오."
+
+msgid "--name takes up to {most} plain letters, digits, dots, underscores and hyphens, starting with a letter, a digit or an underscore, not {name}."
+msgstr "--name은 일반 영문자, 숫자, 점, 밑줄, 하이픈으로 최대 {most}자까지 받으며, 영문자, 숫자, 밑줄로 시작해야 합니다. {name}은(는) 쓸 수 없습니다."

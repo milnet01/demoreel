@@ -1413,3 +1413,6 @@ msgid ""
 msgstr ""
 "出力パス {path} には改行などの制御文字が含まれており、demoreel は安全に渡せません。\n"
 "  別のパスを選んでください。"
+
+msgid "--name takes up to {most} plain letters, digits, dots, underscores and hyphens, starting with a letter, a digit or an underscore, not {name}."
+msgstr "--name に使えるのは、半角英字、数字、ドット、アンダースコア、ハイフンで {most} 文字までです。先頭は英字、数字、アンダースコアのいずれかです。{name} は使えません。"

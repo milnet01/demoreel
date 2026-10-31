@@ -1419,3 +1419,6 @@ msgid ""
 msgstr ""
 "le chemin de sortie {path} contient un caractère de contrôle, comme un saut de ligne, que demoreel ne peut pas transmettre sans risque.\n"
 "  Choisissez un autre chemin."
+
+msgid "--name takes up to {most} plain letters, digits, dots, underscores and hyphens, starting with a letter, a digit or an underscore, not {name}."
+msgstr "--name accepte jusqu'à {most} lettres simples, chiffres, points, tirets bas et traits d'union, en commençant par une lettre, un chiffre ou un tiret bas, et non {name}."

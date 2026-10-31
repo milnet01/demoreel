@@ -1425,3 +1425,6 @@ msgid ""
 msgstr ""
 "выходной путь {path} содержит управляющий символ, например перевод строки, который demoreel не может безопасно передать.\n"
 "  Выберите другой путь."
+
+msgid "--name takes up to {most} plain letters, digits, dots, underscores and hyphens, starting with a letter, a digit or an underscore, not {name}."
+msgstr "--name принимает до {most} простых букв, цифр, точек, подчёркиваний и дефисов, начиная с буквы, цифры или подчёркивания, а не {name}."
