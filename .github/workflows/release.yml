@@ -5,6 +5,9 @@ name: Release
 # attach them with SHA256SUMS and a build record for each
 # (docs/specs/DEMO-0068-linux-packages.md § 4.5, DEMO-0084 § 4.4). A trigger
 # belongs to a whole workflow file, which is why this is not a job in ci.yml.
+#
+# The logic is ci.sh's, where a local run can test it. Only a real release
+# proves what is left here.
 on:
   release:
     types: [published]
@@ -12,32 +15,32 @@ on:
 permissions:
   contents: read
 
+# One run per release at a time, and never cancelled: a cancelled upload would
+# leave a release half replaced. Each release has its own queue.
+concurrency:
+  group: release-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
 jobs:
-  release:
+  build:
+    # Everything that drives podman and installs other people's packages runs
+    # here, with a token that can only read, and no way to ask for a signature.
     runs-on: ubuntu-24.04
     timeout-minutes: 40
-    # The one job in this repository that may write to it, to upload the
-    # files, and the one that may make a build record (DEMO-0084 § 4.4).
-    # ci.sh's full gate fails if any of these grants appears anywhere else.
-    permissions:
-      contents: write
-      id-token: write
-      attestations: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.release.tag_name }}
+          # In full: a bare name checks out a branch of that name first.
+          ref: refs/tags/${{ github.event.release.tag_name }}
           persist-credentials: false
 
-      - name: Check the tag is signed
-        # Nothing is built or attached for an unsigned tag (DEMO-0084 INV-2).
-        # The tag object is fetched by name, so this never depends on what
-        # the checkout fetched. The tag arrives through env, as data.
+      - name: Check the tag is signed, and is what was checked out
+        # Nothing is built or attached otherwise (DEMO-0084 INV-2). The tag
+        # arrives through env, as data.
         env:
           TAG: ${{ github.event.release.tag_name }}
-        run: |
-          git fetch --no-tags origin "+refs/tags/$TAG:refs/tags/$TAG"
-          ./ci.sh --verify-tag "$TAG"
+          GH_TOKEN: ${{ github.token }}
+        run: ./ci.sh --verify-release "$TAG"
 
       - name: Install podman
         timeout-minutes: 15
@@ -47,9 +50,51 @@ jobs:
 
       - name: Build and test the packages
         # The same build and test as the gate's, leaving the files behind. A
-        # failure here attaches nothing: the upload below does not run.
+        # failure here attaches nothing: the job below does not run.
         timeout-minutes: 25
         run: ./ci.sh --packages --out "$RUNNER_TEMP/release"
+
+      - name: Hand the files to the job that attaches them
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-files
+          path: ${{ runner.temp }}/release/
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # The one job in this repository that may write to it, to upload the
+    # files, and the one that may make a build record (DEMO-0084 § 4.4).
+    # ci.sh's full gate fails if any of these grants appears anywhere else. It
+    # also fails on a run: step here that is not ci.sh's: nothing else may run
+    # holding them.
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The commit the build job proved was the tag's, and the one the
+          # build record names.
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-files
+          path: ${{ runner.temp }}/release
+
+      - name: Check the files, and that the release may take them
+        # Before the build record, so a refused run makes no record. SHA256SUMS
+        # came with the files, so this catches damage and not a dishonest build.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: ./ci.sh --release-ready "$TAG" "$RUNNER_TEMP/release"
 
       - name: Make a build record for every file
         # Before the upload, so a failed record attaches nothing.
@@ -59,8 +104,9 @@ jobs:
 
       - name: Attach them to the release
         # The tag arrives through env, so the shell sees data rather than code.
-        # --clobber: a re-run for the same tag replaces the files.
+        # SHA256SUMS goes last, and a release holding it is refused: see
+        # ci.sh's release_attach for how a re-run recovers.
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name }}
-        run: gh release upload "$TAG" "$RUNNER_TEMP"/release/* --clobber --repo "$GITHUB_REPOSITORY"
+        run: ./ci.sh --release-attach "$TAG" "$RUNNER_TEMP/release"

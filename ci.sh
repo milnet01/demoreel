@@ -1259,6 +1259,47 @@ if [ "${1:-}" = "--verify-release" ]; then
     exit 0
 fi
 
+# DEMO-0084 § 4.4. May these files go on this release? A release holding
+# SHA256SUMS has a whole set, because SHA256SUMS goes last. Replacing one is a
+# decision, and deleting its SHA256SUMS is how it is made.
+release_ready() {  # tag folder
+    local names
+    names=$(gh release view "$1" --repo "${GITHUB_REPOSITORY:-milnet01/demoreel}" \
+            --json assets --jq '.assets[].name') || {
+        echo "could not read what $1 already has" >&2; return 1; }
+    if grep -qxF SHA256SUMS <<<"$names"; then
+        echo "$1 already has a whole set of files, so this run replaces nothing." >&2
+        echo "To replace them: gh release delete-asset $1 SHA256SUMS --yes, then re-run." >&2
+        return 1
+    fi
+    ( cd "$2" && check_sums ) || { echo "the files to attach fail their SHA256SUMS" >&2; return 1; }
+    echo "$1 can take these files"
+}
+
+# Everything else first, so a reader never sees sums for files not yet there.
+# After a failure part-way there is no SHA256SUMS on the page, which marks the
+# set as unfinished, and a re-run replaces whatever did arrive.
+release_attach() {  # tag folder
+    local repo=${GITHUB_REPOSITORY:-milnet01/demoreel} f upload_first=()
+    release_ready "$1" "$2"
+    for f in "$2"/*; do
+        [ "${f##*/}" = SHA256SUMS ] || upload_first+=("$f")
+    done
+    gh release upload "$1" "${upload_first[@]}" --clobber --repo "$repo"
+    gh release upload "$1" "$2/SHA256SUMS" --clobber --repo "$repo"
+    echo "$1 has its files"
+}
+
+if [ "${1:-}" = "--release-ready" ]; then
+    release_ready "${2:?--release-ready needs a tag}" "${3:?--release-ready needs a folder}"
+    exit 0
+fi
+
+if [ "${1:-}" = "--release-attach" ]; then
+    release_attach "${2:?--release-attach needs a tag}" "${3:?--release-attach needs a folder}"
+    exit 0
+fi
+
 # DEMO-0084 § 4.5: what SECURITY.md tells a user to do, against a published
 # release. It reads a live release, so the full gate does not run it.
 if [ "${1:-}" = "--release-check" ]; then
@@ -5308,6 +5349,7 @@ chain_checks() {
     # repositories, and the stand-in comes first on PATH.
     GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 PATH="$ct/bin:$PATH" GH_STUB="$ct/gh" \
         chain_tag_checks "$ct/tag"
+    PATH="$ct/bin:$PATH" GH_STUB="$ct/gh" chain_attach_checks "$ct/attach"
 }
 
 # A stand-in gh, so no check here can reach GitHub. It answers from GH_STUB:
@@ -5343,6 +5385,21 @@ case "$1 $2" in
     *" --source-digest $(cat "$GH_STUB/built_from") "*) ;;
     *) echo "stand-in gh: no build record from that commit" >&2; exit 1 ;;
     esac ;;
+"release view")
+    ls "$GH_STUB/page" ;;
+"release upload")
+    shift 3
+    while [ $# -gt 0 ]; do
+        case $1 in
+        --clobber) ;;
+        --repo) shift ;;
+        *)
+            [ ! -e "$GH_STUB/fail_at" ] || [ "${1##*/}" != "$(cat "$GH_STUB/fail_at")" ] || {
+                echo "stand-in gh: the upload of ${1##*/} failed" >&2; exit 1; }
+            cp "$1" "$GH_STUB/page/" ;;
+        esac
+        shift
+    done ;;
 *) echo "stand-in gh: not expected: $*" >&2; exit 1 ;;
 esac
 GHSTUB
@@ -5380,7 +5437,7 @@ chain_set_version() {  # folder version: a commit whose demoreel is that version
 chain_expect_refusal() {  # what, the words expected, then the command run in repo
     local what=$1 words=$2 out rc=0
     shift 2
-    out=$(cd "$repo" && "$@" 2>&1) || rc=$?
+    out=$(cd "${repo:-.}" && "$@" 2>&1) || rc=$?
     if [ "$rc" = 0 ] || ! grep -qF -- "$words" <<<"$out"; then
         echo "FAIL: $what: expected a refusal naming \"$words\", got exit $rc:" >&2
         echo "$out" >&2
@@ -5469,6 +5526,87 @@ chain_tag_checks() {
     [ "$moved" = "$own" ] || {
         echo "FAIL: --release-check overwrote the clone's own tag" >&2; exit 1; }
     echo "the clone's own tag was left as it was"
+}
+
+# Attaching the files to a release: all of a set or a set marked unfinished,
+# whatever a run dies on.
+chain_attach_checks() {
+    local files=$1/files page=$GH_STUB/page calls
+    step "a release's files arrive with SHA256SUMS last, and a whole set is not replaced"
+    mkdir -p "$files" "$page"
+    printf 'one\n' > "$files/demoreel_1-1_all.deb"
+    printf 'two\n' > "$files/PKGBUILD"
+    (cd "$files" && sha256sum demoreel_1-1_all.deb PKGBUILD > SHA256SUMS)
+    : > "$GH_STUB/calls"
+    ./ci.sh --release-attach v1 "$files" >/dev/null
+    [ -e "$page/SHA256SUMS" ] && [ -e "$page/PKGBUILD" ] && [ -e "$page/demoreel_1-1_all.deb" ] || {
+        echo "FAIL: not every file reached the release: $(ls "$page")" >&2; exit 1; }
+    calls=$(grep '^release upload' "$GH_STUB/calls")
+    grep -q SHA256SUMS <<<"$(tail -1 <<<"$calls")" \
+        && ! grep -q SHA256SUMS <<<"$(head -n -1 <<<"$calls")" || {
+        echo "FAIL: SHA256SUMS did not go last and alone:" >&2; echo "$calls" >&2; exit 1; }
+    chain_expect_refusal "a release that already has a whole set" "already has a whole set" \
+        ./ci.sh --release-ready v1 "$files"
+    chain_expect_refusal "attaching over a whole set" "already has a whole set" \
+        ./ci.sh --release-attach v1 "$files"
+    # A run dying part-way leaves no sums on the page, and the next one finishes.
+    rm "$page"/*
+    echo SHA256SUMS > "$GH_STUB/fail_at"
+    chain_expect_refusal "an upload that fails on the sums" "the upload of SHA256SUMS failed" \
+        ./ci.sh --release-attach v1 "$files"
+    [ ! -e "$page/SHA256SUMS" ] && [ -e "$page/PKGBUILD" ] || {
+        echo "FAIL: a failed run should leave the files and no sums: $(ls "$page")" >&2; exit 1; }
+    rm "$GH_STUB/fail_at"
+    printf 'from the run that failed\n' > "$page/PKGBUILD"
+    ./ci.sh --release-attach v1 "$files" >/dev/null
+    [ "$(cat "$page/PKGBUILD")" = two ] && [ -e "$page/SHA256SUMS" ] || {
+        echo "FAIL: a re-run did not finish the set" >&2; exit 1; }
+    # Deleting the sums is how a whole set is replaced.
+    rm "$page/SHA256SUMS"
+    ./ci.sh --release-ready v1 "$files" >/dev/null || {
+        echo "FAIL: a set with its sums deleted was refused" >&2; exit 1; }
+    echo damaged >> "$files/PKGBUILD"
+    chain_expect_refusal "files that fail their sums" "fail their SHA256SUMS" \
+        ./ci.sh --release-ready v1 "$files"
+    echo "SHA256SUMS last, a whole set refused, and a re-run recovers"
+
+    step "the release workflow holds its shape"
+    # A workflow runs only on GitHub, so this reads it. It proves the lines are
+    # there and in order, and nothing about how GitHub runs them.
+    python3 - <<'WORKFLOWPY'
+import pathlib, re, sys
+text = pathlib.Path(".github/workflows/release.yml").read_text(encoding="utf-8")
+head, _, body = text.partition("\njobs:\n")
+jobs = dict(zip(*[iter(re.split(r"^  ([a-z-]+):\n", body, flags=re.M)[1:])] * 2))
+build, release = jobs.get("build", ""), jobs.get("release", "")
+bad = []
+def need(ok, what):
+    if not ok:
+        bad.append(what)
+def in_order(job, name, *words):
+    at = [job.find(w) for w in words]
+    need(-1 not in at and at == sorted(at), f"{name} should hold {words} in that order")
+need("cancel-in-progress: false" in head and "group: release-${{" in head,
+     "the workflow should have a concurrency group per release, never cancelled")
+need("ref: refs/tags/${{ github.event.release.tag_name }}" in build,
+     "the build job should check out the tag by its full name")
+in_order(build, "build", "--verify-release", "--packages --out", "actions/upload-artifact")
+need("needs: build" in release, "the release job should need the build job")
+in_order(release, "release", "ref: ${{ github.sha }}", "actions/download-artifact",
+         "--release-ready", "actions/attest", "--release-attach")
+for line in re.findall(r"^ *(?:- )?run: *(.*)", release, flags=re.M):
+    need(line.startswith("./ci.sh --release-"),
+         f"a step holding the release job's grants runs something else: {line}")
+need("continue-on-error" not in text, "no step here may continue on error")
+for path in pathlib.Path(".github/workflows").glob("*.yml"):
+    for line in path.read_text(encoding="utf-8").splitlines():
+        m = re.match(r"\s*(?:- )?uses: (\S+)", line)
+        if m:
+            need(re.fullmatch(r"[^@]+@[0-9a-f]{40}", m[1]), f"not pinned by commit: {line.strip()}")
+print("\n".join(bad), file=sys.stderr)
+sys.exit(1 if bad else 0)
+WORKFLOWPY
+    echo "the release workflow's lines are there and in order"
 }
 
 # Tab on `demoreel stop`, asked of each installed shell from a folder someone

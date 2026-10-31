@@ -124,31 +124,53 @@ sha256sum -c --ignore-missing SHA256SUMS
 
 ### 4.4 The release job, in order
 
-The `release` job of `.github/workflows/release.yml` (DEMO-0068 § 4.5)
-becomes, in this order:
+`.github/workflows/release.yml` (DEMO-0068 § 4.5) has two jobs, and its steps
+call `ci.sh`, where a local run can test them. **Only a real release proves the
+workflow itself.**
 
-1. Check out the release's tag (unchanged).
-2. Fetch the tag object itself:
-   `git fetch --no-tags origin "+refs/tags/$TAG:refs/tags/$TAG"`, so step 3
-   never depends on what `actions/checkout` happens to fetch.
-3. `./ci.sh --verify-tag "$TAG"`. A failure stops the job: nothing is
-   built and nothing is attached.
-4. Install podman (unchanged).
-5. `./ci.sh --packages --out "$RUNNER_TEMP/release"` (unchanged; it now
-   also writes `SHA256SUMS`, § 4.3).
-6. `actions/attest`, pinned by commit to v4.2.2
+The `build` job holds the workflow's `contents: read` and nothing else, since it
+drives podman and installs other people's packages:
+
+1. Check out `refs/tags/<tag>`, in full: `actions/checkout` tries a bare name
+   as a branch first (`src/ref-helper.ts` at the pinned commit).
+2. `./ci.sh --verify-release "$TAG"` (§ 4.2). A failure stops the run: nothing
+   is built and nothing is attached.
+3. Install podman.
+4. `./ci.sh --packages --out "$RUNNER_TEMP/release"`, which also writes
+   `SHA256SUMS` (§ 4.3).
+5. `actions/upload-artifact`, pinned by commit, hands the folder on.
+
+The `release` job needs `build`, and holds `contents: write`, `id-token: write`
+and `attestations: write`. Every `run:` step in it is `./ci.sh`, and it installs
+nothing:
+
+1. Check out `github.sha`, the commit `build` proved was the tag's and the build
+   record will name.
+2. `actions/download-artifact`, pinned by commit, into the same folder.
+3. `./ci.sh --release-ready "$TAG" <folder>`: stops if the release already holds
+   `SHA256SUMS`, and runs § 4.3's checks. The sums came with the files, so this
+   catches damage on the way, and not a dishonest `build` job.
+4. `actions/attest`, pinned by commit to v4.2.2
    (`1e69f48acb82d1966a394da916b4c1698aa569d6`, read from
    `gh api repos/actions/attest/git/ref/tags/v4.2.2` on 2026-10-13), with
-   `subject-path` naming every file in `$RUNNER_TEMP/release`, `SHA256SUMS`
-   included. It runs before the upload, so a failed attestation attaches
-   nothing.
-7. Upload every file in the folder (unchanged command).
+   `subject-path` naming every file in the folder, `SHA256SUMS` included. It
+   runs before the upload, so a failed attestation attaches nothing. With no
+   predicate input it makes SLSA provenance, which `gh attestation verify`
+   accepts by default: 0.9.0's real record is `https://slsa.dev/provenance/v1`.
+5. `./ci.sh --release-attach "$TAG" <folder>`: every other file, then
+   `SHA256SUMS` alone, last.
 
-The job's permissions become `contents: write`, `id-token: write` and
-`attestations: write`. The README of `actions/attest` also lists
-`artifact-metadata: write`. That one is for a storage record, which the
-action makes only with `push-to-registry`, a container option this job does
-not use, so it is left out. The workflow's top-level `contents: read` stays.
+**A release holding `SHA256SUMS` has a whole set, and a run refuses to replace
+it.** Replacing one is a decision: `gh release delete-asset <tag> SHA256SUMS
+--yes`, then re-run. After a failure part-way there is no `SHA256SUMS` on the
+page, so the set is marked unfinished, no reader sees sums for files not yet
+there, and a re-run replaces whatever arrived. The workflow's `concurrency`
+group holds one run per release at a time, and never cancels one.
+
+The README of `actions/attest` also lists `artifact-metadata: write`. That one
+is for a storage record, which the action makes only with `push-to-registry`, a
+container option this job does not use, so it is left out. The workflow's
+top-level `contents: read` stays.
 
 ### 4.5 Checking a published release: `./ci.sh --release-check <tag>`
 
@@ -189,18 +211,19 @@ downloaded from GitHub; and the limit in § 6's last bullet.
 
 - **INV-1** — Every release tag from 0.9.0 on is signed by a key
   `packaging/release-signers` lists.
-  *Test:* `./ci.sh --verify-tag v0.9.0` after the release; and in the
-  release job, step 3 of § 4.4. Not runnable before the code exists. The
-  fixture that isolates the rule is a tag made with `tag.gpgSign` unset:
-  only the signature check rejects it, since the tag is otherwise valid.
+  *Test:* `./ci.sh --verify-tag v0.9.0` after the release; in the `build`
+  job, step 2 of § 4.4; and `./ci.sh --release-chain`, whose scratch tags are
+  an unsigned one, an old signed object at a new name, and a signed tag on a
+  tree of another version. Each is refused for its own reason.
   *Breaks when:* a tag is cut from a clone without the § 4.1 settings, or
   signed with a key the file does not list.
 
 - **INV-2** — A release whose tag fails INV-1 gets no files attached.
-  *Test:* in `release.yml`, `--verify-tag` (§ 4.4 step 3) comes before
-  the build, the attestation and the upload, and none of them runs when
-  it fails. Seeded by hand once: `./ci.sh --verify-tag` against an
-  unsigned tag in a scratch clone exits 1.
+  *Test:* the full gate's "the release workflow holds its shape" step reads
+  `release.yml`: `--verify-release` comes before the build, the `release` job
+  needs `build`, and no step has `continue-on-error`. `./ci.sh --release-chain`
+  shows `--verify-release` exits 1 for each refusal. It reads the file, and
+  what GitHub does with it only a real release shows.
   *Breaks when:* the step is moved after the upload, or given
   `continue-on-error`.
 
@@ -257,13 +280,14 @@ downloaded from GitHub; and the limit in § 6's last bullet.
 
 ## 6. Failure modes
 
-- **The tag was cut unsigned anyway.** The release job fails at § 4.4
-  step 3 and nothing is attached. A published tag is not moved, so the
+- **The tag was cut unsigned anyway.** The `build` job fails at § 4.4
+  step 2 and nothing is attached. A published tag is not moved, so the
   fix is the next patch release, cut from a clone that passes
   `--signing-check`.
 - **The attestation step fails** (Sigstore or GitHub unavailable). Nothing
-  is attached, because the upload comes after it. Re-run the job; the
-  upload's `--clobber` makes a re-run safe.
+  is attached, because the upload comes after it. Re-run the workflow.
+- **An upload fails part-way.** The release has no `SHA256SUMS`, so a re-run
+  is allowed, and its `--clobber` replaces what arrived.
 - **The key is lost or must be replaced.** Add the new key as a second
   line in `packaging/release-signers` and on the GitHub account. Keep the
   old line, with `valid-before="<date>"` from the allowed-signers format,
@@ -281,9 +305,8 @@ downloaded from GitHub; and the limit in § 6's last bullet.
 
 ## 7. Tests
 
-- INV-1, INV-2: `./ci.sh --verify-tag`, run by `release.yml` on every
-  release and by `--release-check`. Seen to fail once, by hand, against an
-  unsigned tag in a scratch clone before the first release.
+- INV-1, INV-2: `./ci.sh --verify-release`, run by `release.yml` on every
+  release; `--release-check`; and `./ci.sh --release-chain`, in the full gate.
 - INV-3: `./ci.sh --signing-check`, run by `cut-release` at Phase 0h. Seen
   to fail by hand once with `tag.gpgSign` false, and once with a key the
   file does not list.
@@ -318,8 +341,8 @@ downloaded from GitHub; and the limit in § 6's last bullet.
 
 | Rule | What catches a breach |
 |------|----------------------|
-| INV-1 | `release.yml` § 4.4 step 3; `./ci.sh --release-check` |
-| INV-2 | **Partial:** the step order in `release.yml`, read by nobody automatically; a seeded run by hand once |
+| INV-1 | `release.yml`'s `build` job; `./ci.sh --release-check`; `./ci.sh --release-chain` |
+| INV-2 | **Partial:** the full gate reads the step order in `release.yml`; what GitHub does with it, only a real release shows |
 | INV-3 | `cut-release` Phase 0h, running `./ci.sh --signing-check` |
 | INV-4 | `./ci.sh --packages --out`; `./ci.sh --release-check` |
 | INV-5 | `./ci.sh --release-check`, by hand after each release |

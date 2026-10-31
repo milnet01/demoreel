@@ -184,24 +184,25 @@ the existing `ci` job, so the gate's twenty-minute limit is not shared. Per
 
 A `release` job in its own workflow, `.github/workflows/release.yml`, on
 `release: types: [published]`. A trigger belongs to a whole workflow file,
-so the `ci` and `packages` jobs do not run on a release. The job:
+so the `ci` and `packages` jobs do not run on a release. A `build` job:
 
 1. Checks out the release's tag.
 2. Runs `./ci.sh --packages --out <dir>`: the same build and install test,
    leaving the files in `<dir>`.
-3. Uploads the `.deb`, the `.rpm`, the tarball and the filled `PKGBUILD`
-   with `gh release upload`.
+
+A `release` job after it uploads the `.deb`, the `.rpm`, the tarball and the
+filled `PKGBUILD` with `gh release upload`.
 
 `cut-release` publishes the release with the user's token, which is what
 fires `release: published`. A release created by the workflow's own token
-fires nothing. **Only this job has `contents: write`.** Both workflows'
+fires nothing. **Only the `release` job has `contents: write`.** Both workflows'
 top-level `permissions: contents: read` stays. A failed test attaches
-nothing. Re-running the job for the same tag replaces the files
-(`--clobber`).
+nothing. A re-run finishes an unfinished set and refuses to replace a whole
+one.
 
-`docs/specs/DEMO-0084-verify-a-download.md` § 4.4 adds steps to this job
-(a tag-signature check first, `SHA256SUMS`, a build record) and two
-permissions; that spec governs them.
+`docs/specs/DEMO-0084-verify-a-download.md` § 4.4 governs the two jobs' steps
+(a tag-signature check first, `SHA256SUMS`, a build record), what each holds,
+and how a re-run recovers.
 
 ### 4.6 openSUSE and `record --gpu`
 
@@ -377,8 +378,8 @@ The container checks are run by `./ci.sh --packages` in every container of
   DEMO-0084 INV-4 and INV-6 extend this to `SHA256SUMS` and to the two
   permissions its build record needs.
   *Test:* `grep -rn 'contents: write' .github/workflows/` names one line,
-  inside `release.yml`'s `release` job. The upload step runs after the
-  `./ci.sh --packages --out` step and only if it succeeded.
+  inside `release.yml`'s `release` job. That job needs the `build` job, which
+  runs `./ci.sh --packages --out`, so the upload runs only if it succeeded.
   *Breaks when:* `contents: write` moves to the workflow level or another
   job, or the upload runs on failure.
 
