@@ -4083,6 +4083,7 @@ CLEANPY
     printf 'clip "a%sb%sc.mp4"\n' "$c1" "$rtl" > "$ft/s.txt"
     run edit s.txt -o "$ft/out/n.mp4"
     expect_refused "a clip whose name holds C1 and bidi is not there"
+    # shellcheck disable=SC1003  # the text is a backslash and u202e
     stderr_clean "there is no file, C1 and bidi" 'a\x9bb\''u202ec.mp4'
     # A script's own line, quoted beside the refusal.
     printf 'bogus %s[31mred%s\n' "$esc" "$fsi" > "$ft/s.txt"
@@ -4280,10 +4281,11 @@ LOUDPY
     # DEMO-0094. ffmpeg says about 600 bytes a frame at info level, and a file of
     # millions of tiny frames made that gigabytes in Python. Nor was any read of
     # a file under memory_cap. Each is run through a stand-in for ffmpeg.
-    local cmd mem real_probe
+    local cmd mem real_ffmpeg real_probe
+    real_ffmpeg=$(command -v ffmpeg)
     mkdir -p "$ft/loud"
     {
-        printf '#!/bin/sh\ncase "$*" in *-encoders*|*-demuxers*|*filter=drawtext*) exec "%s" "$@" ;; esac\n' "$REAL_FFMPEG"
+        printf '#!/bin/sh\ncase "$*" in *-encoders*|*-demuxers*|*filter=drawtext*) exec "%s" "$@" ;; esac\n' "$real_ffmpeg"
         printf 'head -c 300000000 /dev/zero | tr "\\000" x >&2\nexit 1\n'
     } >"$ft/loud/ffmpeg"
     chmod +x "$ft/loud/ffmpeg"
@@ -4341,10 +4343,11 @@ d.main()
 CAPPY
     mkdir -p "$ft/big"
     {
-        printf '#!/bin/sh\ncase "$*" in *-encoders*|*-demuxers*|*filter=drawtext*) exec "%s" "$@" ;; esac\n' "$REAL_FFMPEG"
+        printf '#!/bin/sh\ncase "$*" in *-encoders*|*-demuxers*|*filter=drawtext*) exec "%s" "$@" ;; esac\n' "$real_ffmpeg"
         printf 'exec python3 -c "import time; b = bytearray(400 * 2**20); time.sleep(20)"\n'
     } >"$ft/big/ffmpeg"
     real_probe=$(command -v ffprobe)
+    # shellcheck disable=SC2016  # written into a script, which expands it
     printf '#!/bin/sh\ncase "$*" in *-count_frames*|*"$BIG_PROBE"*) exec python3 -c "import time; b = bytearray(400 * 2**20); time.sleep(20)" ;; esac\nexec "%s" "$@"\n' \
         "$real_probe" >"$ft/big/ffprobe"
     chmod +x "$ft/big/ffmpeg" "$ft/big/ffprobe"
@@ -4373,7 +4376,7 @@ CAPPY
     # DEMO-0094. Given as written, `concat:a|b` is ffmpeg's concat protocol,
     # `12:30:05.mp4` is "Protocol not found", and `./-report` reaches ffprobe as
     # an option that writes a log here. Every one is an ordinary name.
-    local name n1 n2 want
+    local name n1 want
     ffmpeg -nostdin -v error -i "$ft/A.mp4" -t 1 -c copy -y "$ft/short.mp4"
     want=$(v_frames "$ft/short.mp4")
     for name in '12:30:05.mp4' '-report.mp4' 'concat:short.mp4|short.mp4' 'pipe:0.mp4' \
@@ -4432,6 +4435,7 @@ CAPPY
     # is absolute, and the first look at a file is what a list stops.
     mkdir -p "$ft/watch"
     for name in ffmpeg ffprobe; do
+        # shellcheck disable=SC2016  # written into a script, which expands it
         printf '#!/bin/sh\nprintf "%%s\\n" "$@" >> "$WATCHED"\necho END >> "$WATCHED"\nexec "%s" "$@"\n' \
             "$(command -v "$name")" > "$ft/watch/$name"
         chmod +x "$ft/watch/$name"
