@@ -718,6 +718,76 @@ PKG_FEDORA='registry.fedoraproject.org/fedora:latest'
 PKG_OPENSUSE='docker.io/opensuse/tumbleweed:latest'
 PKG_ARCH='docker.io/library/archlinux:latest'
 
+# What a release builds in: the same images, by digest. A floating tag suits the
+# gate, which should fail when a distro moves, and not a release, whose files
+# should come from a known image (DEMO-0068 § 4.8). ./ci.sh --release-images
+# rewrites the file. Each digest is the image's list across architectures, so
+# another machine pulls its own build of the same release.
+RELEASE_IMAGES=packaging/release-images
+RELEASE_IMAGES_DAYS=30
+
+# Which image a distro's container runs: floating, or pinned when the first
+# argument is non-empty, as --out's folder is.
+pkg_image() {  # pinned distro
+    local image digest
+    case $2 in
+    debian)   image=$PKG_DEBIAN ;;
+    ubuntu)   image=$PKG_UBUNTU ;;
+    fedora)   image=$PKG_FEDORA ;;
+    opensuse) image=$PKG_OPENSUSE ;;
+    arch)     image=$PKG_ARCH ;;
+    esac
+    if [ -z "$1" ]; then
+        printf '%s\n' "$image"
+        return
+    fi
+    digest=$(awk -v d="$2" '$1 == d { print $2 }' "$RELEASE_IMAGES")
+    [[ $digest == sha256:* ]] || { echo "$RELEASE_IMAGES has no digest for $2" >&2; return 1; }
+    printf '%s@%s\n' "${image%:*}" "$digest"
+}
+
+# Old pins are a cost too: the release is built on images with old packages.
+release_images_note() {
+    local refreshed age
+    refreshed=$(sed -n 's/^# refreshed \([0-9-]*\)$/\1/p' "$RELEASE_IMAGES")
+    age=$(( ($(date +%s) - $(date -d "$refreshed" +%s)) / 86400 ))
+    if [ "$age" -ge "$RELEASE_IMAGES_DAYS" ]; then
+        echo "note: $RELEASE_IMAGES is $age days old, so a release builds on old images."
+        echo "      refresh it before cutting one: ./ci.sh --release-images"
+    fi
+}
+
+if [ "${1:-}" = "--release-images-note" ]; then
+    release_images_note
+    exit 0
+fi
+
+if [ "${1:-}" = "--release-images" ]; then
+    command -v podman >/dev/null || { echo "podman is not installed" >&2; exit 1; }
+    images_new=$(mktemp -p "$(dirname "$RELEASE_IMAGES")")
+    trap 'rm -f "$images_new"' EXIT
+    {
+        echo "# The images a release is built in. ./ci.sh --release-images rewrites this."
+        echo "# refreshed $(date +%F)"
+        for distro in debian ubuntu fedora opensuse arch; do
+            image=$(pkg_image '' "$distro")
+            podman pull --quiet "$image" >/dev/null
+            # An image from a list has two digests here. Only the list's can be
+            # read as a list, and it is the one every architecture shares.
+            list=''
+            while read -r named; do
+                if podman manifest inspect "$named" >/dev/null 2>&1; then list=${named#*@}; fi
+            done < <(podman image inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$image")
+            [ -n "$list" ] || list=$(podman image inspect --format '{{.Digest}}' "$image")
+            printf '%s %s\n' "$distro" "$list"
+        done
+    } > "$images_new"
+    chmod 644 "$images_new"
+    mv "$images_new" "$RELEASE_IMAGES"
+    echo "wrote $RELEASE_IMAGES; commit it"
+    exit 0
+fi
+
 # Run inside each container, as root, with the work folder at /w. Its first
 # argument says which distro this is; the second, what to do before testing:
 # build the package here, or only install the one built elsewhere.
@@ -751,6 +821,11 @@ elif command -v dnf >/dev/null; then
     printf 'keepcache=True\nmetadata_expire=0\n' >> /etc/dnf/dnf.conf
 elif command -v zypper >/dev/null; then
     zypper -q modifyrepo --all --keep-packages >/dev/null
+fi
+# /w holds the files a release attaches, and what follows installs other people's
+# packages as root. Only the build may write there.
+if [ "$build" != build ] && ( : > /w/.write-probe ) 2>/dev/null; then
+    fail "this container can write to /w, which holds the release's files"
 fi
 mkdir -p /tmp/src && tar -xzf /w/demoreel-"$v".tar.gz -C /tmp/src
 src=/tmp/src/demoreel-$v
@@ -879,7 +954,9 @@ fedora|opensuse)
         norec=''
         remove_pkg() { dnf -q remove -y demoreel >/dev/null; }
     else
-        install_pkg() { zypper -q -n --no-gpg-checks install --allow-unsigned-rpm \
+        # For the local file alone. --no-gpg-checks, a global option, would
+        # also let an unsigned package in from the repositories.
+        install_pkg() { zypper -q -n install --allow-unsigned-rpm \
             "${1:---recommends}" "$pkg" >/dev/null; }
         norec=--no-recommends
         remove_pkg() { zypper -q -n remove demoreel >/dev/null; }
@@ -932,6 +1009,8 @@ if [ "$build" = build ]; then
         cp /tmp/arch/demoreel-"$v"-1-any.pkg.tar.zst /w/
         ;;
     esac
+    echo "BUILT ($distro)"
+    exit 0
 fi
 
 # INV-5: without recommended packages, none of --gpu's programs comes along.
@@ -1058,12 +1137,25 @@ verify_tag_published() {  # tag object
     echo "$1 is signed by a key the GitHub account milnet01 publishes"
 }
 
-# Build and test every package; with a folder, leave the release files there.
-packages_check() {
-    local out=$1 v work tree rev distro image pids=() names=() failed=0 i
+# Whether a folder's files still hash as they did when built.
+same_as_built() {  # folder, sha256sum's output then
+    ( cd "$1" && sha256sum -c --quiet - <<<"$2" ) || {
+        echo "a built file changed after its build, in the containers that test it" >&2
+        return 1; }
+}
+
+# Build and test every package; with a folder, leave the release files there,
+# built in the pinned images. In a subshell, for a trap of its own beside the
+# gate's: any way out removes the work folder.
+packages_check() (
+    local out=$1 v work logs tree rev distro name build pids=() names=() failed=0 i built=''
     command -v podman >/dev/null || { echo "podman is not installed" >&2; return 1; }
     v=$(tool_version)
     work=$(mktemp -d)
+    # Beside the folder a read-only container sees, not in it.
+    logs=$work.logs
+    mkdir "$logs"
+    trap 'rm -rf "$work" "$logs"' EXIT
     # The tree as it stands, tracked and new files alike, as the parity leg runs
     # it. On a clean tree that is HEAD's, and then HEAD is archived, so a
     # release's tarball carries the tagged commit's time and nothing of this run.
@@ -1096,17 +1188,21 @@ for distro, family in (("debian", "apt"), ("ubuntu", "apt"), ("fedora", "dnf"),
     with open(f"{sys.argv[1]}/deps-{distro}", "w", encoding="utf-8") as f:
         f.write(line.removeprefix("sudo ") + "\n")
 DEPSPY
-    # Two waves: the distros that build a format, then those that only install
-    # one built in the first. Each container is a clean image, pulled again
-    # when its tag has moved, so a renamed dependency fails here first. Only
-    # the downloaded packages carry over, one folder per distro (DEMO-0277);
-    # no wave holds a distro twice, so no two containers share a folder.
-    local cache=${XDG_CACHE_HOME:-$HOME/.cache}/demoreel-ci at
+    # A build wave, whose containers do nothing but build, then the waves that
+    # install. Those mount the work folder read-only: they run other people's
+    # packages as root, and the files they test are the ones attached. Each
+    # container is a clean image, pulled again when its tag has moved, so a
+    # renamed dependency fails here first. Only the downloaded packages carry
+    # over, one folder per distro (DEMO-0277); no wave holds a distro twice, so
+    # no two containers share a folder.
+    local cache=${XDG_CACHE_HOME:-$HOME/.cache}/demoreel-ci at access image
     run_wave() {
         pids=() names=()
         while [ $# -gt 0 ]; do
-            distro=$1 image=$2 build=$3; shift 3
-            name=$distro; [ "$build" = source ] && name=$distro-source
+            distro=$1 build=$2; shift 2
+            name=$distro-$build
+            access=,ro; [ "$build" = build ] && access=''
+            image=$(pkg_image "$out" "$distro") || { failed=1; return; }
             case $distro in
             debian|ubuntu) at=/var/cache/apt/archives ;;
             fedora)        at=/var/cache/libdnf5 ;;
@@ -1114,29 +1210,39 @@ DEPSPY
             arch)          at=/var/cache/pacman/pkg ;;
             esac
             mkdir -p "$cache/$distro"
-            podman run --rm --pull=newer -v "$work:/w:z" -v "$cache/$distro:$at:z" "$image" \
-                bash /w/test.sh "$distro" "$build" "$v" > "$work/$name.log" 2>&1 &
+            podman run --rm --pull=newer -v "$work:/w:z$access" -v "$cache/$distro:$at:z" "$image" \
+                bash /w/test.sh "$distro" "$build" "$v" > "$logs/$name.log" 2>&1 &
             pids+=($!) names+=("$name")
         done
         for i in "${!pids[@]}"; do
             if wait "${pids[$i]}"; then
-                tail -1 "$work/${names[$i]}.log"
+                tail -1 "$logs/${names[$i]}.log"
             else
                 echo "the ${names[$i]} container failed; its output:" >&2
-                cat "$work/${names[$i]}.log" >&2
+                cat "$logs/${names[$i]}.log" >&2
                 failed=1
             fi
         done
     }
-    run_wave debian "$PKG_DEBIAN" build fedora "$PKG_FEDORA" build arch "$PKG_ARCH" build
-    [ "$failed" = 0 ] && run_wave ubuntu "$PKG_UBUNTU" test opensuse "$PKG_OPENSUSE" test
-    # A third wave: the install from source, in a clean container of each distro.
-    [ "$failed" = 0 ] && run_wave debian "$PKG_DEBIAN" source ubuntu "$PKG_UBUNTU" source \
-        fedora "$PKG_FEDORA" source opensuse "$PKG_OPENSUSE" source arch "$PKG_ARCH" source
+    run_wave debian build fedora build arch build
+    # The hashes are taken here, and kept where no container can reach them.
+    if [ "$failed" = 0 ]; then
+        built=$(cd "$work" && sha256sum "demoreel_$v-1_all.deb" "demoreel-$v-1.noarch.rpm" \
+            "demoreel-$v.tar.gz" PKGBUILD)
+        run_wave debian test fedora test arch test
+    fi
+    [ "$failed" = 0 ] && run_wave ubuntu test opensuse test
+    # The install from source, in a clean container of each distro.
+    [ "$failed" = 0 ] && run_wave debian source ubuntu source \
+        fedora source opensuse source arch source
     # Downloads no run has read for 30 days. Through podman unshare, because a
     # package manager's own download user owns some of what it leaves there.
     podman unshare find "$cache" -type f -atime +30 -delete \
         || echo "note: could not prune $cache" >&2
+    # What was built is what was tested, and what goes out.
+    if [ "$failed" = 0 ] && ! same_as_built "$work" "$built"; then
+        failed=1
+    fi
     if [ "$failed" = 0 ] && [ -n "$out" ]; then
         mkdir -p "$out"
         cp "$work/demoreel_$v-1_all.deb" "$work/demoreel-$v-1.noarch.rpm" \
@@ -1145,9 +1251,8 @@ DEPSPY
         ( cd "$out" && sha256sum "demoreel_$v-1_all.deb" "demoreel-$v-1.noarch.rpm" \
             "demoreel-$v.tar.gz" PKGBUILD > SHA256SUMS && check_sums ) || failed=1
     fi
-    rm -rf "$work"
     return "$failed"
-}
+)
 
 if [ "${1:-}" = "--packages" ]; then
     # Called directly it always runs, and fails rather than skips when it cannot.
@@ -1179,7 +1284,7 @@ if [ "${1:-}" = "--obs-check" ]; then
     pids=() names=() failed=0
     while read -r name _path image manager rc text; do
         case $name in ''|'#'*) continue ;; esac
-        podman run --rm --pull=newer -v "$work:/w:z" \
+        podman run --rm --pull=newer -v "$work:/w:z,ro" \
             -e OBS_TARGET="$name" -e OBS_URL="$base/$name" \
             -e EXPECT_RC="$rc" -e EXPECT_TEXT="$text" \
             "$image" bash /w/test.sh "$manager" obs "$v" > "$work/$name.log" 2>&1 &
@@ -1225,6 +1330,8 @@ if [ "${1:-}" = "--signing-check" ]; then
         exit 1
     fi
     echo "release tags will be signed with $(ssh-keygen -lf "$key" | cut -d' ' -f2)"
+    # cut-release runs this before it bumps anything, so the note comes in time.
+    release_images_note
     exit 0
 fi
 
@@ -1330,6 +1437,7 @@ if [ "${1:-}" = "--release-check" ]; then
             || { echo "${f##*/} has no build record from release.yml at $tag, commit $commit" >&2; exit 1; }
     done
     echo "$tag: every file matches SHA256SUMS and has a build record from the signed commit $commit"
+    release_images_note
     exit 0
 fi
 
@@ -1523,7 +1631,8 @@ if [ "${1:-}" = "--perf-baseline" ]; then
     perf_now=$(mktemp)
     trap 'rm -f "$perf_now"' EXIT
     perf_measure "$perf_now"
-    cp "$perf_now" "$PERF_BASELINE"
+    cp "$perf_now" "$PERF_BASELINE.new"
+    mv "$PERF_BASELINE.new" "$PERF_BASELINE"
     echo "wrote $PERF_BASELINE; commit it"
     exit 0
 fi
@@ -5349,6 +5458,8 @@ chain_checks() {
     # repositories, and the stand-in comes first on PATH.
     GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 PATH="$ct/bin:$PATH" GH_STUB="$ct/gh" \
         chain_tag_checks "$ct/tag"
+    GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 PATH="$ct/bin:$PATH" GH_STUB="$ct/gh" \
+        OSC_STUB="$ct/osc" chain_obs_checks "$ct/tag"
     PATH="$ct/bin:$PATH" GH_STUB="$ct/gh" chain_attach_checks "$ct/attach"
 }
 
@@ -5403,7 +5514,25 @@ case "$1 $2" in
 *) echo "stand-in gh: not expected: $*" >&2; exit 1 ;;
 esac
 GHSTUB
-    chmod +x "$1/gh"
+    # A stand-in osc: nothing here may reach OBS. It keeps a checkout on disk and
+    # says what was in it when it was committed.
+    cat > "$1/osc" <<'OSCSTUB'
+#!/usr/bin/env bash
+shift 2  # -A api
+printf '%s\n' "$*" >> "$OSC_STUB/calls"
+case $1 in
+results) cat "$OSC_STUB/results" ;;
+buildlog) echo "stand-in osc: no log" >&2; exit 1 ;;
+checkout)
+    mkdir -p "$2/$3/.osc"
+    printf old > "$2/$3/demoreel-rpmlintrc"
+    printf old > "$2/$3/demoreel-0.0.1.tar.gz" ;;
+commit) ls > "$OSC_STUB/committed" ;;
+update|addremove) ;;
+*) echo "stand-in osc: not expected: $*" >&2; exit 1 ;;
+esac
+OSCSTUB
+    chmod +x "$1/gh" "$1/osc"
 }
 
 # A scratch repository holding this tree's script, recipes and gate, with a
@@ -5528,6 +5657,84 @@ chain_tag_checks() {
     echo "the clone's own tag was left as it was"
 }
 
+# The two OBS scripts as far as a stand-in osc, in the repository the tag checks
+# left at the signed tag v1.2.0.
+chain_obs_checks() {
+    local at=$1 repo=$1/repo stub=$OSC_STUB stage=$1/from status_rc out
+    step "nothing reaches OBS without a signed tag and a build record from its commit"
+    mkdir -p "$stub" "$stage"
+    (cd "$repo" && git rev-parse 'v1.2.0^{commit}') > "$GH_STUB/built_from"
+    rm -rf "$GH_STUB/assets"
+    mkdir -p "$GH_STUB/assets"
+    printf 'pretend tarball\n' > "$GH_STUB/assets/demoreel-1.2.0.tar.gz"
+    printf "sha256sums=('%s')\n" "$(sha256sum < "$GH_STUB/assets/demoreel-1.2.0.tar.gz" | cut -d' ' -f1)" \
+        > "$GH_STUB/assets/PKGBUILD"
+    cp "$GH_STUB/assets/demoreel-1.2.0.tar.gz" "$GH_STUB/assets/PKGBUILD" "$stage/"
+    (cd "$repo" && git rev-parse HEAD~1) > "$GH_STUB/built_from"
+    export OBS_WORKDIR=$at/work
+    chain_expect_refusal "files with no build record from the signed commit" \
+        "has no build record" packaging/obs/obs-submit.sh
+    chain_expect_refusal "a folder's files with no build record" \
+        "has no build record" packaging/obs/obs-submit.sh --from "$stage"
+    [ ! -e "$stub/calls" ] || { echo "FAIL: osc was called anyway:" >&2; cat "$stub/calls" >&2; exit 1; }
+    (cd "$repo" && git rev-parse 'v1.2.0^{commit}') > "$GH_STUB/built_from"
+    (
+        cd "$repo"
+        git tag -d v1.2.0 >/dev/null
+        git tag -a -m unsigned v1.2.0
+    )
+    chain_expect_refusal "an unsigned tag" "did not pass" packaging/obs/obs-submit.sh
+    [ ! -e "$stub/calls" ] || { echo "FAIL: osc was called anyway:" >&2; cat "$stub/calls" >&2; exit 1; }
+    (
+        cd "$repo"
+        git tag -d v1.2.0 >/dev/null
+        git tag -s -m signed v1.2.0
+    )
+    (cd "$repo" && packaging/obs/obs-submit.sh) >/dev/null 2>&1 || {
+        echo "FAIL: a good release was refused" >&2; exit 1; }
+    grep -qx 'demoreel-1.2.0.tar.gz' "$stub/committed" || {
+        echo "FAIL: the release's tarball was not committed:" >&2; cat "$stub/committed" >&2; exit 1; }
+    ! grep -qE 'demoreel-0.0.1|demoreel-rpmlintrc' "$stub/committed" || {
+        echo "FAIL: a file the release does not have stayed on OBS:" >&2; cat "$stub/committed" >&2; exit 1; }
+    # Trying the staging on files no release has yet sends nothing.
+    rm -f "$stub/calls"
+    out=$(cd "$repo" && packaging/obs/obs-submit.sh --dry-run --from "$stage" 2>&1)
+    grep -q 'no build record was checked' <<<"$out" || {
+        echo "FAIL: --dry-run --from did not say what it skipped:" >&2; echo "$out" >&2; exit 1; }
+    [ ! -e "$stub/calls" ] || { echo "FAIL: a dry run called osc" >&2; exit 1; }
+    echo "a good release was committed, without what it no longer has"
+
+    step "obs-status names every target that did not build"
+    export POLL_SECS=0 MAX_POLLS=1
+    local targets_all repo_a repo_b
+    targets_all=$(awk '$1 !~ /^(#|$)/ { print $1 }' "$repo/packaging/obs/targets")
+    repo_a=$(sed -n 1p <<<"$targets_all")
+    repo_b=$(sed -n 2p <<<"$targets_all")
+    chain_results() {  # the status of the first target, of the second, of the rest
+        local i=0 t status
+        while read -r t; do
+            i=$((i + 1))
+            status=$3; [ "$i" = 1 ] && status=$1; [ "$i" = 2 ] && status=$2
+            [ "$status" = none ] || printf '%s x86_64 demoreel %s\n' "$t" "$status"
+        done <<<"$targets_all" > "$stub/results"
+    }
+    chain_results succeeded succeeded succeeded
+    (cd "$repo" && packaging/obs/obs-status.sh) >/dev/null || {
+        echo "FAIL: every target built, and obs-status failed" >&2; exit 1; }
+    chain_results unresolvable broken succeeded
+    status_rc=0
+    out=$(cd "$repo" && packaging/obs/obs-status.sh 2>&1) || status_rc=$?
+    [ "$status_rc" != 0 ] && grep -qF "$repo_a (" <<<"$out" && grep -qF "$repo_b (" <<<"$out" || {
+        echo "FAIL: a target with no log should not hide the next: exit $status_rc:" >&2
+        echo "$out" >&2; exit 1; }
+    chain_results none succeeded succeeded
+    chain_expect_refusal "a target OBS does not list" "lists no build for it" packaging/obs/obs-status.sh
+    chain_results excluded succeeded succeeded
+    chain_expect_refusal "a target OBS excluded" "$repo_a (excluded)" packaging/obs/obs-status.sh
+    echo "obs-status named each, and passed only when all built"
+    unset OBS_WORKDIR POLL_SECS MAX_POLLS
+}
+
 # Attaching the files to a release: all of a set or a set marked unfinished,
 # whatever a run dies on.
 chain_attach_checks() {
@@ -5569,6 +5776,36 @@ chain_attach_checks() {
     chain_expect_refusal "files that fail their sums" "fail their SHA256SUMS" \
         ./ci.sh --release-ready v1 "$files"
     echo "SHA256SUMS last, a whole set refused, and a re-run recovers"
+
+    step "a release is built in images pinned by digest, and the gate in floating ones"
+    local distro floating pinned
+    for distro in debian ubuntu fedora opensuse arch; do
+        floating=$(pkg_image '' "$distro")
+        pinned=$(pkg_image release "$distro")
+        [[ $pinned =~ ^${floating%:*}@sha256:[0-9a-f]{64}$ ]] && [[ $floating != *@* ]] || {
+            echo "FAIL: $distro: floating $floating, pinned $pinned" >&2; exit 1; }
+    done
+    echo "every distro has a digest, in the image's own repository"
+    (
+        scratch=$1/images
+        mkdir -p "$scratch/packaging"
+        cp ci.sh demoreel "$scratch/"
+        printf '# refreshed %s\n' "$(date -d '40 days ago' +%F)" > "$scratch/packaging/release-images"
+        grep -q 'days old' <<<"$("$scratch/ci.sh" --release-images-note)" || {
+            echo "FAIL: pins forty days old drew no note" >&2; exit 1; }
+        printf '# refreshed %s\n' "$(date +%F)" > "$scratch/packaging/release-images"
+        [ -z "$("$scratch/ci.sh" --release-images-note)" ] || {
+            echo "FAIL: pins made today drew a note" >&2; exit 1; }
+    )
+    echo "pins past their age draw a note, and new ones none"
+    # What decides that the tested files are the attached ones: it must refuse.
+    local hashed
+    printf 'built\n' > "$1/file"
+    hashed=$(cd "$1" && sha256sum file)
+    same_as_built "$1" "$hashed" 2>/dev/null || { echo "FAIL: an unchanged file was refused" >&2; exit 1; }
+    printf 'changed\n' > "$1/file"
+    ! same_as_built "$1" "$hashed" 2>/dev/null || { echo "FAIL: a changed file passed" >&2; exit 1; }
+    echo "a file changed after its build is refused"
 
     step "the release workflow holds its shape"
     # A workflow runs only on GitHub, so this reads it. It proves the lines are

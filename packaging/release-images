@@ -1,0 +1,7 @@
+# The images a release is built in. ./ci.sh --release-images rewrites this.
+# refreshed 2026-10-31
+debian sha256:23ef8ad09b87c0dbee73f1f962ee78a6515842480a4444a2e5275912d4cad8e4
+ubuntu sha256:fe81560990fae86dc4743202b2cb4d3df98d0bcf949173cecef15ce1127ef852
+fedora sha256:b414c09be79dd1f32529b55b096b6bb30435d82ee16fbdbbabf8985eb5f86db0
+opensuse sha256:dd1e8c63df176cd3fdacf4212f2af54f9a75857b9f87b5d1b43072c4c0301909
+arch sha256:e82623936fa1a69700b48e98b058df6eaab18b737c27473a7234a40fdecb9413

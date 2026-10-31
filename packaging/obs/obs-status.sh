@@ -51,12 +51,26 @@ if [ "$waiting" != 0 ] || ! grep -qw -- "$package" <<<"$results"; then
     echo "obs-status: timed out with builds pending" >&2
     failed=1
 fi
+# Each target in targets must have built. A row excluded or disabled counts only
+# when it is not one of them, and a target with no row is not done.
+targets=$(awk '$1 !~ /^(#|$)/ { print $1 }' "$(dirname "$0")/targets")
 while read -r repo arch pkg status _; do
     [ "${pkg:-}" = "$package" ] || continue
-    case ${status%\*} in succeeded|excluded|disabled) continue ;; esac
+    case ${status%\*} in
+    succeeded) continue ;;
+    excluded|disabled) grep -qxF -- "$repo" <<<"$targets" || continue ;;
+    esac
     failed=1
     echo "########## $repo ($status) ##########"
-    osc -A "$api" buildlog "$project" "$package" "$repo" "$arch" 2>&1 | tail -40
+    # A target that never built has no log, which must not stop the ones after it.
+    osc -A "$api" buildlog "$project" "$package" "$repo" "$arch" </dev/null 2>&1 | tail -40 || true
 done <<<"$results"
+while read -r target; do
+    [ -n "$target" ] || continue
+    awk -v t="$target" -v p="$package" '$1 == t && $3 == p { found = 1 } END { exit !found }' \
+        <<<"$results" || {
+        echo "obs-status: $target is in targets, and OBS lists no build for it" >&2
+        failed=1; }
+done <<<"$targets"
 [ "$failed" = 0 ] || { echo "obs-status: at least one target did not build" >&2; exit 1; }
 echo "obs-status: every target built. Next: ./ci.sh --obs-check"

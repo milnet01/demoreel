@@ -42,6 +42,10 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   `SECURITY.md`'s `gh attestation verify` command gains `--source-digest`: without it, a tag moved to another commit for the build and moved back afterwards passed all three checks. The tag check now reads the key from the GitHub account rather than from the repository, and says what to read in its output, since git does not compare a signed tag's own name with the one you asked for. A release's tag must also name itself and its version.
 - **The release workflow builds the tag it checked, with less in reach** (DEMO-0094)
   It checks out the tag by its full name and fails unless that is the commit it verified, where a branch named like the tag could have been what it built. Building runs in a job that can only read. Attaching and the build record run in a second job that holds those rights and runs nothing else. `SHA256SUMS` goes up last, and a release that already has it is not replaced unless you delete it first, so a release page never mixes two builds.
+- **What a package install test runs can no longer change the files a release attaches** (DEMO-0094)
+  Those containers install other people's packages as root, and they could write to the folder holding the release's files. They now get it read-only, and the files are hashed after the build and compared before they go out. openSUSE's test no longer turns off signature checks for its repositories. A release builds in images pinned by digest.
+- **Nothing reaches the openSUSE Build Service without a signed tag and a build record** (DEMO-0094)
+  `obs-submit.sh` compared two files from the same release page, so swapping both passed, and OBS would then have signed the result.
 
 ### Fixed
 

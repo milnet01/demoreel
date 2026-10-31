@@ -170,11 +170,21 @@ skips when it cannot.
 |-----------|----------|------|
 | `ubuntu:24.04`, `debian:stable` | the `.deb` | `apt-get install ./…deb` |
 | `fedora:latest` | the `.rpm` | `dnf install` |
-| `opensuse/tumbleweed` | the `.rpm` | `zypper -n --no-gpg-checks install --recommends --allow-unsigned-rpm` |
+| `opensuse/tumbleweed` | the `.rpm` | `zypper -n install --recommends --allow-unsigned-rpm` |
 | `archlinux:latest` | the package `makepkg` built from the `PKGBUILD` | `pacman -U` |
+
+`--allow-unsigned-rpm` covers the local file alone. `--no-gpg-checks`, a global
+option, would also let an unsigned package in from the repositories.
 
 In each container, after the install: § 5's container checks, then the
 package is removed and § 5's removal check runs.
+
+**The containers that build only build, and the rest cannot write to the
+files.** A build wave's containers build a format and stop. Every later
+container mounts the work folder read-only, since it installs other people's
+packages as root and the files it tests are the ones attached. Each fails if it
+can write there. The host hashes the files after the build wave, and fails
+unless they still match before attaching them.
 
 `ci.yml` gains a `packages` job that runs `./ci.sh --packages`, beside
 the existing `ci` job, so the gate's twenty-minute limit is not shared. Per
@@ -281,16 +291,46 @@ system's updates.
      release's tarball;
   2. downloads the release's tarball and `PKGBUILD`, and refuses unless the
      tarball's checksum is the one the `PKGBUILD` names (INV-11);
-  3. updates its `osc` checkout, kept outside the tree, swaps the previous
-     release's files for these, and commits one revision.
+  3. refuses unless `--verify-tag` passes for the tag and each of the two files
+     has a build record from `release.yml` at the tag's commit. They came from
+     one page, so swapping both passes step 2, and OBS would then sign the
+     result;
+  4. updates its `osc` checkout, in `build-obs/` in the tree, which git ignores,
+     or in `OBS_WORKDIR`; swaps the previous release's files for these, a
+     dropped `demoreel-rpmlintrc` included; and commits one revision.
+
+  `--from DIR` takes the two files from a folder rather than the release, and
+  they pass the same checks. Only `--dry-run --from` skips the build record, for
+  trying the staging on files no release has yet. It says so, and sends nothing.
 
   `packaging/obs/obs-status.sh` then waits until every target has finished
-  building, and `./ci.sh --obs-check` tests what was published (INV-13).
+  building, and fails on any line of `targets` that did not succeed, one OBS
+  does not list included. `./ci.sh --obs-check` tests what was published
+  (INV-13).
 - **Credentials stay on this machine**, in the user's `osc` configuration.
   No workflow talks to OBS (INV-14).
 - **`packaging/obs/obs-setup.sh`** creates the project and package, and
   re-applies the targets when `targets` changes. Running it twice changes
   nothing.
+
+### 4.8 The images a release builds in
+
+`--packages --out` runs each container from an image pinned by digest, in
+`packaging/release-images`. The gate and a plain `--packages` keep their floating
+tags, for § 6's reason, which does not extend to the files a release ships.
+
+- **Refreshing.** `./ci.sh --release-images` pulls each floating tag and rewrites
+  the file. Commit it. It is a step of CONTRIBUTING's release routine, because
+  old pins mean a release built on images with old packages.
+- **Noticing.** dependabot cannot read `ci.sh`, so `--signing-check`, which
+  `cut-release` runs before it bumps anything, and `--release-check` print a note
+  once the file is `RELEASE_IMAGES_DAYS` days old. A note, not a failure.
+- **A second architecture.** Each digest is the image's list across
+  architectures, so a build on another machine pulls its own image of the same
+  release. A digest with no list behind it pins one architecture.
+- **What a pin does not cover.** The containers still install from the distros'
+  live repositories: `rpm-build` on Fedora, `fakeroot` and a full upgrade on
+  Arch, and every dependency in the install tests.
 
 ## 5. Invariants
 
@@ -386,10 +426,12 @@ The container checks are run by `./ci.sh --packages` in every container of
 - **INV-11** — OBS builds the release's own tarball.
   *Test:* by hand, once: with the downloaded tarball replaced by another
   file, `obs-submit.sh` stops before its first `osc` call and names the
-  checksum mismatch. In every `--obs-check` container, INV-3's checksum
+  checksum mismatch. `./ci.sh --release-chain`, against a stand-in `osc` and
+  `gh`: with an unsigned tag, or no build record from the tag's commit, it stops
+  before the first `osc` call. In every `--obs-check` container, INV-3's checksum
   compares the installed script with the release tarball's.
   *Breaks when:* the script makes its own tarball, fetches a different
-  file, or OBS's build rewrites the script.
+  file, skips the tag or the build record, or OBS's build rewrites the script.
 
 - **INV-12** — The recipes OBS builds are the tag's.
   *Test:* by hand, once each: with an uncommitted change to
@@ -428,7 +470,10 @@ The container checks are run by `./ci.sh --packages` in every container of
 - **A container image changes underneath the gate** (`debian:stable` moves
   to a new release, `fedora:latest` too). The gate fails on a real
   incompatibility, which is the point. A floating tag is chosen over a pinned
-  one for that reason.
+  one for that reason, in the gate. A release pins (§ 4.8).
+- **A pinned image has gone from its registry.** The release job fails at the
+  pull and attaches nothing. A published tag does not move, so the fix is
+  a refreshed file in the next patch release.
 - **No network, or a mirror is down.** The install fails and the step fails.
   It is not skipped: a skipped package test is not a pass. Without `podman`,
   the full gate skips the step and its last line says so, as the parity leg
@@ -546,11 +591,13 @@ shebang (INV-3), `cage` moved to the required set of the `.deb` and of the
 | INV-8 | `./ci.sh --packages`, removal check |
 | INV-9 | `./ci.sh --packages --out`'s `makepkg --verifysource`; the gate's local equivalent |
 | INV-10 | full gate's workflow grep. **Partial:** it reads the file, not GitHub's effective permissions |
-| INV-11 | `obs-submit.sh`'s checksum check; the seeded break, by hand, once; INV-3 in `--obs-check` |
+| INV-11 | `obs-submit.sh`'s checks; `./ci.sh --release-chain`; the seeded break, by hand, once; INV-3 in `--obs-check` |
 | INV-12 | `obs-submit.sh`'s tag check; the seeded breaks, by hand, once |
 | INV-13 | `./ci.sh --obs-check`, after each submit. **Partial:** not in the full gate |
 | INV-14 | full gate's workflow grep. **Partial:** it reads the file for names, and a workflow could reach OBS without one |
 | § 4.1 one layout | INV-1 |
+| § 4.4 later containers cannot change the files | each such container's write probe; the host's hashes; `./ci.sh --packages` |
+| § 4.8 a release builds on pinned images | `./ci.sh --release-chain` reads the file's digests. **Partial:** that `--out` uses them is seen by running it, and a stale pin only draws a note |
 | § 4.5 files attached to every release | **nothing** — a release whose job never ran has no packages and nothing fails; the website hand-off is the only reader |
 | § 4.7 every release submitted to OBS | **nothing** — CONTRIBUTING.md's release steps are the only reminder |
 
@@ -584,9 +631,9 @@ Rows live in `../reviews/DEMO-0068-linux-packages-loop-log.md`.
 - **No new dependency for demoreel.** The build tools (`dpkg-deb`,
   `rpmbuild`, `makepkg`) live in the containers, never on a user's machine.
 - **Gate time and disk:** five container images and five dependency
-  installs per full gate. Measured 2026-10-13: about three minutes for the
-  whole step, with the images already pulled. The largest image,
-  `archlinux:latest`, is about 410 MB.
+  installs per full gate, plus the build-only containers. Measured 2026-10-13:
+  about three minutes for the whole step, with the images already pulled. The
+  largest image, `archlinux:latest`, is about 410 MB.
 - **Release assets:** four files per release, the tarball the largest.
 - **OBS:** one submit per release, run by hand on this machine. Its build
   time is OBS's. `--obs-check` pulls one container image per target, and

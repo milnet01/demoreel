@@ -119,6 +119,13 @@ key that file lists. The release recipe runs it before anything is bumped,
 and the release workflow attaches nothing to a release whose tag is
 unsigned.
 
+A release builds in the images pinned in `packaging/release-images`. Refresh
+them first, and commit the file, or the release is built on old packages:
+
+```sh
+./ci.sh --release-images
+```
+
 Before cutting one, on a quiet machine, check that nothing has grown costly:
 
 ```sh
@@ -153,7 +160,9 @@ packaging/obs/obs-status.sh    # wait until every target has built
 ./ci.sh --obs-check            # install from each repository and test it
 ```
 
-`obs-submit.sh` refuses when a recipe differs from the release's tag, and
-when the tarball is not the release's own. `--dry-run` stages the files in
-`build-obs/staged/` and sends nothing. After editing `targets`, run
+`obs-submit.sh` refuses when a recipe differs from the release's tag, when the
+tarball is not the release's own, when the tag does not pass `--verify-tag`, and
+when a file has no build record from the tag's commit, so it needs `gh`.
+`--dry-run` stages the files in `build-obs/staged/` and sends nothing. After
+editing `targets`, run
 `packaging/obs/obs-setup.sh` to update the OBS project.

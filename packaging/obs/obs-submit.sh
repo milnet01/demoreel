@@ -7,13 +7,18 @@
 #   packaging/obs/obs-submit.sh --dry-run     stage the files in OBS_WORKDIR/staged
 #                                             and stop
 #   packaging/obs/obs-submit.sh --from DIR    take the tarball and PKGBUILD
-#                                             from DIR, not the release
+#                                             from DIR, not the release; they
+#                                             pass the same checks
 #
 # Then packaging/obs/obs-status.sh, then ./ci.sh --obs-check.
 #
 # OBS builds the release's own tarball, never a second copy of the source
 # (INV-11), with the recipes as they stand at the release's tag (INV-12).
-# Both are checked before the first osc call. Each recipe takes its version
+# Both are checked before the first osc call, as are the tag's signature and
+# a build record for each file, because OBS then signs what it builds and
+# nobody downstream could tell. Only --dry-run with --from skips the record,
+# for trying the staging on files no release has yet: it sends nothing.
+# Each recipe takes its version
 # from the tarball's demoreel, filled in here; no file in the tree holds one
 # (INV-7).
 #
@@ -65,11 +70,27 @@ else
         || die "release $tag has no $tarball and PKGBUILD attached yet"
 fi
 
-# INV-11: the tarball is the one the release's PKGBUILD names, which is the
-# one release.yml built and tested.
+# INV-11: the tarball is the one the release's PKGBUILD names.
 sum=$(sha256sum "$stage/$tarball" | cut -d' ' -f1)
 grep -q "^sha256sums=('$sum')$" "$stage/PKGBUILD" \
     || die "$tarball's checksum ($sum) is not the one the release's PKGBUILD names"
+
+# Those two came from the same page, so swapping both passes the line above.
+# What says they are release.yml's, from the signed commit, is the tag's
+# signature and each file's build record.
+"$root/ci.sh" --verify-tag "$tag" || die "the tag $tag did not pass"
+if $dry && [ -n "$from" ]; then
+    echo "obs-submit: dry run from a folder, so no build record was checked for its files."
+else
+    command -v gh >/dev/null || die "gh is not installed, and it checks the build records"
+    commit=$(git -C "$root" rev-parse "refs/tags/$tag^{commit}")
+    for f in "$tarball" PKGBUILD; do
+        gh attestation verify "$stage/$f" --repo milnet01/demoreel \
+            --source-ref "refs/tags/$tag" --source-digest "$commit" \
+            --signer-workflow milnet01/demoreel/.github/workflows/release.yml >/dev/null \
+            || die "$f has no build record from release.yml at $tag, commit $commit"
+    done
+fi
 
 # The .rpm recipe, with the version it otherwise gets from rpmbuild --define.
 { printf '%%define ver %s\n' "$v"; cat "$root/packaging/demoreel.spec"; } > "$stage/demoreel.spec"
@@ -122,8 +143,9 @@ else
     (cd "$workdir" && osc -A "$api" checkout "$project" "$package")
 fi
 # The previous release's tarball goes: two would leave the .deb build unsure
-# which is its source.
-rm -f "$checkout"/demoreel-*.tar.gz
+# which is its source. So does an rpmlintrc the tree has dropped, which OBS
+# would otherwise go on applying.
+rm -f "$checkout"/demoreel-*.tar.gz "$checkout/demoreel-rpmlintrc"
 cp "$stage"/* "$checkout/"
 cd "$checkout"
 osc -A "$api" addremove
