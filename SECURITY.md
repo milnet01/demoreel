@@ -153,51 +153,69 @@ pixels.
 
 ## Checking a download
 
-From 0.9.0 on, a release can be checked three ways. The commands below use
-0.9.0; put the version you downloaded in its place.
+From 0.9.0 on, a release can be checked three ways, and they hold together: the
+signed tag names a commit, the build record names that commit and a file's hash,
+and that file is the one you hold. The commands below use 0.9.0; put the version
+you downloaded in its place.
 
-**The tag is signed.** Release tags are signed with an SSH key used for
-nothing else. Its public half is
-[`packaging/release-signers`](packaging/release-signers), and the same key
-is listed as a signing key on the GitHub account, at
-<https://api.github.com/users/milnet01/ssh_signing_keys>. In a clone of this
-repository:
+**The tag is signed, with the key GitHub publishes.** Release tags are signed
+with an SSH key used for nothing else. It is listed as a signing key on the
+GitHub account, at <https://api.github.com/users/milnet01/ssh_signing_keys>.
+In a clone of this repository, build the list of signers from that page, so
+that no file in the repository takes part:
 
 ```sh
 git fetch --tags
-git -c gpg.ssh.allowedSignersFile=packaging/release-signers tag -v v0.9.0
+gh api users/milnet01/ssh_signing_keys \
+    --jq '.[] | "milnet01@users.noreply.github.com namespaces=\"git\" " + .key' > github-signers
+git -c gpg.ssh.allowedSignersFile=github-signers tag -v v0.9.0
 ```
 
-It prints `Good "git" signature` and exits 0.
+It prints `Good "git" signature` and a line `tag v0.9.0`, and exits 0. Read that
+line: git does not compare it with the name you asked for, so an old signed tag
+put under a new name passes without it. If `git fetch` says a tag would be
+clobbered, that tag has moved since you last fetched it. Stop there.
 
-**The files are the ones listed.** Each release carries `SHA256SUMS`, which
-names every other file with its SHA-256 hash. In the folder holding your
-downloads:
+The same key is in the repository, as
+[`packaging/release-signers`](packaging/release-signers). A check against that
+file instead rests on the repository alone.
+
+**GitHub built the files from that commit.** Every file, `SHA256SUMS` included,
+has a build record made by the release workflow. With the GitHub CLI, in the
+clone:
+
+```sh
+gh attestation verify demoreel_0.9.0-1_all.deb --repo milnet01/demoreel \
+    --source-ref refs/tags/v0.9.0 \
+    --source-digest "$(git rev-parse 'v0.9.0^{commit}')" \
+    --signer-workflow milnet01/demoreel/.github/workflows/release.yml
+```
+
+`--source-digest` is the part that ties the file to the signed commit. The tag's
+name alone would pass for a tag moved to another commit for the build and moved
+back afterwards.
+
+**Each file is the one listed.** Each release carries `SHA256SUMS`, which names
+every other file with its SHA-256 hash. In the folder holding your downloads:
 
 ```sh
 sha256sum -c --ignore-missing SHA256SUMS
 ```
 
-Each file you downloaded is reported `OK`.
-
-**GitHub built them from that tag.** Every file, `SHA256SUMS` included, has a
-build record made by the release workflow. With the GitHub CLI:
-
-```sh
-gh attestation verify demoreel_0.9.0-1_all.deb --repo milnet01/demoreel \
-    --source-ref refs/tags/v0.9.0 \
-    --signer-workflow milnet01/demoreel/.github/workflows/release.yml
-```
+Each file you downloaded is reported `OK`. `SHA256SUMS` sits on the same page as
+the files, so alone it catches a damaged download and not a swapped one. The
+build record is what catches a swap.
 
 A package installed from the openSUSE Build Service repositories is checked
 by your package manager against that repository's own key. These steps are
 for files downloaded from GitHub.
 
-**The limit.** The tag check reads `packaging/release-signers` from the
-repository it checks, so someone who could push to the repository could
-change that file too. The key's listing on the GitHub account is a second
-source. Compare the two for a check that does not rest on the repository
-alone.
+**The limit.** The release workflow checks the tag as well, but it runs from the
+tag, so a tag can remove that step or add its own key to the file it reads.
+Those checks catch a mistake, and not someone who can push to the repository.
+What holds against that person is your own check above, against the key on the
+account. Someone holding the GitHub account itself could change that list too,
+and nothing here defeats them.
 
 ## Supported versions
 

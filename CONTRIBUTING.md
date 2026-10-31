@@ -136,8 +136,9 @@ Once the files are attached, check the release as a user would:
 ./ci.sh --release-check v<version>
 ```
 
-It downloads every file, checks each against `SHA256SUMS` and its build
-record, and checks the tag's signature.
+It checks the tag against this clone's copy, its signature against the release
+file and the key GitHub publishes, then downloads every file and checks each
+against `SHA256SUMS` and a build record from the signed commit. It needs `gh`.
 
 ### After a release: OBS
 

@@ -93,9 +93,18 @@ tag is not signed gets no files.
   `packaging/release-signers` (`ssh-keygen -Y verify`). On success it
   prints the key's fingerprint. It reads local configuration, so the full
   gate does not run it.
-- **`./ci.sh --verify-tag <tag>`** — runs
-  `git -c gpg.ssh.allowedSignersFile=packaging/release-signers tag -v <tag>`
-  and exits with its status. It needs the tag object present locally.
+- **`./ci.sh --verify-tag <tag>`** — exits 0 only when
+  `git -c gpg.ssh.allowedSignersFile=packaging/release-signers verify-tag`
+  passes for the tag, the tag object's own `tag` field is `<tag>`, and the
+  `__version__` in the tagged commit's `demoreel` is `<tag>` less its `v`. git
+  checks the signature alone: an old signed object at a new name exited 0
+  (measured 2026-10-31). It needs the tag object present locally.
+- **`./ci.sh --verify-release <tag>`** — the release job's first check (§ 4.4).
+  It fetches the tag object, runs `--verify-tag`, then checks the signature
+  again against the keys the GitHub account publishes (§ 4.1). It then exits 0
+  only when `HEAD` is the tag's commit, `GITHUB_SHA` is the same commit where it
+  is set, and the tree has no change. The build record names `GITHUB_SHA`, so
+  this is what ties the record to the tree that was built.
 
 `.claude/bump.json` gains
 `"publish_precheck": "./ci.sh --signing-check"`. `cut-release` runs it at
@@ -146,26 +155,35 @@ not use, so it is left out. The workflow's top-level `contents: read` stays.
 Run on this machine after each release, as `--obs-check` is (CONTRIBUTING
 § Cutting a release). It does what `SECURITY.md` tells a user to do:
 
-1. Downloads every asset of the release with `gh release download` into a
+1. Fetches the tag into a scratch ref, never over the local tag, and fails if
+   the two differ: the local copy is what a moved tag is compared with.
+2. Runs § 4.2's `--verify-tag` checks on the fetched object, and checks its
+   signature against the keys the GitHub account publishes.
+3. Downloads every asset of the release with `gh release download` into a
    new folder under the run's temporary directory.
-2. Fails unless the assets are exactly `SHA256SUMS` plus the files it
+4. Fails unless the assets are exactly `SHA256SUMS` plus the files it
    names, then runs `sha256sum -c SHA256SUMS`.
-3. Runs `gh attestation verify <file> --repo milnet01/demoreel
-   --source-ref refs/tags/<tag> --signer-workflow
-   milnet01/demoreel/.github/workflows/release.yml` on every asset.
-4. Fetches the tag and runs `--verify-tag <tag>`.
+5. Runs `gh attestation verify <file> --repo milnet01/demoreel
+   --source-ref refs/tags/<tag> --source-digest <the tag's commit>
+   --signer-workflow milnet01/demoreel/.github/workflows/release.yml` on
+   every asset. `--source-digest` is what binds the files to the signed
+   commit. The ref's name alone passes for a tag moved to another commit for
+   the build and moved back. Measured 2026-10-31 on 0.9.0's real record: the
+   right digest exits 0, and a wrong one exits 1.
 
-It reads a live release, so the full gate does not run it.
+It reads a live release, so the full gate does not run it. The full gate does
+run `./ci.sh --release-chain`, which exercises this mode and `--verify-release`
+against a stand-in `gh` and scratch repositories.
 
 ### 4.6 What `SECURITY.md` says
 
-A new section, *Checking a download*, in this order: where the signing
-key is published (both places in § 4.1); the `git tag -v` command against
-`packaging/release-signers`; the `sha256sum -c` command; the
-`gh attestation verify` command with the flags in § 4.5; and that packages
-installed from the OBS repositories are checked by the package manager
-against OBS's own repository key, so those three steps are for files
-downloaded from GitHub. It also states the limit in § 6's last bullet.
+A section, *Checking a download*, in this order: the `git tag -v` command
+against the keys the GitHub account publishes, and the same key's place in
+`packaging/release-signers`; the `gh attestation verify` command with the
+flags in § 4.5; the `sha256sum -c` command, with what it does not prove; that
+packages installed from the OBS repositories are checked by the package
+manager against OBS's own repository key, so those steps are for files
+downloaded from GitHub; and the limit in § 6's last bullet.
 
 ## 5. Invariants
 
@@ -249,14 +267,17 @@ downloaded from GitHub. It also states the limit in § 6's last bullet.
 - **The key is lost or must be replaced.** Add the new key as a second
   line in `packaging/release-signers` and on the GitHub account. Keep the
   old line, with `valid-before="<date>"` from the allowed-signers format,
-  so older tags still verify.
-- **`actions/checkout` changes what it fetches for a tag.** § 4.4 step 2
-  fetches the tag object explicitly, so step 3 does not depend on it.
-- **The limit, stated in `SECURITY.md`:** the tag check reads
-  `packaging/release-signers` from the repository it checks, so someone
-  who can push to the repository can also change that file. The key's
-  listing on the GitHub account (§ 4.1) is the second source, and a user
-  who wants an independent check compares the two.
+  and keep the old key listed on the account, so older tags still verify.
+- **`actions/checkout` changes what it fetches for a tag.**
+  `--verify-release` fetches the tag object explicitly, so it does not
+  depend on it.
+- **The limit, stated in `SECURITY.md`:** every check in the release workflow
+  runs from the tag. A tag can delete the signature step, or add its own key
+  to the `packaging/release-signers` it reads. So INV-2 and `--verify-release`
+  catch a mistake, and bind nobody who can push to the repository. What binds
+  that person is the user's own check against the key on the GitHub account
+  (§ 4.1), which needs nothing from the tree. Someone holding the account
+  could change that list too; nothing here defeats them.
 
 ## 7. Tests
 

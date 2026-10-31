@@ -18,6 +18,10 @@
 # by hand before a release. The gate does not run it.
 set -euo pipefail
 cd "$(dirname "$0")"
+# git exports GIT_DIR to a pre-push hook run from a linked worktree (measured
+# 2026-10-31). Left set, every git call below would read that worktree's HEAD
+# and index, whichever commit this script was checked out at to be gated.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
 
 # Several steps stand a root-owned file or link in for another user's. Run as
 # root those are the caller's own, so the guards let them through and a step
@@ -1015,12 +1019,43 @@ check_sums() {
     sha256sum -c --quiet SHA256SUMS
 }
 
-# DEMO-0084 § 4.2: the tag is signed by a key packaging/release-signers lists.
-verify_tag() {
-    git -c gpg.ssh.allowedSignersFile=packaging/release-signers tag -v "$1" >/dev/null || {
-        echo "$1 is not signed by a key in packaging/release-signers" >&2
+# DEMO-0084 § 4.2: the tag is signed by a key packaging/release-signers lists,
+# and is this tag. git checks the signature alone (measured 2026-10-31), so an
+# old signed object pushed under a new name passes it, and a signed tag can sit
+# on a tree that is another version. The object may be given apart from the
+# name, for one fetched somewhere other than refs/tags.
+verify_tag() {  # tag [object]
+    local tag=$1 object=${2:-refs/tags/$1} named version
+    git -c gpg.ssh.allowedSignersFile=packaging/release-signers verify-tag "$object" >/dev/null || {
+        echo "$tag is not signed by a key in packaging/release-signers" >&2
         return 1; }
-    echo "$1 is signed by a key in packaging/release-signers"
+    named=$(git cat-file tag "$object" | sed -n '/^$/q; s/^tag //p')
+    [ "$named" = "$tag" ] || {
+        echo "the signed object at $tag says it is the tag ${named:-<none>}" >&2
+        return 1; }
+    version=$(git show "$object^{commit}:demoreel" | sed -n 's/^__version__ = "\(.*\)"$/\1/p')
+    [ "v$version" = "$tag" ] || {
+        echo "$tag holds a demoreel whose __version__ is ${version:-<none>}" >&2
+        return 1; }
+    echo "$tag is signed by a key in packaging/release-signers, and names itself and its version"
+}
+
+# DEMO-0084 § 4.1's second source: the key on the GitHub account, which no file
+# in the tree can change. Inside the release workflow this catches a mistake,
+# such as a new key in the file and not on the account. It stops no attacker
+# there: the workflow runs from the tag, which can delete this call (§ 6).
+verify_tag_published() {  # tag object
+    local signers rc=0
+    signers=$(mktemp)
+    gh api users/milnet01/ssh_signing_keys \
+        --jq '.[] | "milnet01@users.noreply.github.com namespaces=\"git\" " + .key' > "$signers" \
+        && [ -s "$signers" ] \
+        && git -c gpg.ssh.allowedSignersFile="$signers" verify-tag "$2" >/dev/null 2>&1 || rc=$?
+    rm -f "$signers"
+    [ "$rc" = 0 ] || {
+        echo "$1 is not signed by a key the GitHub account milnet01 publishes" >&2
+        return 1; }
+    echo "$1 is signed by a key the GitHub account milnet01 publishes"
 }
 
 # Build and test every package; with a folder, leave the release files there.
@@ -1193,10 +1228,34 @@ if [ "${1:-}" = "--signing-check" ]; then
     exit 0
 fi
 
-# DEMO-0084 § 4.2: the release job runs this first, so an unsigned tag gets no
-# files. It needs the tag object present locally.
+# It needs the tag object present locally.
 if [ "${1:-}" = "--verify-tag" ]; then
     verify_tag "${2:?--verify-tag needs a tag}"
+    exit 0
+fi
+
+# DEMO-0084 § 4.4: the release job's first check, before anything is built. The
+# tree that will be built is the signed tag's, and the commit the build record
+# will name. The tag object is fetched by name, so this never depends on what
+# the checkout fetched.
+if [ "${1:-}" = "--verify-release" ]; then
+    tag=${2:?--verify-release needs a tag}
+    git fetch --quiet --no-tags origin "+refs/tags/$tag:refs/tags/$tag"
+    verify_tag "$tag"
+    verify_tag_published "$tag" "refs/tags/$tag"
+    head=$(git rev-parse HEAD)
+    [ "$head" = "$(git rev-parse "refs/tags/$tag^{commit}")" ] || {
+        echo "the tree checked out is $head, and $tag is $(git rev-parse "refs/tags/$tag^{commit}")" >&2
+        exit 1; }
+    # GitHub signs the build record with this commit, whatever is checked out.
+    [ "${GITHUB_SHA:-$head}" = "$head" ] || {
+        echo "this run started from $GITHUB_SHA, and $tag is now $head" >&2
+        exit 1; }
+    [ -z "$(git status --porcelain)" ] || {
+        echo "the tree to build differs from $tag:" >&2
+        git status --porcelain >&2
+        exit 1; }
+    echo "the tree to build is $tag, commit $head"
     exit 0
 fi
 
@@ -1206,17 +1265,30 @@ if [ "${1:-}" = "--release-check" ]; then
     tag=${2:?--release-check needs a tag}
     command -v gh >/dev/null || { echo "gh is not installed" >&2; exit 1; }
     work=$(mktemp -d)
-    trap 'rm -rf "$work"' EXIT
+    # Fetched to a ref of its own. Over the local tag, a moved tag would destroy
+    # the good copy it should be compared with.
+    fetched_ref=refs/demoreel-release-check/$$
+    trap 'rm -rf "$work"; git update-ref -d "$fetched_ref" 2>/dev/null || true' EXIT
+    git fetch --quiet --no-tags origin "+refs/tags/$tag:$fetched_ref"
+    fetched=$(git rev-parse "$fetched_ref")
+    if own=$(git rev-parse -q --verify "refs/tags/$tag") && [ "$own" != "$fetched" ]; then
+        echo "$tag has moved: GitHub's is $fetched, and this clone's is $own" >&2
+        exit 1
+    fi
+    verify_tag "$tag" "$fetched_ref"
+    verify_tag_published "$tag" "$fetched_ref"
     gh release download "$tag" --repo milnet01/demoreel --dir "$work/assets"
     ( cd "$work/assets" && check_sums ) || { echo "$tag's assets fail their SHA256SUMS" >&2; exit 1; }
+    # By digest as well as by name: the name alone passes for a tag that was
+    # moved to another commit for the build and moved back afterwards.
+    commit=$(git rev-parse "$fetched_ref^{commit}")
     for f in "$work"/assets/*; do
         gh attestation verify "$f" --repo milnet01/demoreel --source-ref "refs/tags/$tag" \
+            --source-digest "$commit" \
             --signer-workflow milnet01/demoreel/.github/workflows/release.yml >/dev/null \
-            || { echo "${f##*/} has no build record from release.yml at $tag" >&2; exit 1; }
+            || { echo "${f##*/} has no build record from release.yml at $tag, commit $commit" >&2; exit 1; }
     done
-    git fetch --quiet --no-tags origin "+refs/tags/$tag:refs/tags/$tag"
-    verify_tag "$tag"
-    echo "$tag: every file matches SHA256SUMS and has a build record, and the tag is signed"
+    echo "$tag: every file matches SHA256SUMS and has a build record from the signed commit $commit"
     exit 0
 fi
 
@@ -5225,6 +5297,178 @@ chain_checks() {
     local ct="$tmp/chain"
     mkdir -p "$ct"
     chain_tab_checks "$ct/tab"
+    if ! command -v git >/dev/null || ! command -v ssh-keygen >/dev/null; then
+        step "the release chain's scratch repositories"
+        echo "skipped: they need git and ssh-keygen, so their checks did not run"
+        return 0
+    fi
+    chain_stand_ins "$ct/bin"
+    mkdir -p "$ct/gh"
+    # For these calls only: no git setting of this machine reaches the scratch
+    # repositories, and the stand-in comes first on PATH.
+    GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 PATH="$ct/bin:$PATH" GH_STUB="$ct/gh" \
+        chain_tag_checks "$ct/tag"
+}
+
+# A stand-in gh, so no check here can reach GitHub. It answers from GH_STUB:
+# keys holds the account's published signing keys, assets/ the release's files,
+# and built_from the commit a build record was made from.
+chain_stand_ins() {
+    mkdir -p "$1"
+    cat > "$1/gh" <<'GHSTUB'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >> "$GH_STUB/calls"
+case "$1 $2" in
+"api users/milnet01/ssh_signing_keys")
+    while IFS= read -r key; do
+        printf 'milnet01@users.noreply.github.com namespaces="git" %s\n' "$key"
+    done < "$GH_STUB/keys" ;;
+"release download")
+    tag=$3; shift 3
+    while [ $# -gt 0 ]; do
+        case $1 in
+        --dir) dir=$2; shift ;;
+        --pattern) patterns+=("$2"); shift ;;
+        esac
+        shift
+    done
+    mkdir -p "$dir"
+    if [ "${#patterns[@]}" = 0 ]; then
+        cp "$GH_STUB"/assets/* "$dir/"
+    else
+        for p in "${patterns[@]}"; do cp "$GH_STUB/assets/$p" "$dir/"; done
+    fi ;;
+"attestation verify")
+    case " $* " in
+    *" --source-digest $(cat "$GH_STUB/built_from") "*) ;;
+    *) echo "stand-in gh: no build record from that commit" >&2; exit 1 ;;
+    esac ;;
+*) echo "stand-in gh: not expected: $*" >&2; exit 1 ;;
+esac
+GHSTUB
+    chmod +x "$1/gh"
+}
+
+# A scratch repository holding this tree's script, recipes and gate, with a
+# throwaway key its release-signers lists, and a bare origin on disk.
+chain_repo() {  # folder
+    mkdir -p "$1/repo"
+    ssh-keygen -q -t ed25519 -N '' -C 'throwaway' -f "$1/key"
+    git init -q --bare "$1/origin.git"
+    cp -r ci.sh demoreel packaging "$1/repo/"
+    printf 'milnet01@users.noreply.github.com namespaces="git" %s\n' "$(cat "$1/key.pub")" \
+        > "$1/repo/packaging/release-signers"
+    (
+        cd "$1/repo"
+        git init -q
+        git config user.name chain
+        git config user.email chain@example.invalid
+        git config gpg.format ssh
+        git config user.signingkey "$1/key.pub"
+        git remote add origin "$1/origin.git"
+        git add -A
+        git commit -qm start
+    )
+}
+
+chain_set_version() {  # folder version: a commit whose demoreel is that version
+    ( cd "$1/repo" \
+        && sed -i "s/^__version__ = .*/__version__ = \"$2\"/" demoreel \
+        && git add demoreel && git commit -qm "$2" --allow-empty )
+}
+
+chain_expect_refusal() {  # what, the words expected, then the command run in repo
+    local what=$1 words=$2 out rc=0
+    shift 2
+    out=$(cd "$repo" && "$@" 2>&1) || rc=$?
+    if [ "$rc" = 0 ] || ! grep -qF -- "$words" <<<"$out"; then
+        echo "FAIL: $what: expected a refusal naming \"$words\", got exit $rc:" >&2
+        echo "$out" >&2
+        exit 1
+    fi
+    echo "refused: $what"
+}
+
+chain_tag_checks() {
+    local at=$1 repo=$1/repo old new
+    step "a release tag must be signed, and be the tag and version it says"
+    chain_repo "$at"
+    ssh-keygen -q -t ed25519 -N '' -C 'stranger' -f "$at/stranger"
+    cut -d' ' -f1,2 "$at/key.pub" > "$GH_STUB/keys"
+    old=1.0.0 new=1.1.0
+    (
+        cd "$repo"
+        chain_set_version "$at" "$old"
+        git tag -s -m "$old" "v$old"
+        # What an unsigned tag looks like (DEMO-0084 INV-1).
+        git tag -a -m unsigned v9.9.9
+        # Signed and correctly named, on a tree of another version.
+        git tag -s -m wrong v1.0.9
+        chain_set_version "$at" "$new"
+        # An old signed object at a new name, the tree being of that version.
+        git tag -s -m old-name v1.1.8
+        git update-ref "refs/tags/v$new" "$(git rev-parse v1.1.8)"
+        git tag -d v1.1.8 >/dev/null
+        chain_set_version "$at" 1.2.0
+        git tag -s -m good v1.2.0
+    )
+    (cd "$repo" && ./ci.sh --verify-tag "v$old") >/dev/null || {
+        echo "FAIL: a good tag was refused, so the refusals below prove nothing" >&2; exit 1; }
+    chain_expect_refusal "an unsigned tag" "is not signed" ./ci.sh --verify-tag v9.9.9
+    chain_expect_refusal "an old signed object at a new name" "says it is the tag" \
+        ./ci.sh --verify-tag "v$new"
+    chain_expect_refusal "a signed tag on a tree of another version" "__version__" \
+        ./ci.sh --verify-tag v1.0.9
+
+    step "the release job builds the signed tag's tree, and no other"
+    (
+        cd "$repo"
+        git push -q origin HEAD:refs/heads/main refs/tags/v1.2.0
+        git checkout -q --detach v1.2.0
+    )
+    (cd "$repo" && GITHUB_SHA=$(git rev-parse HEAD) ./ci.sh --verify-release v1.2.0) >/dev/null || {
+        echo "FAIL: the signed tag's own tree was refused" >&2; exit 1; }
+    chain_expect_refusal "a run started from another commit" "this run started from" \
+        env GITHUB_SHA=0000000000000000000000000000000000000000 ./ci.sh --verify-release v1.2.0
+    (cd "$repo" && git checkout -q --detach HEAD~1)
+    chain_expect_refusal "a tree other than the tag's, as a branch of its name gives" \
+        "the tree checked out is" ./ci.sh --verify-release v1.2.0
+    (cd "$repo" && git checkout -q --detach v1.2.0 && echo changed >> packaging/PKGBUILD)
+    chain_expect_refusal "a tree changed since the tag" "differs from" ./ci.sh --verify-release v1.2.0
+    (cd "$repo" && git checkout -q -- packaging/PKGBUILD)
+    cut -d' ' -f1,2 "$at/stranger.pub" > "$GH_STUB/keys"
+    chain_expect_refusal "a key the account does not publish" "not signed by a key the GitHub" \
+        ./ci.sh --verify-release v1.2.0
+    cut -d' ' -f1,2 "$at/key.pub" > "$GH_STUB/keys"
+
+    step "--release-check ties the files to the signed commit, and keeps the local tag"
+    mkdir -p "$GH_STUB/assets"
+    printf 'pretend package\n' > "$GH_STUB/assets/PKGBUILD"
+    (cd "$GH_STUB/assets" && sha256sum PKGBUILD > SHA256SUMS)
+    (cd "$repo" && git rev-parse 'v1.2.0^{commit}') > "$GH_STUB/built_from"
+    (cd "$repo" && ./ci.sh --release-check v1.2.0) >/dev/null || {
+        echo "FAIL: a good release was refused" >&2; exit 1; }
+    [ -z "$(cd "$repo" && git for-each-ref refs/demoreel-release-check)" ] || {
+        echo "FAIL: --release-check left its scratch ref behind" >&2; exit 1; }
+    # Built while the tag stood on another commit, and moved back since.
+    (cd "$repo" && git rev-parse HEAD~1) > "$GH_STUB/built_from"
+    chain_expect_refusal "files built from another commit than the signed one" \
+        "has no build record" ./ci.sh --release-check v1.2.0
+    (cd "$repo" && git rev-parse 'v1.2.0^{commit}') > "$GH_STUB/built_from"
+    # The tag moved on GitHub. The clone's copy is the evidence, and must survive.
+    local own moved
+    own=$(cd "$repo" && git rev-parse v1.2.0)
+    (
+        cd "$repo"
+        git tag -s -f -m moved v1.2.0 HEAD~1 >/dev/null
+        git push -q -f origin refs/tags/v1.2.0
+        git update-ref refs/tags/v1.2.0 "$own"
+    )
+    chain_expect_refusal "a tag moved on the remote" "has moved" ./ci.sh --release-check v1.2.0
+    moved=$(cd "$repo" && git rev-parse v1.2.0)
+    [ "$moved" = "$own" ] || {
+        echo "FAIL: --release-check overwrote the clone's own tag" >&2; exit 1; }
+    echo "the clone's own tag was left as it was"
 }
 
 # Tab on `demoreel stop`, asked of each installed shell from a folder someone

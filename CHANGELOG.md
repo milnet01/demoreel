@@ -36,6 +36,11 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 - **The finishing commands need fewer options** (DEMO-0263)
   `-o` is now optional on `edit`, `trim`, `caption`, `join`, `card`, `poster`, `thumbnail` and `sheet`: the file lands in the current folder, named after what it was made from and the time. `card` lasts 3 seconds unless you say, and `sheet` with neither `--every` nor `--at` takes 12 frames spread over the video. `edit --help` now says where a script's words are listed.
 
+### Security
+
+- **Checking a download now ties each file to the signed commit** (DEMO-0094)
+  `SECURITY.md`'s `gh attestation verify` command gains `--source-digest`: without it, a tag moved to another commit for the build and moved back afterwards passed all three checks. The tag check now reads the key from the GitHub account rather than from the repository, and says what to read in its output, since git does not compare a signed tag's own name with the one you asked for. A release's tag must also name itself and its version.
+
 ### Fixed
 
 - **Names such as `12:30:05.mp4`, `-report.mp4` and `q%d.png` are read as those files** (DEMO-0094)
