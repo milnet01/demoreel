@@ -786,6 +786,8 @@ simplest case, and a gate proves it still records.
   worktree gate failed once on a sync check (57 ms against 40) at load
   about 7 and passed unchanged on re-run; it was not a push gate and is
   not counted.
+  2026-10-31: d87f531's full push gate passed, Ubuntu leg included:
+  eight passes, one failure since a88e583.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
