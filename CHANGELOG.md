@@ -57,6 +57,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   `shot -o p%d.png` wrote `p1.png` and failed.
 - **`edit x.mp4 -o x.mp4` no longer writes over its script** (DEMO-0094)
 - **A file where a folder must go no longer gives a traceback on the finishing commands** (DEMO-0094)
+- **Pressing Tab after `demoreel stop` no longer runs anything from the folder you are in** (DEMO-0094)
+  A file named `argparse.py` in that folder, or a script called `demoreel` when you typed `./demoreel`, ran as you. In bash, so did a command written into a run's name. As root, Tab also left a file behind in `/usr/share/demoreel` that no package owned.
 - **A second SIGTERM while `shot` is ending no longer leaves a private screen running** (DEMO-0094)
   And `check` no longer reads a SIGTERM as "the display did not start".
 - **A Ctrl+C landing just as a recording checks its picture no longer fails the run** (DEMO-0094)

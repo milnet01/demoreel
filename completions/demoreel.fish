@@ -13,9 +13,17 @@
 # state file behind, so the files alone would offer finished runs too. Never
 # test the run's lock instead -- taking it, even for a moment, can make a run
 # starting at that instant refuse to record.
+#
+# This reads a file and runs python3 on the user's behalf at a key press, so it
+# trusts nothing in the folder Tab is pressed in. -I keeps that folder and the
+# PYTHON* variables off the import path, and -B writes no bytecode, which under
+# a root shell would be a file no package owns. A command typed with a path can
+# be a stranger's script, so it is not run at all.
 function __demoreel_running
-    set -l exe (command -v -- (commandline -opc)[1]); or return
-    python3 -c 'import importlib.machinery as m, importlib.util as u, sys
+    set -l typed (commandline -opc)[1]
+    string match -q '*/*' -- $typed; and return
+    set -l exe (command -v -- $typed); or return
+    python3 -I -B -c 'import importlib.machinery as m, importlib.util as u, sys
 l = m.SourceFileLoader("demoreel", sys.argv[1])
 d = u.module_from_spec(u.spec_from_loader("demoreel", l))
 l.exec_module(d)

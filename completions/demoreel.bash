@@ -17,10 +17,17 @@ _demoreel_commands="record shot check stop $_demoreel_finishing"
 # state file behind, so the files alone would offer finished runs too. Never
 # test the run's lock instead -- taking it, even for a moment, can make a run
 # starting at that instant refuse to record.
+#
+# This reads a file and runs python3 on the user's behalf at a key press, so it
+# trusts nothing in the folder Tab is pressed in. -I keeps that folder and the
+# PYTHON* variables off the import path, and -B writes no bytecode, which under
+# a root shell would be a file no package owns. A command typed with a path can
+# be a stranger's script, so it is not run at all.
 _demoreel_running() {
     local exe
+    [[ $1 == */* ]] && return
     exe=$(command -v -- "$1") || return
-    python3 -c 'import importlib.machinery as m, importlib.util as u, sys
+    python3 -I -B -c 'import importlib.machinery as m, importlib.util as u, sys
 l = m.SourceFileLoader("demoreel", sys.argv[1])
 d = u.module_from_spec(u.spec_from_loader("demoreel", l))
 l.exec_module(d)
@@ -114,8 +121,13 @@ _demoreel() {
             if [[ $cur == -* ]]; then
                 words="-h --help"
             else
-                mapfile -t COMPREPLY < <(compgen -W \
-                    "$(_demoreel_running "${COMP_WORDS[0]}")" -- "$cur")
+                # Matched here, never through compgen -W, which expands its
+                # word list: a run's name comes from a file, and is only text.
+                local name
+                COMPREPLY=()
+                while IFS= read -r name; do
+                    [[ $name == "$cur"* ]] && COMPREPLY+=("$name")
+                done < <(_demoreel_running "${COMP_WORDS[0]}")
                 return
             fi ;;
     esac

@@ -5217,6 +5217,85 @@ CASES
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }
 
+# The checks of the release chain and the shells' completions (DEMO-0094). One
+# definition, run by the full gate and alone by `./ci.sh --release-chain`. They
+# need no display and no network: every outside program is a stand-in or a
+# scratch repository under $tmp, so none of them can reach a real remote.
+chain_checks() {
+    local ct="$tmp/chain"
+    mkdir -p "$ct"
+    chain_tab_checks "$ct/tab"
+}
+
+# Tab on `demoreel stop`, asked of each installed shell from a folder someone
+# else filled. The run names are the state files', and those are text a shell
+# must never expand.
+chain_tab_checks() {
+    local at=$1 shell canary=$1/ran offered_names bad=0 run_pid
+    step "Tab on stop runs nothing from the folder it is pressed in, or from a run's name"
+    mkdir -p "$at/folder" "$at/bin" "$at/xdg"
+    # A copy, so that bytecode written beside the script can be seen here.
+    cp demoreel "$at/bin/demoreel"
+    cp -r completions "$at/folder/"
+    for module in argparse importlib json; do
+        printf 'open("%s", "a").write("planted %s\\n")\n' "$canary" "$module" \
+            > "$at/folder/$module.py"
+    done
+    # A script of that name in the folder, for someone who types ./demoreel.
+    printf '#!/usr/bin/env python3\nopen("%s", "a").write("the folder'"'"'s demoreel\\n")\n' \
+        "$canary" > "$at/folder/demoreel"
+    chmod +x "$at/folder/demoreel"
+    sleep 120 &
+    run_pid=$!
+    XDG_RUNTIME_DIR="$at/xdg" python3 - "$run_pid" "$canary" <<'CHAINPY'
+import importlib.machinery, importlib.util, json, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+demoreel = importlib.util.module_from_spec(
+    importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(demoreel)
+pid, canary = int(sys.argv[1]), sys.argv[2]
+names = ["chainlive", f"$(echo name >> {canary})", f"`echo name >> {canary}`",
+         f"(echo name >> {canary})"]
+for i, name in enumerate(names):
+    (demoreel.state_dir() / f"run{i}.json").write_text(json.dumps(
+        {"name": name, "pid": pid, "starttime": demoreel.proc_starttime(pid)}))
+CHAINPY
+    write_zcomp
+    for shell in bash zsh fish; do
+        command -v "$shell" >/dev/null || { echo "skipped $shell: not installed"; continue; }
+        rm -f "$canary"
+        offered_names=$(cd "$at/folder" && XDG_RUNTIME_DIR="$at/xdg" PATH="$at/bin:$PATH" \
+            offered "$shell" "demoreel stop " </dev/null)
+        # The control: the completion did read the runs, or nothing here is tested.
+        grep -q chainlive <<<"$offered_names" || {
+            echo "$shell did not offer the live run, so this check tested nothing:" >&2
+            echo "$offered_names" >&2; bad=1; }
+        [ ! -e "$canary" ] || {
+            echo "$shell's Tab on stop ran something it should only have read:" >&2
+            cat "$canary" >&2; bad=1; }
+        [ ! -e "$at/bin/__pycache__" ] || {
+            echo "$shell's Tab on stop wrote bytecode beside the script" >&2
+            rm -rf "$at/bin/__pycache__"; bad=1; }
+        rm -f "$canary"
+        (cd "$at/folder" && XDG_RUNTIME_DIR="$at/xdg" offered "$shell" "./demoreel stop " \
+            </dev/null) >/dev/null
+        [ ! -e "$canary" ] || {
+            echo "$shell's Tab on ./demoreel stop ran the folder's script" >&2; bad=1; }
+        [ "$bad" = 0 ] && echo "$shell: Tab on stop read the runs and ran nothing"
+    done
+    kill "$run_pid" 2>/dev/null || true
+    wait "$run_pid" 2>/dev/null || true
+    [ "$bad" = 0 ] || exit 1
+}
+
+if [ "${1:-}" = "--release-chain" ]; then
+    tmp=$(mktemp -d)
+    trap 'rm -rf "$tmp"' EXIT
+    chain_checks
+    gate_end 'release chain checks passed'
+    exit 0
+fi
+
 if $FINISHING_ONLY; then
     for prog in ffmpeg ffprobe python3; do
         command -v "$prog" >/dev/null || { echo "missing: $prog" >&2; exit 1; }
@@ -9528,6 +9607,8 @@ if grep -rnE 'opensuse\.org|obs-submit|OBS_|\bosc\b' .github/workflows/ >&2; the
     exit 1
 fi
 echo "no workflow names OBS"
+
+chain_checks
 
 step "the packages, on every distro they target"
 # Slow, so near the end. GitHub runs it in its own job, and the Ubuntu leg below

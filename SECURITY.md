@@ -19,7 +19,8 @@ containment mechanism, and should not be used as one.
 **The `PATH` demoreel inherits.** The fixed helpers — `Xvfb`, `ffmpeg`,
 `xdotool`, `xauth`, and on `--gpu` `cage`, `Xwayland`, `wlr-randr` and
 `wf-recorder` — are started by name, so the caller's `PATH`
-decides which binaries run. This is deliberate. It is not a privilege boundary:
+decides which binaries run. So does `python3`, which the script's first line
+and the shells' tab completion both find there. This is deliberate. It is not a privilege boundary:
 demoreel runs as the caller with no elevation, so anyone who can alter that
 `PATH` can already run code as them, and resolving the names to absolute paths
 would read the same `PATH` to do it. What it does mean is that demoreel inherits
@@ -28,6 +29,13 @@ and a helper substituted under it would see the private display. Start demoreel
 from an environment you trust as much as the one you would run `ffmpeg` in
 directly. Decided under DEMO-0039; the reasoning is also recorded for the audit
 tools, which flag these call sites on every run.
+
+**Tab completion.** Pressing Tab after `demoreel stop` asks demoreel which runs
+are live, in whatever folder the shell is in. That folder may be a download or
+someone else's, so nothing in it is imported or run: `python3 -I` keeps it off
+the import path, a command typed with a path such as `./demoreel` is not run,
+and a run's name is text the shell does not expand. The gate covers each of
+these in bash, zsh and fish (DEMO-0094).
 
 **The virtual X display.** The whole point of the tool is that what the app
 draws is private to the run. Both backends now put the display behind an
