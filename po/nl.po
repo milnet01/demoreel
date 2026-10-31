@@ -1428,3 +1428,6 @@ msgstr "{taken} was al bezet toen het bestand klaar was, dus het bestand is {out
 
 msgid "{output} was left as it was, and this run's video is in {part}."
 msgstr "{output} is gelaten zoals het was, en de video van deze run staat in {part}."
+
+msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
+msgstr "het lezen van {path} gebruikte meer dan {size} GB geheugen, de helft van deze machine, en is dus gestopt."

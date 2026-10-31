@@ -1428,3 +1428,6 @@ msgstr "{taken} était déjà pris quand le fichier a été prêt : le fichier e
 
 msgid "{output} was left as it was, and this run's video is in {part}."
 msgstr "{output} a été laissé tel quel, et la vidéo de cette exécution se trouve dans {part}."
+
+msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
+msgstr "la lecture de {path} a utilisé plus de {size} Go de mémoire, la moitié de celle de cette machine, elle a donc été arrêtée."

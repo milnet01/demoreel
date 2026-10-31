@@ -91,6 +91,16 @@ stop agreeing.
 - **Text is measured by drawing it.** `text_size` draws the line on a black
   strip and reads ffmpeg's `bbox`. The refusal of a too-wide line rests on it,
   and so does `demoreel check`'s text line.
+- **A measurement comes from what a file cannot write.** ffmpeg's log repeats a
+  file's name and tags, and a name holding a line break makes a whole line that
+  starts as a filter's does (measured). So `motion` reads `metadata=print` on
+  stdout, after `metadata=delete`, at `-loglevel error`, and `volume_measured`
+  takes only what follows the last `n_samples`, which the filter prints as it
+  closes. Do not go back to reading `showinfo`, or a first match.
+- **A run of a file someone else made goes through `run_capped`.** It reads both
+  pipes as they fill and keeps the last `OUTPUT_KEPT` bytes of each, and
+  `read_file_capped` adds `memory_cap`. ffmpeg's log reached 300 MB in Python's
+  memory on the old read, and a file can make it say more.
 - **"The picture changed" is one test, `NEW_FRAME` (640), for `motion` and
   the `--gpu` note.** Below 640 x264's sharpening after a change counts as new
   frames, so a stuttering video reports as smooth: on real `--gpu` recordings

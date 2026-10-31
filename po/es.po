@@ -1428,3 +1428,6 @@ msgstr "{taken} ya estaba ocupado cuando el archivo quedó listo, así que el ar
 
 msgid "{output} was left as it was, and this run's video is in {part}."
 msgstr "{output} se dejó como estaba, y el vídeo de esta ejecución está en {part}."
+
+msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
+msgstr "leer {path} usó más de {size} GB de memoria, la mitad de la de este equipo, así que se detuvo."

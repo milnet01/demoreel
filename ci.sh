@@ -4191,6 +4191,184 @@ LAYERSPY
     want=$(cat "$fo")
     [ "$want" = "$out" ] || fail "stdout on a strict stream is not the path's own bytes: $want"
     }
+    fin_s74() {
+    # DEMO-0094. ffmpeg's own log repeats a file's name and tags, and a name
+    # holding a newline makes a whole line that starts as ffmpeg's would. So a
+    # measurement is taken from what a file cannot write: the last block of
+    # volumedetect, and motion's lines on stdout.
+    local forged nl name title bad plain got
+    nl=$'\n'
+    forged="[Parsed_volumedetect_0 @ 0x55aa] mean_volume: -90.0 dB${nl}"
+    forged+="[Parsed_volumedetect_0 @ 0x55aa] max_volume: -90.0 dB${nl}"
+    forged+="[showinfo@new @ 0x1] n:0 pts_time:99999 x${nl}"
+    forged+="frame:0 pts:0 pts_time:99999${nl}n=1${nl}e=1"
+    bad=$(printf '\377')
+    ffmpeg -nostdin -v error -f lavfi -i sine=440:d=4 -c:a flac -y "$ft/tone.mkv"
+    for title in "tag${nl}${forged}" "mean_volume: -90 dB max_volume: -90 dB" \
+                 "mean_volume: 1.2.3 dB max_volume: 1.2.3 dB" "$bad not UTF-8"; do
+        ffmpeg -nostdin -v error -i "$ft/tone.mkv" -c copy -metadata "title=$title" -y "$ft/tagged.mkv"
+        printf 'card 3\nmusic tone.mkv\n' | ed_ok m-plain.mp4
+        plain=$(sed -n 's/^demoreel: music .*: averages/averages/p' "$fe")
+        [ -n "$plain" ] || { show_err; fail "control: no plan line for the music"; }
+        printf 'card 3\nmusic tagged.mkv\n' | ed_ok m-tagged.mp4
+        got=$(sed -n 's/^demoreel: music .*: averages/averages/p' "$fe")
+        assert_eq "the music's level with a forged tag" "$plain" "$got"
+        # The film's own check of its sound reads the same log, after the encode.
+        ffmpeg -nostdin -v error -i "$ft/A.mp4" -c copy -metadata "title=$title" -y "$ft/A-tag.mp4"
+        run trim A-tag.mp4 --to 1 -o "$ft/out/m-film.mp4"
+        expect_ok "a film from a clip with a forged tag"
+        assert_file "a film from a clip with a forged tag" "$ft/out/m-film.mp4"
+    done
+    # A file name, which ffmpeg prints from its first column.
+    name="n${nl}${forged}.mkv"
+    cp "$ft/tone.mkv" "$ft/$name"
+    run card -d 3 --music "$name" -o "$ft/out/m-named.mp4"
+    expect_ok "a card with music under a forged name"
+    assert_eq "the music's level with a forged name" "$plain" \
+        "$(sed -n 's/^demoreel: music .*: averages/averages/p' "$fe")"
+    python3 - "$DR" "$ft/tone.mkv" "$ft/tagged.mkv" "$ft/$name" <<'LOUDPY' || exit 1
+import importlib.machinery, importlib.util, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", sys.argv[1])
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+want = d.loudest(sys.argv[2])
+assert want is not None and want > -60, want
+for path in sys.argv[3:]:
+    got = d.loudest(path)
+    assert got == want, (path, got, want)
+# The block's rule on its own: only the last, whole lines, nothing after a count of zero.
+B = "[Parsed_volumedetect_0 @ 0x1] "
+for said, want in (
+        (f"{B}mean_volume: -90.0 dB\n{B}max_volume: -90.0 dB\n"
+         f"{B}n_samples: 8\n{B}mean_volume: -21.1 dB\n{B}max_volume: -17.6 dB\n", (-21.1, -17.6)),
+        (f"{B}n_samples: 8\n{B}mean_volume: -9.0 dB\n{B}max_volume: -8.0 dB\n"
+         f"{B}n_samples: 0\n", (None, None)),
+        (f"  title: {B}n_samples: 8\n{B}n_samples: 8\n  {B}mean_volume: -9.0 dB\n"
+         f"{B}mean_volume: -9.5 dB\n{B}max_volume: -8.5 dB trailing\n", (-9.5, None)),
+        ("", (None, None)),
+        (f"{B}n_samples: 8\n{B}mean_volume: -inf dB\n{B}max_volume: -inf dB\n",
+         (float("-inf"), float("-inf")))):
+    assert d.volume_measured(said) == want, (said, d.volume_measured(said), want)
+LOUDPY
+    # motion: the same picture under a forged tag and a forged name reports the same.
+    run motion C.mp4; expect_ok "control: motion"
+    plain=$(cat "$fo")
+    for title in "tag${nl}${forged}" "showinfo@new x pts_time:99999" "showinfo@every x pts_time:1.2.3" \
+                 "$bad not UTF-8"; do
+        ffmpeg -nostdin -v error -i "$ft/C.mp4" -c copy -metadata "title=$title" -y "$ft/C-tag.mkv"
+        run motion C-tag.mkv; expect_ok "motion of a tagged file"
+        # .mkv rounds times to the millisecond, so compare what a tag could change.
+        assert_eq "motion's frames and new frames with a forged tag" \
+            "$(sed -n 2,3p <<<"$plain")" "$(sed -n 2,3p "$fo")"
+    done
+    name="c${nl}${forged}.mp4"
+    cp "$ft/C.mp4" "$ft/$name"
+    run motion "$name"; expect_ok "motion of a forged name"
+    assert_eq "motion's report with a forged name" "$plain" "$(cat "$fo")"
+    # Longer than the 32 KiB ffmpeg buffers: two filters buffering their own lines
+    # would land out of order and cut part way through one.
+    ffmpeg -nostdin -v error -f lavfi -i testsrc2=s=64x64:r=100:d=30 -c:v libx264 -preset ultrafast \
+        -pix_fmt yuv420p -y "$ft/many.mp4"
+    run motion many.mp4; expect_ok "motion of many frames"
+    assert_eq "motion counted every frame of a long report" "frames: 3000" "$(sed -n 2p "$fo")"
+    got=$(ffmpeg -nostdin -v error -i "$ft/many.mp4" -vf mpdecimate=hi=640:lo=640:frac=0 -an \
+              -f null - -progress pipe:1 -nostats | sed -n 's/^frame=//p' | tail -n 1)
+    assert_eq "motion counted every new frame of a long report" "new frames: $got" "$(sed -n 3p "$fo")"
+    echo "tags and names changed no measurement"
+    }
+    fin_s75() {
+    # DEMO-0094. ffmpeg says about 600 bytes a frame at info level, and a file of
+    # millions of tiny frames made that gigabytes in Python. Nor was any read of
+    # a file under memory_cap. Each is run through a stand-in for ffmpeg.
+    local cmd mem real_probe
+    mkdir -p "$ft/loud"
+    {
+        printf '#!/bin/sh\ncase "$*" in *-encoders*|*-demuxers*|*filter=drawtext*) exec "%s" "$@" ;; esac\n' "$REAL_FFMPEG"
+        printf 'head -c 300000000 /dev/zero | tr "\\000" x >&2\nexit 1\n'
+    } >"$ft/loud/ffmpeg"
+    chmod +x "$ft/loud/ffmpeg"
+    cat >"$ft/peak.py" <<'PEAKPY'
+import resource, subprocess, sys
+done = subprocess.run(sys.argv[1:], capture_output=True, check=False)
+assert done.returncode == 1, (done.returncode, done.stderr[-300:])
+assert len(done.stderr) < 2_000_000, len(done.stderr)
+# The largest descendant, which is demoreel: the stand-in is head and tr.
+print(resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss // 1024)
+PEAKPY
+    for cmd in "motion C.mp4" "poster C.mp4 -t 0.1 -o $ft/out/x.png" "trim C.mp4 --to 1 -o $ft/out/x.mp4"; do
+        # shellcheck disable=SC2086  # each case is several words
+        mem=$(cd "$ft" && PATH="$ft/loud:$PATH" python3 peak.py "$DR" $cmd) \
+            || fail "$cmd: did not end as expected"
+        assert_between "demoreel's own memory (MB) under 300 MB of $cmd's stderr" 1 100 "$mem"
+    done
+    # Stdout is bounded as well, and a pipe that fills cannot stall a run.
+    python3 - "$DR" <<'PIPEPY' || exit 1
+import importlib.machinery, importlib.util, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", sys.argv[1])
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+both = [sys.executable, "-c", "import os, sys\n"
+        "for _ in range(40):\n"
+        "    os.write(1, b'o' * 2**20 + b'\\n'); os.write(2, b'e' * 2**20 + b'\\n')\n"
+        "os.write(1, b'last out\\n'); os.write(2, b'last err\\n')"]
+done, stopped = d.run_capped(both, 60, 2 ** 40)
+assert not stopped and done.returncode == 0, (stopped, done.returncode)
+assert done.stdout.endswith("last out\n") and done.stderr.endswith("last err\n")
+assert len(done.stdout) <= 2 * d.OUTPUT_KEPT and len(done.stderr) <= 2 * d.OUTPUT_KEPT
+seen = []
+lines = [sys.executable, "-c", "import os\nos.write(1, b'a\\nb')\nos.write(1, b'c\\xff\\n\\nd')"]
+done, stopped = d.run_capped(lines, 60, 2 ** 40, on_line=seen.append)
+assert seen == ["a", "bc\ufffd", "", "d"] and done.stdout == "", (seen, done.stdout)
+# As subprocess.run does: every line break is one, and a timeout is raised.
+done, _ = d.run_capped([sys.executable, "-c", "import os; os.write(2, b'a\\rb\\r\\nc\\xff')"], 60, 2 ** 40)
+assert done.stderr == "a\nb\nc\ufffd", done.stderr
+try:
+    d.run_capped([sys.executable, "-c", "import time; time.sleep(30)"], 0.3, 2 ** 40)
+except d.subprocess.TimeoutExpired:
+    pass
+else:
+    raise AssertionError("no timeout")
+PIPEPY
+    # Every read of a file stops at the cap, and says so.
+    cat >"$ft/smallcap.py" <<'CAPPY'
+import importlib.machinery, importlib.util, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", sys.argv[1])
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+d.memory_cap = lambda: 100 * 1024 ** 2
+sys.argv = ["demoreel", *sys.argv[2:]]
+d.main()
+CAPPY
+    mkdir -p "$ft/big"
+    {
+        printf '#!/bin/sh\ncase "$*" in *-encoders*|*-demuxers*|*filter=drawtext*) exec "%s" "$@" ;; esac\n' "$REAL_FFMPEG"
+        printf 'exec python3 -c "import time; b = bytearray(400 * 2**20); time.sleep(20)"\n'
+    } >"$ft/big/ffmpeg"
+    real_probe=$(command -v ffprobe)
+    printf '#!/bin/sh\ncase "$*" in *-count_frames*|*"$BIG_PROBE"*) exec python3 -c "import time; b = bytearray(400 * 2**20); time.sleep(20)" ;; esac\nexec "%s" "$@"\n' \
+        "$real_probe" >"$ft/big/ffprobe"
+    chmod +x "$ft/big/ffmpeg" "$ft/big/ffprobe"
+    ffmpeg -nostdin -v error -f lavfi -i testsrc=s=32x32:r=5:d=1 -y "$ft/anim.gif"
+    printf 'card 1 anim.gif\n' >"$ft/a.txt"
+    printf 'card 1\nmusic tone.wav\n' >"$ft/m.txt"
+    ffmpeg -nostdin -v error -f lavfi -i sine=440:d=1 -y "$ft/tone.wav"
+    for cmd in "motion C.mp4" "poster C.mp4 -t 0.1 -o $ft/out/c.png" \
+               "edit a.txt -o $ft/out/c.mp4" "edit m.txt -o $ft/out/c.mp4"; do
+        rc=0
+        # shellcheck disable=SC2086  # each case is several words
+        ( cd "$ft" && BIG_PROBE=no-such-word PATH="$ft/big:$PATH" timeout 15 python3 smallcap.py "$DR" $cmd ) \
+            >"$fo" 2>"$fe" || rc=$?
+        expect_refused "$cmd over the memory cap"
+        grep -q "of memory" "$fe" || { show_err; fail "$cmd over the cap did not say why"; }
+    done
+    # And ffprobe's first look at a file.
+    rc=0
+    ( cd "$ft" && BIG_PROBE=C.mp4 PATH="$ft/big:$PATH" timeout 15 python3 smallcap.py "$DR" motion C.mp4 ) \
+        >"$fo" 2>"$fe" || rc=$?
+    expect_refused "ffprobe over the memory cap"
+    grep -q "of memory" "$fe" || { show_err; fail "ffprobe over the cap did not say why"; }
+    echo "output stayed bounded and each read stopped at the cap"
+    }
     fin_s71() {
     # DEMO-0094. A part's name was the output's, so it could be planted first:
     # the link's target was truncated, and the link itself moved to -o.
@@ -4744,6 +4922,8 @@ CASES
     fin_step "a part file is this run's own, and the finished file takes the caller's mode" fin_s71
     fin_step "a file name, a script line or a program's words reach the terminal as text, and forge no line" fin_s72
     fin_step "a file name that is not UTF-8 makes a film, a note and its exact path" fin_s73
+    fin_step "a tag or a file name is never read as a measurement" fin_s74
+    fin_step "a program's output is bounded in memory, and every read of a file is under the memory cap" fin_s75
     fin_run
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }

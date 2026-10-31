@@ -1428,3 +1428,6 @@ msgstr "השם {taken} כבר היה תפוס כשהקובץ היה מוכן, ו
 
 msgid "{output} was left as it was, and this run's video is in {part}."
 msgstr "{output} נשאר כפי שהיה, והסרטון של הריצה הזו נמצא ב-{part}."
+
+msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
+msgstr "הקריאה של {path} השתמשה ביותר מ-{size} GB זיכרון, מחצית מזיכרון המחשב הזה, ולכן הופסקה."

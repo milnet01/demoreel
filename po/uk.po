@@ -1434,3 +1434,6 @@ msgstr "{taken} вже було зайнято, коли файл був гот�
 
 msgid "{output} was left as it was, and this run's video is in {part}."
 msgstr "{output} залишено як було, а відео цього запуску міститься в {part}."
+
+msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
+msgstr "читання {path} зайняло понад {size} ГБ пам'яті, половину пам'яті цієї машини, тому його зупинено."

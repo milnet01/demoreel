@@ -1452,3 +1452,6 @@ msgstr "كان الاسم {taken} قد أُخذ عندما أصبح الملف �
 
 msgid "{output} was left as it was, and this run's video is in {part}."
 msgstr "تُرك {output} كما كان، وفيديو هذا التشغيل موجود في {part}."
+
+msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
+msgstr "استهلكت قراءة {path} أكثر من {size} غيغابايت من الذاكرة، أي نصف ذاكرة هذا الجهاز، لذلك أُوقفت."

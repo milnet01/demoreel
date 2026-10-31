@@ -2076,14 +2076,12 @@ def has_pulse_input():
 def loudest(output):
     """The loudest moment of the video's sound in dB; None if it cannot tell."""
     try:
-        done = subprocess.run(
+        done, stopped = run_capped(
             ["ffmpeg", "-nostdin", "-hide_banner", "-i", str(output), "-map", "0:a",
-             "-af", "volumedetect", "-f", "null", "-"],
-            capture_output=True, text=True, errors="replace", timeout=6 * CALL_TIMEOUT, check=False)
+             "-af", "volumedetect", "-f", "null", "-"], 6 * CALL_TIMEOUT, memory_cap())
     except (OSError, subprocess.TimeoutExpired):
         return None
-    found = re.search(r"max_volume: (-?[\d.]+|-inf) dB", done.stderr)
-    return float(found[1]) if found else None
+    return None if stopped else volume_measured(done.stderr)[1]
 
 
 # Which package gives each program, per package manager, looked up in each
@@ -3830,12 +3828,11 @@ def probe(path, where):
     if not Path(path).is_file():
         die(tr("{where}: there is no file {path}", where=where, path=path))
     try:
-        out = subprocess.run(
+        out = read_file_capped(
             ["ffprobe", "-v", "error", "-select_streams", "v:0",
              "-show_entries",
              "stream=width,height,avg_frame_rate:format=duration,format_name",
-             "-of", "json", str(path)],
-            capture_output=True, text=True, errors="replace", timeout=CALL_TIMEOUT, check=False)
+             "-of", "json", str(path)], CALL_TIMEOUT, path)
     except subprocess.TimeoutExpired:
         die(tr("{where}: reading {path} took over {seconds}s.", where=where,
                path=path, seconds=CALL_TIMEOUT))
@@ -3867,12 +3864,10 @@ def picture_frames(scene, where):
     if scene.info["format"] not in ("apng", "gif"):
         return 1
     try:
-        counted = subprocess.run(
+        counted = read_file_capped(
             ["ffprobe", "-v", "error", "-count_frames", "-select_streams",
              "v:0", "-show_entries", "stream=nb_read_frames", "-of",
-             "csv=p=0", str(scene.path)],
-            capture_output=True, text=True, errors="replace", timeout=6 * CALL_TIMEOUT,
-            check=False)
+             "csv=p=0", str(scene.path)], 6 * CALL_TIMEOUT, scene.path)
         frames = int(counted.stdout.strip().split(",")[0])
     except (subprocess.TimeoutExpired, ValueError):
         die(tr("{where}: could not count the frames of {path}.", where=where,
@@ -3915,33 +3910,72 @@ def resident(pid):
     return 0
 
 
-def run_capped(cmd, timeout, cap):
-    """Run `cmd` as subprocess.run(capture_output=True, text=True) would, but
-    stop it once it holds more than `cap` bytes. Returns (completed, stopped);
-    raises subprocess.TimeoutExpired after `timeout` seconds."""
+# How much of a program's output is kept. Its last lines are all a message or a
+# measurement needs, and a crafted file can make ffmpeg say gigabytes.
+OUTPUT_KEPT = 256 * 1024
+
+
+def run_capped(cmd, timeout, cap, on_line=None, watch=None):
+    """Run `cmd` as subprocess.run(capture_output=True, text=True,
+    errors="replace") would, keeping only the last OUTPUT_KEPT bytes of each
+    stream, and stop it once it holds more than `cap` bytes of memory, or `watch`
+    says to. Returns (completed, why it was stopped or False); raises
+    subprocess.TimeoutExpired after `timeout` seconds.
+
+    `on_line`, if given, gets each line of stdout as it comes, and stdout is not
+    kept. Both pipes are read as they fill, so a program saying a lot never waits
+    on one. Nothing here sleeps: a look at the memory is due every 0.25 s, and
+    select wakes for it. memory_cap's 14 GB runaway grew about 40 MB a second.
+    """
     deadline = time.monotonic() + timeout
     with subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE, text=True, errors="replace") as proc:
+                          stderr=subprocess.PIPE) as proc:
+        kept = {proc.stdout: bytearray(), proc.stderr: bytearray()}
+        reading, stopped, due = list(kept), False, 0.0
         try:
-            while True:
-                try:
-                    out, err = proc.communicate(timeout=0.25)
-                    return (subprocess.CompletedProcess(cmd, proc.returncode, out, err),
-                            False)
-                except subprocess.TimeoutExpired:
-                    pass
-                # 0.25 s apart: memory_cap's 14 GB runaway grew about 40 MB a second.
-                if resident(proc.pid) > cap:
-                    proc.kill()
-                    out, err = proc.communicate()
-                    return (subprocess.CompletedProcess(cmd, proc.returncode, out, err),
-                            True)
-                if time.monotonic() > deadline:
-                    raise subprocess.TimeoutExpired(cmd, timeout)
+            while reading:
+                for stream in select.select(reading, [], [], 0.25)[0]:
+                    data = os.read(stream.fileno(), 65536)
+                    if not data:
+                        reading.remove(stream)
+                    buffer = kept[stream]
+                    buffer += data
+                    if on_line and stream is proc.stdout:
+                        *lines, rest = buffer.split(b"\n")
+                        for line in [*lines, *([rest] if rest and not data else [])]:
+                            on_line(line.decode(errors="replace"))
+                        buffer[:] = rest if data else b""
+                    elif len(buffer) > 2 * OUTPUT_KEPT:
+                        del buffer[:-OUTPUT_KEPT]
+                now = time.monotonic()
+                if now >= due:
+                    due = now + 0.25
+                    why = ("memory" if resident(proc.pid) > cap
+                           else watch() if watch else False)
+                    if why and not stopped:
+                        stopped = why
+                        proc.kill()
+                    if now > deadline:
+                        raise subprocess.TimeoutExpired(cmd, timeout)
+            proc.wait(max(0.0, deadline - time.monotonic()))
         except BaseException:
             # As subprocess.run does: an interrupted film leaves no ffmpeg behind.
             proc.kill()
             raise
+    out, err = (kept[stream].decode(errors="replace").replace("\r\n", "\n").replace("\r", "\n")
+                for stream in (proc.stdout, proc.stderr))
+    return subprocess.CompletedProcess(cmd, proc.returncode, out, err), stopped
+
+
+def read_file_capped(cmd, timeout, path, on_line=None):
+    """run_capped for a program reading a file someone else may have made: under
+    memory_cap, and the run stops saying so if it passes it."""
+    cap = memory_cap()
+    done, stopped = run_capped(cmd, timeout, cap, on_line)
+    if stopped:
+        die(tr("reading {path} used more than {size} GB of memory, half this "
+               "machine's, so it was stopped.", path=path, size=f"{cap / 1024 ** 3:.1f}"))
+    return done
 
 
 def rate_text(rate):
@@ -4478,10 +4512,10 @@ def sound_info(path, where):
     if not Path(path).is_file():
         die(tr("{where}: there is no file {path}", where=where, path=path))
     try:
-        out = subprocess.run(
+        out = read_file_capped(
             ["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries",
              "stream=index,duration:format=duration", "-of", "json", str(path)],
-            capture_output=True, text=True, errors="replace", timeout=CALL_TIMEOUT, check=False)
+            CALL_TIMEOUT, path)
     except subprocess.TimeoutExpired:
         die(tr("{where}: reading {path} took over {seconds}s.", where=where,
                path=path, seconds=CALL_TIMEOUT))
@@ -4498,26 +4532,40 @@ def sound_info(path, where):
     return None  # unreachable; die() exits
 
 
+def volume_measured(said):
+    """(mean, peak) in dB from what volumedetect said, each None if it did not.
+
+    ffmpeg's log holds a file's name and tags, and a name holding a line break
+    makes a whole line that starts as this filter's does (measured 2026-10-31).
+    The filter prints when ffmpeg closes it, after everything else a file can
+    make it say, so only what follows the last `n_samples` counts. A film with
+    no sound at all prints a count of zero and nothing after it."""
+    prefix = r"^\[Parsed_volumedetect_\d+ @ 0x[0-9a-f]+\] "
+    counts = list(re.finditer(prefix + r"n_samples: \d+$", said, re.MULTILINE))
+    after = said[counts[-1].end():] if counts else ""
+    found = [re.search(rf"{prefix}{name}_volume: (-?\d+(?:\.\d+)?|-inf) dB$", after, re.MULTILINE)
+             for name in ("mean", "max")]
+    return tuple(float(value[1]) if value else None for value in found)
+
+
 def music_loudness(music):
     """(mean, peak) of the music in dB, measured as the film will hear it:
     made stereo first, since a mono file reads 3 dB quieter once it is."""
     try:
-        done = subprocess.run(
+        done = read_file_capped(
             ["ffmpeg", "-nostdin", "-hide_banner", "-i", str(music.path), "-map",
              "0:a:0", "-af", f"{SOUND_FORMAT},volumedetect", "-f", "null", "-"],
-            capture_output=True, text=True, errors="replace", timeout=60 + music.length / 5,
-            check=False)
+            60 + music.length / 5, music.path)
     except subprocess.TimeoutExpired:
         die(tr("{where}: measuring the sound of {path} took too long, so it was "
                "stopped.", where=music.where, path=music.path))
-    mean = re.search(r"mean_volume: (-?[\d.]+) dB", done.stderr)
-    peak = re.search(r"max_volume: (-?[\d.]+) dB", done.stderr)
-    if done.returncode or not mean or not peak:
+    mean, peak = volume_measured(done.stderr)
+    if done.returncode or mean is None or peak is None:
         said = last_said(done.stderr, lines=1)
         die(tr("{where}: ffmpeg could not measure the sound of {path}.",
                where=music.where, path=music.path)
             + (f"\n  {said}" if said and done.returncode else ""))
-    return float(mean[1]), float(peak[1])
+    return mean, peak
 
 
 def check_music(music, total):
@@ -5049,7 +5097,7 @@ def run_film_ffmpeg(cmd, seconds, cap, made_file, frames=None):
     (measured 2026-10-30, under ulimit -v).
     """
     made, stopped = run_capped(cmd, 60 + 20 * seconds, cap)
-    if stopped:
+    if stopped == "memory":
         die(tr("ffmpeg used more than {size} GB of memory making the film, "
                "half this machine's, so it was stopped.",
                size=f"{cap / 1024 ** 3:.1f}"))
@@ -5358,34 +5406,48 @@ def cmd_motion(a):
     # off the 8x8 grid keeps NEW_FRAME's calibration: a 9-in-90 pattern scored
     # 9 at x of 0, 3, 5 and 8. Both measured 2026-10-16.
     crop = "crop={2}:{3}:{0}:{1}:exact=1,".format(*region) if region else ""
+    # Each frame is printed to stdout twice over, one each side of the test: "e"
+    # for every frame, "n" for a new one. A frame's own metadata, which a picture's
+    # text chunk fills, is deleted first, so stdout holds nothing a file wrote. On
+    # ffmpeg's log a tag or a file name passed for a frame. direct=1, or the two
+    # filters' buffers would land out of order, cut part way through a line.
+    frames, new_frames, last_new, stills = 0, 0, None, []
+    moment = None
+
+    def frame_line(line):
+        nonlocal frames, new_frames, last_new, moment
+        found = re.fullmatch(r"frame:\d+ +pts:\S+ +pts_time:([0-9.]+)", line)
+        if line.startswith("frame:"):
+            moment = found and start + float(found[1])
+        elif moment is not None and line == "e=1":
+            frames += 1
+        elif moment is not None and line == "n=1":
+            if last_new is not None and moment - last_new > a.still:
+                stills.append((last_new, moment))
+            new_frames, last_new = new_frames + 1, moment
+
     try:
-        seen = subprocess.run(
-            ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "info",
+        seen = read_file_capped(
+            ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
              "-ss", f"{start:.6f}", "-t", f"{end - start:.6f}",
              "-i", str(Path(a.input).expanduser()),
-             "-vf", f"{crop}showinfo@every=checksum=0,{NEW_FRAME},"
-                    "showinfo@new=checksum=0",
+             "-vf", f"{crop}metadata=delete,metadata=add:key=e:value=1,"
+                    f"metadata=print:key=e:file=-:direct=1,{NEW_FRAME},"
+                    "metadata=add:key=n:value=1,metadata=print:key=n:file=-:direct=1",
              "-an", "-f", "null", "-"],
-            capture_output=True, text=True, errors="replace", timeout=60 + 10 * (end - start),
-            check=False)
+            60 + 10 * (end - start), a.input, frame_line)
     except subprocess.TimeoutExpired:
         die(tr("reading {path} took too long for its length, so it was "
                "stopped.", path=a.input))
-    # Two showinfo filters, one each side of the test: the first sees every
-    # frame, the second only the new ones. Named, so a crop before them does
-    # not move the names ffmpeg logs them under.
-    every = re.findall(r"showinfo@every .* pts_time:([0-9.]+)", seen.stderr)
-    new = [start + float(t) for t in
-           re.findall(r"showinfo@new .* pts_time:([0-9.]+)", seen.stderr)]
-    if seen.returncode != 0 or not every or not new:
+    if seen.returncode != 0 or not frames or not new_frames:
         die(tr("could not read the frames of {path}.", path=a.input) + "\n  "
             + last_said(seen.stderr, lines=2))
-    stills = [(before, after) for before, after in itertools.pairwise([*new, end])
-              if after - before > a.still]
-    report = {"duration": round(end - start, 3), "frames": len(every),
-              "new_frames": len(new),
-              "new_frames_per_second": round(len(new) / (end - start), 2),
-              "last_change": round(new[-1], 3),
+    if end - last_new > a.still:
+        stills.append((last_new, end))
+    report = {"duration": round(end - start, 3), "frames": frames,
+              "new_frames": new_frames,
+              "new_frames_per_second": round(new_frames / (end - start), 2),
+              "last_change": round(last_new, 3),
               "still": [{"from": round(b, 3), "to": round(e, 3),
                          "seconds": round(e - b, 3)} for b, e in stills]}
     if a.json:
@@ -5418,14 +5480,14 @@ def grab_frame(path, moment, info, picture, look=None):
     # it; seeking lands on the first frame at or after the point given, so
     # aim half a frame before that frame's own start.
     try:
-        grab = subprocess.run(  # noqa: PLW1510 - a failure is handled below
+        grab = read_file_capped(
             ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
              "-ss", f"{max(0.0, (frame - 0.5) * step):.6f}",
              "-i", str(Path(path).expanduser()), "-frames:v", "1",
              *(["-vf", look] if look else []),
              *(["-q:v", "3"] if picture.suffix.lower() == ".jpg" else []),
              *single_picture(picture), "-y", str(picture)],
-            capture_output=True, text=True, errors="replace", timeout=6 * CALL_TIMEOUT)
+            6 * CALL_TIMEOUT, path)
     except subprocess.TimeoutExpired:
         die(tr("taking the frame took over {seconds}s.", seconds=6 * CALL_TIMEOUT))
     if grab.returncode != 0 or not has_data(picture):

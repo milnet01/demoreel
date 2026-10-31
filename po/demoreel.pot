@@ -635,6 +635,9 @@ msgid_plural ""
 msgstr[0] ""
 msgstr[1] ""
 
+msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
+msgstr ""
+
 msgid "drawing a line of text took over {seconds}s."
 msgstr ""
 

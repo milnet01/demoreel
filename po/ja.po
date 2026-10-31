@@ -1422,3 +1422,6 @@ msgstr "ファイルの準備ができたときには {taken} はすでに使わ
 
 msgid "{output} was left as it was, and this run's video is in {part}."
 msgstr "{output} はそのままにしました。この実行の動画は {part} にあります。"
+
+msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
+msgstr "{path} の読み込みがメモリを {size} GB 以上使いました。このマシンの半分にあたるため、停止しました。"

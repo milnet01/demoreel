@@ -1422,3 +1422,6 @@ msgstr "파일이 준비되었을 때 {taken}은(는) 이미 사용 중이어서
 
 msgid "{output} was left as it was, and this run's video is in {part}."
 msgstr "{output}은(는) 그대로 두었고, 이번 실행의 영상은 {part}에 있습니다."
+
+msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
+msgstr "{path}을(를) 읽는 데 메모리를 {size} GB 넘게 사용했습니다. 이 컴퓨터의 절반에 해당하므로 중지했습니다."

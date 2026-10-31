@@ -1428,3 +1428,6 @@ msgstr "{taken} was reeds geneem toe die lêer gereed was, so die lêer is {outp
 
 msgid "{output} was left as it was, and this run's video is in {part}."
 msgstr "{output} is gelaat soos dit was, en hierdie lopie se video is in {part}."
+
+msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
+msgstr "die lees van {path} het meer as {size} GB geheue gebruik, die helfte van hierdie masjien s'n, en is dus gestop."

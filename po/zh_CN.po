@@ -1422,3 +1422,6 @@ msgstr "文件就绪时 {taken} 已被占用，因此文件是 {output}。"
 
 msgid "{output} was left as it was, and this run's video is in {part}."
 msgstr "{output} 保持原样，本次运行的视频在 {part}。"
+
+msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
+msgstr "读取 {path} 使用了超过 {size} GB 内存,即本机内存的一半,因此已停止。"
