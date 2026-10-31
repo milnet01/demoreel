@@ -1707,9 +1707,10 @@ gate_end() { step_end; printf '\n=== %s ===\n' "$1"; }
 # and alone by `./ci.sh --finishing`. Every input is made by ffmpeg from a
 # generated source, so nothing here needs a display and it takes seconds.
 #
-# Each check quotes the README sentence it holds. A refusal is only believed
-# after a control: the same command made valid succeeded first, so "refused"
-# cannot be a command that fails whatever it is given.
+# Each check quotes the README sentence it holds. A refusal is believed for one
+# of three reasons: the same command made valid succeeded first, it names the
+# line or the words at fault, or at the least it is none of the failures in
+# expect_refused, so "refused" is not a command that fails whatever it is given.
 finishing_checks() {
     local DR="$PWD/demoreel" ft="$tmp/fin" fo fe rc
     mkdir -p "$ft/log" "$ft/out" "$ft/shim"
@@ -1732,13 +1733,25 @@ finishing_checks() {
         echo "FAIL: $1: expected exit 0, got $rc" >&2; show_err; exit 1
     }
     # Refused: non-zero, said why, and did not pretend to finish. The stub's
-    # own message is not a reason.
-    expect_refused() {
+    # own message is not a reason, and neither is a check's own mistake: a script
+    # it never wrote, an input it forgot, a shim that fails too early, a crash.
+    # A file a check means to be missing is called nothing.*, or named in WORDS.
+    expect_refused() {  # what [the words the refusal must hold]
         [ "$rc" -ne 0 ] || fail "$1: expected it to be refused (non-zero exit), got exit 0"
         [ -s "$fe" ] || fail "$1: refused without saying why (stderr empty)"
         if grep -q 'not built yet' "$fe"; then
             echo "FAIL: $1: expected a refusal naming the mistake, got: " >&2
             show_err; exit 1
+        fi
+        if [ -n "${2:-}" ]; then
+            grep -qF -- "$2" "$fe" || { echo "FAIL: $1: expected a refusal saying: $2" >&2
+                                        show_err; exit 1; }
+        elif grep -v 'nothing\.' "$fe" | grep -Eq 'could not read the script|there is no file|did not say which formats'; then
+            echo "FAIL: $1: refused for the check's own mistake, not the one it means:" >&2
+            show_err; exit 1
+        fi
+        if grep -q Traceback "$fe"; then
+            echo "FAIL: $1: a crash is not a refusal:" >&2; show_err; exit 1
         fi
         [ ! -s "$fo" ] || fail "$1: refused but printed on stdout: $(cat "$fo")"
     }
@@ -2336,11 +2349,11 @@ SHIM
             join)    set -- join in.mp4 in2.mp4 ;;
         esac
         run "$@" -o "$ft/out/wrong.mov"
-        expect_refused "$cmd with -o ending .mov"
+        expect_refused "$cmd with -o ending .mov" "must end in .mp4"
         assert_absent "$cmd -o .mov" "$ft/out/wrong.mov"
     done
-    run edit f5.txt -o "$ft/out/wrong.mov"
-    expect_refused "edit with -o ending .mov"
+    run edit self.txt -o "$ft/out/wrong.mov"
+    expect_refused "edit with -o ending .mov" "must end in .mp4"
     assert_absent "edit -o .mov" "$ft/out/wrong.mov"
     echo "an input is never overwritten; -o must end in .mp4"
 
@@ -2365,7 +2378,7 @@ SHIM
     assert_absent "poster -t 99" "$ft/out/e3.png"
     printf 'clip A.mp4 from 2 to 99\n' > "$ft/e4.txt"
     run edit e4.txt -o "$ft/out/e4.mp4"
-    expect_refused "edit: clip to 99 on a 6 s file"
+    expect_refused "edit: clip to 99 on a 6 s file" "line 1: \`to 99\`"
     echo "times past the end were refused; --to at the length was accepted"
 
     }
@@ -2377,6 +2390,7 @@ SHIM
     run trim A.mp4 -o "$ft/out/keep.mp4" --to 2
     expect_ok "control: a good trim may write over an older output"
     cp "$ft/B.mp4" "$ft/out/keep.mp4"
+    printf 'clip A.mp4 from 2 to 99\n' > "$ft/e5.txt"
     before=$(snap)
     for what in "trim A.mp4 --to 99" "trim bad.mp4 --to 1" "caption bad.mp4 --text hi" \
                 "join A.mp4 W.mp4" "join A.mp4 bad.mp4" "join A.mp4"; do
@@ -2389,8 +2403,8 @@ SHIM
         expect_refused "$what"
         assert_absent "$what" "$ft/out/nothing.mp4"
     done
-    run edit e4.txt -o "$ft/out/keep.mp4"
-    expect_refused "edit with a bad line, -o an existing file"
+    run edit e5.txt -o "$ft/out/keep.mp4"
+    expect_refused "edit with a bad line, -o an existing file" "line 1: \`to 99\`"
     assert_eq "edit: the file already at -o" "$keep" "$(sha256sum < "$ft/out/keep.mp4")"
     assert_eq "no stray file after failures" "$before" "$(snap)"
     echo "failures left nothing new and the older file byte for byte"
@@ -4361,11 +4375,11 @@ CLEANPY
     # A name that is not there, in each of the messages that quote it.
     printf 'clip "e%s]52;c;eA==%sx.mp4"\n' "$esc" "$(printf '\007')" > "$ft/s.txt"
     run edit s.txt -o "$ft/out/n.mp4"
-    expect_refused "a clip whose name holds ESC is not there"
+    expect_refused "a clip whose name holds ESC is not there" "there is no file"
     stderr_clean "there is no file, ESC" '\x1b]52;c;eA==\x07x.mp4'
     printf 'clip "a%sb%sc.mp4"\n' "$c1" "$rtl" > "$ft/s.txt"
     run edit s.txt -o "$ft/out/n.mp4"
-    expect_refused "a clip whose name holds C1 and bidi is not there"
+    expect_refused "a clip whose name holds C1 and bidi is not there" "there is no file"
     # shellcheck disable=SC1003  # the text is a backslash and u202e
     stderr_clean "there is no file, C1 and bidi" 'a\x9bb\''u202ec.mp4'
     # A script's own line, quoted beside the refusal.
@@ -4467,7 +4481,7 @@ LAYERSPY
         rc=0
         ( cd "$ft" && LC_ALL=$envs "$DR" trim "$(printf 'gone\377.mp4')" --to 1 \
               -o "$ft/out/g.mp4" ) >"$fo" 2>"$fe" || rc=$?
-        expect_refused "a name that is not there under LC_ALL=$envs"
+        expect_refused "a name that is not there under LC_ALL=$envs" "there is no file"
         stderr_clean "the refusal under LC_ALL=$envs" 'gone\xff.mp4'
     done
     # A locale whose stdout is strict: Python chooses that outside C and C.UTF-8.
@@ -4968,10 +4982,12 @@ NOSIZE
     expect_refused "poster past the end"
     assert_eq "a failed poster left what was there" keep "$(cat "$dir/kept.png")"
     mkdir -p "$ft/noframes"
-    printf '#!/bin/sh\nexit 1\n' >"$ft/noframes/ffmpeg"
+    # shellcheck disable=SC2016  # written into a script, which expands it
+    printf '#!/bin/sh\ncase "$*" in *-demuxers*) exec "%s" "$@" ;; esac\nexit 1\n' \
+        "$(command -v ffmpeg)" >"$ft/noframes/ffmpeg"
     chmod +x "$ft/noframes/ffmpeg"
     FIN_PATH="$ft/noframes:$PATH" run poster A.mp4 -t 0.1 -o "$dir/none.png"
-    expect_refused "poster with an ffmpeg that fails"
+    expect_refused "poster with an ffmpeg that fails" "could not take the frame"
     assert_absent "a failed poster leaves nothing at -o" "$dir/none.png"
     assert_eq "a failed command leaves no part" 0 "$(find "$dir" -name '.demoreel-*' | wc -l)"
     # The caller's umask decides a new file's mode, and a file replaced keeps its own.
