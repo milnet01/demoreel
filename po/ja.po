@@ -822,9 +822,6 @@ msgstr "{where}: シーンにはクロスフェードかフェードインのど
 msgid "{where}: a crossfade of {seconds} seconds does not fit: the two scenes overlap for that long, and one of them is shorter."
 msgstr "{where}: {seconds} 秒のクロスフェードは収まりません。2 つのシーンがその長さだけ重なりますが、どちらかがそれより短いためです。"
 
-msgid "text"
-msgstr "テキスト"
-
 msgid "scene {number}: {kind} {name}, {start} to {end}"
 msgstr "シーン {number}: {kind} {name}、{start} から {end}"
 
@@ -860,9 +857,6 @@ msgstr "trim には何をするかの指定が必要です: --from、--to、フ�
 
 msgid "join takes two or more videos; one on its own is already whole."
 msgstr "join には 2 つ以上の動画が必要です。1 つだけならそれで完成しています。"
-
-msgid "the card"
-msgstr "カード"
 
 msgid "--from and --to must be inside {path}, which is {seconds} seconds long, with --from before --to."
 msgstr "--from と --to は {path} (長さ {seconds} 秒) の範囲内で、--from を --to より前にしてください。"
@@ -1443,3 +1437,13 @@ msgstr "{path} のあるディスクがほぼ満杯のため、いっぱいに�
 
 msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
 msgstr "{where}: {path} は {size} で、このサイズのウィンドウに表示するには細すぎるか平たすぎます。もっと大きなウィンドウにしてください。"
+
+msgid "scene {number}: a card with no picture, {start} to {end}"
+msgstr "シーン {number}: 画像のないカード、{start} から {end} まで"
+
+msgid ""
+"demoreel keeps its files in {path}, and ffmpeg's filters cannot carry a character in that path.\n"
+"  Point XDG_RUNTIME_DIR at a plainer one."
+msgstr ""
+"demoreel はファイルを {path} に置きますが、そのパスには ffmpeg のフィルターで扱えない文字があります。\n"
+"  XDG_RUNTIME_DIR をもっと単純なパスに向けてください。"

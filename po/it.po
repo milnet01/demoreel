@@ -828,9 +828,6 @@ msgstr "{where}: una scena accetta una dissolvenza incrociata o una dissolvenza 
 msgid "{where}: a crossfade of {seconds} seconds does not fit: the two scenes overlap for that long, and one of them is shorter."
 msgstr "{where}: una dissolvenza incrociata di {seconds} secondi non ci sta: le due scene si sovrappongono per quel tempo, e una delle due è più corta."
 
-msgid "text"
-msgstr "testo"
-
 msgid "scene {number}: {kind} {name}, {start} to {end}"
 msgstr "scena {number}: {kind} {name}, da {start} a {end}"
 
@@ -866,9 +863,6 @@ msgstr "trim ha bisogno di qualcosa da fare: --from, --to, una dissolvenza, --mu
 
 msgid "join takes two or more videos; one on its own is already whole."
 msgstr "join accetta due o più video; uno da solo è già completo."
-
-msgid "the card"
-msgstr "il cartello"
 
 msgid "--from and --to must be inside {path}, which is {seconds} seconds long, with --from before --to."
 msgstr "--from e --to devono essere dentro {path}, che dura {seconds} secondi, con --from prima di --to."
@@ -1449,3 +1443,13 @@ msgstr "il disco che contiene {path} è quasi pieno, quindi il film è stato fer
 
 msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
 msgstr "{where}: {path} è {size}, troppo stretto o troppo piatto per una finestra di queste dimensioni. Dagli una finestra più grande."
+
+msgid "scene {number}: a card with no picture, {start} to {end}"
+msgstr "scena {number}: una scheda senza immagine, da {start} a {end}"
+
+msgid ""
+"demoreel keeps its files in {path}, and ffmpeg's filters cannot carry a character in that path.\n"
+"  Point XDG_RUNTIME_DIR at a plainer one."
+msgstr ""
+"demoreel tiene i suoi file in {path}, e i filtri di ffmpeg non possono portare un carattere di quel percorso.\n"
+"  Fai puntare XDG_RUNTIME_DIR a uno più semplice."

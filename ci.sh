@@ -5520,6 +5520,151 @@ CASES
     assert_cmp "a card's picture ($gt) starts below its stack at the top ($wb)" "$gt" ">=" "$wb"
     echo "a card's picture was fitted below a stack of two lines"
     }
+    fin_s80() {
+    # DEMO-0094. Text the renderer could not draw as asked: drawtext breaks a line
+    # on four characters, the strip that measures a line was narrower than a wide
+    # frame's room, and a path with a quote in it broke the filter graph.
+    run card -d 1 -s 320x240 --text Hi --text-size 5 -o "$ft/out/ok.mp4"
+    expect_ok "control: a card with a text size"
+    run card -d 1 -s 320x240 --text Hi --text-size 0 -o "$ft/out/zero.mp4"
+    expect_refused "card --text-size 0" "between 0 and 50"
+    local wide c
+    wide=$(python3 -c 'print("WMWM " * 150, end="")')
+    run card -d 1 -s 1920x1080 --text "${wide:0:20}" --text-size 1 -o "$ft/out/ok.mp4"
+    expect_ok "control: a short line at a small size"
+    run card -d 1 -s 1920x1080 --text "$wide" --text-size 1 -o "$ft/out/wide.mp4"
+    expect_refused "a line wider than a wide frame, at a small size" "pixels wide"
+    run caption A.mp4 --text "one two" --to 0.5 -o "$ft/out/ok.mp4"
+    expect_ok "control: one line of text"
+    for c in '\n' '\r' '\f' '\v'; do
+        run caption A.mp4 --text "$(printf 'one%btwo' "$c")" --to 0.5 -o "$ft/out/two.mp4"
+        expect_refused "a text with $c in it" "more than one line"
+        run thumbnail A.mp4 -t 0.1 --text "$(printf 'one%btwo' "$c")" -o "$ft/out/two.jpg"
+        expect_refused "a title with $c in it" "more than one line"
+    done
+    mkdir -m 700 "$ft/it's"
+    XDG_RUNTIME_DIR="$ft/it's" run caption A.mp4 --text "one two" --to 0.5 -o "$ft/out/quote.mp4"
+    expect_refused "text with a quote in the state directory's path" "ffmpeg's filters cannot carry"
+    echo "a text's size, width and single line are held to, and a path it cannot use is named"
+    }
+    fin_s81() {
+    # DEMO-0094. Without exact=1, crop rounds an odd corner down to the chroma grid
+    # on yuv420p, so sheet --region showed a pixel more on the left than was asked.
+    ffmpeg -nostdin -v error -f lavfi -i color=black:s=320x240:r=10:d=1 \
+        -vf drawbox=x=11:y=11:w=300:h=200:color=white:t=fill \
+        -c:v libx264 -qp 0 -pix_fmt yuv420p -y "$ft/box.mp4"
+    run sheet box.mp4 --at 0.1 --width 100 --region 11,11,100,100 -o "$ft/out/box.png"
+    expect_ok "sheet --region on an odd corner"
+    local corner
+    corner=$(ffmpeg -nostdin -v error -i "$ft/out/box.png" -vf crop=1:1:0:10,format=gray \
+        -f rawvideo - | od -An -tu1 | tr -d ' ')
+    [ "${corner:-0}" -gt 200 ] || fail "sheet --region 11,...: its first column is $corner, not the white at x=11"
+    echo "sheet cuts the rectangle asked for, on an odd corner too"
+    }
+    fin_s82() {
+    # DEMO-0094. volumedetect reads silence as -91 dB, not as infinity, so a silent
+    # music file passed the refusal written for it.
+    ffmpeg -nostdin -v error -f lavfi -i anullsrc=d=2:r=48000 -c:a pcm_s16le -y "$ft/silent.wav"
+    run trim A.mp4 --to 1 --music silent.wav -o "$ft/out/silent.mp4"
+    expect_refused "music with no sound in it" "silent all through"
+    assert_absent "silent music leaves nothing" "$ft/out/silent.mp4"
+    echo "music that is silent all through is refused"
+    }
+    fin_s83() {
+    # DEMO-0094. A film is for publishing, and a clip's or a music file's tags and
+    # chapters are not what its maker chose to publish.
+    printf ';FFMETADATA1\ntitle=PRIVATE-TAG\nlocation=PRIVATE-TAG\n[CHAPTER]\nTIMEBASE=1/1\nSTART=0\nEND=1\ntitle=PRIVATE-TAG\n' \
+        > "$ft/tags.txt"
+    ffmpeg -nostdin -v error -i "$ft/A.mp4" -i "$ft/tags.txt" -map 0 -map_metadata 1 -map_chapters 1 \
+        -c copy -y "$ft/T.mp4"
+    ffmpeg -nostdin -v error -f lavfi -i sine=d=2 -i "$ft/tags.txt" -map 0 -map_metadata 1 \
+        -c:a aac -y "$ft/M.m4a"
+    probe_all() { ffprobe -v error -show_entries format_tags:stream_tags:chapters -of default=nw=1 "$1"; }
+    probe_all "$ft/T.mp4" | grep -q PRIVATE-TAG || fail "control: the test clip holds no tags"
+    local i film
+    printf 'clip T.mp4 from 0 to 1\n' > "$ft/one.txt"
+    : > "$ft/many.txt"
+    for i in 1 2 3 4 5 6 7 8 9 10; do printf 'clip T.mp4 from 0 to 0.2\n' >> "$ft/many.txt"; done
+    ffmpeg -nostdin -v error -i "$ft/T.mp4" -map 0:v -c copy -y "$ft/V.mp4"
+    run trim T.mp4 --to 1 -o "$ft/out/trim.mp4"; expect_ok "trim of a tagged clip"
+    run trim V.mp4 --to 1 -o "$ft/out/silent.mp4"; expect_ok "trim of a tagged clip with no sound"
+    run caption T.mp4 --text Hi --to 1 -o "$ft/out/caption.mp4"; expect_ok "caption of a tagged clip"
+    run edit one.txt -o "$ft/out/one.mp4"; expect_ok "a film of one tagged scene"
+    run edit many.txt -o "$ft/out/many.mp4"; expect_ok "a film of tagged scenes, in pieces"
+    run trim T.mp4 --to 1 --music M.m4a -o "$ft/out/music.mp4"; expect_ok "a tagged clip under tagged music"
+    for film in trim silent caption one many music; do
+        ! probe_all "$ft/out/$film.mp4" | grep -q PRIVATE-TAG \
+            || fail "$film: a source's tags or chapters reached the film"
+    done
+    echo "no source's tags or chapters reach a film"
+    }
+    fin_s84() {
+    # DEMO-0094. Started with stderr closed, Python's sys.stderr is None, and the
+    # first note ended a run that was going well.
+    local out
+    rc=0
+    out=$(cd "$ft" && "$DR" trim A.mp4 --to 0.5 -o "$ft/out/closed.mp4" 2>&-) || rc=$?
+    assert_eq "a run with stderr closed: its exit status" 0 "$rc"
+    assert_eq "a run with stderr closed: stdout" "$ft/out/closed.mp4" "$out"
+    [ -s "$ft/out/closed.mp4" ] || fail "a run with stderr closed wrote no file"
+    rc=0
+    out=$(cd "$ft" && "$DR" trim nothing.mp4 --to 0.5 -o "$ft/out/none.mp4" 2>&-) || rc=$?
+    [ "$rc" -ne 0 ] || fail "a refused run with stderr closed exited 0"
+    [ -z "$out" ] || fail "a refused run with stderr closed printed '$out'"
+    echo "stderr closed changes nothing but who can read the notes"
+    }
+    fin_s85() {
+    # DEMO-0094. A signal during the tidying up ended it there, and the working folder
+    # stayed in RAM. The stand-in sends one just as that begins.
+    cat > "$ft/held.py" <<'HELDPY'
+import importlib.machinery, importlib.util, os, signal, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", sys.argv[1])
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+real = d.shutil.rmtree
+def rmtree(*args, **kwargs):
+    os.kill(os.getpid(), signal.SIGTERM)
+    real(*args, **kwargs)
+d.shutil.rmtree = rmtree
+sys.argv = ["demoreel", *sys.argv[2:]]
+d.main()
+HELDPY
+    local cmd
+    for cmd in "card -d 1 -s 320x240 -o out/h1.mp4" "thumbnail A.mp4 -t 0.1 -o out/h2.jpg" \
+               "sheet A.mp4 --at 0.1 -o out/h3.png"; do
+        rc=0
+        # shellcheck disable=SC2086  # each case is several words
+        ( cd "$ft" && python3 held.py "$DR" $cmd ) >"$fo" 2>"$fe" || rc=$?
+        assert_eq "$cmd, with a signal as it tidies up: its exit status" 0 "$rc"
+        [ -z "$(find "$XDG_RUNTIME_DIR" -mindepth 2 -maxdepth 2)" ] || {
+            find "$XDG_RUNTIME_DIR" -mindepth 2 -maxdepth 2 >&2
+            fail "$cmd: a signal as it tidied up left its folder"; }
+        [ -z "$(find "$ft/out" -maxdepth 1 -name '.demoreel-*')" ] || fail "$cmd: it left a part"
+    done
+    echo "a signal during the tidying up does not stop it"
+    }
+    fin_s86() {
+    # DEMO-0094. The state directory is private from the moment it exists: made at the
+    # umask's mode and tightened after, others could plant files in the gap.
+    mkdir -m 700 "$ft/fresh"
+    ( umask 0; XDG_RUNTIME_DIR="$ft/fresh" python3 - "$DR" <<'MODEPY'
+import importlib.machinery, importlib.util, os, pathlib, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", sys.argv[1])
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+real = pathlib.Path.chmod
+seen = []
+def chmod(self, mode, **kwargs):
+    seen.append(os.lstat(self).st_mode & 0o777)
+    real(self, mode, **kwargs)
+pathlib.Path.chmod = chmod
+d.state_dir()
+if seen != [0o700]:
+    sys.exit(f"the state directory was made with mode {[oct(m) for m in seen]}, not 0o700")
+MODEPY
+    ) || fail "the state directory was open before it was tightened"
+    echo "the state directory is never open, whatever the umask"
+    }
     fin_step "the checks' own comparisons refuse a measurement that came back empty or as words" fin_s0
     fin_step "trim keeps the frames from --from to --to, the last one included" fin_s1
     fin_step "every video a command writes is H.264, yuv420p, index first, with its clips' sound" fin_s2
@@ -5606,6 +5751,13 @@ CASES
     fin_step "a file that points at other files is refused, on every input" fin_s77
     fin_step "a film has a longest length and a highest rate, and leaves the disk some room" fin_s78
     fin_step "a stream with no size, and a clip too narrow for its window, are refused in words" fin_s79
+    fin_step "a text's size, width and single line are held to, and a path it cannot use is named" fin_s80
+    fin_step "sheet cuts the rectangle asked for, on an odd corner too" fin_s81
+    fin_step "music that is silent all through is refused" fin_s82
+    fin_step "no source's tags or chapters reach a film" fin_s83
+    fin_step "a run with stderr closed goes on as usual" fin_s84
+    fin_step "a signal during the tidying up does not stop it" fin_s85
+    fin_step "the state directory is never open, whatever the umask" fin_s86
     fin_run
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }

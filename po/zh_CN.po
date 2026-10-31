@@ -822,9 +822,6 @@ msgstr "{where}：一个场景只能使用交叉淡化或淡入之一，不能�
 msgid "{where}: a crossfade of {seconds} seconds does not fit: the two scenes overlap for that long, and one of them is shorter."
 msgstr "{where}：{seconds} 秒的交叉淡化放不下：两个场景要重叠这么长时间，而其中一个比这更短。"
 
-msgid "text"
-msgstr "文字"
-
 msgid "scene {number}: {kind} {name}, {start} to {end}"
 msgstr "场景 {number}：{kind} {name}，{start} 到 {end}"
 
@@ -860,9 +857,6 @@ msgstr "trim 需要有事可做：--from、--to、淡入淡出、--music 或 --n
 
 msgid "join takes two or more videos; one on its own is already whole."
 msgstr "join 需要两个或更多视频；只有一个视频时它本身就已完整。"
-
-msgid "the card"
-msgstr "卡片"
 
 msgid "--from and --to must be inside {path}, which is {seconds} seconds long, with --from before --to."
 msgstr "--from 和 --to 必须在 {path} 之内（长 {seconds} 秒），且 --from 在 --to 之前。"
@@ -1443,3 +1437,13 @@ msgstr "存放 {path} 的磁盘快满了,因此在写满之前停止了影片。
 
 msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
 msgstr "{where}:{path} 为 {size},太窄或太扁,无法在这种大小的窗口中显示。请给它更大的窗口。"
+
+msgid "scene {number}: a card with no picture, {start} to {end}"
+msgstr "场景 {number}:没有图片的卡片,{start} 到 {end}"
+
+msgid ""
+"demoreel keeps its files in {path}, and ffmpeg's filters cannot carry a character in that path.\n"
+"  Point XDG_RUNTIME_DIR at a plainer one."
+msgstr ""
+"demoreel 把文件放在 {path},而该路径中有 ffmpeg 滤镜无法处理的字符。\n"
+"  请把 XDG_RUNTIME_DIR 指向更简单的路径。"

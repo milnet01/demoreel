@@ -828,9 +828,6 @@ msgstr "{where}: een scène krijgt een crossfade of een fade-in, niet allebei."
 msgid "{where}: a crossfade of {seconds} seconds does not fit: the two scenes overlap for that long, and one of them is shorter."
 msgstr "{where}: een crossfade van {seconds} seconden past niet: de twee scènes overlappen zo lang, en een ervan is korter."
 
-msgid "text"
-msgstr "tekst"
-
 msgid "scene {number}: {kind} {name}, {start} to {end}"
 msgstr "scène {number}: {kind} {name}, {start} tot {end}"
 
@@ -866,9 +863,6 @@ msgstr "trim moet iets te doen hebben: --from, --to, een vervaging, --music of -
 
 msgid "join takes two or more videos; one on its own is already whole."
 msgstr "join neemt twee of meer video's; één op zichzelf is al compleet."
-
-msgid "the card"
-msgstr "de kaart"
 
 msgid "--from and --to must be inside {path}, which is {seconds} seconds long, with --from before --to."
 msgstr "--from en --to moeten binnen {path} liggen, dat {seconds} seconden duurt, met --from voor --to."
@@ -1449,3 +1443,13 @@ msgstr "de schijf met {path} is bijna vol, dus de film is gestopt voordat die vo
 
 msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
 msgstr "{where}: {path} is {size}, te smal of te plat voor een venster van dit formaat. Geef het een groter venster."
+
+msgid "scene {number}: a card with no picture, {start} to {end}"
+msgstr "scène {number}: een kaart zonder afbeelding, {start} tot {end}"
+
+msgid ""
+"demoreel keeps its files in {path}, and ffmpeg's filters cannot carry a character in that path.\n"
+"  Point XDG_RUNTIME_DIR at a plainer one."
+msgstr ""
+"demoreel bewaart zijn bestanden in {path}, en de filters van ffmpeg kunnen een teken in dat pad niet aan.\n"
+"  Laat XDG_RUNTIME_DIR naar een eenvoudiger pad wijzen."

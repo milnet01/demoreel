@@ -828,9 +828,6 @@ msgstr "{where} : une scène prend un fondu enchaîné ou une ouverture en fondu
 msgid "{where}: a crossfade of {seconds} seconds does not fit: the two scenes overlap for that long, and one of them is shorter."
 msgstr "{where} : un fondu enchaîné de {seconds} secondes ne tient pas : les deux scènes se chevauchent pendant cette durée, et l'une d'elles est plus courte."
 
-msgid "text"
-msgstr "texte"
-
 msgid "scene {number}: {kind} {name}, {start} to {end}"
 msgstr "scène {number} : {kind} {name}, de {start} à {end}"
 
@@ -866,9 +863,6 @@ msgstr "trim a besoin d'un paramètre : --from, --to, un fondu, --music ou --no-
 
 msgid "join takes two or more videos; one on its own is already whole."
 msgstr "join prend au moins deux vidéos ; une seule est déjà complète."
-
-msgid "the card"
-msgstr "le carton"
 
 msgid "--from and --to must be inside {path}, which is {seconds} seconds long, with --from before --to."
 msgstr "--from et --to doivent être dans {path}, qui dure {seconds} secondes, avec --from avant --to."
@@ -1449,3 +1443,13 @@ msgstr "le disque contenant {path} est presque plein, le film a donc été arrê
 
 msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
 msgstr "{where} : {path} fait {size}, trop étroit ou trop plat pour une fenêtre de cette taille. Donnez-lui une fenêtre plus grande."
+
+msgid "scene {number}: a card with no picture, {start} to {end}"
+msgstr "scène {number} : une carte sans image, de {start} à {end}"
+
+msgid ""
+"demoreel keeps its files in {path}, and ffmpeg's filters cannot carry a character in that path.\n"
+"  Point XDG_RUNTIME_DIR at a plainer one."
+msgstr ""
+"demoreel garde ses fichiers dans {path}, et les filtres de ffmpeg ne peuvent pas porter un caractère de ce chemin.\n"
+"  Faites pointer XDG_RUNTIME_DIR vers un chemin plus simple."

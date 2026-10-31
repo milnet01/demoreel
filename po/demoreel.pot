@@ -644,6 +644,11 @@ msgstr ""
 msgid "{where}: {path} is a list that points at other files, such as a playlist, and demoreel does not follow one."
 msgstr ""
 
+msgid ""
+"demoreel keeps its files in {path}, and ffmpeg's filters cannot carry a character in that path.\n"
+"  Point XDG_RUNTIME_DIR at a plainer one."
+msgstr ""
+
 msgid "drawing a line of text took over {seconds}s."
 msgstr ""
 
@@ -860,11 +865,11 @@ msgstr ""
 msgid "{where}: a crossfade of {seconds} seconds does not fit: the two scenes overlap for that long, and one of them is shorter."
 msgstr ""
 
-msgid "text"
+#. translators: {kind} is clip or card, in English; {name} is a file name.
+msgid "scene {number}: {kind} {name}, {start} to {end}"
 msgstr ""
 
-#. translators: {kind} is clip or card, in English; {name} is a file name, or the translation of "text".
-msgid "scene {number}: {kind} {name}, {start} to {end}"
+msgid "scene {number}: a card with no picture, {start} to {end}"
 msgstr ""
 
 msgid "  sound {name} at {start}"
@@ -892,9 +897,6 @@ msgid "trim needs something to do: --from, --to, a fade, --music or --no-sound."
 msgstr ""
 
 msgid "join takes two or more videos; one on its own is already whole."
-msgstr ""
-
-msgid "the card"
 msgstr ""
 
 msgid "--from and --to must be inside {path}, which is {seconds} seconds long, with --from before --to."

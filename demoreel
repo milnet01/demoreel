@@ -141,8 +141,8 @@ def _exit_on_signal(signum, frame):
 
 def hold_signals():
     """From here on _exit_on_signal only notes a signal. For the code that ends
-    a display: leaving that part way leaves the display running, which nothing
-    else would then end (DEMO-0094)."""
+    a display, whose leaving part way leaves the display running with nothing
+    else to end it, and for what a film removes as it finishes (DEMO-0094)."""
     global _signals_held  # noqa: PLW0603 - a signal handler reads it
     _signals_held = True
 
@@ -696,7 +696,7 @@ def runtime_dir():
 def state_dir():
     d = runtime_dir() / f"demoreel-{os.getuid()}"
     try:
-        d.mkdir(parents=True, exist_ok=True)
+        d.mkdir(mode=0o700, parents=True, exist_ok=True)
     except OSError as exc:
         die(tr("could not use {path}: {reason}.\n"
                "  demoreel keeps its run files there. Point XDG_RUNTIME_DIR at a "
@@ -3406,6 +3406,10 @@ class _CaptionField(argparse.Action):
 _text_fonts = {}
 
 
+# What one level of quotes in a filter graph does not protect in a path.
+FILTER_CANNOT_CARRY = set("':\\,;[]")
+
+
 def text_font(name=None, where=None):
     """The drawtext option naming a text's font: the one its line names, else
     the machine's own bold sans, so the same line measures differently on two
@@ -3456,7 +3460,7 @@ def text_font(name=None, where=None):
                    "  `fc-list : family` lists the names it has.", where=where,
                    font=repr(asked), nearest=repr(families.split(",")[0])))
     usable = bool(found) and Path(found).is_file() \
-        and not set(found) & set("':\\,;[]")
+        and not set(found) & FILTER_CANNOT_CARRY
     if name and not usable:
         die(tr("{where}: the font file {path} has a character in its path that "
                "ffmpeg's filters cannot carry. Copy it to a plainer path.",
@@ -4066,20 +4070,27 @@ class TextUnavailable(Exception):
         self.reason, self.checked = reason, checked
 
 
-def text_size(textfile, fontsize, font=None, border=0):
+def text_size(textfile, fontsize, font=None, border=0, room=0):
     """(width, height) in pixels of the text in `textfile` at `fontsize`, as
     ffmpeg will draw it in `font` with an outline `border` pixels thick; raises
-    TextUnavailable if this machine cannot draw text at all.
+    TextUnavailable if this machine cannot draw text at all, or cannot from
+    where `textfile` is.
 
     Measured by drawing it: white on a black strip, then ffmpeg's own bounding
     box of what is not black. Nothing else knows the font's metrics, and there
-    is no Python library here to ask (standard library only).
+    is no Python library here to ask (standard library only). The strip is wider
+    than `room`, or a line too wide for it would measure as fitting.
     """
+    if set(str(textfile)) & FILTER_CANNOT_CARRY:
+        raise TextUnavailable(tr("demoreel keeps its files in {path}, and ffmpeg's filters "
+                                 "cannot carry a character in that path.\n  Point "
+                                 "XDG_RUNTIME_DIR at a plainer one.",
+                                 path=textfile.parent.parent), checked=True)
     try:
         drawn = subprocess.run(
             ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "info",
              "-f", "lavfi", "-i",
-             f"color=black:s={fontsize * 80}x{fontsize * 3}:d=1",
+             f"color=black:s={max(fontsize * 80, room * 2)}x{fontsize * 3}:d=1",
              "-vf", f"drawtext=textfile='{textfile}':expansion=none:"
                     f"{font or text_font()}:fontsize={fontsize}:"
                     f"fontcolor=white:borderw={border}:bordercolor=white:"
@@ -4096,6 +4107,9 @@ def text_size(textfile, fontsize, font=None, border=0):
     boxes = re.findall(r" w:(\d+) h:(\d+) ", drawn.stderr)
     return (int(boxes[-1][0]), int(boxes[-1][1])) if boxes else (0, 0)
 
+
+# drawtext starts a new line on each of these (measured by its height).
+LINE_BREAKS = re.compile("[\n\r\f\v]")
 
 # The most a film may be, whoever asks: a script or a crafted file's claims. Well
 # past anything real, and low enough that nothing overflows. ffmpeg's own limits
@@ -4178,7 +4192,7 @@ def check_texts(scene, length, width, height, workdir):
         if not words.strip():
             die(tr("{where}: a text is one line of words, and this one is empty.",
                    where=where))
-        if "\n" in words:
+        if LINE_BREAKS.search(words):
             die(tr("{where}: a text is one line of words, and this one is more "
                    "than one line.", where=where))
         # A time printed just short of a frame's start means that frame, so a
@@ -4237,12 +4251,12 @@ def check_texts(scene, length, width, height, workdir):
             if "outline" in text else 0
         textfile = workdir / f"text-{len(list(workdir.iterdir()))}.txt"
         textfile.write_text(words, encoding="utf-8", errors="replace")
+        room = width - 2 * round(CARD_MARGIN * width)
         try:
-            wide, _ = text_size(textfile, fontsize, font, border)
+            wide, _ = text_size(textfile, fontsize, font, border, room)
         except TextUnavailable as exc:
             die(exc.reason + ("\n  " + tr("`demoreel check` tests this on its own.")
                               if exc.checked else ""))
-        room = width - 2 * round(CARD_MARGIN * width)
         if wide > room:
             die(tr("{where}: the text {words} is {wide} pixels wide at size "
                    "{size}, and the frame has room for {room}.\n  Shorten it, "
@@ -4651,6 +4665,10 @@ def volume_measured(said):
     return tuple(float(value[1]) if value else None for value in found)
 
 
+# volumedetect's reading of nothing at all (measured): it never says -inf.
+SILENCE_DB = -91.0
+
+
 def music_loudness(music):
     """(mean, peak) of the music in dB, measured as the film will hear it:
     made stereo first, since a mono file reads 3 dB quieter once it is."""
@@ -4722,7 +4740,7 @@ def check_music(music, total):
             die(tr("{where}: this level line and {other} overlap, counting their "
                    "ramps.", where=after["where"], other=before["where"]))
     mean, peak = music_loudness(music)
-    if not (math.isfinite(mean) and math.isfinite(peak)):
+    if peak <= SILENCE_DB:
         die(tr("{where}: {path} is silent all through.", where=music.where,
                path=music.path))
     music.mean = mean
@@ -5223,6 +5241,11 @@ def run_film_ffmpeg(cmd, seconds, cap, made_file, frames=None):
                or video_error(made_file) or ""))
 
 
+# A film carries no source's tags or chapters: ffmpeg copies the first input's by
+# default, and they can hold what its maker never meant to publish.
+NO_TAGS = ("-map_metadata", "-1", "-map_chapters", "-1")
+
+
 def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None):
     """Check every scene, then encode the film and print its path: the
     picture in pieces (film_pieces), then the sound over the joined pieces.
@@ -5295,12 +5318,14 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
             starts.append(begins)
             total = begins + length
             check_length(scene.where, total)
-            name = scene.path.name if scene.path else tr("text")
-            # translators: {kind} is clip or card, in English; {name} is a file name, or the
-            # translation of "text".
-            note(tr("scene {number}: {kind} {name}, {start} to {end}",
-                    number=number + 1, kind=scene.kind, name=name,
-                    start=f"{begins:.3f}", end=f"{total:.3f}"))
+            if scene.path:
+                # translators: {kind} is clip or card, in English; {name} is a file name.
+                note(tr("scene {number}: {kind} {name}, {start} to {end}",
+                        number=number + 1, kind=scene.kind, name=scene.path.name,
+                        start=f"{begins:.3f}", end=f"{total:.3f}"))
+            else:
+                note(tr("scene {number}: a card with no picture, {start} to {end}",
+                        number=number + 1, start=f"{begins:.3f}", end=f"{total:.3f}"))
             check_sounds(scene, length, begins)
             for entry in scene.sounds:
                 note(tr("  sound {name} at {start}", name=entry["path"].name,
@@ -5354,7 +5379,7 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
                 ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
                  *more, "-filter_complex", ";".join(graph), "-map", film,
                  "-frames:v", str(count), "-t", f"{(count + 0.5) / rate:.4f}",
-                 "-an", *ENCODER, "-y", str(piece_file)],
+                 "-an", *ENCODER, *NO_TAGS, "-y", str(piece_file)],
                 count / rate, cap, piece_file, count)
         if piece_files != [part]:
             listing = workdir / "pieces.txt"
@@ -5369,7 +5394,7 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
                  *(["-filter_complex", ";".join(chains)] if chains else []),
                  "-map", "0:v", "-c:v", "copy", *audio,
                  "-t", f"{total + 0.5 / rate:.4f}", "-movflags", "+faststart",
-                 "-y", str(part)],
+                 *NO_TAGS, "-y", str(part)],
                 total, cap, part, origins[-1])
         peak = loudest(part) if mixed else None
         if peak is not None and peak >= FULL_SCALE:
@@ -5380,6 +5405,7 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
         die(tr("ffmpeg did not finish making the film in the time allowed for "
                "its length, so it was stopped."))
     finally:
+        hold_signals()
         for leftover in parts:
             leftover.unlink(missing_ok=True)
         shutil.rmtree(workdir, ignore_errors=True)
@@ -5475,13 +5501,13 @@ def cmd_join(a):
 
 def cmd_card(a):
     """One card. Its size and rate come from --like unless -s and -r say."""
-    scene = Scene("card", tr("the card"))
+    scene = Scene("card", "card")  # the command's name, which is never translated
     scene.seconds, scene.background = a.duration, a.background
     scene.path = Path(a.image).expanduser() if a.image else None
     scene.fade_in, scene.fade_out = a.fade_in, a.fade_out
     if a.text is not None:
         scene.texts = [{"words": a.text}
-                       | ({"size": a.text_size} if a.text_size else {})]
+                       | ({"size": a.text_size} if a.text_size is not None else {})]
     size, rate = a.size, a.framerate
     if a.like:
         finishing_tools()
@@ -5674,6 +5700,7 @@ def cmd_thumbnail(a):
                    size=f"{size / 1_000_000:.1f}"))
         output = move_into_place(part, output)
     finally:
+        hold_signals()
         part.unlink(missing_ok=True)
         shutil.rmtree(workdir, ignore_errors=True)
     print(output)
@@ -5685,7 +5712,7 @@ def title_filter(words, workdir):
     if not words.strip():
         die(tr("{where}: a text is one line of words, and this one is empty.",
                where="--text"))
-    if "\n" in words:
+    if LINE_BREAKS.search(words):
         die(tr("{where}: a text is one line of words, and this one is more "
                "than one line.", where="--text"))
     fontsize = round(THUMB_TEXT_SIZE / 100 * THUMB_HEIGHT)
@@ -5693,12 +5720,12 @@ def title_filter(words, workdir):
     border = max(1, round(fontsize * OUTLINE_SHARE))
     textfile = workdir / "title.txt"
     textfile.write_text(words, encoding="utf-8", errors="replace")
+    room = THUMB_WIDTH - 2 * round(CARD_MARGIN * THUMB_WIDTH)
     try:
-        wide, _ = text_size(textfile, fontsize, font, border)
+        wide, _ = text_size(textfile, fontsize, font, border, room)
     except TextUnavailable as exc:
         die(exc.reason + ("\n  " + tr("`demoreel check` tests this on its own.")
                           if exc.checked else ""))
-    room = THUMB_WIDTH - 2 * round(CARD_MARGIN * THUMB_WIDTH)
     if wide > room:
         die(tr("the title {words} is {wide} pixels wide, and the thumbnail has "
                "room for {room}. Shorten it.", words=repr(words), wide=wide,
@@ -5782,7 +5809,8 @@ def cmd_sheet(a):
     columns = min(a.columns, len(times))
     rows = math.ceil(len(times) / columns)
     font = text_font()
-    crop = "crop={2}:{3}:{0}:{1},".format(*region) if region else ""
+    # exact=1 as in motion: an odd corner stays where it was asked for.
+    crop = "crop={2}:{3}:{0}:{1}:exact=1,".format(*region) if region else ""
     workdir = Path(tempfile.mkdtemp(prefix="sheet-", dir=state_dir()))
     part = new_part(output)
     try:
@@ -5813,6 +5841,7 @@ def cmd_sheet(a):
                 + (f"\n  {said}" if said else ""))
         output = move_into_place(part, output)
     finally:
+        hold_signals()
         part.unlink(missing_ok=True)
         shutil.rmtree(workdir, ignore_errors=True)
     print(output)
@@ -6224,6 +6253,11 @@ def build_parser():
 
 
 def main():
+    # Started with stderr closed, Python leaves sys.stderr None, and the first
+    # note would end the run. Opening this also fills file descriptor 2, which
+    # the next file opened would otherwise take, and children write there.
+    if sys.stderr is None:
+        sys.stderr = open(os.devnull, "w")  # noqa: SIM115 - lives to exit
     # The language is chosen before the parser exists: argparse translates its
     # group titles as the parser is built (§ 4.6).
     use_languages(chosen_languages(os.environ))

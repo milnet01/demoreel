@@ -828,9 +828,6 @@ msgstr "{where}: una escena admite un fundido encadenado o un fundido de entrada
 msgid "{where}: a crossfade of {seconds} seconds does not fit: the two scenes overlap for that long, and one of them is shorter."
 msgstr "{where}: un fundido encadenado de {seconds} segundos no cabe: las dos escenas se solapan durante ese tiempo, y una de ellas es más corta."
 
-msgid "text"
-msgstr "texto"
-
 msgid "scene {number}: {kind} {name}, {start} to {end}"
 msgstr "escena {number}: {kind} {name}, de {start} a {end}"
 
@@ -866,9 +863,6 @@ msgstr "trim necesita algo que hacer: --from, --to, un fundido, --music o --no-s
 
 msgid "join takes two or more videos; one on its own is already whole."
 msgstr "join admite dos o más vídeos; uno solo ya está completo."
-
-msgid "the card"
-msgstr "el rótulo"
 
 msgid "--from and --to must be inside {path}, which is {seconds} seconds long, with --from before --to."
 msgstr "--from y --to deben estar dentro de {path}, que dura {seconds} segundos, con --from antes que --to."
@@ -1449,3 +1443,13 @@ msgstr "el disco que contiene {path} está casi lleno, así que la película se 
 
 msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
 msgstr "{where}: {path} es {size}, demasiado estrecho o plano para mostrarse en una ventana de este tamaño. Dale una ventana más grande."
+
+msgid "scene {number}: a card with no picture, {start} to {end}"
+msgstr "escena {number}: una tarjeta sin imagen, de {start} a {end}"
+
+msgid ""
+"demoreel keeps its files in {path}, and ffmpeg's filters cannot carry a character in that path.\n"
+"  Point XDG_RUNTIME_DIR at a plainer one."
+msgstr ""
+"demoreel guarda sus archivos en {path}, y los filtros de ffmpeg no admiten un carácter de esa ruta.\n"
+"  Haz que XDG_RUNTIME_DIR apunte a una más sencilla."

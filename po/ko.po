@@ -822,9 +822,6 @@ msgstr "{where}: 장면에는 크로스페이드와 페이드인 중 하나만 �
 msgid "{where}: a crossfade of {seconds} seconds does not fit: the two scenes overlap for that long, and one of them is shorter."
 msgstr "{where}: {seconds}초 크로스페이드는 맞지 않습니다: 두 장면이 그만큼 겹쳐야 하는데, 둘 중 하나가 더 짧습니다."
 
-msgid "text"
-msgstr "텍스트"
-
 msgid "scene {number}: {kind} {name}, {start} to {end}"
 msgstr "장면 {number}: {kind} {name}, {start}부터 {end}까지"
 
@@ -860,9 +857,6 @@ msgstr "trim에 할 일을 주십시오: --from, --to, 페이드, --music 또는
 
 msgid "join takes two or more videos; one on its own is already whole."
 msgstr "join은 동영상을 두 개 이상 받습니다. 하나만 있으면 이미 완성된 것입니다."
-
-msgid "the card"
-msgstr "카드"
 
 msgid "--from and --to must be inside {path}, which is {seconds} seconds long, with --from before --to."
 msgstr "--from과 --to는 길이가 {seconds}초인 {path} 안에 있어야 하며, --from이 --to보다 앞이어야 합니다."
@@ -1443,3 +1437,13 @@ msgstr "{path}이(가) 있는 디스크가 거의 가득 차서, 가득 차기 �
 
 msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
 msgstr "{where}: {path}은(는) {size}로, 이 크기의 창에 표시하기에는 너무 좁거나 납작합니다. 창을 더 크게 하세요."
+
+msgid "scene {number}: a card with no picture, {start} to {end}"
+msgstr "장면 {number}: 그림 없는 카드, {start}부터 {end}까지"
+
+msgid ""
+"demoreel keeps its files in {path}, and ffmpeg's filters cannot carry a character in that path.\n"
+"  Point XDG_RUNTIME_DIR at a plainer one."
+msgstr ""
+"demoreel은 파일을 {path}에 두는데, 그 경로에 ffmpeg 필터가 다룰 수 없는 문자가 있습니다.\n"
+"  XDG_RUNTIME_DIR을 더 단순한 경로로 지정하세요."

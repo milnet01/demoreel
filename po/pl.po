@@ -834,9 +834,6 @@ msgstr "{where}: scena może mieć przenikanie albo pojawianie się, nie oba nar
 msgid "{where}: a crossfade of {seconds} seconds does not fit: the two scenes overlap for that long, and one of them is shorter."
 msgstr "{where}: przenikanie trwające {seconds} s się nie mieści: obie sceny nachodzą na siebie przez ten czas, a jedna z nich jest krótsza."
 
-msgid "text"
-msgstr "tekst"
-
 msgid "scene {number}: {kind} {name}, {start} to {end}"
 msgstr "scena {number}: {kind} {name}, od {start} do {end}"
 
@@ -872,9 +869,6 @@ msgstr "trim potrzebuje zadania: --from, --to, przejścia, --music albo --no-sou
 
 msgid "join takes two or more videos; one on its own is already whole."
 msgstr "join przyjmuje dwa filmy lub więcej; jeden sam w sobie jest już całością."
-
-msgid "the card"
-msgstr "karta"
 
 msgid "--from and --to must be inside {path}, which is {seconds} seconds long, with --from before --to."
 msgstr "--from i --to muszą mieścić się w {path}, który trwa {seconds} s, a --from musi wypadać przed --to."
@@ -1455,3 +1449,13 @@ msgstr "dysk z {path} jest prawie pełny, więc film zatrzymano, zanim go zapeł
 
 msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
 msgstr "{where}: {path} ma rozmiar {size}, jest zbyt wąski lub zbyt płaski na okno tej wielkości. Daj mu większe okno."
+
+msgid "scene {number}: a card with no picture, {start} to {end}"
+msgstr "scena {number}: plansza bez obrazu, od {start} do {end}"
+
+msgid ""
+"demoreel keeps its files in {path}, and ffmpeg's filters cannot carry a character in that path.\n"
+"  Point XDG_RUNTIME_DIR at a plainer one."
+msgstr ""
+"demoreel trzyma swoje pliki w {path}, a filtry ffmpeg nie obsługują jednego ze znaków tej ścieżki.\n"
+"  Wskaż w XDG_RUNTIME_DIR prostszą ścieżkę."

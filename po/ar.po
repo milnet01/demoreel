@@ -852,9 +852,6 @@ msgstr "{where}: يأخذ المشهد تلاشيًا متداخلًا أو ظه
 msgid "{where}: a crossfade of {seconds} seconds does not fit: the two scenes overlap for that long, and one of them is shorter."
 msgstr "{where}: تلاشٍ متداخل مدته {seconds} ثانية لا يتسع: فالمشهدان يتداخلان طوال هذه المدة، وأحدهما أقصر منها."
 
-msgid "text"
-msgstr "نص"
-
 msgid "scene {number}: {kind} {name}, {start} to {end}"
 msgstr "المشهد {number}: {kind} {name}، من {start} إلى {end}"
 
@@ -890,9 +887,6 @@ msgstr "يحتاج trim إلى عمل يقوم به: --from أو --to أو تل�
 
 msgid "join takes two or more videos; one on its own is already whole."
 msgstr "يأخذ join فيديوين أو أكثر؛ فالفيديو الواحد كامل أصلًا."
-
-msgid "the card"
-msgstr "البطاقة"
 
 msgid "--from and --to must be inside {path}, which is {seconds} seconds long, with --from before --to."
 msgstr "يجب أن يكون --from و--to داخل {path}، ومدته {seconds} ثانية، وأن يأتي --from قبل --to."
@@ -1473,3 +1467,13 @@ msgstr "القرص الذي يحوي {path} شبه ممتلئ، لذلك أُو�
 
 msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
 msgstr "{where}: {path} بحجم {size}، وهو ضيق جدًا أو مسطح جدًا لعرضه في نافذة بهذا الحجم. امنحه نافذة أكبر."
+
+msgid "scene {number}: a card with no picture, {start} to {end}"
+msgstr "المشهد {number}: بطاقة بلا صورة، من {start} إلى {end}"
+
+msgid ""
+"demoreel keeps its files in {path}, and ffmpeg's filters cannot carry a character in that path.\n"
+"  Point XDG_RUNTIME_DIR at a plainer one."
+msgstr ""
+"يحفظ demoreel ملفاته في {path}، ولا تستطيع مرشحات ffmpeg حمل أحد المحارف في هذا المسار.\n"
+"  وجّه XDG_RUNTIME_DIR إلى مسار أبسط."

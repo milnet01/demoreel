@@ -90,7 +90,10 @@ stop agreeing.
   No ffmpeg older than 6.1.1 has been measured.
 - **Text is measured by drawing it.** `text_size` draws the line on a black
   strip and reads ffmpeg's `bbox`. The refusal of a too-wide line rests on it,
-  and so does `demoreel check`'s text line.
+  and so does `demoreel check`'s text line. The strip is wider than the frame's
+  room: narrower, a line too wide for the frame measured as fitting.
+- **A film keeps no source's tags or chapters.** ffmpeg copies the first input's
+  by default, into a piece and into the film, so both ffmpegs take `NO_TAGS`.
 - **A measurement comes from what a file cannot write.** ffmpeg's log repeats a
   file's name and tags, and a name holding a line break makes a whole line that
   starts as a filter's does (measured). So `motion` reads `metadata=print` on
