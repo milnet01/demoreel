@@ -1514,9 +1514,11 @@ the only definition of what counts as documentation here, and the gate fails in
 the documentation mode exits, deliberately: the glob is what selects the mode,
 so a check sitting behind that exit could never fire in the mode it guards.
 
-Neither the hook nor the workflow matches against that glob itself. Both pipe
-the changed paths into `./ci.sh --docs-mode` and run whatever comes back, so the
-decision has one home as well as its value.
+Neither the hook nor the workflow matches against that glob itself. The hook
+pipes the changed paths into `./ci.sh --docs-mode`, and the workflow asks
+`./ci.sh --docs-mode-between` about its range. Each runs whatever comes back, so
+the decision has one home as well as its value. A rename counts as both its old
+name and its new one, so moving code to a `.md` runs the full gate.
 
 ## Languages
 

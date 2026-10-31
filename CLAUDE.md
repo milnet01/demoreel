@@ -27,7 +27,11 @@ picture. It is the same script CI runs, and it runs before a push. Add a check
 there, never to the workflow. `./ci.sh --docs` is the documentation-only
 subset, which a documentation-only push selects. `./ci.sh --finishing` runs
 only the finishing commands' checks, which need no display; it is for working
-on them, and the full gate runs them too.
+on them, and the full gate runs them too. `./ci.sh --release-chain` runs only
+the checks of tab completion, the release tag, the OBS scripts, attaching files
+and `.githooks/pre-push`, against stand-ins and scratch repositories, so nothing
+can reach a real remote. The full gate runs them too. A workflow runs only on
+GitHub, so keep its logic in `ci.sh`, where those checks can reach it.
 
 To read a gate's saved output, such as a `cc-job` log, run `./ci.sh --summary
 <log>` rather than reading the log. It prints the slowest steps, the steps
@@ -64,7 +68,9 @@ weeks old; rebuild then.
 every distro it targets (`docs/specs/DEMO-0068-linux-packages.md`), then runs
 README § Install from source in each (DEMO-0072). The full
 gate runs it where `podman` is; GitHub runs it in its own job, and
-`release.yml` runs it again to attach the files to a published release.
+`release.yml` runs it again to attach the files to a published release, in the
+images `packaging/release-images` pins (`./ci.sh --release-images` refreshes it).
+After the build wave its containers mount the files read-only.
 
 The gate records on `--gpu` and on a real Flatpak as well, but only where
 the machine has what those steps need — both skip on GitHub, so CI still covers

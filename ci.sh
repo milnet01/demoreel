@@ -14,6 +14,9 @@
 # trim, caption, join, card, motion, poster, thumbnail, sheet), which need no display and take
 # seconds. The full gate runs the same checks, from the same function.
 #
+# ./ci.sh --release-chain runs only the checks of tab completion and the release
+# chain, against stand-ins and scratch repositories. The full gate runs them too.
+#
 # ./ci.sh --perf measures what each command costs against docs/perf-baseline.tsv,
 # by hand before a release. The gate does not run it.
 set -euo pipefail
@@ -1637,13 +1640,13 @@ if [ "${1:-}" = "--perf-baseline" ]; then
     exit 0
 fi
 
-if [ "${1:-}" = "--docs-mode" ]; then
-    # The decision itself, not just the glob it turns on. Callers pipe the
-    # changed paths in and run ./ci.sh with whatever comes out, so nobody
-    # reimplements the matching. Empty input prints nothing: a change set we
-    # cannot see gets the full gate.
+# The decision itself, not just the glob it turns on. Callers hand over the
+# changed paths and run ./ci.sh with whatever comes out, so nobody reimplements
+# the matching. Empty input prints nothing: a change set we cannot see gets the
+# full gate.
+docs_mode() {
+    local globs path g matched seen=false
     IFS='|' read -r -a globs <<<"$DOCS_GLOB"
-    seen=false
     while IFS= read -r path; do
         [ -z "$path" ] && continue
         seen=true
@@ -1653,12 +1656,26 @@ if [ "${1:-}" = "--docs-mode" ]; then
             [[ $path == $g ]] && { matched=true; break; }
         done
         if ! $matched; then
-            exit 0
+            return 0
         fi
     done
     if $seen; then
         printf '%s\n' '--docs'
     fi
+}
+
+if [ "${1:-}" = "--docs-mode" ]; then
+    docs_mode
+    exit 0
+fi
+
+# The same decision over a range, for the GitHub workflow. --no-renames lists a
+# rename's old name as well as its new one: `git mv packaging/install.sh
+# packaging/install.md` otherwise reads as a change to documentation alone.
+if [ "${1:-}" = "--docs-mode-between" ]; then
+    changed_paths=$(git diff --name-only --no-renames "${2:?needs two commits}" "${3:?needs two commits}" \
+        2>/dev/null) || changed_paths=''
+    docs_mode <<<"$changed_paths"
     exit 0
 fi
 
@@ -5461,6 +5478,7 @@ chain_checks() {
     GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 PATH="$ct/bin:$PATH" GH_STUB="$ct/gh" \
         OSC_STUB="$ct/osc" chain_obs_checks "$ct/tag"
     PATH="$ct/bin:$PATH" GH_STUB="$ct/gh" chain_attach_checks "$ct/attach"
+    GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 chain_hook_checks "$ct/hook"
 }
 
 # A stand-in gh, so no check here can reach GitHub. It answers from GH_STUB:
@@ -5735,6 +5753,188 @@ chain_obs_checks() {
     unset OBS_WORKDIR POLL_SECS MAX_POLLS
 }
 
+# The hook in .githooks, from a scratch clone against a scratch bare remote, with
+# a gate script that writes down what it was asked to do. Its first checks are
+# the mode decision itself, in this very ci.sh.
+chain_hook_checks() {
+    local at=$1 hook=$PWD/.githooks/pre-push repo=$1/repo gate_log=$1/gate.log base out rc
+    step "a rename to documentation is not a documentation-only change"
+    mkdir -p "$repo/.githooks"
+    git init -q --bare "$at/origin.git"
+    cp ci.sh "$repo/ci.sh.real"
+    cp demoreel "$repo/demoreel"
+    (
+        cd "$repo"
+        git init -q
+        git config user.name chain
+        git config user.email chain@example.invalid
+        git remote add origin "$at/origin.git"
+        mkdir packaging
+        echo code > packaging/install.sh
+        echo words > notes.md
+        mv ci.sh.real ci.sh
+        git add -A
+        git commit -qm start
+        git mv packaging/install.sh packaging/install.md
+        git commit -qm rename
+        echo more >> notes.md
+        git add notes.md
+        git commit -qm notes
+    )
+    out=$(cd "$repo" && ./ci.sh --docs-mode-between HEAD~2 HEAD~1)
+    [ -z "$out" ] || { echo "FAIL: a rename to .md chose \"$out\", not the full gate" >&2; exit 1; }
+    out=$(cd "$repo" && ./ci.sh --docs-mode-between HEAD~1 HEAD)
+    [ "$out" = --docs ] || { echo "FAIL: a change to notes.md chose \"$out\", not --docs" >&2; exit 1; }
+    out=$(cd "$repo" && ./ci.sh --docs-mode-between HEAD~1 no-such-commit)
+    [ -z "$out" ] || { echo "FAIL: a range it could not read chose \"$out\"" >&2; exit 1; }
+    # A hook run from a linked worktree hands its GIT_DIR down to the gate.
+    git init -q "$at/elsewhere"
+    out=$(cd "$repo" && GIT_DIR=$at/elsewhere/.git ./ci.sh --docs-mode-between HEAD~1 HEAD)
+    [ "$out" = --docs ] || { echo "FAIL: GIT_DIR sent ci.sh to another repository: \"$out\"" >&2; exit 1; }
+    echo "the full gate for a rename, and --docs for documentation"
+
+    step "the pre-push hook answers for the pushed commits, not the working tree"
+    rm -rf "$repo" "$at/origin.git"
+    mkdir -p "$repo/.githooks"
+    git init -q --bare "$at/origin.git"
+    cp "$hook" "$repo/.githooks/pre-push"
+    chmod +x "$repo/.githooks/pre-push"
+    # The gate here writes down each run. Its --docs-mode counts .md alone,
+    # unless the DOCS_ANY line says otherwise.
+    cat > "$repo/ci.sh" <<'FAKEGATE'
+#!/usr/bin/env bash
+cd "$(dirname "$0")" || exit 1
+DOCS_ANY=false
+if [ "${1:-}" = --docs-mode ]; then
+    paths=$(cat)
+    if $DOCS_ANY || ! grep -qvE '\.md$|^$' <<<"$paths"; then echo --docs; fi
+    exit 0
+fi
+printf '%s %s\n' "${1:-full}" "$(git rev-parse HEAD)" >> "$GATE_LOG"
+[ ! -e fail-the-gate ]
+FAKEGATE
+    chmod +x "$repo/ci.sh"
+    (
+        cd "$repo"
+        git init -q -b main
+        git config user.name chain
+        git config user.email chain@example.invalid
+        git config core.hooksPath .githooks
+        git remote add origin "$at/origin.git"
+        echo code > code.sh
+        echo words > notes.md
+        git add -A
+        git commit -qm start
+        git push -q --no-verify origin main
+    )
+    chain_commit() {  # file: one commit changing it, on the current branch
+        (cd "$repo" && echo more >> "$1" && git add "$1" && git commit -qm "$1")
+    }
+    chain_push() {  # git push's arguments after origin; sets out and rc
+        rc=0
+        out=$(cd "$repo" && GATE_LOG=$gate_log git push origin "$@" 2>&1) || rc=$?
+    }
+    chain_gate_ran() {  # what, the mode expected: the push passed, gated at the tip
+        local tip want
+        tip=$(cd "$repo" && git rev-parse HEAD)
+        want="$2 $tip"
+        [ "$rc" = 0 ] && [ "$(tail -1 "$gate_log" 2>/dev/null)" = "$want" ] || {
+            echo "FAIL: $1: wanted exit 0 and \"$want\", got exit $rc and \"$(tail -1 "$gate_log" 2>/dev/null)\":" >&2
+            echo "$out" >&2; exit 1; }
+        echo "gated: $1"
+    }
+    chain_commit code.sh
+    chain_push main
+    chain_gate_ran "a code push" full
+    chain_commit notes.md
+    chain_push main
+    chain_gate_ran "a documentation push" --docs
+    chain_commit code.sh
+    chmod -x "$repo/ci.sh"
+    chain_push main
+    chain_gate_ran "ci.sh not executable in the working tree only" full
+    chmod +x "$repo/ci.sh"
+    chain_commit code.sh
+    rm "$repo/ci.sh"
+    chain_push main
+    chain_gate_ran "ci.sh deleted from the working tree only" full
+    (cd "$repo" && git checkout -q -- ci.sh)
+    chain_commit code.sh
+    sed -i 's/^DOCS_ANY=false/DOCS_ANY=true/' "$repo/ci.sh"
+    chain_push main
+    chain_gate_ran "an uncommitted edit calling everything documentation" full
+    (cd "$repo" && git checkout -q -- ci.sh && git mv code.sh code.md && git commit -qm rename)
+    chain_push main
+    chain_gate_ran "a rename to .md on a branch the remote has" full
+    (cd "$repo" && echo code > more.sh && git add more.sh && git commit -qm more)
+    chain_push main
+    chain_gate_ran "a new file of code" full
+    (cd "$repo" && git checkout -q -b renamed && git mv more.sh more.md && git commit -qm rename)
+    chain_push renamed
+    chain_gate_ran "a rename to .md on a branch new to the remote" full
+    # A merge's own edits count, though the commit log shows none by default.
+    (
+        cd "$repo"
+        git checkout -q -b side
+        echo side >> notes.md
+        git add notes.md
+        git commit -qm side
+        git checkout -q renamed
+        git checkout -q -b merged
+        git merge -q --no-ff --no-commit side >/dev/null
+        echo edit >> code.md
+        echo edit > other.sh
+        git add -A
+        git commit -qm merged
+    )
+    chain_push merged
+    chain_gate_ran "a merge carrying its own edits, on a new branch" full
+    (cd "$repo" && git checkout -q main)
+
+    # From a linked worktree git exports GIT_DIR, and the gate must not read it.
+    (cd "$repo" && git worktree add -q -b linked "$at/linked" && cd "$at/linked" \
+        && echo linked >> notes.md && git add notes.md && git commit -qm linked)
+    chain_commit code.sh
+    rc=0
+    out=$(cd "$at/linked" && GATE_LOG=$gate_log git push origin main 2>&1) || rc=$?
+    chain_gate_ran "a push from a linked worktree of another branch" full
+
+    # What must stop a push, and what must not.
+    (cd "$repo" && touch fail-the-gate && git add fail-the-gate && git commit -qm fail)
+    chain_push main
+    [ "$rc" != 0 ] && grep -q 'gate FAILED' <<<"$out" || {
+        echo "FAIL: a gate that failed at the tip let the push through: $out" >&2; exit 1; }
+    (cd "$repo" && git rm -q fail-the-gate && git update-index --chmod=-x ci.sh && git commit -qm noexec)
+    chain_push main
+    [ "$rc" != 0 ] && grep -q 'gate FAILED' <<<"$out" || {
+        echo "FAIL: a committed ci.sh that cannot run let the push through: $out" >&2; exit 1; }
+    (cd "$repo" && git update-index --chmod=+x ci.sh && git checkout -q -- ci.sh && git commit -qm exec)
+    base=$(wc -l < "$gate_log")
+    (cd "$repo" && git rm -q ci.sh && git commit -qm gone)
+    chain_push main
+    [ "$rc" = 0 ] && grep -q 'no ci.sh at' <<<"$out" && [ "$(wc -l < "$gate_log")" = "$base" ] || {
+        echo "FAIL: a tip with no ci.sh should pass, saying so: exit $rc: $out" >&2; exit 1; }
+    echo "stopped: a failing gate and a ci.sh that cannot run; passed: a tip with no ci.sh"
+
+    # The secret scan, through a stand-in that says what it was asked and answers.
+    (cd "$repo" && git revert --no-edit HEAD >/dev/null)
+    cat > "$at/gitleaks" <<'FAKESCAN'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >> "$GATE_LOG.scan"
+exit "${SCAN_RC:-0}"
+FAKESCAN
+    chmod +x "$at/gitleaks"
+    rm -f "$gate_log.scan"
+    chain_commit code.md
+    rc=0
+    out=$(cd "$repo" && PATH="$at:$PATH" SCAN_RC=1 GATE_LOG=$gate_log git push origin main 2>&1) || rc=$?
+    [ "$rc" != 0 ] && grep -q 'secret scan' <<<"$out" && grep -q -- '--log-opts' "$gate_log.scan" || {
+        echo "FAIL: a scan that found something let the push through: exit $rc: $out" >&2; exit 1; }
+    out=$(cd "$repo" && PATH="$at:$PATH" GATE_LOG=$gate_log git push origin main 2>&1) || {
+        echo "FAIL: a clean scan stopped the push: $out" >&2; exit 1; }
+    echo "the pushed commits are scanned for secrets, and a finding stops the push"
+}
+
 # Attaching the files to a release: all of a set or a set marked unfinished,
 # whatever a run dies on.
 chain_attach_checks() {
@@ -5835,6 +6035,9 @@ for line in re.findall(r"^ *(?:- )?run: *(.*)", release, flags=re.M):
     need(line.startswith("./ci.sh --release-"),
          f"a step holding the release job's grants runs something else: {line}")
 need("continue-on-error" not in text, "no step here may continue on error")
+ci = pathlib.Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+need("./ci.sh --docs-mode-between" in ci and "git diff" not in ci,
+     "ci.yml should leave the mode decision to ./ci.sh --docs-mode-between")
 for path in pathlib.Path(".github/workflows").glob("*.yml"):
     for line in path.read_text(encoding="utf-8").splitlines():
         m = re.match(r"\s*(?:- )?uses: (\S+)", line)

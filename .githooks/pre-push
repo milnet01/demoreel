@@ -16,17 +16,25 @@ set -Eeuo pipefail
 
 say() { printf 'pre-push: %s\n' "$1" >&2; }
 
+# git exports GIT_DIR to this hook when the push comes from a linked worktree
+# (measured 2026-10-31). Left set, git calls in the gate would read that
+# worktree's HEAD and index rather than the commit being gated.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
+
 cd "$(git rev-parse --show-toplevel)"
-[ -x ./ci.sh ] || { say 'no ./ci.sh here — nothing to run'; exit 0; }
 
 # git feeds one line per ref: <local ref> <local sha> <remote ref> <remote sha>.
 # The commits are tested from that range, never from the working tree: the two
 # are the same only when the tree is clean, and an uncommitted fix turns the run
-# green for commits that will go red. Which gate runs is decided by the working
-# tree's ./ci.sh --docs-mode, so an uncommitted edit to its DOCS_GLOB counts.
+# green for commits that will go red. The same goes for what decides the run:
+# nothing below reads the working tree's ci.sh, so an uncommitted delete, chmod
+# or edit of it changes nothing. --no-renames, or a rename lists only its new
+# name, and moving code to a .md reads as documentation. --diff-merges, or a
+# merge's own edits are listed nowhere.
 ZERO=0000000000000000000000000000000000000000
 changed=""
 tips=()
+ranges=()
 unresolved=false
 
 while read -r _lref lsha _rref rsha; do
@@ -34,10 +42,12 @@ while read -r _lref lsha _rref rsha; do
     tips+=("$lsha")
     if [ "$rsha" = "$ZERO" ]; then
         # A branch the remote has never seen has no "since" to diff against.
-        files=$(git log --name-only --pretty=format: "$lsha" --not --remotes 2>/dev/null) \
-            || { unresolved=true; continue; }
+        ranges+=("$lsha --not --remotes")
+        files=$(git log --name-only --no-renames --diff-merges=first-parent --pretty=format: \
+            "$lsha" --not --remotes 2>/dev/null) || { unresolved=true; continue; }
     else
-        files=$(git diff --name-only "$rsha" "$lsha" 2>/dev/null) \
+        ranges+=("$rsha..$lsha")
+        files=$(git diff --name-only --no-renames "$rsha" "$lsha" 2>/dev/null) \
             || { unresolved=true; continue; }
     fi
     changed+=$files$'\n'
@@ -45,14 +55,18 @@ done
 
 [ ${#tips[@]} -eq 0 ] && { say 'nothing to check (deletion or empty push)'; exit 0; }
 
-# ci.sh owns the glob AND the matching, so this hook only hands it the paths --
-# the same division the GitHub workflow uses. Anything we could not resolve runs
-# the full gate: a wrong guess here must cost time, never coverage.
-mode=""
-if ! $unresolved && [ -n "${changed//[$'\n' ]/}" ]; then
-    mode=$(printf '%s' "$changed" | ./ci.sh --docs-mode)
+# A secret must never reach a remote, whatever the gate would have said. Where
+# gitleaks is not installed this says so, and the push carries on.
+if command -v gitleaks >/dev/null; then
+    for range in "${ranges[@]}"; do
+        gitleaks git --no-banner --redact --log-opts="$range" . >/dev/null 2>&1 || {
+            say "secret scan failed over $range — push aborted"
+            say "  see: gitleaks git --redact --log-opts=\"$range\" ."
+            exit 1; }
+    done
+else
+    say 'gitleaks is not installed, so the pushed commits were not scanned for secrets'
 fi
-[ -n "$mode" ] && say "documentation-only push — running ./ci.sh $mode"
 
 # A detached worktree, not a stash: `git stash` exits 0 having stashed nothing
 # when there was nothing to stash, so a hook cannot tell a clean tree from a
@@ -67,8 +81,22 @@ cleanup() {
 trap cleanup EXIT
 
 for tip in "${tips[@]}"; do
+    if ! git cat-file -e "$tip:ci.sh" 2>/dev/null; then
+        say "no ci.sh at ${tip:0:12} — nothing to run"
+        continue
+    fi
     worktree=$(mktemp -d)
     git worktree add --detach --quiet "$worktree" "$tip"
+    # The tip's own ci.sh owns the glob AND the matching, so this hook only hands
+    # it the paths -- the same division the GitHub workflow uses. Anything we
+    # could not resolve runs the full gate: a wrong guess here must cost time,
+    # never coverage.
+    mode=""
+    if ! $unresolved && [ -n "${changed//[$'\n' ]/}" ]; then
+        mode=$(cd "$worktree" && printf '%s' "$changed" | ./ci.sh --docs-mode) || mode=""
+    fi
+    [ "$mode" = --docs ] || mode=""
+    [ -n "$mode" ] && say "documentation-only push — running ./ci.sh $mode"
     say "gating ${tip:0:12}"
     if ! ( cd "$worktree" && ./ci.sh "$mode" ); then
         say "gate FAILED on ${tip:0:12} — push aborted"

@@ -60,9 +60,9 @@ jobs:
         run: pipx install "ruff==$(./ci.sh --ruff-version)"
 
       - name: Decide which mode to run
-        # ci.sh makes the decision, not this file. It owns the glob AND the
-        # matching, so this step only has to find the range and hand over the
-        # changed paths. A range we cannot resolve falls back to the full gate,
+        # ci.sh makes the decision, not this file. It owns the glob, the
+        # matching and the listing of what changed, so this step only has to
+        # find the range. A range we cannot resolve falls back to the full gate,
         # never to the docs one.
         id: mode
         # Every value arrives through env, so the shell sees data. Expanded as
@@ -84,7 +84,7 @@ jobs:
           mode=""
           if [ -n "$base" ] && [ "$base" != "0000000000000000000000000000000000000000" ] \
              && git cat-file -e "$base^{commit}" 2>/dev/null; then
-            mode=$(git diff --name-only "$base" "$head" | ./ci.sh --docs-mode)
+            mode=$(./ci.sh --docs-mode-between "$base" "$head")
           else
             echo "no resolvable range; running the full gate"
           fi
