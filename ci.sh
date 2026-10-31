@@ -5040,7 +5040,7 @@ bad = [line.strip() for line in text.splitlines()
        # Split in two so this line does not match itself.
        if re.search(r'/demoreel"?' r" record\b(?! --help)", line)
        and not line.lstrip().startswith("#")
-       and not re.search(r" (-n|--name) ", line)]
+       and not re.search(r" (-n |--name[ =])", line)]
 for line in bad:
     print(f"records under the default name: {line[:100]}", file=sys.stderr)
 sys.exit(1 if bad else 0)
@@ -7009,7 +7009,8 @@ exec $(command -v ffmpeg) "\$@"
 SHIM
     chmod +x "$tmp/noremux/ffmpeg"
     set +e
-    PATH="$tmp/noremux:$PATH" ./demoreel record --gpu -n gatestale -o "$tmp/midway.mp4" -s 320x240 \
+    mkdir -p "$tmp/midway"
+    PATH="$tmp/noremux:$PATH" ./demoreel record --gpu -n gatestale -o "$tmp/midway/take.mp4" -s 320x240 \
         -a 'key Bogus_Key' -- xclock >/dev/null 2>"$tmp/midway.err"
     midway_status=$?
     set -e
@@ -7021,11 +7022,11 @@ SHIM
         exit 1
     }
     # The recording is kept and named, and the failed copy of it is not kept.
-    midway_kept=$(find "$tmp" -maxdepth 1 -name '.demoreel-part-*')
+    midway_kept=$(find "$tmp/midway" -maxdepth 1 -name '.demoreel-part-*')
     [ "$(printf '%s\n' "$midway_kept" | wc -l)" = 1 ] && [ -s "$midway_kept" ] \
         && grep -qF "$midway_kept" "$tmp/midway.err" || {
         echo "a part that could not be finished should be kept and named, alone:" >&2
-        find "$tmp" -maxdepth 1 -name '.demoreel-*' >&2
+        find "$tmp/midway" -maxdepth 1 -name '.demoreel-*' >&2
         cat "$tmp/midway.err" >&2
         exit 1
     }
@@ -7753,9 +7754,13 @@ done
     exit 1
 }
 sleep 1
-[ "$(./demoreel stop gatepart)" = "$retake/take.mp4" ] || {
-    echo "stop did not print the finished path" >&2; exit 1; }
-wait "$take_rec"
+take_stopped=$(./demoreel stop gatepart) || true
+wait "$take_rec" || true
+[ "$take_stopped" = "$retake/take.mp4" ] || {
+    echo "stop did not print the finished path, but '$take_stopped':" >&2
+    cat "$retake/take.err" >&2
+    exit 1
+}
 [ "$(parts "$retake")" = 0 ] || { echo "a finished run left a part" >&2; exit 1; }
 ffprobe -v error "$retake/take.mp4" || { echo "the recording moved into place cannot be read" >&2; exit 1; }
 good=$(sha256sum <"$retake/take.mp4")
