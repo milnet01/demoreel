@@ -4369,6 +4369,157 @@ CAPPY
     grep -q "of memory" "$fe" || { show_err; fail "ffprobe over the cap did not say why"; }
     echo "output stayed bounded and each read stopped at the cap"
     }
+    fin_s76() {
+    # DEMO-0094. Given as written, `concat:a|b` is ffmpeg's concat protocol,
+    # `12:30:05.mp4` is "Protocol not found", and `./-report` reaches ffprobe as
+    # an option that writes a log here. Every one is an ordinary name.
+    local name n1 n2 want
+    ffmpeg -nostdin -v error -i "$ft/A.mp4" -t 1 -c copy -y "$ft/short.mp4"
+    want=$(v_frames "$ft/short.mp4")
+    for name in '12:30:05.mp4' '-report.mp4' 'concat:short.mp4|short.mp4' 'pipe:0.mp4' \
+                'pipe:0' 'subfile,,start,0,end,99,,:short.mp4' 'a%d.mp4' 'file:short.mp4'; do
+        cp "$ft/short.mp4" "$ft/$name"
+        printf 'clip %q to 0.5\n' "$name" > "$ft/s.txt"
+        n1="$ft/out/n1.mp4"
+        run edit s.txt -o "$n1"; expect_ok "a clip named $name"
+        assert_eq "the clip named $name is that file's frames" 6 "$(v_frames "$n1")"
+        run motion -- "$name"; expect_ok "motion of $name"
+        assert_eq "motion of $name counts that file's frames" "frames: $want" "$(sed -n 2p "$fo")"
+    done
+    for name in '12:30:05.mp4' '-report.mp4' 'a%d.mp4'; do
+        n1="$ft/out/n1.mp4"
+        run trim --to 0.5 -o "$n1" -- "$name"; expect_ok "trim of $name"
+        run caption --text x -o "$n1" -- "$name"; expect_ok "caption of $name"
+        assert_eq "caption of $name is the whole of that file" "$want" "$(v_frames "$n1")"
+        run join -o "$n1" -- "$name" short.mp4; expect_ok "join of $name"
+        run poster -t 0.1 -o "$ft/out/p.png" -- "$name"; expect_ok "poster of $name"
+        run thumbnail -t 0.1 -o "$ft/out/p.jpg" -- "$name"; expect_ok "thumbnail of $name"
+        run sheet --at 0.1 -o "$ft/out/p.png" -- "$name"; expect_ok "sheet of $name"
+        run card -d 1 "--like=$name" -o "$n1"; expect_ok "card --like $name"
+    done
+    assert_eq "ffprobe was given no option to write a log" 0 \
+        "$(find "$ft" -maxdepth 1 -name 'ff*.log' | wc -l)"
+    # The other inputs. A music, a sound and a picture named as oddly.
+    ffmpeg -nostdin -v error -f lavfi -i sine=440:d=1 -y "$ft/12:30.wav"
+    cp "$ft/12:30.wav" "$ft/s:1.wav"
+    ffmpeg -nostdin -v error -f lavfi -i testsrc=s=32x32:r=5:d=1 -y "$ft/g:1.gif"
+    ffmpeg -nostdin -v error -f lavfi -i color=red:s=32x32:d=0.1 -frames:v 1 -update 1 -y "$ft/p:1.png"
+    cp "$ft/p:1.png" "$ft/-p.png"
+    printf 'card 1 %q\n  sound %q\nmusic %q\ncard 1 %q\ncard 1 %q\n' \
+        'p:1.png' 's:1.wav' '12:30.wav' '-p.png' 'g:1.gif' > "$ft/s.txt"
+    run edit s.txt -o "$ft/out/n2.mp4"; expect_ok "a music, a sound and pictures with odd names"
+    [ "$(a_streams "$ft/out/n2.mp4")" = 1 ] || fail "the film with odd names has no sound"
+    run card 'p:1.png' -d 1 -o "$ft/out/n3.mp4"; expect_ok "card's picture with a colon"
+    run trim A.mp4 --to 1 --music '12:30.wav' -o "$ft/out/n4.mp4"; expect_ok "trim --music with a colon"
+    # A name holding %d is that file, and not a sibling it would be a pattern for.
+    ffmpeg -nostdin -v error -f lavfi -i color=red:s=64x64:d=0.1 -frames:v 1 -update 1 -y "$ft/q%d.png"
+    ffmpeg -nostdin -v error -f lavfi -i color=blue:s=128x128:d=0.1 -frames:v 1 -update 1 -y "$ft/out/blue.png"
+    cp "$ft/out/blue.png" "$ft/q1.png"
+    cp "$ft/out/blue.png" "$ft/q0.png"
+    run card 'q%d.png' -d 1 -s 320x240 -r 10 -o "$ft/out/n5.mp4"
+    expect_ok "a picture named q%d.png"
+    assert_colour "the picture named q%d.png, not q1.png beside it" "$ft/out/n5.mp4" 2 0.5 0.5 255 0 0 40
+    run card -d 1 '--like=q%d.png' -o "$ft/out/n7.mp4"
+    expect_ok "--like a picture named q%d.png"
+    assert_eq "the size of the picture named q%d.png, not q1.png beside it" 64x64 "$(v_size "$ft/out/n7.mp4")"
+    # A real film from a picture with a % and music: the sound's graph reads it too.
+    cp "$ft/12:30.wav" "$ft/m%d.wav"
+    printf 'card 1 %q\nmusic %q\n' 'q%d.png' 'm%d.wav' > "$ft/s.txt"
+    run edit s.txt -o "$ft/out/n6.mp4"; expect_ok "a % in a picture's and a music's name"
+    # Every file someone else may have made is opened under both lists, on both
+    # programs. On a file ffmpeg reads the name decides nothing else here, so
+    # this is what holds them: no fixture reaches another protocol once a path
+    # is absolute, and the first look at a file is what a list stops.
+    mkdir -p "$ft/watch"
+    for name in ffmpeg ffprobe; do
+        printf '#!/bin/sh\nprintf "%%s\\n" "$@" >> "$WATCHED"\necho END >> "$WATCHED"\nexec "%s" "$@"\n' \
+            "$(command -v "$name")" > "$ft/watch/$name"
+        chmod +x "$ft/watch/$name"
+    done
+    printf 'clip A.mp4 to 1\n  sound s:1.wav\ncard 1 g:1.gif\nclip A.mp4 window 50 to 1\nmusic 12:30.wav\n' > "$ft/s.txt"
+    export WATCHED="$ft/log/watched"
+    : > "$WATCHED"
+    FIN_PATH="$ft/watch:$PATH" run edit s.txt -o "$ft/out/w.mp4"
+    expect_ok "a film under watch"
+    for name in "poster A.mp4 -t 0.1 -o $ft/out/w.png" "thumbnail A.mp4 -t 0.1 -o $ft/out/w.jpg" \
+                "sheet A.mp4 --at 0.1 -o $ft/out/w.png" "motion A.mp4"; do
+        # shellcheck disable=SC2086  # each case is several words
+        FIN_PATH="$ft/watch:$PATH" run $name
+        expect_ok "$name under watch"
+    done
+    python3 - "$WATCHED" "$ft" <<'WATCHPY' || exit 1
+import sys
+words = open(sys.argv[1], errors="replace").read().split("\n")
+home = sys.argv[2] + "/"
+runs, run = [], []
+for word in words:
+    if word == "END":
+        runs.append(run)
+        run = []
+    else:
+        run.append(word)
+seen = bad = 0
+for run in runs:
+    since = 0
+    for at, word in enumerate(run):
+        if word == "-i" and at + 1 < len(run):
+            name = run[at + 1]
+            # What demoreel wrote itself, or not a file: its pieces, parts and lavfi.
+            own = "/.demoreel-" in name or "/out/" in name or not name.startswith(home)
+            if not own:
+                seen += 1
+                before = run[since:at]
+                for option in ("-protocol_whitelist", "-format_whitelist"):
+                    if option not in before:
+                        bad += 1
+                        print(f"FAIL: {name} was read without {option}: {' '.join(before)[:200]}")
+            since = at + 2
+assert seen >= 10, f"control: only {seen} inputs were seen"
+sys.exit(1 if bad else 0)
+WATCHPY
+    echo "colons, a dash and a % in a name stayed names"
+    }
+    fin_s77() {
+    # DEMO-0094. Measured on ffmpeg 6.1.1 and 9.0.2: an .m3u8 reads a local file
+    # it names, and a concat list reads one beside it under any name, with
+    # -protocol_whitelist file or without. What they open is a file.
+    local a_abs bad cmd
+    a_abs="$ft/A.mp4"
+    printf '#EXTM3U\n#EXT-X-TARGETDURATION:6\n#EXTINF:6,\n%s\n#EXT-X-ENDLIST\n' "$a_abs" > "$ft/list.m3u8"
+    printf 'ffconcat version 1.0\nfile A.mp4\n' > "$ft/list.mp4"
+    printf 'ffconcat version 1.0\nfile A.mp4\n' > "$ft/list.wav"
+    printf 'ffconcat version 1.0\nfile A.mp4\n' > "$ft/list.png"
+    assert_eq "control: ffmpeg reads a playlist" hls \
+        "$(ffprobe -v error -show_entries format=format_name -of csv=p=0 "$ft/list.m3u8")"
+    assert_eq "control: ffmpeg reads a list" concat \
+        "$(cd "$ft" && ffprobe -v error -show_entries format=format_name -of csv=p=0 list.mp4)"
+    for bad in list.m3u8 list.mp4; do
+        for cmd in "trim $bad --to 1 -o $ft/out/x.mp4" "caption $bad --text x -o $ft/out/x.mp4" \
+                   "join A.mp4 $bad -o $ft/out/x.mp4" "motion $bad" \
+                   "poster $bad -t 0.1 -o $ft/out/x.png" "thumbnail $bad -t 0.1 -o $ft/out/x.jpg" \
+                   "sheet $bad --at 0.1 -o $ft/out/x.png" "card -d 1 --like $bad -o $ft/out/x.mp4" \
+                   "card $bad -d 1 -o $ft/out/x.mp4" \
+                   "trim A.mp4 --to 1 --music $bad -o $ft/out/x.mp4"; do
+            # shellcheck disable=SC2086  # each case is several words
+            run $cmd
+            expect_refused "$cmd"
+            grep -q 'a list that points at other files' "$fe" || {
+                show_err; fail "$cmd: did not say the file is a list"; }
+            assert_absent "$cmd leaves nothing" "$ft/out/x.mp4"
+            assert_absent "$cmd leaves nothing" "$ft/out/x.png"
+        done
+    done
+    for bad in 'clip list.mp4' 'card 1 list.png' 'clip A.mp4 to 1|  sound list.wav' \
+               'clip A.mp4 to 1|music list.wav'; do
+        tr '|' '\n' <<<"$bad" > "$ft/s.txt"
+        run edit s.txt -o "$ft/out/x.mp4"
+        expect_refused "edit: $bad"
+        grep -q 'a list that points at other files' "$fe" || {
+            show_err; fail "edit: $bad: did not say the file is a list"; }
+        grep -q '^demoreel: line' "$fe" || { show_err; fail "edit: $bad: did not name its line"; }
+    done
+    echo "a playlist and a list were refused on every input, and said so"
+    }
     fin_s71() {
     # DEMO-0094. A part's name was the output's, so it could be planted first:
     # the link's target was truncated, and the link itself moved to -o.
@@ -4924,6 +5075,8 @@ CASES
     fin_step "a file name that is not UTF-8 makes a film, a note and its exact path" fin_s73
     fin_step "a tag or a file name is never read as a measurement" fin_s74
     fin_step "a program's output is bounded in memory, and every read of a file is under the memory cap" fin_s75
+    fin_step "a file name is a name, on every input" fin_s76
+    fin_step "a file that points at other files is refused, on every input" fin_s77
     fin_run
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }

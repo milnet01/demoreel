@@ -1425,3 +1425,9 @@ msgstr "{output} 保持原样，本次运行的视频在 {part}。"
 
 msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
 msgstr "读取 {path} 使用了超过 {size} GB 内存,即本机内存的一半,因此已停止。"
+
+msgid "{where}: {path} is a list that points at other files, such as a playlist, and demoreel does not follow one."
+msgstr "{where}:{path} 是指向其他文件的列表,例如播放列表,demoreel 不会跟随这种列表。"
+
+msgid "ffmpeg did not say which formats it reads, so nothing was read."
+msgstr "ffmpeg 没有说明它能读取哪些格式,因此没有读取任何内容。"

@@ -3825,17 +3825,18 @@ def parse_script(text):
 def probe(path, where):
     """What ffprobe says of a video or a picture: its size, frame rate, length
     and format. Dies if it cannot be read, naming the scene that asked."""
-    if not Path(path).is_file():
+    if not Path(path).expanduser().is_file():
         die(tr("{where}: there is no file {path}", where=where, path=path))
     try:
         out = read_file_capped(
             ["ffprobe", "-v", "error", "-select_streams", "v:0",
              "-show_entries",
              "stream=width,height,avg_frame_rate:format=duration,format_name",
-             "-of", "json", str(path)], CALL_TIMEOUT, path)
+             "-of", "json", *probe_input(path)], CALL_TIMEOUT, path)
     except subprocess.TimeoutExpired:
         die(tr("{where}: reading {path} took over {seconds}s.", where=where,
                path=path, seconds=CALL_TIMEOUT))
+    refuse_a_list(out.stderr, path, where)
     try:
         info = json.loads(out.stdout) if out.returncode == 0 else {}
         stream = info["streams"][0]
@@ -3867,7 +3868,7 @@ def picture_frames(scene, where):
         counted = read_file_capped(
             ["ffprobe", "-v", "error", "-count_frames", "-select_streams",
              "v:0", "-show_entries", "stream=nb_read_frames", "-of",
-             "csv=p=0", str(scene.path)], 6 * CALL_TIMEOUT, scene.path)
+             "csv=p=0", *probe_input(scene.path)], 6 * CALL_TIMEOUT, scene.path)
         frames = int(counted.stdout.strip().split(",")[0])
     except (subprocess.TimeoutExpired, ValueError):
         die(tr("{where}: could not count the frames of {path}.", where=where,
@@ -3976,6 +3977,75 @@ def read_file_capped(cmd, timeout, path, on_line=None):
         die(tr("reading {path} used more than {size} GB of memory, half this "
                "machine's, so it was stopped.", path=path, size=f"{cap / 1024 ** 3:.1f}"))
     return done
+
+
+# The formats a file someone else made may not be read as, each of which opens
+# other files or the network on the file's say: a playlist named .m3u8, or a
+# concat list named anything (measured: a .mp4 holding `ffconcat version 1.0` and
+# a file beside it). -protocol_whitelist file does not stop them, since what they
+# open is a file. avisynth and vapoursynth run a script as code.
+REFUSED_FORMATS = frozenset(("applehttp", "avisynth", "concat", "dash", "hls", "imf",
+                             "rtp", "rtsp", "sap", "sdp", "vapoursynth"))
+_readable_formats = None
+
+
+def readable_formats():
+    """The formats this ffmpeg reads, less REFUSED_FORMATS, for
+    -format_whitelist. A list asked of ffmpeg, since README promises any video it
+    can read; a fixed list would refuse a format nobody thought of."""
+    global _readable_formats  # noqa: PLW0603 - asked once per run
+    if _readable_formats is None:
+        try:
+            listed = subprocess.run(["ffmpeg", "-hide_banner", "-demuxers"], capture_output=True,
+                                    text=True, errors="replace", timeout=CALL_TIMEOUT,
+                                    check=False).stdout
+        except (OSError, subprocess.TimeoutExpired):
+            listed = ""
+        names = [name for name in re.findall(r"^ D\S* +([a-z0-9_,]+) ", listed, re.MULTILINE)
+                 if not set(name.split(",")) & REFUSED_FORMATS]
+        if not names:
+            die(tr("ffmpeg did not say which formats it reads, so nothing was read."))
+        _readable_formats = ",".join(names)
+    return _readable_formats
+
+
+def absolute_input(path):
+    """A file to read, as ffmpeg and ffprobe must be given it: from the root, so
+    `12:30:05.mp4` and `concat:a|b` are names rather than protocols, and
+    `-report.mp4` is a name rather than an option. inputs.count("-i") counts
+    ffmpeg's inputs because of this too."""
+    return str(Path(path).expanduser().absolute())
+
+
+def probe_input(path):
+    """What goes on ffprobe's command line to read a file someone else may have
+    made. -pattern_type is image2's, and ffprobe takes it for any format."""
+    full = absolute_input(path)
+    return ["-protocol_whitelist", "file", "-format_whitelist", readable_formats(),
+            *(["-pattern_type", "none"] if "%" in full else []), "-i", full]
+
+
+def media_input(path):
+    """The same for ffmpeg, which is an error to give -pattern_type for any format
+    but image2. Unset, image2 reads a name holding %d as a pattern, so `a%d.png`
+    shows the a1.png beside it (measured). So a name with a % in it is asked about
+    first; no other name can be read as a pattern."""
+    full = absolute_input(path)
+    pattern = []
+    if "%" in full:
+        said = read_file_capped(["ffprobe", "-v", "error", "-show_entries", "format=format_name",
+                                 "-of", "csv=p=0", *probe_input(path)], CALL_TIMEOUT, path)
+        if said.stdout.strip().strip('"') == "image2":
+            pattern = ["-pattern_type", "none"]
+    return ["-protocol_whitelist", "file", "-format_whitelist", readable_formats(),
+            *pattern, "-i", full]
+
+
+def refuse_a_list(said, path, where):
+    """Die if ffprobe's words say the format is one of REFUSED_FORMATS."""
+    if re.search(r"^\[\S+ @ 0x[0-9a-f]+\] Format not on whitelist", said, re.MULTILINE):
+        die(tr("{where}: {path} is a list that points at other files, such as a "
+               "playlist, and demoreel does not follow one.", where=where, path=path))
 
 
 def rate_text(rate):
@@ -4509,16 +4579,17 @@ def sound_info(path, where):
     (DEMO-0191); the file's stands in where the stream gives none, as in a
     .mkv. Dies if ffprobe cannot read it, naming the line or option that
     asked."""
-    if not Path(path).is_file():
+    if not Path(path).expanduser().is_file():
         die(tr("{where}: there is no file {path}", where=where, path=path))
     try:
         out = read_file_capped(
             ["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries",
-             "stream=index,duration:format=duration", "-of", "json", str(path)],
+             "stream=index,duration:format=duration", "-of", "json", *probe_input(path)],
             CALL_TIMEOUT, path)
     except subprocess.TimeoutExpired:
         die(tr("{where}: reading {path} took over {seconds}s.", where=where,
                path=path, seconds=CALL_TIMEOUT))
+    refuse_a_list(out.stderr, path, where)
     try:
         info = json.loads(out.stdout) if out.returncode == 0 else None
         streams = info.get("streams") or []
@@ -4553,7 +4624,7 @@ def music_loudness(music):
     made stereo first, since a mono file reads 3 dB quieter once it is."""
     try:
         done = read_file_capped(
-            ["ffmpeg", "-nostdin", "-hide_banner", "-i", str(music.path), "-map",
+            ["ffmpeg", "-nostdin", "-hide_banner", *media_input(music.path), "-map",
              "0:a:0", "-af", f"{SOUND_FORMAT},volumedetect", "-f", "null", "-"],
             60 + music.length / 5, music.path)
     except subprocess.TimeoutExpired:
@@ -4736,7 +4807,7 @@ def clip_input(scene):
     read = scene.read_sound if keeps_sound(scene) else scene.read
     if read is not None:
         inputs += ["-t", f"{read:.6f}"]
-    return [*inputs, "-i", str(scene.path)]
+    return [*inputs, *media_input(scene.path)]
 
 
 def scene_graph(scene, length, number, first_input, width, height, rate):
@@ -4780,7 +4851,7 @@ def scene_graph(scene, length, number, first_input, width, height, rate):
     # loop instead (-ignore_loop 0, -loop 1) makes an input with no end: an
     # animated .png read that way, waiting behind another scene, is what
     # filled the memory.
-    inputs += ["-i", str(scene.path)]
+    inputs += media_input(scene.path)
     top, room_w, room_h = picture_room(scene, width, height)
     return inputs, [
         # Fitted into the room left for it, keeping its shape, never enlarged.
@@ -5196,11 +5267,11 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
         if music:
             check_music(music, total)
             chains.append(music_graph(music, inputs.count("-i") + 1, total))
-            inputs += ["-i", str(music.path)]
+            inputs += media_input(music.path)
             plan_music(music)
         for number, entry in enumerate(effects):
             chains.append(sound_graph(entry, inputs.count("-i") + 1, number, total))
-            inputs += ["-i", str(entry["path"])]
+            inputs += media_input(entry["path"])
         mixed = [*([sound] if clip_sound else []), *(["[m]"] if music else []),
                  *(f"[e{number}]" for number in range(len(effects)))]
         if len(mixed) > 1:
@@ -5430,7 +5501,7 @@ def cmd_motion(a):
         seen = read_file_capped(
             ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
              "-ss", f"{start:.6f}", "-t", f"{end - start:.6f}",
-             "-i", str(Path(a.input).expanduser()),
+             *media_input(a.input),
              "-vf", f"{crop}metadata=delete,metadata=add:key=e:value=1,"
                     f"metadata=print:key=e:file=-:direct=1,{NEW_FRAME},"
                     "metadata=add:key=n:value=1,metadata=print:key=n:file=-:direct=1",
@@ -5483,7 +5554,7 @@ def grab_frame(path, moment, info, picture, look=None):
         grab = read_file_capped(
             ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
              "-ss", f"{max(0.0, (frame - 0.5) * step):.6f}",
-             "-i", str(Path(path).expanduser()), "-frames:v", "1",
+             *media_input(path), "-frames:v", "1",
              *(["-vf", look] if look else []),
              *(["-q:v", "3"] if picture.suffix.lower() == ".jpg" else []),
              *single_picture(picture), "-y", str(picture)],

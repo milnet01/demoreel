@@ -638,6 +638,12 @@ msgstr[1] ""
 msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
 msgstr ""
 
+msgid "ffmpeg did not say which formats it reads, so nothing was read."
+msgstr ""
+
+msgid "{where}: {path} is a list that points at other files, such as a playlist, and demoreel does not follow one."
+msgstr ""
+
 msgid "drawing a line of text took over {seconds}s."
 msgstr ""
 

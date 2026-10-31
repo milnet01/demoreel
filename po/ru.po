@@ -1437,3 +1437,9 @@ msgstr "{output} оставлен как был, а видео этого зап
 
 msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
 msgstr "чтение {path} заняло более {size} ГБ памяти, половину памяти этой машины, поэтому оно остановлено."
+
+msgid "{where}: {path} is a list that points at other files, such as a playlist, and demoreel does not follow one."
+msgstr "{where}: {path} — это список, указывающий на другие файлы, например плейлист, а demoreel по таким спискам не переходит."
+
+msgid "ffmpeg did not say which formats it reads, so nothing was read."
+msgstr "ffmpeg не сообщил, какие форматы он читает, поэтому ничего не прочитано."
