@@ -38,6 +38,12 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **Names such as `12:30:05.mp4`, `-report.mp4` and `q%d.png` are read as those files** (DEMO-0094)
+  The first failed with "Protocol not found", the second reached ffprobe as an option, and the third showed the `q1.png` beside it.
+- **A name that is not UTF-8 no longer gives a Python error** (DEMO-0094)
+- **A translation that loses a `%s` no longer breaks a usage error** (DEMO-0094)
+  The message falls back to English, as for any other unusable translation.
+- **A stream reporting no size, or a clip too narrow for its window, gets a message before anything is made** (DEMO-0094)
 - **Another user's link anywhere on a path is refused, not just at its end** (DEMO-0094)
   Links are now checked on the way up and along a chain. Your own, and root's such as `/var/run`, still work.
 - **Another user's file or pipe at `-o` or `--app-log` is refused** (DEMO-0094)
@@ -142,6 +148,16 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Security
 
+- **A file name, a script line or a tag can no longer steer your terminal or forge a line** (DEMO-0094)
+  They printed as they were, so an escape code ran and a line break could pass for a line of demoreel's. They now print as text, such as `\x1b`. An ordinary name in any language prints as it is, and the path on stdout is unchanged.
+- **A file's tag or name can no longer pass for a measurement** (DEMO-0094)
+  A crafted file could set a music's level, past its cap, change `motion`'s report, or lose a finished film.
+- **A playlist or a concat list is refused on every input, whatever it is named** (DEMO-0094)
+  It could pull another file on the machine into a film. Everything else ffmpeg reads still works.
+- **A crafted file can no longer fill the memory or the disk** (DEMO-0094)
+  Each read of a file is held to half the machine's memory, and only the end of a program's output is kept. A film lasts at most 24 hours, at most 1000 frames a second, and stops before the disk is full.
+- **A translation file must be a regular file, and a refusal quotes none of it** (DEMO-0094)
+  A link or a named pipe could cost the run or hang it, and a control code in a bad file reached the terminal through the note.
 - **A `key` or `hold` step takes key names and nothing else** (DEMO-0094)
   `key a exec sh -c ...` used to run the command, since xdotool reads its own command names anywhere among its arguments. Such a step is now refused before anything starts. So are `key --window ...` and the like, and `key Help`, which only ever ran xdotool's help.
 - **A step that cannot be read no longer has its text printed** (DEMO-0094)

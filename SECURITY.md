@@ -111,10 +111,30 @@ directory or a path named by the environment. A message is filled by plain
 substitution, which cannot reach an attribute or an index, and a translation
 whose placeholders differ from the English is not used. A catalog holding a
 control character, a text-direction character, a charset other than UTF-8,
-syntax outside the subset demoreel reads, or more than 1 MiB is refused whole.
+syntax outside the subset demoreel reads, or more than 1 MiB is refused whole,
+and so is anything but a regular file, a link included.
 A refused catalog costs its language and one English note, never the run, and
 under `LC_ALL=C` no catalog is opened at all. The gate covers each of these
 with hostile catalogs (DEMO-0083).
+
+**Files, names and scripts from someone else.** A finishing command may be given
+a media file, a font, a script or a file name it did not make, so:
+
+- A name, a script line or a program's words reach the terminal as text: each
+  value in a message is escaped, a line break too, and no line of them can pass
+  for one of demoreel's own. Only stdout's path is left as it is.
+- A file is read from its absolute path, so its name is never a protocol or an
+  option, and only as a file. A format that opens other files on a file's say, a
+  playlist or a concat list, is refused.
+- A measurement is never read from text a file can write: a tag or a name cannot
+  set a music's level or `motion`'s report.
+- Reading a file is held to half this machine's memory, and a program's output to
+  its last part. A film is held to a longest length, a highest rate and a little
+  free disk.
+
+The gate covers each of these with crafted files and names (DEMO-0094). A script
+can still name any file the caller can read and put it in the film, so read a
+script from someone else before publishing what it makes.
 
 **The video and the logs demoreel writes.** Whatever the app draws is in the
 video, and `--app-log` keeps whatever the app printed. Both are ordinary files

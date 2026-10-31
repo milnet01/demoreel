@@ -101,6 +101,15 @@ stop agreeing.
   pipes as they fill and keeps the last `OUTPUT_KEPT` bytes of each, and
   `read_file_capped` adds `memory_cap`. ffmpeg's log reached 300 MB in Python's
   memory on the old read, and a file can make it say more.
+- **A file someone else made is read through `media_input` or `probe_input`.**
+  They give its absolute path, so its name is no protocol or option, under a
+  protocol list and a format list. The format list is `ffmpeg -demuxers` less
+  `REFUSED_FORMATS`, since README promises any video ffmpeg can read. Do not
+  swap it for `-protocol_whitelist` alone: a playlist opens a file, measured.
+  The list of a film's pieces is demoreel's own, and takes neither.
+- **A film has its limits in one place.** `check_length` and `FILM_RATE_MOST` are
+  checked before anything is made, and the disk beside `-o` is watched while it
+  is. Each is in README, so a change moves both.
 - **"The picture changed" is one test, `NEW_FRAME` (640), for `motion` and
   the `--gpu` note.** Below 640 x264's sharpening after a change counts as new
   frames, so a stuttering video reports as smooth: on real `--gpu` recordings

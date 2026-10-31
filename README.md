@@ -339,7 +339,17 @@ What they share:
 - **The picture is encoded again each time a video is written, and each encode
   loses a little.** `edit` encodes each frame once however many scenes the film
   has, which is the reason to use it for anything more than one step.
-- **They need `ffmpeg` and nothing new**, and read any video it can read.
+- **A film has limits a person will not reach by accident.** It lasts at most 24
+  hours, at most 1000 frames a second, and stops if the disk beside `-o` falls
+  below 16 MiB free. A scene or a rate over a limit is refused before anything is
+  made, and the message names the limit.
+- **A file's name is only a name.** `12:30:05.mp4`, `-report.mp4` and `a%d.png`
+  are read as those files. In a shell, a name starting with a dash goes after
+  `--`, as in `demoreel motion -- -report.mp4`.
+- **They need `ffmpeg` and nothing new**, and read any video it can read, except
+  a file that points at other files: a playlist such as an `.m3u8` or an `.mpd`,
+  a concat list, or an `.sdp`. Those are refused whatever they are named, since
+  what they would put in a film is not what the script names.
   Text also needs an `ffmpeg` built to draw text, and a font on the machine.
   `demoreel check` draws a line of text to find out, and reports the finishing
   commands and their text on lines of their own. Those lines

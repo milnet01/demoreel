@@ -176,7 +176,9 @@ The music stream `[m]` is built from the music file in this order:
    line's, whose gain would put the music's `max_volume` above -1 dB is
    lowered until it does not, and stderr gets one note naming the level
    reached. With `normalise off` this needs the same `volumedetect` pass, so
-   the pass always runs.
+   the pass always runs. The measure is what follows the last `n_samples` the
+   filter prints: ffmpeg's log also holds the file's name and tags, and a name
+   holding a line break makes a whole line that looks like the filter's.
 4. **Repeated to fill the film**, when it is shorter: `aloop=loop=-1`
    with `size` the sound's length times 48000, rounded up: samples are counted
    after step 1's resampling. The sound's length is its first sound stream's
@@ -374,8 +376,9 @@ cannot read stops the run.
   bounds too.
   *Breaks when:* a stream has no end and something waits for it.
 
-No trust boundary is crossed: the music file is one more input the caller
-names, read by ffmpeg like a clip, and the `-o` guard covers it.
+The music file is one more input, which someone else may have made. It is read
+by ffmpeg like a clip, under `SECURITY.md`'s rules for such a file, and the `-o`
+guard covers it.
 
 ## 6. Failure modes
 
