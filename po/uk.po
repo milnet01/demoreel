@@ -1428,3 +1428,9 @@ msgstr ""
 
 msgid "--name takes up to {most} plain letters, digits, dots, underscores and hyphens, starting with a letter, a digit or an underscore, not {name}."
 msgstr "--name приймає до {most} простих літер, цифр, крапок, підкреслень і дефісів, починаючи з літери, цифри або підкреслення, а не {name}."
+
+msgid "{taken} was taken by the time the file was ready, so the file is {output}."
+msgstr "{taken} вже було зайнято, коли файл був готовий, тому файл називається {output}."
+
+msgid "{output} was left as it was, and this run's video is in {part}."
+msgstr "{output} залишено як було, а відео цього запуску міститься в {part}."

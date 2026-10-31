@@ -1422,3 +1422,9 @@ msgstr ""
 
 msgid "--name takes up to {most} plain letters, digits, dots, underscores and hyphens, starting with a letter, a digit or an underscore, not {name}."
 msgstr "--name neemt tot {most} gewone letters, cijfers, punten, onderstrepingstekens en koppeltekens, beginnend met een letter, een cijfer of een onderstrepingsteken, niet {name}."
+
+msgid "{taken} was taken by the time the file was ready, so the file is {output}."
+msgstr "{taken} was al bezet toen het bestand klaar was, dus het bestand is {output}."
+
+msgid "{output} was left as it was, and this run's video is in {part}."
+msgstr "{output} is gelaten zoals het was, en de video van deze run staat in {part}."

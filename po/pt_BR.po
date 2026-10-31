@@ -1422,3 +1422,9 @@ msgstr ""
 
 msgid "--name takes up to {most} plain letters, digits, dots, underscores and hyphens, starting with a letter, a digit or an underscore, not {name}."
 msgstr "--name aceita até {most} letras simples, algarismos, pontos, sublinhados e hifens, começando com uma letra, um algarismo ou um sublinhado, não {name}."
+
+msgid "{taken} was taken by the time the file was ready, so the file is {output}."
+msgstr "{taken} já estava ocupado quando o arquivo ficou pronto, então o arquivo é {output}."
+
+msgid "{output} was left as it was, and this run's video is in {part}."
+msgstr "{output} ficou como estava, e o vídeo desta execução está em {part}."

@@ -1422,3 +1422,9 @@ msgstr ""
 
 msgid "--name takes up to {most} plain letters, digits, dots, underscores and hyphens, starting with a letter, a digit or an underscore, not {name}."
 msgstr "--name מקבל עד {most} אותיות לטיניות רגילות, ספרות, נקודות, קווים תחתונים ומקפים, בתחילה אות, ספרה או קו תחתון, ולא {name}."
+
+msgid "{taken} was taken by the time the file was ready, so the file is {output}."
+msgstr "השם {taken} כבר היה תפוס כשהקובץ היה מוכן, ולכן הקובץ הוא {output}."
+
+msgid "{output} was left as it was, and this run's video is in {part}."
+msgstr "{output} נשאר כפי שהיה, והסרטון של הריצה הזו נמצא ב-{part}."

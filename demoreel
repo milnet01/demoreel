@@ -1370,13 +1370,14 @@ ENCODER = [
 AUDIO_ENCODER = ["-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2"]
 
 
-def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor,
+def start_ffmpeg(env, display, width, height, framerate, part, logfile, cursor,
                  monitor=None):
-    """Record the display. env matters: the GPU backend's Xwayland wants an
-    auth cookie, and ffmpeg is as much a client of that display as xdotool.
+    """Record the display into the part file. env matters: the GPU backend's
+    Xwayland wants an auth cookie, and ffmpeg is as much a client of that
+    display as xdotool.
 
-    With `monitor`, a sink's monitor, the sound is recorded too, into the part
-    file, and finish_audio_video puts it in step with the picture.
+    With `monitor`, a sink's monitor, the sound is recorded too, and
+    finish_audio_video puts it in step with the picture.
 
     Returns the process, its log, and how many seconds before this returns
     the video's first frame was grabbed."""
@@ -1395,7 +1396,7 @@ def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor
         *(["-thread_queue_size", "1024", "-f", "pulse", "-i", monitor]
           if monitor else []),
         *ENCODER, *(AUDIO_ENCODER if monitor else []),
-        "-y", str(partial_video(output) if monitor else output),
+        "-y", str(part),
     ]
     # Deliberate: the handle is owned by the ffmpeg process and closed in
     # record()'s finally block, so it must outlive this statement.
@@ -1418,7 +1419,6 @@ def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor
         proc.kill()
         proc.wait()
         log.close()
-        partial_video(output).unlink(missing_ok=True)
         tail = "\n".join(
             line for line in Path(logfile).read_text(errors="replace").splitlines()
             if not line.startswith("[info]")).strip()
@@ -1444,11 +1444,38 @@ def start_ffmpeg(env, display, width, height, framerate, output, logfile, cursor
     return proc, log, lag
 
 
-def partial_video(output):
-    """Where a recording is written before it is finished -- record --gpu's,
-    and an --audio one's: beside the output, on its disk, and not in the
-    state directory, which is RAM."""
-    return output.with_name(f".{output.stem}.demoreel-part.mp4")
+def new_part(output, suffix=None, kind="part"):
+    """A new empty file beside the output, for something that is not finished.
+
+    Beside it, so a rename finishes it, and on its disk rather than in the state
+    directory, which is RAM. Its name owes nothing to the output's, and O_EXCL
+    makes it this run's: a name another user could work out could be planted
+    first, with a link to a file of the caller's, and two runs to one -o would
+    remove each other's. Not mkstemp: its mode ignores the umask, and SECURITY.md
+    promises the caller's. A part a killed run left is never found again, and
+    costs only its disk space.
+    """
+    part = output.with_name(f".demoreel-{kind}-{secrets.token_hex(8)}"
+                            f"{output.suffix if suffix is None else suffix}")
+    try:
+        os.close(os.open(part, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_CLOEXEC, 0o666))
+    except OSError as exc:
+        die(tr("could not write to {path}: {reason}.", path=output, reason=exc.strerror))
+    return part
+
+
+def has_data(path):
+    """Whether a file is there with anything in it: a part starts empty."""
+    try:
+        return path.stat().st_size > 0
+    except OSError:
+        return False
+
+
+def single_picture(path):
+    """The ffmpeg option writing one picture to exactly this name. Without it, a
+    picture's name is a pattern, and p%d.png came out as p1.png."""
+    return ["-update", "1"] if path.suffix.lower() in (".png", ".jpg", ".jpeg") else []
 
 
 class CopiedLog:
@@ -1475,7 +1502,7 @@ class CopiedLog:
             self.log.close()
 
 
-def start_wf_recorder(env, wayland, framerate, output, logfile, monitor=None):
+def start_wf_recorder(env, wayland, framerate, part, logfile, monitor=None):
     """Record cage's own output, for record --gpu (DEMO-0111).
 
     Under a busy 3D app the X side's copy of the picture goes stale, so x11grab
@@ -1495,7 +1522,6 @@ def start_wf_recorder(env, wayland, framerate, output, logfile, monitor=None):
     frame, so start_ffmpeg's correction for a late signal (DEMO-0169) has no
     counterpart here.
     """
-    part = partial_video(output)
     cmd = ["wf-recorder", "-D", "-y", "-r", str(framerate),
            "-c", "libx264", "-p", "preset=veryfast", "-p", "crf=23",
            "-x", "yuv420p", "-f", str(part)]
@@ -1525,7 +1551,6 @@ def start_wf_recorder(env, wayland, framerate, output, logfile, monitor=None):
             proc.kill()
             proc.wait()
             log.close()
-            part.unlink(missing_ok=True)
             tail = Path(logfile).read_text(errors="replace").strip()
             die(tr("wf-recorder could not start recording.")
                 + ("\n  " + tr("It said: {text}", text=tail) if tail else "")
@@ -1533,14 +1558,14 @@ def start_wf_recorder(env, wayland, framerate, output, logfile, monitor=None):
     return proc, CopiedLog(proc, log)
 
 
-def finish_gpu_video(output, logfile):
+def finish_gpu_video(part, output, logfile):
     """Give record --gpu's file the +faststart the Xvfb path's has.
 
     wf-recorder has no option for muxer flags, so a stream copy moves the index
     to the front. Nothing is re-encoded. The partial file is kept if the copy
     fails, and the message names it.
     """
-    finish_part(output, logfile, ["-i", str(partial_video(output)), "-c", "copy"])
+    finish_part(part, output, logfile, ["-i", str(part), "-c", "copy"])
 
 
 def input_starts(logfile):
@@ -1557,7 +1582,7 @@ def input_starts(logfile):
     return starts
 
 
-def finish_audio_video(output, logfile):
+def finish_audio_video(part, output, logfile):
     """Put an --audio recording's sound in step with its picture (DEMO-0106).
 
     ffmpeg starts each stream at zero, but the pulse input opens later than
@@ -1572,8 +1597,7 @@ def finish_audio_video(output, logfile):
     silence to the picture's end and trimmed there, and only the sound is
     encoded again. The picture is copied as it was recorded.
     """
-    part = partial_video(output)
-    if not part.exists():
+    if not has_data(part):
         return
     starts = input_starts(logfile)
     length = stream_length(part, "v:0")
@@ -1583,7 +1607,7 @@ def finish_audio_video(output, logfile):
                "in {part}, and the log is {log}.", part=part, log=logfile))
     shift = starts["pulse"] - starts["x11grab"]
     fit = f"{max(0.0, length - shift):.6f}"
-    finish_part(output, logfile, [
+    finish_part(part, output, logfile, [
         "-i", str(part), "-itsoffset", f"{shift:.6f}", "-i", str(part),
         "-map", "0:v", "-map", "1:a", "-c:v", "copy",
         "-af", f"apad=whole_dur={fit},atrim=duration={fit}", *AUDIO_ENCODER])
@@ -1601,15 +1625,15 @@ def stream_length(path, stream):
         return None
 
 
-def finish_part(output, logfile, inputs):
-    """Write the part file to the output with `inputs`, then remove it."""
-    part = partial_video(output)
-    if not part.exists():
+def finish_part(part, output, logfile, inputs):
+    """Make the part file again with `inputs`, as what -o names, in its place."""
+    if not has_data(part):
         return
+    done = new_part(output)
     try:
         copy = subprocess.run(  # noqa: PLW1510 - a failed copy is handled below
             ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
-             *inputs, "-movflags", "+faststart", "-y", str(output)],
+             *inputs, "-movflags", "+faststart", "-y", str(done)],
             capture_output=True, timeout=6 * CALL_TIMEOUT)
         failed, said = copy.returncode != 0, copy.stderr
     except subprocess.TimeoutExpired as exc:
@@ -1618,12 +1642,13 @@ def finish_part(output, logfile, inputs):
         failed, said = True, (exc.stderr or b"") + (
             f"\nffmpeg did not finish within {exc.timeout:g}s\n".encode())
     if failed:
+        done.unlink(missing_ok=True)
         with open(logfile, "ab") as log:
             log.write(said)
         die(tr("could not finish the video: turning the recording into {name}"
                " failed.\n  What was recorded is kept in {part}, and {log}"
                " says why.", name=output.name, part=part, log=logfile))
-    part.unlink()
+    os.replace(done, part)
 
 
 def last_said(stderr, lines=3):
@@ -2250,18 +2275,81 @@ def open_app_log(applog):
         die(tr("could not write to {path}: {reason}.", path=applog, reason=exc.strerror))
 
 
+# The name this run made up, if it made one up: move_into_place never writes
+# over one of these.
+made_up_outputs = set()
+
+
 def timestamped_output(name, suffix):
     """Where a run writes without -o: this folder, named after `name` and the
     time. Short commands can finish inside one second, so a name already taken
-    gets a number rather than the file being written over."""
+    gets a number rather than the file being written over. That holds until the
+    file is ready: move_into_place claims the name then, and numbers it again if
+    another run got there first."""
     stem = re.sub(r"[^A-Za-z0-9._-]", "_", name) or "demo"
     when = time.strftime("%Y%m%d-%H%M%S")
     output = Path.cwd() / f"{stem}-{when}{suffix}"
     taken = 1
-    while output.exists():
+    while os.path.lexists(output):
         taken += 1
         output = Path.cwd() / f"{stem}-{when}-{taken}{suffix}"
+    made_up_outputs.add(output)
     return output
+
+
+def claim_free_name(output):
+    """Make an empty file at output, or if that is taken beside it with a number,
+    and return its path. Claimed only once the file is ready: claimed earlier,
+    every failure and refusal after it would have to remove it. A hard link would
+    need no empty file, but not every disk this may be on has them."""
+    claimed, taken = output, 1
+    while True:
+        try:
+            os.close(os.open(claimed, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_CLOEXEC, 0o600))
+            return claimed
+        except FileExistsError:
+            taken += 1
+            claimed = output.with_name(f"{output.stem}-{taken}{output.suffix}")
+
+
+def move_into_place(part, output):
+    """Move a finished part to output, in one step, and return where it went.
+
+    A rename does not follow a link at output, so one planted there after
+    own_path looked is replaced, not written through. A file replaced keeps its
+    mode: one the caller made private stays private. A name this run made up is
+    never written over.
+    """
+    try:
+        if output in made_up_outputs:
+            planned, output = output, claim_free_name(output)
+            if output != planned:
+                note(tr("{taken} was taken by the time the file was ready, so the "
+                        "file is {output}.", taken=planned, output=output))
+        else:
+            with contextlib.suppress(FileNotFoundError):
+                old = os.lstat(output)
+                if stat.S_ISREG(old.st_mode):
+                    os.chmod(part, stat.S_IMODE(old.st_mode))
+        os.replace(part, output)
+    except OSError as exc:
+        die(tr("could not write to {path}: {reason}.", path=output, reason=exc.strerror))
+    return output
+
+
+def keep_failed_take(part, output):
+    """What a failed recording leaves: its file at -o, as README promises, unless
+    a file is there already, which stays as it was: that is the last good take.
+    Then the part stays beside it, and this says where."""
+    if not has_data(part):
+        part.unlink(missing_ok=True)
+    elif os.path.lexists(output):
+        note(tr("{output} was left as it was, and this run's video is in {part}.",
+                output=output, part=part))
+    else:
+        # What went wrong first is what the run ends on.
+        with contextlib.suppress(SystemExit):
+            move_into_place(part, output)
 
 
 # As many links as one path may go through, which is the kernel's own limit.
@@ -2556,14 +2644,14 @@ def settle(a, env, display, width, height):
                 seconds=a.settle))
 
 
-def start_recorder(a, env, display, wayland, width, height, output, logpath,
+def start_recorder(a, env, display, wayland, width, height, part, logpath,
                    sound):
     """The recorder, its log, and how long ago its first frame was taken."""
     monitor = f"{sound.sink}.monitor" if a.audio else None
     if a.gpu:
-        return (*start_wf_recorder(env, wayland, a.framerate, output, logpath,
+        return (*start_wf_recorder(env, wayland, a.framerate, part, logpath,
                                    monitor), 0.0)
-    return start_ffmpeg(env, display, width, height, a.framerate, output,
+    return start_ffmpeg(env, display, width, height, a.framerate, part,
                         logpath, a.cursor, monitor)
 
 
@@ -2640,14 +2728,16 @@ def check_at_end(env, app, window, display, width, height, checks):
         checks.sample("at the end", None, app, env, display, width, height)
 
 
-def vouch_for(a, output, logpath, width, height, checks):
-    """Fail the run unless the finished video is one it can stand behind."""
-    if not output.exists() or output.stat().st_size == 0:
+def vouch_for(a, output, video, logpath, width, height, checks):
+    """Fail the run unless the finished video, still at its part file, is one it
+    can stand behind. A failure names where keep_failed_take will leave it."""
+    if not has_data(video):
         die(tr("no video was written to {output}: the recorder produced nothing."
                "\n  Its log, {log}, says why.", output=output, log=logpath))
-    unreadable = video_error(output)
+    kept = video if os.path.lexists(output) else output
+    unreadable = video_error(video)
     if unreadable:
-        die(tr("the video cannot be played: {output}", output=output)
+        die(tr("the video cannot be played: {output}", output=kept)
             + f"\n  {unreadable}\n  "
             + tr("The recorder most likely stopped before it finished the file. "
                  "See {log}", log=logpath))
@@ -2655,33 +2745,33 @@ def vouch_for(a, output, logpath, width, height, checks):
         die(tr("the recorder stopped early; see {log}", log=logpath))
     if checks.blank == "halfway":
         die(tr("the virtual display was blank halfway, so at least half of it is a "
-               "flat colour: {output}", output=output) + "\n" + blank_causes(a.gpu))
+               "flat colour: {output}", output=kept) + "\n" + blank_causes(a.gpu))
     if checks.blank:
         die(tr("the virtual display was blank at the end, so it ends on a flat "
-               "colour: {output}", output=output) + "\n" + blank_causes(a.gpu))
+               "colour: {output}", output=kept) + "\n" + blank_causes(a.gpu))
     if checks.unsampled is not None:
         die(tr("could not sample the virtual display to check {output} is not blank,\n"
-               "  so this run cannot vouch for it.", output=output)
+               "  so this run cannot vouch for it.", output=kept)
             + f"\n  {checks.unsampled}")
     if a.gpu:
         for when, at in checks.sampled:
             try:
-                flat = video_is_blank(output, at, width, height)
+                flat = video_is_blank(video, at, width, height)
             except SampleError as exc:
                 die(tr("could not read {output} back to check it is not blank,\n"
-                       "  so this run cannot vouch for it.", output=output)
+                       "  so this run cannot vouch for it.", output=kept)
                     + f"\n  {exc}")
             if flat and when == "halfway":
                 die(tr("the video is a flat colour halfway, though the private "
                        "screen was not: {output}\n  The recorder captured "
                        "something other than the screen. See {log}",
-                       output=output, log=logpath))
+                       output=kept, log=logpath))
             if flat:
                 die(tr("the video is a flat colour at the end, though the private "
                        "screen was not: {output}\n  The recorder captured "
                        "something other than the screen. See {log}",
-                       output=output, log=logpath))
-        share = changed_share(output, a.framerate)
+                       output=kept, log=logpath))
+        share = changed_share(video, a.framerate)
         if share is not None and share < CHANGED_NOTE_BELOW:
             # translators: {share} is a percentage, such as 48%; {output} is the video's path.
             note(tr("only {share} of the frames in the middle of {output} "
@@ -2757,7 +2847,7 @@ def cmd_record(a):
     # what it drew was the real thing — a wrong-but-not-blank recording passes
     # every check this tool can make.
     appout = open_app_log(applog)
-    server = app = recorder = log = auth = sound = None
+    server = app = recorder = log = auth = sound = part = None
     checks = Checks()
     ran_through = False
     try:
@@ -2777,8 +2867,11 @@ def cmd_record(a):
         window = place_window(env, app, a, width, height, picture=False)
         settle(a, env, display, width, height)
 
+        # A chosen ending picks the container. --gpu and --audio make their
+        # file again at the end, so theirs is always the one they record well.
+        part = new_part(output, ".mp4" if a.gpu or a.audio else None)
         recorder, log, lag = start_recorder(a, env, display, wayland, width,
-                                            height, output, logpath, sound)
+                                            height, part, logpath, sound)
         started = time.monotonic() - lag
         write_state(statefile, dict(state, display=display, recording=True))
         note(tr("recording {display} to {output} (until stopped)",
@@ -2812,22 +2905,31 @@ def cmd_record(a):
         end_server(server)
         if auth is not None:
             auth.unlink(missing_ok=True)
-        # Only what this run recorded: a part file a killed run left is not
-        # ours, and the run may have failed before it wrote one of its own.
-        if recorder is not None:
+        if recorder is None:
+            if part is not None:
+                part.unlink(missing_ok=True)
+        else:
             try:
                 if a.gpu:
-                    finish_gpu_video(output, logpath)
+                    finish_gpu_video(part, output, logpath)
                 elif a.audio:
-                    finish_audio_video(output, logpath)
+                    finish_audio_video(part, output, logpath)
             except SystemExit as exc:
                 if ran_through:
                     raise
                 # What went wrong first is what the run ends on. This one still
                 # says where the recording is kept.
                 note(str(exc.code).removeprefix("demoreel: "))
+            else:
+                if not ran_through:
+                    keep_failed_take(part, output)
 
-    vouch_for(a, output, logpath, width, height, checks)
+    try:
+        vouch_for(a, output, part, logpath, width, height, checks)
+        output = move_into_place(part, output)
+    except SystemExit:
+        keep_failed_take(part, output)
+        raise
     if a.audio:
         level = loudest(output)
         if level is not None and level <= SILENT_DB:
@@ -2836,7 +2938,8 @@ def cmd_record(a):
     summarise(output)
     for stale in (logpath, displaylog):
         stale.unlink(missing_ok=True)  # only worth keeping when something failed
-    write_state(statefile, dict(state, result="ok"))
+    # With the path it ended at, which `stop` prints: a made-up name can change.
+    write_state(statefile, dict(state, output=str(output), result="ok"))
     print(output)
 
 
@@ -2888,20 +2991,17 @@ def shot_region(text, width, height):
 
 
 def cut_region(screen, region, output):
-    """Write region of the checked screen to output; the reason it failed, or None.
-
-    A failed cut leaves nothing at output: README promises a failed --region
-    shot writes nothing there.
-    """
-    x, y, w, h = region
+    """Write the checked screen to output, only `region` of it if there is one;
+    the reason it failed, or None. The caller removes output if it failed."""
+    crop = ["-vf", "crop={2}:{3}:{0}:{1}".format(*region)] if region else []
     cut = subprocess.run(  # noqa: PLW1510 - a failed cut is handled below
         ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error", "-i", str(screen),
-         "-vf", f"crop={w}:{h}:{x}:{y}", "-frames:v", "1", "-y", str(output)],
+         *crop, "-frames:v", "1", *single_picture(output), "-y", str(output)],
         capture_output=True, timeout=CALL_TIMEOUT)
-    if cut.returncode != 0 or not output.exists():
-        output.unlink(missing_ok=True)
-        return (tr("could not cut the --region rectangle out of the picture.")
-                + "\n  " + last_said(cut.stderr))
+    if cut.returncode != 0 or not has_data(output):
+        reason = (tr("could not cut the --region rectangle out of the picture.") if region
+                  else tr("could not take the picture."))
+        return reason + "\n  " + last_said(cut.stderr)
     return None
 
 
@@ -2910,9 +3010,9 @@ def cmd_shot(a):
 
     No name and no state file: there is nothing to stop, so a shot keeps its
     files in a folder of its own and `stop` never sees it. The folder goes when
-    the shot succeeds and is kept, and named, when it fails. With --region the
-    whole screen is saved and checked there, and only a picture that passes is
-    cut and written to output.
+    the shot succeeds and is kept, and named, when it fails. The whole screen is
+    saved and checked there, and only a picture that passes goes to output, cut
+    to --region if there is one, so a failed shot writes nothing there.
     """
     command, width, height, output, applog = prepare(a, ".png")
     region = shot_region(a.region, width, height)
@@ -2942,11 +3042,17 @@ def cmd_shot(a):
             moved = window_off_frame(env, window, width, height)
             if moved:
                 note(moved)
-        screen = rundir / "screen.png" if region else output
+        screen = rundir / "screen.png"
         failed = take_picture(env, display, width, height, a.cursor, screen,
                               a.gpu)
-        if region and not failed:
-            failed = cut_region(screen, region, output)
+        if not failed:
+            part = new_part(output)
+            try:
+                failed = cut_region(screen, region, part)
+                if not failed:
+                    output = move_into_place(part, output)
+            finally:
+                part.unlink(missing_ok=True)
     except subprocess.TimeoutExpired:
         failed = tr("could not take the picture: the display did not answer "
                     "within {seconds}s.", seconds=CALL_TIMEOUT)
@@ -3123,14 +3229,16 @@ def cmd_stop(a):
         # PermissionError: the pid has gone to another user since the check.
         with contextlib.suppress(ProcessLookupError, PermissionError):
             os.kill(entry["pid"], signal.SIGUSR1)
-        if not run_succeeded(entry):
+        finished = run_succeeded(entry)
+        if not finished:
             die(tr("the recording failed after it was stopped, so there is no "
                    "video to hand back.\n  Its own error message says why."))
-        print(entry["output"])
+        print(finished)
 
 
 def run_succeeded(entry):
-    """Wait for a stopped run to exit, then say whether it succeeded.
+    """Wait for a stopped run to exit, then say where its video is if it
+    succeeded, or None.
 
     A stopped run still has work to do: finish the video, then check the
     display was not blank. Printing its path before that handed the caller a
@@ -3146,10 +3254,12 @@ def run_succeeded(entry):
     try:
         final = json.loads((state_dir() / f"{entry['name']}.json").read_text())
     except (OSError, ValueError):
-        return False
-    return (isinstance(final, dict) and final.get("pid") == pid
+        return None
+    if (isinstance(final, dict) and final.get("pid") == pid
             and final.get("starttime") == entry.get("starttime")
-            and final.get("result") == "ok")
+            and final.get("result") == "ok"):
+        return final.get("output", entry["output"])
+    return None
 
 
 def wait_until_recording(entry):
@@ -4722,7 +4832,7 @@ def finishing_output(raw, inputs, endings):
         if Path(source).expanduser().resolve() == output:
             die(tr("-o is {output}, which is also a file this command reads. "
                    "demoreel never writes over its own input.", output=output))
-    output.parent.mkdir(parents=True, exist_ok=True)
+    make_parent(output)
     return output
 
 
@@ -4890,9 +5000,10 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
                      *([music.path] if music else [])],
         (".mp4",))
     workdir = Path(tempfile.mkdtemp(prefix="edit-", dir=state_dir()))
-    part = partial_video(output)
-    piece_files = []
+    parts = []
     try:
+        part = new_part(output)
+        parts.append(part)
         width, height, rate = film_shape(scenes, size, rate)
         inputs, chains, lengths = [], [], []
         for number, scene in enumerate(scenes):
@@ -4983,8 +5094,10 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
         if len(pieces) == 1 and not mixed:
             piece_files = [part]
         else:
-            piece_files = [output.with_name(f".{output.stem}.demoreel-piece{i}.mp4")
-                           for i in range(len(pieces))]
+            piece_files = []
+            for _ in pieces:
+                piece_files.append(new_part(output, kind="piece"))
+                parts.append(piece_files[-1])
         # The frame each piece starts on: its first scene's, and later by the
         # frames of it the piece before drew. The film ends half a frame
         # after its planned length at the latest, even if a stream does not.
@@ -5019,14 +5132,13 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
         if peak is not None and peak >= FULL_SCALE:
             note(tr("the film's sound reaches full scale, so it may be distorted. "
                     "Turn the music, a clip or a sound down to keep it clean."))
-        os.replace(part, output)
+        output = move_into_place(part, output)
     except subprocess.TimeoutExpired:
         die(tr("ffmpeg did not finish making the film in the time allowed for "
                "its length, so it was stopped."))
     finally:
-        part.unlink(missing_ok=True)
-        for piece_file in piece_files:
-            piece_file.unlink(missing_ok=True)
+        for leftover in parts:
+            leftover.unlink(missing_ok=True)
         shutil.rmtree(workdir, ignore_errors=True)
     summarise(output)
     print(output)
@@ -5042,7 +5154,8 @@ def cmd_edit(a):
                reason=getattr(exc, "strerror", None) or exc))
     scenes, music = parse_script(text)
     make_film(scenes, output_or_default(a, "film" if a.script == "-" else a.script),
-              a.size, a.framerate, music=music)
+              a.size, a.framerate, also_read=() if a.script == "-" else (a.script,),
+              music=music)
 
 
 def shortcut_music(a):
@@ -5229,11 +5342,11 @@ def grab_frame(path, moment, info, picture, look=None):
              "-i", str(Path(path).expanduser()), "-frames:v", "1",
              *(["-vf", look] if look else []),
              *(["-q:v", "3"] if picture.suffix.lower() == ".jpg" else []),
-             "-y", str(picture)],
+             *single_picture(picture), "-y", str(picture)],
             capture_output=True, text=True, timeout=6 * CALL_TIMEOUT)
     except subprocess.TimeoutExpired:
         die(tr("taking the frame took over {seconds}s.", seconds=6 * CALL_TIMEOUT))
-    if grab.returncode != 0 or not picture.exists() or not picture.stat().st_size:
+    if grab.returncode != 0 or not has_data(picture):
         said = last_said(grab.stderr, lines=2)
         die(tr("could not take the frame at {time} from {path}.",
                time=f"{moment:g}", path=path) + (f"\n  {said}" if said else ""))
@@ -5255,10 +5368,10 @@ def cmd_poster(a):
                               (".png", ".jpg"))
     info = probe(a.input, Path(a.input).name)
     check_time(a, info)
-    part = output.with_name(f".{output.stem}.demoreel-part{output.suffix}")
+    part = new_part(output)
     try:
         grab_frame(a.input, a.time, info, part)
-        os.replace(part, output)
+        output = move_into_place(part, output)
     finally:
         part.unlink(missing_ok=True)
     print(output)
@@ -5292,7 +5405,7 @@ def cmd_thumbnail(a):
         crop = f"crop={width}:{round(width * 9 / 16)}"
     look = [crop, f"scale={THUMB_WIDTH}:{THUMB_HEIGHT}", "setsar=1"]
     workdir = Path(tempfile.mkdtemp(prefix="thumbnail-", dir=state_dir()))
-    part = output.with_name(f".{output.stem}.demoreel-part{output.suffix}")
+    part = new_part(output)
     try:
         if a.text is not None:
             look.append(title_filter(a.text, workdir))
@@ -5302,7 +5415,7 @@ def cmd_thumbnail(a):
             die(tr("the thumbnail would be {size} MB, and YouTube takes one of "
                    "at most 2 MB. The same frame as a .jpg is smaller.",
                    size=f"{size / 1_000_000:.1f}"))
-        os.replace(part, output)
+        output = move_into_place(part, output)
     finally:
         part.unlink(missing_ok=True)
         shutil.rmtree(workdir, ignore_errors=True)
@@ -5414,7 +5527,7 @@ def cmd_sheet(a):
     font = text_font()
     crop = "crop={2}:{3}:{0}:{1},".format(*region) if region else ""
     workdir = Path(tempfile.mkdtemp(prefix="sheet-", dir=state_dir()))
-    part = output.with_name(f".{output.stem}.demoreel-part{output.suffix}")
+    part = new_part(output)
     try:
         # Each frame is cut, scaled and labelled as it is taken, so the last
         # ffmpeg reads small pictures one at a time: given a hundred full
@@ -5433,15 +5546,15 @@ def cmd_sheet(a):
                  "-start_number", "0", "-i", str(workdir / "%03d.png"),
                  "-vf", f"tile={columns}x{rows}:color=black", "-frames:v", "1",
                  *(["-q:v", "3"] if output.suffix.lower() == ".jpg" else []),
-                 "-y", str(part)],
+                 *single_picture(part), "-y", str(part)],
                 capture_output=True, text=True, timeout=6 * CALL_TIMEOUT)
         except subprocess.TimeoutExpired:
             made = subprocess.CompletedProcess([], 1, "", "")
-        if made.returncode != 0 or not part.exists() or not part.stat().st_size:
+        if made.returncode != 0 or not has_data(part):
             said = last_said(made.stderr, lines=2)
             die(tr("could not put the frames together into one picture.")
                 + (f"\n  {said}" if said else ""))
-        os.replace(part, output)
+        output = move_into_place(part, output)
     finally:
         part.unlink(missing_ok=True)
         shutil.rmtree(workdir, ignore_errors=True)

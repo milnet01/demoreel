@@ -1416,3 +1416,9 @@ msgstr ""
 
 msgid "--name takes up to {most} plain letters, digits, dots, underscores and hyphens, starting with a letter, a digit or an underscore, not {name}."
 msgstr "--name に使えるのは、半角英字、数字、ドット、アンダースコア、ハイフンで {most} 文字までです。先頭は英字、数字、アンダースコアのいずれかです。{name} は使えません。"
+
+msgid "{taken} was taken by the time the file was ready, so the file is {output}."
+msgstr "ファイルの準備ができたときには {taken} はすでに使われていたので、ファイルは {output} です。"
+
+msgid "{output} was left as it was, and this run's video is in {part}."
+msgstr "{output} はそのままにしました。この実行の動画は {part} にあります。"

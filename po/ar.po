@@ -1446,3 +1446,9 @@ msgstr ""
 
 msgid "--name takes up to {most} plain letters, digits, dots, underscores and hyphens, starting with a letter, a digit or an underscore, not {name}."
 msgstr "يقبل --name حتى {most} من الأحرف اللاتينية العادية والأرقام والنقاط والشرطات السفلية والشرطات، ويبدأ بحرف أو رقم أو شرطة سفلية، لا {name}."
+
+msgid "{taken} was taken by the time the file was ready, so the file is {output}."
+msgstr "كان الاسم {taken} قد أُخذ عندما أصبح الملف جاهزًا، لذا فالملف هو {output}."
+
+msgid "{output} was left as it was, and this run's video is in {part}."
+msgstr "تُرك {output} كما كان، وفيديو هذا التشغيل موجود في {part}."

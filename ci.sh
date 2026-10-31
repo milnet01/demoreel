@@ -4021,9 +4021,185 @@ ONEPY
         >"$fo" 2>"$fe" || rc=$?
     expect_refused "a film with a piece short of its frames"
     assert_absent "a film with a piece short of its frames leaves no film" "$ft/out/pc3.mp4"
-    leftovers=$(find "$ft/out" -name '*demoreel-piece*' | wc -l)
+    leftovers=$(find "$ft/out" -name '.demoreel-*' | wc -l)
     assert_eq "a failed film leaves no piece behind" 0 "$leftovers"
     echo "a long windowed film fits in 5.5 GB, and pieces make the film one ffmpeg would"
+    }
+    fin_s70() {
+    # README: "-o may not be one of the files being read." The script is read
+    # too. A file where a folder must go was a traceback (DEMO-0094).
+    printf 'card 1\n  text "hi"\n' >"$ft/own.mp4"
+    local script_sum; script_sum=$(sha256sum <"$ft/own.mp4")
+    run edit own.mp4 -o out/own-control.mp4
+    expect_ok "control: edit reads a script with any name"
+    run edit own.mp4 -o own.mp4
+    expect_refused "edit writing over its own script"
+    grep -q 'never writes over its own input' "$fe" \
+        || { show_err; fail "edit's script: refused, but not for being read"; }
+    assert_eq "edit's script is as it was" "$script_sum" "$(sha256sum <"$ft/own.mp4")"
+    : >"$ft/out/not-a-folder"
+    run poster A.mp4 -t 0.1 -o out/not-a-folder/p.png
+    expect_refused "a folder that cannot be made"
+    grep -q 'could not write to' "$fe" && ! grep -q Traceback "$fe" \
+        || { show_err; fail "a folder that cannot be made: not said in words"; }
+    echo "a script is not written over, and the folder's failure is one line"
+    }
+    fin_s71() {
+    # DEMO-0094. A part's name was the output's, so it could be planted first:
+    # the link's target was truncated, and the link itself moved to -o.
+    local dir="$ft/out/parts" victim sum planted cmd written
+    mkdir -p "$dir"
+    victim="$ft/victim"
+    printf precious >"$victim"
+    sum=$(sha256sum <"$victim")
+    for cmd in "poster A.mp4 -t 0.1 -o $dir/po.png:.po.demoreel-part.png" \
+               "thumbnail A.mp4 -t 0.1 -o $dir/th.jpg:.th.demoreel-part.jpg" \
+               "sheet A.mp4 --at 0.1 -o $dir/sh.png:.sh.demoreel-part.png" \
+               "trim A.mp4 --to 0.5 -o $dir/tr.mp4:.tr.demoreel-part.mp4" \
+               "join A.mp4 A.mp4 A.mp4 A.mp4 A.mp4 -o $dir/jo.mp4:.jo.demoreel-piece0.mp4"; do
+        planted="$dir/${cmd##*:}"
+        ln -s "$victim" "$planted"
+        # shellcheck disable=SC2086  # each case is several words
+        run ${cmd%%:*}
+        expect_ok "control: ${cmd%%:*}"
+        assert_eq "${cmd%%:*} left the planted link's target alone" "$sum" "$(sha256sum <"$victim")"
+        written=$(sed -n '1p' "$fo")
+        [ ! -L "$written" ] || fail "${cmd%%:*}: the finished file is a link"
+        [ -L "$planted" ] || fail "${cmd%%:*}: the planted link was moved"
+        rm "$planted"
+    done
+    assert_eq "a finished command leaves no part" 0 "$(find "$dir" -name '.demoreel-*' | wc -l)"
+    # A failed command leaves no part and no output, and what was there stays.
+    printf 'keep' >"$dir/kept.png"
+    run poster A.mp4 -t 999 -o "$dir/kept.png"
+    expect_refused "poster past the end"
+    assert_eq "a failed poster left what was there" keep "$(cat "$dir/kept.png")"
+    mkdir -p "$ft/noframes"
+    printf '#!/bin/sh\nexit 1\n' >"$ft/noframes/ffmpeg"
+    chmod +x "$ft/noframes/ffmpeg"
+    FIN_PATH="$ft/noframes:$PATH" run poster A.mp4 -t 0.1 -o "$dir/none.png"
+    expect_refused "poster with an ffmpeg that fails"
+    assert_absent "a failed poster leaves nothing at -o" "$dir/none.png"
+    assert_eq "a failed command leaves no part" 0 "$(find "$dir" -name '.demoreel-*' | wc -l)"
+    # The caller's umask decides a new file's mode, and a file replaced keeps its own.
+    rc=0
+    ( cd "$ft" && umask 027 && "$DR" poster A.mp4 -t 0.1 -o "$dir/um.png" ) >"$fo" 2>"$fe" || rc=$?
+    expect_ok "poster under umask 027"
+    assert_eq "a new picture takes the umask" 640 "$(stat -c %a "$dir/um.png")"
+    ( cd "$ft" && umask 027 && "$DR" trim A.mp4 --to 0.5 -o "$dir/um.mp4" ) >"$fo" 2>"$fe" || rc=$?
+    expect_ok "trim under umask 027"
+    assert_eq "a new video takes the umask" 640 "$(stat -c %a "$dir/um.mp4")"
+    chmod 600 "$dir/um.png"
+    run poster A.mp4 -t 0.2 -o "$dir/um.png"
+    expect_ok "poster over a private file"
+    assert_eq "a file replaced keeps its mode" 600 "$(stat -c %a "$dir/um.png")"
+    # The caller's own link keeps writing to its target, and stays a link.
+    ln -s lnk-target.png "$dir/lnk.png"
+    run poster A.mp4 -t 0.1 -o "$dir/lnk.png"
+    expect_ok "poster through the caller's own link"
+    [ -L "$dir/lnk.png" ] && [ -s "$dir/lnk-target.png" ] \
+        || fail "the caller's own link was replaced, or its target not written"
+    expect_stdout_path "poster through a link prints the file" "$dir/lnk-target.png"
+    # A % is a character of the name, not a frame number.
+    mkdir -p "$dir/d%d"
+    for out in "$dir/p%d.png" "$dir/q%.jpg" "$dir/d%d/x.png"; do
+        run poster A.mp4 -t 0.1 -o "$out"
+        expect_ok "poster to $out"
+        expect_stdout_path "poster prints $out" "$out"
+        assert_file "poster to $out" "$out"
+    done
+    run sheet A.mp4 --at 0.1 -o "$dir/s%d.png"
+    expect_ok "sheet with a % in its name"
+    assert_file "sheet with a % in its name" "$dir/s%d.png"
+    run thumbnail A.mp4 -t 0.1 -o "$dir/t%d.jpg"
+    expect_ok "thumbnail with a % in its name"
+    assert_file "thumbnail with a % in its name" "$dir/t%d.jpg"
+    ( cd "$dir" && python3 - "$DR" <<'CLAIMPY'
+import importlib.machinery, importlib.util, os, stat, sys
+from pathlib import Path
+loader = importlib.machinery.SourceFileLoader("demoreel", sys.argv[1])
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+d.time.strftime = lambda _: "CLAIM"
+notes = []
+d.note = notes.append
+def part_with(data, output):
+    part = d.new_part(output)
+    part.write_bytes(data)
+    return part
+# Two runs in one second chose one name; neither loses its file.
+one, two = d.timestamped_output("race", ".mp4"), d.timestamped_output("race", ".mp4")
+assert one == two
+first = d.move_into_place(part_with(b"first", one), one)
+second = d.move_into_place(part_with(b"second", two), two)
+assert first == one and first.read_bytes() == b"first", first
+assert second != one and second.read_bytes() == b"second", second
+assert second.name == "race-CLAIM-2.mp4", second
+assert any(str(one) in n and str(second) in n for n in notes), notes
+# A made-up name does not follow a dangling link, whether it was there when the
+# name was made up or came later.
+victim = Path("dangling-target")
+Path("dang-CLAIM.mp4").symlink_to(victim)
+chosen = d.timestamped_output("dang", ".mp4")
+assert chosen.name == "dang-CLAIM-2.mp4", chosen
+late = d.timestamped_output("late", ".mp4")
+late.symlink_to(victim)
+landed = d.move_into_place(part_with(b"late", late), late)
+assert landed != late and not victim.exists() and landed.read_bytes() == b"late", landed
+# A link or a file planted at a given -o after the walk is replaced, not followed.
+given = d.own_path("given.mp4", "output")
+victim.write_bytes(b"precious")
+given.symlink_to(victim)
+assert d.move_into_place(part_with(b"mine", given), given) == given
+assert not given.is_symlink() and given.read_bytes() == b"mine"
+assert victim.read_bytes() == b"precious"
+# A folder there by then is said in words, and the part is the caller's to remove.
+blocked = d.own_path("blocked.mp4", "output")
+part = part_with(b"x", blocked)
+blocked.mkdir()
+try:
+    d.move_into_place(part, blocked)
+    raise AssertionError("moved over a folder")
+except SystemExit as exc:
+    assert "could not write to" in str(exc.code), exc.code
+part.unlink()
+# A failed recording's file goes to -o if nothing is there, stays beside what
+# is, and is removed if it holds nothing.
+empty = d.new_part(given)
+d.keep_failed_take(empty, Path("fresh.mp4"))
+assert not empty.exists() and not Path("fresh.mp4").exists()
+some = part_with(b"take", Path("fresh.mp4"))
+d.keep_failed_take(some, Path("fresh.mp4"))
+assert not some.exists() and Path("fresh.mp4").read_bytes() == b"take"
+some = part_with(b"retake", Path("fresh.mp4"))
+notes.clear()
+d.keep_failed_take(some, Path("fresh.mp4"))
+assert some.read_bytes() == b"retake" and Path("fresh.mp4").read_bytes() == b"take"
+assert any(str(some) in n for n in notes), notes
+some.unlink()
+# A part's name is new to the kernel too: O_EXCL does not open what is planted.
+real_token, d.secrets.token_hex = d.secrets.token_hex, lambda _: "planted"
+Path(".demoreel-part-planted.mp4").symlink_to(victim)
+try:
+    d.new_part(given)
+    raise AssertionError("a part opened what was planted at its name")
+except SystemExit as exc:
+    assert "could not write to" in str(exc.code), exc.code
+assert victim.read_bytes() == b"precious"
+Path(".demoreel-part-planted.mp4").unlink()
+d.secrets.token_hex = real_token
+# A part is new each time, starts empty, and takes the umask.
+old = os.umask(0o027)
+a, b = d.new_part(given), d.new_part(given, ".mkv", "piece")
+os.umask(old)
+assert a != b and a.parent == given.parent and a.suffix == ".mp4" and b.suffix == ".mkv"
+assert a.name.startswith(".demoreel-part-") and b.name.startswith(".demoreel-piece-")
+assert stat.S_IMODE(a.lstat().st_mode) == 0o640 and a.stat().st_size == 0
+a.unlink(), b.unlink()
+print("a made-up name is claimed when the file is ready")
+CLAIMPY
+    ) || fail "the finished file did not land as promised"
+    echo "parts are private to the run, and the finished file lands whole"
     }
     fin_s50() {
     # DEMO-0177 INV-12: README's "the shortcuts do exactly what the script
@@ -4417,6 +4593,8 @@ CASES
     fin_step "edit refuses a bad sound line" fin_s67
     fin_step "a film's ffmpeg is held to the memory it uses, not the address space it reserves" fin_s68
     fin_step "a long windowed film fits in 5.5 GB, and pieces make the film one ffmpeg would" fin_s69
+    fin_step "edit's script is never written over, and a folder that cannot be made is said in words" fin_s70
+    fin_step "a part file is this run's own, and the finished file takes the caller's mode" fin_s71
     fin_run
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }
@@ -5272,7 +5450,7 @@ if sound_step "no run leaves a sound output behind"; then
     [ -n "$(run_sinks "$leak_run")" ] || {
         echo "a SIGKILLed run's sink was gone at once, so nothing tests the sweep" >&2
         exit 1; }
-    pkill -f -- "-y $tmp/sound-killed.mp4" || true
+    pkill -f -- "-y $tmp/\.demoreel-part-" || true
     for xv in $(pgrep -u "$(id -u)" -x Xvfb); do
         if tr '\0' ' ' <"/proc/$xv/cmdline" 2>/dev/null \
            | grep -q "demoreel-$(id -u)/gate-sound-kill"; then
@@ -6680,7 +6858,7 @@ for _ in $(seq 1 100); do
     sleep 0.1
 done
 sleep 1.5
-pkill -KILL -f "^ffmpeg .*$tmp/killed.mp4"
+pkill -KILL -f "^ffmpeg .*-y $tmp/\.demoreel-part-"
 wait "$killed_rec"
 killed_status=$?
 set -e
@@ -6713,7 +6891,7 @@ for early in recorder display; do
     done
     sleep 1
     if [ "$early" = recorder ]; then
-        pkill -TERM -f "^ffmpeg .*$tmp/early.mp4"
+        pkill -TERM -f "^ffmpeg .*-y $tmp/\.demoreel-part-"
     else
         for server in $(pgrep -u "$(id -u)" -x Xvfb); do
             tr '\0' ' ' <"/proc/$server/cmdline" | grep -q "/gateearly\." && kill -KILL "$server"
@@ -6788,7 +6966,9 @@ step "a run finishes only what it recorded, and keeps its first error"
 # DEMO-0094. Finishing ran in a finally whether or not this run had recorded
 # anything. A part file a killed run left was finished by a later run that had
 # failed at start, which overwrote -o and deleted the part; one that could not
-# be finished replaced the real error with its own. Measured with both.
+# be finished replaced the real error with its own. Measured with both. A part's
+# name is random now, so no later run can find one: the file here is at the name
+# they used to have, and checks that stays true.
 if [ -z "$(./demoreel check 2>&1 | sed -n '/--gpu: ready/p')" ]; then
     echo "skipped: demoreel check says --gpu is not ready"
 else
@@ -6840,6 +7020,16 @@ SHIM
         cat "$tmp/midway.err" >&2
         exit 1
     }
+    # The recording is kept and named, and the failed copy of it is not kept.
+    midway_kept=$(find "$tmp" -maxdepth 1 -name '.demoreel-part-*')
+    [ "$(printf '%s\n' "$midway_kept" | wc -l)" = 1 ] && [ -s "$midway_kept" ] \
+        && grep -qF "$midway_kept" "$tmp/midway.err" || {
+        echo "a part that could not be finished should be kept and named, alone:" >&2
+        find "$tmp" -maxdepth 1 -name '.demoreel-*' >&2
+        cat "$tmp/midway.err" >&2
+        exit 1
+    }
+    rm "$midway_kept"
     echo "a stale part file is left alone, and the first error is the one said last"
 fi
 
@@ -7541,6 +7731,190 @@ assert log.stat().st_size == 0, "an app log is written afresh"
 d.open_app_log(Path("/dev/null")).close()
 print("links on the way up and along a chain, and other users' files, are checked")
 WALKPY
+
+step "a recording is moved to -o when whole, and a failed retake leaves the last good take"
+# DEMO-0094. The plain path wrote to -o from the first frame, so a retake that
+# failed had already destroyed the take before it. --gpu and --audio finish
+# through the same code, and the gate records on both where it can.
+parts() { find "$1" -maxdepth 1 -name '.demoreel-*' | wc -l; }
+retake="$tmp/retake"
+mkdir -p "$retake"
+./demoreel record -d 0 -n gatepart -o "$retake/take.mp4" -s 320x240 -- xclock \
+    >/dev/null 2>"$retake/take.err" &
+take_rec=$!
+gate_pids="$gate_pids $take_rec"
+for _ in $(seq 1 100); do
+    [ -n "$(sed -n '/recording :/p' "$retake/take.err")" ] && break
+    sleep 0.1
+done
+[ ! -e "$retake/take.mp4" ] && [ "$(parts "$retake")" = 1 ] || {
+    echo "a recording under way should be a part file, with nothing at -o:" >&2
+    ls -la "$retake" >&2
+    exit 1
+}
+sleep 1
+[ "$(./demoreel stop gatepart)" = "$retake/take.mp4" ] || {
+    echo "stop did not print the finished path" >&2; exit 1; }
+wait "$take_rec"
+[ "$(parts "$retake")" = 0 ] || { echo "a finished run left a part" >&2; exit 1; }
+ffprobe -v error "$retake/take.mp4" || { echo "the recording moved into place cannot be read" >&2; exit 1; }
+good=$(sha256sum <"$retake/take.mp4")
+chmod 600 "$retake/take.mp4"
+# A retake that fails on the blank check.
+set +e
+./demoreel record -n gatepart -o "$retake/take.mp4" -d 1 -s 320x240 --settle 0 -- sleep 30 \
+    >"$retake/blank.out" 2>"$retake/blank.err"
+retake_status=$?
+set -e
+kept=$(find "$retake" -maxdepth 1 -name '.demoreel-part-*')
+[ "$retake_status" -ne 0 ] && [ ! -s "$retake/blank.out" ] \
+    && [ "$(sha256sum <"$retake/take.mp4")" = "$good" ] \
+    && grep -qF "was left as it was" "$retake/blank.err" \
+    && [ -n "$kept" ] && [ -s "$kept" ] && grep -qF "flat colour: $kept" "$retake/blank.err" || {
+    echo "a retake that failed should leave the last take, and say where it put its own:" >&2
+    cat "$retake/blank.err" >&2
+    ls -la "$retake" >&2
+    exit 1
+}
+rm "$kept"
+# A retake that fails before it records.
+set +e
+./demoreel record -n gatepart -o "$retake/take.mp4" -d 1 -s 320x240 -- sh -c 'exit 3' \
+    >/dev/null 2>"$retake/early.err"
+early_status=$?
+set -e
+[ "$early_status" -ne 0 ] && [ "$(sha256sum <"$retake/take.mp4")" = "$good" ] \
+    && [ "$(parts "$retake")" = 0 ] || {
+    echo "a retake that failed at start touched the take, or left a part:" >&2
+    cat "$retake/early.err" >&2
+    exit 1
+}
+# A recorder that cannot start leaves no part. Only the recorder is given a
+# part's name, so everything else this ffmpeg is asked for still works.
+mkdir -p "$retake/norec"
+cat >"$retake/norec/ffmpeg" <<SHIM
+#!/bin/sh
+case "\$*" in *demoreel-part*) exit 1 ;; esac
+exec $(command -v ffmpeg) "\$@"
+SHIM
+chmod +x "$retake/norec/ffmpeg"
+set +e
+PATH="$retake/norec:$PATH" ./demoreel record -n gatepart -o "$retake/norec.mp4" -d 1 -s 320x240 \
+    -- xclock >/dev/null 2>"$retake/norec.err"
+norec_status=$?
+set -e
+[ "$norec_status" -ne 0 ] && grep -q 'could not start recording' "$retake/norec.err" \
+    && [ ! -e "$retake/norec.mp4" ] && [ "$(parts "$retake")" = 0 ] || {
+    echo "a recorder that could not start left something behind:" >&2
+    cat "$retake/norec.err" >&2
+    exit 1
+}
+# A first take that fails part-way leaves what it recorded at -o, as before.
+set +e
+./demoreel record -n gatepart -o "$retake/midway.mp4" -s 320x240 -a 'key Bogus_Key' -- xclock \
+    >/dev/null 2>"$retake/midway.err"
+midway_status=$?
+set -e
+[ "$midway_status" -ne 0 ] && grep -q 'key step failed' "$retake/midway.err" \
+    && [ -s "$retake/midway.mp4" ] && [ "$(parts "$retake")" = 0 ] || {
+    echo "a take that failed part-way should leave its file at -o, and no part:" >&2
+    cat "$retake/midway.err" >&2
+    exit 1
+}
+# A retake that works replaces it, and keeps its mode.
+./demoreel record -n gatepart -o "$retake/take.mp4" -d 1 -s 320x240 -- xclock >/dev/null 2>&1
+[ "$(sha256sum <"$retake/take.mp4")" != "$good" ] && [ "$(stat -c %a "$retake/take.mp4")" = 600 ] || {
+    echo "a retake that worked did not replace the take, or did not keep its mode" >&2
+    exit 1
+}
+# A new file takes the umask, and a chosen ending still picks the container.
+( umask 027; ./demoreel record -n gatepart -o "$retake/um.mkv" -d 1 -s 320x240 -- xclock >/dev/null 2>&1 )
+[ "$(stat -c %a "$retake/um.mkv")" = 640 ] || {
+    echo "a new video did not take the caller's umask: $(stat -c %a "$retake/um.mkv")" >&2; exit 1; }
+case $(ffprobe -v error -show_entries format=format_name -of csv=p=0 "$retake/um.mkv") in
+    *matroska*) ;;
+    *) echo "-o um.mkv is not a Matroska file" >&2; exit 1 ;;
+esac
+# The caller's own link keeps writing to its target.
+ln -s through-target.mp4 "$retake/through.mp4"
+[ "$(./demoreel record -n gatepart -o "$retake/through.mp4" -d 1 -s 320x240 -- xclock 2>/dev/null)" \
+    = "$retake/through-target.mp4" ] && [ -L "$retake/through.mp4" ] || {
+    echo "a recording through the caller's own link replaced it" >&2; exit 1; }
+# The default name, taken after the plan named it: the new name is what is printed.
+mkdir -p "$retake/default"
+dr_path="$PWD/demoreel"
+( cd "$retake/default" && exec "$dr_path" record -d 0 -n gatepart -s 320x240 -- xclock ) \
+    >"$retake/default.out" 2>"$retake/default.err" &
+take_rec=$!
+gate_pids="$gate_pids $take_rec"
+for _ in $(seq 1 100); do
+    [ -n "$(sed -n '/recording :/p' "$retake/default.err")" ] && break
+    sleep 0.1
+done
+planned=$(sed -n 's/.*recording :[0-9]* to \(.*\) (until stopped).*/\1/p' "$retake/default.err")
+[ -n "$planned" ] || { cat "$retake/default.err" >&2; exit 1; }
+: >"$planned"
+sleep 1
+stopped=$(./demoreel stop gatepart)
+wait "$take_rec"
+[ "$stopped" = "$(cat "$retake/default.out")" ] && [ "$stopped" != "$planned" ] \
+    && [ -s "$stopped" ] && [ ! -s "$planned" ] && grep -qF "$planned was taken" "$retake/default.err" || {
+    echo "a default name taken mid-run: planned $planned, stop said $stopped:" >&2
+    cat "$retake/default.err" >&2
+    exit 1
+}
+echo "a recording lands whole; a failed retake leaves the last take"
+
+step "a shot lands whole, and a failed one leaves what was at -o"
+# DEMO-0094. A flat shot, or a --region cut that failed, took a file already at
+# -o with it. A % is a character of the name, not a frame number.
+shots="$tmp/shots"
+mkdir -p "$shots"
+./demoreel shot -o "$shots/keep.png" -s 320x240 -- xclock >/dev/null
+keep_sum=$(sha256sum <"$shots/keep.png")
+set +e
+./demoreel shot -o "$shots/keep.png" -s 320x240 --settle 1 --startup-timeout 2 -- sleep 30 \
+    >/dev/null 2>"$shots/flat.err"
+flat_status=$?
+set -e
+[ "$flat_status" -ne 0 ] && grep -q 'one flat colour' "$shots/flat.err" \
+    && [ "$(sha256sum <"$shots/keep.png")" = "$keep_sum" ] || {
+    echo "a flat shot touched the file already at -o:" >&2
+    cat "$shots/flat.err" >&2
+    exit 1
+}
+rm -rf "$(sed -n 's/.*display log is kept in //p' "$shots/flat.err")"
+mkdir -p "$shots/nocut"
+cat >"$shots/nocut/ffmpeg" <<SHIM
+#!/bin/sh
+case "\$*" in *crop=*) exit 1 ;; esac
+exec $(command -v ffmpeg) "\$@"
+SHIM
+chmod +x "$shots/nocut/ffmpeg"
+set +e
+PATH="$shots/nocut:$PATH" ./demoreel shot -o "$shots/keep.png" -s 320x240 --region 0,0,100,100 \
+    -- xclock >/dev/null 2>"$shots/cut.err"
+cut_status=$?
+set -e
+[ "$cut_status" -ne 0 ] && grep -q 'could not cut' "$shots/cut.err" \
+    && [ "$(sha256sum <"$shots/keep.png")" = "$keep_sum" ] \
+    && [ -z "$(find "$shots" -maxdepth 1 -name '.demoreel-*')" ] || {
+    echo "a failed cut touched the file at -o, or left a part:" >&2
+    cat "$shots/cut.err" >&2
+    exit 1
+}
+rm -rf "$(sed -n 's/.*display log is kept in //p' "$shots/cut.err")"
+shot=$(./demoreel shot -o "$shots/p%d.png" -s 320x240 -- xclock)
+[ "$shot" = "$shots/p%d.png" ] && [ -s "$shots/p%d.png" ] || {
+    echo "a % in a shot's name did not reach the file: '$shot'" >&2; exit 1; }
+( umask 027; ./demoreel shot -o "$shots/um.png" -s 320x240 -- xclock >/dev/null )
+[ "$(stat -c %a "$shots/um.png")" = 640 ] || {
+    echo "a new shot did not take the umask: $(stat -c %a "$shots/um.png")" >&2; exit 1; }
+ln -s lnk-target.png "$shots/lnk.png"
+[ "$(./demoreel shot -o "$shots/lnk.png" -s 320x240 -- xclock)" = "$shots/lnk-target.png" ] \
+    && [ -L "$shots/lnk.png" ] || {
+    echo "a shot through the caller's own link replaced it" >&2; exit 1; }
+echo "a shot lands whole, and a failed one leaves what was there"
 
 step "a run's name stays inside the state directory"
 # DEMO-0094. A name becomes file names in the state directory, so ../x and /x

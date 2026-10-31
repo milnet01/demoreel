@@ -1416,3 +1416,9 @@ msgstr ""
 
 msgid "--name takes up to {most} plain letters, digits, dots, underscores and hyphens, starting with a letter, a digit or an underscore, not {name}."
 msgstr "--name 最多接受 {most} 個一般字母、數字、點、底線和連字號，並以字母、數字或底線開頭，不接受 {name}。"
+
+msgid "{taken} was taken by the time the file was ready, so the file is {output}."
+msgstr "檔案就緒時 {taken} 已被占用，所以檔案是 {output}。"
+
+msgid "{output} was left as it was, and this run's video is in {part}."
+msgstr "{output} 維持原樣，本次執行的影片在 {part}。"
