@@ -6,8 +6,8 @@ they are listed below rather than dismissed: it starts an X display other local
 processes can reach, writes state under a path other local users can predict,
 passes text on a command line, and reads files someone else may have made.
 
-`~/.claude/standards/security.md` owns what a trust boundary is and what
-defending one requires. This file is what an outside reader needs.
+Each boundary below says what demoreel does about it, what the gate checks, and
+what is left.
 
 ## Trust boundaries
 
@@ -84,7 +84,7 @@ it, and in `/tmp` otherwise. The name in `/tmp` is predictable,
 so on a shared machine another user can create that path first. demoreel checks
 before using it: `lstat` rather than `stat`, so a planted symlink is seen rather
 than followed, and the run stops unless the path is a directory the caller owns.
-It then sets that directory to mode 0700.
+It makes that directory at mode 0700, and sets one already there to that mode.
 A desktop session sets `XDG_RUNTIME_DIR`, so the fallback is the unusual path.
 A run's `--name` becomes file
 names there, so it takes plain letters, digits, dots, underscores and hyphens,
@@ -187,7 +187,8 @@ nearly full disk (DEMO-0094).
 A script holds scenes and nothing else. No line of one runs a program or says
 where the film is written. Each value is checked against what its word takes, and
 text reaches `ffmpeg` from a file, so no value becomes part of a filter. A font's
-path holding a character `ffmpeg`'s filters read is refused. No gate step tries to
+path holding a character `ffmpeg`'s filters read is refused, and so is text when
+the state directory's path holds one. No gate step tries to
 pass a filter through a script. These rest on the code, and on a probe of
 2026-10-31 that put a filter in a script's text, font, colour, transition and
 number values and got no file from it.
@@ -203,7 +204,8 @@ Two limits are left:
 **The video and the logs demoreel writes.** Whatever the app draws is in the
 video, and `--app-log` keeps whatever the app printed. Both are ordinary files
 with the caller's umask, and a part file has that mode from the start. A video
-or a picture that replaces a file keeps that file's mode. Check what is in them
+or a picture that replaces a file keeps that file's mode. A film keeps no tags or
+chapters from the files it is made from, which the gate checks. Check what is in them
 before publishing one; demoreel cannot tell a secret on screen from any other
 pixels.
 

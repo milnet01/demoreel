@@ -36,19 +36,6 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 - **The finishing commands need fewer options** (DEMO-0263)
   `-o` is now optional on `edit`, `trim`, `caption`, `join`, `card`, `poster`, `thumbnail` and `sheet`: the file lands in the current folder, named after what it was made from and the time. `card` lasts 3 seconds unless you say, and `sheet` with neither `--every` nor `--at` takes 12 frames spread over the video. `edit --help` now says where a script's words are listed.
 
-### Security
-
-- **`SECURITY.md` now says what demoreel trusts** (DEMO-0094)
-  Edit scripts, media files, fonts and file names are untrusted, a `--steps` file is as trusted as the command, and other processes of your own user are no boundary. It also lists every helper found through `PATH`, says what the gate really checks for each claim, and says only the latest release gets fixes.
-- **Checking a download now ties each file to the signed commit** (DEMO-0094)
-  `SECURITY.md`'s `gh attestation verify` command gains `--source-digest`: without it, a tag moved to another commit for the build and moved back afterwards passed all three checks. The tag check now reads the key from the GitHub account rather than from the repository, and says what to read in its output, since git does not compare a signed tag's own name with the one you asked for. A release's tag must also name itself and its version.
-- **The release workflow builds the tag it checked, with less in reach** (DEMO-0094)
-  It checks out the tag by its full name and fails unless that is the commit it verified, where a branch named like the tag could have been what it built. Building runs in a job that can only read. Attaching and the build record run in a second job that holds those rights and runs nothing else. `SHA256SUMS` goes up last, and a release that already has it is not replaced unless you delete it first, so a release page never mixes two builds.
-- **What a package install test runs can no longer change the files a release attaches** (DEMO-0094)
-  Those containers install other people's packages as root, and they could write to the folder holding the release's files. They now get it read-only, and the files are hashed after the build and compared before they go out. openSUSE's test no longer turns off signature checks for its repositories. A release builds in images pinned by digest.
-- **Nothing reaches the openSUSE Build Service without a signed tag and a build record** (DEMO-0094)
-  `obs-submit.sh` compared two files from the same release page, so swapping both passed, and OBS would then have signed the result.
-
 ### Fixed
 
 - **Names such as `12:30:05.mp4`, `-report.mp4` and `q%d.png` are read as those files** (DEMO-0094)
@@ -173,6 +160,19 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   It could pull another file on the machine into a film. Everything else ffmpeg reads still works.
 - **A crafted file can no longer fill the memory or the disk** (DEMO-0094)
   Each read of a file is held to half the machine's memory, and only the end of a program's output is kept. A film lasts at most 24 hours, at most 1000 frames a second, and stops before the disk is full.
+- **`card --text-size 0` is refused, as `caption` refuses it** (DEMO-0094)
+- **A line too wide for a large frame is refused at a small text size too** (DEMO-0094)
+  At a small size the measurement stopped short of the frame's width, so the line passed and ran off the edge.
+- **A text with a carriage return, form feed or vertical tab is refused as more than one line** (DEMO-0094)
+  ffmpeg starts a new line on each, so `caption --text` could get past the one-line rule.
+- **Music that is silent all through is refused, as it was meant to be** (DEMO-0094)
+- **`sheet --region` on an odd corner starts where you asked** (DEMO-0094)
+  It started a pixel to the left and above.
+- **A run started with stderr closed goes on as usual** (DEMO-0094)
+  `2>&-` used to end a good run with exit status 1 at its first note.
+- **A second stop signal no longer leaves a finishing command's working folder behind** (DEMO-0094)
+- **Text stops with a clear message if the state directory's path has a quote in it** (DEMO-0094)
+  It failed with ffmpeg's own words about an output file. Point `XDG_RUNTIME_DIR` at a plainer path.
 - **A translation file must be a regular file, and a refusal quotes none of it** (DEMO-0094)
   A link or a named pipe could cost the run or hang it, and a control code in a bad file reached the terminal through the note.
 - **A `key` or `hold` step takes key names and nothing else** (DEMO-0094)
@@ -181,6 +181,21 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   A mistyped line such as `Type pass'word` printed the password in the error. It now prints the first word.
 - **The private display's password no longer appears on a command line, and the display is locked before it starts.** (DEMO-0094)
   Another local user could read the password from the process list while it was being set. Both backends now write it first and send it over stdin.
+
+### Security
+
+- **`SECURITY.md` now says what demoreel trusts** (DEMO-0094)
+  Edit scripts, media files, fonts and file names are untrusted, a `--steps` file is as trusted as the command, and other processes of your own user are no boundary. It also lists every helper found through `PATH`, says what the gate really checks for each claim, and says only the latest release gets fixes.
+- **Checking a download now ties each file to the signed commit** (DEMO-0094)
+  `SECURITY.md`'s `gh attestation verify` command gains `--source-digest`: without it, a tag moved to another commit for the build and moved back afterwards passed all three checks. The tag check now reads the key from the GitHub account rather than from the repository, and says what to read in its output, since git does not compare a signed tag's own name with the one you asked for. A release's tag must also name itself and its version.
+- **The release workflow builds the tag it checked, with less in reach** (DEMO-0094)
+  It checks out the tag by its full name and fails unless that is the commit it verified, where a branch named like the tag could have been what it built. Building runs in a job that can only read. Attaching and the build record run in a second job that holds those rights and runs nothing else. `SHA256SUMS` goes up last, and a release that already has it is not replaced unless you delete it first, so a release page never mixes two builds.
+- **What a package install test runs can no longer change the files a release attaches** (DEMO-0094)
+  Those containers install other people's packages as root, and they could write to the folder holding the release's files. They now get it read-only, and the files are hashed after the build and compared before they go out. openSUSE's test no longer turns off signature checks for its repositories. A release builds in images pinned by digest.
+- **A film no longer carries its sources' tags or chapters** (DEMO-0094)
+  A clip's title, comment or place name, or a music file's, went into the film you published. Any of them is now left out, and so are chapters. The picture and sound are unchanged.
+- **Nothing reaches the openSUSE Build Service without a signed tag and a build record** (DEMO-0094)
+  `obs-submit.sh` compared two files from the same release page, so swapping both passed, and OBS would then have signed the result.
 
 ## [0.9.0] - 2026-10-14
 

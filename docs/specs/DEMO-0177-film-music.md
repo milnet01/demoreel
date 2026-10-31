@@ -230,7 +230,8 @@ sound is shorter than the film, so what it holds is bounded by the film's length
 All of it, as today, naming the line or the option: a second `music` line;
 a `level` line that does not follow the music line or another `level`
 line; a `text` line under a `music`
-or `level` line; a music file that is missing or has no sound; a `level` or
+or `level` line; a music file that is missing, has no sound or is silent all
+through; a `level` or
 `volume` out of range or not a number; `sound` other than `on` or `off`;
 `normalise` other than `on` or `off`; a `level` line's `from` not before
 its `to`, or either past the film's end; two `level` lines that overlap;
@@ -382,7 +383,8 @@ guard covers it.
 
 ## 6. Failure modes
 
-- **A music file ffmpeg cannot read, or with no sound:** refused before
+- **A music file ffmpeg cannot read, with no sound, or silent all through:**
+  refused before
   anything is made (§ 4.6).
 - **A music file whose length ffprobe cannot tell:** the loop `size` cannot
   be set, so it is refused, naming the file.

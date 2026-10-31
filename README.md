@@ -323,6 +323,7 @@ What they share:
   at the front**, and `-o` must end in `.mp4`; any other ending is refused. So
   one command's output can be another's input. A clip keeps its own sound; a
   film with no sound in its clips and no music has no sound track at all.
+  A film keeps no tags or chapters from the files it is made from.
 - **stdout carries the finished path and nothing else**, as with `record`.
   `motion` writes no file, so its report is what it prints there. Everything
   else these commands say goes to stderr.

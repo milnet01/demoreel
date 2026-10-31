@@ -529,11 +529,13 @@ the same template.
 
 - **INV-14** — Under the pseudo-locale, every stderr message demoreel itself
   writes, and every option's help entry in `--help` — which argparse may wrap
-  over several lines — begins with `⟦` and ends with `⟧`.
+  over several lines — begins with `⟦` and ends with `⟧`. A message holds no
+  translation of three words or fewer inside it: that is a fragment.
   *Test:* `ci.sh` step `translation: stdout and exit status do not move` —
   the failing runs of INV-2 and `--help` of every subcommand; any `demoreel: `
-  message or help entry without the marks fails the step.
-  *Breaks when:* a message is written without `tr`. Partial: only the
+  message or help entry without the marks, or with a fragment, fails the step.
+  *Breaks when:* a message is written without `tr`, or built from a translated
+  fragment. Partial: only the
   messages those runs reach are checked.
 
 - **INV-15** — `tr`, `trn`, `tr_help` and `tr_listed` are called only inside

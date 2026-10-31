@@ -169,9 +169,11 @@ it cannot vouch for.
 - **Without `--audio`:** the run goes on, and prints one note on stderr
   that the app's sound may play on the speakers, naming the reason.
 - **With `--audio`:** the run stops before launching the app, names the
-  reason, and exits non-zero. `prepare` checks for `pactl` and for an
-  ffmpeg with the `pulse` input device only when `--audio` is given, and
-  names the install command as it does for other programs (`install_hint`).
+  reason, and exits non-zero. `prepare` checks for `pactl` only when
+  `--audio` is given, and names the install command as it does for other
+  programs (`install_hint`). `cmd_record` checks for an ffmpeg with the
+  `pulse` input device, also only then, once the run can be stopped
+  (DEMO-0165).
   `pactl` never joins `required_programs`, which every run and `check`'s
   readiness lines read.
 
@@ -290,8 +292,8 @@ README.
   two seconds into a 15 s run, ffmpeg exited 0 at 15 s with a full-length
   sound track. The sound goes quiet from that moment, and the run cannot
   tell.
-- **ffmpeg without the `pulse` device:** `prepare` refuses `--audio` and
-  names the install command.
+- **ffmpeg without the `pulse` device:** `cmd_record` refuses `--audio`
+  before the app starts.
 - **A Flatpak without sound permission:** it makes no sound, the track is
   silent, and § 4.6's note says so.
 - **The log lacks a `start:` line:** § 4.4; the run fails.
