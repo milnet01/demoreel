@@ -1987,7 +1987,9 @@ finishing_checks() {
     # thread reserves its stack and an arena. So a limit set on twelve cores failed a
     # larger machine and let a runaway through on four. Measured, in pieces then all
     # in one ffmpeg, 2026-10-31: 2.2 and 5.5 GB on ffmpeg 9.0, 4.1 and over 5 GB on
-    # Ubuntu's 6.1, at four cores. On one or two a runaway can stay under a limit.
+    # Ubuntu's 6.1, at four cores. GitHub's runner failed pc1 at 4.5 GB and passed it
+    # at 5.5, unmeasured between, with the same four cores. On one or two a runaway
+    # can stay under a limit.
     four_cores() {
         taskset -c "$(python3 -c 'import os; print(*sorted(os.sched_getaffinity(0))[:4], sep=",")')" "$@"
     }
@@ -4352,9 +4354,9 @@ CAPPY
       for _ in $(seq 15); do echo "clip A.mp4 to 1 window 80 crossfade 0.25"; done
     } > "$ft/pc1.txt"
     rc=0
-    ( ulimit -v 4500000; cd "$ft" && four_cores "$DR" edit pc1.txt -o "$ft/out/pc1.mp4" ) \
+    ( ulimit -v 5250000; cd "$ft" && four_cores "$DR" edit pc1.txt -o "$ft/out/pc1.mp4" ) \
         >"$fo" 2>"$fe" || rc=$?
-    expect_ok "16 windowed scenes with crossfades, inside 4.5 GB on four cores"
+    expect_ok "16 windowed scenes with crossfades, inside 5.25 GB on four cores"
     assert_eq "16 windowed scenes: frames" 139 "$(v_frames "$ft/out/pc1.mp4")"
     # The same film from pieces and from one piece: the same frames, each
     # within x264's noise, and the same sound. Cuts, cards, holds and
@@ -4417,7 +4419,7 @@ ONEPY
     assert_absent "a film with a piece short of its frames leaves no film" "$ft/out/pc3.mp4"
     leftovers=$(find "$ft/out" -name '.demoreel-*' | wc -l)
     assert_eq "a failed film leaves no piece behind" 0 "$leftovers"
-    echo "a long windowed film fits in 4.5 GB, and pieces make the film one ffmpeg would"
+    echo "a long windowed film fits in 5.25 GB, and pieces make the film one ffmpeg would"
     }
     fin_s70() {
     # README: "-o may not be one of the files being read." The script is read
@@ -5745,7 +5747,7 @@ MODEPY
     fin_step "a sound line plays its file at its moment, at its volume" fin_s66
     fin_step "edit refuses a bad sound line" fin_s67
     fin_step "a film's ffmpeg is held to the memory it uses, not the address space it reserves" fin_s68
-    fin_step "a long windowed film fits in 4.5 GB, and pieces make the film one ffmpeg would" fin_s69
+    fin_step "a long windowed film fits in 5.25 GB, and pieces make the film one ffmpeg would" fin_s69
     fin_step "edit's script is never written over, and a folder that cannot be made is said in words" fin_s70
     fin_step "a part file is this run's own, and the finished file takes the caller's mode" fin_s71
     fin_step "a file name, a script line or a program's words reach the terminal as text, and forge no line" fin_s72
