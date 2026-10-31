@@ -68,6 +68,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   `shot -o p%d.png` wrote `p1.png` and failed.
 - **`edit x.mp4 -o x.mp4` no longer writes over its script** (DEMO-0094)
 - **A file where a folder must go no longer gives a traceback on the finishing commands** (DEMO-0094)
+- **The checks before a push and on GitHub no longer shrink for a rename, or for an uncommitted edit** (DEMO-0094)
+  Moving code to a `.md` file read as a change to documentation alone. In a clone using `.githooks/pre-push`, an uncommitted delete or edit of `ci.sh` could skip or narrow the checks on the commits being pushed. That hook also now scans the pushed commits for secrets where `gitleaks` is installed.
 - **Pressing Tab after `demoreel stop` no longer runs anything from the folder you are in** (DEMO-0094)
   A file named `argparse.py` in that folder, or a script called `demoreel` when you typed `./demoreel`, ran as you. In bash, so did a command written into a run's name. As root, Tab also left a file behind in `/usr/share/demoreel` that no package owned.
 - **A second SIGTERM while `shot` is ending no longer leaves a private screen running** (DEMO-0094)

@@ -6004,7 +6004,7 @@ chain_attach_checks() {
     hashed=$(cd "$1" && sha256sum file)
     same_as_built "$1" "$hashed" 2>/dev/null || { echo "FAIL: an unchanged file was refused" >&2; exit 1; }
     printf 'changed\n' > "$1/file"
-    ! same_as_built "$1" "$hashed" 2>/dev/null || { echo "FAIL: a changed file passed" >&2; exit 1; }
+    ! same_as_built "$1" "$hashed" >/dev/null 2>&1 || { echo "FAIL: a changed file passed" >&2; exit 1; }
     echo "a file changed after its build is refused"
 
     step "the release workflow holds its shape"
@@ -6043,7 +6043,8 @@ for path in pathlib.Path(".github/workflows").glob("*.yml"):
         m = re.match(r"\s*(?:- )?uses: (\S+)", line)
         if m:
             need(re.fullmatch(r"[^@]+@[0-9a-f]{40}", m[1]), f"not pinned by commit: {line.strip()}")
-print("\n".join(bad), file=sys.stderr)
+for line in bad:
+    print(line, file=sys.stderr)
 sys.exit(1 if bad else 0)
 WORKFLOWPY
     echo "the release workflow's lines are there and in order"

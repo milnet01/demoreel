@@ -518,7 +518,8 @@ All in `ci.sh`, in the `--packages` step, run inside each container of
   same `makepkg --verifysource` against a locally made tarball.
 - INV-10 — a `ci.sh` grep of the workflow files, in the full gate.
 - INV-11, INV-12 — by hand, once, when `obs-submit.sh` is first built: each
-  seeded break named in the invariant.
+  seeded break named in the invariant. INV-11's tag and build record, also in
+  `./ci.sh --release-chain`, against a stand-in `osc`.
 - INV-13 — `./ci.sh --obs-check`, run after each OBS submit.
 - INV-14 — a `ci.sh` grep of the workflow files, in the full gate.
 
