@@ -790,6 +790,8 @@ simplest case, and a gate proves it still records.
   eight passes, one failure since a88e583.
   2026-10-31: 6dc5b52's full push gate passed, Ubuntu leg included: nine
   passes, one failure since a88e583.
+  2026-10-31: 1ff75a9's full push gate passed, Ubuntu leg included: ten
+  passes, one failure since a88e583.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
@@ -5370,7 +5372,7 @@ covers both display backends and the Flatpak invocation.
   Kind: ux.
   Source: user-request-2026-10-16.
 
-- 📋 [DEMO-0094] **Run a full security pass before 1.0 and fix what it finds.**
+- ✅ [DEMO-0094] **Run a full security pass before 1.0 and fix what it finds.**
   Everything since the last security look: the stop verdict, translations,
   packages and the window. Run `check-code` with its security tools
   (bandit, semgrep, gitleaks), zizmor over the workflow, and a
@@ -5404,6 +5406,12 @@ covers both display backends and the Flatpak invocation.
   its own runs; skipped parts are counted on its last line. Left for the
   sweep: failed shots in the gate still leave folders in the real state
   directory, and the last line reads "1 parts".
+  2026-10-31: every finding of the review has an outcome and the sweep
+  has run. Reports and ledger: docs/reviews/review-code-2026-10-30/.
+  Proven by 1ff75a9: full push gate and GitHub CI both passed; the real
+  Flatpak step skipped because GIMP was open. Left as their own items:
+  DEMO-0292 (the next real release must prove the release workflow),
+  DEMO-0293, DEMO-0294, DEMO-0295 to DEMO-0298.
   **Layman:** Before calling it finished, have the code checked end to end for security holes and fix any found.
   Kind: audit-fix.
   Source: user-request-2026-09-25.
