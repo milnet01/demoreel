@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=290 -->
+<!-- ants-roadmap-id-high-water: DEMO=291 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -845,6 +845,14 @@ simplest case, and a gate proves it still records.
   Older than DEMO-0094's path walk, and the walk keeps it. Found while
   closing the output-paths subject.
   **Layman:** Sending an app's output straight into another command, rather than a file, does not work.
+  Kind: fix.
+  Source: review-fix DEMO-0094 2026-10-31.
+
+- 📋 [DEMO-0291] **A film whose first scene is one frame long, followed by a clip, fails with no reason given.**
+  `card 0.2` at 5 frames a second, then a clip: "ffmpeg could not make the
+  film" and nothing more. Older than DEMO-0094, which found it while
+  closing the untrusted-input subject.
+  **Layman:** A very short title card before a clip stops the film from being made, and the message does not say why.
   Kind: fix.
   Source: review-fix DEMO-0094 2026-10-31.
 
@@ -5326,6 +5334,10 @@ covers both display backends and the Flatpak invocation.
   path and part file, retakes, and the gate refusing root. Left:
   untrusted text and media, the release chain and completions, the
   gate's own weak checks, then SECURITY.md in full.
+  2026-10-31: subject closed: untrusted text and media. Messages,
+  catalogs, measurements, input formats and a film's limits. Left: the
+  release chain and completions, the gate's own weak checks, then
+  SECURITY.md in full.
   **Layman:** Before calling it finished, have the code checked end to end for security holes and fix any found.
   Kind: audit-fix.
   Source: user-request-2026-09-25.
