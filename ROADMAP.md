@@ -5370,6 +5370,12 @@ covers both display backends and the Flatpak invocation.
   SECURITY.md in full.
   2026-10-31: subject closed: the release chain and completions. Left:
   the gate's own weak checks, then SECURITY.md in full.
+  2026-10-31: the gate's own weak checks are closed (e8736ef to
+  d87f531): a failed measurement or a wrong-reason refusal now fails its
+  check; the gate's teardown signals only what it still runs and only
+  its own runs; skipped parts are counted on its last line. Left for the
+  sweep: failed shots in the gate still leave folders in the real state
+  directory, and the last line reads "1 parts".
   **Layman:** Before calling it finished, have the code checked end to end for security holes and fix any found.
   Kind: audit-fix.
   Source: user-request-2026-09-25.
