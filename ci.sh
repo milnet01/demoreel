@@ -6006,6 +6006,9 @@ chain_attach_checks() {
     printf 'changed\n' > "$1/file"
     ! same_as_built "$1" "$hashed" >/dev/null 2>&1 || { echo "FAIL: a changed file passed" >&2; exit 1; }
     echo "a file changed after its build is refused"
+    ! grep -q '^ *install_pkg() { zypper.*--no-gpg-checks' <<<"$(pkg_container_script)" || {
+        echo "FAIL: openSUSE's install turns off signature checks for its repositories" >&2; exit 1; }
+    echo "openSUSE's install keeps signature checks on for its repositories"
 
     step "the release workflow holds its shape"
     # A workflow runs only on GitHub, so this reads it. It proves the lines are
