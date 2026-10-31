@@ -10,6 +10,7 @@ import argparse
 import codecs
 import contextlib
 import ctypes
+import errno
 import fcntl
 import fractions
 import itertools
@@ -2200,10 +2201,8 @@ def prepare(a, suffix):
                "an odd width or height.\n  Try {size}.",
                size=f"{width + width % 2}x{height + height % 2}"))
 
-    if a.output:
-        output = own_path(a.output, "output")
-    else:
-        output = timestamped_output(Path(command[0]).name, suffix)
+    output = own_path(a.output or timestamped_output(Path(command[0]).name, suffix),
+                      "output")
     make_parent(output)
 
     applog = own_path(a.app_log, "app log") if a.app_log else None
@@ -2226,7 +2225,11 @@ def open_app_log(applog):
     if not applog:
         return sys.stderr
     try:
-        return open(applog, "wb")  # closed by the run's finally
+        # O_NOFOLLOW: own_path resolved this path, so a link here now was
+        # planted after that. 0o666 is what open() asks for: the umask applies.
+        fd = os.open(applog, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW
+                     | os.O_CLOEXEC, 0o666)
+        return os.fdopen(fd, "wb")  # closed by the run's finally
     except OSError as exc:
         die(tr("could not write to {path}: {reason}.", path=applog, reason=exc.strerror))
 
@@ -2245,29 +2248,106 @@ def timestamped_output(name, suffix):
     return output
 
 
-def own_path(raw, what):
-    """Resolve a path demoreel will write, refusing a symlink someone else made.
+# As many links as one path may go through, which is the kernel's own limit.
+MOST_LINKS = 40
+CONTROL_CHARACTER = re.compile(r"[\x00-\x1f\x7f]")
 
-    resolve() follows the link here, in demoreel, so the writer is handed its
-    target and the kernel's fs.protected_symlinks never gets to refuse it.
-    Measured: a link at the -o path had its target overwritten, exit 0. So
-    another local user could plant /tmp/demo.mp4 pointing at one of your files
-    and have your run overwrite it (DEMO-0082). A link you made yourself is
-    yours to follow. A link planted after this check is opened by the writer,
-    and there the kernel's protection applies. `what` is "output" or "app log".
+
+def walk_links(path, what):
+    """Follow path's links one at a time, as the kernel would, and return where
+    they lead. A name that is not there yet, or cannot be read, is kept as it
+    is: whatever writes the file then says what is wrong.
+
+    The name given is the caller's alone: root's link there is refused too.
+    Every other link, on the way up or along a chain, may also be root's:
+    /var/run -> /run is. Anyone else's could point anywhere, and following it
+    here, in demoreel, means fs.protected_symlinks never gets to refuse it.
     """
-    path = Path(os.path.abspath(Path(raw).expanduser()))
-    if path.is_symlink() and path.lstat().st_uid != os.getuid():
-        if what == "app log":
-            die(tr("the app log {path} is a symbolic link another user made, so "
-                   "demoreel\n  will not write through it: it could point at a file "
-                   "of yours.\n  Choose another path, or remove the link if it is "
-                   "not meant to be there.", path=path))
+    now, rest, at_name_given, hops = Path("/"), list(reversed(path.parts[1:])), True, 0
+    while rest:
+        name = rest.pop()
+        if name == "..":
+            now = now.parent
+        elif name not in ("", "."):
+            here = now / name
+            is_name_given = at_name_given and not rest
+            try:
+                st = os.lstat(here)
+                target = os.readlink(here) if stat.S_ISLNK(st.st_mode) else None
+            except OSError:
+                st, target = None, None
+            if target is None:
+                now = here
+                continue
+            hops += 1
+            if hops > MOST_LINKS:
+                die(tr("could not write to {path}: {reason}.", path=path,
+                       reason=os.strerror(errno.ELOOP)))
+            if st.st_uid != os.getuid() and (st.st_uid != 0 or is_name_given):
+                refuse_link(path, here, what, is_name_given)
+            at_name_given = at_name_given and not is_name_given
+            if target.startswith("/"):
+                now = Path("/")
+            rest.extend(reversed(target.split("/")))
+    return now
+
+
+def refuse_link(path, link, what, is_name_given):
+    """Die: the path goes through `link`, which someone else made."""
+    if is_name_given and what == "app log":
+        die(tr("the app log {path} is a symbolic link another user made, so "
+               "demoreel\n  will not write through it: it could point at a file "
+               "of yours.\n  Choose another path, or remove the link if it is "
+               "not meant to be there.", path=path))
+    if is_name_given:
         die(tr("the output {path} is a symbolic link another user made, so demoreel\n"
                "  will not write through it: it could point at a file of yours.\n"
                "  Choose another path, or remove the link if it is not meant to be "
                "there.", path=path))
-    return path.resolve()
+    if what == "app log":
+        die(tr("the app log {path} goes through the symbolic link {link}, which "
+               "another user made,\n  so demoreel will not write through it: it "
+               "could point at a file of yours.\n  Choose another path.",
+               path=path, link=link))
+    die(tr("the output {path} goes through the symbolic link {link}, which another "
+           "user made,\n  so demoreel will not write through it: it could point at "
+           "a file of yours.\n  Choose another path.", path=path, link=link))
+
+
+def own_path(raw, what):
+    """Resolve a path demoreel will write, refusing what someone else planted.
+
+    Measured: a link at the -o path had its target overwritten, exit 0, so
+    another user could plant /tmp/demo.mp4 pointing at one of your files
+    (DEMO-0082). walk_links says which links are followed. Another user's file
+    or pipe is refused as well, since they could read what is written there; a
+    device is not, so --app-log /dev/null works. -o takes an ordinary file or
+    nothing, since a finished file replaces what is there. A link or file planted
+    after this check is for the writer to meet; SECURITY.md says what that
+    leaves. `what` is "output" or "app log".
+    """
+    path = Path(os.path.abspath(Path(raw).expanduser()))
+    if what == "output" and CONTROL_CHARACTER.search(str(path)):
+        die(tr("the output path {path} holds a control character, such as a line "
+               "break, which demoreel cannot pass on safely.\n  Choose another path.",
+               path=repr(str(path))))
+    resolved = walk_links(path, what)
+    try:
+        st = os.lstat(resolved)
+    except OSError:
+        return resolved
+    if st.st_uid != os.getuid() and (stat.S_ISREG(st.st_mode) or stat.S_ISFIFO(st.st_mode)):
+        if what == "app log":
+            die(tr("the app log {path} is a file another user owns, so demoreel will "
+                   "not write to it:\n  that user could read what is written there.\n"
+                   "  Choose another path.", path=resolved))
+        die(tr("the output {path} is a file another user owns, so demoreel will not "
+               "write to it:\n  that user could read what is written there.\n"
+               "  Choose another path.", path=resolved))
+    if what == "output" and not stat.S_ISREG(st.st_mode):
+        die(tr("-o {path} is not an ordinary file, so demoreel cannot put its file "
+               "there.\n  Choose another path.", path=resolved))
+    return resolved
 
 
 def park_pointer(env, width, height):

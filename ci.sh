@@ -7419,6 +7419,129 @@ set -e
 }
 echo "the gate stops before any step when run as root"
 
+step "a path demoreel writes is walked, and every link and file on it checked"
+# DEMO-0094. Only the last name used to be checked, so a planted link earlier in
+# the path, or further along a chain, was followed. The gate has one account, so
+# a stand-in for os.lstat says who owns what: that covers each rule, but not the
+# kernel's own view of a second user. /etc/passwd and the root-owned link in the
+# next step are real files of another owner. A link swapped in after the walk
+# is covered at the last name only, here for the app log.
+python3 - "$tmp/walk" <<'WALKPY'
+import importlib.machinery, importlib.util, os, stat, sys
+from pathlib import Path
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+t = Path(sys.argv[1])
+t.mkdir()
+t = t.resolve()
+(t / "dir").mkdir()
+(t / "other").mkdir()
+real_lstat = os.lstat
+owners = {}
+def lstat(path, **kw):
+    st = real_lstat(path, **kw)
+    uid = owners.get(str(path))
+    return st if uid is None else os.stat_result((*st[:4], uid, *st[5:]))
+os.lstat = lstat
+THEM = os.getuid() + 1
+def answer(raw, what, owned):
+    """What own_path says about raw with these names owned by these users."""
+    owners.clear()
+    owners.update({str(t / name): uid for name, uid in owned.items()})
+    try:
+        return d.own_path(str(raw), what)
+    except SystemExit as exc:
+        return str(exc.code)
+def refused(said, raw, what="output", **owned):
+    got = answer(raw, what, owned.get("by", {}))
+    assert isinstance(got, str) and said in got, (raw, owned, got)
+def goes_to(where, raw, what="output", **owned):
+    got = answer(raw, what, owned.get("by", {}))
+    assert got == where, (raw, owned, got)
+
+# A link on the way up: another user's is refused, root's and the caller's are
+# followed, which is what /var/run -> /run needs.
+(t / "up").symlink_to(t / "dir")
+refused("goes through the symbolic link", t / "up/demo.mp4", by={"up": THEM})
+refused(str(t / "up"), t / "up/demo.mp4", by={"up": THEM})
+refused("goes through the symbolic link", t / "up/app.log", "app log", by={"up": THEM})
+goes_to(t / "dir/demo.mp4", t / "up/demo.mp4", by={"up": 0})
+goes_to(t / "dir/demo.mp4", t / "up/demo.mp4")
+if os.path.islink("/var/run"):
+    goes_to(Path(os.path.realpath("/var/run")) / "nothing.mp4", "/var/run/nothing.mp4")
+
+# Along a chain: the caller's own link pointing at another link.
+(t / "mine.mp4").symlink_to("hop")
+(t / "hop").symlink_to("dir/real.mp4")
+refused("goes through the symbolic link", t / "mine.mp4", by={"hop": THEM})
+goes_to(t / "dir/real.mp4", t / "mine.mp4", by={"hop": 0})
+goes_to(t / "dir/real.mp4", t / "mine.mp4")
+
+# The name given itself: only the caller's, even in a folder reached through a
+# trusted link.
+(t / "dir/leaf.mp4").symlink_to("real.mp4")
+refused("symbolic link another user made", t / "up/leaf.mp4",
+        by={"up": 0, "dir/leaf.mp4": 0})
+refused("symbolic link another user made", t / "mine.mp4", by={"mine.mp4": 0})
+refused("symbolic link another user made", t / "mine.mp4", "app log", by={"mine.mp4": THEM})
+
+# A link's own target can climb, and can go round for ever.
+(t / "dir/back").symlink_to("../other")
+goes_to(t / "other/f.mp4", t / "dir/back/f.mp4")
+(t / "loop.mp4").symlink_to("loop.mp4")
+refused("could not write to", t / "loop.mp4")
+
+# Files: another user's regular file or pipe would hand them what is written.
+(t / "theirs.mp4").write_bytes(b"")
+refused("is a file another user owns", t / "theirs.mp4", by={"theirs.mp4": THEM})
+refused("is a file another user owns", t / "theirs.mp4", "app log", by={"theirs.mp4": THEM})
+goes_to(t / "theirs.mp4", t / "theirs.mp4")
+(t / "to-theirs.mp4").symlink_to("theirs.mp4")
+refused("is a file another user owns", t / "to-theirs.mp4", by={"theirs.mp4": THEM})
+os.mkfifo(t / "pipe")
+refused("is a file another user owns", t / "pipe", "app log", by={"pipe": THEM})
+goes_to(t / "pipe", t / "pipe", "app log")
+refused("is a file another user owns", "/etc/passwd")
+refused("is a file another user owns", "/etc/passwd", "app log")
+goes_to(Path("/dev/null"), "/dev/null", "app log")
+
+# -o only ever takes an ordinary file: ffmpeg cannot write an mp4 to a pipe,
+# and a finished file moved over a device or a pipe would replace it.
+for bad in (t / "pipe", t / "dir", "/dev/null"):
+    refused("is not an ordinary file", bad)
+
+# A line break breaks the one-line stdout and the list of pieces given to ffmpeg.
+refused("control character", t / "a\nb.mp4")
+refused("control character", t / "dir\tx/b.mp4")
+goes_to(t / "a b'c%d.mp4", t / "a b'c%d.mp4")
+
+# A link planted after the walk: demoreel opens the app log itself, and does
+# not follow one at the last name. /dev/null and an ordinary file still open.
+owners.clear()
+log = d.own_path(str(t / "app.log"), "app log")
+victim = t / "victim"
+victim.write_bytes(b"precious")
+log.symlink_to(victim)
+try:
+    d.open_app_log(log).close()
+    raise AssertionError("the app log followed a link planted after the walk")
+except SystemExit as exc:
+    assert "could not write to" in str(exc.code), exc.code
+assert victim.read_bytes() == b"precious"
+log.unlink()
+old = os.umask(0o027)
+with d.open_app_log(log) as out:
+    out.write(b"said")
+os.umask(old)
+assert stat.S_IMODE(real_lstat(log).st_mode) == 0o640, oct(real_lstat(log).st_mode)
+with d.open_app_log(log) as out:
+    pass
+assert log.stat().st_size == 0, "an app log is written afresh"
+d.open_app_log(Path("/dev/null")).close()
+print("links on the way up and along a chain, and other users' files, are checked")
+WALKPY
+
 step "an output path that is another user's symlink is refused"
 # DEMO-0082. demoreel resolves -o itself, so the kernel's protected_symlinks
 # never sees the link: a planted /tmp/demo.mp4 had its target overwritten. A
