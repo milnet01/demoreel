@@ -14,6 +14,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **A `split` scene in `edit` plays several videos side by side, frame for frame** (DEMO-0285)
+  Each video is a slice of the frame, with a border between slices and a label on each. A `slide` line moves the row along, eased, at a time you name. Videos that differ in size, rate or frame count are refused before anything is made.
 - **`shot --region x,y,w,h` keeps one rectangle of the picture** (DEMO-0205)
   A smaller picture is a smaller file, and cheaper for a Claude Code session to read. The blank-picture check still looks at the whole screen, and a failed run writes nothing to `-o`.
 - **`motion --region x,y,w,h` reports on one rectangle of a video** (DEMO-0211)

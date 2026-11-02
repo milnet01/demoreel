@@ -3526,7 +3526,23 @@ SCENE_WORDS = {
     "music": ("level", "normalise", "fade-in", "fade-out"),
     "level": ("from", "to", "ramp"),
     "sound": ("at", "volume"),
+    "split": ("from", "to", "fade-in", "fade-out", "fade-at", "fade-length",
+              "crossfade", "show"),
+    "slice": ("label", "size", "centre"),
+    "slide": ("at", "over"),
 }
+# A split scene (DEMO-0285): how many videos it takes, the label's height and how
+# far down it sits as shares of the frame's height (split_sample.py's 75 px at
+# 1440), the seconds a slide takes, and a border's white and dark widths as shares
+# of the frame's width (its 8 and 2 at 2560). A label's box reaches past its words
+# by this share of its height.
+SPLIT_MOST = 8
+SPLIT_LABEL = 4.2
+SPLIT_LABEL_TOP = 0.052
+SPLIT_LABEL_PAD = 0.3
+SPLIT_SLIDE = 1.4
+SPLIT_WHITE = 0.003125
+SPLIT_DARK = 0.00078
 # The ready-made pictures a crossfade may take, after its seconds: xfade's own
 # names, those ffmpeg 6.1.1 and 9.0.2 both have, less `custom`.
 TRANSITIONS = (
@@ -3586,6 +3602,14 @@ class Scene:
         self.zoom = None        # a windowed clip: its zoom line, a dict, or None
         self.stacks = []        # its texts' stacks, laid out by check_texts
         self.sounds = []        # its sound lines: each path, at, volume, where
+        self.slices = []        # a split: its videos, each a Scene of kind slice
+        self.slides = []        # a split: its slide lines, in order, each a dict
+        self.show = None        # a split: how many slices fill the frame
+        self.slice_w = 0        # a split: each slice's width in the film's pixels
+        self.label = None       # a slice: the words on it
+        self.size = SPLIT_LABEL  # a slice: its label's height, % of the frame's
+        self.centre = "50"      # a slice: the point it is centred on, % across
+        self.crop = None        # a slice: (width, x) of the part of its file shown
 
 
 # The film's sound: every stream is made this before it is joined or mixed.
@@ -3688,6 +3712,8 @@ def script_words(target, words, kind, where):
                 refuse_window(where, repr(value))
         elif word == "background":
             target.background = value
+        elif word in ("show", "centre", "label"):
+            setattr(target, word, value)  # check_split reads and refuses them
         elif kind == "sound":
             target[word] = (script_decibels if word == "volume" else script_number)(
                 value, where, word)
@@ -3695,7 +3721,7 @@ def script_words(target, words, kind, where):
             setattr(target, word, script_on_off(value, where, word))
         elif word in ("volume", "level"):
             setattr(target, word, script_decibels(value, where, word))
-        elif kind in ("level", "zoom"):
+        elif kind in ("level", "zoom", "slide"):
             target[names.get(word, word)] = script_number(value, where, word)
         elif word == "fade-at":
             target.fade_at.append(script_number(value, where, word))
@@ -3719,7 +3745,9 @@ def parse_script(text):
 
     A `sound FILE ...` line belongs to the scene above it, as a text does.
     One `music FILE ...` line may stand anywhere among the scenes, with its
-    `level DB ...` lines straight after it. Returns (scenes, music or None).
+    `level DB ...` lines straight after it. A `split ...` line starts a scene
+    whose videos are the `slice FILE ...` lines under it, and `slide N ...` lines
+    move its row of slices. Returns (scenes, music or None).
     """
     scenes, music, above = [], None, None
     for number, raw in enumerate(text.splitlines(), 1):
@@ -3803,6 +3831,30 @@ def parse_script(text):
             scene.path = Path(rest[0]).expanduser()
             script_words(scene, rest[1:], "clip", where)
             scenes.append(scene)
+        elif verb == "split":
+            scene = Scene("split", where)
+            script_words(scene, rest, "split", where)
+            scenes.append(scene)
+        elif verb in ("slice", "slide"):
+            if not scenes or scenes[-1].kind != "split" or above in ("music", "level"):
+                # translators: slice, slide and split are edit-script words and stay in
+                # English.
+                die(tr("{where}: a slice or a slide line belongs to the split above it, "
+                       "and the line above is not part of a split.", where=where))
+            if verb == "slide":
+                entry = {"number": rest[0] if rest else "", "where": where}
+                script_words(entry, rest[1:], "slide", where)
+                scenes[-1].slides.append(entry)
+            elif not rest:
+                # translators: slice is an edit-script word and stays in English.
+                die(tr("{where}: slice needs a video file after it.", where=where))
+            else:
+                part = Scene("slice", where)
+                part.path = Path(rest[0]).expanduser()
+                script_words(part, rest[1:], "slice", where)
+                scenes[-1].slices.append(part)
+                # A split is read as a clip of its first slice: its shape, its cut.
+                scenes[-1].path = scenes[-1].slices[0].path
         elif verb == "card":
             if not rest:
                 die(tr("{where}: card needs its length in seconds: card 3", where=where))
@@ -3816,13 +3868,20 @@ def parse_script(text):
             scenes.append(scene)
         else:
             # translators: {word} is the first word of the line, in quotes.
-            die(tr("{where}: a line starts with clip, card, text, zoom, sound, music "
-                   "or level, not {word}.", where=where, word=repr(verb))
+            die(tr("{where}: a line starts with clip, card, split, slice, slide, text, "
+                   "zoom, sound, music or level, not {word}.", where=where,
+                   word=repr(verb))
                 + f"\n  {as_value(line)}")
         above = verb if verb not in ("text", "sound") else above
     if not scenes:
         die(tr("the script has no scenes in it. A scene is a line starting with "
-               "clip or card."))
+               "clip, card or split."))
+    for scene in scenes:
+        if scene.kind == "split" and not 2 <= len(scene.slices) <= SPLIT_MOST:
+            # translators: slice is an edit-script word and stays in English.
+            die(tr("{where}: a split shows {low} to {most} videos, each on a slice "
+                   "line, and this one has {count}.", where=scene.where, low=2,
+                   most=SPLIT_MOST, count=len(scene.slices)))
     return scenes, music
 
 
@@ -3835,7 +3894,7 @@ def probe(path, where):
         out = read_file_capped(
             ["ffprobe", "-v", "error", "-select_streams", "v:0",
              "-show_entries",
-             "stream=width,height,avg_frame_rate:format=duration,format_name",
+             "stream=width,height,avg_frame_rate,nb_frames:format=duration,format_name",
              "-of", "json", *probe_input(path)], CALL_TIMEOUT, path)
     except subprocess.TimeoutExpired:
         die(tr("{where}: reading {path} took over {seconds}s.", where=where,
@@ -3851,6 +3910,9 @@ def probe(path, where):
             raise ValueError
         return {"width": int(stream["width"]), "height": int(stream["height"]),
                 "rate": rate,
+                # None when the file's index does not say, as a .mkv's does not.
+                "frames": int(frames) if str(frames := stream.get("nb_frames")).isdecimal()
+                else None,
                 "duration": float(info["format"].get("duration") or 0),
                 "format": info["format"].get("format_name", "")}
     except (KeyError, IndexError, ValueError):
@@ -4221,11 +4283,12 @@ def check_texts(scene, length, width, height, workdir):
                 die(tr("{where}: a text's {word} is a colour written #RRGGBB, "
                        "like #FFD040, not {value}.", where=where, word=what,
                        value=repr(text[what])))
-        band = text.get("band", "on" if scene.kind == "clip" else "off")
+        as_clip = scene.kind in ("clip", "split")
+        band = text.get("band", "on" if as_clip else "off")
         if band not in ("on", "off"):
             die(tr("{where}: a text's band is on or off, not {value}.", where=where,
                    value=repr(band)))
-        place = text.get("at", "bottom" if scene.kind == "clip"
+        place = text.get("at", "bottom" if as_clip
                          else "top" if scene.path is not None else "middle")
         if place not in TEXT_PLACES:
             die(tr("{where}: a text sits at {places} or {last}, not at {value}.",
@@ -4321,6 +4384,145 @@ def place_stack(scene, lines, width, height):
             "last": lines[-1]["fontsize"]}
 
 
+def check_slices_agree(scene, rate):
+    """Read each slice of a split, and die if one differs from the first in size,
+    rate or frame count: only frames that match make an honest comparison."""
+    for part in scene.slices:
+        part.info = probe(part.path, part.where)
+    first = scene.slices[0]
+    want = first.info
+    for part in scene.slices[1:]:
+        info = part.info
+        if (info["width"], info["height"]) != (want["width"], want["height"]):
+            die(tr("{where}: {path} is {size}, and {first} above it is {other}. The "
+                   "slices of a split are all one size.", where=part.where,
+                   path=part.path, size=f"{info['width']}x{info['height']}",
+                   first=first.path, other=f"{want['width']}x{want['height']}"))
+        if abs(info["rate"] - want["rate"]) > 0.001 * want["rate"]:
+            die(tr("{where}: {path} plays at {rate} frames a second, and {first} above "
+                   "it at {other}. The slices of a split all play at one rate.",
+                   where=part.where, path=part.path, rate=f"{info['rate']:g}",
+                   first=first.path, other=f"{want['rate']:g}"))
+        if info["frames"] is not None and want["frames"] is not None:
+            if info["frames"] != want["frames"]:
+                die(tr("{where}: {path} and {first} hold different numbers of frames "
+                       "({count} and {other}). The slices of a split all hold the same.",
+                       where=part.where, path=part.path, first=first.path,
+                       count=info["frames"], other=want["frames"]))
+        elif abs(info["duration"] - want["duration"]) > 0.5 / (want["rate"] or rate):
+            die(tr("{where}: {path} and {first} last different times ({seconds} and "
+                   "{other} seconds). The slices of a split all last the same.",
+                   where=part.where, path=part.path, first=first.path,
+                   seconds=f"{info['duration']:.3f}", other=f"{want['duration']:.3f}"))
+
+
+def split_border(width):
+    """(white, dark): the widths of a border's white and of each dark edge."""
+    return max(2, 2 * round(SPLIT_WHITE * width / 2)), max(1, round(SPLIT_DARK * width))
+
+
+def check_label(part, room, height, workdir):
+    """Check a slice's label and make it ready to draw. One too wide is refused
+    and not clipped, which would cut words off without saying so."""
+    where, words = part.where, part.label
+    if not words.strip():
+        die(tr("{where}: a text is one line of words, and this one is empty.", where=where))
+    if LINE_BREAKS.search(words):
+        die(tr("{where}: a text is one line of words, and this one is more "
+               "than one line.", where=where))
+    if not 0 < part.size <= 50:
+        die(tr("{where}: a text's size is a percentage of the frame's "
+               "height, between 0 and 50, not {size}.", where=where,
+               size=f"{part.size:g}"))
+    part.fontsize = max(1, round(part.size / 100 * height))
+    part.textfile = workdir / f"text-{len(list(workdir.iterdir()))}.txt"
+    part.textfile.write_text(words, encoding="utf-8", errors="replace")
+    try:
+        wide, _ = text_size(part.textfile, part.fontsize, room=room)
+    except TextUnavailable as exc:
+        die(exc.reason + ("\n  " + tr("`demoreel check` tests this on its own.")
+                          if exc.checked else ""))
+    if wide > room:
+        die(tr("{where}: the label {words} is {wide} pixels wide at size {size}, and "
+               "its slice has room for {room}.\n  Shorten it, or give it a smaller "
+               "size: about {fits} would fit.", where=where, words=repr(words),
+               wide=wide, size=f"{part.size:g}", room=room,
+               fits=f"{part.size * max(room, 0) / wide:.1f}"))
+
+
+def check_slides(scene, length):
+    """Check a split's slide lines and turn their times into times from the
+    scene's start. Each gets `before` and `after`, the row's first slice counted
+    from 0, and `begin` and `finish`."""
+    count, first, ended = len(scene.slices), 1, None
+    for slide in scene.slides:
+        where = slide["where"]
+        most = count - scene.show + 1
+        number = int(slide["number"]) if slide["number"].isdecimal() else 0
+        if not 1 <= number <= most:
+            # translators: slide is an edit-script word and stays in English.
+            die(tr("{where}: slide takes the number of a slice that leaves a full set on "
+                   "screen: from 1 to {most}, not {value}.", where=where, most=most,
+                   value=repr(slide["number"])))
+        if number == first:
+            die(tr("{where}: slide {number} moves to the slice already first.",
+                   where=where, number=number))
+        if "at" not in slide:
+            # translators: slide and at are edit-script words and stay in English.
+            die(tr("{where}: slide needs `at`, the moment it starts: slide 2 at 7",
+                   where=where))
+        over = slide.get("over", SPLIT_SLIDE)
+        begin = scene_time(scene, slide["at"])
+        if ended is not None and begin < ended - 1e-6:
+            die(tr("{where}: slides are written in time order and may not overlap, and "
+                   "this one starts at {start}, before the one above ends at {end}.",
+                   where=where, start=f"{slide['at']:g}",
+                   end=f"{scene.start + ended:g}"))
+        if begin < -TIME_SLACK or begin + over > length + TIME_SLACK:
+            die(tr("{where}: the slide runs from {start} to {end}, which is not inside "
+                   "its scene ({scene_start} to {scene_end}).", where=where,
+                   start=f"{slide['at']:g}", end=f"{slide['at'] + over:g}",
+                   scene_start=f"{scene.start:.3f}",
+                   scene_end=f"{scene.start + length:.3f}"))
+        ended = begin + over
+        slide.update(begin=max(0.0, begin), finish=ended, before=first - 1, after=number - 1)
+        first = number
+
+
+def check_split(scene, length, width, height, workdir):
+    """Check what a split shows, and work out each slice's part of its file
+    (DEMO-0285 § 4.3). Every slice has one even width, so a set always fills the
+    frame and every slide stops on a slice's edge."""
+    count = len(scene.slices)
+    written = str(count) if scene.show is None else scene.show
+    if not written.isdecimal() or not 1 <= int(written) <= count:
+        # translators: show is an edit-script word and stays in English.
+        die(tr("{where}: show is how many slices fill the frame, a whole number from "
+               "1 to {most}, not {value}.", where=scene.where, most=count,
+               value=repr(written)))
+    scene.show = int(written)
+    scene.slice_w = 2 * math.ceil(width / scene.show / 2)
+    white, dark = split_border(width)
+    room = scene.slice_w - 2 * (white + 2 * dark)
+    for part in scene.slices:
+        try:
+            centre = float(part.centre)
+        except ValueError:
+            centre = math.nan
+        if not 0 <= centre <= 100:
+            # translators: centre is an edit-script word and stays in English.
+            die(tr("{where}: a slice's centre is a percentage of the picture across, "
+                   "from 0 to 100, not {value}.", where=part.where,
+                   value=repr(part.centre)))
+        file_w = part.info["width"]
+        crop_w = max(2, scene.slice_w * file_w // width // 2 * 2)
+        crop_x = max(0, min(round(centre / 100 * file_w - crop_w / 2), file_w - crop_w))
+        part.crop = crop_w, crop_x // 2 * 2
+        if part.label is not None:
+            check_label(part, room, height, workdir)
+    check_slides(scene, length)
+
+
 def check_scene(scene, width, height, rate, workdir):
     """Check one scene against the film's size and return its length.
 
@@ -4342,6 +4544,8 @@ def check_scene(scene, width, height, rate, workdir):
                    "none.", where=where))
         length = scene.seconds
     else:
+        if scene.kind == "split":
+            check_slices_agree(scene, rate)
         info = scene.info = probe(scene.path, where)
         whole = info["duration"]
         step = 1 / (info["rate"] or rate)
@@ -4407,6 +4611,12 @@ def check_scene(scene, width, height, rate, workdir):
         # silent for the half frame before each cut (DEMO-0177 § 4.3); trim
         # still bounds the picture.
         scene.read_sound = None if last is None else (last + 1) * step - scene.seek
+        # The first slice's frame numbers, over each slice's own rate: rates may
+        # differ a little, and one seek time would land them frames apart.
+        for part in scene.slices:
+            own = 1 / (part.info["rate"] or rate)
+            part.seek = max(0.0, first * own - own / 2)
+            part.read = None if last is None else (last + 0.5) * own - part.seek
         if not SPEED_LOW <= scene.speed <= SPEED_HIGH:
             # translators: speed is an edit-script word and stays in English.
             die(tr("{where}: speed is between {low} and {high}, not {value}: 2 plays "
@@ -4437,6 +4647,8 @@ def check_scene(scene, width, height, rate, workdir):
                "{seconds} long.", where=where,
                fades=f"{scene.fade_in + scene.fade_out:g}", seconds=f"{length:.3f}"))
     check_texts(scene, length, width, height, workdir)
+    if scene.kind == "split":
+        check_split(scene, length, width, height, workdir)
     if scene.zoom is not None:
         check_zoom(scene, length)
     if scene.kind == "card" and scene.path is not None \
@@ -4457,8 +4669,8 @@ def check_scene(scene, width, height, rate, workdir):
 
 def film_shape(scenes, size, rate):
     """(width, height, rate) of the film: what was asked for, else the first
-    clip's, else what `record` defaults to."""
-    clips = [s for s in scenes if s.kind == "clip"]
+    clip's or split's first slice's, else what `record` defaults to."""
+    clips = [s for s in scenes if s.kind in ("clip", "split")]
     first = probe(clips[0].path, clips[0].where) if clips else None
     if size:
         match = SIZE_RE.match(size)
@@ -4878,6 +5090,9 @@ def scene_graph(scene, length, number, first_input, width, height, rate):
                      *fade_filters(scene, length)])
     tail = f",{tail}" if tail else ""
     out = f"[v{number}]"
+    if scene.kind == "split":
+        return split_graph(scene, number, first_input, width, height, rate,
+                           f"{shape}{tail}{out}")
     if scene.kind == "clip":
         inputs = clip_input(scene)
         pts = "PTS-STARTPTS" if scene.speed == 1 else f"(PTS-STARTPTS)/{scene.speed:.9g}"
@@ -4911,6 +5126,82 @@ def scene_graph(scene, length, number, first_input, width, height, rate):
         f"[p{number}]",
         f"[{first_input}:v][p{number}]overlay=x='(W-w)/2':"
         f"y='{top}+({room_h}-h)/2':format=auto,{shape}{tail}{out}"]
+
+
+def split_position(slides):
+    """An ffmpeg expression in `t`: how many slices the row has moved, eased
+    (smoothstep) through each slide and still between them."""
+    position = str(slides[-1]["after"]) if slides else "0"
+    for slide in reversed(slides):
+        begin, finish, before = slide["begin"], slide["finish"], slide["before"]
+        done = f"((t-{begin:.6f})/{finish - begin:.6f})"
+        position = (f"if(lt(t,{begin:.6f}),{before},if(lt(t,{finish:.6f}),"
+                    f"{before}+({slide['after'] - before})*{done}*{done}*(3-2*{done}),"
+                    f"{position}))")
+    return position
+
+
+def split_borders(scene, width, height):
+    """The filters that draw a split's borders on its row, so they move with its
+    slices. A border resting just before the first slice shown or just after the
+    last is off, where part of it would show as a stripe. The test is by slice, not
+    position: a row can overrun the frame by a few pixels."""
+    slides = scene.slides
+    rests = list(zip([0, *(s["after"] for s in slides)], [None, *(s["finish"] for s in slides)],
+                     [*(s["begin"] for s in slides), None], strict=True))
+    white, dark = split_border(width)
+    filters = []
+    for border in range(1, len(scene.slices)):
+        at_edge = []
+        for first, begin, end in rests:
+            if border in (first, first + scene.show):
+                at_edge.append("*".join(
+                    [*([f"gte(t,{begin:.6f})"] if begin is not None else []),
+                     *([f"lte(t,{end:.6f})"] if end is not None else [])]) or "1")
+        if "1" in at_edge:  # at the edge for the whole scene: no slide moves it
+            continue
+        when = f":enable='not({'+'.join(at_edge)})'" if at_edge else ""
+        left = border * scene.slice_w - white // 2
+        filters += [f"drawbox=x={left - dark}:y=0:w={white + 2 * dark}:h={height}:"
+                    f"color=black:t=fill{when}",
+                    f"drawbox=x={left}:y=0:w={white}:h={height}:color=white:t=fill{when}"]
+    return filters
+
+
+def split_graph(scene, number, first_input, width, height, rate, ending):
+    """(ffmpeg inputs, filter chains) that turn a split into `[v<number>]`: one
+    chain per slice, then the row, which `crop` pans along.
+
+    settb and setpts=N are what make it frame for frame: each frame's time is made
+    from its number, in one time base, so hstack pairs frame N with frame N
+    whatever the files' timestamps say. Do not change it to the PTS-STARTPTS a clip
+    uses. Without settb, files of 1/15360 and 1/90000 paired their last frame wrongly.
+    shortest=1 ends the scene on a short slice, where hstack would hold its last
+    frame. hstack ends at its last frame's own time, so fps would drop that frame;
+    tpad gives fps one past it, and `ending`'s trim takes that off (DEMO-0285 § 4.4).
+    """
+    tb = f"1/{scene.slices[0].info['rate'] or rate:.9g}"
+    inputs, chains = [], []
+    for i, part in enumerate(scene.slices):
+        inputs += clip_input(part)
+        crop_w, crop_x = part.crop
+        label = ""
+        if part.label is not None:
+            label = (f",drawtext=textfile='{part.textfile}':expansion=none:{text_font()}:"
+                     f"fontsize={part.fontsize}:fontcolor=white:box=1:boxcolor=black@0.84:"
+                     f"boxborderw={round(part.fontsize * SPLIT_LABEL_PAD)}:x=(w-text_w)/2:"
+                     f"y={round(SPLIT_LABEL_TOP * height)}")
+        chains.append(f"[{first_input + i}:v]settb={tb},setpts=N,"
+                      f"crop={crop_w}:{part.info['height']}:{crop_x}:0,"
+                      f"scale={scene.slice_w}:{height},setsar=1,format=yuv420p{label}"
+                      f"[s{number}_{i}]")
+    row = "".join(f"[s{number}_{i}]" for i in range(len(scene.slices)))
+    pan = f"trunc({scene.slice_w}*({split_position(scene.slides)})/2)*2"
+    steps = [f"hstack=inputs={len(scene.slices)}:shortest=1", "tpad=stop_mode=clone:stop=1",
+             f"fps={rate_text(rate)}", *split_borders(scene, width, height),
+             f"crop={width}:{height}:x='{pan}':y=0"]
+    chains.append(f"{row}{','.join(steps)},{ending}")
+    return inputs, chains
 
 
 # A moving background (DEMO-0178), after the Slipcase trailer: ffmpeg's
@@ -5107,6 +5398,11 @@ def finishing_tools():
 PIECE_SCENES = 4
 
 
+def scene_weight(scene):
+    """What a scene counts for towards PIECE_SCENES: a decoder is what costs."""
+    return len(scene.slices) if scene.kind == "split" else 1
+
+
 def scene_frames(scenes, frames, starts, rate):
     """The frame each scene starts on in the film one ffmpeg would draw, and
     the frame after its last.
@@ -5131,7 +5427,8 @@ def scene_frames(scenes, frames, starts, rate):
 
 def film_pieces(scenes, frames, firsts, rate):
     """The film's picture as pieces, each a list of (scene number, first
-    frame, frame count) drawn by one ffmpeg, about PIECE_SCENES to a piece.
+    frame, frame count) drawn by one ffmpeg, about PIECE_SCENES to a piece,
+    weighed by scene_weight: a split is as heavy as its slices.
 
     A piece that starts with a crossfade starts with the frames of the scene
     before from where the crossfade begins, and the piece before ends without
@@ -5139,12 +5436,16 @@ def film_pieces(scenes, frames, firsts, rate):
     draw it. A piece starts only where the scene before has a frame of its
     own after the crossfade into it, so a piece can run longer to reach one.
     """
-    starts = [0]
+    starts, weight = [0], scene_weight(scenes[0])
     for number in range(1, len(scenes)):
         own = (firsts[number] - firsts[number - 1]
                - math.ceil(scenes[number - 1].crossfade * rate - 1e-9))
-        if number - starts[-1] >= PIECE_SCENES - 1 and own > 0:
+        heavy = scenes[number].kind == "split" \
+            and weight + scene_weight(scenes[number]) > PIECE_SCENES - 1
+        if (weight >= PIECE_SCENES - 1 or heavy) and own > 0:
             starts.append(number)
+            weight = 0
+        weight += scene_weight(scenes[number])
     pieces = []
     for start, end in zip(starts, [*starts[1:], len(scenes)], strict=True):
         parts = []
@@ -5260,6 +5561,7 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
                "uses.") + x264_advice(distro_family()))
     output = finishing_output(
         raw_output, [*(s.path for s in scenes if s.path), *also_read,
+                     *(part.path for s in scenes for part in s.slices),
                      *(e["path"] for s in scenes for e in s.sounds),
                      *([music.path] if music else [])],
         (".mp4",))
@@ -5318,7 +5620,11 @@ def make_film(scenes, raw_output, size=None, rate=None, also_read=(), music=None
             starts.append(begins)
             total = begins + length
             check_length(scene.where, total)
-            if scene.path:
+            if scene.kind == "split":
+                note(tr("scene {number}: a split of {count} videos, {start} to {end}",
+                        number=number + 1, count=len(scene.slices),
+                        start=f"{begins:.3f}", end=f"{total:.3f}"))
+            elif scene.path:
                 # translators: {kind} is clip or card, in English; {name} is a file name.
                 note(tr("scene {number}: {kind} {name}, {start} to {end}",
                         number=number + 1, kind=scene.kind, name=scene.path.name,

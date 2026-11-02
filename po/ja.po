@@ -608,13 +608,6 @@ msgstr "{where}: clip の後に動画ファイルが必要です。"
 msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: card には秒単位の長さが必要です: card 3"
 
-#. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, zoom, sound, music or level, not {word}."
-msgstr "{where}: 行は clip、card、text、zoom、sound、music、level のどれかで始めます。{word} では始められません。"
-
-msgid "the script has no scenes in it. A scene is a line starting with clip or card."
-msgstr "スクリプトにシーンがありません。シーンとは clip か card で始まる行のことです。"
-
 msgid "{where}: there is no file {path}"
 msgstr "{where}: ファイル {path} がありません"
 
@@ -1447,3 +1440,69 @@ msgid ""
 msgstr ""
 "demoreel はファイルを {path} に置きますが、そのパスには ffmpeg のフィルターで扱えない文字があります。\n"
 "  XDG_RUNTIME_DIR をもっと単純なパスに向けてください。"
+
+#. translators: slice, slide and split are edit-script words and stay in English.
+msgid "{where}: a slice or a slide line belongs to the split above it, and the line above is not part of a split."
+msgstr "{where}: slice 行と slide 行はその上の split に属しますが、上の行は split の一部ではありません。"
+
+#. translators: slice is an edit-script word and stays in English.
+msgid "{where}: slice needs a video file after it."
+msgstr "{where}: slice の後には動画ファイルが必要です。"
+
+#. translators: slice is an edit-script word and stays in English.
+msgid "{where}: a split shows {low} to {most} videos, each on a slice line, and this one has {count}."
+msgstr "{where}: split には slice 行ごとに動画を {low} から {most} 本指定しますが、ここには {count} 本あります。"
+
+#. translators: show is an edit-script word and stays in English.
+msgid "{where}: show is how many slices fill the frame, a whole number from 1 to {most}, not {value}."
+msgstr "{where}: show は画面を埋める slice の数で、1 から {most} までの整数です。{value} は指定できません。"
+
+#. translators: centre is an edit-script word and stays in English.
+msgid "{where}: a slice's centre is a percentage of the picture across, from 0 to 100, not {value}."
+msgstr "{where}: slice の centre は映像の幅に対する割合で、0 から 100 までです。{value} は指定できません。"
+
+msgid "{where}: {path} is {size}, and {first} above it is {other}. The slices of a split are all one size."
+msgstr "{where}: {path} は {size} で、上の {first} は {other} です。split の slice はすべて同じサイズにします。"
+
+msgid "{where}: {path} plays at {rate} frames a second, and {first} above it at {other}. The slices of a split all play at one rate."
+msgstr "{where}: {path} は毎秒 {rate} フレームで、上の {first} は {other} です。split の slice はすべて同じフレームレートにします。"
+
+msgid "{where}: {path} and {first} hold different numbers of frames ({count} and {other}). The slices of a split all hold the same."
+msgstr "{where}: {path} と {first} はフレーム数が異なります ({count} と {other})。split の slice はすべて同じフレーム数にします。"
+
+msgid "{where}: {path} and {first} last different times ({seconds} and {other} seconds). The slices of a split all last the same."
+msgstr "{where}: {path} と {first} は長さが異なります ({seconds} 秒と {other} 秒)。split の slice はすべて同じ長さにします。"
+
+#. translators: slide is an edit-script word and stays in English.
+msgid "{where}: slide takes the number of a slice that leaves a full set on screen: from 1 to {most}, not {value}."
+msgstr "{where}: slide には画面に一揃いが残る slice の番号を指定します。1 から {most} までで、{value} は指定できません。"
+
+msgid "{where}: slide {number} moves to the slice already first."
+msgstr "{where}: slide {number} の移動先は、すでに先頭にある slice です。"
+
+#. translators: slide and at are edit-script words and stay in English.
+msgid "{where}: slide needs `at`, the moment it starts: slide 2 at 7"
+msgstr "{where}: slide には開始時刻を示す `at` が必要です: slide 2 at 7"
+
+msgid "{where}: slides are written in time order and may not overlap, and this one starts at {start}, before the one above ends at {end}."
+msgstr "{where}: slide は時間順に書き、重ねることはできませんが、この行は上の行が {end} で終わる前の {start} に始まります。"
+
+msgid "{where}: the slide runs from {start} to {end}, which is not inside its scene ({scene_start} to {scene_end})."
+msgstr "{where}: slide は {start} から {end} までですが、シーンの範囲 ({scene_start} から {scene_end}) に収まりません。"
+
+msgid ""
+"{where}: the label {words} is {wide} pixels wide at size {size}, and its slice has room for {room}.\n"
+"  Shorten it, or give it a smaller size: about {fits} would fit."
+msgstr ""
+"{where}: ラベル {words} はサイズ {size} で幅 {wide} ピクセルですが、slice の余地は {room} です。\n"
+"  短くするか、サイズを小さくしてください。{fits} くらいなら収まります。"
+
+msgid "scene {number}: a split of {count} videos, {start} to {end}"
+msgstr "シーン {number}: 動画 {count} 本の split、{start} から {end}"
+
+#. translators: {word} is the first word of the line, in quotes.
+msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, sound, music or level, not {word}."
+msgstr "{where}: 行は clip、card、split、slice、slide、text、zoom、sound、music、level のどれかで始めます。{word} では始められません。"
+
+msgid "the script has no scenes in it. A scene is a line starting with clip, card or split."
+msgstr "スクリプトにシーンがありません。シーンとは clip、card、split のどれかで始まる行のことです。"

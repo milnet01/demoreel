@@ -544,6 +544,46 @@ transitions, such as
 or
 .BR dissolve .
 .TP
+.BR split
+Start a scene that plays the
+.B slice
+lines under it side by side, frame N of each in frame N of the film.
+Then any of
+.BI from " s"\fR,\fP
+.BI to " s"\fR,\fP
+.BI fade\-in " s"\fR,\fP
+.BI fade\-out " s"\fR,\fP
+.BI fade\-at " s"\fR,\fP
+.BI fade\-length " s"\fR,\fP
+.B crossfade
+with a transition as on a clip, and
+.BI show " n"\fR,\fP
+how many slices fill the frame, by default all of them.
+.TP
+.BI "slice " file
+Under a
+.BR split :
+add a video, 2 to 8 of them, left to right.
+Each must match the first in size, rate and frame count.
+Then any of
+.BI label " \(dqwords\(dq"\fR,\fP
+.BI size " percent"
+(the label's height) and
+.BI centre " percent"
+(the point across the video it is centred on, default the middle).
+.TP
+.BI "slide " n
+Under a
+.BR split :
+move the row, eased, until slice
+.I n
+is first on the left.
+Needs
+.BI at " s"
+in the videos' own time; then
+.BI over " s"\fR,\fP
+by default 1.4.
+.TP
 .BI "card " "seconds \fR[\fPpicture\fR]\fP"
 Show a plain background, with a picture on it, or text, or both.
 A .gif or an animated .png keeps playing.

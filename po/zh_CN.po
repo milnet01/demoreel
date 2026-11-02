@@ -608,13 +608,6 @@ msgstr "{where}：clip 后面需要一个视频文件。"
 msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}：card 需要以秒为单位的时长：card 3"
 
-#. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, zoom, sound, music or level, not {word}."
-msgstr "{where}：每一行应以 clip、card、text、zoom、sound、music 或 level 开头，而不是 {word}。"
-
-msgid "the script has no scenes in it. A scene is a line starting with clip or card."
-msgstr "脚本中没有任何场景。场景是以 clip 或 card 开头的行。"
-
 msgid "{where}: there is no file {path}"
 msgstr "{where}：文件 {path} 不存在"
 
@@ -1447,3 +1440,69 @@ msgid ""
 msgstr ""
 "demoreel 把文件放在 {path},而该路径中有 ffmpeg 滤镜无法处理的字符。\n"
 "  请把 XDG_RUNTIME_DIR 指向更简单的路径。"
+
+#. translators: slice, slide and split are edit-script words and stay in English.
+msgid "{where}: a slice or a slide line belongs to the split above it, and the line above is not part of a split."
+msgstr "{where}：slice 或 slide 行属于其上方的 split，而上一行不属于任何 split。"
+
+#. translators: slice is an edit-script word and stays in English.
+msgid "{where}: slice needs a video file after it."
+msgstr "{where}：slice 后面需要一个视频文件。"
+
+#. translators: slice is an edit-script word and stays in English.
+msgid "{where}: a split shows {low} to {most} videos, each on a slice line, and this one has {count}."
+msgstr "{where}：split 显示 {low} 到 {most} 个视频，每个占一行 slice，而这里有 {count} 个。"
+
+#. translators: show is an edit-script word and stays in English.
+msgid "{where}: show is how many slices fill the frame, a whole number from 1 to {most}, not {value}."
+msgstr "{where}：show 是填满画面的 slice 数量，应为 1 到 {most} 的整数，而不是 {value}。"
+
+#. translators: centre is an edit-script word and stays in English.
+msgid "{where}: a slice's centre is a percentage of the picture across, from 0 to 100, not {value}."
+msgstr "{where}：slice 的 centre 是画面宽度的百分比，应为 0 到 100，而不是 {value}。"
+
+msgid "{where}: {path} is {size}, and {first} above it is {other}. The slices of a split are all one size."
+msgstr "{where}：{path} 的大小是 {size}，而上方的 {first} 是 {other}。一个 split 的所有 slice 大小必须相同。"
+
+msgid "{where}: {path} plays at {rate} frames a second, and {first} above it at {other}. The slices of a split all play at one rate."
+msgstr "{where}：{path} 的帧率是每秒 {rate} 帧，而上方的 {first} 是 {other}。一个 split 的所有 slice 帧率必须相同。"
+
+msgid "{where}: {path} and {first} hold different numbers of frames ({count} and {other}). The slices of a split all hold the same."
+msgstr "{where}：{path} 和 {first} 的帧数不同（{count} 和 {other}）。一个 split 的所有 slice 帧数必须相同。"
+
+msgid "{where}: {path} and {first} last different times ({seconds} and {other} seconds). The slices of a split all last the same."
+msgstr "{where}：{path} 和 {first} 的时长不同（{seconds} 秒和 {other} 秒）。一个 split 的所有 slice 时长必须相同。"
+
+#. translators: slide is an edit-script word and stays in English.
+msgid "{where}: slide takes the number of a slice that leaves a full set on screen: from 1 to {most}, not {value}."
+msgstr "{where}：slide 接受一个能让画面留满一组的 slice 编号：1 到 {most}，而不是 {value}。"
+
+msgid "{where}: slide {number} moves to the slice already first."
+msgstr "{where}：slide {number} 移向的 slice 已经排在最前。"
+
+#. translators: slide and at are edit-script words and stay in English.
+msgid "{where}: slide needs `at`, the moment it starts: slide 2 at 7"
+msgstr "{where}：slide 需要 `at`，即开始的时刻：slide 2 at 7"
+
+msgid "{where}: slides are written in time order and may not overlap, and this one starts at {start}, before the one above ends at {end}."
+msgstr "{where}：slide 按时间顺序书写，不得重叠，而这一行从 {start} 开始，早于上一行结束的 {end}。"
+
+msgid "{where}: the slide runs from {start} to {end}, which is not inside its scene ({scene_start} to {scene_end})."
+msgstr "{where}：slide 从 {start} 到 {end}，不在其场景之内（{scene_start} 到 {scene_end}）。"
+
+msgid ""
+"{where}: the label {words} is {wide} pixels wide at size {size}, and its slice has room for {room}.\n"
+"  Shorten it, or give it a smaller size: about {fits} would fit."
+msgstr ""
+"{where}：标签 {words} 在大小 {size} 时宽 {wide} 像素，而其 slice 只有 {room} 的空间。\n"
+"  请缩短它，或使用更小的大小：大约 {fits} 可以放下。"
+
+msgid "scene {number}: a split of {count} videos, {start} to {end}"
+msgstr "场景 {number}：{count} 个视频的 split，{start} 到 {end}"
+
+#. translators: {word} is the first word of the line, in quotes.
+msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, sound, music or level, not {word}."
+msgstr "{where}：每一行应以 clip、card、split、slice、slide、text、zoom、sound、music 或 level 开头，而不是 {word}。"
+
+msgid "the script has no scenes in it. A scene is a line starting with clip, card or split."
+msgstr "脚本中没有任何场景。场景是以 clip、card 或 split 开头的行。"

@@ -434,6 +434,48 @@ A clip's sound fades, cuts and crossfades with its picture.
 Nothing takes a piece out of the middle of a clip. To skip a part, use the clip
 twice, with a different `from` and `to` each time.
 
+**`split`** starts a scene that plays several videos at once, each as one
+vertical slice of the frame, with a border between slices. Frame N of each file
+is in frame N of the film, whatever the files' timestamps say, so a difference
+you see is one the videos hold.
+
+```
+split from 2 to 17 show 3 crossfade 0.5
+  slice classic.mp4 label "Classic"
+  slice raster.mp4 label "Rasterised"
+  slice traced.mp4 label "Ray traced" centre 40
+  slice ultra.mp4 label "Ultra" size 3
+  slide 2 at 7 over 1.4
+  text "Same frame, four renderers" at bottom band off
+  sound whoosh.wav at 7
+```
+
+- The `split` line takes `from`, `to`, the fades and `crossfade` as a clip does,
+  and `from` and `to` apply to every slice. `show 3` is how many slices fill the
+  frame, and defaults to all of them. It takes none of `window`, `background`,
+  `push`, `speed`, `hold`, `sound` or `volume`, and no `zoom` line.
+- **`slice FILE`** on its own line adds a video, left to right in the order
+  written, 2 to 8 of them. Each must match the first in size, rate and frame
+  count, or the film is refused before anything is made. The first counts as a
+  first clip does for the film's size and rate.
+- `label "WORDS"` on a slice is one line, bold white on a dark box near the top,
+  and moves with its slice. `size 3` is its height in percent of the frame's. A
+  label too wide for its slice is refused, not clipped.
+- `centre 40` on a slice names the point of the video it is centred on, in percent
+  across. Left out, it is the middle, so every slice shows the same part of its
+  video.
+- **`slide 2`** on its own line moves the row, easing in and out, until slice 2 is
+  first on the left. `at 7` is required, a time in the videos' own time, and
+  `over 1.4` is the seconds it takes, 1.4 unless given. A scene may have any
+  number of them, in time order and not overlapping. Each must leave a full set on
+  screen, and fall inside the scene.
+- A `text` and a `sound` work as on a clip, in the videos' own time. A text stays
+  where it is while the row slides. A slice's own sound is not read.
+
+Every slice is decoded for the whole scene, on screen or not, so memory grows with
+the slices and their size: five at 2560x1440 used about 1.8 GB. A source on a `/tmp`
+held in memory adds its whole size to that, so keep sources on a disk there.
+
 **`card SECONDS`** shows a plain background for that long. It may carry a
 picture, text, or both.
 

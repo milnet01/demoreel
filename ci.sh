@@ -1551,6 +1551,12 @@ card 2 fade-out 0.5
 with open("film24.txt", "w", encoding="utf-8") as f:
     f.writelines(f"clip rec.mp4 from {i % 9 * 2} to {i % 9 * 2 + 2} window 80\n"
                  for i in range(24))
+# Five videos at 1080p and 60 a second, the case DEMO-0285 was asked to hold.
+subprocess.run(["ffmpeg", "-loglevel", "error", "-f", "lavfi", "-i",
+                "testsrc2=size=1920x1080:rate=60:duration=6", "-c:v", "libx264",
+                "-pix_fmt", "yuv420p", "rec60.mp4"], stdin=subprocess.DEVNULL, check=True)
+with open("split.txt", "w", encoding="utf-8") as f:
+    f.write("split show 3\n" + "  slice rec60.mp4\n" * 5 + "  slide 2 at 2\n")
 
 CASES = [
     ("check", ["check"]),
@@ -1564,6 +1570,7 @@ CASES = [
     ("card", ["card", "-o", "out.mp4", "-d", "5", "--text", "A title"]),
     ("edit", ["edit", "film.txt", "-o", "out.mp4"]),
     ("edit-24", ["edit", "film24.txt", "-o", "out.mp4"]),
+    ("edit-split", ["edit", "split.txt", "-o", "out.mp4"]),
     ("motion", ["motion", "rec.mp4"]),
     ("poster", ["poster", "rec.mp4", "-o", "out.png", "-t", "5"]),
     ("thumbnail", ["thumbnail", "rec.mp4", "-o", "out.png", "-t", "5", "--text", "A title"]),
@@ -5672,6 +5679,369 @@ MODEPY
     ) || fail "the state directory was open before it was tightened"
     echo "the state directory is never open, whatever the umask"
     }
+    # DEMO-0285. Five flat colours, 320x240 at 10 a second for 10 s, for a split.
+    split_colours() {
+        local n=0 c
+        for c in C00000 00C000 0000C0 C0C000 00C0C0; do
+            n=$((n + 1))
+            ff -f lavfi -i "color=0x$c:s=320x240:r=10:d=10" "${x264[@]}" "$ft/C$n.mp4"
+        done
+    }
+    # The pixel at x y of a 320x240 film, as `px find` reads it: is it within 60 of
+    # that colour? A sixth word of 0 says it must not be.
+    split_spot() {  # what file frame x y #RRGGBB [0]
+        local box
+        box=$(awk -v x="$4" -v y="$5" 'BEGIN { printf "%.6f %.6f %.6f %.6f",
+              (x + .5) / 320, (y + .5) / 240, (x + 1.5) / 320, (y + 1.5) / 240 }')
+        # shellcheck disable=SC2086  # the box is four words
+        assert_eq "$1" "${7:-1}" "$(n_of "$2" "$3" "$6:60" $box)"
+    }
+    # How many of column x's pixels match, on a 320x240 film. `px` reads a 5-pixel
+    # block, and a border is narrower than that.
+    split_column() {  # file frame spec x
+        local box
+        box=$(awk -v x="$4" 'BEGIN { printf "%.6f 0 %.6f 1", (x + .5) / 320, (x + 1.5) / 320 }')
+        # shellcheck disable=SC2086  # the box is four words
+        n_of "$1" "$2" "$3" $box
+    }
+    # Two slices of one film show the same brightness at this frame.
+    split_agree() {  # what file frame
+        local left right
+        left=$(px px "$2" "$3" .25 .5 | awk '{ print $1 }')
+        right=$(px px "$2" "$3" .75 .5 | awk '{ print $1 }')
+        assert_near "$1" "$left" "$right" 6
+    }
+    fin_s87() {
+    # DEMO-0285 INV-1. J.mp4 is R.mp4 with uneven timestamps, and the same rate, count
+    # and length. Paired by time, as PTS-STARTPTS pairs them, frames 5, 15 and 25
+    # differ by 9 or more.
+    local f
+    ff -f lavfi -i 'color=black:s=320x240:r=10:d=3,geq=lum=10+8*N:cb=128:cr=128' \
+        "${x264[@]}" -bf 0 "$ft/R.mp4"
+    ff -i "$ft/R.mp4" -c copy -bsf:v "setts=ts='PTS+mod(N,2)*lt(N,29)*0.06/TB'" "$ft/J.mp4"
+    assert_eq "the fixture with uneven timestamps keeps its rate, count and length" \
+        '10/1,30
+3.000000' "$(ffprobe -v error -select_streams v:0 -show_entries stream=avg_frame_rate,nb_frames:format=duration \
+        -of csv=p=0 "$ft/J.mp4")"
+    printf 'split\n  slice R.mp4\n  slice J.mp4\n' > "$ft/s.txt"
+    run edit s.txt -o "$ft/out/fr.mp4"; expect_ok "a split of uneven timestamps"
+    for f in 5 15 25; do
+        split_agree "slices agree at frame $f" "$ft/out/fr.mp4" "$f"
+    done
+    run edit s.txt -o "$ft/out/fr7.mp4" -r 7; expect_ok "a split at another rate"
+    for f in 3 15; do
+        split_agree "slices agree at frame $f at 7 a second" "$ft/out/fr7.mp4" "$f"
+    done
+    # Two time bases: without settb, files of 1/15360 and 1/90000 pair their last
+    # frame wrongly. Alternate frames, so a frame off is as far off as can be.
+    for f in 15360 90000; do
+        ff -f lavfi -i 'color=black:s=320x240:r=70:d=1,geq=lum=if(mod(N\,2)\,200\,40):cb=128:cr=128' \
+            "${x264[@]}" -video_track_timescale "$f" "$ft/T$f.mp4"
+    done
+    printf 'split\n  slice T15360.mp4\n  slice T90000.mp4\n' > "$ft/s.txt"
+    run edit s.txt -o "$ft/out/tb.mp4"; expect_ok "a split of two time bases"
+    split_agree "slices of two time bases agree at the last frame" "$ft/out/tb.mp4" 69
+    # Two rates a little apart: one seek time for both starts them a frame apart.
+    for f in 10 10.009; do
+        ff -f lavfi -i "color=black:s=160x120:r=$f,geq=lum=10+8*mod(N\\,30):cb=128:cr=128" \
+            "${x264[@]}" -frames:v 1000 "$ft/L$f.mp4"
+    done
+    printf 'split from 91\n  slice L10.mp4\n  slice L10.009.mp4\n' > "$ft/s.txt"
+    run edit s.txt -o "$ft/out/ls.mp4"; expect_ok "a split of rates a little apart, from 91"
+    split_agree "slices of rates a little apart agree at the first frame" "$ft/out/ls.mp4" 0
+    echo "a split showed frame N of each slice in frame N of the film"
+    }
+    fin_s88() {
+    # DEMO-0285 INV-2. Each fixture differs from P.mp4 in one property.
+    local n=0 name words
+    ff -f lavfi -i 'testsrc2=s=320x240:r=10' "${x264[@]}" -frames:v 100 "$ft/P.mp4"
+    ff -f lavfi -i 'testsrc2=s=640x480:r=10' "${x264[@]}" -frames:v 100 "$ft/big.mp4"
+    ff -f lavfi -i 'testsrc2=s=320x240:r=20' "${x264[@]}" -frames:v 100 "$ft/fast.mp4"
+    ff -f lavfi -i 'testsrc2=s=320x240:r=10' "${x264[@]}" -frames:v 99 "$ft/less.mp4"
+    ff -i "$ft/P.mp4" -c copy "$ft/P.mkv"
+    ff -i "$ft/less.mp4" -c copy "$ft/less.mkv"
+    while IFS='|' read -r first name words; do
+        n=$((n + 1))
+        printf 'split\n  slice %s\n  slice %s\n' "$first" "$name" > "$ft/s.txt"
+        : > "$ft/log/ffmpeg.calls"
+        FIN_PATH="$ft/shim:$PATH" run edit s.txt -o "$ft/out/d$n.mp4"
+        refused_naming_line "a slice differing: $name" "d$n.mp4" 3
+        grep -qF "$words" "$fe" || fail "a slice differing: $name: expected: $words"
+        grep -qF "$first" "$fe" || fail "a slice differing: $name: the message should name $first"
+        grep -qF "$name" "$fe" || fail "a slice differing: $name: the message should name it"
+        assert_eq "a slice differing ($name): no encode started" 0 \
+            "$(grep -cw 'libx264' "$ft/log/ffmpeg.calls" || true)"
+    done <<'CASES'
+P.mp4|big.mp4|all one size
+P.mp4|fast.mp4|all play at one rate
+P.mp4|less.mp4|all hold the same
+P.mkv|less.mkv|all last the same
+CASES
+    printf 'split\n  slice P.mkv\n  slice P.mkv\n' > "$ft/s.txt"
+    run edit s.txt -o "$ft/out/same.mp4"; expect_ok "two slices whose index has no count, of one length"
+    echo "a slice differing in size, rate or frame count was refused, naming both files"
+    }
+    fin_s89() {
+    # DEMO-0285 INV-3. Q.mp4 is four stripes across 640: red, green, blue, white.
+    local q=$ft/out/q.mp4
+    ff -f lavfi -i 'color=0xFF0000:s=640x480:r=10:d=2,drawbox=x=160:y=0:w=160:h=480:color=0x00FF00:t=fill,drawbox=x=320:y=0:w=160:h=480:color=0x0000FF:t=fill,drawbox=x=480:y=0:w=160:h=480:color=0xFFFFFF:t=fill' \
+        "${x264[@]}" "$ft/Q.mp4"
+    printf 'split show 2\n  slice Q.mp4\n  slice Q.mp4 centre 75\n' > "$ft/s.txt"
+    run edit s.txt -o "$q" -s 320x240; expect_ok "a slice centred by default and one at 75"
+    split_spot "the middle half: green first" "$q" 5 40 120 '#00FF00'
+    split_spot "the middle half: then blue" "$q" 5 120 120 '#0000FF'
+    split_spot "centre 75: blue first" "$q" 5 200 120 '#0000FF'
+    split_spot "centre 75: then white" "$q" 5 280 120 '#FFFFFF'
+    printf 'split show 2\n  slice Q.mp4 centre 0\n  slice Q.mp4 centre 100\n' > "$ft/s.txt"
+    run edit s.txt -o "$q" -s 320x240; expect_ok "slices centred past each edge"
+    split_spot "centre 0 is held at the edge: red first" "$q" 5 40 120 '#FF0000'
+    split_spot "centre 0 is held at the edge: then green" "$q" 5 120 120 '#00FF00'
+    split_spot "centre 100 is held at the edge: blue first" "$q" 5 200 120 '#0000FF'
+    split_spot "centre 100 is held at the edge: then white" "$q" 5 280 120 '#FFFFFF'
+    echo "each slice showed the part its centre names, in the file's pixels"
+    }
+    fin_s90() {
+    # DEMO-0285 INV-4 and INV-5. slice_w is 108 and the end pan 216.
+    local r=$ft/out/row.mp4 x
+    split_colours
+    printf 'split show 3\n  slice C1.mp4\n  slice C2.mp4\n  slice C3.mp4\n  slice C4.mp4\n  slice C5.mp4\n  slide 3 at 2 over 2\n' > "$ft/s.txt"
+    run edit s.txt -o "$r"; expect_ok "a split that slides"
+    split_spot "still before the slide: the first slice" "$r" 19 54 120 '#C00000'
+    split_spot "still before the slide: the third slice" "$r" 19 270 120 '#0000C0'
+    # A quarter through, eased to 0.156: the pan is 32, and a linear one 54.
+    split_spot "eased a quarter through: x=60 is still the first slice" "$r" 25 60 120 '#C00000'
+    split_spot "half way: the second slice" "$r" 30 54 120 '#00C000'
+    split_spot "stopped: the third slice first" "$r" 41 54 120 '#0000C0'
+    split_spot "stopped: the fourth slice" "$r" 41 162 120 '#C0C000'
+    split_spot "stopped: the fifth slice" "$r" 41 270 120 '#00C0C0'
+    for x in 107 108; do
+        assert_cmp "at rest, column $x of a border is white" \
+            "$(split_column "$r" 19 '#FFFFFF:60' "$x")" ">" 230
+        assert_cmp "moving, column $x of a border is white" \
+            "$(split_column "$r" 30 '#FFFFFF:60' "$x")" ">" 230
+    done
+    for x in 106 109; do
+        assert_cmp "at rest, column $x of a border is dark" \
+            "$(split_column "$r" 19 'dark:60' "$x")" ">" 230
+    done
+    split_spot "at rest, no border on the left edge" "$r" 45 0 120 '#0000C0'
+    split_spot "at rest, no border on the right edge" "$r" 45 319 120 '#00C0C0'
+    # Half of the border after the last slice shown would be on screen, at x=319.
+    printf 'split show 2\n  slice C1.mp4\n  slice C2.mp4\n  slice C3.mp4\n' > "$ft/s.txt"
+    run edit s.txt -o "$r"; expect_ok "a split with a border just off the frame"
+    for x in 318 319; do
+        assert_eq "no white in column $x" 0 "$(split_column "$r" 5 '#FFFFFF:60' "$x")"
+        assert_eq "no dark in column $x" 0 "$(split_column "$r" 5 'dark:60' "$x")"
+    done
+    echo "a split's row stayed still, slid eased, and stopped on a slice, with its borders"
+    }
+    fin_s91() {
+    # DEMO-0285 INV-6. The label sits at about y=17 here, the middle of its box.
+    local r=$ft/out/lab.mp4 xs
+    split_colours
+    printf 'split show 3\n  slice C1.mp4\n  slice C2.mp4\n  slice C3.mp4 label "X"\n  slice C4.mp4\n  slice C5.mp4\n  slide 3 at 2 over 2\n' > "$ft/s.txt"
+    run edit s.txt -o "$r"; expect_ok "a slice with a label"
+    split_spot "before the slide the label is on the third slice" "$r" 19 270 17 '#0000C0' 0
+    split_spot "before the slide the first slice has none" "$r" 19 54 17 '#C00000'
+    split_spot "after the slide the label has moved with its slice" "$r" 45 54 17 '#0000C0' 0
+    split_spot "after the slide nothing is left where it was" "$r" 45 270 17 '#00C0C0'
+    xs=XXXXXXXXXXXXXXXXXXXX
+    printf 'split show 3\n  slice C1.mp4 label "%s"\n  slice C2.mp4\n  slice C3.mp4\n' "$xs" > "$ft/s.txt"
+    : > "$ft/log/ffmpeg.calls"
+    FIN_PATH="$ft/shim:$PATH" run edit s.txt -o "$ft/out/wide.mp4"
+    refused_naming_line "a label too wide for its slice" wide.mp4 2
+    assert_eq "a label too wide: no encode started" 0 \
+        "$(grep -cw 'libx264' "$ft/log/ffmpeg.calls" || true)"
+    printf 'split show 3\n  slice C1.mp4 label "%s" size 2\n  slice C2.mp4\n  slice C3.mp4\n' "$xs" > "$ft/s.txt"
+    run edit s.txt -o "$ft/out/fits.mp4"; expect_ok "the same label, small enough to fit"
+    echo "a label moved with its slice, and one too wide was refused"
+    }
+    fin_s92() {
+    # DEMO-0285 INV-7. Times are the videos': from 1, so at 3 is 2 s into the film.
+    local r=$ft/out/txt.mp4 near far a b w
+    split_colours
+    ff -f lavfi -i 'sine=frequency=440:duration=1' "$ft/tone.wav"
+    cat > "$ft/s.txt" <<'SPLIT'
+split show 3 from 1
+  slice C1.mp4
+  slice C2.mp4
+  slice C3.mp4
+  slice C4.mp4
+  slice C5.mp4
+  slide 3 at 2 over 2
+  text "T" at top band off colour #FF00FF
+  text "B"
+  sound tone.wav at 3
+SPLIT
+    run edit s.txt -o "$r"; expect_ok "a split with a text and a sound"
+    near=$(px find "$r" 10 '#FF00FF:60' 0 0 1 .2)
+    far=$(px find "$r" 40 '#FF00FF:60' 0 0 1 .2)
+    for w in 2 3 4 5; do
+        a=$(printf '%s\n' "$near" | awk -v w="$w" '{ print $w }')
+        b=$(printf '%s\n' "$far" | awk -v w="$w" '{ print $w }')
+        assert_near "a text stays where it is while the row slides (word $w of its box)" "$a" "$b" 0.02
+    done
+    assert_cmp "a clip's band darkens the first slice" \
+        "$(n_of "$r" 10 'dark:20' .168 .977 .172 .982)" ">" 0
+    assert_cmp "a clip's band darkens the third slice" \
+        "$(n_of "$r" 40 'dark:10' .168 .977 .172 .982)" ">" 0
+    grep -qF 'sound tone.wav at 2.000' "$fe" \
+        || fail "the plan should print the sound at 2.000: $(cat "$fe")"
+    a=$(ffmpeg -nostdin -hide_banner -t 1.9 -i "$r" -map 0:a -af volumedetect -f null - 2>&1 \
+        | sed -n 's/.*max_volume: \(.*\) dB/\1/p')
+    assert_cmp "the film is silent up to the sound (max dB)" "$a" "<" -60
+    b=$(ffmpeg -nostdin -hide_banner -ss 2.1 -t 0.5 -i "$r" -map 0:a -af volumedetect -f null - 2>&1 \
+        | sed -n 's/.*max_volume: \(.*\) dB/\1/p')
+    assert_cmp "the sound plays at its moment (max dB)" "$b" ">" -40
+    echo "a split's text stayed, and its sound landed in the videos' own time"
+    }
+    fin_s93() {
+    # DEMO-0285 INV-8, partial: the trim, the output's -t and hstack each bound the
+    # others. Both splits share an ffmpeg, drawn whole over their crossfade.
+    local secs
+    split_colours
+    cat > "$ft/s.txt" <<'SPLIT'
+clip A.mp4
+split to 3
+  slice C1.mp4
+  slice C2.mp4
+  slice C3.mp4
+split to 3 crossfade 0.5
+  slice C4.mp4
+  slice C5.mp4
+clip B.mp4 crossfade 0.5
+SPLIT
+    rc=0
+    ( ulimit -v 3000000; cd "$ft" && four_cores "$DR" edit s.txt -o "$ft/out/end.mp4" -s 320x240 -r 10 ) \
+        >"$fo" 2>"$fe" || rc=$?
+    expect_ok "a film of cuts, crossfades and two splits, inside 3 GB"
+    secs=$(sed -n 's/.*, \([0-9.]*\) seconds at 320x240.*/\1/p' "$fe")
+    assert_eq "the film's frames are the plan's" \
+        "$(awk -v s="$secs" 'BEGIN { printf "%d", s * 10 + .5 }')" "$(v_frames "$ft/out/end.mp4")"
+    echo "split scenes ended where the plan says"
+    }
+    fin_s94() {
+    # DEMO-0285 INV-9.
+    local worst
+    cat > "$ft/weigh.py" <<'WEIGHPY'
+import importlib.machinery, importlib.util, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", sys.argv[1])
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+
+
+def starts(scenes):
+    frames = [10] * len(scenes)
+    firsts = list(range(0, 10 * len(scenes), 10))
+    return [piece[0][0] for piece in d.film_pieces(scenes, frames, firsts, 10)]
+
+
+def clip():
+    return d.Scene("clip", "x")
+
+
+five = d.Scene("split", "x")
+five.slices = [d.Scene("slice", "x") for _ in range(5)]
+print(starts([clip(), clip(), five, clip()]), starts([clip() for _ in range(8)]))
+WEIGHPY
+    assert_eq "a split's weight gives it a piece; eight clips are cut as before" \
+        "[0, 2, 3] [0, 3, 6]" "$(python3 "$ft/weigh.py" "$DR")"
+    cat > "$ft/onepiece.py" <<'ONEPY'
+import importlib.machinery, importlib.util, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", sys.argv[1])
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+d.PIECE_SCENES = 1000
+sys.argv = ["demoreel", *sys.argv[2:]]
+d.main()
+ONEPY
+    split_colours
+    cat > "$ft/s.txt" <<'SPLIT'
+clip A.mp4 to 1
+clip B.mp4 to 1
+split show 2 to 2
+  slice C1.mp4
+  slice C2.mp4
+  slice C3.mp4
+  slide 2 at 0.5 over 1
+clip A.mp4 to 1 crossfade 0.3
+SPLIT
+    run edit s.txt -o "$ft/out/sp.mp4" -s 320x240 -r 10; expect_ok "a film with a split, in pieces"
+    rc=0
+    ( cd "$ft" && python3 onepiece.py "$DR" edit s.txt -o "$ft/out/sp-one.mp4" -s 320x240 -r 10 ) \
+        >"$fo" 2>"$fe" || rc=$?
+    expect_ok "a film with a split, in one piece"
+    assert_eq "a film with a split: frames in pieces and in one" \
+        "$(v_frames "$ft/out/sp-one.mp4")" "$(v_frames "$ft/out/sp.mp4")"
+    worst=$(ffmpeg -nostdin -v error -i "$ft/out/sp-one.mp4" -i "$ft/out/sp.mp4" \
+        -lavfi "[0:v][1:v]psnr=stats_file=$ft/sp.psnr" -f null - \
+        && awk '{ split($6, v, ":"); p = v[2] == "inf" ? 99 : v[2] + 0
+                  if (NR == 1 || p < m) m = p } END { print m }' "$ft/sp.psnr")
+    assert_cmp "a film with a split: its worst frame in pieces against one piece (PSNR dB)" "$worst" ">" 35
+    echo "a split took its weight in the pieces, and pieces made the film one ffmpeg would"
+    }
+    fin_s95() {
+    # DEMO-0285 INV-10. A trust boundary: a script names the files.
+    local name want
+    split_colours
+    printf '#EXTM3U\n#EXT-X-TARGETDURATION:6\n#EXTINF:6,\n%s\n#EXT-X-ENDLIST\n' "$ft/A.mp4" > "$ft/list.m3u8"
+    printf 'split\n  slice list.m3u8\n  slice A.mp4\n' > "$ft/s.txt"
+    run edit s.txt -o "$ft/out/l1.mp4"
+    expect_refused "a playlist as the first slice" "does not follow one"
+    printf 'split\n  slice A.mp4\n  slice list.m3u8\n' > "$ft/s.txt"
+    run edit s.txt -o "$ft/out/l2.mp4"
+    expect_refused "a playlist as a later slice" "does not follow one"
+    printf 'split\n  slice C1.mp4\n  slice C2.mp4\n  slice C3.mp4\n' > "$ft/s.txt"
+    run edit s.txt -o "$ft/C3.mp4"
+    expect_refused "-o naming the third slice" "also a file this command reads"
+    ff -i "$ft/A.mp4" -t 1 -c copy "$ft/short.mp4"
+    want=$(v_frames "$ft/short.mp4")
+    for name in '12:30:05.mp4' '-report.mp4' 'concat:short.mp4|short.mp4'; do
+        cp "$ft/short.mp4" "$ft/$name"
+        printf 'split\n  slice %q\n  slice %q\n' "$name" "$name" > "$ft/s.txt"
+        run edit s.txt -o "$ft/out/nm.mp4"; expect_ok "a split of slices named $name"
+        assert_eq "the split named $name is that file's frames" "$want" "$(v_frames "$ft/out/nm.mp4")"
+    done
+    echo "a slice was only ever read as a video, and -o could not be one"
+    }
+    fin_s96() {
+    # DEMO-0285 INV-11.
+    local n=0 line script nine
+    split_colours
+    nine=$(printf '\\n  slice C1.mp4%.0s' 1 2 3 4 5 6 7 8 9)
+    while IFS='|' read -r line script; do
+        n=$((n + 1))
+        printf '%b\n' "${script/NINE/$nine}" > "$ft/sb$n.txt"
+        : > "$ft/log/ffmpeg.calls"
+        FIN_PATH="$ft/shim:$PATH" run edit "sb$n.txt" -o "$ft/out/sb$n.mp4"
+        refused_naming_line "edit refuses: $script" "sb$n.mp4" "$line"
+        assert_eq "edit refuses ($script): no encode started" 0 \
+            "$(grep -cw 'libx264' "$ft/log/ffmpeg.calls" || true)"
+    done <<'CASES'
+1|split\n  slice C1.mp4
+1|splitNINE
+1|split show 0\n  slice C1.mp4\n  slice C2.mp4
+1|split show 3\n  slice C1.mp4\n  slice C2.mp4
+1|split show 1.5\n  slice C1.mp4\n  slice C2.mp4
+2|split\n  slice C1.mp4 centre 101\n  slice C2.mp4
+2|split\n  slice\n  slice C2.mp4
+1|slice C1.mp4
+1|slide 2 at 1
+2|card 1\n  slice C1.mp4
+2|card 1\n  slide 2 at 1
+4|split show 1\n  slice C1.mp4\n  slice C2.mp4\n  slide 2
+5|split show 2\n  slice C1.mp4\n  slice C2.mp4\n  slice C3.mp4\n  slide 3 at 1
+4|split\n  slice C1.mp4\n  slice C2.mp4\n  slide x at 1
+5|split show 1\n  slice C1.mp4\n  slice C2.mp4\n  slice C3.mp4\n  slide 1 at 1
+6|split show 1\n  slice C1.mp4\n  slice C2.mp4\n  slice C3.mp4\n  slide 2 at 1 over 2\n  slide 3 at 2
+6|split show 1\n  slice C1.mp4\n  slice C2.mp4\n  slice C3.mp4\n  slide 2 at 5\n  slide 3 at 2
+4|split show 1\n  slice C1.mp4\n  slice C2.mp4\n  slide 2 at 9.5 over 1
+1|split window 50\n  slice C1.mp4\n  slice C2.mp4
+1|split speed 2\n  slice C1.mp4\n  slice C2.mp4
+4|split\n  slice C1.mp4\n  slice C2.mp4\n  zoom 2
+CASES
+    echo "$n bad split lines were each refused, naming the line, before any encode"
+    }
     fin_step "the checks' own comparisons refuse a measurement that came back empty or as words" fin_s0
     fin_step "trim keeps the frames from --from to --to, the last one included" fin_s1
     fin_step "every video a command writes is H.264, yuv420p, index first, with its clips' sound" fin_s2
@@ -5765,6 +6135,16 @@ MODEPY
     fin_step "a run with stderr closed goes on as usual" fin_s84
     fin_step "a signal during the tidying up does not stop it" fin_s85
     fin_step "the state directory is never open, whatever the umask" fin_s86
+    fin_step "a split scene is frame for frame" fin_s87
+    fin_step "a split refuses slices that differ" fin_s88
+    fin_step "a slice shows the part its centre names" fin_s89
+    fin_step "a split's row slides, eased, with its borders" fin_s90
+    fin_step "a slice's label moves with it" fin_s91
+    fin_step "a split's text stays and its sound lands" fin_s92
+    fin_step "a split scene ends where the plan says" fin_s93
+    fin_step "a split takes its weight in the pieces" fin_s94
+    fin_step "a slice is read as a video and only as one" fin_s95
+    fin_step "edit refuses a bad split" fin_s96
     fin_run
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }

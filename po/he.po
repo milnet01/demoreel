@@ -611,13 +611,6 @@ msgstr "{where}: אחרי clip צריך לבוא קובץ וידאו."
 msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: אחרי card צריך לבוא האורך בשניות: card 3"
 
-#. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, zoom, sound, music or level, not {word}."
-msgstr "{where}: שורה מתחילה ב־clip, card, text, zoom, sound, music או level, ולא ב־{word}."
-
-msgid "the script has no scenes in it. A scene is a line starting with clip or card."
-msgstr "אין סצנות בתסריט. סצנה היא שורה שמתחילה ב־clip או ב־card."
-
 msgid "{where}: there is no file {path}"
 msgstr "{where}: אין קובץ {path}"
 
@@ -1453,3 +1446,69 @@ msgid ""
 msgstr ""
 "demoreel שומר את הקבצים שלו ב-{path}, והמסננים של ffmpeg אינם יכולים לשאת תו בנתיב הזה.\n"
 "  כוון את XDG_RUNTIME_DIR לנתיב פשוט יותר."
+
+#. translators: slice, slide and split are edit-script words and stay in English.
+msgid "{where}: a slice or a slide line belongs to the split above it, and the line above is not part of a split."
+msgstr "{where}: שורת slice או slide שייכת ל־split שמעליה, והשורה שמעליה אינה חלק מ־split."
+
+#. translators: slice is an edit-script word and stays in English.
+msgid "{where}: slice needs a video file after it."
+msgstr "{where}: אחרי slice צריך לבוא קובץ וידאו."
+
+#. translators: slice is an edit-script word and stays in English.
+msgid "{where}: a split shows {low} to {most} videos, each on a slice line, and this one has {count}."
+msgstr "{where}: split מציג {low} עד {most} סרטונים, כל אחד בשורת slice, ובזה יש {count}."
+
+#. translators: show is an edit-script word and stays in English.
+msgid "{where}: show is how many slices fill the frame, a whole number from 1 to {most}, not {value}."
+msgstr "{where}: show הוא מספר ה־slices שממלאים את התמונה, מספר שלם מ־1 עד {most}, ולא {value}."
+
+#. translators: centre is an edit-script word and stays in English.
+msgid "{where}: a slice's centre is a percentage of the picture across, from 0 to 100, not {value}."
+msgstr "{where}: ה־centre של slice הוא אחוז מרוחב התמונה, מ־0 עד 100, ולא {value}."
+
+msgid "{where}: {path} is {size}, and {first} above it is {other}. The slices of a split are all one size."
+msgstr "{where}: {path} בגודל {size}, ו־{first} שמעליו בגודל {other}. כל ה־slices של split באותו גודל."
+
+msgid "{where}: {path} plays at {rate} frames a second, and {first} above it at {other}. The slices of a split all play at one rate."
+msgstr "{where}: {path} מתנגן ב־{rate} פריימים בשנייה, ו־{first} שמעליו ב־{other}. כל ה־slices של split באותו קצב."
+
+msgid "{where}: {path} and {first} hold different numbers of frames ({count} and {other}). The slices of a split all hold the same."
+msgstr "{where}: ב־{path} וב־{first} מספר שונה של פריימים ({count} ו־{other}). בכל ה־slices של split אותו מספר."
+
+msgid "{where}: {path} and {first} last different times ({seconds} and {other} seconds). The slices of a split all last the same."
+msgstr "{where}: ל־{path} ול־{first} אורך שונה ({seconds} ו־{other} שניות). כל ה־slices של split באותו אורך."
+
+#. translators: slide is an edit-script word and stays in English.
+msgid "{where}: slide takes the number of a slice that leaves a full set on screen: from 1 to {most}, not {value}."
+msgstr "{where}: slide מקבל מספר של slice שמשאיר סדרה מלאה על המסך: מ־1 עד {most}, ולא {value}."
+
+msgid "{where}: slide {number} moves to the slice already first."
+msgstr "{where}: slide {number} זז אל ה־slice שכבר ראשון."
+
+#. translators: slide and at are edit-script words and stay in English.
+msgid "{where}: slide needs `at`, the moment it starts: slide 2 at 7"
+msgstr "{where}: slide צריך `at`, הרגע שבו הוא מתחיל: slide 2 at 7"
+
+msgid "{where}: slides are written in time order and may not overlap, and this one starts at {start}, before the one above ends at {end}."
+msgstr "{where}: שורות slide נכתבות לפי סדר הזמן ואסור שיחפפו, וזו מתחילה ב־{start}, לפני שזו שמעליה מסתיימת ב־{end}."
+
+msgid "{where}: the slide runs from {start} to {end}, which is not inside its scene ({scene_start} to {scene_end})."
+msgstr "{where}: ה־slide נמשך מ־{start} עד {end}, וזה לא בתוך הסצנה שלו ({scene_start} עד {scene_end})."
+
+msgid ""
+"{where}: the label {words} is {wide} pixels wide at size {size}, and its slice has room for {room}.\n"
+"  Shorten it, or give it a smaller size: about {fits} would fit."
+msgstr ""
+"{where}: התווית {words} ברוחב {wide} פיקסלים בגודל {size}, וב־slice שלה יש מקום ל־{room}.\n"
+"  קצרו אותה או תנו לה גודל קטן יותר: בערך {fits} ייכנס."
+
+msgid "scene {number}: a split of {count} videos, {start} to {end}"
+msgstr "סצנה {number}: split של {count} סרטונים, מ־{start} עד {end}"
+
+#. translators: {word} is the first word of the line, in quotes.
+msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, sound, music or level, not {word}."
+msgstr "{where}: שורה מתחילה ב־clip, card, split, slice, slide, text, zoom, sound, music או level, ולא ב־{word}."
+
+msgid "the script has no scenes in it. A scene is a line starting with clip, card or split."
+msgstr "אין סצנות בתסריט. סצנה היא שורה שמתחילה ב־clip, ב־card או ב־split."

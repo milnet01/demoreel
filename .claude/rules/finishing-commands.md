@@ -25,6 +25,17 @@ stop agreeing.
 - **A crossfade over a join is drawn in the later piece.** That piece starts
   with the last frames of the scene before, from where the crossfade begins,
   and the earlier piece stops there.
+- **A `split` is frame for frame by number.** Each slice takes
+  `settb=1/first_rate,setpts=N`, so `hstack` pairs frame N with frame N whatever
+  the files' timestamps say. Do not change it to the `PTS-STARTPTS` a clip uses,
+  and do not drop the `settb`: files of 1/15360 and 1/90000 paired their last frame
+  wrongly without it. Each slice has its own `-ss` and `-t`, the first slice's frame
+  numbers over its own rate. One `fps`, after the `hstack`, so a change of rate drops
+  the same frame from every slice. `tpad` gives that `fps` a frame past the last, and
+  the scene's `trim` takes it off. The contract is `docs/specs/DEMO-0285-split-scene.md`.
+- **A `split` weighs its slices in `film_pieces`.** `PIECE_SCENES` counts decoders:
+  `scene_weight` is 1 for a clip or a card, and a split's number of slices. A film
+  with no split is cut as before, and `ci.sh` holds that with a literal.
 - **A piece's frames are counted, because ffmpeg's exit status is not
   enough.** Out of memory, it logged a scaler error, wrote 9 frames of 25 and
   exited 0 (measured 2026-10-30, under `ulimit -v`). `run_film_ffmpeg` compares

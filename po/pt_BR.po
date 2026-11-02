@@ -611,13 +611,6 @@ msgstr "{where}: clip precisa de um arquivo de vídeo depois."
 msgid "{where}: card needs its length in seconds: card 3"
 msgstr "{where}: card precisa da duração em segundos: card 3"
 
-#. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, text, zoom, sound, music or level, not {word}."
-msgstr "{where}: uma linha começa com clip, card, text, zoom, sound, music ou level, não com {word}."
-
-msgid "the script has no scenes in it. A scene is a line starting with clip or card."
-msgstr "o roteiro não tem cenas. Uma cena é uma linha que começa com clip ou card."
-
 msgid "{where}: there is no file {path}"
 msgstr "{where}: não existe o arquivo {path}"
 
@@ -1453,3 +1446,69 @@ msgid ""
 msgstr ""
 "o demoreel guarda seus arquivos em {path}, e os filtros do ffmpeg não aceitam um caractere desse caminho.\n"
 "  Aponte XDG_RUNTIME_DIR para um caminho mais simples."
+
+#. translators: slice, slide and split are edit-script words and stay in English.
+msgid "{where}: a slice or a slide line belongs to the split above it, and the line above is not part of a split."
+msgstr "{where}: uma linha slice ou slide pertence ao split acima dela, e a linha acima não faz parte de um split."
+
+#. translators: slice is an edit-script word and stays in English.
+msgid "{where}: slice needs a video file after it."
+msgstr "{where}: slice precisa de um arquivo de vídeo depois dele."
+
+#. translators: slice is an edit-script word and stays in English.
+msgid "{where}: a split shows {low} to {most} videos, each on a slice line, and this one has {count}."
+msgstr "{where}: um split mostra de {low} a {most} vídeos, cada um em uma linha slice, e este tem {count}."
+
+#. translators: show is an edit-script word and stays in English.
+msgid "{where}: show is how many slices fill the frame, a whole number from 1 to {most}, not {value}."
+msgstr "{where}: show é quantos slices preenchem o quadro, um número inteiro de 1 a {most}, não {value}."
+
+#. translators: centre is an edit-script word and stays in English.
+msgid "{where}: a slice's centre is a percentage of the picture across, from 0 to 100, not {value}."
+msgstr "{where}: o centre de um slice é uma porcentagem da largura da imagem, de 0 a 100, não {value}."
+
+msgid "{where}: {path} is {size}, and {first} above it is {other}. The slices of a split are all one size."
+msgstr "{where}: {path} tem {size}, e {first} acima tem {other}. Os slices de um split têm todos o mesmo tamanho."
+
+msgid "{where}: {path} plays at {rate} frames a second, and {first} above it at {other}. The slices of a split all play at one rate."
+msgstr "{where}: {path} roda a {rate} quadros por segundo, e {first} acima a {other}. Os slices de um split rodam todos à mesma taxa."
+
+msgid "{where}: {path} and {first} hold different numbers of frames ({count} and {other}). The slices of a split all hold the same."
+msgstr "{where}: {path} e {first} têm números diferentes de quadros ({count} e {other}). Os slices de um split têm todos o mesmo número."
+
+msgid "{where}: {path} and {first} last different times ({seconds} and {other} seconds). The slices of a split all last the same."
+msgstr "{where}: {path} e {first} têm durações diferentes ({seconds} e {other} segundos). Os slices de um split duram todos o mesmo."
+
+#. translators: slide is an edit-script word and stays in English.
+msgid "{where}: slide takes the number of a slice that leaves a full set on screen: from 1 to {most}, not {value}."
+msgstr "{where}: slide recebe o número de um slice que deixe um conjunto completo na tela: de 1 a {most}, não {value}."
+
+msgid "{where}: slide {number} moves to the slice already first."
+msgstr "{where}: slide {number} vai para o slice que já é o primeiro."
+
+#. translators: slide and at are edit-script words and stay in English.
+msgid "{where}: slide needs `at`, the moment it starts: slide 2 at 7"
+msgstr "{where}: slide precisa de `at`, o momento em que começa: slide 2 at 7"
+
+msgid "{where}: slides are written in time order and may not overlap, and this one starts at {start}, before the one above ends at {end}."
+msgstr "{where}: os slide são escritos em ordem de tempo e não podem se sobrepor, e este começa em {start}, antes de o de cima terminar em {end}."
+
+msgid "{where}: the slide runs from {start} to {end}, which is not inside its scene ({scene_start} to {scene_end})."
+msgstr "{where}: o slide vai de {start} a {end}, o que não está dentro da cena ({scene_start} a {scene_end})."
+
+msgid ""
+"{where}: the label {words} is {wide} pixels wide at size {size}, and its slice has room for {room}.\n"
+"  Shorten it, or give it a smaller size: about {fits} would fit."
+msgstr ""
+"{where}: o rótulo {words} tem {wide} pixels de largura no tamanho {size}, e seu slice tem espaço para {room}.\n"
+"  Encurte-o ou use um tamanho menor: cerca de {fits} caberia."
+
+msgid "scene {number}: a split of {count} videos, {start} to {end}"
+msgstr "cena {number}: um split de {count} vídeos, de {start} a {end}"
+
+#. translators: {word} is the first word of the line, in quotes.
+msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, sound, music or level, not {word}."
+msgstr "{where}: uma linha começa com clip, card, split, slice, slide, text, zoom, sound, music ou level, não com {word}."
+
+msgid "the script has no scenes in it. A scene is a line starting with clip, card or split."
+msgstr "o roteiro não tem cenas. Uma cena é uma linha que começa com clip, card ou split."
