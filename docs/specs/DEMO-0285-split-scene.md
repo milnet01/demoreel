@@ -56,10 +56,12 @@ Every other choice below follows from § 2 and is reviewed as design.
 ```
 split from 2 to 17 show 3 crossfade 0.5
   slice scene1-classic.mp4 label "Classic"
+  slice scene1-solid-raster.mp4 label "Solid, rasterised"
   slice scene1-solid-rt.mp4 label "Solid, ray traced" centre 40
+  slice scene1-ultra-raster.mp4 label "Ultra, rasterised"
   slice scene1-ultra-rt.mp4 label "Ultra, ray traced" size 3
   slide 2 at 7 over 1.4
-  text "Same frame, three renderers" at top band off
+  text "Same frame, five renderers" at top band off
   sound whoosh.wav at 7
 ```
 
@@ -83,9 +85,9 @@ split from 2 to 17 show 3 crossfade 0.5
   leave a full set on screen, so `N + show - 1` is at most the number of slices,
   and must differ from the slice already first. The whole slide must fall inside
   the scene.
-- **`text`** and **`sound`** lines work as on a clip: a text's defaults are a
-  clip's (`check_texts`), and times are the videos' own (`scene_time`). A text
-  stays where it is while the row slides.
+- **`text`** and **`sound`** lines work as on a clip: `check_texts` gives a text
+  on a `split` a clip's band and place, and times are the videos' own
+  (`scene_time`). A text stays where it is while the row slides.
 - A scene takes none of `window`, `background`, `push`, `speed`, `hold`, `sound`
   or `volume` on its `split` line, and no `zoom` line.
 - All of this goes in `SCENE_WORDS` and `parse_script`, so an error names its line
@@ -125,19 +127,31 @@ and every slide stops on a slice's edge.
 ### 4.4 The graph
 
 `scene_graph` gets a branch for `split`, in the shape below. Each slice is read by
-`clip_input`'s arguments, with its own path.
+`clip_input`'s arguments, with its own path and its own `-ss` and `-t`: the first
+slice's frame numbers over that slice's rate. § 4.2 lets rates differ by 0.1%, and
+one seek time would land them frames apart.
 
 ```
-[i:v]setpts=N/(file_rate*TB),crop=crop_w:file_h:crop_x:0,scale=slice_w:height,
+[i:v]settb=1/first_rate,setpts=N,crop=crop_w:file_h:crop_x:0,scale=slice_w:height,
      setsar=1,format=yuv420p,drawtext(label)[s_i]        # one per slice
-[s_0]...[s_n]hstack=inputs=n,fps=film_rate,
+[s_0]...[s_n]hstack=inputs=n:shortest=1,tpad=stop_mode=clone:stop=1,fps=film_rate,
      drawbox(borders),crop=width:height:x=PAN:y=0,{shape}{tail}[v<number>]
 ```
 
-- **`setpts=N/(file_rate*TB)` is what makes it frame for frame** (§ 2.3): each
-  frame's time is made from its number, so `hstack` pairs frame N with frame N
-  whatever the files' timestamps say. Do not change it to the `PTS-STARTPTS` a
-  clip uses.
+- **`settb=1/first_rate,setpts=N` is what makes it frame for frame** (§ 2.3): each
+  frame's time is made from its number, in one time base, so `hstack` pairs frame N
+  with frame N whatever the files' timestamps say. `first_rate` is the first slice's
+  rate, on every slice. Do not change it to the `PTS-STARTPTS` a clip uses. Do not
+  drop the `settb`: `setpts=N/(70*TB)` rounds differently in each file's time base,
+  and files of 1/15360 and 1/90000 paired their last frame wrongly (ffmpeg 6.1.1 and
+  9.0.2, 2026-11-02).
+- **`shortest=1` is what ends the scene on a short slice** (§ 6). By default
+  `hstack` holds a short input's last frame to the end (measured on both, the same day).
+- **`tpad` gives `fps` a frame past the last, and `{shape}`'s `trim` takes it off.**
+  `hstack` ends at its last frame's own time, and `fps` then drops that frame: 29 of
+  30 on 6.1.1, and 359 of 360 from 70 to 60 a second on both before the `settb`. With
+  the `tpad`, each of 70 to 30, 60, 70 and 100 and 10 to 7, 10 and 25 came out whole on
+  both, and a 10-frame slice beside a 30-frame one still made 10.
 - **One `fps`, after the `hstack`,** so a change of rate drops the same frame from
   every slice. A 70 a second source in a 60 a second film drops one in seven, as
   `split_sample.py` does.
@@ -149,7 +163,7 @@ and every slide stops on a slice's edge.
 - **`PAN` is a slice's width times a number that eases between slide targets**,
   smoothstep (`p*p*(3-2*p)`) as `split_sample.py`'s `smooth`, written as nested
   `if`s on `t` and rounded down to an even number. `crop` works it out each frame.
-- **A border is white with a dark edge at each side**, between each pair of slices:
+- **A border is white with a dark edge at each side**, centred where two slices meet:
   white `max(2, even(0.003125 * width))` wide and each dark edge
   `max(1, round(0.00078 * width))`, from `split_sample.py`'s 8 and 2 at 2560.
   One look serves a trailer. A border is drawn in the row, so it moves with its
@@ -164,15 +178,15 @@ and every slide stops on a slice's edge.
 of `/mnt/Games/Trailers/incoming/doom-ants/scene1-*.mp4`, each 2560x1440 at 70, for
 6 s, `show 3` at 1920x1080 at 60, one slide, x264 `medium`): 360 frames, 1.82 GB peak
 resident memory, 29 s wall. The picture was checked by eye. ffmpeg 6.1.1 in
-`ci.sh`'s Ubuntu image lists every filter used (`ffmpeg -filters`, 2026-11-02); the
-graph has not been run there.
+`ci.sh`'s Ubuntu image lists every filter used (`ffmpeg -filters`, 2026-11-02). Of the
+graph, only the part up to `fps` has been run there.
 
 ### 4.5 A piece of the film
 
 `PIECE_SCENES` counts scenes. Five decoders are worth more than one scene, so
 `film_pieces` weighs them: a clip or a card is 1, a `split` is its number of
 slices. A piece closes once its weight reaches `PIECE_SCENES - 1`, and a `split`
-with something before it in its piece starts a new one. With no `split`, every
+that would take it past that starts a new one. With no `split`, every
 weight is 1 and the pieces come out as they do today. A crossfade over a join is
 still drawn whole in one piece, as `.claude/rules/finishing-commands.md` requires,
 so two crossfading splits share an ffmpeg.
@@ -191,14 +205,21 @@ rule its fixture isolates.
 
 - **INV-1** — Frame N of the film holds frame N of every slice, whatever the files'
   timestamps say.
-  *Test:* ci.sh finishing: `R.mp4` is 30 frames whose brightness is `10+8*n`. `J.mp4`
-  is the same frames with the odd ones' timestamps moved 0.04 s later and the same
-  first and last, kept with `-fps_mode passthrough`, so its size, rate and count
-  pass § 4.2. `split` with `slice R.mp4`, `slice J.mp4`: at frames 5, 15 and 25 `px`
-  in each slice's middle agree within 6. With `-r 7` they agree too, at frames 3 and
-  15. The fixture isolates the `setpts`: `PTS-STARTPTS` pairs J's late frames with
-  the frame before them, and the two differ by 8 on half the frames.
-  *Breaks when:* a slice is paired by time, or each slice gets its own `fps`.
+  *Test:* ci.sh finishing: `R.mp4` is 30 frames at 10 a second whose brightness is
+  `10+8*n`. `J.mp4` is `R.mp4` copied with `-c copy -bsf:v
+  setts=ts='PTS+mod(N,2)*lt(N,29)*0.06/TB'`, so its rate, count and length pass § 4.2
+  (`10/1`, 30, 3.000 by `ffprobe`). `split` with `slice R.mp4`, `slice J.mp4`: at frames
+  5, 15 and 25 `px` in each slice's middle agree within 6. With `-r 7` they agree too,
+  at frames 3 and 15. The fixture isolates the `setpts`: under `PTS-STARTPTS` those
+  three frames differ by 9 or more, and under a shift of 0.04 s by none (measured
+  2026-11-02).
+  Two more `split`s, with a `px` at each slice's middle: 70 frames at 70 a second that
+  alternate dark and light, made with `-video_track_timescale` 15360 and 90000, whose
+  last frames agree; and 1000 frames of brightness `10+8*(n%30)`, at 10 and at 10.009 a
+  second, with `from 91`, whose first frames agree. One seek time for both starts them a
+  frame apart.
+  *Breaks when:* a slice is paired by time or in its own time base, each slice gets its
+  own `fps`, or every slice takes the first slice's seek time.
 
 - **INV-2** — A slice differing in size, rate or frame count is refused before
   ffmpeg starts, and the message names the line and both files.
@@ -213,10 +234,10 @@ rule its fixture isolates.
   fitted to the film's size and never stretched.
   *Test:* ci.sh finishing: `Q.mp4` is 640x480, four vertical stripes of red, green,
   blue and white. `edit -s 320x240` with `split show 2`, `slice Q.mp4`, `slice Q.mp4
-  centre 12.5`, each `px` probed: the first slice (160 wide, showing 320 of Q's 640)
-  is green up to x=80 then blue, as the middle half is; the second is red from x=160
-  to x=240, then green. A slice of `centre 0` is held at the edge by the clamp and
-  matches `centre 12.5`.
+  centre 75`, each `px` probed: the first slice (160 wide, showing 320 of Q's 640)
+  is green up to x=80 then blue, as the middle half is; the second is blue from x=160
+  to x=240, then white. `centre 0` is held at the edge by the clamp and shows red then
+  green; `centre 100` is held at the other and matches `centre 75`.
   *Breaks when:* `crop_x` ignores `centre`, or is not clamped, or the crop is in the
   film's pixels and not the file's.
 
@@ -232,10 +253,11 @@ rule its fixture isolates.
 
 - **INV-5** — A border lies between each pair of slices and none on the frame's edge
   at rest.
-  *Test:* ci.sh finishing: as INV-4. Frame 19: `px` at x=108 is within 60 of white,
-  and x=105 or x=110 is darker than the colours beside it. Frame 45: x=0 and x=319 are
-  C3 and C5, not white, which a border on the edge fails. Frame 30 (moving): the border
-  between C2 and C3 is white at x=108.
+  *Test:* ci.sh finishing: as INV-4. `px` reads a 5-pixel block, so a border's columns
+  are read by `px find`. Frame 19: columns x=107 and x=108 are within 60 of white, and
+  x=106 and x=109 are `dark:60`. Frame 45: `px` at x=0 and x=319 are C3 and C5, not white,
+  which a border on the edge fails. Frame 30 (moving): the border between C2 and C3 is
+  white in those same columns.
   *Breaks when:* the border is left out, or its `enable` is, or is drawn after the
   `crop` and so does not move.
 
@@ -246,16 +268,18 @@ rule its fixture isolates.
   same height) is C1. Frame 45: the label's mark is at x=54 and x=270 is C5. A label
   of 20 `X`s is refused by `expect_refused`, naming its line, with nothing at `-o`.
   The same label with `size 2` is made, so the refusal comes from the width.
-  *Breaks when:* the label is drawn after the `hstack`, or the width check is missing.
+  *Breaks when:* the label is drawn after the `crop`, or the width check is missing.
 
 - **INV-7** — A `text` stays where it is while the row slides, and a `sound` lands
   where a clip's would.
-  *Test:* ci.sh finishing: as INV-4, with `from 1`, `text "T" at top band off` and
-  `sound tone.wav at 3`. `px bbox` against the top strip gives one box in the same
-  place at frames 10 and 40. The plan prints the sound at 2.000, and the film's sound
+  *Test:* ci.sh finishing: as INV-4, with `from 1`, `text "T" at top band off colour
+  #FF00FF`, `text "B"` and `sound tone.wav at 3`. `px find` of that colour over the top
+  strip gives one box in the same place at frames 10 and 40, whatever slices lie under
+  it. `B`, with no `at` or `band`, has a clip's band: `px` at the bottom of the frame is
+  darker than C1 and than C3. The plan prints the sound at 2.000, and the film's sound
   is silent up to it (`volumedetect`, as DEMO-0177's steps read it).
-  *Breaks when:* the tail is put before the `crop`, or times are counted from the
-  film.
+  *Breaks when:* the tail is put before the `crop`, a `split` takes a card's text
+  defaults, or times are counted from the film.
 
 - **INV-8** — A split scene ends where the plan says, in a film with cuts and a
   crossfade, under a memory limit.
@@ -277,9 +301,10 @@ rule its fixture isolates.
 - **INV-10** — A slice's file is only ever read as a video, and `-o` cannot be one.
   This is a trust boundary: a script names the files, and a slice reaches ffmpeg as a
   clip does.
-  *Test:* ci.sh finishing: `expect_refused` on `slice list.m3u8` (`refuse_a_list`), on
-  `-o` naming the third slice ("also a file this command reads"), and on a slice named
-  `-report.mp4`, which is read as that file and not as an option.
+  *Test:* ci.sh finishing: `expect_refused` on `slice list.m3u8` (`refuse_a_list`) and on
+  `-o` naming the third slice ("also a file this command reads"). A `split` of two slices
+  of one file, for each of `12:30:05.mp4`, `-report.mp4` and `concat:short.mp4|short.mp4`,
+  the names DEMO-0094's step copies a video to: made, with that file's frames.
   *Breaks when:* a slice is read without `probe_input` and `media_input`, or
   `finishing_output` is not told about it.
 
@@ -335,9 +360,10 @@ All in `ci.sh`'s finishing steps, so `./ci.sh --finishing` runs them, except INV
 - INV-12: the existing finishing steps, unchanged.
 - INV-13: a new row in `perf_measure`, read by `./ci.sh --perf`.
 
-Each new step is seen to fail first: INV-1 by `PTS-STARTPTS`, INV-2 and INV-11 by
-removing one check at a time, INV-3 by ignoring `centre`, INV-4 by a linear pan, INV-5
-by dropping `enable`, INV-6 by drawing after the `hstack`, INV-9 by a weight of 1.
+Each new step is seen to fail first: INV-1 by `PTS-STARTPTS`, by dropping `settb` and by
+one seek time, INV-2 and INV-11 by removing one check at a time, INV-3 by ignoring
+`centre`, INV-4 by a linear pan, INV-5 by dropping `enable`, INV-6 by drawing after the
+`crop`, INV-9 by a weight of 1.
 
 ## 8. Alternatives considered (and rejected)
 
