@@ -95,12 +95,13 @@ clip demo.mp4 from 2 to 14
   not percentages, and are not written `x` and `y`, so that a `zoom`'s meaning of those
   words does not read across.
 - `at`, required, is a time in the clip's own file, as a `sound` line's is. It must fall
-  in the clip's own frames, not its `hold`. A clip may have any number of rings.
+  in the clip's own frames. On a clip with a `hold` the whole half second must, since the
+  hold would freeze the ring. A clip may have any number of rings.
 - One look, from `trailer.py`'s `ring_png` on footage about 1080 high, as shares of the
-  file's height: its diameter eases out over `RING_SECONDS` (0.5) from `RING_FROM`
-  (0.03) to `RING_TO` (0.185) as `1-(1-p)^2`; a `#FDE047` line `RING_LINE` (0.0185) wide
-  on a black edge at 75% and `RING_EDGE` (0.0315) wide; and it fades out over the same
-  half second.
+  file's height: its diameter, to the line's middle, eases out over `RING_SECONDS` (0.5)
+  from `RING_FROM` (0.03) to `RING_TO` (0.185) as `1-(1-p)^2`; a `#FDE047` line `RING_LINE`
+  (0.00926) wide on a black edge at 75% and `RING_EDGE` (0.0157) wide, each at the ring's
+  largest and thinning with it; and it fades out over the same half second.
 - **It is drawn on the clip before anything scales it**, so it sits on the same point of
   the picture in a window, a zoom and at any `speed`.
 
@@ -113,6 +114,12 @@ color=...,format=rgba,geq=...,loop=loop=-1:size=1,trim=end_frame=RING_FRAMES,
 [m][r]overlay=x=X-w/2:y=Y-h/2:eval=frame:eof_action=pass[m2]
 ```
 
+The rings go between the clip's `setpts` and its `fps`, and `AT` is `scene_time`'s. After
+the last ring comes `tpad=stop_mode=clone:stop=1`, and `{shape}`'s `trim` takes that frame
+off. Without it, ffmpeg 6.1.1's `overlay` ends at its last frame's own time and `fps` drops
+that frame: 29 of 30, as `scene_graph`'s comment on a window says, and with it 30 (ffmpeg
+6.1.1 and 9.0.2, 2026-11-02).
+
 So a ring costs only for its half second, and a scene's rings add up by their own length
 and not the scene's. A ring running past its scene's end is cut there.
 
@@ -124,15 +131,15 @@ due.
 ### 4.4 Drawn backgrounds
 
 `background NAME` on a card or a windowed clip, where a colour goes today. Each is a
-look from `trailer.py`'s `BACKGROUND`, with its colours from the matching `THEMES` entry.
-All sizes follow the frame.
+look from `trailer.py`'s `BACKGROUND`, in the colours its function draws, which some read
+from the matching `THEMES` entry. All sizes follow the frame.
 
 | Name | From | What it draws | Moves |
 |---|---|---|---|
 | `record` | `bg_record`, `studio` | gradient (`#b45309,#9d174d,#4c1d95,#0c0a09`, dark 0.36), a vinyl disc with grooves and a two-colour label low on the right, grain | the disc turns, 0.5 radians a second |
 | `log` | `bg_log`, `terminal` | gradient (`#14532d,#064e3b,#0c4a6e,#020617`, dark 0.42), two columns of faint program output, scanlines | the output scrolls up |
 | `grid` | `bg_grid`, `arcade` | `#0b0620` with a vignette, a striped sun at the horizon, a neon floor in perspective, scanlines | the floor runs towards you |
-| `paper` | `bg_ruled`, `paper` | lined paper with a margin, lit from above, a little noise | nothing |
+| `paper` | `bg_ruled`, `paper` | lined paper with a margin (`#fbf8f0` to `#efe9da`, lines `#c9d8ee`, margin `#ecb4b4`), lit from above, a little noise | nothing |
 | `felt` | `bg_felt`, `table` | green baize, lit from the middle, a little noise | nothing |
 
 - **Text with no band is white on all but `paper`, where it is near-black.** A small table
@@ -142,8 +149,9 @@ All sizes follow the frame.
   in `[out0]`, so `scene_graph` and `window_graph` do not change. Each picture is drawn once
   with `geq`, repeated with `loop`, and bounded by `trim=end_frame`, keeping both rules of
   `.claude/rules/finishing-commands.md`.
-- **The same script makes the same film.** A `noise` takes `all_seed` from the scene's
-  number, as a gradient's `seed` does.
+- **The same script makes the same film.** A gradient takes `seed` from the scene's number,
+  as `background_source`'s does. `noise` needs none: with no `all_seed` it draws the same
+  frames each run (`-f framemd5`, ffmpeg 6.1.1 and 9.0.2, 2026-11-02).
 - `log`'s text is written once in the run's work folder. Its font is `fc-match`'s answer
   for `monospace`. It needs an ffmpeg that draws text, and `check_scene` says so through
   `TextUnavailable`, as a text does.
@@ -167,7 +175,7 @@ the build replaces by one frame looped):
 Checked by eye; all five read as their names. A `grid` whose floor had a line along the
 master picture's edge smeared that line into a wedge, since `perspective` repeats an edge
 outward; the floor's lines are offset from the edges to avoid it. ffmpeg 6.1.1 in `ci.sh`'s
-Ubuntu image lists every filter used, and `all_seed` and `eof_action` (`ffmpeg -filters`
+Ubuntu image lists every filter used, and `eof_action` (`ffmpeg -filters`
 and `-h filter=`, 2026-11-02); the graphs have not been run there.
 
 ## 5. Invariants
@@ -179,9 +187,9 @@ clauses can run until the code exists. Each names the rule its fixture isolates.
   *Test:* ci.sh finishing: `Q.mp4` is 320x240 in four flat quarters. `clip Q.mp4` with
   `zoom 2 x 0 y 0 from 0 to 1`. Frame 0: `px` at the frame's four quarter points are the
   four colours. After 1 s, the view is the picture's top-left quarter, so all four
-  probes are that quarter's colour. A caption
-  on it has the same `px bbox` at both frames, so the text is outside the zoom. Without a
-  window `push 4` is still refused.
+  probes are that quarter's colour. A caption on it in `colour #FF00FF`, a colour none of
+  the quarters is, has the same box from `px find` at both frames, so the text is outside
+  the zoom. Without a window `push 4` is still refused.
   *Breaks when:* the refusal stays, or the zoom is left out of the unwindowed path.
 
 - **INV-2** — A text at `x` and `y` has its middle there.
@@ -209,7 +217,7 @@ clauses can run until the code exists. Each names the rule its fixture isolates.
   is `(0.03 + 0.155*0.64) * 480`, 62 px: `px` at (351, 240), on the line, has blue at least
   25 below its grey. Frame 9, before the moment, and frame 16, after the half second:
   within 10 of `#808080` there. The fixture is flat, so only a ring can move the probe.
-  *Breaks when:* the moment or point is wrong, or the ring's stream outlives its half second.
+  *Breaks when:* the moment or point is wrong.
 
 - **INV-6** — A ring stays on its point of the picture through a window, a zoom and a speed.
   *Test:* ci.sh finishing: as INV-5 with `window 50` (`px bbox` gives the window; the
@@ -220,8 +228,10 @@ clauses can run until the code exists. Each names the rule its fixture isolates.
 
 - **INV-7** — A wrong ring is refused before ffmpeg starts, naming the line.
   *Test:* ci.sh finishing: each by `expect_refused`: `ring 640 400` with no `at`; `ring 640`;
-  `ring big 400 at 1`; a point outside the file; `at` outside the clip; `at` in its `hold`; a
-  `ring` under a card; and under a `split` (DEMO-0285).
+  `ring big 400 at 1`; a point outside the file; `at` outside the clip; `at` in its `hold`; `at`
+  under half a second before the end of a clip with a `hold`; a `ring` under a card; and under
+  a `split`, with words naming the ring, which whichever of this and DEMO-0285 is built second
+  adds.
   *Breaks when:* any is accepted, or reaches ffmpeg.
 
 - **INV-8** — Each named background draws its own picture, and those that should move, move.
@@ -234,8 +244,9 @@ clauses can run until the code exists. Each names the rule its fixture isolates.
 
 - **INV-9** — The same script makes the same film.
   *Test:* ci.sh finishing: each named background twice: `-f framemd5` of the two films agree.
-  The fixture isolates the seeds: `noise` with no `all_seed` gives different frames.
-  *Breaks when:* a seed is left out.
+  The fixture isolates the seed: a gradient with no `seed` gives different frames, so `record`
+  and `log` fail it.
+  *Breaks when:* a gradient's seed is left out.
 
 - **INV-10** — A band-less text is near-black on `paper` and white on the rest.
   *Test:* ci.sh finishing: `card 2 background paper`, and `felt`, each with a large `text`:
@@ -291,8 +302,8 @@ All in `ci.sh`'s finishing steps, so `./ci.sh --finishing` runs them.
 - INV-13: the existing finishing steps, with the one change named.
 
 Each new step is seen to fail first: INV-1 by keeping the refusal, INV-2 by a centred `x`, INV-3
-by stacking placed texts, INV-5 by a ring with no `trim`, INV-6 by drawing after the scaling, INV-8
-by a plain colour under each name, INV-9 by dropping `all_seed`, INV-10 by dropping the table.
+by stacking placed texts, INV-5 by a second added to `AT`, INV-6 by drawing after the scaling, INV-8
+by a plain colour under each name, INV-9 by dropping a gradient's `seed`, INV-10 by dropping the table.
 
 ## 8. Alternatives considered (and rejected)
 
@@ -339,6 +350,7 @@ by a plain colour under each name, INV-9 by dropping `all_seed`, INV-10 by dropp
 | INV-13 | every existing finishing step |
 | No new program | **nothing** automatic; code review. README § Finishing a recording promises it |
 | A ring is never automatic | **nothing** automatic; README § What it will never do, and code review |
+| A ring's stream ends at its half second | **nothing** automatic; code review. With no `trim` the picture is the same, since the fade has left the ring transparent (measured on ffmpeg 9.0.2, 2026-11-02) |
 | New messages go through `tr` at run time | ci.sh "translation: nothing translated at import time" (DEMO-0060 INV-15), and "translation: the template matches the source", refreshed with `./ci.sh --pot` |
 
 ## 11. Cross-doc impact
@@ -346,8 +358,7 @@ by a plain colour under each name, INV-9 by dropping `all_seed`, INV-10 by dropp
 - `README.md` § `edit`: a film from a script — `zoom` with no window, a text's `x` and `y`, the
   `ring` line, the named backgrounds.
 - `demoreel.1` — the same.
-- `.claude/rules/finishing-commands.md` — a ring costs only its half second, and a background's
-  noise is seeded.
+- `.claude/rules/finishing-commands.md` — a ring costs only its half second.
 - `CHANGELOG.md` — one bullet.
 - `po/` — through `./ci.sh --pot` and `./ci.sh --add-message`.
 - `record-demo` skill — feedback to `claude-config`, which owns it.
