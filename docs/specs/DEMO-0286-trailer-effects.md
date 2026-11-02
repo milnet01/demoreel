@@ -1,7 +1,7 @@
 <!-- ants-spec-format: 1 -->
 # DEMO-0286 — Full-frame zoom, text at any position, click rings and drawn backgrounds
 
-**Status:** spec draft (2026-11-02).
+**Status:** accepted (2026-11-02).
 **Kind:** feature.
 **Source:** ROADMAP DEMO-0286 (peer-request-2026-10-30, APHW-0030; the website's `tools/trailer.py`).
 **Pairs with:** DEMO-0285 (the same scope lift).
@@ -153,9 +153,10 @@ from the matching `THEMES` entry. All sizes follow the frame.
   as `background_source`'s does. `noise` needs none: with no `all_seed` it draws the same
   frames each run (`-f framemd5`, ffmpeg 6.1.1 and 9.0.2, 2026-11-02).
 - `log`'s text is written once in the run's work folder. Its font is `fc-match`'s answer
-  for `monospace`. It needs an ffmpeg that draws text, and `check_scene` says so through
+  for `monospace`, asked directly, since `text_font` refuses a general name. It needs an ffmpeg that draws text, and `check_scene` says so through
   `TextUnavailable`, as a text does.
-- **`check_scene`'s background refusal** adds the five names to its message.
+- **`check_scene`'s background refusal** adds the five names to its message. The `card`
+  shortcut's `--background` goes through it, so that shortcut takes them too.
 
 **Dropped from `trailer.py`, to tell the website:** the card suits on `felt`, since drawing
 them needs a font with those signs, and the sheen on `record`, which adds little.
@@ -176,12 +177,16 @@ Checked by eye; all five read as their names. A `grid` whose floor had a line al
 master picture's edge smeared that line into a wedge, since `perspective` repeats an edge
 outward; the floor's lines are offset from the edges to avoid it. ffmpeg 6.1.1 in `ci.sh`'s
 Ubuntu image lists every filter used, and `eof_action` (`ffmpeg -filters`
-and `-h filter=`, 2026-11-02); the graphs have not been run there.
+and `-h filter=`, 2026-11-02). A ring's chain has been run there (§ 4.3); the backgrounds
+have not.
 
 ## 5. Invariants
 
-Fixtures are `ci.sh`'s finishing ones (`px`, `px bbox`, `expect_refused`). None of these
-clauses can run until the code exists. Each names the rule its fixture isolates.
+Fixtures are `ci.sh`'s finishing ones (`px`, `px bbox`, `px find`, `refused_naming_line`).
+None of these clauses can run until the code exists. Each names the rule its fixture
+isolates. "Refused before any encode" means `refused_naming_line` and no `libx264` in the
+shim's call log, as the bad-push-and-zoom step does: `expect_refused` alone passes a refusal
+that came from ffmpeg.
 
 - **INV-1** — A zoom works on a clip with no window, closing in on its point.
   *Test:* ci.sh finishing: `Q.mp4` is 320x240 in four flat quarters. `clip Q.mp4` with
@@ -199,14 +204,14 @@ clauses can run until the code exists. Each names the rule its fixture isolates.
   *Breaks when:* `text_filters` keeps `(w-text_w)/2`, or `y` names the text's top.
 
 - **INV-3** — Such a text moves no other line and takes no room.
-  *Test:* ci.sh finishing: `card 2 P.png` with `text "A" at middle`, and again with a
-  second text `text "B" x 50 y 5`. The picture's `px bbox` over its own area, and `A`'s,
-  agree between the two within 0.01. A stack would shift `A`; `picture_room` would shrink
-  the picture.
+  *Test:* ci.sh finishing: `card 2 P.png` with `text "A" at middle colour #FF00FF`, and
+  again with a second text `text "B" x 50 y 5`. `px find` over the picture's area, of a
+  colour P holds and of `A`'s, gives boxes that agree between the two within 0.01. A stack
+  would shift `A`; `picture_room` would shrink the picture.
   *Breaks when:* a placed text reaches `text_stacks`.
 
-- **INV-4** — A wrong place is refused before ffmpeg starts, naming the line.
-  *Test:* ci.sh finishing: each by `expect_refused`: `x 50` with no `y`; `y 50` with no
+- **INV-4** — A wrong place is refused before any encode, naming the line.
+  *Test:* ci.sh finishing: each: `x 50` with no `y`; `y 50` with no
   `x`; `x 101 y 50`; `x 50 y 50 at top`; `x 50 y 50 band on`; a wide text at `x 1 y 50`,
   which fits the width check and not the frame.
   *Breaks when:* any is accepted, or a text is drawn cut off by the frame.
@@ -215,31 +220,32 @@ clauses can run until the code exists. Each names the rule its fixture isolates.
   *Test:* ci.sh finishing: `F.mp4` is flat `#808080`, 640x480 at 10 a second for 3 s,
   `clip F.mp4` with `ring 320 240 at 1`. At frame 12, `p` 0.4 and 0.64 eased, the diameter
   is `(0.03 + 0.155*0.64) * 480`, 62 px: `px` at (351, 240), on the line, has blue at least
-  25 below its grey. Frame 9, before the moment, and frame 16, after the half second:
+  15 below its grey (27 measured on a prototype, 2026-11-02, and 23 at `window 50`'s scale). Frame 9, before the moment, and frame 16, after the half second:
   within 10 of `#808080` there. The fixture is flat, so only a ring can move the probe.
   *Breaks when:* the moment or point is wrong.
 
 - **INV-6** — A ring stays on its point of the picture through a window, a zoom and a speed.
   *Test:* ci.sh finishing: as INV-5 with `window 50` (`px bbox` gives the window; the
-  probe is scaled by it); with `speed 2` and `at 2`, which lands at frame 10 and not 20; and
-  on `Q.mp4` with a `zoom`, whose probe is worked from `zoom_filters`' own view. Each fails
-  if the ring is drawn after the scaling.
+  probe is scaled by it); and on `Q.mp4` with a `zoom`, whose probe is worked from
+  `zoom_filters`' own view. Each fails if the ring is drawn after the scaling. As INV-5 with
+  `speed 2` and `at 2`, which lands at frame 10 and not 20, reading frames 9 and 12 only: the
+  film is 15 frames, and this case isolates `at`, not the scaling.
   *Breaks when:* the ring goes in after `zoom_filters`, or `at` is read as the scene's time.
 
-- **INV-7** — A wrong ring is refused before ffmpeg starts, naming the line.
-  *Test:* ci.sh finishing: each by `expect_refused`: `ring 640 400` with no `at`; `ring 640`;
+- **INV-7** — A wrong ring is refused before any encode, naming the line.
+  *Test:* ci.sh finishing: each: `ring 640 400` with no `at`; `ring 640`;
   `ring big 400 at 1`; a point outside the file; `at` outside the clip; `at` in its `hold`; `at`
   under half a second before the end of a clip with a `hold`; a `ring` under a card; and under
   a `split`, with words naming the ring, which whichever of this and DEMO-0285 is built second
   adds.
-  *Breaks when:* any is accepted, or reaches ffmpeg.
+  *Breaks when:* any is accepted, or reaches an encode.
 
 - **INV-8** — Each named background draws its own picture, and those that should move, move.
   *Test:* ci.sh finishing: at 640x400, `card 3 background NAME` for each. None is flat
   (`frame_is_flat`, imported). `paper`: `px` at the top right has luma above 200. `felt`: at
   the middle green leads red and blue by at least 30. `record`, `log` and `grid`: frames 15 and
   60 differ by more than a noise allowance; `paper` and `felt`: they do not. A windowed clip
-  takes each of them.
+  takes each of them, and so does `demoreel card --background felt`.
   *Breaks when:* a name falls through to a plain colour, or a moving one stands still.
 
 - **INV-9** — The same script makes the same film.
@@ -260,9 +266,9 @@ clauses can run until the code exists. Each names the rule its fixture isolates.
   plan's. Partial, as that clause is, for the same reason.
   *Breaks when:* a `loop` is left without its `trim`, and something waits on it.
 
-- **INV-12** — A wrong name is refused before ffmpeg starts, naming the line and the names.
+- **INV-12** — A wrong name is refused before any encode, naming the line and the names.
   *Test:* ci.sh finishing: `background stripes` on a card, and `background record` on a clip with
-  no window, by `expect_refused`.
+  no window.
   *Breaks when:* it reaches ffmpeg as a colour.
 
 - **INV-13** — A script using none of these makes the film it made before.
@@ -301,7 +307,8 @@ All in `ci.sh`'s finishing steps, so `./ci.sh --finishing` runs them.
 - INV-12: "edit refuses a background it has no name for".
 - INV-13: the existing finishing steps, with the one change named.
 
-Each new step is seen to fail first: INV-1 by keeping the refusal, INV-2 by a centred `x`, INV-3
+Each new step is seen to fail first: INV-4, INV-7 and INV-12 by removing one check at a time,
+INV-1 by keeping the refusal, INV-2 by a centred `x`, INV-3
 by stacking placed texts, INV-5 by a second added to `AT`, INV-6 by drawing after the scaling, INV-8
 by a plain colour under each name, INV-9 by dropping a gradient's `seed`, INV-10 by dropping the table.
 
@@ -356,7 +363,7 @@ by a plain colour under each name, INV-9 by dropping a gradient's `seed`, INV-10
 ## 11. Cross-doc impact
 
 - `README.md` § `edit`: a film from a script — `zoom` with no window, a text's `x` and `y`, the
-  `ring` line, the named backgrounds.
+  `ring` line, the named backgrounds; § The shortcuts — `card --background` takes the names.
 - `demoreel.1` — the same.
 - `.claude/rules/finishing-commands.md` — a ring costs only its half second.
 - `CHANGELOG.md` — one bullet.
