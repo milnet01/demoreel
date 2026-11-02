@@ -133,7 +133,7 @@ one seek time would land them frames apart.
 
 ```
 [i:v]settb=1/first_rate,setpts=N,crop=crop_w:file_h:crop_x:0,scale=slice_w:height,
-     setsar=1,format=yuv420p,drawtext(label)[s<number>_i]  # one per slice
+     setsar=1,format=yuv420p,drawtext(label),tpad=stop_mode=clone:stop=1[s<number>_i]  # one per slice
 [s<number>_0]...[s<number>_n]hstack=inputs=n:shortest=1,tpad=stop_mode=clone:stop=1,fps=film_rate,
      drawbox(borders),crop=width:height:x=PAN:y=0,{shape}{tail}[v<number>]
 ```
@@ -147,6 +147,9 @@ one seek time would land them frames apart.
   9.0.2, 2026-11-02).
 - **`shortest=1` is what ends the scene on a short slice** (§ 6). By default
   `hstack` holds a short input's last frame to the end (measured on both, the same day).
+  On 6.1.1 it also lost the row's last frame when the slices reached their ends apart:
+  89 of 90 from `from 91` at rates 10 and 10.009, found by the Ubuntu gate on 2026-11-02.
+  So each slice has one cloned frame to spare, and `{shape}`'s `trim` takes it off.
 - **`tpad` gives `fps` a frame past the last, and `{shape}`'s `trim` takes it off.**
   `hstack` ends at its last frame's own time, and `fps` then drops that frame: 29 of
   30 on 6.1.1, and 359 of 360 from 70 to 60 a second on both before the `settb`. With
@@ -341,8 +344,10 @@ alone passes a refusal that came from ffmpeg.
   sources are unaffected, and every recording in the request is even (each step between
   `ffprobe`'s `packet=pts_time` is 1/70, 2026-11-02). § Out of scope carries reading by
   number.
-- **A file whose index lies about its frame count.** One that ends early ends the
-  `hstack`, and `run_film_ffmpeg`'s frame count fails the run with ffmpeg's last lines.
+- **A file whose index lies about its frame count.** One that ends two or more frames
+  early ends the `hstack`, and `run_film_ffmpeg`'s frame count fails the run with ffmpeg's
+  last lines. One frame early is hidden by the frame to spare (§ 4.4): its last frame
+  shows twice, and nothing says so.
 - **Very large sources.** Memory grows with slices and with the sources' sizes.
   `memory_cap` stops the ffmpeg at half the machine's memory, with its own message.
 - **Sources on `/tmp`.** It is RAM on this machine. README tells the caller; demoreel

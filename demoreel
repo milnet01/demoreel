@@ -5177,7 +5177,8 @@ def split_graph(scene, number, first_input, width, height, rate, ending):
     whatever the files' timestamps say. Do not change it to the PTS-STARTPTS a clip
     uses. Without settb, files of 1/15360 and 1/90000 paired their last frame wrongly.
     shortest=1 ends the scene on a short slice, where hstack would hold its last
-    frame. hstack ends at its last frame's own time, so fps would drop that frame;
+    frame. On ffmpeg 6.1.1 it also lost the last frame of a row whose slices reached
+    their ends apart, so each slice has one frame to spare. hstack ends at its last frame's own time, so fps would drop that frame;
     tpad gives fps one past it, and `ending`'s trim takes that off (DEMO-0285 § 4.4).
     """
     tb = f"1/{scene.slices[0].info['rate'] or rate:.9g}"
@@ -5193,8 +5194,8 @@ def split_graph(scene, number, first_input, width, height, rate, ending):
                      f"y={round(SPLIT_LABEL_TOP * height)}")
         chains.append(f"[{first_input + i}:v]settb={tb},setpts=N,"
                       f"crop={crop_w}:{part.info['height']}:{crop_x}:0,"
-                      f"scale={scene.slice_w}:{height},setsar=1,format=yuv420p{label}"
-                      f"[s{number}_{i}]")
+                      f"scale={scene.slice_w}:{height},setsar=1,format=yuv420p{label},"
+                      f"tpad=stop_mode=clone:stop=1[s{number}_{i}]")
     row = "".join(f"[s{number}_{i}]" for i in range(len(scene.slices)))
     pan = f"trunc({scene.slice_w}*({split_position(scene.slides)})/2)*2"
     steps = [f"hstack=inputs={len(scene.slices)}:shortest=1", "tpad=stop_mode=clone:stop=1",

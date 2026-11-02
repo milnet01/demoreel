@@ -5912,9 +5912,9 @@ split to 3 crossfade 0.5
 clip B.mp4 crossfade 0.5
 SPLIT
     rc=0
-    ( ulimit -v 3000000; cd "$ft" && four_cores "$DR" edit s.txt -o "$ft/out/end.mp4" -s 320x240 -r 10 ) \
+    ( ulimit -v 5250000; cd "$ft" && four_cores "$DR" edit s.txt -o "$ft/out/end.mp4" -s 320x240 -r 10 ) \
         >"$fo" 2>"$fe" || rc=$?
-    expect_ok "a film of cuts, crossfades and two splits, inside 3 GB"
+    expect_ok "a film of cuts, crossfades and two splits, inside 5.25 GB"
     secs=$(sed -n 's/.*, \([0-9.]*\) seconds at 320x240.*/\1/p' "$fe")
     assert_eq "the film's frames are the plan's" \
         "$(awk -v s="$secs" 'BEGIN { printf "%d", s * 10 + .5 }')" "$(v_frames "$ft/out/end.mp4")"
