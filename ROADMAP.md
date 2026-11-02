@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=298 -->
+<!-- ants-roadmap-id-high-water: DEMO=300 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -792,11 +792,15 @@ simplest case, and a gate proves it still records.
   passes, one failure since a88e583.
   2026-10-31: 1ff75a9's full push gate passed, Ubuntu leg included: ten
   passes, one failure since a88e583.
+  2026-11-02: be05b2f's full push gate passed its Ubuntu leg. Two
+  earlier attempts stopped: 7c4f75b failed on the Ubuntu leg for real
+  faults in that code (a lost frame on ffmpeg 6.1.1, a test's memory
+  limit), not a flake, and d54ff72 stopped on ruff.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
 
-- 📋 [DEMO-0285] **An edit scene that plays several videos at once as side-by-side slices, frame for frame.**
+- ✅ [DEMO-0285] **An edit scene that plays several videos at once as side-by-side slices, frame for frame.**
   Asked for by the website session for the DOOM Ants trailer (APHW-0030),
   on the user's behalf; sample at
   /mnt/Games/Trailers/doom-ants-SAMPLE-B-same-view.mp4, reference code
@@ -816,6 +820,9 @@ simplest case, and a gate proves it still records.
   Scope lifted in 804242e. Spec accepted 2026-11-02, after its two
   review loops: docs/specs/DEMO-0285-split-scene.md. The last fixes are
   read by no reviewer, so the build is their reader. Nothing built yet.
+  Built in 7c4f75b, d54ff72 and be05b2f. The full gate with its Ubuntu
+  copy passed, and GitHub run 41491343960 passed. The website session
+  has been told it is ready to try. Baseline figure: DEMO-0300.
   **Layman:** Show the same moment from several recordings next to each other, split by borders, for a comparison trailer.
   Kind: feature.
   Source: peer-request-2026-10-30 APHW-0030.
@@ -922,6 +929,25 @@ simplest case, and a gate proves it still records.
   **Layman:** Older design documents lack a plain-language summary that newer ones have.
   Kind: doc-fix.
   Source: review-code-2026-10-30.
+
+- 📋 [DEMO-0299] **When a film comes out short of its planned frames, say so instead of printing a blank reason.**
+  run_film_ffmpeg dies with 'ffmpeg could not make the film.' and an empty
+  second line when the only fault is the frame count: ffmpeg said nothing and
+  the file is valid. Seen on ffmpeg 6.1.1 on 2026-11-02, before DEMO-0285's
+  spare frame. It should name the frames made and planned. A new message needs
+  ./ci.sh --pot and --add-message.
+  **Layman:** A failed film can stop with no reason shown; it should say how many frames it made and how many it should have made.
+  Kind: fix.
+  Source: found-building-DEMO-0285-2026-11-02.
+
+- 📋 [DEMO-0300] **Give the edit-split row in ./ci.sh --perf its baseline figure.**
+  DEMO-0285 INV-13 is unproven: perf_measure has the row, but
+  docs/perf-baseline.tsv has no figure, so --perf prints 'no baseline' for it.
+  The machine's load was too high on 2026-11-02. --perf refuses a load of 10 or
+  more. Run ./ci.sh --perf-baseline on a quiet machine, before a release.
+  **Layman:** The speed and memory check has no starting figure for split-screen yet, because the machine was too busy to measure it fairly.
+  Kind: test.
+  Source: found-building-DEMO-0285-2026-11-02.
 
 ## Standing chores
 
