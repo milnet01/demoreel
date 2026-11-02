@@ -813,6 +813,9 @@ simplest case, and a gate proves it still records.
   User, 2026-10-30: take this after the security pass (DEMO-0094) and
   before the whole-project audit (DEMO-0095). It starts with the scope
   lift through the review gate, as DEMO-0182 did.
+  Scope lifted in 804242e. Spec accepted 2026-11-02, after its two
+  review loops: docs/specs/DEMO-0285-split-scene.md. The last fixes are
+  read by no reviewer, so the build is their reader. Nothing built yet.
   **Layman:** Show the same moment from several recordings next to each other, split by borders, for a comparison trailer.
   Kind: feature.
   Source: peer-request-2026-10-30 APHW-0030.
@@ -827,6 +830,10 @@ simplest case, and a gate proves it still records.
   position, click rings and themed backgrounds, in the same scope lift
   as DEMO-0285. Click rings need README's cursor-highlighting line
   reworded. Crop stays DEMO-0151.
+  Scope lifted in 804242e. Spec accepted 2026-11-02, after its two
+  review loops: docs/specs/DEMO-0286-trailer-effects.md. A ring still
+  showing when a held clip's own frames end is refused (the review's
+  call, kept in the main session 2026-11-02). Nothing built yet.
   **Layman:** Choose which of the other effects in the website's own trailer script demoreel should take over.
   Kind: feature.
   Source: peer-request-2026-10-30 APHW-0030.
