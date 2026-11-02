@@ -1,7 +1,7 @@
 <!-- ants-spec-format: 1 -->
 # DEMO-0285 — A film scene that plays several videos as side-by-side slices, frame for frame
 
-**Status:** spec draft (2026-11-02).
+**Status:** accepted (2026-11-02).
 **Kind:** feature.
 **Source:** ROADMAP DEMO-0285 (peer-request-2026-10-30, APHW-0030; the DOOM Ants trailer).
 **Pairs with:** DEMO-0286 (the same scope lift).
@@ -61,7 +61,7 @@ split from 2 to 17 show 3 crossfade 0.5
   slice scene1-ultra-raster.mp4 label "Ultra, rasterised"
   slice scene1-ultra-rt.mp4 label "Ultra, ray traced" size 3
   slide 2 at 7 over 1.4
-  text "Same frame, five renderers" at top band off
+  text "Same frame, five renderers" at bottom band off
   sound whoosh.wav at 7
 ```
 
@@ -133,8 +133,8 @@ one seek time would land them frames apart.
 
 ```
 [i:v]settb=1/first_rate,setpts=N,crop=crop_w:file_h:crop_x:0,scale=slice_w:height,
-     setsar=1,format=yuv420p,drawtext(label)[s_i]        # one per slice
-[s_0]...[s_n]hstack=inputs=n:shortest=1,tpad=stop_mode=clone:stop=1,fps=film_rate,
+     setsar=1,format=yuv420p,drawtext(label)[s<number>_i]  # one per slice
+[s<number>_0]...[s<number>_n]hstack=inputs=n:shortest=1,tpad=stop_mode=clone:stop=1,fps=film_rate,
      drawbox(borders),crop=width:height:x=PAN:y=0,{shape}{tail}[v<number>]
 ```
 
@@ -167,8 +167,9 @@ one seek time would land them frames apart.
   white `max(2, even(0.003125 * width))` wide and each dark edge
   `max(1, round(0.00078 * width))`, from `split_sample.py`'s 8 and 2 at 2560.
   One look serves a trailer. A border is drawn in the row, so it moves with its
-  slices. Its `enable` turns it off while the row rests with that border on the
-  frame's edge, where half of it would show as a stripe.
+  slices. Its `enable` turns it off while the row rests with it just before the first
+  slice shown or just after the last, where part of it would show as a stripe. The test
+  is by slice, not position: a row can overrun the frame by a few pixels (§ 4.3).
 - **A slice's sound is not read.** `keeps_sound` already answers no for anything
   but a clip, so the scene is silent under its `sound` lines, the film's music and
   whatever it crossfades with.
@@ -257,7 +258,9 @@ rule its fixture isolates.
   are read by `px find`. Frame 19: columns x=107 and x=108 are within 60 of white, and
   x=106 and x=109 are `dark:60`. Frame 45: `px` at x=0 and x=319 are C3 and C5, not white,
   which a border on the edge fails. Frame 30 (moving): the border between C2 and C3 is
-  white in those same columns.
+  white in those same columns. `split show 2` of `C1` to `C3`, whose border after the last
+  slice shown is centred on x=320: at frame 5, `px find` over columns x=318 and x=319 finds
+  nothing white or dark.
   *Breaks when:* the border is left out, or its `enable` is, or is drawn after the
   `crop` and so does not move.
 
@@ -283,8 +286,9 @@ rule its fixture isolates.
 
 - **INV-8** — A split scene ends where the plan says, in a film with cuts and a
   crossfade, under a memory limit.
-  *Test:* ci.sh finishing: `clip A.mp4`, a three-slice `split`, then `clip B.mp4
-  crossfade 0.5`, under `ulimit -v` as DEMO-0183's INV-6: made, its frame count the
+  *Test:* ci.sh finishing: `clip A.mp4`, a three-slice `split`, a second `split` with
+  `crossfade 0.5`, so both are in one ffmpeg, then `clip B.mp4 crossfade 0.5`, under
+  `ulimit -v` as DEMO-0183's INV-6: made, its frame count the
   plan's. Partial, as that clause is: the `trim`, the output's `-t` and `hstack` each
   bound the others, so removing one alone may not fail it.
   *Breaks when:* a stream never ends and something waits on it.
@@ -332,8 +336,9 @@ rule its fixture isolates.
 - **A source whose timestamps are uneven, with `from`.** `setpts` pairs by number from
   where each file's read began, and `-ss` finds that place by time. So `from` above
   zero on uneven sources can start them on different frames, and nothing says so. Even
-  sources are unaffected, and every recording in the request is even (`avg_frame_rate`
-  70/1 by `ffprobe`, 2026-11-02). § Out of scope carries reading by number.
+  sources are unaffected, and every recording in the request is even (each step between
+  `ffprobe`'s `packet=pts_time` is 1/70, 2026-11-02). § Out of scope carries reading by
+  number.
 - **A file whose index lies about its frame count.** One that ends early ends the
   `hstack`, and `run_film_ffmpeg`'s frame count fails the run with ffmpeg's last lines.
 - **Very large sources.** Memory grows with slices and with the sources' sizes.
