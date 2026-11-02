@@ -199,10 +199,12 @@ through `tr`.
 
 ## 5. Invariants
 
-Fixtures are `ci.sh`'s finishing ones (`px`, `px bbox`, `expect_refused`). Flat
+Fixtures are `ci.sh`'s finishing ones (`px`, `px find`, `refused_naming_line`). Flat
 sources `C1` to `C5` are five flat colours, 320x240 at 10 a second for 10 s, made
 in the step. None of these clauses can run until the code exists. Each names the
-rule its fixture isolates.
+rule its fixture isolates. "Refused before any encode" means `refused_naming_line` and
+no `libx264` in the shim's call log, as the bad-push-and-zoom step does: `expect_refused`
+alone passes a refusal that came from ffmpeg.
 
 - **INV-1** — Frame N of the film holds frame N of every slice, whatever the files'
   timestamps say.
@@ -223,8 +225,8 @@ rule its fixture isolates.
   own `fps`, or every slice takes the first slice's seek time.
 
 - **INV-2** — A slice differing in size, rate or frame count is refused before
-  ffmpeg starts, and the message names the line and both files.
-  *Test:* ci.sh finishing: each by `expect_refused`, with nothing at `-o`, beside a
+  any encode, and the message names the line and both files.
+  *Test:* ci.sh finishing: each, beside a
   slice of 100 frames at 320x240 at 10 a second: 100 frames at 640x480; 100 frames at
   20 a second; 99 frames at 10 a second. The last again with both as `.mkv`, whose
   index has no frame count, so the length check refuses it. Each fixture differs in
@@ -269,7 +271,7 @@ rule its fixture isolates.
   *Test:* ci.sh finishing: as INV-4, with `label "X"` on slice 3 only. Frame 19: `px`
   at its slice's middle (270, at the label's height) differs from C3, and at (54, the
   same height) is C1. Frame 45: the label's mark is at x=54 and x=270 is C5. A label
-  of 20 `X`s is refused by `expect_refused`, naming its line, with nothing at `-o`.
+  of 20 `X`s is refused before any encode.
   The same label with `size 2` is made, so the refusal comes from the width.
   *Breaks when:* the label is drawn after the `crop`, or the width check is missing.
 
@@ -312,14 +314,14 @@ rule its fixture isolates.
   *Breaks when:* a slice is read without `probe_input` and `media_input`, or
   `finishing_output` is not told about it.
 
-- **INV-11** — A wrong word stops the run before ffmpeg starts, and the message names
+- **INV-11** — A wrong word stops the run before any encode, and the message names
   the line.
-  *Test:* ci.sh finishing: each by `expect_refused` naming its line: one slice; nine
+  *Test:* ci.sh finishing: each: one slice; nine
   slices; `show 0`; `show` above the slices; `centre 101`; `slice` and `slide` with no
   `split` above; `slide` with no `at`; a slide past the last set; a slide to the slice
   already first; two overlapping slides; slides out of order; a slide outside the
   scene; `window 50` and `speed 2` on the `split` line; a `zoom` line under it.
-  *Breaks when:* any of them is accepted, or reaches ffmpeg.
+  *Breaks when:* any of them is accepted, or reaches an encode.
 
 - **INV-12** — A script with no `split` makes the film it made before.
   *Test:* ci.sh finishing: every existing finishing step passes unchanged.
