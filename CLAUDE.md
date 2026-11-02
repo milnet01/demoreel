@@ -141,8 +141,8 @@ Any change that breaks one of these is wrong, even if it makes the tool simpler:
 ## Scope ceiling
 
 The ceiling is what the tool *does*, not how long it is. Permanently out of
-scope: webcam, cursor highlighting, a GUI, a daemon, a config file
-format, plugins, per-app profiles, and recording the real screen. Anything
+scope: webcam, highlighting the cursor (a ring a script places is on the
+list), a GUI, a daemon, a config file format, plugins, per-app profiles, and recording the real screen. Anything
 needing more than "record this app doing these few things, and make that
 recording fit to publish" wants OBS and a video editor instead.
 
@@ -150,7 +150,7 @@ recording fit to publish" wants OBS and a video editor instead.
 it.** `README.md` § What it will never do holds the list of what editing may
 do, and nothing off it is built. Still out: a clip laid over another picture,
 except one clip's window over its background; two clips on screen together
-outside a transition; pan and rotate beyond the list's zoom; animating
+outside a transition or a split scene's slices; pan and rotate beyond the list's zoom; animating
 a setting over time in general; and anything removed from a video
 automatically. An `edit` script is a
 list of scenes for one film. It is not a config file: it holds no settings

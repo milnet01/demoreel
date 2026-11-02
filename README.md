@@ -1166,7 +1166,8 @@ and a video editor.
 
 Permanently out of scope:
 
-- No webcam or cursor highlighting.
+- No webcam. Nothing follows or highlights the cursor; the one mark allowed is
+  a ring at a moment and place a script names.
 
 - No editing beyond finishing a recording and making a short trailer from it.
   demoreel may do these things, and no others:
@@ -1181,18 +1182,24 @@ Permanently out of scope:
     view drifting towards that point as it closes in;
   - show a clip in a smaller window, with rounded corners and a soft shadow;
   - give a clip's window or a card a plain or slowly moving coloured
-    background;
+    background, or one of the drawn backgrounds `edit` names;
+  - play several videos of one length side by side as slices of one frame,
+    frame for frame, with borders and a label on each, and slide smoothly from
+    one set of slices to another;
+  - draw a ring that grows and fades at a moment and place the script names,
+    to show a click;
   - show a picture, still or animated, on a card, and let it grow slightly as
     it fades in;
-  - put text on or between scenes, in one line or several, styled as the
-    script says, standing still or sliding and fading in;
+  - put text on or between scenes, in one line or several, styled and placed
+    as the script says, standing still or sliding and fading in;
   - keep a clip's sound, lay one music track under a film at levels the
     script sets, and play a sound file at a moment the script names.
 
   A script is a list of scenes in order, plus lines such as `music` that
   are not scenes, and nothing more. No clip is laid over
   another picture, except one clip's window over its background. Two clips
-  are on screen together only while one scene changes into the next. It does not
+  are on screen together only while one scene changes into the next, or as the
+  slices above. It does not
   pan or rotate, beyond the zoom above, and nothing on screen moves
   or changes over time except in the ways listed above. Nothing is ever removed from a video automatically.
   What is built so far is in [Finishing a recording](#finishing-a-recording).
