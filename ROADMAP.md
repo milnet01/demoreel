@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=349 -->
+<!-- ants-roadmap-id-high-water: DEMO=350 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -796,6 +796,8 @@ simplest case, and a gate proves it still records.
   earlier attempts stopped: 7c4f75b failed on the Ubuntu leg for real
   faults in that code (a lost frame on ffmpeg 6.1.1, a test's memory
   limit), not a flake, and d54ff72 stopped on ruff.
+  2026-11-03: the full push gate for c3141be (DEMO-0286) passed with its
+  Ubuntu leg, no flaky failure.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
@@ -827,7 +829,7 @@ simplest case, and a gate proves it still records.
   Kind: feature.
   Source: peer-request-2026-10-30 APHW-0030.
 
-- 📋 [DEMO-0286] **Decide the website session's other trailer asks: click rings, themed backgrounds, text at any position, full-frame zoom.**
+- ✅ [DEMO-0286] **Decide the website session's other trailer asks: click rings, themed backgrounds, text at any position, full-frame zoom.**
   From the same request. tools/trailer.py in the website session does these
   today, and taking them would retire it. Crop is DEMO-0151 already (1.6.0).
   README rules out cursor highlighting permanently and only the zoom,
@@ -841,6 +843,10 @@ simplest case, and a gate proves it still records.
   review loops: docs/specs/DEMO-0286-trailer-effects.md. A ring still
   showing when a held clip's own frames end is refused (the review's
   call, kept in the main session 2026-11-02). Nothing built yet.
+  Shipped 2026-11-03 in c3141be. Full push gate with its Ubuntu copy
+  passed, nothing skipped; ./ci.sh --finishing also passed on ffmpeg
+  6.1.1 in the CI image before the push. Each of spec § 7's mutations
+  was run and turned its step red.
   **Layman:** Choose which of the other effects in the website's own trailer script demoreel should take over.
   Kind: feature.
   Source: peer-request-2026-10-30 APHW-0030.
@@ -955,6 +961,17 @@ simplest case, and a gate proves it still records.
   **Layman:** Check a film in seconds before the real render.
   Kind: feature.
   Source: research-2026-11-03.
+
+- 📋 [DEMO-0350] **The translators' note on the no-window refusal still says push or zoom.**
+  DEMO-0286 let zoom work with no window, so only push reaches
+  \"{word} acts on a clip's window\" in check_scene. Its translators'
+  comment still says \"{word} is push or zoom\". Fixing it changes the
+  template and every catalog's comment: run ./ci.sh --pot after.
+  Also found then: script_number's \"takes a number of seconds\" is
+  the message for a negative text x/y, as it already was for size.
+  **Layman:** A note for translators describes a message wrongly since zoom stopped needing a window.
+  Kind: doc-fix.
+  Source: review-fix-2026-11-03.
 
 ## Standing chores
 
