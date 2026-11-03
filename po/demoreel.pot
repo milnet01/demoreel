@@ -601,6 +601,18 @@ msgstr ""
 msgid "{where}: a clip takes one zoom line, and {first} is already one."
 msgstr ""
 
+#. translators: ring is an edit-script word and stays in English.
+msgid "{where}: a ring line belongs to the clip above it, and the line above is not part of a clip."
+msgstr ""
+
+#. translators: ring and at are edit-script words and stay in English.
+msgid "{where}: ring takes the point clicked, in the pixels of the clip's own file, then its moment: ring 640 400 at 5.4"
+msgstr ""
+
+#. translators: ring and at are edit-script words and stay in English.
+msgid "{where}: ring needs `at`, the moment of the click in the clip's own time: ring 640 400 at 5.4"
+msgstr ""
+
 msgid "{where}: clip needs a video file after it."
 msgstr ""
 
@@ -616,7 +628,7 @@ msgid "{where}: card needs its length in seconds: card 3"
 msgstr ""
 
 #. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, sound, music or level, not {word}."
+msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, ring, sound, music or level, not {word}."
 msgstr ""
 
 msgid "the script has no scenes in it. A scene is a line starting with clip, card or split."
@@ -677,6 +689,17 @@ msgstr ""
 msgid "{where}: the zoom is asked to run from {start} to {end}, which is not inside its clip ({scene_start} to {scene_end})."
 msgstr ""
 
+#. translators: ring is an edit-script word and stays in English.
+msgid "{where}: the ring's point {x} {y} is outside {path}, which is {size}."
+msgstr ""
+
+msgid "{where}: the ring at {at} is not inside its clip ({start} to {end})."
+msgstr ""
+
+#. translators: hold is an edit-script word and stays in English.
+msgid "{where}: the ring at {at} lasts {seconds} seconds, past the clip's own frames, which end at {end}; the hold would freeze it. Move it earlier."
+msgstr ""
+
 msgid "{where}: a text is one line of words, and this one is empty."
 msgstr ""
 
@@ -691,6 +714,18 @@ msgstr ""
 
 #. translators: {word} is colour, outline or shadow: an edit-script word, which stays in English.
 msgid "{where}: a text's {word} is a colour written #RRGGBB, like #FFD040, not {value}."
+msgstr ""
+
+#. translators: x and y are edit-script words and stay in English.
+msgid "{where}: a text's x and y are given together, and this one has only {word}."
+msgstr ""
+
+#. translators: {word} is x or y, an edit-script word that stays in English.
+msgid "{where}: a text's {word} is a percentage of the frame, from 0 to 100, not {value}."
+msgstr ""
+
+#. translators: {word} is at or band; x, y, at and band are edit-script words and stay in English.
+msgid "{where}: a text placed with x and y takes no {word}: it sits at its point, and has no band."
 msgstr ""
 
 msgid "{where}: a text's band is on or off, not {value}."
@@ -714,6 +749,9 @@ msgstr ""
 msgid ""
 "{where}: the text {words} is {wide} pixels wide at size {size}, and the frame has room for {room}.\n"
 "  Shorten it, or give it a smaller size: about {fits} would fit."
+msgstr ""
+
+msgid "{where}: the text {words} at x {x} y {y} reaches past the frame's edge. Move it in, or give it a smaller size."
 msgstr ""
 
 #. translators: band is an edit-script word and stays in English.
@@ -808,7 +846,8 @@ msgstr ""
 msgid "{where}: `fade-at {moment}` needs {seconds} seconds of the scene on each side, and the scene runs from {start} to {end}."
 msgstr ""
 
-msgid "{where}: a background is a colour written #RRGGBB, like {example}, or two to {most} of them joined by commas for a moving gradient, not {value}."
+#. translators: {names} are the drawn backgrounds' names, which stay in English.
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, two to {most} of them joined by commas for a moving gradient, or one of {names}, not {value}."
 msgstr ""
 
 msgid "{where}: its fades come to {fades} seconds, and the scene is only {seconds} long."
@@ -1324,7 +1363,7 @@ msgid "the text's height, as a percentage of the frame's (default: {size})"
 msgstr ""
 
 #. argparse formats this text with %
-msgid "the background colour (default: {colour})"
+msgid "the background colour, or a drawn background: {names} (default: {colour})"
 msgstr ""
 
 #. argparse formats this text with %

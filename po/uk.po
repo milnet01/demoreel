@@ -719,9 +719,6 @@ msgstr "{where}: window — частка місця у відсотках, ві�
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: тривалість картки має бути більшою за нуль."
 
-msgid "{where}: a background is a colour written #RRGGBB, like {example}, or two to {most} of them joined by commas for a moving gradient, not {value}."
-msgstr "{where}: тло — це колір у вигляді #RRGGBB, наприклад {example}, або від двох до {most} кольорів через кому для рухомого градієнта, а не {value}."
-
 msgid "{where}: {path} has no length ffmpeg can tell."
 msgstr "{where}: ffmpeg не може визначити тривалість {path}."
 
@@ -1199,10 +1196,6 @@ msgid "the text's height, as a percentage of the frame's (default: {size})"
 msgstr "висота тексту у відсотках від висоти кадру (типово: {size})"
 
 #. argparse formats this text with %
-msgid "the background colour (default: {colour})"
-msgstr "колір тла (типово: {colour})"
-
-#. argparse formats this text with %
 msgid "take the size and frame rate from this video"
 msgstr "узяти розмір і частоту кадрів із цього відео"
 
@@ -1512,9 +1505,55 @@ msgstr ""
 msgid "scene {number}: a split of {count} videos, {start} to {end}"
 msgstr "сцена {number}: split, кількість відео: {count}, від {start} до {end}"
 
-#. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, sound, music or level, not {word}."
-msgstr "{where}: рядок починається з clip, card, split, slice, slide, text, zoom, sound, music або level, а не з {word}."
-
 msgid "the script has no scenes in it. A scene is a line starting with clip, card or split."
 msgstr "у сценарії немає сцен. Сцена — це рядок, що починається з clip, card або split."
+
+#. translators: ring is an edit-script word and stays in English.
+msgid "{where}: a ring line belongs to the clip above it, and the line above is not part of a clip."
+msgstr "{where}: рядок ring належить до кліпу над ним, а рядок над ним не належить до кліпу."
+
+#. translators: ring and at are edit-script words and stay in English.
+msgid "{where}: ring takes the point clicked, in the pixels of the clip's own file, then its moment: ring 640 400 at 5.4"
+msgstr "{where}: ring приймає точку клацання в пікселях власного файлу кліпу, а потім її момент: ring 640 400 at 5.4"
+
+#. translators: ring and at are edit-script words and stay in English.
+msgid "{where}: ring needs `at`, the moment of the click in the clip's own time: ring 640 400 at 5.4"
+msgstr "{where}: ring потрібен `at` — момент клацання у власному часі кліпу: ring 640 400 at 5.4"
+
+#. translators: {word} is the first word of the line, in quotes.
+msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, ring, sound, music or level, not {word}."
+msgstr "{where}: рядок починається з clip, card, split, slice, slide, text, zoom, ring, sound, music або level, а не з {word}."
+
+#. translators: ring is an edit-script word and stays in English.
+msgid "{where}: the ring's point {x} {y} is outside {path}, which is {size}."
+msgstr "{where}: точка {x} {y} кільця лежить поза межами {path}, розмір якого {size}."
+
+msgid "{where}: the ring at {at} is not inside its clip ({start} to {end})."
+msgstr "{where}: кільце в {at} не потрапляє у свій кліп (від {start} до {end})."
+
+#. translators: hold is an edit-script word and stays in English.
+msgid "{where}: the ring at {at} lasts {seconds} seconds, past the clip's own frames, which end at {end}; the hold would freeze it. Move it earlier."
+msgstr "{where}: кільце в {at} триває {seconds} с, довше за власні кадри кліпу, що закінчуються в {end}; hold заморозив би його. Поставте його раніше."
+
+#. translators: x and y are edit-script words and stay in English.
+msgid "{where}: a text's x and y are given together, and this one has only {word}."
+msgstr "{where}: x та y тексту задаються разом, а в цього є лише {word}."
+
+#. translators: {word} is x or y, an edit-script word that stays in English.
+msgid "{where}: a text's {word} is a percentage of the frame, from 0 to 100, not {value}."
+msgstr "{where}: {word} у тексту — частка кадру у відсотках, від 0 до 100, а не {value}."
+
+#. translators: {word} is at or band; x, y, at and band are edit-script words and stay in English.
+msgid "{where}: a text placed with x and y takes no {word}: it sits at its point, and has no band."
+msgstr "{where}: текст, розміщений через x та y, не приймає {word}: він стоїть у своїй точці й не має смуги."
+
+msgid "{where}: the text {words} at x {x} y {y} reaches past the frame's edge. Move it in, or give it a smaller size."
+msgstr "{where}: текст {words} у x {x} y {y} виходить за край кадру. Посуньте його всередину або задайте менший size."
+
+#. translators: {names} are the drawn backgrounds' names, which stay in English.
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, two to {most} of them joined by commas for a moving gradient, or one of {names}, not {value}."
+msgstr "{where}: тло — це колір у вигляді #RRGGBB, наприклад {example}, від двох до {most} кольорів через кому для рухомого градієнта або одне з {names}, а не {value}."
+
+#. argparse formats this text with %
+msgid "the background colour, or a drawn background: {names} (default: {colour})"
+msgstr "колір тла або намальоване тло: {names} (типово: {colour})"

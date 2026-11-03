@@ -401,7 +401,8 @@ Text too wide for the frame is refused.
 .TP
 .BI \-\-background " #RRGGBB"
 .BR card :
-the background colour (default #101418).
+the background colour (default #101418), or a drawn background's name, as in a
+script.
 .TP
 .BI \-\-like " video"
 .BR card :
@@ -534,6 +535,15 @@ and lets a clip of another shape from the film's in;
 grows that window slowly as the clip plays.
 A background of two to eight colours joined by commas is a slowly moving,
 darkened gradient through them, on a clip's window or a card.
+A background may instead be one of the drawn ones:
+.BR record ,
+.BR log ,
+.BR grid ,
+.B paper
+or
+.BR felt .
+Text with no band is white on each but
+.BR paper .
 A clip's times stay in its own file's time whatever its speed, and
 .B hold
 keeps its last frame on screen.
@@ -597,9 +607,9 @@ with a transition as on a clip, and
 which fades the picture in while it grows to its full size.
 .TP
 .BI "zoom " factor
-Under a clip with a
-.BR window :
-zoom the picture inside it to that many times its size, easing in and out,
+Under a clip: zoom the picture, inside its
+.B window
+if it has one, to that many times its size, easing in and out,
 and stay there.
 Then any of
 .BI x " percent"
@@ -609,6 +619,13 @@ and
 .BI from " s"
 and
 .BI to " s"\fR.\fP
+.TP
+.BI "ring " "x y"
+Under a clip: draw a ring that grows and fades over half a second at that
+point, in the pixels of the clip's own file.
+Needs
+.BI at " s"\fR,\fP
+in the clip's own time, inside its own frames.
 .TP
 .BI "text " "\(dqwords\(dq"
 Put one line of text on the scene above.
@@ -627,7 +644,12 @@ Then any of
 which rises the text into place as it fades in,
 .BR band " " on | off
 and
-.BR at " " top | middle | bottom .
+.BR at " " top | middle | bottom ,
+or
+.BI x " percent"
+and
+.BI y " percent"
+together, which put the text's middle at that point, alone and with no band.
 .TP
 .BI "sound " file
 Play a sound file once on the scene above, mixed with the film's other sound.

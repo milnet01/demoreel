@@ -5458,7 +5458,6 @@ CASES
 1|clip A.mp4 push 5
 1|clip A.mp4 window 50 push 25
 1|clip A.mp4 window 90 push 20
-1|clip A.mp4\n  zoom 2
 2|clip A.mp4 window 50\n  zoom 5
 2|clip A.mp4 window 50\n  zoom 1
 2|clip A.mp4 window 50\n  zoom
@@ -6042,6 +6041,234 @@ SPLIT
 CASES
     echo "$n bad split lines were each refused, naming the line, before any encode"
     }
+    # DEMO-0286. Each script on stdin, `line|script`, is refused naming its line,
+    # before any encode.
+    edit_refuses() {  # what
+        local n=0 line script
+        while IFS='|' read -r line script; do
+            n=$((n + 1))
+            printf '%b\n' "$script" > "$ft/rf$n.txt"
+            : > "$ft/log/ffmpeg.calls"
+            FIN_PATH="$ft/shim:$PATH" run edit "rf$n.txt" -o "$ft/out/rf$n.mp4"
+            refused_naming_line "$1: $script" "rf$n.mp4" "$line"
+            assert_eq "$1 ($script): no encode started" 0 \
+                "$(grep -cw 'libx264' "$ft/log/ffmpeg.calls" || true)"
+        done
+        echo "$n were each refused, naming the line, before any encode: $1"
+    }
+    # F.mp4 is flat #808080, 640x480 at 10 a second for 3 s, so only a ring can move
+    # a probe on it.
+    flat_grey() { ff -f lavfi -i 'color=0x808080:s=640x480:r=10:d=3' "${x264[@]}" "$ft/F.mp4"; }
+    blue_at() { px px "$@" | awk '{ print $3 }'; }  # file frame fx fy
+    # A ring's line at frame 12 of a ring at 1 s: blue at least 15 below the grey
+    # the same probe reads at frame 9, before the moment.
+    ring_seen() {  # what file fx fy
+        local grey; grey=$(blue_at "$2" 9 "$3" "$4")
+        assert_cmp "$1: the ring's line, 15 below the grey ($grey) in blue" \
+            "$(blue_at "$2" 12 "$3" "$4")" "<=" "$grey - 15"
+    }
+    fin_s97() {
+    # DEMO-0286 INV-1. Z4.mp4 is four flat quarters: red, green over blue, white.
+    local z=$ft/out/z.mp4 f a b w near far
+    ff -f lavfi -i 'color=0xFF0000:s=320x240:r=10:d=3,drawbox=x=160:y=0:w=160:h=120:color=0x00FF00:t=fill,drawbox=x=0:y=120:w=160:h=120:color=0x0000FF:t=fill,drawbox=x=160:y=120:w=160:h=120:color=0xFFFFFF:t=fill' \
+        "${x264[@]}" "$ft/Z4.mp4"
+    printf 'clip Z4.mp4\n  zoom 2 x 0 y 0 from 0 to 1\n  text "X" colour #FF00FF\n' > "$ft/s.txt"
+    run edit s.txt -o "$z"; expect_ok "a zoom on a clip with no window"
+    assert_colour "before the zoom: the top left quarter" "$z" 0 .25 .25 255 0 0 40
+    assert_colour "before the zoom: the top right quarter" "$z" 0 .75 .25 0 255 0 40
+    assert_colour "before the zoom: the bottom left quarter" "$z" 0 .25 .75 0 0 255 40
+    assert_colour "before the zoom: the bottom right quarter" "$z" 0 .75 .75 255 255 255 40
+    for f in ".25 .25" ".75 .25" ".25 .75" ".75 .75"; do
+        # shellcheck disable=SC2086  # two fractions
+        assert_colour "zoomed in on the top left quarter, at $f" "$z" 15 $f 255 0 0 40
+    done
+    near=$(px find "$z" 0 '#FF00FF:60')
+    far=$(px find "$z" 15 '#FF00FF:60')
+    for w in 2 3 4 5; do
+        a=$(printf '%s\n' "$near" | awk -v w="$w" '{ print $w }')
+        b=$(printf '%s\n' "$far" | awk -v w="$w" '{ print $w }')
+        assert_near "the text is outside the zoom (word $w of its box)" "$a" "$b" 0.01
+    done
+    printf '1|clip Z4.mp4 push 4\n' | edit_refuses "a push with no window"
+    echo "a clip with no window zoomed in on its point, under its text"
+    }
+    fin_s98() {
+    # DEMO-0286 INV-2 and INV-3. Centred, as before, the box's middle is 0.5.
+    local box p q w a b
+    printf 'card 2\n  text "XXXX" x 25 y 75 size 10\n' | ed_ok pl.mp4
+    box=$(px bbox "$ft/out/pl.mp4" 5 '#101418')
+    assert_near "a text at x 25: its box's middle across ($box)" 0.25 \
+        "$(printf '%s\n' "$box" | awk '{ print ($1 + $3) / 2 }')" 0.02
+    assert_near "a text at y 75: its box's middle down ($box)" 0.75 \
+        "$(printf '%s\n' "$box" | awk '{ print ($2 + $4) / 2 }')" 0.02
+    ff -f lavfi -i 'color=0x00C0C0:s=160x120' -frames:v 1 "$ft/P.png"
+    printf 'card 2 P.png\n  text "A" at middle colour #FF00FF\n' | ed_ok pa.mp4
+    printf 'card 2 P.png\n  text "A" at middle colour #FF00FF\n  text "B" x 50 y 5\n' | ed_ok pb.mp4
+    for spec in '#00C0C0:40' '#FF00FF:60'; do
+        p=$(px find "$ft/out/pa.mp4" 5 "$spec")
+        q=$(px find "$ft/out/pb.mp4" 5 "$spec")
+        for w in 2 3 4 5; do
+            a=$(printf '%s\n' "$p" | awk -v w="$w" '{ print $w }')
+            b=$(printf '%s\n' "$q" | awk -v w="$w" '{ print $w }')
+            assert_near "a placed text moves nothing ($spec, word $w of its box)" "$a" "$b" 0.01
+        done
+    done
+    echo "a text sat with its middle at its point, and moved no other line or picture"
+    }
+    fin_s99() {
+    # DEMO-0286 INV-4. The last fits the frame's width, and not at x 1.
+    edit_refuses "a bad place for a text" <<'CASES'
+2|card 2\n  text "A" x 50
+2|card 2\n  text "A" y 50
+2|card 2\n  text "A" x 101 y 50
+2|card 2\n  text "A" x 50 y 50 at top
+2|card 2\n  text "A" x 50 y 50 band on
+2|card 2\n  text "WWWWWWWWWW" x 1 y 50 size 6
+CASES
+    # Off the frame, x 101 would not fit either: the words show its own check refused it.
+    printf 'card 2\n  text "A" x 101 y 50\n' > "$ft/s.txt"
+    run edit s.txt -o "$ft/out/x.mp4"
+    expect_refused "a text at x 101" "a percentage of the frame"
+    }
+    fin_s100() {
+    # DEMO-0286 INV-5. At frame 12, p is 0.4 and 0.64 eased: the diameter is
+    # (0.03 + 0.155 * 0.64) * 480, 62 px, so x=351 is on the line.
+    local r=$ft/out/ring.mp4
+    flat_grey
+    printf 'clip F.mp4\n  ring 320 240 at 1\n' > "$ft/s.txt"
+    run edit s.txt -o "$r"; expect_ok "a clip with a ring"
+    ring_seen "a ring at its moment and point" "$r" 0.5484375 0.5
+    assert_colour "before its moment, no ring" "$r" 9 0.5484375 0.5 128 128 128 10
+    assert_colour "after its half second, no ring" "$r" 16 0.5484375 0.5 128 128 128 10
+    assert_eq "a ring keeps every frame of its clip" 30 "$(v_frames "$r")"
+    echo "a ring showed at its point and moment, and went"
+    }
+    fin_s101() {
+    # DEMO-0286 INV-6. Drawn after the scaling, each ring would miss its probe.
+    local r=$ft/out/ring.mp4 box fx fy
+    flat_grey
+    # At twice the clip's size: at its own, the window's line is a pixel and a
+    # half wide, and px's 5-pixel probe averages it away.
+    printf 'clip F.mp4 window 50\n  ring 320 240 at 1\n' > "$ft/s.txt"
+    run edit s.txt -o "$r" -s 1280x960; expect_ok "a ring in a window"
+    box=$(px bbox "$r" 12 '#101418')
+    fx=$(printf '%s\n' "$box" | awk '{ printf "%.6f", $1 + 351 / 640 * ($3 - $1) }')
+    fy=$(printf '%s\n' "$box" | awk '{ printf "%.6f", ($2 + $4) / 2 }')
+    ring_seen "a ring in a window, scaled with it" "$r" "$fx" "$fy"
+    # zoom 2 on the middle from 0 to 0.5: at frame 12 the view is the middle half,
+    # so the ring's 31 px radius is 62 on screen.
+    printf 'clip F.mp4\n  zoom 2 from 0 to 0.5\n  ring 320 240 at 1\n' > "$ft/s.txt"
+    run edit s.txt -o "$r"; expect_ok "a ring under a zoom"
+    ring_seen "a ring under a zoom, zoomed with it" "$r" 0.596875 0.5
+    printf 'clip F.mp4 speed 2\n  ring 320 240 at 2\n' > "$ft/s.txt"
+    run edit s.txt -o "$r"; expect_ok "a ring on a clip at speed 2"
+    ring_seen "a ring at 2 in the file's time is at 1 in the film" "$r" 0.5484375 0.5
+    echo "a ring stayed on its point of the picture through a window, a zoom and a speed"
+    }
+    fin_s102() {
+    # DEMO-0286 INV-7.
+    flat_grey
+    edit_refuses "a bad ring" <<'CASES'
+2|clip F.mp4\n  ring 100 100
+2|clip F.mp4\n  ring 640
+2|clip F.mp4\n  ring big 400 at 1
+2|clip F.mp4\n  ring 640 100 at 1
+2|clip F.mp4\n  ring 100 480 at 1
+2|clip F.mp4\n  ring 100 100 at 5
+2|clip F.mp4 from 1\n  ring 100 100 at 0.5
+2|clip F.mp4 hold 1\n  ring 100 100 at 3.5
+2|clip F.mp4 hold 1\n  ring 100 100 at 2.8
+2|card 2\n  ring 100 100 at 1
+4|split\n  slice F.mp4\n  slice F.mp4\n  ring 100 100 at 1
+CASES
+    grep -qF 'ring line belongs to the clip' "$fe" \
+        || fail "a ring under a split: the message should name the ring: $(cat "$fe")"
+    }
+    # Whether frame IDX of FILE is flat by demoreel's own test, frame_is_flat.
+    flat_or_not() {  # file idx
+        python3 - "$DR" "$1" "$2" <<'FLATPY'
+import importlib.machinery, importlib.util, subprocess, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", sys.argv[1])
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+raw = subprocess.run(["ffmpeg", "-v", "error", "-i", sys.argv[2], "-vf",
+                      f"select=eq(n\\,{sys.argv[3]})", "-frames:v", "1", "-f", "rawvideo",
+                      "-pix_fmt", "gray", "-"], capture_output=True, check=True,
+                     stdin=subprocess.DEVNULL).stdout
+if not raw:
+    sys.exit("no frame to test")
+print("flat" if d.frame_is_flat(raw) else "not flat")
+FLATPY
+    }
+    fin_s103() {
+    # DEMO-0286 INV-8 and INV-10. Frames 15 and 60 are 1.5 s apart.
+    local name b moved c
+    for name in record log grid paper felt; do
+        b=$ft/out/bg-$name.mp4
+        printf 'card 3 background %s\n' "$name" > "$ft/s.txt"
+        run edit s.txt -o "$b" -s 640x400 -r 30; expect_ok "a card on $name"
+        assert_eq "$name is not flat" "not flat" "$(flat_or_not "$b" 15)"
+        moved=$(px diff "$b" 15 "$b" 60)
+        case $name in
+            paper | felt) assert_cmp "$name stands still (mean difference)" "$moved" "<" 0.05 ;;
+            *) assert_cmp "$name moves (mean difference)" "$moved" ">" 0.2 ;;
+        esac
+        printf 'clip A.mp4 window 60 background %s\n' "$name" > "$ft/s.txt"
+        run edit s.txt -o "$ft/out/win-$name.mp4"; expect_ok "a window on $name"
+        assert_eq "a window on $name keeps its clip's frames" 60 "$(v_frames "$ft/out/win-$name.mp4")"
+    done
+    assert_cmp "paper is light at the top right (luma)" \
+        "$(px px "$ft/out/bg-paper.mp4" 15 .95 .05 | awk '{ print 0.299 * $1 + 0.587 * $2 + 0.114 * $3 }')" ">" 200
+    c=$(px px "$ft/out/bg-felt.mp4" 15 .5 .5)
+    assert_cmp "felt is green in the middle ($c)" \
+        "$(printf '%s\n' "$c" | awk '{ print ($2 - $1 >= 30) * ($2 - $3 >= 30) }')" "==" 1
+    card cf.mp4 -d 2 --background felt
+    c=$(px px "$ft/out/cf.mp4" 5 .5 .5)
+    assert_cmp "card --background felt is green in the middle ($c)" \
+        "$(printf '%s\n' "$c" | awk '{ print ($2 - $1 >= 30) * ($2 - $3 >= 30) }')" "==" 1
+    printf 'card 2 background paper\n  text "HH" size 30\n' | ed_ok tp.mp4
+    assert_cmp "a text on paper is near-black (dark pixels in the middle)" \
+        "$(n_of "$ft/out/tp.mp4" 5 dark:80 .3 .3 .7 .7)" ">" 200
+    printf 'card 2 background felt\n  text "HH" size 30\n' | ed_ok tf.mp4
+    assert_cmp "a text on felt is white (light pixels in the middle)" \
+        "$(n_of "$ft/out/tf.mp4" 5 light:200 .3 .3 .7 .7)" ">" 200
+    echo "each drawn background drew its own picture, moved or stood still, and set its text's colour"
+    }
+    fin_s104() {
+    # DEMO-0286 INV-9.
+    local name
+    for name in record log grid paper felt; do
+        printf 'card 2 background %s\n' "$name" | ed_ok "one-$name.mp4"
+        printf 'card 2 background %s\n' "$name" | ed_ok "two-$name.mp4"
+        assert_eq "$name makes the same film twice (framemd5)" \
+            "$(ffmpeg -nostdin -v error -i "$ft/out/one-$name.mp4" -f framemd5 - | grep -v '^#')" \
+            "$(ffmpeg -nostdin -v error -i "$ft/out/two-$name.mp4" -f framemd5 - | grep -v '^#')"
+    done
+    echo "each drawn background made the same film twice"
+    }
+    fin_s105() {
+    # DEMO-0286 INV-11, partial, as DEMO-0183's INV-6 is: every loop has its trim.
+    local secs
+    printf 'card 2 background grid\nclip A.mp4 window 80 background record crossfade 0.5\n' > "$ft/s.txt"
+    rc=0
+    ( ulimit -v 5250000; cd "$ft" && four_cores "$DR" edit s.txt -o "$ft/out/dg.mp4" -s 320x240 -r 10 ) \
+        >"$fo" 2>"$fe" || rc=$?
+    expect_ok "a film of drawn backgrounds with a crossfade, under a memory limit"
+    secs=$(sed -n 's/.*, \([0-9.]*\) seconds at 320x240.*/\1/p' "$fe")
+    assert_eq "the film's frames are the plan's" \
+        "$(awk -v s="$secs" 'BEGIN { printf "%d", s * 10 + .5 }')" "$(v_frames "$ft/out/dg.mp4")"
+    echo "drawn backgrounds ended where the plan says"
+    }
+    fin_s106() {
+    # DEMO-0286 INV-12.
+    edit_refuses "a background with no name" <<'CASES'
+1|card 2 background stripes
+1|clip A.mp4 background record
+CASES
+    printf 'card 2 background stripes\n' > "$ft/s.txt"
+    run edit s.txt -o "$ft/out/st.mp4"
+    expect_refused "a background with no name" "record, log, grid, paper, felt"
+    }
     fin_step "the checks' own comparisons refuse a measurement that came back empty or as words" fin_s0
     fin_step "trim keeps the frames from --from to --to, the last one included" fin_s1
     fin_step "every video a command writes is H.264, yuv420p, index first, with its clips' sound" fin_s2
@@ -6145,6 +6372,16 @@ CASES
     fin_step "a split takes its weight in the pieces" fin_s94
     fin_step "a slice is read as a video and only as one" fin_s95
     fin_step "edit refuses a bad split" fin_s96
+    fin_step "a clip with no window can zoom" fin_s97
+    fin_step "a text can sit at any point" fin_s98
+    fin_step "edit refuses a bad place for a text" fin_s99
+    fin_step "a ring shows where and when it is told" fin_s100
+    fin_step "a ring stays on its point of the picture" fin_s101
+    fin_step "edit refuses a bad ring" fin_s102
+    fin_step "each drawn background draws itself" fin_s103
+    fin_step "a drawn background makes the same film twice" fin_s104
+    fin_step "a drawn background ends where the plan says" fin_s105
+    fin_step "edit refuses a background it has no name for" fin_s106
     fin_run
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }

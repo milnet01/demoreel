@@ -707,9 +707,6 @@ msgstr "{where}: window は領域に占める割合 (パーセント) で、{low
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: card の長さは 0 より大きくしてください。"
 
-msgid "{where}: a background is a colour written #RRGGBB, like {example}, or two to {most} of them joined by commas for a moving gradient, not {value}."
-msgstr "{where}: 背景は {example} のように #RRGGBB 形式の色で指定します。動くグラデーションにするには、2〜{most} 色をカンマでつなぎます。{value} は使えません。"
-
 msgid "{where}: {path} has no length ffmpeg can tell."
 msgstr "{where}: {path} の長さを ffmpeg が判断できません。"
 
@@ -1187,10 +1184,6 @@ msgid "the text's height, as a percentage of the frame's (default: {size})"
 msgstr "文字の高さ。フレームの高さに対する割合 (パーセント) (既定値: {size})"
 
 #. argparse formats this text with %
-msgid "the background colour (default: {colour})"
-msgstr "背景の色 (既定値: {colour})"
-
-#. argparse formats this text with %
 msgid "take the size and frame rate from this video"
 msgstr "サイズとフレームレートをこの動画から取ります"
 
@@ -1500,9 +1493,55 @@ msgstr ""
 msgid "scene {number}: a split of {count} videos, {start} to {end}"
 msgstr "シーン {number}: 動画 {count} 本の split、{start} から {end}"
 
-#. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, sound, music or level, not {word}."
-msgstr "{where}: 行は clip、card、split、slice、slide、text、zoom、sound、music、level のどれかで始めます。{word} では始められません。"
-
 msgid "the script has no scenes in it. A scene is a line starting with clip, card or split."
 msgstr "スクリプトにシーンがありません。シーンとは clip、card、split のどれかで始まる行のことです。"
+
+#. translators: ring is an edit-script word and stays in English.
+msgid "{where}: a ring line belongs to the clip above it, and the line above is not part of a clip."
+msgstr "{where}: ring 行はその上にあるクリップに付くものですが、上の行はクリップの一部ではありません。"
+
+#. translators: ring and at are edit-script words and stay in English.
+msgid "{where}: ring takes the point clicked, in the pixels of the clip's own file, then its moment: ring 640 400 at 5.4"
+msgstr "{where}: ring にはクリックした位置をクリップ自身のファイルのピクセルで指定し、続けてその時刻を指定します: ring 640 400 at 5.4"
+
+#. translators: ring and at are edit-script words and stay in English.
+msgid "{where}: ring needs `at`, the moment of the click in the clip's own time: ring 640 400 at 5.4"
+msgstr "{where}: ring には `at` が必要です。クリップ自身の時間でのクリックの時刻です: ring 640 400 at 5.4"
+
+#. translators: {word} is the first word of the line, in quotes.
+msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, ring, sound, music or level, not {word}."
+msgstr "{where}: 行は clip、card、split、slice、slide、text、zoom、ring、sound、music、level のどれかで始めます。{word} では始められません。"
+
+#. translators: ring is an edit-script word and stays in English.
+msgid "{where}: the ring's point {x} {y} is outside {path}, which is {size}."
+msgstr "{where}: リングの位置 {x} {y} は {path} ({size}) の外にあります。"
+
+msgid "{where}: the ring at {at} is not inside its clip ({start} to {end})."
+msgstr "{where}: {at} のリングはそのクリップ ({start} 〜 {end}) の中にありません。"
+
+#. translators: hold is an edit-script word and stays in English.
+msgid "{where}: the ring at {at} lasts {seconds} seconds, past the clip's own frames, which end at {end}; the hold would freeze it. Move it earlier."
+msgstr "{where}: {at} のリングは {seconds} 秒続き、{end} で終わるクリップ自身のフレームを越えます。hold で止まってしまうので、もっと前にしてください。"
+
+#. translators: x and y are edit-script words and stay in English.
+msgid "{where}: a text's x and y are given together, and this one has only {word}."
+msgstr "{where}: テキストの x と y は一緒に指定します。このテキストには {word} しかありません。"
+
+#. translators: {word} is x or y, an edit-script word that stays in English.
+msgid "{where}: a text's {word} is a percentage of the frame, from 0 to 100, not {value}."
+msgstr "{where}: テキストの {word} は画面に対する割合 (パーセント) で、0 から 100 の間です。{value} は使えません。"
+
+#. translators: {word} is at or band; x, y, at and band are edit-script words and stay in English.
+msgid "{where}: a text placed with x and y takes no {word}: it sits at its point, and has no band."
+msgstr "{where}: x と y で置いたテキストには {word} を付けられません。その位置に置かれ、帯もありません。"
+
+msgid "{where}: the text {words} at x {x} y {y} reaches past the frame's edge. Move it in, or give it a smaller size."
+msgstr "{where}: x {x} y {y} のテキスト {words} が画面の端からはみ出します。内側に寄せるか、size を小さくしてください。"
+
+#. translators: {names} are the drawn backgrounds' names, which stay in English.
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, two to {most} of them joined by commas for a moving gradient, or one of {names}, not {value}."
+msgstr "{where}: 背景は {example} のように #RRGGBB 形式の色、動くグラデーションにするためにカンマでつないだ 2〜{most} 色、または {names} のどれかで指定します。{value} は使えません。"
+
+#. argparse formats this text with %
+msgid "the background colour, or a drawn background: {names} (default: {colour})"
+msgstr "背景の色、または描画された背景: {names} (既定値: {colour})"

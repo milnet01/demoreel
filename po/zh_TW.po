@@ -707,9 +707,6 @@ msgstr "{where}：window 是所佔區域的百分比，應介於 {low} 到 {high
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}：卡片的長度必須大於零。"
 
-msgid "{where}: a background is a colour written #RRGGBB, like {example}, or two to {most} of them joined by commas for a moving gradient, not {value}."
-msgstr "{where}：背景應是以 #RRGGBB 表示的顏色，例如 {example}，或以逗號連接的兩到 {most} 種顏色（構成移動的漸層），而不是 {value}。"
-
 msgid "{where}: {path} has no length ffmpeg can tell."
 msgstr "{where}：ffmpeg 無法判斷 {path} 的長度。"
 
@@ -1187,10 +1184,6 @@ msgid "the text's height, as a percentage of the frame's (default: {size})"
 msgstr "文字的高度，以畫面高度的百分比表示（預設：{size}）"
 
 #. argparse formats this text with %
-msgid "the background colour (default: {colour})"
-msgstr "背景顏色（預設：{colour}）"
-
-#. argparse formats this text with %
 msgid "take the size and frame rate from this video"
 msgstr "採用這部影片的大小和影格率"
 
@@ -1500,9 +1493,55 @@ msgstr ""
 msgid "scene {number}: a split of {count} videos, {start} to {end}"
 msgstr "場景 {number}：{count} 部影片的 split，{start} 到 {end}"
 
-#. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, sound, music or level, not {word}."
-msgstr "{where}：每一行要以 clip、card、split、slice、slide、text、zoom、sound、music 或 level 開頭，而不是 {word}。"
-
 msgid "the script has no scenes in it. A scene is a line starting with clip, card or split."
 msgstr "腳本中沒有任何場景。場景是以 clip、card 或 split 開頭的一行。"
+
+#. translators: ring is an edit-script word and stays in English.
+msgid "{where}: a ring line belongs to the clip above it, and the line above is not part of a clip."
+msgstr "{where}：ring 行屬於它上方的片段，但上一行不屬於任何片段。"
+
+#. translators: ring and at are edit-script words and stay in English.
+msgid "{where}: ring takes the point clicked, in the pixels of the clip's own file, then its moment: ring 640 400 at 5.4"
+msgstr "{where}：ring 先寫點擊的位置（以片段本身檔案的像素計），再寫時刻：ring 640 400 at 5.4"
+
+#. translators: ring and at are edit-script words and stay in English.
+msgid "{where}: ring needs `at`, the moment of the click in the clip's own time: ring 640 400 at 5.4"
+msgstr "{where}：ring 需要 `at`，即點擊在片段本身時間中的時刻：ring 640 400 at 5.4"
+
+#. translators: {word} is the first word of the line, in quotes.
+msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, ring, sound, music or level, not {word}."
+msgstr "{where}：每一行要以 clip、card、split、slice、slide、text、zoom、ring、sound、music 或 level 開頭，而不是 {word}。"
+
+#. translators: ring is an edit-script word and stays in English.
+msgid "{where}: the ring's point {x} {y} is outside {path}, which is {size}."
+msgstr "{where}：圓環的位置 {x} {y} 在 {path} 之外，該檔案為 {size}。"
+
+msgid "{where}: the ring at {at} is not inside its clip ({start} to {end})."
+msgstr "{where}：{at} 處的圓環不在其片段內（{start} 到 {end}）。"
+
+#. translators: hold is an edit-script word and stays in English.
+msgid "{where}: the ring at {at} lasts {seconds} seconds, past the clip's own frames, which end at {end}; the hold would freeze it. Move it earlier."
+msgstr "{where}：{at} 處的圓環持續 {seconds} 秒，超出了片段本身的影格（在 {end} 結束）；hold 會把它定住。請把它提前。"
+
+#. translators: x and y are edit-script words and stay in English.
+msgid "{where}: a text's x and y are given together, and this one has only {word}."
+msgstr "{where}：文字的 x 和 y 要一起給出，而這一條只有 {word}。"
+
+#. translators: {word} is x or y, an edit-script word that stays in English.
+msgid "{where}: a text's {word} is a percentage of the frame, from 0 to 100, not {value}."
+msgstr "{where}：文字的 {word} 是畫面的百分比，應介於 0 到 100 之間，而不是 {value}。"
+
+#. translators: {word} is at or band; x, y, at and band are edit-script words and stay in English.
+msgid "{where}: a text placed with x and y takes no {word}: it sits at its point, and has no band."
+msgstr "{where}：用 x 和 y 放置的文字不接受 {word}：它位於自己的點上，沒有底條。"
+
+msgid "{where}: the text {words} at x {x} y {y} reaches past the frame's edge. Move it in, or give it a smaller size."
+msgstr "{where}：位於 x {x} y {y} 的文字 {words} 超出了畫面邊緣。請把它往內移，或給它更小的 size。"
+
+#. translators: {names} are the drawn backgrounds' names, which stay in English.
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, two to {most} of them joined by commas for a moving gradient, or one of {names}, not {value}."
+msgstr "{where}：背景應是以 #RRGGBB 表示的顏色，例如 {example}，或以逗號連接的兩到 {most} 種顏色（構成移動的漸層），或 {names} 之一，而不是 {value}。"
+
+#. argparse formats this text with %
+msgid "the background colour, or a drawn background: {names} (default: {colour})"
+msgstr "背景顏色，或繪製的背景：{names}（預設：{colour}）"

@@ -14,6 +14,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **`edit` can zoom a whole frame, place text anywhere, show a click and draw five backgrounds** (DEMO-0286)
+  A `zoom` line works on a clip with no window. A text takes `x` and `y` to put its middle at that point. A `ring` line draws a growing, fading ring where and when the script says the pointer clicked. `background` takes `record`, `log`, `grid`, `paper` or `felt` as well as colours, on a card, a clip's window and `card --background`. A script using none of these makes the same film as before.
 - **A `split` scene in `edit` plays several videos side by side, frame for frame** (DEMO-0285)
   Each video is a slice of the frame, with a border between slices and a label on each. A `slide` line moves the row along, eased, at a time you name. Videos that differ in size, rate or frame count are refused before anything is made.
 - **`shot --region x,y,w,h` keeps one rectangle of the picture** (DEMO-0205)

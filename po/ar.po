@@ -737,9 +737,6 @@ msgstr "{where}: قيمة window نسبة مئوية من المساحة، من 
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: تحتاج البطاقة إلى مدة أكبر من الصفر."
 
-msgid "{where}: a background is a colour written #RRGGBB, like {example}, or two to {most} of them joined by commas for a moving gradient, not {value}."
-msgstr "{where}: الخلفية لون يُكتب بالشكل #RRGGBB، مثل {example}، أو من لونين إلى {most} ألوان تفصل بينها فواصل لتدرّج متحرّك، لا {value}."
-
 msgid "{where}: {path} has no length ffmpeg can tell."
 msgstr "{where}: لا يستطيع ffmpeg معرفة مدة {path}."
 
@@ -1217,10 +1214,6 @@ msgid "the text's height, as a percentage of the frame's (default: {size})"
 msgstr "ارتفاع النص، كنسبة مئوية من ارتفاع الإطار (الافتراضي: {size})"
 
 #. argparse formats this text with %
-msgid "the background colour (default: {colour})"
-msgstr "لون الخلفية (الافتراضي: {colour})"
-
-#. argparse formats this text with %
 msgid "take the size and frame rate from this video"
 msgstr "خذ الأبعاد ومعدل الإطارات من هذا الفيديو"
 
@@ -1530,9 +1523,55 @@ msgstr ""
 msgid "scene {number}: a split of {count} videos, {start} to {end}"
 msgstr "المشهد {number}: split من مقاطع فيديو عددها {count}، من {start} إلى {end}"
 
-#. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, sound, music or level, not {word}."
-msgstr "{where}: يبدأ السطر بـ clip أو card أو split أو slice أو slide أو text أو zoom أو sound أو music أو level، لا بـ {word}."
-
 msgid "the script has no scenes in it. A scene is a line starting with clip, card or split."
 msgstr "لا يحتوي السيناريو على أي مشهد. المشهد سطر يبدأ بـ clip أو card أو split."
+
+#. translators: ring is an edit-script word and stays in English.
+msgid "{where}: a ring line belongs to the clip above it, and the line above is not part of a clip."
+msgstr "{where}: سطر ring يتبع المقطع الذي فوقه، والسطر الذي فوقه ليس جزءًا من مقطع."
+
+#. translators: ring and at are edit-script words and stay in English.
+msgid "{where}: ring takes the point clicked, in the pixels of the clip's own file, then its moment: ring 640 400 at 5.4"
+msgstr "{where}: يأخذ ring النقطة التي نُقر عليها، بوحدات البكسل في ملف المقطع نفسه، ثم لحظتها: ring 640 400 at 5.4"
+
+#. translators: ring and at are edit-script words and stay in English.
+msgid "{where}: ring needs `at`, the moment of the click in the clip's own time: ring 640 400 at 5.4"
+msgstr "{where}: يحتاج ring إلى `at`، لحظة النقرة بزمن المقطع نفسه: ring 640 400 at 5.4"
+
+#. translators: {word} is the first word of the line, in quotes.
+msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, ring, sound, music or level, not {word}."
+msgstr "{where}: يبدأ السطر بـ clip أو card أو split أو slice أو slide أو text أو zoom أو ring أو sound أو music أو level، لا بـ {word}."
+
+#. translators: ring is an edit-script word and stays in English.
+msgid "{where}: the ring's point {x} {y} is outside {path}, which is {size}."
+msgstr "{where}: نقطة ring {x} {y} خارج {path}، وأبعاده {size}."
+
+msgid "{where}: the ring at {at} is not inside its clip ({start} to {end})."
+msgstr "{where}: الحلقة عند {at} ليست داخل مقطعها (من {start} إلى {end})."
+
+#. translators: hold is an edit-script word and stays in English.
+msgid "{where}: the ring at {at} lasts {seconds} seconds, past the clip's own frames, which end at {end}; the hold would freeze it. Move it earlier."
+msgstr "{where}: تدوم الحلقة عند {at} مدة {seconds} ثانية، بعد إطارات المقطع نفسه التي تنتهي عند {end}؛ وسيجمّدها hold. اجعلها أبكر."
+
+#. translators: x and y are edit-script words and stay in English.
+msgid "{where}: a text's x and y are given together, and this one has only {word}."
+msgstr "{where}: يُعطى x وy للنص معًا، وهذا النص فيه {word} وحده."
+
+#. translators: {word} is x or y, an edit-script word that stays in English.
+msgid "{where}: a text's {word} is a percentage of the frame, from 0 to 100, not {value}."
+msgstr "{where}: قيمة {word} للنص نسبة مئوية من الإطار، من 0 إلى 100، لا {value}."
+
+#. translators: {word} is at or band; x, y, at and band are edit-script words and stay in English.
+msgid "{where}: a text placed with x and y takes no {word}: it sits at its point, and has no band."
+msgstr "{where}: النص الموضوع بـ x وy لا يأخذ {word}: فهو في نقطته، ولا شريط له."
+
+msgid "{where}: the text {words} at x {x} y {y} reaches past the frame's edge. Move it in, or give it a smaller size."
+msgstr "{where}: النص {words} عند x {x} y {y} يتجاوز حافة الإطار. حرّكه إلى الداخل، أو أعطه size أصغر."
+
+#. translators: {names} are the drawn backgrounds' names, which stay in English.
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, two to {most} of them joined by commas for a moving gradient, or one of {names}, not {value}."
+msgstr "{where}: الخلفية لون يُكتب بالشكل #RRGGBB، مثل {example}، أو من لونين إلى {most} ألوان تفصل بينها فواصل لتدرّج متحرّك، أو واحد من {names}، لا {value}."
+
+#. argparse formats this text with %
+msgid "the background colour, or a drawn background: {names} (default: {colour})"
+msgstr "لون الخلفية، أو خلفية مرسومة: {names} (الافتراضي: {colour})"

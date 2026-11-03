@@ -410,17 +410,18 @@ order:
   corners and a soft shadow below it, centred on a plain background. It is
   between `20` and `100`. A caption sits on its band under the window.
 - `background #202830` — the colour round a window, written `#RRGGBB`, or a
-  moving gradient, as on a card. Without it the background is `#101418`. A
-  clip with no `window` refuses it. A text with no band takes its colour from
-  it, as on a card.
+  moving gradient or a drawn background, as on a card. Without it the
+  background is `#101418`. A clip with no `window` refuses it. A text with no
+  band takes its colour from it, as on a card.
 - `push 4` — the window grows steadily as the clip plays, about its own
   middle, until it is 4% larger at the end; its shadow grows with it. It is
   between `0` and `20`, and needs a `window`. The window at its largest must
   still fit the room, so `window 90` takes at most `push 11`.
 
-**`zoom 2`** on its own line under a clip with a `window`, indented like a
-text, zooms the picture inside the window to twice its size. It is above `1`
-and at most `4`, and a clip takes one zoom line.
+**`zoom 2`** on its own line under a clip, indented like a text, zooms the
+picture to twice its size: inside the window on a clip with a `window`, and
+the whole frame on one without. It is above `1` and at most `4`, and a clip
+takes one zoom line. A text stays where it is, outside the zoom.
 
 - `x 60` and `y 40` name the point it closes in on, in percent across and
   down the clip's picture. Left out, it is the middle. The view drifts
@@ -428,6 +429,26 @@ and at most `4`, and a clip takes one zoom line.
 - `from 3` and `to 5` say when, in the clip's own file, as a text's times
   do. The zoom starts slowly and slows again as it arrives, and stays zoomed
   after `to`. Left out, it runs over the whole clip.
+
+**`ring 640 400`** on its own line under a clip draws a ring where the pointer
+clicked, so a viewer with the sound off sees the click. The two numbers are the
+point in the pixels of the clip's own file: the numbers given to `xdotool` when
+it was recorded. demoreel draws a ring only where a script puts one.
+
+```
+clip demo.mp4 from 2 to 14
+  ring 640 400 at 5.4
+```
+
+- `at 5.4` is required: the moment, a time in the clip's own file, as a
+  sound's `at` is. It must fall in the clip's own frames, and on a clip with a
+  `hold` the ring's whole half second must, since the hold would freeze it.
+- The ring is yellow on a dark edge. It grows from 3% to 18.5% of the clip's
+  height across, slowing as it grows, and fades out over half a second. A ring
+  still showing when its scene ends is cut there.
+- It is drawn on the clip before anything scales it, so it stays on its point
+  of the picture in a window, under a zoom and at any `speed`. A clip may have
+  any number of rings.
 
 A clip's sound fades, cuts and crossfades with its picture.
 
@@ -453,7 +474,7 @@ split from 2 to 17 show 3 crossfade 0.5
 - The `split` line takes `from`, `to`, the fades and `crossfade` as a clip does,
   and `from` and `to` apply to every slice. `show 3` is how many slices fill the
   frame, and defaults to all of them. It takes none of `window`, `background`,
-  `push`, `speed`, `hold`, `sound` or `volume`, and no `zoom` line.
+  `push`, `speed`, `hold`, `sound` or `volume`, and no `zoom` or `ring` line.
 - **`slice FILE`** on its own line adds a video, left to right in the order
   written, 2 to 8 of them. Each must match the first in size, rate and frame
   count, or the film is refused before anything is made. The first counts as a
@@ -493,6 +514,20 @@ picture, text, or both.
   darkened to 38% of its brightness and darker still towards the corners, so
   a text with no band on it is white. It turns at the same speed whatever the
   film's rate, and the same script makes the same film.
+- `background record` — one of five drawn backgrounds, each sized to the frame,
+  and the same each time the script is made. A text with no band is white on
+  all but `paper`, where it is near-black.
+
+  | Name | What it draws |
+  |---|---|
+  | `record` | a warm gradient, and a vinyl record low on the right that turns slowly, with film grain |
+  | `log` | a green gradient, with two columns of faint program output scrolling up, and scanlines |
+  | `grid` | a dark sky with a striped sun on the horizon, a neon floor running towards you, and scanlines |
+  | `paper` | lined paper with a margin, lit from above; it does not move |
+  | `felt` | green baize lit from the middle; it does not move |
+
+  `log` draws text, so it needs what a text needs: an ffmpeg that draws text.
+  Its font is `fc-match`'s answer for `monospace`.
 - `fade-in`, `fade-out` and `crossfade` work as on a clip.
 - `reveal 0.9` brings the picture in over that many seconds: it fades in and
   grows from 82% of its size to the whole, slowing as it arrives. It is for a
@@ -536,6 +571,10 @@ you like; the indent is only for your eyes.
   `slide-in` with `fade-out` may not be longer than the text shows.
 - `band off` takes the dark band away, and `band on` gives a card's text one.
   Text on a band is white unless `colour` says otherwise.
+- `x 25 y 80` puts the text's middle at that point, in percent across and
+  down the frame, the two given together. Such a text has no band and takes no
+  `at`. It stands alone: it is in no stack, moves no other line, and takes no
+  room from a card's picture. It must fit inside the frame, or it is refused.
 - `at top`, `at middle` or `at bottom` says where it sits. With a band, the
   band runs across the frame there, against the edge at the top or bottom.
   Without one, the text sits a twentieth of the frame's height in from that
@@ -675,7 +714,8 @@ demoreel card -o title.mp4 -d 3 --like demo.mp4 --text 'Saving a file'
 - `card` takes `-d` for its length, 3 seconds unless you say. A picture is given as
   a bare file name, as in the script: `demoreel card -o spin.mp4 -d 6.9
   spin.png`. It also takes `--text`, `--text-size`, `--background`,
-  `--fade-in` and `--fade-out`. Its size and
+  `--fade-in` and `--fade-out`. `--background` takes a colour or a drawn
+  background's name, as the script's `background` does. Its size and
   frame rate come from `--like FILE`; `-s` and `-r` set them by hand and win
   over `--like`. With none of them it is 1600x1000 at 30.
 - All four take the music line's words: `--music FILE`, `--music-level`,
@@ -684,8 +724,8 @@ demoreel card -o title.mp4 -d 3 --like demo.mp4 --text 'Saving a file'
   which is `sound off` on every clip. `trim` with only `--music` or
   `--no-sound` adds that and cuts nothing.
 
-A text's `font`, `colour`, `outline`, `shadow`, `band`, `at` and its own fades
-are the script's alone. A shortcut sets a text's words, times and size. So are
+A text's `font`, `colour`, `outline`, `shadow`, `band`, `at`, `x`, `y` and its
+own fades are the script's alone, and so is a `ring`. A shortcut sets a text's words, times and size. So are
 `normalise`, `level` lines and a clip's `volume`, `speed`, `hold`, `window`
 and `background`.
 

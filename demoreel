@@ -3521,7 +3521,7 @@ SCENE_WORDS = {
              "background", "push"),
     "card": ("background", "fade-in", "fade-out", "crossfade", "reveal"),
     "text": ("from", "to", "size", "font", "colour", "outline", "shadow",
-             "fade-in", "fade-out", "band", "at", "slide-in"),
+             "fade-in", "fade-out", "band", "at", "slide-in", "x", "y"),
     "zoom": ("x", "y", "from", "to"),
     "music": ("level", "normalise", "fade-in", "fade-out"),
     "level": ("from", "to", "ramp"),
@@ -3530,6 +3530,7 @@ SCENE_WORDS = {
               "crossfade", "show"),
     "slice": ("label", "size", "centre"),
     "slide": ("at", "over"),
+    "ring": ("at",),
 }
 # A split scene (DEMO-0285): how many videos it takes, the label's height and how
 # far down it sits as shares of the frame's height (split_sample.py's 75 px at
@@ -3610,6 +3611,8 @@ class Scene:
         self.size = SPLIT_LABEL  # a slice: its label's height, % of the frame's
         self.centre = "50"      # a slice: the point it is centred on, % across
         self.crop = None        # a slice: (width, x) of the part of its file shown
+        self.rings = []         # a clip: its ring lines, each x, y, at, where
+        self.drawn = None       # a `log` background: its two columns' files and size
 
 
 # The film's sound: every stream is made this before it is joined or mixed.
@@ -3721,7 +3724,7 @@ def script_words(target, words, kind, where):
             setattr(target, word, script_on_off(value, where, word))
         elif word in ("volume", "level"):
             setattr(target, word, script_decibels(value, where, word))
-        elif kind in ("level", "zoom", "slide"):
+        elif kind in ("level", "zoom", "slide", "ring"):
             target[names.get(word, word)] = script_number(value, where, word)
         elif word == "fade-at":
             target.fade_at.append(script_number(value, where, word))
@@ -3824,6 +3827,27 @@ def parse_script(text):
             entry = {"factor": factor, "where": where}
             script_words(entry, rest[1:], "zoom", where)
             scenes[-1].zoom = entry
+        elif verb == "ring":
+            if not scenes or scenes[-1].kind != "clip" or above in ("music", "level"):
+                # translators: ring is an edit-script word and stays in English.
+                die(tr("{where}: a ring line belongs to the clip above it, and the "
+                       "line above is not part of a clip.", where=where))
+            try:
+                point = [float(word) for word in rest[:2]]
+            except ValueError:
+                point = []
+            if len(point) < 2 or not all(math.isfinite(v) for v in point):
+                # translators: ring and at are edit-script words and stay in English.
+                die(tr("{where}: ring takes the point clicked, in the pixels of the "
+                       "clip's own file, then its moment: ring 640 400 at 5.4",
+                       where=where))
+            entry = {"x": point[0], "y": point[1], "where": where}
+            script_words(entry, rest[2:], "ring", where)
+            if "at" not in entry:
+                # translators: ring and at are edit-script words and stay in English.
+                die(tr("{where}: ring needs `at`, the moment of the click in the clip's "
+                       "own time: ring 640 400 at 5.4", where=where))
+            scenes[-1].rings.append(entry)
         elif verb == "clip":
             if not rest:
                 die(tr("{where}: clip needs a video file after it.", where=where))
@@ -3869,7 +3893,7 @@ def parse_script(text):
         else:
             # translators: {word} is the first word of the line, in quotes.
             die(tr("{where}: a line starts with clip, card, split, slice, slide, text, "
-                   "zoom, sound, music or level, not {word}.", where=where,
+                   "zoom, ring, sound, music or level, not {word}.", where=where,
                    word=repr(verb))
                 + f"\n  {as_value(line)}")
         above = verb if verb not in ("text", "sound") else above
@@ -4241,6 +4265,99 @@ def check_zoom(scene, length):
     zoom["begin"], zoom["finish"] = begin, min(finish, played)
 
 
+# A ring where the pointer clicked (DEMO-0286 § 4.3), after the website's
+# trailer.py on footage about 1080 high. Its diameter, to the line's middle, grows
+# from RING_FROM to RING_TO of the clip's height over RING_SECONDS, easing out, as
+# it fades. Its line is RING_LINE wide on a black edge RING_EDGE wide, at its largest.
+RING_SECONDS = 0.5
+RING_FROM = 0.03
+RING_TO = 0.185
+RING_LINE = 0.00926
+RING_EDGE = 0.0157
+RING_COLOUR = "#FDE047"
+RING_EDGE_ALPHA = 0.75
+
+
+def check_rings(scene, length):
+    """Check a clip's ring lines and turn their moments into times from the
+    scene's start. A ring is drawn only where the script puts one."""
+    played = length - scene.hold
+    file_w, file_h = scene.info["width"], scene.info["height"]
+    end = f"{scene.start + played * scene.speed:.3f}"
+    for ring in scene.rings:
+        where, at = ring["where"], ring["at"]
+        if not (0 <= ring["x"] < file_w and 0 <= ring["y"] < file_h):
+            # translators: ring is an edit-script word and stays in English.
+            die(tr("{where}: the ring's point {x} {y} is outside {path}, which is "
+                   "{size}.", where=where, x=f"{ring['x']:g}", y=f"{ring['y']:g}",
+                   path=scene.path, size=f"{file_w}x{file_h}"))
+        begin = scene_time(scene, at)
+        if -TIME_SLACK <= begin < 0:
+            begin = 0.0
+        if not 0 <= begin < played:
+            die(tr("{where}: the ring at {at} is not inside its clip ({start} to "
+                   "{end}).", where=where, at=f"{at:g}", start=f"{scene.start:g}",
+                   end=end))
+        if scene.hold and begin + RING_SECONDS > played + TIME_SLACK:
+            # translators: hold is an edit-script word and stays in English.
+            die(tr("{where}: the ring at {at} lasts {seconds} seconds, past the clip's "
+                   "own frames, which end at {end}; the hold would freeze it. Move it "
+                   "earlier.", where=where, at=f"{at:g}", seconds=f"{RING_SECONDS:g}",
+                   end=end))
+        ring["begin"] = begin
+
+
+# A `log` background's faint program output, as shares of the frame's height:
+# its text's size, the space between its lines, and how far it scrolls up a
+# second; its two columns' left edges as shares of the width.
+LOG_TEXT = 0.0204
+LOG_SPACING = 0.00926
+LOG_SCROLL = 0.0259
+LOG_COLUMNS = (0.03125, 0.53125)
+LOG_WORDS = ("ok", "load", "sync", "build", "index", "check", "watch", "done")
+
+_mono_font = None
+
+
+def mono_font():
+    """The drawtext option naming fc-match's answer for `monospace`. Asked
+    directly, since text_font refuses a general name; any answer will do for
+    decoration, and with none the filter's own default is used."""
+    global _mono_font  # noqa: PLW0603 - asked once per run
+    if _mono_font is None:
+        try:
+            found = subprocess.run(
+                ["fc-match", "-f", "%{file}", "monospace"], capture_output=True,
+                text=True, errors="replace", timeout=CALL_TIMEOUT, check=False).stdout.strip()
+        except (OSError, subprocess.TimeoutExpired):
+            found = ""
+        usable = bool(found) and Path(found).is_file() and not set(found) & FILTER_CANNOT_CARRY
+        _mono_font = f"fontfile='{found}'" if usable else "font='Monospace'"
+    return _mono_font
+
+
+def check_log(scene, height, workdir):
+    """Write a `log` background's two columns once in the work folder, and die
+    if this machine cannot draw them, as a text does. Each column is shorter
+    than the frame, so two copies of it, one under the other, repeat as it
+    scrolls."""
+    fontsize = max(1, round(LOG_TEXT * height))
+    count = max(1, int(height / (1.25 * fontsize + LOG_SPACING * height)))
+    lines = [f"[{i * 0.137:9.3f}] {LOG_WORDS[i * 7 % len(LOG_WORDS)]:<6} "
+             f"{i * 2654435761 % 16 ** 8:08x}  {'#' * (i * 13 % 23)}" for i in range(2 * count)]
+    files = []
+    for column in range(2):
+        files.append(workdir / f"log-{column}.txt")
+        files[-1].write_text("\n".join(lines[column * count:(column + 1) * count]),
+                             encoding="utf-8")
+    try:
+        text_size(files[0], fontsize, mono_font())
+    except TextUnavailable as exc:
+        die(exc.reason + ("\n  " + tr("`demoreel check` tests this on its own.")
+                          if exc.checked else ""))
+    scene.drawn = {"files": files, "fontsize": fontsize}
+
+
 def check_texts(scene, length, width, height, workdir):
     """Check a scene's texts and turn their times into times from its start.
 
@@ -4283,14 +4400,33 @@ def check_texts(scene, length, width, height, workdir):
                 die(tr("{where}: a text's {word} is a colour written #RRGGBB, "
                        "like #FFD040, not {value}.", where=where, word=what,
                        value=repr(text[what])))
-        as_clip = scene.kind in ("clip", "split")
+        # A text at x and y has its middle there, alone: no stack, no band
+        # (DEMO-0286 § 4.2).
+        placed = "x" in text or "y" in text
+        for word in ("x", "y") if placed else ():
+            if word not in text:
+                # translators: x and y are edit-script words and stay in English.
+                die(tr("{where}: a text's x and y are given together, and this one "
+                       "has only {word}.", where=where, word="y" if word == "x" else "x"))
+            if not 0 <= text[word] <= 100:
+                # translators: {word} is x or y, an edit-script word that stays in English.
+                die(tr("{where}: a text's {word} is a percentage of the frame, from 0 "
+                       "to 100, not {value}.", where=where, word=word,
+                       value=f"{text[word]:g}"))
+        for word, given in (("at", "at" in text), ("band", text.get("band") == "on")):
+            if placed and given:
+                # translators: {word} is at or band; x, y, at and band are edit-script
+                # words and stay in English.
+                die(tr("{where}: a text placed with x and y takes no {word}: it sits at "
+                       "its point, and has no band.", where=where, word=word))
+        as_clip = scene.kind in ("clip", "split") and not placed
         band = text.get("band", "on" if as_clip else "off")
         if band not in ("on", "off"):
             die(tr("{where}: a text's band is on or off, not {value}.", where=where,
                    value=repr(band)))
-        place = text.get("at", "bottom" if as_clip
-                         else "top" if scene.path is not None else "middle")
-        if place not in TEXT_PLACES:
+        place = "placed" if placed else text.get(
+            "at", "bottom" if as_clip else "top" if scene.path is not None else "middle")
+        if not placed and place not in TEXT_PLACES:
             die(tr("{where}: a text sits at {places} or {last}, not at {value}.",
                    where=where, places=", ".join(TEXT_PLACES[:-1]),
                    last=TEXT_PLACES[-1], value=repr(place)))
@@ -4316,7 +4452,7 @@ def check_texts(scene, length, width, height, workdir):
         textfile.write_text(words, encoding="utf-8", errors="replace")
         room = width - 2 * round(CARD_MARGIN * width)
         try:
-            wide, _ = text_size(textfile, fontsize, font, border, room)
+            wide, tall = text_size(textfile, fontsize, font, border, room)
         except TextUnavailable as exc:
             die(exc.reason + ("\n  " + tr("`demoreel check` tests this on its own.")
                               if exc.checked else ""))
@@ -4326,11 +4462,24 @@ def check_texts(scene, length, width, height, workdir):
                    "or give it a smaller size: about {fits} would fit.",
                    where=where, words=repr(words), wide=wide, size=f"{size:g}",
                    room=room, fits=f"{size * room / wide:.1f}"))
+        if placed:
+            # Refused, not clipped: a text cut off by the frame's edge says
+            # nothing of the words it lost. `y` becomes the text's top, as
+            # place_stack gives a stacked line's.
+            share = text["y"]
+            text["cx"] = round(text["x"] / 100 * width)
+            text["y"] = round(share / 100 * height) - fontsize // 2
+            if text["cx"] - wide / 2 < 0 or text["cx"] + wide / 2 > width \
+                    or text["y"] < 0 or text["y"] + max(tall, fontsize) > height:
+                die(tr("{where}: the text {words} at x {x} y {y} reaches past the "
+                       "frame's edge. Move it in, or give it a smaller size.",
+                       where=where, words=repr(words), x=f"{text['x']:g}",
+                       y=f"{share:g}"))
         text.update(begin=begin, finish=min(finish, length), fontsize=fontsize,
                     textfile=textfile, fontfile=font, border=border,
                     banded=band == "on", place=place)
-    scene.stacks = [place_stack(scene, lines, width, height)
-                    for lines in text_stacks(scene.texts)]
+    scene.stacks = [place_stack(scene, lines, width, height) for lines in
+                    text_stacks([t for t in scene.texts if t["place"] != "placed"])]
 
 
 def text_stacks(texts):
@@ -4561,12 +4710,12 @@ def check_scene(scene, width, height, rate, workdir):
             refuse_window(where, f"{scene.window:g}")
         if scene.window is not None:
             scene.background = scene.background or CARD_BACKGROUND
-        for word, given in (("push", scene.push), ("zoom", scene.zoom)):
-            if scene.window is None and given:
-                # translators: {word} is push or zoom, and window an edit-script word;
-                # both stay in English.
-                die(tr("{where}: {word} acts on a clip's window, and this clip has "
-                       "no window.", where=where, word=word))
+        # A push grows a window. A zoom works on a whole frame too (DEMO-0286 § 4.1).
+        if scene.window is None and scene.push:
+            # translators: {word} is push or zoom, and window an edit-script word;
+            # both stay in English.
+            die(tr("{where}: {word} acts on a clip's window, and this clip has "
+                   "no window.", where=where, word="push"))
         if not 0 <= scene.push <= PUSH_HIGH:
             # translators: push is an edit-script word and stays in English.
             die(tr("{where}: push is how much the window grows, in percent, from "
@@ -4625,6 +4774,7 @@ def check_scene(scene, width, height, rate, workdir):
                    value=f"{scene.speed:g}"))
         length = length / scene.speed + scene.hold
         check_length(where, length)
+        check_rings(scene, length)
         for moment in scene.fade_at:
             if not (scene.fade_length <= scene_time(scene, moment)
                     <= length - scene.fade_length):
@@ -4634,14 +4784,17 @@ def check_scene(scene, width, height, rate, workdir):
                        where=where, moment=f"{moment:g}",
                        seconds=f"{scene.fade_length:g}", start=f"{scene.start:.3f}",
                        end=f"{scene.start + length * scene.speed:.3f}"))
-    if scene.background is not None and not (
+    if scene.background is not None and scene.background not in DRAWN_DARK and not (
             1 <= len(scene.background.split(",")) <= GRADIENT_MOST
             and all(COLOUR_RE.fullmatch(c) for c in scene.background.split(","))):
+        # translators: {names} are the drawn backgrounds' names, which stay in English.
         die(tr("{where}: a background is a colour written #RRGGBB, like "
-               "{example}, or two to {most} of them joined by commas for a "
-               "moving gradient, not {value}.", where=where,
+               "{example}, two to {most} of them joined by commas for a "
+               "moving gradient, or one of {names}, not {value}.", where=where,
                example=CARD_BACKGROUND, most=GRADIENT_MOST,
-               value=repr(scene.background)))
+               names=", ".join(DRAWN_DARK), value=repr(scene.background)))
+    if scene.background == "log":
+        check_log(scene, height, workdir)
     if scene.fade_in + scene.fade_out > length + 1e-6:
         die(tr("{where}: its fades come to {fades} seconds, and the scene is only "
                "{seconds} long.", where=where,
@@ -4702,9 +4855,12 @@ def text_filters(scene, width, height):
     if not scene.texts:
         return []
     dark = True
-    # A gradient is darkened to GRADIENT_DARK, so it is always dark.
-    if scene.background is not None and "," not in scene.background:
-        red, green, blue = (int(scene.background[i:i + 2], 16) for i in (1, 3, 5))
+    # A gradient is darkened to GRADIENT_DARK, so it is always dark. A drawn
+    # background says which it is.
+    if scene.background in DRAWN_DARK:
+        dark = DRAWN_DARK[scene.background]
+    elif scene.background is not None and "," not in scene.background:
+        red, green, blue = rgb(scene.background)
         dark = 0.299 * red + 0.587 * green + 0.114 * blue < 140
     filters = []
     for text in scene.texts:
@@ -4741,7 +4897,9 @@ def text_filters(scene, width, height):
                                f"color=black@0.75:t=fill:{when}")
                 draw += ["x=(w-text_w)/2", f"y={top + (band - size) // 2}"]
         else:
-            draw += ["x=(w-text_w)/2", f"y={place}"]
+            across = text.get("cx")  # a text placed with x and y
+            draw += ["x=(w-text_w)/2" if across is None else f"x={across}-text_w/2",
+                     f"y={place}"]
         if fade_in or slide or fade_out:
             arrive = fade_in or slide
             rise = f"(t-{begin:.4f})/{arrive:.4f}" if arrive else "1"
@@ -5096,8 +5254,10 @@ def scene_graph(scene, length, number, first_input, width, height, rate):
     if scene.kind == "clip":
         inputs = clip_input(scene)
         pts = "PTS-STARTPTS" if scene.speed == 1 else f"(PTS-STARTPTS)/{scene.speed:.9g}"
+        rings, head = ring_graph(scene, number, f"[{first_input}:v]setpts={pts}", rate)
         if scene.window is None:
-            return inputs, [f"[{first_input}:v]setpts={pts},{shape}{tail}{out}"]
+            zoom = f",fps={fps},{zoom_filters(scene, width, height, rate)}" if scene.zoom else ""
+            return inputs, [*rings, f"{head}{zoom},{shape}{tail}{out}"]
         # The background runs a frame past the scene, and `shape` trims it
         # back. Ending with the clip, ffmpeg 6.1.1's overlay hands on its end
         # at its last frame's own time, and the fps after it then drops that
@@ -5105,8 +5265,8 @@ def scene_graph(scene, length, number, first_input, width, height, rate):
         inputs += ["-f", "lavfi", "-i",
                    background_source(scene, width, height, rate, length + 1 / rate,
                                      number)]
-        return inputs, window_graph(scene, length, number, first_input, pts,
-                                    f"{shape}{tail}{out}", rate)
+        return inputs, [*rings, *window_graph(scene, length, number, first_input, head,
+                                              f"{shape}{tail}{out}", rate)]
     inputs = ["-f", "lavfi", "-i",
               background_source(scene, width, height, rate, length, number)]
     if scene.path is None:
@@ -5216,18 +5376,141 @@ GRADIENT_MOST = 8
 
 
 def background_source(scene, width, height, rate, length, number):
-    """The lavfi source behind a card or a clip's window: one colour, or a
-    slowly moving gradient through several. The gradient's seed is the
-    scene's number, so the same script makes the same film."""
-    colours = scene.background.split(",")
+    """The lavfi source behind a card or a clip's window: one colour, a
+    slowly moving gradient through several, or a drawn background. A
+    gradient's seed is the scene's number, so the same script makes the same
+    film."""
     shape = f"s={width}x{height}:r={rate_text(rate)}:d={length:.6f}"
+    if scene.background in DRAWN_DARK:
+        return drawn_background(scene, width, height, rate, length, number, shape)
+    colours = scene.background.split(",")
     if len(colours) == 1:
         return f"color=c=0x{colours[0][1:]}:{shape}"
+    return gradient_source(colours, GRADIENT_DARK, shape, rate, number)
+
+
+def gradient_source(colours, dark, shape, rate, number):
     stops = ":".join(f"c{i}=0x{c[1:]}" for i, c in enumerate(colours))
-    dark = GRADIENT_DARK
     return (f"gradients={shape}:n={len(colours)}:{stops}:"
             f"speed={GRADIENT_TURN / rate:.6g}:seed={number},"
             f"colorchannelmixer=rr={dark}:gg={dark}:bb={dark},vignette=PI/4")
+
+
+# The drawn backgrounds (DEMO-0286 § 4.4), each a look from the website's
+# trailer.py at 1080 high, so their sizes below are shares of the frame's height.
+# Each says whether text with no band is white on it, as on a dark colour.
+DRAWN_DARK = {"record": True, "log": True, "grid": True, "paper": False, "felt": True}
+RECORD_COLOURS = ("#b45309", "#9d174d", "#4c1d95", "#0c0a09")
+RECORD_DARK = 0.36
+RECORD_TURN = 0.5  # radians a second
+LOG_COLOURS = ("#14532d", "#064e3b", "#0c4a6e", "#020617")
+LOG_DARK = 0.42
+
+
+def rgb(colour):
+    """A #RRGGBB colour's red, green and blue, 0 to 255."""
+    return [int(colour[i:i + 2], 16) for i in (1, 3, 5)]
+
+
+def channel(colour, index):
+    """One channel of a #RRGGBB colour, or of a triple of geq expressions."""
+    return str(rgb(colour)[index]) if isinstance(colour, str) else colour[index]
+
+
+def paint(cases, otherwise):
+    """geq's r, g and b: the colour of the first (test, colour) case whose test
+    holds, else `otherwise`."""
+    out = []
+    for index, name in enumerate("rgb"):
+        expr = channel(otherwise, index)
+        for test, colour in reversed(cases):
+            expr = f"if({test},{channel(colour, index)},{expr})"
+        out.append(f"{name}='{expr}'")
+    return ":".join(out)
+
+
+def drawn_background(scene, width, height, rate, length, number, shape):
+    """A drawn background as one lavfi graph. Each picture that does not change
+    is drawn once by geq, repeated by loop and cut by trim, so it costs one
+    frame and still ends; what moves is a filter on every frame."""
+    name, fps = scene.background, rate_text(rate)
+    one = f"r={fps}:d={1 / rate:.6f}"
+    held = f"loop=loop=-1:size=1,trim=end_frame={max(1, math.ceil(length * rate - 1e-6))}"
+    period = max(2, round(4 * height / 1080))
+    scanlines = (f"color=c=black@0:s={width}x{height}:{one},format=rgba,"
+                 f"geq=r=0:g=0:b=0:a='if(lt(mod(Y,{period}),{period // 2}),89,0)',{held}")
+    if name == "paper":
+        tint = [f"{a}+{b - a}*Y/{height}"
+                for a, b in zip(rgb("#fbf8f0"), rgb("#efe9da"), strict=True)]
+        lw, top, step = max(1, round(0.00185 * height)), 0.1389 * height, 0.0519 * height
+        margin = round(0.104 * width)
+        ruled = f"gte(Y,{top:.2f})*lt(mod(Y-{top:.2f},{step:.3f}),{lw})"
+        cases = [(f"between(X,{margin},{margin + lw - 1})", "#ecb4b4"), (ruled, "#c9d8ee")]
+        return (f"color=c=black:s={width}x{height}:{one},format=gbrp,"
+                f"geq={paint(cases, tint)},noise=alls=6,{held}")
+    if name == "felt":
+        far = f"(hypot(X-{width / 2},Y-{height / 2})/{math.hypot(width / 2, height / 2):.3f})"
+        lit = [f"({a}+{b - a}*{far})" for a, b in zip(rgb("#166534"), rgb("#052e16"), strict=True)]
+        edge = [f"{m}+({d}-{m})*pow({far},4)" for m, d in zip(lit, rgb("#03140a"), strict=True)]
+        return (f"color=c=black:s={width}x{height}:{one},format=gbrp,"
+                f"geq={paint([], edge)},noise=alls=10,{held}")
+    if name == "record":
+        # A vinyl disc low on the right: grooves of two greys, a label of two
+        # colours, which is what shows it turning, and a spindle hole.
+        half = round(0.6667 * height)
+        far = f"hypot(X-{half},Y-{half})"
+        start, step, lw = 0.2222 * height, max(2.0, 0.00833 * height), max(1.0, 0.00185 * height)
+        label, hole = 0.2037 * height, 0.013 * height
+        out = f"({far}-{start - lw / 2:.3f})"
+        groove = (f"between({far},{start - lw / 2:.3f},{0.6389 * height + lw / 2:.3f})"
+                  f"*lt(mod({out},{step:.3f}),{lw:.3f})")
+        cases = [(f"lte({far},{hole:.3f})", "#f5e6d3"),
+                 (f"lte({far},{label:.3f})*gte(X,{half})*gte(Y,{half})", RECORD_COLOURS[1]),
+                 (f"lte({far},{label:.3f})", RECORD_COLOURS[0]),
+                 (f"{groove}*mod(floor({out}/{step:.3f}),2)", "#2c2932"),
+                 (groove, "#1a181e")]
+        disc = f"{paint(cases, '#0b0b0d')}:a='255*clip({0.648 * height:.3f}+0.5-{far},0,1)'"
+        x, y = width - round(0.185 * height) - half, height - round(0.0556 * height) - half
+        return (f"{gradient_source(RECORD_COLOURS, RECORD_DARK, shape, rate, number)}[g];"
+                f"color=c=black@0:s={2 * half}x{2 * half}:{one},format=rgba,geq={disc},{held},"
+                f"rotate=a=t*{RECORD_TURN}:c=black@0:ow=iw:oh=ih[d];"
+                f"[g][d]overlay=x={x}:y={y},noise=alls=10:allf=t[out0]")
+    if name == "log":
+        # Two columns, each drawn twice, one under the other, on a picture twice
+        # the frame's height: scrolled by a crop, it repeats without a seam.
+        text = [f"drawtext=textfile='{path}':expansion=none:{mono_font()}:"
+                f"fontsize={scene.drawn['fontsize']}:fontcolor=0x4ade80:"
+                f"line_spacing={round(LOG_SPACING * height)}:x={round(left * width)}:y={y}"
+                for path, left in zip(scene.drawn["files"], LOG_COLUMNS, strict=True)
+                for y in (0, height)]
+        return (f"{gradient_source(LOG_COLOURS, LOG_DARK, shape, rate, number)}[g];"
+                f"color=c=black@0:s={width}x{2 * height}:{one},format=rgba,{','.join(text)},"
+                f"colorchannelmixer=aa=0.1,{held},crop=w={width}:h={height}:x=0:"
+                f"y='mod(t*{LOG_SCROLL * height:.3f},{height})'[t];{scanlines}[s];"
+                f"[g][t]overlay[u];[u][s]overlay[out0]")
+    # grid: a striped sun on the horizon, and a neon floor drawn flat, moved
+    # towards the viewer by a crop and laid down by perspective. No line of the
+    # floor touches its picture's edge, which perspective would smear outward.
+    horizon, sun = round(0.8333 * height), 2 * round(0.1389 * height)
+    gaps = "+".join(f"between(Y,{sun * (190 + 22 * i) / 300:.2f},{sun * (194 + 24 * i) / 300:.2f})"
+                    for i in range(5))
+    glow = [f"{a}+{b - a}*Y/{sun}" for a, b in zip(rgb("#fde047"), rgb("#db2777"), strict=True)]
+    disc = (f"{paint([], glow)}:a='128*lte(hypot(X-{sun / 2},Y-{sun / 2}),{sun / 2})"
+            f"*not({gaps})'")
+    wide, deep, row = 2 * width, round(0.6667 * height), round(0.1667 * height)
+    column, lw = wide / 24, max(1.0, 0.00463 * height)
+    lines = (f"lt(abs(mod(Y,{row})-{row / 2}),{lw / 2:.3f})"
+             f"+lt(abs(mod(X,{column:.3f})-{column / 2:.3f}),{lw / 2:.3f})")
+    floor = f"{paint([], '#f472b6')}:a='140*gt({lines},0)'"
+    lay = (f"perspective=x0={0.3906 * wide:.1f}:y0=0:x1={0.6094 * wide:.1f}:y1=0:"
+           f"x2={-0.677 * wide:.1f}:y2={deep}:x3={1.677 * wide:.1f}:y3={deep}:sense=destination")
+    return (f"color=c=0x0b0620:{shape},vignette=PI/4[g];"
+            f"color=c=black@0:s={sun}x{sun}:{one},format=rgba,geq={disc},{held}[s];"
+            f"color=c=black@0:s={wide}x{deep + row}:{one},format=rgba,geq={floor},{held},"
+            f"crop=w={wide}:h={deep}:x=0:y='{row}-mod(t*{row},{row})',{lay},"
+            f"scale={width}:{height - horizon}[f];{scanlines}[l];"
+            f"[g][s]overlay=x={(width - sun) // 2}:y={horizon - sun + round(0.0556 * height)}[a];"
+            f"[a][f]overlay=x=0:y={horizon}[b];[b][l]overlay[out0]")
 
 
 # A clip's window (DEMO-0183): the smallest share of the room it may take,
@@ -5287,12 +5570,12 @@ def rounded(x0, y0, w, h, r):
             f"*between({x},0,{w - 1})*between({y},0,{h - 1})")
 
 
-def window_graph(scene, length, number, first_input, pts, rest, rate):
+def window_graph(scene, length, number, first_input, head, rest, rate):
     """Filter chains for a windowed clip, from the back: its background (the
     input after the clip), a blurred shadow dropped below the window, and the
-    clip with its corners rounded. The mask and the shadow are one frame
-    each, repeated by `loop`; every chain is trimmed to the scene's frames,
-    since a loop never ends by itself (DEMO-0183 § 4.4)."""
+    clip, which `head` starts, with its corners rounded. The mask and the
+    shadow are one frame each, repeated by `loop`; every chain is trimmed to
+    the scene's frames, since a loop never ends by itself (DEMO-0183 § 4.4)."""
     x, y, w, h = scene.box
     fps, frames = rate_text(rate), max(1, round(length * rate))
     clip_frames = max(1, round((length - scene.hold) * rate))
@@ -5310,7 +5593,7 @@ def window_graph(scene, length, number, first_input, pts, rest, rate):
     cx, cy = x + w // 2, y + h // 2
     centre = f"x='{cx}-w/2':y='{cy}-h/2'"
     return [
-        f"[{first_input}:v]setpts={pts},fps={fps},{zoom_filters(scene, w, h, rate)},"
+        f"{head},fps={fps},{zoom_filters(scene, w, h, rate)},"
         f"setsar=1,format=rgba,trim=end_frame={clip_frames}[c{n}]",
         f"color=c=white:s={w}x{h}:{one},format=gray,"
         f"geq=lum='255*{rounded(0, 0, w, h, r)}',"
@@ -5324,8 +5607,47 @@ def window_graph(scene, length, number, first_input, pts, rest, rate):
         f"[b{n}][w{n}]overlay={centre}:format=auto,{rest}"]
 
 
+def ring_graph(scene, number, head, rate):
+    """(chains, head): a clip's rings drawn on it, in its file's pixels before
+    anything scales it, so each stays on its point of the picture.
+
+    Each ring is one frame drawn by geq, repeated by loop and cut to its half
+    second, so it costs only then; its timestamps start it at its moment, and
+    eof_action=pass lets the clip go on without it. After the last, tpad gives
+    the fps that follows a frame past the clip's last: ffmpeg 6.1.1's overlay ends
+    at its last frame's own time, and fps would drop that frame. The scene's trim
+    takes it off (DEMO-0286 § 4.3)."""
+    if not scene.rings:
+        return [], head
+    fps, tall = rate_text(rate), scene.info["height"]
+    big, line, edge = RING_TO * tall, RING_LINE * tall, RING_EDGE * tall
+    side = 2 * math.ceil((big + edge) / 2) + 4
+    off = f"abs(hypot(X-{side / 2},Y-{side / 2})-{big / 2:.3f})"
+    on_line = f"clip({line / 2 + 0.5:.3f}-{off},0,1)"
+    on_edge = f"clip({edge / 2 + 0.5:.3f}-{off},0,1)"
+    cover = f"({on_line}+(1-{on_line})*{RING_EDGE_ALPHA}*{on_edge})"
+    colour = ":".join(f"{name}='{value}*{on_line}/max({cover},0.001)'"
+                      for name, value in zip("rgb", rgb(RING_COLOUR), strict=True))
+    p = f"clip(t/{RING_SECONDS},0,1)"
+    k = f"({RING_FROM}+{RING_TO - RING_FROM:.6g}*(1-(1-{p})*(1-{p})))/{RING_TO}"
+    chains, at = [], f"{head}[k{number}_0]"
+    for i, ring in enumerate(scene.rings):
+        chains += [
+            at,
+            f"color=c=black@0:s={side}x{side}:r={fps}:d={1 / rate:.6f},format=rgba,"
+            f"geq={colour}:a='255*{cover}',loop=loop=-1:size=1,"
+            f"trim=end_frame={max(1, round(RING_SECONDS * rate))},"
+            f"fade=t=out:st=0:d={RING_SECONDS}:alpha=1,"
+            f"scale=w='max(1,round(iw*{k}))':h='max(1,round(ih*{k}))':eval=frame,"
+            f"setpts=PTS+{ring['begin']:.6f}/TB[g{number}_{i}]"]
+        at = (f"[k{number}_{i}][g{number}_{i}]overlay=x='{ring['x']:g}-w/2':"
+              f"y='{ring['y']:g}-h/2':eval=frame:eof_action=pass[k{number}_{i + 1}]")
+    chains.append(at)
+    return chains, f"[k{number}_{len(scene.rings)}]tpad=stop_mode=clone:stop=1"
+
+
 def zoom_filters(scene, w, h, rate):
-    """Scale a windowed clip to its window, zooming as its zoom line says:
+    """Scale a clip to its window or the frame, zooming as its zoom line says:
     the view closes in on a point of the picture and drifts towards it,
     never past the picture's edge, eased in and out (smoothstep) between two
     times, and stays there. The
@@ -6478,8 +6800,9 @@ def build_parser():
                                    "frame's (default: {size})", size=CARD_TEXT_SIZE))
     card.add_argument("--background", default=CARD_BACKGROUND,
                       metavar="#RRGGBB",
-                      help=tr_help("the background colour (default: {colour})",
-                                   colour=CARD_BACKGROUND))
+                      help=tr_help("the background colour, or a drawn background: "
+                                   "{names} (default: {colour})",
+                                   names=", ".join(DRAWN_DARK), colour=CARD_BACKGROUND))
     card.add_argument("--like", metavar="VIDEO",
                       help=tr_help("take the size and frame rate from this video"))
     card.add_argument("-s", "--size", help=tr_help("the picture size, like 1280x800 "

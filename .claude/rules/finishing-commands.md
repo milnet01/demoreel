@@ -36,6 +36,14 @@ stop agreeing.
 - **A `split` weighs its slices in `film_pieces`.** `PIECE_SCENES` counts decoders:
   `scene_weight` is 1 for a clip or a card, and a split's number of slices. A film
   with no split is cut as before, and `ci.sh` holds that with a literal.
+- **A ring costs only its half second.** Each `ring` is one frame drawn by `geq`,
+  repeated by `loop`, cut by `trim` to its half second and started at its moment
+  by its timestamps; its `overlay` takes `eof_action=pass`, so the clip goes on
+  without it. Do not make it a stream as long as its scene, switched by `enable`:
+  each ring would then scale a frame for every frame of the scene. It goes in
+  before the clip's `fps`, so before anything scales it, and a `tpad` after the
+  last ring gives that `fps` a frame to spare, as on a `split`. The contract is
+  `docs/specs/DEMO-0286-trailer-effects.md`.
 - **A piece's frames are counted, because ffmpeg's exit status is not
   enough.** Out of memory, it logged a scaler error, wrote 9 frames of 25 and
   exited 0 (measured 2026-10-30, under `ulimit -v`). `run_film_ffmpeg` compares

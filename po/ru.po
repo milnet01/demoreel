@@ -719,9 +719,6 @@ msgstr "{where}: window — доля места в процентах, от {low
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: длительность карточки должна быть больше нуля."
 
-msgid "{where}: a background is a colour written #RRGGBB, like {example}, or two to {most} of them joined by commas for a moving gradient, not {value}."
-msgstr "{where}: фон — это цвет в виде #RRGGBB, например {example}, или от двух до {most} цветов через запятую для движущегося градиента, а не {value}."
-
 msgid "{where}: {path} has no length ffmpeg can tell."
 msgstr "{where}: ffmpeg не может определить длительность {path}."
 
@@ -1199,10 +1196,6 @@ msgid "the text's height, as a percentage of the frame's (default: {size})"
 msgstr "высота текста в процентах от высоты кадра (по умолчанию: {size})"
 
 #. argparse formats this text with %
-msgid "the background colour (default: {colour})"
-msgstr "цвет фона (по умолчанию: {colour})"
-
-#. argparse formats this text with %
 msgid "take the size and frame rate from this video"
 msgstr "взять размер и частоту кадров из этого видео"
 
@@ -1512,9 +1505,55 @@ msgstr ""
 msgid "scene {number}: a split of {count} videos, {start} to {end}"
 msgstr "сцена {number}: split, число видео: {count}, от {start} до {end}"
 
-#. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, sound, music or level, not {word}."
-msgstr "{where}: строка начинается с clip, card, split, slice, slide, text, zoom, sound, music или level, а не с {word}."
-
 msgid "the script has no scenes in it. A scene is a line starting with clip, card or split."
 msgstr "в сценарии нет сцен. Сцена — это строка, начинающаяся с clip, card или split."
+
+#. translators: ring is an edit-script word and stays in English.
+msgid "{where}: a ring line belongs to the clip above it, and the line above is not part of a clip."
+msgstr "{where}: строка ring относится к клипу над ней, а строка над ней не относится к клипу."
+
+#. translators: ring and at are edit-script words and stay in English.
+msgid "{where}: ring takes the point clicked, in the pixels of the clip's own file, then its moment: ring 640 400 at 5.4"
+msgstr "{where}: ring принимает точку щелчка в пикселях собственного файла клипа, а затем её момент: ring 640 400 at 5.4"
+
+#. translators: ring and at are edit-script words and stay in English.
+msgid "{where}: ring needs `at`, the moment of the click in the clip's own time: ring 640 400 at 5.4"
+msgstr "{where}: ring нужен `at` — момент щелчка в собственном времени клипа: ring 640 400 at 5.4"
+
+#. translators: {word} is the first word of the line, in quotes.
+msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, ring, sound, music or level, not {word}."
+msgstr "{where}: строка начинается с clip, card, split, slice, slide, text, zoom, ring, sound, music или level, а не с {word}."
+
+#. translators: ring is an edit-script word and stays in English.
+msgid "{where}: the ring's point {x} {y} is outside {path}, which is {size}."
+msgstr "{where}: точка {x} {y} кольца лежит за пределами {path}, размер которого {size}."
+
+msgid "{where}: the ring at {at} is not inside its clip ({start} to {end})."
+msgstr "{where}: кольцо в {at} не попадает в свой клип (от {start} до {end})."
+
+#. translators: hold is an edit-script word and stays in English.
+msgid "{where}: the ring at {at} lasts {seconds} seconds, past the clip's own frames, which end at {end}; the hold would freeze it. Move it earlier."
+msgstr "{where}: кольцо в {at} длится {seconds} с, дольше собственных кадров клипа, которые кончаются в {end}; hold заморозил бы его. Поставьте его раньше."
+
+#. translators: x and y are edit-script words and stay in English.
+msgid "{where}: a text's x and y are given together, and this one has only {word}."
+msgstr "{where}: x и y текста задаются вместе, а у этого есть только {word}."
+
+#. translators: {word} is x or y, an edit-script word that stays in English.
+msgid "{where}: a text's {word} is a percentage of the frame, from 0 to 100, not {value}."
+msgstr "{where}: {word} у текста — доля кадра в процентах, от 0 до 100, а не {value}."
+
+#. translators: {word} is at or band; x, y, at and band are edit-script words and stay in English.
+msgid "{where}: a text placed with x and y takes no {word}: it sits at its point, and has no band."
+msgstr "{where}: текст, размещённый через x и y, не принимает {word}: он стоит в своей точке и не имеет полосы."
+
+msgid "{where}: the text {words} at x {x} y {y} reaches past the frame's edge. Move it in, or give it a smaller size."
+msgstr "{where}: текст {words} в x {x} y {y} выходит за край кадра. Сдвиньте его внутрь или задайте меньший size."
+
+#. translators: {names} are the drawn backgrounds' names, which stay in English.
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, two to {most} of them joined by commas for a moving gradient, or one of {names}, not {value}."
+msgstr "{where}: фон — это цвет в виде #RRGGBB, например {example}, от двух до {most} цветов через запятую для движущегося градиента или один из {names}, а не {value}."
+
+#. argparse formats this text with %
+msgid "the background colour, or a drawn background: {names} (default: {colour})"
+msgstr "цвет фона или нарисованный фон: {names} (по умолчанию: {colour})"

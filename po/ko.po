@@ -707,9 +707,6 @@ msgstr "{where}: window는 공간에서 차지하는 비율(퍼센트)로, {low}
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: card의 길이는 0보다 커야 합니다."
 
-msgid "{where}: a background is a colour written #RRGGBB, like {example}, or two to {most} of them joined by commas for a moving gradient, not {value}."
-msgstr "{where}: 배경은 {example}처럼 #RRGGBB로 쓴 색이거나, 움직이는 그라데이션을 위해 쉼표로 이은 2~{most}개의 색이어야 합니다. {value}은(는) 안 됩니다."
-
 msgid "{where}: {path} has no length ffmpeg can tell."
 msgstr "{where}: ffmpeg이 {path}의 길이를 알 수 없습니다."
 
@@ -1187,10 +1184,6 @@ msgid "the text's height, as a percentage of the frame's (default: {size})"
 msgstr "텍스트의 높이, 프레임 높이에 대한 백분율 (기본값: {size})"
 
 #. argparse formats this text with %
-msgid "the background colour (default: {colour})"
-msgstr "배경색 (기본값: {colour})"
-
-#. argparse formats this text with %
 msgid "take the size and frame rate from this video"
 msgstr "이 동영상에서 크기와 프레임 레이트 가져오기"
 
@@ -1500,9 +1493,55 @@ msgstr ""
 msgid "scene {number}: a split of {count} videos, {start} to {end}"
 msgstr "장면 {number}: 동영상 {count}개의 split, {start}부터 {end}까지"
 
-#. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, sound, music or level, not {word}."
-msgstr "{where}: 줄은 {word}이(가) 아니라 clip, card, split, slice, slide, text, zoom, sound, music 또는 level로 시작해야 합니다."
-
 msgid "the script has no scenes in it. A scene is a line starting with clip, card or split."
 msgstr "스크립트에 장면이 없습니다. 장면은 clip, card 또는 split으로 시작하는 줄입니다."
+
+#. translators: ring is an edit-script word and stays in English.
+msgid "{where}: a ring line belongs to the clip above it, and the line above is not part of a clip."
+msgstr "{where}: ring 줄은 바로 위 클립에 속하는데, 위 줄은 클립의 일부가 아닙니다."
+
+#. translators: ring and at are edit-script words and stay in English.
+msgid "{where}: ring takes the point clicked, in the pixels of the clip's own file, then its moment: ring 640 400 at 5.4"
+msgstr "{where}: ring에는 클릭한 지점을 클립 자체 파일의 픽셀로 쓰고, 이어서 그 시각을 씁니다: ring 640 400 at 5.4"
+
+#. translators: ring and at are edit-script words and stay in English.
+msgid "{where}: ring needs `at`, the moment of the click in the clip's own time: ring 640 400 at 5.4"
+msgstr "{where}: ring에는 `at`이 필요합니다. 클립 자체 시간에서 클릭한 시각입니다: ring 640 400 at 5.4"
+
+#. translators: {word} is the first word of the line, in quotes.
+msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, ring, sound, music or level, not {word}."
+msgstr "{where}: 줄은 {word}이(가) 아니라 clip, card, split, slice, slide, text, zoom, ring, sound, music 또는 level로 시작해야 합니다."
+
+#. translators: ring is an edit-script word and stays in English.
+msgid "{where}: the ring's point {x} {y} is outside {path}, which is {size}."
+msgstr "{where}: 링의 지점 {x} {y}이(가) {path} 밖에 있습니다. 이 파일은 {size}입니다."
+
+msgid "{where}: the ring at {at} is not inside its clip ({start} to {end})."
+msgstr "{where}: {at}의 링이 클립 안({start}~{end})에 있지 않습니다."
+
+#. translators: hold is an edit-script word and stays in English.
+msgid "{where}: the ring at {at} lasts {seconds} seconds, past the clip's own frames, which end at {end}; the hold would freeze it. Move it earlier."
+msgstr "{where}: {at}의 링은 {seconds}초 동안 이어져 {end}에 끝나는 클립 자체 프레임을 넘습니다. hold가 링을 멈춰 버리니 더 앞으로 옮기세요."
+
+#. translators: x and y are edit-script words and stay in English.
+msgid "{where}: a text's x and y are given together, and this one has only {word}."
+msgstr "{where}: 텍스트의 x와 y는 함께 써야 하는데, 이 텍스트에는 {word}만 있습니다."
+
+#. translators: {word} is x or y, an edit-script word that stays in English.
+msgid "{where}: a text's {word} is a percentage of the frame, from 0 to 100, not {value}."
+msgstr "{where}: 텍스트의 {word}는 화면에서 차지하는 비율(퍼센트)로, 0에서 100 사이입니다. {value}은(는) 안 됩니다."
+
+#. translators: {word} is at or band; x, y, at and band are edit-script words and stay in English.
+msgid "{where}: a text placed with x and y takes no {word}: it sits at its point, and has no band."
+msgstr "{where}: x와 y로 놓은 텍스트에는 {word}을(를) 쓸 수 없습니다. 그 지점에 놓이고 띠도 없습니다."
+
+msgid "{where}: the text {words} at x {x} y {y} reaches past the frame's edge. Move it in, or give it a smaller size."
+msgstr "{where}: x {x} y {y}의 텍스트 {words}이(가) 화면 가장자리를 넘어갑니다. 안쪽으로 옮기거나 size를 줄이세요."
+
+#. translators: {names} are the drawn backgrounds' names, which stay in English.
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, two to {most} of them joined by commas for a moving gradient, or one of {names}, not {value}."
+msgstr "{where}: 배경은 {example}처럼 #RRGGBB로 쓴 색, 움직이는 그라데이션을 위해 쉼표로 이은 2~{most}개의 색, 또는 {names} 중 하나여야 합니다. {value}은(는) 안 됩니다."
+
+#. argparse formats this text with %
+msgid "the background colour, or a drawn background: {names} (default: {colour})"
+msgstr "배경색 또는 그려진 배경: {names} (기본값: {colour})"

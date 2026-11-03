@@ -713,9 +713,6 @@ msgstr "{where}: window is een deel van de ruimte in procent, van {low} tot {hig
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: een kaart heeft een lengte boven nul nodig."
 
-msgid "{where}: a background is a colour written #RRGGBB, like {example}, or two to {most} of them joined by commas for a moving gradient, not {value}."
-msgstr "{where}: een achtergrond is een kleur geschreven als #RRGGBB, zoals {example}, of twee tot {most} daarvan, gescheiden door komma's, voor een bewegend kleurverloop, niet {value}."
-
 msgid "{where}: {path} has no length ffmpeg can tell."
 msgstr "{where}: ffmpeg kan de lengte van {path} niet bepalen."
 
@@ -1193,10 +1190,6 @@ msgid "the text's height, as a percentage of the frame's (default: {size})"
 msgstr "de hoogte van de tekst, als percentage van die van het beeld (standaard: {size})"
 
 #. argparse formats this text with %
-msgid "the background colour (default: {colour})"
-msgstr "de achtergrondkleur (standaard: {colour})"
-
-#. argparse formats this text with %
 msgid "take the size and frame rate from this video"
 msgstr "de grootte en beeldsnelheid van deze video overnemen"
 
@@ -1506,9 +1499,55 @@ msgstr ""
 msgid "scene {number}: a split of {count} videos, {start} to {end}"
 msgstr "scène {number}: een split van {count} video's, {start} tot {end}"
 
-#. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, sound, music or level, not {word}."
-msgstr "{where}: een regel begint met clip, card, split, slice, slide, text, zoom, sound, music of level, niet met {word}."
-
 msgid "the script has no scenes in it. A scene is a line starting with clip, card or split."
 msgstr "het script bevat geen scènes. Een scène is een regel die begint met clip, card of split."
+
+#. translators: ring is an edit-script word and stays in English.
+msgid "{where}: a ring line belongs to the clip above it, and the line above is not part of a clip."
+msgstr "{where}: een ring-regel hoort bij de clip erboven, en de regel erboven hoort niet bij een clip."
+
+#. translators: ring and at are edit-script words and stay in English.
+msgid "{where}: ring takes the point clicked, in the pixels of the clip's own file, then its moment: ring 640 400 at 5.4"
+msgstr "{where}: ring neemt het aangeklikte punt, in de pixels van het eigen bestand van de clip, en dan het moment: ring 640 400 at 5.4"
+
+#. translators: ring and at are edit-script words and stay in English.
+msgid "{where}: ring needs `at`, the moment of the click in the clip's own time: ring 640 400 at 5.4"
+msgstr "{where}: ring heeft `at` nodig, het moment van de klik in de eigen tijd van de clip: ring 640 400 at 5.4"
+
+#. translators: {word} is the first word of the line, in quotes.
+msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, ring, sound, music or level, not {word}."
+msgstr "{where}: een regel begint met clip, card, split, slice, slide, text, zoom, ring, sound, music of level, niet met {word}."
+
+#. translators: ring is an edit-script word and stays in English.
+msgid "{where}: the ring's point {x} {y} is outside {path}, which is {size}."
+msgstr "{where}: het punt {x} {y} van de ring ligt buiten {path}, dat {size} is."
+
+msgid "{where}: the ring at {at} is not inside its clip ({start} to {end})."
+msgstr "{where}: de ring op {at} valt niet binnen zijn clip ({start} tot {end})."
+
+#. translators: hold is an edit-script word and stays in English.
+msgid "{where}: the ring at {at} lasts {seconds} seconds, past the clip's own frames, which end at {end}; the hold would freeze it. Move it earlier."
+msgstr "{where}: de ring op {at} duurt {seconds} seconden, voorbij de eigen beelden van de clip, die eindigen op {end}; de hold zou hem bevriezen. Zet hem eerder."
+
+#. translators: x and y are edit-script words and stay in English.
+msgid "{where}: a text's x and y are given together, and this one has only {word}."
+msgstr "{where}: x en y van een tekst worden samen gegeven, en deze heeft alleen {word}."
+
+#. translators: {word} is x or y, an edit-script word that stays in English.
+msgid "{where}: a text's {word} is a percentage of the frame, from 0 to 100, not {value}."
+msgstr "{where}: de {word} van een tekst is een percentage van het beeld, van 0 tot 100, niet {value}."
+
+#. translators: {word} is at or band; x, y, at and band are edit-script words and stay in English.
+msgid "{where}: a text placed with x and y takes no {word}: it sits at its point, and has no band."
+msgstr "{where}: een tekst die met x en y is geplaatst, neemt geen {word}: hij staat op zijn punt en heeft geen band."
+
+msgid "{where}: the text {words} at x {x} y {y} reaches past the frame's edge. Move it in, or give it a smaller size."
+msgstr "{where}: de tekst {words} op x {x} y {y} reikt tot voorbij de rand van het beeld. Zet hem verder naar binnen, of geef hem een kleinere size."
+
+#. translators: {names} are the drawn backgrounds' names, which stay in English.
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, two to {most} of them joined by commas for a moving gradient, or one of {names}, not {value}."
+msgstr "{where}: een achtergrond is een kleur geschreven als #RRGGBB, zoals {example}, twee tot {most} daarvan, gescheiden door komma's, voor een bewegend kleurverloop, of een van {names}, niet {value}."
+
+#. argparse formats this text with %
+msgid "the background colour, or a drawn background: {names} (default: {colour})"
+msgstr "de achtergrondkleur, of een getekende achtergrond: {names} (standaard: {colour})"

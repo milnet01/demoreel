@@ -713,9 +713,6 @@ msgstr "{where}: window הוא חלק מהשטח באחוזים, מ־{low} עד 
 msgid "{where}: a card needs a length above zero."
 msgstr "{where}: לכרטיס צריך להיות אורך גדול מאפס."
 
-msgid "{where}: a background is a colour written #RRGGBB, like {example}, or two to {most} of them joined by commas for a moving gradient, not {value}."
-msgstr "{where}: רקע הוא צבע שנכתב #RRGGBB, כמו {example}, או שניים עד {most} צבעים מופרדים בפסיקים למעבר צבעים נע, ולא {value}."
-
 msgid "{where}: {path} has no length ffmpeg can tell."
 msgstr "{where}: ל־{path} אין אורך ש־ffmpeg יכול לזהות."
 
@@ -1193,10 +1190,6 @@ msgid "the text's height, as a percentage of the frame's (default: {size})"
 msgstr "גובה הטקסט, כאחוז מגובה הפריים (ברירת מחדל: {size})"
 
 #. argparse formats this text with %
-msgid "the background colour (default: {colour})"
-msgstr "צבע הרקע (ברירת מחדל: {colour})"
-
-#. argparse formats this text with %
 msgid "take the size and frame rate from this video"
 msgstr "לקיחת הגודל וקצב הפריימים מהסרטון הזה"
 
@@ -1506,9 +1499,55 @@ msgstr ""
 msgid "scene {number}: a split of {count} videos, {start} to {end}"
 msgstr "סצנה {number}: split של {count} סרטונים, מ־{start} עד {end}"
 
-#. translators: {word} is the first word of the line, in quotes.
-msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, sound, music or level, not {word}."
-msgstr "{where}: שורה מתחילה ב־clip, card, split, slice, slide, text, zoom, sound, music או level, ולא ב־{word}."
-
 msgid "the script has no scenes in it. A scene is a line starting with clip, card or split."
 msgstr "אין סצנות בתסריט. סצנה היא שורה שמתחילה ב־clip, ב־card או ב־split."
+
+#. translators: ring is an edit-script word and stays in English.
+msgid "{where}: a ring line belongs to the clip above it, and the line above is not part of a clip."
+msgstr "{where}: שורת ring שייכת לקטע שמעליה, והשורה שמעליה אינה חלק מקטע."
+
+#. translators: ring and at are edit-script words and stay in English.
+msgid "{where}: ring takes the point clicked, in the pixels of the clip's own file, then its moment: ring 640 400 at 5.4"
+msgstr "{where}: ring מקבל את הנקודה שבה לחצו, בפיקסלים של הקובץ של הקטע עצמו, ואחר כך את הרגע: ring 640 400 at 5.4"
+
+#. translators: ring and at are edit-script words and stay in English.
+msgid "{where}: ring needs `at`, the moment of the click in the clip's own time: ring 640 400 at 5.4"
+msgstr "{where}: ring צריך `at`, רגע הלחיצה בזמן של הקטע עצמו: ring 640 400 at 5.4"
+
+#. translators: {word} is the first word of the line, in quotes.
+msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, ring, sound, music or level, not {word}."
+msgstr "{where}: שורה מתחילה ב־clip, card, split, slice, slide, text, zoom, ring, sound, music או level, ולא ב־{word}."
+
+#. translators: ring is an edit-script word and stays in English.
+msgid "{where}: the ring's point {x} {y} is outside {path}, which is {size}."
+msgstr "{where}: הנקודה {x} {y} של הטבעת נמצאת מחוץ ל־{path}, שגודלו {size}."
+
+msgid "{where}: the ring at {at} is not inside its clip ({start} to {end})."
+msgstr "{where}: הטבעת ב־{at} אינה בתוך הקטע שלה ({start} עד {end})."
+
+#. translators: hold is an edit-script word and stays in English.
+msgid "{where}: the ring at {at} lasts {seconds} seconds, past the clip's own frames, which end at {end}; the hold would freeze it. Move it earlier."
+msgstr "{where}: הטבעת ב־{at} נמשכת {seconds} שניות, מעבר לפריימים של הקטע עצמו, שמסתיימים ב־{end}; ה־hold היה מקפיא אותה. הקדימו אותה."
+
+#. translators: x and y are edit-script words and stay in English.
+msgid "{where}: a text's x and y are given together, and this one has only {word}."
+msgstr "{where}: את x ואת y של טקסט נותנים יחד, ולטקסט הזה יש רק {word}."
+
+#. translators: {word} is x or y, an edit-script word that stays in English.
+msgid "{where}: a text's {word} is a percentage of the frame, from 0 to 100, not {value}."
+msgstr "{where}: ה־{word} של טקסט הוא אחוז מהמסגרת, מ־0 עד 100, ולא {value}."
+
+#. translators: {word} is at or band; x, y, at and band are edit-script words and stay in English.
+msgid "{where}: a text placed with x and y takes no {word}: it sits at its point, and has no band."
+msgstr "{where}: טקסט שממוקם עם x ו־y אינו מקבל {word}: הוא נמצא בנקודה שלו, ואין לו פס."
+
+msgid "{where}: the text {words} at x {x} y {y} reaches past the frame's edge. Move it in, or give it a smaller size."
+msgstr "{where}: הטקסט {words} ב־x {x} y {y} חורג מקצה המסגרת. הזיזו אותו פנימה, או תנו לו size קטן יותר."
+
+#. translators: {names} are the drawn backgrounds' names, which stay in English.
+msgid "{where}: a background is a colour written #RRGGBB, like {example}, two to {most} of them joined by commas for a moving gradient, or one of {names}, not {value}."
+msgstr "{where}: רקע הוא צבע שנכתב #RRGGBB, כמו {example}, שניים עד {most} צבעים מופרדים בפסיקים למעבר צבעים נע, או אחד מ־{names}, ולא {value}."
+
+#. argparse formats this text with %
+msgid "the background colour, or a drawn background: {names} (default: {colour})"
+msgstr "צבע הרקע, או רקע מצויר: {names} (ברירת מחדל: {colour})"
