@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=300 -->
+<!-- ants-roadmap-id-high-water: DEMO=349 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -948,6 +948,13 @@ simplest case, and a gate proves it still records.
   **Layman:** The speed and memory check has no starting figure for split-screen yet, because the machine was too busy to measure it fairly.
   Kind: test.
   Source: found-building-DEMO-0285-2026-11-02.
+
+- 📋 [DEMO-0346] **A fast draft render of an `edit` script at a low size and frame rate.**
+  Offered by editly (fast mode) and auto-editor. Useful before the
+  editor exists.
+  **Layman:** Check a film in seconds before the real render.
+  Kind: feature.
+  Source: research-2026-11-03.
 
 ## Standing chores
 
@@ -6058,6 +6065,34 @@ Claude Code can use them before the editor's window exists.
   Kind: ux.
   Source: user-request-2026-10-16.
 
+- 📋 [DEMO-0301] **A `move` step glides the pointer along an eased path over a set time.**
+  Offered by Screen Studio (smooth cursor) and Camtasia (cursor
+  smoothing). Today only `drag` slides, over half a second.
+  **Layman:** The pointer slides smoothly to its target instead of jumping.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0302] **Hide the pointer while it stands still, and show it again when it moves.**
+  Offered by Screen Studio. It hides the pointer and highlights
+  nothing, so the cursor-highlight ban does not reach it.
+  **Layman:** The pointer disappears when nobody is using it.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0303] **Draw the pointer on `record --gpu`.**
+  `record --gpu` refuses `--cursor` today (README). Screen Studio
+  and Cap draw the pointer on every recording.
+  **Layman:** Recordings made with the graphics card can show the mouse too.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0304] **Speed up only the stretches where scripted typing happens.**
+  Offered by Screen Studio (speed up typing). Driven by the `-a`
+  steps, like DEMO-0235 and DEMO-0236.
+  **Layman:** Long typing plays fast while the rest stays at normal speed.
+  Kind: feature.
+  Source: research-2026-11-03.
+
 ## 1.3.0 — Sound that sits right
 
 Music and voice tracks, even loudness, music that ducks under a voice and
@@ -6125,6 +6160,26 @@ review gate.
   **Layman:** Adding music or making the sound even takes one step, not a page of settings.
   Kind: ux.
   Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0305] **Audio effects: equaliser, compressor, limiter, noise gate, de-click and reverb.**
+  Offered by Shotcut and Resolve (6-band clip EQ). DEMO-0223 covers
+  loudness and hiss only.
+  **Layman:** Shape how a voice or music sounds.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0306] **Keep a voice's pitch when a clip's speed changes.**
+  Offered by Shotcut (pitch compensation). First check what `speed`
+  does to pitch today: README does not say.
+  **Layman:** A sped-up video does not make voices squeaky.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0307] **Show speaker notes on screen while recording a voice-over.**
+  Offered by Screen Studio. Pairs with DEMO-0232.
+  **Layman:** A script to read from while you talk.
+  Kind: feature.
+  Source: research-2026-11-03.
 
 ## 1.4.0 — The editor opens
 
@@ -6195,6 +6250,20 @@ command line too (DEMO-0181).
   **Layman:** The editor's menus are laid out so that everything is quick to reach and nothing is hard to find.
   Kind: ux.
   Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0308] **Editable keyboard shortcuts, and a search box that finds every command.**
+  Offered by Shotcut and Resolve. Also helps people who work by
+  keyboard alone.
+  **Layman:** Change the keys, and type to find any action.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0309] **Relink moved media, and pack a project with all its files into one folder.**
+  Offered by Resolve (media management). Goes with project files
+  (DEMO-0144). Kdenlive's project archiving is unverified.
+  **Layman:** A project still opens after its files move, or on another machine.
+  Kind: feature.
+  Source: research-2026-11-03.
 
 ## 1.5.0 — A timeline to work in
 
@@ -6272,6 +6341,47 @@ detection.
   Kind: ux.
   Source: user-request-2026-10-16.
 
+- 📋 [DEMO-0310] **Find the beats in a music track and snap cuts to them.**
+  Offered by Final Cut Pro 12 (Beat Detection). Extends DEMO-0227's
+  snapping.
+  **Layman:** Cuts land in time with the music.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0311] **Line up two clips by their sound.**
+  Offered by Shotcut (align by audio) and Resolve (sync by audio).
+  **Layman:** Sync a separately recorded voice to the video.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0312] **Roll, slip and slide trims, insert and overwrite edits, and three-point editing.**
+  Offered by Shotcut and Resolve. DEMO-0146 has split, trim and
+  ripple delete only.
+  **Layman:** The fine trimming tools that professionals expect.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0313] **Keep named versions of an edit and compare two of them.**
+  Offered by Resolve (timeline comparison). More than undo
+  (DEMO-0148).
+  **Layman:** Try an idea without losing the old cut.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0314] **Leave review notes at a moment in the film.**
+  Offered by Resolve and Camtasia. Local notes only: hosted review
+  links need a service, which demoreel does not run.
+  **Layman:** Write "fix this here" on the timeline.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0315] **Keywords, smart collections and searchable notes in the media library.**
+  Offered by Resolve (smart bins) and Kdenlive 25.04. Extends
+  DEMO-0226.
+  **Layman:** Find clips by tag or note.
+  Kind: feature.
+  Source: research-2026-11-03.
+
 ## 1.6.0 — Shaping the picture
 
 Layers, zoom, pan, crop and rotate, keyframes, colour, and the window's
@@ -6311,6 +6421,8 @@ titles. Motion tracking comes last here, as the least needed.
   Source: user-request-2026-10-02.
 
 - 📋 [DEMO-0155] **Correct colour: brightness, contrast, saturation and looks.**
+  Research 2026-11-03: also load LUT files (Shotcut, Kdenlive) and a
+  vignette (editly).
   **Layman:** Make a clip lighter, richer or warmer, or give the whole film one look.
   Kind: feature.
   Source: user-request-2026-10-02.
@@ -6359,6 +6471,118 @@ titles. Motion tracking comes last here, as the least needed.
   Kind: ux.
   Source: user-request-2026-10-16.
 
+- 📋 [DEMO-0316] **Set a window's shadow, corner radius and inset.**
+  Offered by Screen Studio. The look is fixed today.
+  **Layman:** Adjust how the floating window looks.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0317] **Use your own picture as the background behind a clip's window.**
+  Offered by Screen Studio. DEMO-0286 adds five drawn backgrounds
+  only.
+  **Layman:** Put a wallpaper or photo behind the window.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0318] **Motion blur on fast zooms, pans and slides.**
+  Offered by Screen Studio. Builds on DEMO-0151 and DEMO-0154.
+  **Layman:** Fast camera moves look smooth instead of choppy.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0319] **Speed ramps: a clip's speed eases from one rate to another.**
+  Offered by Resolve (retime curves) and Shotcut. DEMO-0219 has
+  fixed speeds only; uses DEMO-0154's easing.
+  **Layman:** Slow down smoothly into a moment, then speed back up.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0320] **Smooth slow motion that makes the in-between frames.**
+  Offered by Resolve (Optical Flow) and Final Cut Pro (Smooth
+  Slo-Mo). ffmpeg's `minterpolate` may do it; unchecked.
+  **Layman:** Slowed-down video stays fluid instead of jerky.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0321] **Hide a jump cut inside one shot with a blended transition.**
+  Offered by Premiere (Morph Cut) and Resolve (Smooth Cut).
+  **Layman:** A cut out of the middle of a shot does not visibly jump.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0322] **Stabilise shaky footage.**
+  Offered by Resolve and Shotcut. Matters for imported video only
+  (DEMO-0145).
+  **Layman:** Steady a wobbly phone video.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0323] **Upscale a small video sharply.**
+  Offered by Screen Studio. Resolve's Super Scale is unverified.
+  **Layman:** A small recording looks crisp at a larger size.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0324] **Make one colour see-through in an imported clip (green screen).**
+  Offered by Camtasia (Remove a Color) and Shotcut (Chroma Key).
+  It keys footage the user brings; it records no webcam. After
+  DEMO-0149.
+  **Layman:** Remove a green backdrop from behind someone.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0325] **Select a person or object once and mask it through the clip.**
+  Offered by Resolve (Magic Mask), Final Cut Pro (Magnetic Mask)
+  and Kdenlive 25.04. Builds on DEMO-0251.
+  **Layman:** Click a thing and apply an effect to it alone.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0326] **Adjustment layers: one effect applied to everything beneath it for a stretch.**
+  Offered by Shotcut and Resolve.
+  **Layman:** Change the look of several clips at once.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0327] **Video scopes: waveform, histogram, vectorscope and RGB parade.**
+  Offered by Shotcut, OpenShot and Resolve. Goes with DEMO-0155.
+  **Layman:** Graphs that show whether colour and brightness are right.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0328] **Automatic light and colour fix, and matching colour between clips.**
+  Offered by Final Cut Pro (Enhance Light and Color, Match Color).
+  **Layman:** One step makes clips look right and alike.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0329] **Fit a clip of another shape over a blurred, enlarged copy of itself.**
+  Offered by editly (contain-blur). Today a clip of another shape
+  is refused unless it plays in a window.
+  **Layman:** A tall phone clip fills a wide frame without black bars.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0330] **Bring in Lottie and other animated vector graphics.**
+  Offered by Resolve 20, Shotcut and Kdenlive (Glaxnimate).
+  DEMO-0145 covers video and pictures only.
+  **Layman:** Use animated icons and stickers made in design tools.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0331] **A library of ready-made animated titles and name bars.**
+  Offered by ScreenFlow, Camtasia and Resolve. DEMO-0221 designs
+  titles and DEMO-0245 saves your own; neither ships presets.
+  **Layman:** Pick a finished title style instead of designing one.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0332] **An audio visualiser: bars or a waveform that move with the sound.**
+  Offered by Camtasia, OpenShot and Resolve.
+  **Layman:** Show the music or voice as moving shapes.
+  Kind: feature.
+  Source: research-2026-11-03.
+
 ## 1.7.0 — Words and voices
 
 Subtitles, then the features that need a local speech or voice model:
@@ -6376,6 +6600,7 @@ too, as the other cut offered for approval.
 - 📋 [DEMO-0222] **Subtitles: bring in or save an .srt file, edit its lines, and burn them into the picture.**
   Import and export .srt, edit text and times on the timeline, and
   choose between a separate subtitle track and burned-in text.
+  Research 2026-11-03: read and write VTT, ASS and TTML as well as .srt.
   **Layman:** Add subtitles to a video, or use subtitles made elsewhere.
   Kind: feature.
   Source: user-request-2026-10-16.
@@ -6441,6 +6666,39 @@ too, as the other cut offered for approval.
   Kind: ux.
   Source: user-request-2026-10-16.
 
+- 📋 [DEMO-0333] **Captions that light up each word as it is spoken.**
+  Offered by Screen Studio, Camtasia and Remotion. Builds on
+  DEMO-0222 and DEMO-0246.
+  **Layman:** Animated captions in the style of short social videos.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0334] **Translate subtitles into other languages.**
+  Offered by Premiere 25.2, Descript, Camtasia and Loom.
+  **Layman:** One video, with captions in many languages.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0335] **Search footage by its spoken words or by what is in the picture.**
+  Offered by Premiere (Media Intelligence), Final Cut Pro 12 and
+  Resolve (IntelliSearch). Uses DEMO-0246's transcript.
+  **Layman:** Find the moment where you said "save".
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0336] **Build a first cut from a written script.**
+  Offered by Resolve 20 (IntelliScript).
+  **Layman:** Paste a script, and the matching takes are laid out in order.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 💭 [DEMO-0349] **Dub the narration into another language.**
+  Considered, not planned: no source showed dubbing itself, only
+  translation (Descript). After DEMO-0247.
+  **Layman:** The narrator speaks another language.
+  Kind: feature.
+  Source: research-2026-11-03.
+
 ## 1.8.0 — Out the door
 
 Getting a film out: export presets, tall and square versions, background
@@ -6450,6 +6708,8 @@ export, smooth editing of long videos, recording from inside the editor,
 and style kits for a series.
 
 - 📋 [DEMO-0158] **Export presets: web video, GIF, WebM, and a choice of size and frame rate.**
+  Research 2026-11-03: add an image sequence (Shotcut) and animated PNG
+  (ScreenFlow); animated WebP is unverified.
   **Layman:** Save the finished film in the right shape for where it is going, in one step.
   Kind: feature.
   Source: user-request-2026-10-02.
@@ -6502,6 +6762,76 @@ and style kits for a series.
   **Layman:** Saving a finished video for YouTube or a phone takes one click.
   Kind: ux.
   Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0337] **Offer short clips cut from a long video, for the user to pick.**
+  Offered by Descript. Nothing is cut until the user picks it.
+  **Layman:** Get social-media snippets from a long demo.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0338] **Draft a title, description and chapter list for publishing.**
+  Offered by Camtasia, Cap and Descript. Pairs with DEMO-0227.
+  **Layman:** Text ready to paste into a video site.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0339] **Show where a platform's buttons and captions will cover the picture.**
+  Offered by Screen Studio (Reel mode). Goes with DEMO-0220.
+  **Layman:** See what a phone app's buttons would hide.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0340] **Exchange timelines with other editors through OpenTimelineIO or EDL.**
+  Offered by Kdenlive 25.04 (OpenTimelineIO) and Shotcut (EDL).
+  **Layman:** Finish a demoreel edit in Resolve or Kdenlive.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0341] **Apply one edit or preset to many files in one run.**
+  Offered by Shotcut (batch encode) and Remotion. Sits with
+  DEMO-0231.
+  **Layman:** Process a folder of recordings the same way.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0342] **Make a film loop seamlessly, its end flowing into its start.**
+  Offered by Screen Studio.
+  **Layman:** A GIF that repeats without a visible jump.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0343] **Export with a see-through background.**
+  Offered by Cap and Shotcut.
+  **Layman:** Lay the result over something else in another editor.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0344] **Copy the finished video to the clipboard.**
+  Offered by Screen Studio.
+  **Layman:** Paste it straight into a chat.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 📋 [DEMO-0345] **Tone-map HDR sources to standard video.**
+  Offered by Shotcut and Resolve. Matters once outside video can be
+  imported (DEMO-0145).
+  **Layman:** HDR phone clips do not look washed out.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 💭 [DEMO-0347] **Upload straight to a video site, only when the user asks.**
+  Offered by Resolve and ScreenFlow. Considered, not planned: it
+  sends the film off the machine, so each upload is the user's call.
+  **Layman:** Publish without opening a browser.
+  Kind: feature.
+  Source: research-2026-11-03.
+
+- 💭 [DEMO-0348] **Make many versions of one film from a table of words and pictures.**
+  Offered by Remotion. Considered, not planned: it must stay an
+  edit script and never become a config file format.
+  **Layman:** One template, with a version made for each product.
+  Kind: feature.
+  Source: research-2026-11-03.
 
 ## 1.9.0 — Plug-ins
 
