@@ -27,6 +27,8 @@ _demoreel_running() {
     local exe
     [[ $1 == */* ]] && return
     exe=$(command -v -- "$1") || return
+    # A function or an alias answers with its bare name, which opens the folder's.
+    [[ $exe == /* ]] || return
     python3 -I -B -c 'import importlib.machinery as m, importlib.util as u, sys
 l = m.SourceFileLoader("demoreel", sys.argv[1])
 d = u.module_from_spec(u.spec_from_loader("demoreel", l))

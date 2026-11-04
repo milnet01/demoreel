@@ -7059,7 +7059,7 @@ WORKFLOWPY
 # else filled. The run names are the state files', and those are text a shell
 # must never expand.
 chain_tab_checks() {
-    local at=$1 shell canary=$1/ran offered_names bad=0 run_pid
+    local at=$1 shell canary=$1/ran offered_names bad=0 run_pid path_without_demoreel
     step "Tab on stop runs nothing from the folder it is pressed in, or from a run's name"
     mkdir -p "$at/folder" "$at/bin" "$at/xdg"
     # A copy, so that bytecode written beside the script can be seen here.
@@ -7089,6 +7089,9 @@ for i, name in enumerate(names):
         {"name": name, "pid": pid, "starttime": demoreel.proc_starttime(pid)}))
 CHAINPY
     write_zcomp
+    # PATH less every folder holding a demoreel, such as ~/.local/bin here.
+    path_without_demoreel=$(tr ':' '\n' <<<"$PATH" | while read -r dir; do
+        [ -e "$dir/demoreel" ] || printf '%s\n' "$dir"; done | paste -sd:)
     for shell in bash zsh fish; do
         command -v "$shell" >/dev/null || { skipped "$shell is not installed"; continue; }
         rm -f "$canary"
@@ -7109,6 +7112,15 @@ CHAINPY
             </dev/null) >/dev/null
         [ ! -e "$canary" ] || {
             echo "$shell's Tab on ./demoreel stop ran the folder's script" >&2; bad=1; }
+        # DEMO-0095. With demoreel on no PATH entry, or a bash function by that
+        # name, the bare name is all the shell has; opened, it is the folder's.
+        rm -f "$canary"
+        (cd "$at/folder" && demoreel() { :; } && export -f demoreel &&
+            XDG_RUNTIME_DIR="$at/xdg" PATH="$path_without_demoreel" \
+            offered "$shell" "demoreel stop " </dev/null) >/dev/null 2>&1 || true
+        [ ! -e "$canary" ] || {
+            echo "$shell's Tab on stop, with demoreel off PATH or a function, ran the folder's script" >&2
+            bad=1; }
         [ "$bad" = 0 ] && echo "$shell: Tab on stop read the runs and ran nothing"
     done
     kill "$run_pid" 2>/dev/null || true

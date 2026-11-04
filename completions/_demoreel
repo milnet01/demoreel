@@ -25,7 +25,9 @@ _demoreel_running() {
   # $words has been narrowed to the subcommand's own words by now, so the
   # command's name comes from _demoreel, which saved it before that.
   [[ $_demoreel_cmd == */* ]] && return
-  local exe=${commands[$_demoreel_cmd]:-$_demoreel_cmd}
+  # Off PATH there is only the bare name, which would open the folder's.
+  local exe=${commands[$_demoreel_cmd]}
+  [[ $exe == /* ]] || return
   local -a names
   names=(${(f)"$(python3 -I -B -c 'import importlib.machinery as m, importlib.util as u, sys
 l = m.SourceFileLoader("demoreel", sys.argv[1])
