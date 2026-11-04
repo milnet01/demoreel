@@ -4215,6 +4215,21 @@ def text_size(textfile, fontsize, font=None, border=0, room=0):
     return (int(boxes[-1][0]), int(boxes[-1][1])) if boxes else (0, 0)
 
 
+def advance_width(words, textfile, fontsize, font, border, room):
+    """The width drawtext lays `words` out in, spaces at the ends included.
+
+    text_size measures ink, and a space draws none, but a placed text is
+    centred on drawtext's text_w, which counts them: twelve leading spaces put
+    a line wholly past the edge while its ink measured as fitting (DEMO-0354).
+    So the words are measured between two bars, less the two bars alone.
+    """
+    def measured(line, name):
+        path = textfile.with_name(textfile.stem + name)
+        path.write_text(line, encoding="utf-8", errors="replace")
+        return text_size(path, fontsize, font, border, room)[0]
+    return measured(f"|{words}|", "-barred.txt") - measured("||", "-bars.txt")
+
+
 # drawtext starts a new line on each of these (measured by its height).
 LINE_BREAKS = re.compile("[\n\r\f\v]")
 
@@ -4474,6 +4489,9 @@ def check_texts(scene, length, width, height, workdir):
         room = width - 2 * round(CARD_MARGIN * width)
         try:
             wide, tall = text_size(textfile, fontsize, font, border, room)
+            if placed and words != words.strip():
+                wide = max(wide, advance_width(words, textfile, fontsize, font,
+                                               border, room))
         except TextUnavailable as exc:
             die(exc.reason + ("\n  " + tr("`demoreel check` tests this on its own.")
                               if exc.checked else ""))

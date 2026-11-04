@@ -6201,7 +6201,11 @@ CASES
 2|card 2\n  text "A" x 50 y 50 at top
 2|card 2\n  text "A" x 50 y 50 band on
 2|card 2\n  text "WWWWWWWWWW" x 1 y 50 size 6
+2|card 2\n  text "            Hi" x 95 y 50 size 6
 CASES
+    # DEMO-0354. The spaces above draw nothing, yet push the line past the
+    # edge; without them the same line fits there.
+    printf 'card 2\n  text "Hi" x 95 y 50 size 6\n' | ed_ok pf.mp4
     # Off the frame, x 101 would not fit either: the words show its own check refused it.
     printf 'card 2\n  text "A" x 101 y 50\n' > "$ft/s.txt"
     run edit s.txt -o "$ft/out/x.mp4"
