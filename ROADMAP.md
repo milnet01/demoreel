@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=350 -->
+<!-- ants-roadmap-id-high-water: DEMO=359 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -798,6 +798,13 @@ simplest case, and a gate proves it still records.
   limit), not a flake, and d54ff72 stopped on ruff.
   2026-11-03: the full push gate for c3141be (DEMO-0286) passed with its
   Ubuntu leg, no flaky failure.
+  2026-11-04: review-tests found fixtures timed from their own start,
+  not from demoreel's recording state, which can only fail under load:
+  ci.sh steps near the old lines 7724, 7828, 8091 (a 40 ms sync bound at
+  30 fps), 8105, 8337, 8546, 8837, 8900, 9180, 9317 and 9758. Candidate
+  causes for this item. Details:
+  ~/.local/share/demoreel-private-reviews/review-tests-2026-11-04/message-2.md
+  § 3, dimension 5.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
@@ -5480,6 +5487,19 @@ covers both display backends and the Flatpak invocation.
   `review-ledger` for whether ROADMAP and CHANGELOG are true, and
   `check-dependencies` for the pins. Fix every verified finding before
   cutting 1.0.
+  2026-11-04 run. check-dependencies: no advisories; every action
+  current; ruff 0.17.1 against 0.17.3 (a bump changes the parity image's
+  tag). review-ledger over v0.9.0..HEAD: fixed in d5c10b5.
+  verify-instructions in clean ubuntu:24.04 and tumbleweed: everything
+  ran with xterm; Kate 23.08 forks (DEMO-0351); README's trim example
+  cut past the quick start's 20 s demo.mp4 (fixed); README documents
+  shot --region, thumbnail and sheet, which the 0.9.0 package it tells
+  you to install refuses, until the next release. review-code (since
+  d5d079d, user's choice 2026-11-04) and review-tests: security items
+  and the proven HIGHs fixed (6d93590, d3c2856 and the gate commits
+  after); the rest filed as DEMO-0352 to DEMO-0359. Records kept
+  privately in ~/.local/share/demoreel-private-reviews/, as the
+  repository is public.
   **Layman:** Before calling it finished, check that the code, tests, docs and records all hold up, and fix anything that doesn't.
   Kind: audit-fix.
   Source: user-request-2026-09-25.
@@ -5665,6 +5685,105 @@ covers both display backends and the Flatpak invocation.
   **Layman:** A warning about Flatpak flags overstates the risk now, and its translations need the same fix.
   Kind: fix.
   Source: in-session-2026-10-22 DEMO-0281 review.
+
+- 📋 [DEMO-0351] **README's first example, `demoreel record -- kate`, fails on Ubuntu 24.04, whose Kate forks into the background.**
+  Measured 2026-11-04 by verify-instructions in a clean ubuntu:24.04
+  container, as a normal user: Kate 23.08.5's first process exits 0
+  at once and a child carries on (ppid 1) and draws its window.
+  demoreel then says "the app exited immediately (status 0)" and blames
+  a single-instance app. Same on 0.9.0's .deb and on main. Kate 26.08.2
+  (Tumbleweed, this machine) stays in the foreground and records.
+  Recommended fix: when the app exits 0 and a process it started is
+  still alive, keep waiting for a window up to --settle, as demoreel
+  already tracks those processes for teardown. That stays app-agnostic.
+  No per-app flag. Then the message names forking as a cause too.
+  **Layman:** On Ubuntu 24.04 the very first example in the README fails, because that version of Kate hands itself to a background copy and demoreel thinks it closed.
+  Kind: fix.
+  Source: review-fix-2026-11-04 DEMO-0095.
+
+- 📋 [DEMO-0352] **Ctrl+C while shot or check starts a display can leave Xvfb running.**
+  review-code 2026-11-04 lane 1 (MEDIUM): main's signals_held holds
+  SIGTERM and SIGHUP while a display starts, not SIGINT, so a Ctrl+C
+  in that window raises KeyboardInterrupt before the display is handed
+  to its owner. Reasoned, not run. Full text:
+  ~/.local/share/demoreel-private-reviews/review-code-2026-11-04/
+  lane-01-record-primitives.md.
+  **Layman:** Pressing Ctrl+C at the wrong moment can leave a hidden screen running in the background.
+  Kind: fix.
+  Source: review-fix-2026-11-04 DEMO-0095.
+
+- 📋 [DEMO-0353] **A part that cannot be made when finishing a recording hides the whole take in an unnamed part.**
+  review-code 2026-11-04 lane 1 (MEDIUM): finish_part calls
+  new_part(output) outside its try; a die there leaves the take in the
+  run's part with no message naming it. Same private record, lane 1.
+  **Layman:** In a rare failure the finished recording could end up in a hidden file nobody is told about.
+  Kind: fix.
+  Source: review-fix-2026-11-04 DEMO-0095.
+
+- 📋 [DEMO-0354] **A placed text's fit check ignores the ink's offset, descenders and leading spaces.**
+  review-code 2026-11-04 lane 3 (MEDIUM, reasoned, not measured):
+  check_texts' x,y fit uses text_size's box from its origin, not the
+  drawn ink. Measure first: draw a line with descenders and a leading
+  space at the edge and read the frame. Private record, lane 3.
+  **Layman:** A text placed near the edge of the frame might be let through when part of it would fall outside.
+  Kind: fix.
+  Source: review-fix-2026-11-04 DEMO-0095.
+
+- 📋 [DEMO-0355] **Several gate checks pass without showing they reached the case they test.**
+  review-tests 2026-11-04, dimension 1. Each needs a control or a
+  sharper assertion: --option-places 'a new one nowhere'
+  passes on any early failure; the --settle control run accepts any
+  failure; default output name throws stdout away; stale-state refusal
+  accepts any exit; 'every recording names its run' sees shell calls only;
+  README install lines checked one way only; workflow permissions
+  matched as three literals; hold and drag never show the stop cut
+  them short; odd-named inputs are copies of one file; the memory-cap
+  stand-in fails on its first read; join and card compared on length
+  only; a ±0.15 s tolerance passes a film one frame short at 10 fps;
+  V.mp4 and M.m4a never checked for the private tag. Locations and
+  fix shapes: ~/.local/share/demoreel-private-reviews/
+  review-tests-2026-11-04/message-2.md § 3.
+  **Layman:** Some automatic checks could pass even if what they test broke, because they never confirm they actually got there.
+  Kind: test.
+  Source: review-fix-2026-11-04 DEMO-0095.
+
+- 📋 [DEMO-0356] **The gate's package cache is shared by every gate run with no lock, and the tarball is hashed after root build containers could write it.**
+  review-tests 2026-11-04 (dimension 6, MEDIUM) and review-code
+  2026-11-04 lane 5 (MEDIUM). Hash the tarball and PKGBUILD before any
+  container mounts them, and give each gate run its own cache folder
+  or a lock. Private records name the lines.
+  **Layman:** Two checks running at once could trip over each other's package files.
+  Kind: test.
+  Source: review-fix-2026-11-04 DEMO-0095.
+
+- 📋 [DEMO-0357] **A failing --gpu try_case in the gate leaks its Xvfb past every sweep.**
+  review-code 2026-11-04 lane 7 and review-tests 2026-11-04 R2
+  (MEDIUM): try_case's failure path does not end the display it
+  started, and under load the case can pass falsely too.
+  **Layman:** When one GPU check fails, it can leave a hidden screen running.
+  Kind: test.
+  Source: review-fix-2026-11-04 DEMO-0095.
+
+- 📋 [DEMO-0358] **Speed up the slowest gate checks the 2026-11-04 test review measured.**
+  review-tests 2026-11-04 dimension 12, from the 2026-10-31 log:
+  fin_s76 takes 50.7 s; px.py's one() decodes every frame; two
+  recordings run in series in one 18 s step; eight smaller ones.
+  Time them again on a quiet machine before changing anything.
+  **Layman:** Make the automatic checks faster.
+  Kind: perf.
+  Source: review-fix-2026-11-04 DEMO-0095.
+
+- 📋 [DEMO-0359] **Close the remaining LOW findings of the 2026-11-04 code and test reviews.**
+  About 35 LOW and INFO items from review-code 2026-11-04 (all seven
+  lanes) and about 30 LOW from review-tests 2026-11-04. Do not
+  re-review; fold in directly from
+  ~/.local/share/demoreel-private-reviews/ (message-1.md in each).
+  Some are security-adjacent, so their text stays out of this public
+  roadmap until fixed. The 2026-10-30 run's open lane-1 lows (old
+  lines 536, 2556, 2622, 2509, 1145) were not re-mapped either.
+  **Layman:** Tidy up the many small issues the two reviews found.
+  Kind: review-fix.
+  Source: review-fix-2026-11-04 DEMO-0095.
 
 ## 1.1.0 — A window for people who want one
 
