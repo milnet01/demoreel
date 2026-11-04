@@ -412,7 +412,14 @@ def catalog_bytes(path):
     try:
         if not stat.S_ISREG(os.fstat(fd).st_mode):
             raise CatalogError("it is not a regular file")
-        return os.read(fd, CATALOG_LIMIT + 1)
+        # One read may stop short on FUSE or a network disk (DEMO-0359).
+        read = b""
+        while len(read) <= CATALOG_LIMIT:
+            more = os.read(fd, CATALOG_LIMIT + 1 - len(read))
+            if not more:
+                break
+            read += more
+        return read
     finally:
         os.close(fd)
 
@@ -1970,7 +1977,8 @@ def pactl(*args):
         raise SoundUnavailable(tr("pactl is not installed."))
     try:
         done = subprocess.run(["pactl", *map(str, args)], capture_output=True,
-                              text=True, timeout=CALL_TIMEOUT, check=False)
+                              text=True, errors="replace", timeout=CALL_TIMEOUT,
+                              check=False)
     except subprocess.TimeoutExpired:
         raise SoundUnavailable(tr("pactl did not answer within {seconds}s.",
                                   seconds=CALL_TIMEOUT)) from None
@@ -2260,7 +2268,7 @@ def start_failure(program):
     if it cannot tell (DEMO-0176)."""
     try:
         done = subprocess.run([program, "--version"], capture_output=True, text=True,
-                              timeout=CALL_TIMEOUT, check=False)
+                              errors="replace", timeout=CALL_TIMEOUT, check=False)
     except (OSError, subprocess.TimeoutExpired):
         return None
     if done.returncode == 0:
@@ -6325,6 +6333,7 @@ def cmd_poster(a):
         grab_frame(a.input, a.time, info, part)
         output = move_into_place(part, output)
     finally:
+        hold_signals()
         part.unlink(missing_ok=True)
     print(output)
 
@@ -6357,8 +6366,10 @@ def cmd_thumbnail(a):
         crop = f"crop={width}:{round(width * 9 / 16)}"
     look = [crop, f"scale={THUMB_WIDTH}:{THUMB_HEIGHT}", "setsar=1"]
     workdir = Path(tempfile.mkdtemp(prefix="thumbnail-", dir=state_dir()))
-    part = new_part(output)
+    part = None
     try:
+        # Inside the try, or a refusal here leaves workdir behind (DEMO-0359).
+        part = new_part(output)
         if a.text is not None:
             look.append(title_filter(a.text, workdir))
         grab_frame(a.input, a.time, info, part, ",".join(look))
@@ -6370,7 +6381,8 @@ def cmd_thumbnail(a):
         output = move_into_place(part, output)
     finally:
         hold_signals()
-        part.unlink(missing_ok=True)
+        if part is not None:
+            part.unlink(missing_ok=True)
         shutil.rmtree(workdir, ignore_errors=True)
     print(output)
 
@@ -6481,8 +6493,10 @@ def cmd_sheet(a):
     # exact=1 as in motion: an odd corner stays where it was asked for.
     crop = "crop={2}:{3}:{0}:{1}:exact=1,".format(*region) if region else ""
     workdir = Path(tempfile.mkdtemp(prefix="sheet-", dir=state_dir()))
-    part = new_part(output)
+    part = None
     try:
+        # Inside the try, or a refusal here leaves workdir behind (DEMO-0359).
+        part = new_part(output)
         # Each frame is cut, scaled and labelled as it is taken, so the last
         # ffmpeg reads small pictures one at a time: given a hundred full
         # frames as a hundred inputs, it failed under a 6 GB address-space
@@ -6511,7 +6525,8 @@ def cmd_sheet(a):
         output = move_into_place(part, output)
     finally:
         hold_signals()
-        part.unlink(missing_ok=True)
+        if part is not None:
+            part.unlink(missing_ok=True)
         shutil.rmtree(workdir, ignore_errors=True)
     print(output)
 
