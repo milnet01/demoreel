@@ -814,6 +814,11 @@ simplest case, and a gate proves it still records.
   blender-5.2 at full load, and a hand-run vkcube on --gpu then gave
   41%. The stutter check needs an idle GPU; the gate cannot tell a busy
   card from a stuttering recorder.
+  2026-11-04: the same 10 s limit failed a finishing check at load 29
+  ("reading B.mp4 took over 10s", the no-sound-track check), passing on
+  the tree minutes earlier. And the push gate's "--audio keeps sound and
+  picture in step" failed at load 14-21 with the GPU quiet: 75 ms apart
+  against the 40 ms bound.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
@@ -5767,7 +5772,7 @@ covers both display backends and the Flatpak invocation.
   Kind: fix.
   Source: review-fix-2026-11-04 DEMO-0095.
 
-- 📋 [DEMO-0355] **Several gate checks pass without showing they reached the case they test.**
+- ✅ [DEMO-0355] **Several gate checks pass without showing they reached the case they test.**
   review-tests 2026-11-04, dimension 1. Each needs a control or a
   sharper assertion: hold and drag never show the stop cut
   them short; odd-named inputs are copies of one file; the memory-cap
@@ -5776,6 +5781,9 @@ covers both display backends and the Flatpak invocation.
   V.mp4 and M.m4a never checked for the private tag. Locations and
   fix shapes: ~/.local/share/demoreel-private-reviews/
   review-tests-2026-11-04/message-2.md § 3.
+  2026-11-04: 215ca96 closes all six. Proven by mutants: the sound join
+  without its cap passed the old memory-cap check and fails the new one;
+  hold and drag that ignore a stop fail the new timing.
   **Layman:** Some automatic checks could pass even if what they test broke, because they never confirm they actually got there.
   Kind: test.
   Source: review-fix-2026-11-04 DEMO-0095.
