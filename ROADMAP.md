@@ -809,6 +809,11 @@ simplest case, and a gate proves it still records.
   app that needs the card": vkcube's recording had 52% new frames in the
   middle, and the stutter note fired. A heavy signal test of mine ran
   beside it, so load is the likely cause. Not reproduced.
+  2026-11-04: push of 3000c30 failed in the same --gpu step at 31% new
+  frames. Cause found: the GPU was 99% busy (gpu_busy_percent) with
+  blender-5.2 at full load, and a hand-run vkcube on --gpu then gave
+  41%. The stutter check needs an idle GPU; the gate cannot tell a busy
+  card from a stuttering recorder.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
@@ -5725,10 +5730,12 @@ covers both display backends and the Flatpak invocation.
   Kind: fix.
   Source: review-fix-2026-11-04 DEMO-0095.
 
-- 📋 [DEMO-0353] **A part that cannot be made when finishing a recording hides the whole take in an unnamed part.**
+- ✅ [DEMO-0353] **A part that cannot be made when finishing a recording hides the whole take in an unnamed part.**
   review-code 2026-11-04 lane 1 (MEDIUM): finish_part calls
   new_part(output) outside its try; a die there leaves the take in the
   run's part with no message naming it. Same private record, lane 1.
+  2026-11-04: f4f6f10. finish_part catches new_part's refusal like a
+  failed copy: the log gets the reason, the message names the kept part.
   **Layman:** In a rare failure the finished recording could end up in a hidden file nobody is told about.
   Kind: fix.
   Source: review-fix-2026-11-04 DEMO-0095.
@@ -5744,10 +5751,7 @@ covers both display backends and the Flatpak invocation.
 
 - 📋 [DEMO-0355] **Several gate checks pass without showing they reached the case they test.**
   review-tests 2026-11-04, dimension 1. Each needs a control or a
-  sharper assertion: --option-places 'a new one nowhere'
-  passes on any early failure; the --settle control run accepts any
-  failure; default output name throws stdout away; stale-state refusal
-  accepts any exit; 'every recording names its run' sees shell calls only;
+  sharper assertion: 'every recording names its run' sees shell calls only;
   README install lines checked one way only; workflow permissions
   matched as three literals; hold and drag never show the stop cut
   them short; odd-named inputs are copies of one file; the memory-cap
