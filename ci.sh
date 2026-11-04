@@ -5273,6 +5273,21 @@ try:
 finally:
     d.os.replace = real_replace
 assert part.exists() and any(str(part) in n for n in notes), notes
+# DEMO-0353. A finishing copy whose own part cannot be made says where the
+# take is, and the log says why.
+real_new_part = d.new_part
+def no_room(*_args, **_kwargs):
+    d.die("could not write to there: No space left on device.")
+d.new_part = no_room
+log = Path("finish.log")
+try:
+    d.finish_part(part, Path("finished.mp4"), log, [])
+    raise AssertionError("a finishing copy with no part went on")
+except SystemExit as exc:
+    assert str(part) in str(exc.code), exc.code
+finally:
+    d.new_part = real_new_part
+assert "No space left" in log.read_text(), log.read_text()
 part.unlink()
 print("a made-up name is claimed when the file is ready")
 CLAIMPY

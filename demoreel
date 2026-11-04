@@ -1713,8 +1713,11 @@ def finish_part(part, output, logfile, inputs):
     """Make the part file again with `inputs`, as what -o names, in its place."""
     if not has_data(part):
         return
-    done = new_part(output)
+    done = None
     try:
+        # new_part's own refusal would not name the part holding the take
+        # (DEMO-0353), so it is said below like any other failure.
+        done = new_part(output)
         copy = subprocess.run(  # noqa: PLW1510 - a failed copy is handled below
             ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error",
              *inputs, "-movflags", "+faststart", "-y", str(done)],
@@ -1725,8 +1728,11 @@ def finish_part(part, output, logfile, inputs):
         # finally block, where a traceback would hide the kept part file.
         failed, said = True, (exc.stderr or b"") + (
             f"\nffmpeg did not finish within {exc.timeout:g}s\n".encode())
+    except SystemExit as exc:
+        failed, said = True, f"\n{exc.code}\n".encode()
     if failed:
-        done.unlink(missing_ok=True)
+        if done is not None:
+            done.unlink(missing_ok=True)
         with open(logfile, "ab") as log:
             log.write(said)
         die(tr("could not finish the video: turning the recording into {name}"
