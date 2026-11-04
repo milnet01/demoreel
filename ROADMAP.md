@@ -5769,9 +5769,7 @@ covers both display backends and the Flatpak invocation.
 
 - 📋 [DEMO-0355] **Several gate checks pass without showing they reached the case they test.**
   review-tests 2026-11-04, dimension 1. Each needs a control or a
-  sharper assertion: 'every recording names its run' sees shell calls only;
-  README install lines checked one way only; workflow permissions
-  matched as three literals; hold and drag never show the stop cut
+  sharper assertion: hold and drag never show the stop cut
   them short; odd-named inputs are copies of one file; the memory-cap
   stand-in fails on its first read; join and card compared on length
   only; a ±0.15 s tolerance passes a film one frame short at 10 fps;
@@ -5819,6 +5817,15 @@ covers both display backends and the Flatpak invocation.
   Some are security-adjacent, so their text stays out of this public
   roadmap until fixed. The 2026-10-30 run's open lane-1 lows (old
   lines 536, 2556, 2622, 2509, 1145) were not re-mapped either.
+  2026-11-04 progress: 7ec6982 (a label's divide by zero) and a39f448
+  (thumbnail and sheet clean their folder on a refusal; poster holds
+  signals in cleanup; pactl and start_failure decode with
+  errors="replace"; a catalog is read to its end). Still open from
+  review-code: typed text with surrogates becomes "?"; script_number's
+  seconds message for a negative x, y or slice size (needs a new message
+  in every catalog); the split note's count should use trn; the box and
+  read_file_capped items in lane 3; and three in lanes 1 and 2 whose
+  text stays in the private record.
   **Layman:** Tidy up the many small issues the two reviews found.
   Kind: review-fix.
   Source: review-fix-2026-11-04 DEMO-0095.
