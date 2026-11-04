@@ -6625,6 +6625,23 @@ chain_tag_checks() {
         ./ci.sh --verify-tag "v$new"
     chain_expect_refusal "a signed tag on a tree of another version" "__version__" \
         ./ci.sh --verify-tag v1.0.9
+    # DEMO-0095. Signed, named and versioned right, but by a key the signers
+    # file does not list. Made on a branch of its own and removed, so the
+    # steps below see the history they expect.
+    (
+        cd "$repo"
+        git checkout -q -b stranger
+        chain_set_version "$at" 1.3.0
+        git -c user.signingkey="$at/stranger.pub" tag -s -m stranger v1.3.0
+    )
+    chain_expect_refusal "a tag signed by a key packaging/release-signers does not list" \
+        "is not signed by a key in packaging/release-signers" ./ci.sh --verify-tag v1.3.0
+    (
+        cd "$repo"
+        git checkout -q -
+        git tag -d v1.3.0 >/dev/null
+        git branch -q -D stranger
+    )
 
     step "the release job builds the signed tag's tree, and no other"
     (
@@ -6951,7 +6968,11 @@ chain_attach_checks() {
     [ -e "$page/SHA256SUMS" ] && [ -e "$page/PKGBUILD" ] && [ -e "$page/demoreel_1-1_all.deb" ] || {
         echo "FAIL: not every file reached the release: $(ls "$page")" >&2; exit 1; }
     calls=$(grep '^release upload' "$GH_STUB/calls")
+    # Alone: the last call names no other file, and the files went in a call
+    # before it (DEMO-0095: one call carrying all of them passed).
     grep -q SHA256SUMS <<<"$(tail -1 <<<"$calls")" \
+        && ! grep -qE 'PKGBUILD|\.deb' <<<"$(tail -1 <<<"$calls")" \
+        && grep -q PKGBUILD <<<"$(head -n -1 <<<"$calls")" \
         && ! grep -q SHA256SUMS <<<"$(head -n -1 <<<"$calls")" || {
         echo "FAIL: SHA256SUMS did not go last and alone:" >&2; echo "$calls" >&2; exit 1; }
     chain_expect_refusal "a release that already has a whole set" "already has a whole set" \
@@ -7333,8 +7354,9 @@ for flag in $(grep -oE '`-{1,2}[a-z-]+`' README.md | tr -d '`' | sort -u); do
     case "$flag" in --allow-unsigned-rpm) continue ;; esac
     # A here-string, not a pipe: grep -q stops reading at its first match,
     # the writer then dies of SIGPIPE, and pipefail reports that as a miss.
-    # A longer help text is all it takes to hit it.
-    if ! grep -qF -- "$flag" <<<"$help"; then
+    # A longer help text is all it takes to hit it. Bounded as a word, or -o
+    # would be found inside --output (DEMO-0095).
+    if ! grep -qE -- "(^|[^A-Za-z0-9_-])$flag([^A-Za-z0-9_-]|\$)" <<<"$help"; then
         echo "README documents $flag, which demoreel does not accept" >&2
         undocumented=$((undocumented + 1))
     fi
