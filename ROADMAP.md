@@ -5836,6 +5836,13 @@ covers both display backends and the Flatpak invocation.
   in every catalog); the split note's count should use trn; the box and
   read_file_capped items in lane 3; and three in lanes 1 and 2 whose
   text stays in the private record.
+  2026-11-05: the surrogate typing, the flat-window message and
+  run_capped's endless line are fixed. The missing-ffprobe traceback was
+  not reproduced: finishing_tools() refuses a missing ffprobe first, and
+  an unrunnable stand-in did not reach probe's call either; left as is.
+  Still open: script_number's message for a negative x, y or size, and the
+  split note's trn, both needing new messages in every catalog (do them
+  as one batch); the rest of lane 3 and the private lane 1 and 2 items.
   **Layman:** Tidy up the many small issues the two reviews found.
   Kind: review-fix.
   Source: review-fix-2026-11-04 DEMO-0095.
