@@ -4635,7 +4635,7 @@ def check_label(part, room, height, workdir):
                "its slice has room for {room}.\n  Shorten it, or give it a smaller "
                "size: about {fits} would fit.", where=where, words=repr(words),
                wide=wide, size=f"{part.size:g}", room=room,
-               fits=f"{part.size * max(room, 0) / wide:.1f}"))
+               fits=f"{part.size * max(room, 0) / max(wide, 1):.1f}"))
 
 
 def check_slides(scene, length):
