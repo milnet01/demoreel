@@ -823,6 +823,8 @@ run_check() {
         echo "note: demoreel check hit a time limit (try $try of 3)" >&2
         sleep 5
     done
+    # Not the loop's last status, which is sleep's (DEMO-0095).
+    fail "demoreel check hit a time limit three times: $out"
 }
 # DEMO-0277: keep what the package manager downloads. packages_check mounts a
 # folder per distro at its cache, so a later run fetches only what changed.
@@ -9888,6 +9890,8 @@ except PermissionError:
     raise SystemExit("a refused signal ended stop in a traceback") from None
 except SystemExit as exc:
     assert "the recording failed after it was stopped" in str(exc.code), exc.code
+else:
+    raise SystemExit("stop returned as if it had stopped a run it could not signal")
 print("a refused signal is reported as a run that is no longer ours")
 REFUSEDPY
 
@@ -11285,6 +11289,8 @@ RUNS = [
     ["poster", "clip.mp4", "-o", "poster.png", "-t", "1"],
     ["motion", "clip.mp4"],
     ["motion", "clip.mp4", "--json"],
+    ["thumbnail", "clip.mp4", "-t", "0.5", "-o", "thumb.jpg"],
+    ["sheet", "clip.mp4", "--every", "0.5", "-o", "sheet.png"],
     ["--version"],
     ["record", "-n", os.environ['GATE_RUN'] + "tr", "-s", "301x200", "--", "xclock"],
     ["shot", "-s", "320x240"],
@@ -11297,6 +11303,8 @@ RUNS = [
     ["edit", "nofile.txt", "-o", "film2.mp4"],
     ["poster", "clip.mp4", "-o", "poster2.png", "-t", "9"],
     ["motion", "clip.mp4", "--from", "9"],
+    ["thumbnail", "clip.mp4", "-t", "9", "-o", "thumb2.jpg"],
+    ["sheet", "clip.mp4", "--at", "9", "-o", "sheet2.png"],
     ["trim", "clip.mp4"],
 ]
 for argv in RUNS:
@@ -11343,7 +11351,7 @@ def help_entries(text):
     return [" ".join(parts) for parts in entries if parts]
 
 pages = [[], ["record"], ["shot"], ["check"], ["stop"], ["edit"], ["trim"], ["caption"],
-         ["join"], ["card"], ["motion"], ["poster"]]
+         ["join"], ["card"], ["motion"], ["poster"], ["thumbnail"], ["sheet"]]
 for page in pages:
     r = run([*page, "--help"], pseudo)
     found = help_entries(r.stdout)
