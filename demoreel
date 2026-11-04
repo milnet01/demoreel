@@ -1079,11 +1079,12 @@ def xdotool(env, *args, check=False, stdin_text=None):
     """
     timeout = CALL_TIMEOUT + TYPE_SECONDS_PER_CHAR * len(stdin_text or "")
     try:
-        return subprocess.run(["xdotool", *[str(a) for a in args]], env=env,
-                              input=stdin_text, capture_output=True, text=True,
-                              # A window's title comes back as its bytes, in
-                              # whatever encoding the app wrote it.
-                              errors="replace", check=check, timeout=timeout,
+        # Text to type goes as the caller's own bytes: an argument that is not
+        # UTF-8 reaches Python with surrogates, and a text-mode stdin typed "?".
+        done = subprocess.run(["xdotool", *[str(a) for a in args]], env=env,
+                              input=None if stdin_text is None
+                              else stdin_text.encode("utf-8", "surrogateescape"),
+                              capture_output=True, check=False, timeout=timeout,
                               # Its own session, so a terminal's Ctrl+C, which
                               # finishes the video, does not fail a step too.
                               start_new_session=True)
@@ -1092,6 +1093,14 @@ def xdotool(env, *args, check=False, stdin_text=None):
         die(tr("the private display {display} stopped answering: "
                "`xdotool {command}` did not return within {seconds}s.",
                display=env.get("DISPLAY"), command=args[0], seconds=f"{timeout:g}"))
+    # A window's title comes back as its bytes, in whatever encoding the app
+    # wrote it. Line ends as text mode gave them.
+    done.stdout, done.stderr = (
+        s.decode("utf-8", "replace").replace("\r\n", "\n").replace("\r", "\n")
+        for s in (done.stdout, done.stderr))
+    if check:
+        done.check_returncode()
+    return done
 
 
 def window_geometry(env, wid):
@@ -4068,7 +4077,8 @@ def run_capped(cmd, timeout, cap, on_line=None, watch=None):
                         for line in [*lines, *([rest] if rest and not data else [])]:
                             on_line(line.decode(errors="replace"))
                         buffer[:] = rest if data else b""
-                    elif len(buffer) > 2 * OUTPUT_KEPT:
+                    # A line that never ends is kept to its last part, too.
+                    if len(buffer) > 2 * OUTPUT_KEPT:
                         del buffer[:-OUTPUT_KEPT]
                 now = time.monotonic()
                 if now >= due:
@@ -4857,7 +4867,8 @@ def check_scene(scene, width, height, rate, workdir):
                "Give them a smaller size.", where=where))
     if scene.window is not None:
         scene.box = window_box(scene, width, height)
-        if scene.box[2] < 2 or (scene.box[3] < 2 and not scene.texts):
+        # A placed text takes no room, so only stacked ones can be to blame.
+        if scene.box[2] < 2 or (scene.box[3] < 2 and not scene.stacks):
             die(tr("{where}: {path} is {size}, too narrow or too flat to show in a "
                    "window of this size. Give it a larger window.", where=where,
                    path=scene.path, size=f"{scene.info['width']}x{scene.info['height']}"))
