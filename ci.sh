@@ -9826,7 +9826,9 @@ plain_path = shim_path.split(":", 1)[1]
 
 
 def servers():
-    found = subprocess.run(["pgrep", "-f", f"^[^ ]*Xvfb .*{tmp}/sigstate"],
+    # The stand-in too, as the shell running it: a display it has yet to exec
+    # is one the case leaves behind, and waiting for the exec raced it.
+    found = subprocess.run(["pgrep", "-f", f"^([^ ]*sh )?[^ ]*Xvfb .*{tmp}/sigstate"],
                            capture_output=True, text=True).stdout.split()
     return [pid for pid in found if pid != str(os.getpid())]
 
@@ -9863,7 +9865,6 @@ def try_case(name, args, marker, env_path, sig=signal.SIGTERM):
                 if run.poll() is None:
                     run.kill()
                     run.wait()
-        time.sleep(1.5)  # long enough for a stand-in Xvfb to become the real one
         left = servers()
     finally:
         end_servers()
