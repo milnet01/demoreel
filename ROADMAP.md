@@ -5797,13 +5797,15 @@ covers both display backends and the Flatpak invocation.
   Kind: test.
   Source: review-fix-2026-11-04 DEMO-0095.
 
-- 📋 [DEMO-0357] **A failing --gpu try_case in the gate leaks its Xvfb past every sweep.**
+- ✅ [DEMO-0357] **A failing --gpu try_case in the gate leaks its Xvfb past every sweep.**
   review-code 2026-11-04 lane 7 and review-tests 2026-11-04 R2
   (MEDIUM): try_case's failure path does not end the display it
   started, and under load the case can pass falsely too.
   2026-11-04: 9e03910 makes try_case end its run and its servers on
   every way out. Still open: under load the case can pass falsely
   (review-tests R2).
+  2026-11-04: the false pass under load is closed: servers() sees the
+  stand-in shell before its exec, and the 1.5 s wait is gone.
   **Layman:** When one GPU check fails, it can leave a hidden screen running.
   Kind: test.
   Source: review-fix-2026-11-04 DEMO-0095.
