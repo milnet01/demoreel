@@ -805,6 +805,10 @@ simplest case, and a gate proves it still records.
   causes for this item. Details:
   ~/.local/share/demoreel-private-reviews/review-tests-2026-11-04/message-2.md
   § 3, dimension 5.
+  2026-11-04: push of 87ab7d0 failed in "the --gpu backend records an
+  app that needs the card": vkcube's recording had 52% new frames in the
+  middle, and the stutter note fired. A heavy signal test of mine ran
+  beside it, so load is the likely cause. Not reproduced.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
@@ -969,13 +973,17 @@ simplest case, and a gate proves it still records.
   Kind: feature.
   Source: research-2026-11-03.
 
-- 📋 [DEMO-0350] **The translators' note on the no-window refusal still says push or zoom.**
+- ✅ [DEMO-0350] **The translators' note on the no-window refusal still says push or zoom.**
   DEMO-0286 let zoom work with no window, so only push reaches
   \"{word} acts on a clip's window\" in check_scene. Its translators'
   comment still says \"{word} is push or zoom\". Fixing it changes the
   template and every catalog's comment: run ./ci.sh --pot after.
   Also found then: script_number's \"takes a number of seconds\" is
   the message for a negative text x/y, as it already was for size.
+  2026-11-04: f5f8c14 fixed the note; ./ci.sh --pot rewrote the
+  template. The second finding above (script_number's seconds message
+  for a negative x/y) is not fixed: it needs a new message in every
+  catalog, and is folded into DEMO-0359.
   **Layman:** A note for translators describes a message wrongly since zoom stopped needing a window.
   Kind: doc-fix.
   Source: review-fix-2026-11-03.
@@ -5686,7 +5694,7 @@ covers both display backends and the Flatpak invocation.
   Kind: fix.
   Source: in-session-2026-10-22 DEMO-0281 review.
 
-- 📋 [DEMO-0351] **README's first example, `demoreel record -- kate`, fails on Ubuntu 24.04, whose Kate forks into the background.**
+- ✅ [DEMO-0351] **README's first example, `demoreel record -- kate`, fails on Ubuntu 24.04, whose Kate forks into the background.**
   Measured 2026-11-04 by verify-instructions in a clean ubuntu:24.04
   container, as a normal user: Kate 23.08.5's first process exits 0
   at once and a child carries on (ppid 1) and draws its window.
@@ -5697,17 +5705,22 @@ covers both display backends and the Flatpak invocation.
   still alive, keep waiting for a window up to --settle, as demoreel
   already tracks those processes for teardown. That stays app-agnostic.
   No per-app flag. Then the message names forking as a cause too.
+  2026-11-04: 6da4465. wait_for_window waits while the app's group has a
+  member; a gate step records sh -c 'sleep 0.5; xclock & exit 0' and
+  checks `-- true` is still told at once.
   **Layman:** On Ubuntu 24.04 the very first example in the README fails, because that version of Kate hands itself to a background copy and demoreel thinks it closed.
   Kind: fix.
   Source: review-fix-2026-11-04 DEMO-0095.
 
-- 📋 [DEMO-0352] **Ctrl+C while shot or check starts a display can leave Xvfb running.**
+- ✅ [DEMO-0352] **Ctrl+C while shot or check starts a display can leave Xvfb running.**
   review-code 2026-11-04 lane 1 (MEDIUM): main's signals_held holds
   SIGTERM and SIGHUP while a display starts, not SIGINT, so a Ctrl+C
   in that window raises KeyboardInterrupt before the display is handed
   to its owner. Reasoned, not run. Full text:
   ~/.local/share/demoreel-private-reviews/review-code-2026-11-04/
   lane-01-record-primitives.md.
+  2026-11-04: 9e03910. SIGINT goes through _exit_on_signal; the gate
+  sends Ctrl+C to shot and check while Xvfb starts.
   **Layman:** Pressing Ctrl+C at the wrong moment can leave a hidden screen running in the background.
   Kind: fix.
   Source: review-fix-2026-11-04 DEMO-0095.
@@ -5760,6 +5773,9 @@ covers both display backends and the Flatpak invocation.
   review-code 2026-11-04 lane 7 and review-tests 2026-11-04 R2
   (MEDIUM): try_case's failure path does not end the display it
   started, and under load the case can pass falsely too.
+  2026-11-04: 9e03910 makes try_case end its run and its servers on
+  every way out. Still open: under load the case can pass falsely
+  (review-tests R2).
   **Layman:** When one GPU check fails, it can leave a hidden screen running.
   Kind: test.
   Source: review-fix-2026-11-04 DEMO-0095.
