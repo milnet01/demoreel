@@ -8684,10 +8684,14 @@ step "--settle waits for the app's first picture"
 late_app=(xterm -bg black -fg black -cr black -b 0 -e sh -c
     'printf "\033[?25l"; sleep 4; i=0; while [ $i -lt 30 ]; do printf "\033[47m%80s\033[0m\n" " "; i=$((i+1)); done; sleep 60')
 if ./demoreel record -n "${GATE_RUN}main" -o "$tmp/unsettled.mp4" -d 3 -s 640x480 \
-        -- "${late_app[@]}" >/dev/null 2>&1; then
+        -- "${late_app[@]}" >/dev/null 2>"$tmp/unsettled.err"; then
     echo "the fixture was drawn before the halfway sample, so it cannot test --settle" >&2
     exit 1
 fi
+# And it failed for that reason, not another (DEMO-0095).
+grep -q 'was blank halfway' "$tmp/unsettled.err" || {
+    echo "the run without --settle failed, but not as blank halfway:" >&2
+    cat "$tmp/unsettled.err" >&2; exit 1; }
 out=$(./demoreel record -n "${GATE_RUN}main" -o "$tmp/settled.mp4" -d 2 -s 640x480 --settle 20 \
     -- "${late_app[@]}")
 assert_frame_drawn "$out" 0 "--settle started recording before the app drew"
@@ -10066,11 +10070,16 @@ victim=$!
 # case -- right pid, wrong incarnation.
 printf '{"name":"%s","pid":%d,"starttime":"1","display":":9","output":"%s"}\n' \
     "${GATE_RUN}stale" "$victim" "$tmp/never.mp4" > "$statedir/${GATE_RUN}stale.json"
-if ./demoreel stop "${GATE_RUN}stale" >/dev/null 2>&1; then
+if ./demoreel stop "${GATE_RUN}stale" >/dev/null 2>"$tmp/stale.err"; then
     kill "$victim" 2>/dev/null || true
     echo "stop acted on a state file whose recorded start time does not match" >&2
     exit 1
 fi
+# Refused as no such run, not by falling over first (DEMO-0095).
+grep -q 'no recording named' "$tmp/stale.err" || {
+    kill "$victim" 2>/dev/null || true
+    echo "stop failed on the stale state file, but not by refusing it:" >&2
+    cat "$tmp/stale.err" >&2; exit 1; }
 if ! kill -0 "$victim" 2>/dev/null; then
     echo "stop signalled a process it never started" >&2
     exit 1
@@ -10948,6 +10957,10 @@ fi
 grep -q '^  present ' <<<"$places" && {
     echo "--option-places found an option nobody has added:" >&2
     echo "$places" >&2; exit 1; }
+# It looked, and found it missing everywhere, rather than failing first (DEMO-0095).
+[ "$(grep -c '^  MISSING ' <<<"$places")" -eq 7 ] || {
+    echo "--option-places did not report --not-an-option missing in all seven places:" >&2
+    echo "$places" >&2; exit 1; }
 echo "--option-places found --region in every place, and --not-an-option in none"
 
 finishing_checks
@@ -11710,8 +11723,12 @@ echo "a broken or hostile catalog costs its language, never the run"
 
 step "default output name"
 # -o is optional; without it the file is named from the app and a timestamp.
-( cd "$tmp" && "$OLDPWD/demoreel" record -n "${GATE_RUN}default" -d 3 -s 640x480 -- xclock >/dev/null )
-ls "$tmp"/xclock-*.mp4 >/dev/null
+named=$(cd "$tmp" && "$OLDPWD/demoreel" record -n "${GATE_RUN}default" -d 3 -s 640x480 -- xclock)
+# stdout is the path, and the name is the app and the time (DEMO-0095).
+[[ $named =~ ^$tmp/xclock-[0-9]{8}-[0-9]{6}(-[0-9]+)?\.mp4$ ]] && [ -s "$named" ] || {
+    echo "record without -o printed '$named', not the app-and-time file it wrote:" >&2
+    ls "$tmp"/xclock-* >&2; exit 1; }
+echo "without -o the file is $(basename "$named")"
 
 step "only the release job can write to the repository"
 # DEMO-0068 INV-10 and DEMO-0084 INV-6. It reads the workflow files, not
