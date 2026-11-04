@@ -8372,6 +8372,26 @@ finally:
 print("a window with a Latin-1 title is found")
 TITLEPY
 
+step "an app that forks and exits 0 is waited for, and one that just exits is not"
+# DEMO-0351. Kate 23.08 (Ubuntu 24.04) forks: its first process exits 0 and a
+# child in the same group draws the window. That is not a hand-over to another
+# desktop, so the run waits for the window as it would for the app itself.
+shot_aside -s 320x240 -o "$tmp/forked.png" -- sh -c 'sleep 0.5; xclock & exit 0' \
+    >/dev/null 2>"$tmp/forked.err" || {
+    echo "an app that forked and exited 0 was not waited for:" >&2
+    cat "$tmp/forked.err" >&2; exit 1; }
+[ -s "$tmp/forked.png" ] || { echo "the forked app's picture was not written" >&2; exit 1; }
+# The control: an app that exits 0 and leaves nothing is still told so at once.
+started=$SECONDS
+if shot_aside -s 320x240 -o "$tmp/gone.png" -- true >/dev/null 2>"$tmp/gone.err"; then
+    echo "an app that exited at once made a picture" >&2; exit 1
+fi
+grep -q 'the app exited immediately (status 0)' "$tmp/gone.err" \
+    && [ $((SECONDS - started)) -lt 8 ] || {
+    echo "an app that exited at once was not told so promptly:" >&2
+    cat "$tmp/gone.err" >&2; exit 1; }
+echo "a forked app was waited for, and an app that left nothing was told so"
+
 step "a long type step is given time for its pace"
 # DEMO-0094. A type step was allowed 50 ms a character and typed at 60, so text
 # over about 1000 characters ended the run with "stopped answering" while it was

@@ -271,7 +271,8 @@ something behaves unexpectedly:
   already running on the real desktop, the new launch hands over to it and exits
   **0** — a successful process that never shows a window. finbreak behaves this
   way (FIBR-0204). The error message must name this, or it reads as a demoreel
-  bug.
+  bug. An exit 0 that leaves a process in the app's group is a fork, not a
+  hand-over, and the run waits for its window: Kate 23.08 forks so (DEMO-0351).
 - **The window to record is the biggest one, and that is deliberate.** An app
   with a modal startup dialog has two windows; picking by search order gets the
   dialog about as often as not, and it then gets stretched to fill the frame

@@ -1209,6 +1209,11 @@ def wait_for_window(env, app, timeout):
         if ids:
             return max(ids, key=lambda wid: window_area(env, wid))
         if app.poll() is not None:
+            # An app that forks and exits 0, as Kate 23.08 does, leaves its
+            # window to a child in the same group: wait for that as for the app.
+            # A hand-over to another desktop leaves no one behind (DEMO-0351).
+            if app.returncode == 0 and signal_group(app, 0):
+                return None
             if app.returncode == 0:
                 # The first line is what happened; the rest is a guess, and is
                 # written as one. The hand-over is the common case here, but a

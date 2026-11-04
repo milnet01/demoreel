@@ -104,6 +104,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   Its window goes a moment before its process, so a check landing between the two reported a blank recording. demoreel now gives a blank display's app 2 seconds to finish closing.
 - **A long film no longer needs more memory for every scene** (DEMO-0252)
   `edit` now draws a film a few scenes at a time, so a 24-scene film of windowed clips at 1600x1000 peaks at about 1.1 GB rather than 4.6 GB, and fits on a smaller machine. The film comes out the same, each frame is still encoded once, and it takes about 15% more CPU time.
+- **An app that puts itself in the background, such as Kate on Ubuntu 24.04, is recorded** (DEMO-0351)
+  Its first process exits at once and leaves the window to a copy of itself. demoreel used to stop there and blame a copy on your desktop.
 - **Chromium and Electron apps such as Brave start under demoreel** (DEMO-0283)
   They chose Wayland from your session and exited when it was not there. demoreel now tells the app its session is X11.
 - **Apps built with winit (egui, Bevy, Alacritty) now start under demoreel** (DEMO-0281)
