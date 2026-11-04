@@ -1725,10 +1725,19 @@ skipped() {
     echo "skipped: $*"
     echo "$*" >>"$tmp/skipped"
 }
-skipped_line() {  # how many parts skipped
+skipped_line() {  # how many parts skipped [, what passed]
     local parts=parts
     [ "$1" != 1 ] || parts=part
-    echo "all checks passed; $1 $parts SKIPPED, which ./ci.sh --summary lists"
+    echo "${2:-all checks passed}; $1 $parts SKIPPED, which ./ci.sh --summary lists"
+}
+# The last line of the gate or one of its modes: what passed, and how many
+# parts did not run (DEMO-0095: two modes and two early exits left them out).
+gate_finish() {  # what passed
+    if [ -s "$tmp/skipped" ]; then
+        gate_end "$(skipped_line "$(wc -l <"$tmp/skipped")" "$1")"
+    else
+        gate_end "$1"
+    fi
 }
 
 # End what this shell started and still has running, for every way out of the
@@ -3631,6 +3640,7 @@ E
     else
         refused_naming_line "a fading text on a band, with an ffmpeg that has no boxw" fd3.mp4 2
         echo "this ffmpeg has no boxw: the fading text on a band was refused, as README says"
+        skipped "this ffmpeg has no boxw, so a fading text on a band was not drawn"
     fi
     # The same on a card, whose text counts from the card's start.
     ed_ok fd4.mp4 <<'E'
@@ -3842,6 +3852,7 @@ card 2
 E
         refused_naming_line "a font asked for by name on a machine without fc-match" ff0.mp4 2
         echo "no fc-match here: a font asked for by name was refused, as README says"
+        skipped "no fc-match, so a font drawn by name did not run"
         return 0
     fi
     drawn() {  # out family: a card in that family; sets rc
@@ -7160,7 +7171,7 @@ if [ "${1:-}" = "--release-chain" ]; then
     tmp=$(mktemp -d)
     trap 'rm -rf "$tmp"' EXIT
     chain_checks
-    gate_end 'release chain checks passed'
+    gate_finish 'release chain checks passed'
     exit 0
 fi
 
@@ -7171,7 +7182,7 @@ if $FINISHING_ONLY; then
     tmp=$(mktemp -d)
     trap 'stop_children; rm -rf "$tmp"' EXIT
     finishing_checks
-    gate_end 'finishing checks passed'
+    gate_finish 'finishing checks passed'
     exit 0
 fi
 
@@ -7515,7 +7526,8 @@ if command -v groff >/dev/null; then
                             echo "$warnings" >&2; exit 1; }
     echo "demoreel.1 names every option, command and step, and renders cleanly"
 else
-    echo "demoreel.1 names every option, command and step (no groff to render it)"
+    echo "demoreel.1 names every option, command and step"
+    skipped "no groff, so demoreel.1 was not rendered"
 fi
 
 step "README's language list matches po/"
@@ -9114,6 +9126,8 @@ if command -v pactl >/dev/null; then
         cat "$tmp/check-slow.err" >&2
         exit 1
     }
+else
+    skipped "no pactl, so check's could-not-tell answer for --audio did not run"
 fi
 echo "check says it could not tell when ffmpeg is too slow to answer"
 
@@ -11686,8 +11700,8 @@ step "the packages, on every distro they target"
 if [ -n "${GITHUB_ACTIONS:-}" ] || [ -n "${DEMOREEL_PARITY_INSIDE:-}" ]; then
     echo "not applicable: the packages job runs it on GitHub"
 elif ! command -v podman >/dev/null; then
-    gate_end 'checks passed; the packages and the Ubuntu leg were SKIPPED: podman is not installed'
-    exit 0
+    skipped "podman is not installed, so the packages and the Ubuntu leg did not run"
+    no_podman=1
 else
     packages_check ''
 fi
@@ -11699,10 +11713,10 @@ step "the same gate on GitHub's Ubuntu"
 # (DEMO-0282).
 if [ -n "${GITHUB_ACTIONS:-}" ] || [ -n "${DEMOREEL_PARITY_INSIDE:-}" ]; then
     echo "not applicable: this run already is on that Ubuntu"
+elif [ -n "${no_podman:-}" ]; then
+    echo "not run: podman is not installed, as counted above"
 elif ! podman image exists "$PARITY_IMAGE"; then
-    gate_end 'checks passed; the Ubuntu leg was SKIPPED: its image is not built'
-    echo "build it once (a few minutes): ./ci.sh --parity-build"
-    exit 0
+    skipped "the Ubuntu leg: its image is not built; build it once (a few minutes): ./ci.sh --parity-build"
 else
     # GitHub's runner takes Ubuntu's package updates every week; the image keeps
     # the ones it was built with. So say when it has had time to fall behind.
@@ -11742,10 +11756,9 @@ else
         cat "$tmp/parity.log" >&2
         exit 1; }
     echo "every check above also passed on $PARITY_BASE"
+    # Its own skips are not counted here: they are the --gpu, Flatpak and sound
+    # parts the container lacks, which this machine ran above. The leg is for
+    # Ubuntu's package versions.
 fi
 
-if [ -s "$tmp/skipped" ]; then
-    gate_end "$(skipped_line "$(wc -l <"$tmp/skipped")")"
-else
-    gate_end 'all checks passed'
-fi
+gate_finish 'all checks passed'

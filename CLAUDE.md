@@ -57,9 +57,9 @@ The full gate ends by running itself again in a local `ubuntu:24.04` image
 built from the same package list the workflow installs (`./ci.sh
 --ci-packages`), so a difference in GitHub's older packages fails here first.
 `./ci.sh --parity-build` builds the image; a changed package list or ruff
-version changes its tag and asks for a rebuild. Without it the gate's last line
-says the Ubuntu step was skipped. That is not a pass. A part of a check that
-could not run on this machine is counted on that same line, and `./ci.sh
+version changes its tag and asks for a rebuild. Without it the Ubuntu step is
+skipped. That is not a pass. A part of a check that could not run on this
+machine, this step included, is counted on the gate's last line, and `./ci.sh
 --summary` lists each one. GitHub's packages move
 weekly and the image does not, so the step prints a note once the image is two
 weeks old; rebuild then.
