@@ -1,7 +1,7 @@
 <!-- ants-spec-format: 1 -->
 # DEMO-0084 — Sign release tags, and attach checksums and a build record to each release
 
-**Status:** accepted (2026-10-13).
+**Status:** shipped 0.9.0 (2026-10-14).
 **Kind:** security.
 **Source:** ROADMAP DEMO-0084 (user-request-2026-09-25; decisions 2026-10-13).
 **Pairs with:** DEMO-0068 (its release job, `docs/specs/DEMO-0068-linux-packages.md` § 4.5 and INV-10, gains the steps below; that spec is amended in the same batch).

@@ -1,7 +1,7 @@
 <!-- ants-spec-format: 1 -->
 # DEMO-0106 — Record an app's own sound, and keep every app's sound off the speakers
 
-**Status:** accepted (2026-10-10).
+**Status:** shipped 0.7.0 (2026-10-11).
 **Kind:** feature.
 **Source:** ROADMAP DEMO-0106 (user-request-2026-09-25; decisions 2026-10-10).
 **Blocked by:** DEMO-0104 (the scope ceiling still says audio is out).

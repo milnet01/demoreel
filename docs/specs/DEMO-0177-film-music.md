@@ -1,7 +1,7 @@
 <!-- ants-spec-format: 1 -->
 # DEMO-0177 — Keep a clip's sound through the finishing commands, and put music under a film
 
-**Status:** accepted (2026-10-11).
+**Status:** shipped 0.7.0 (2026-10-11).
 **Kind:** feature.
 **Source:** ROADMAP DEMO-0177 (user-request-2026-10-10; decisions 2026-10-10 and 2026-10-11).
 **Pairs with:** DEMO-0106 (records the app's sound this keeps; its § 9 leaves this work here).

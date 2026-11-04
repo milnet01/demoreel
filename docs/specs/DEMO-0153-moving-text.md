@@ -1,7 +1,7 @@
 <!-- ants-spec-format: 1 -->
 # DEMO-0153 — Several lines of text on screen at once, sliding and fading in
 
-**Status:** accepted (2026-10-11).
+**Status:** shipped 0.8.0 (2026-10-13).
 **Kind:** feature.
 **Source:** ROADMAP DEMO-0153 (user-request-2026-10-02; the Slipcase trailer, 2026-10-10).
 **Pairs with:** DEMO-0185 (a logo that grows as it fades in; an end card is that plus this). DEMO-0183 (its window sits in the room these texts leave).

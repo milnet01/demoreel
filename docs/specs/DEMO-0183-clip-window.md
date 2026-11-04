@@ -1,7 +1,7 @@
 <!-- ants-spec-format: 1 -->
 # DEMO-0183 — Show a clip in a smaller window, with rounded corners and a soft shadow, over a background
 
-**Status:** accepted (2026-10-11).
+**Status:** shipped 0.8.0 (2026-10-13).
 **Kind:** feature.
 **Source:** ROADMAP DEMO-0183 (peer-website-session-2026-10-10; the Slipcase trailer).
 **Pairs with:** DEMO-0178 (a moving background behind the window), DEMO-0184 (push-in and zoom); both build on the layout this spec sets.

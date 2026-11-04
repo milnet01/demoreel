@@ -89,6 +89,13 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   A mistyped key name such as `key Retrun` used to leave a video with the key press missing, and report success.
 - **`wait inf` is refused before the recording starts** (DEMO-0094)
   It used to end the run in a Python error partway through. `hold` is the same, and a negative time is refused too.
+- **Every option that takes seconds refuses `nan`, `inf` and a negative number**
+  `trim --from nan` and `poster -t nan` ended in a Python error, and `record -d nan` never stopped. An `edit` script already refused them.
+- **A private screen that stops answering while it starts is ended, not left running**
+- **`demoreel stop` on a run that has just ended no longer gives a Python error**
+- **A recording whose final copy takes too long fails with a message naming the kept part file**
+  It used to end in a Python error.
+- **A film whose ffmpeg fails without a word gets a message, not a Python error**
 - **A recording cut short by its recorder or its private screen now fails** (DEMO-0094)
   A `-d 30` run whose recorder stopped early could hand back a 2-second video and report success.
 - **An app that cannot start no longer leaves a private screen running** (DEMO-0094)
@@ -97,6 +104,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   Its window goes a moment before its process, so a check landing between the two reported a blank recording. demoreel now gives a blank display's app 2 seconds to finish closing.
 - **A long film no longer needs more memory for every scene** (DEMO-0252)
   `edit` now draws a film a few scenes at a time, so a 24-scene film of windowed clips at 1600x1000 peaks at about 1.1 GB rather than 4.6 GB, and fits on a smaller machine. The film comes out the same, each frame is still encoded once, and it takes about 15% more CPU time.
+- **Chromium and Electron apps such as Brave start under demoreel** (DEMO-0283)
+  They chose Wayland from your session and exited when it was not there. demoreel now tells the app its session is X11.
 - **Apps built with winit (egui, Bevy, Alacritty) now start under demoreel** (DEMO-0281)
   demoreel gave the app a made-up Wayland display name to keep it off
   your real desktop. winit took any name as "use Wayland" and quit.

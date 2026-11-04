@@ -1,7 +1,7 @@
 <!-- ants-spec-format: 1 -->
 # DEMO-0068 — Ship demoreel as .deb, .rpm and Arch packages built and tested in CI
 
-**Status:** accepted (2026-10-10).
+**Status:** shipped 0.9.0 (2026-10-14).
 **Kind:** package.
 **Source:** ROADMAP DEMO-0068 (user-request-2026-09-25; design decisions 2026-10-08).
 **Pairs with:** DEMO-0069 and DEMO-0070 (built under this contract; no spec of their own), DEMO-0072 (the from-source install reuses § 4.1's script), DEMO-0174 (`record --gpu` on openSUSE, § 4.6).
