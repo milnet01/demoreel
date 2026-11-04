@@ -7718,6 +7718,12 @@ bad = [line.strip() for line in text.splitlines()
        if re.search(r'/demoreel"?' r" record\b(?! --help)", line)
        and not line.lstrip().startswith("#")
        and not re.search(r" (-n |--name[ =])", line)]
+# And the list form Python steps pass to subprocess (DEMO-0095): it needs "-n",
+# and the gate's own prefix, or --perf's name, which no gate run uses.
+bad += [line.strip() for line in text.splitlines()
+        if re.search(r'(\[|, )"record", "', line) and '"--help"' not in line
+        and not line.lstrip().startswith("#")
+        and not ('"-n"' in line and ("GATE_RUN" in line or '"perf"' in line))]
 for line in bad:
     print(f"records under the default name: {line[:100]}", file=sys.stderr)
 sys.exit(1 if bad else 0)
