@@ -4722,7 +4722,7 @@ def check_scene(scene, width, height, rate, workdir):
             scene.background = scene.background or CARD_BACKGROUND
         # A push grows a window. A zoom works on a whole frame too (DEMO-0286 § 4.1).
         if scene.window is None and scene.push:
-            # translators: {word} is push or zoom, and window an edit-script word;
+            # translators: {word} is push, and window an edit-script word;
             # both stay in English.
             die(tr("{where}: {word} acts on a clip's window, and this clip has "
                    "no window.", where=where, word="push"))

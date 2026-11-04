@@ -817,7 +817,7 @@ msgstr ""
 msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
 msgstr ""
 
-#. translators: {word} is push or zoom, and window an edit-script word; both stay in English.
+#. translators: {word} is push, and window an edit-script word; both stay in English.
 msgid "{where}: {word} acts on a clip's window, and this clip has no window."
 msgstr ""
 
