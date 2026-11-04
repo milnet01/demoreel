@@ -7110,12 +7110,18 @@ CHAINPY
         rm -f "$canary"
         (cd "$at/folder" && XDG_RUNTIME_DIR="$at/xdg" offered "$shell" "./demoreel stop " \
             </dev/null) >/dev/null
+        # The control: the completion answers for ./demoreel at all, or the case
+        # above tested nothing (DEMO-0095).
+        offered_names=$(cd "$at/folder" && offered "$shell" "./demoreel " </dev/null)
+        grep -qx record <<<"$offered_names" || {
+            echo "$shell offered no commands after ./demoreel, so that case tested nothing:" >&2
+            echo "$offered_names" >&2; bad=1; }
         [ ! -e "$canary" ] || {
             echo "$shell's Tab on ./demoreel stop ran the folder's script" >&2; bad=1; }
         # DEMO-0095. With demoreel on no PATH entry, or a bash function by that
         # name, the bare name is all the shell has; opened, it is the folder's.
         rm -f "$canary"
-        # shellcheck disable=SC2329  # exported, for the shell under test to find
+        # shellcheck disable=SC2317,SC2329  # exported, for the shell under test to find
         (cd "$at/folder" && demoreel() { :; } && export -f demoreel &&
             XDG_RUNTIME_DIR="$at/xdg" PATH="$path_without_demoreel" \
             offered "$shell" "demoreel stop " </dev/null) >/dev/null 2>&1 || true
