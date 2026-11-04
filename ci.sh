@@ -7115,6 +7115,7 @@ CHAINPY
         # DEMO-0095. With demoreel on no PATH entry, or a bash function by that
         # name, the bare name is all the shell has; opened, it is the folder's.
         rm -f "$canary"
+        # shellcheck disable=SC2329  # exported, for the shell under test to find
         (cd "$at/folder" && demoreel() { :; } && export -f demoreel &&
             XDG_RUNTIME_DIR="$at/xdg" PATH="$path_without_demoreel" \
             offered "$shell" "demoreel stop " </dev/null) >/dev/null 2>&1 || true
