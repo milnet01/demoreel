@@ -7497,7 +7497,7 @@ step "README's install lines are the ones demoreel check prints"
 # too, so hold each of its lines to that table: per distro, the default
 # backend's packages, the four more --gpu needs, and pactl's for sound.
 python3 - <<'INSTALLPY'
-import importlib.machinery, importlib.util, sys
+import importlib.machinery, importlib.util, re, sys
 loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
 demoreel = importlib.util.module_from_spec(
     importlib.util.spec_from_loader("demoreel", loader))
@@ -7506,12 +7506,26 @@ readme = open("README.md", encoding="utf-8").read().splitlines()
 default = demoreel.required_programs(False, True)
 gpu = [p for p in demoreel.required_programs(True, True) if p not in default]
 bad = 0
+made = set()
 for family, (command, names) in demoreel.PACKAGES.items():
     for programs in (default, gpu, ["pactl"]):
         line = " ".join([command, *dict.fromkeys(
             names[p] for p in programs if p in names)])
+        made.add(line)
         if line not in readme:
             print(f"README.md § Install lacks this line: {line}", file=sys.stderr)
+            bad += 1
+# And the other way (DEMO-0095): a README line installing plain package names
+# with one of the table's commands is one the table makes, so a stale name kept
+# beside the new line is caught. A file, a URL or an option is another matter.
+commands = {command for command, _ in demoreel.PACKAGES.values()}
+plain = re.compile(r"[A-Za-z0-9][A-Za-z0-9+_.-]*")
+for line in readme:
+    for command in commands:
+        words = line[len(command) + 1:].split() if line.startswith(command + " ") else []
+        if words and all(plain.fullmatch(w) for w in words) and line not in made:
+            print(f"README.md installs what the package table does not: {line}",
+                  file=sys.stderr)
             bad += 1
 sys.exit(1 if bad else 0)
 INSTALLPY
@@ -11749,6 +11763,14 @@ for grant in 'contents: write' 'id-token: write' 'attestations: write'; do
         exit 1; }
     echo "$grants"
 done
+# And no other grant, however it is spelled: write-all, a quoted value, extra
+# spaces (DEMO-0095). Every write grant found must be one of the three above.
+others=$(grep -rnE -- "write-all|:[[:space:]]*['\"]?write['\"]?[[:space:]]*(#.*)?\$" \
+    .github/workflows/ | grep -vE '^\.github/workflows/release\.yml:[0-9]+:      (contents|id-token|attestations): write$' \
+    || true)
+[ -z "$others" ] || { echo "a workflow grants write beyond the release job's three:" >&2
+                      echo "$others" >&2; exit 1; }
+echo "no other write grant"
 
 step "no private key is in the repository"
 # DEMO-0084 INV-7. The header is built from two parts, so this file does not
