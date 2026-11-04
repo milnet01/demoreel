@@ -204,7 +204,8 @@ Two limits are left:
 **The video and the logs demoreel writes.** Whatever the app draws is in the
 video, and `--app-log` keeps whatever the app printed. Both are ordinary files
 with the caller's umask, and a part file has that mode from the start. A video
-or a picture that replaces a file keeps that file's mode. A film keeps no tags or
+or a picture that replaces a file of the caller's keeps that file's mode;
+one replacing a file another user put there during the run keeps the umask's. A film keeps no tags or
 chapters from the files it is made from, which the gate checks. Check what is in them
 before publishing one; demoreel cannot tell a secret on screen from any other
 pixels.

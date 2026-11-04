@@ -32,7 +32,7 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 ### Changed
 
 - **A recording appears at `-o` only when it is whole** (DEMO-0094)
-  While it records, the video is a hidden file beside `-o`. A failed retake no longer destroys the take before it: that file stays, and the message says where the new video is. A file replaced keeps its permissions.
+  While it records, the video is a hidden file beside `-o`. A failed retake no longer destroys the take before it: that file stays, and the message says where the new video is. A file of yours replaced keeps its permissions.
 - **`--name` takes plain letters, digits, dots, underscores and hyphens** (DEMO-0094)
   Up to 64, starting with a letter, a digit or an underscore. `-n ../x` used to write outside demoreel's own folder. A name with a space or an accented letter is now refused.
 - **`-o` takes an ordinary file or nothing, and no control characters** (DEMO-0094)

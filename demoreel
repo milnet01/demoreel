@@ -2396,22 +2396,28 @@ def move_into_place(part, output):
 
     A rename does not follow a link at output, so one planted there after
     own_path looked is replaced, not written through. A file replaced keeps its
-    mode: one the caller made private stays private. A name this run made up is
-    never written over.
+    mode: one the caller made private stays private. Only the caller's own file
+    lends its mode; one another user planted during the run would otherwise
+    choose who can read the take. A name this run made up is never written
+    over, and the empty file claiming it goes if the move fails.
     """
+    claimed = None
     try:
         if output in made_up_outputs:
             planned, output = output, claim_free_name(output)
+            claimed = output
             if output != planned:
                 note(tr("{taken} was taken by the time the file was ready, so the "
                         "file is {output}.", taken=planned, output=output))
         else:
             with contextlib.suppress(FileNotFoundError):
                 old = os.lstat(output)
-                if stat.S_ISREG(old.st_mode):
+                if stat.S_ISREG(old.st_mode) and old.st_uid == os.getuid():
                     os.chmod(part, stat.S_IMODE(old.st_mode))
         os.replace(part, output)
     except OSError as exc:
+        if claimed is not None:
+            claimed.unlink(missing_ok=True)
         die(tr("could not write to {path}: {reason}.", path=output, reason=exc.strerror))
     return output
 
@@ -2426,9 +2432,13 @@ def keep_failed_take(part, output):
         note(tr("{output} was left as it was, and this run's video is in {part}.",
                 output=output, part=part))
     else:
-        # What went wrong first is what the run ends on.
-        with contextlib.suppress(SystemExit):
+        # What went wrong first is what the run ends on, so the move's own
+        # failure is not raised; but the take is then still in the part.
+        try:
             move_into_place(part, output)
+        except SystemExit:
+            note(tr("{output} was left as it was, and this run's video is in {part}.",
+                    output=output, part=part))
 
 
 # As many links as one path may go through, which is the kernel's own limit.

@@ -912,7 +912,7 @@ you would only find out by watching it.
 
 | Option | What it does |
 |---|---|
-| `-o`, `--output` | Where to write the video. Without it, the file lands in the current folder, named after the app and the time. A link of your own at this path keeps writing to its target, and a file replaced keeps its permissions. Another user's link or file on the path is refused, as is anything that is not an ordinary file, and a path holding a line break. |
+| `-o`, `--output` | Where to write the video. Without it, the file lands in the current folder, named after the app and the time. A link of your own at this path keeps writing to its target, and a file of yours replaced keeps its permissions. Another user's link or file on the path is refused, as is anything that is not an ordinary file, and a path holding a line break. |
 | `-d`, `--duration` | How many seconds to record, counted from when the scripted steps finish — so a run with `-a` steps lasts longer than this. `-d 0` means "keep going until I say stop, or until the app closes itself, whichever comes first". |
 | `-s`, `--size` | The size of the picture, like `1280x800`. Both numbers must be even. |
 | `-r`, `--framerate` | Frames per second. |

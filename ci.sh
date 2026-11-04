@@ -5212,6 +5212,55 @@ assert a != b and a.parent == given.parent and a.suffix == ".mp4" and b.suffix =
 assert a.name.startswith(".demoreel-part-") and b.name.startswith(".demoreel-piece-")
 assert stat.S_IMODE(a.lstat().st_mode) == 0o640 and a.stat().st_size == 0
 a.unlink(), b.unlink()
+# DEMO-0095. A file another user planted at -o lends the take none of its mode;
+# the caller's own file at -o still does.
+real_lstat = d.os.lstat
+def lstat_owned_by(uid):
+    def fake(path, *args, **kwargs):
+        got = real_lstat(path, *args, **kwargs)
+        if Path(path).name == "planted.mp4":
+            return os.stat_result((got.st_mode, got.st_ino, got.st_dev, got.st_nlink,
+                                   uid, got.st_gid, got.st_size, got.st_atime,
+                                   got.st_mtime, got.st_ctime))
+        return got
+    return fake
+planted = d.own_path("planted.mp4", "output")
+for uid, mode in ((os.getuid() + 1, 0o600), (os.getuid(), 0o666)):
+    planted.write_bytes(b"theirs")
+    planted.chmod(0o666)
+    part = part_with(b"mine", planted)
+    part.chmod(0o600)
+    d.os.lstat = lstat_owned_by(uid)
+    try:
+        d.move_into_place(part, planted)
+    finally:
+        d.os.lstat = real_lstat
+    assert stat.S_IMODE(planted.lstat().st_mode) == mode, (uid, oct(planted.lstat().st_mode))
+planted.unlink()
+# A move that fails leaves no empty claimed file at a made-up name, and a
+# failed take whose move fails is named, not left unsaid in a hidden part.
+real_replace = d.os.replace
+def refuse(*_):
+    raise PermissionError(13, "Permission denied")
+madeup = d.timestamped_output("refused", ".mp4")
+part = part_with(b"take", madeup)
+d.os.replace = refuse
+try:
+    d.move_into_place(part, madeup)
+    raise AssertionError("a refused move went unsaid")
+except SystemExit:
+    pass
+finally:
+    d.os.replace = real_replace
+assert not madeup.exists(), "an empty claimed file was left at the made-up name"
+notes.clear()
+d.os.replace = refuse
+try:
+    d.keep_failed_take(part, Path("unmoved.mp4"))
+finally:
+    d.os.replace = real_replace
+assert part.exists() and any(str(part) in n for n in notes), notes
+part.unlink()
 print("a made-up name is claimed when the file is ready")
 CLAIMPY
     ) || fail "the finished file did not land as promised"
