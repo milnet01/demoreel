@@ -5537,6 +5537,11 @@ covers both display backends and the Flatpak invocation.
   settles, every change would need ten more edits. Decide the layout
   (man/<code>/demoreel.1, where a package installs it) and how the gate
   checks each copy against the English.
+  Waiting-on: user (Translate the manual page before 1.0.0, as this
+  item's 2026-10-02 decision says, or after it, as the 2026-10-10
+  decision "other translations after 1.0.0" reads? Recommended: after
+  1.0.0. The page still changes, 2026-11-04 included, and each change
+  would need edits in every language, 2026-11-04).
   **Layman:** `man demoreel` will be translated too, but only near 1.0, so each change to the manual doesn't need ten more edits.
   Kind: doc.
   Source: user-decision-2026-10-02.
@@ -5740,11 +5745,24 @@ covers both display backends and the Flatpak invocation.
   Kind: fix.
   Source: review-fix-2026-11-04 DEMO-0095.
 
-- 📋 [DEMO-0354] **A placed text's fit check ignores the ink's offset, descenders and leading spaces.**
+- ✅ [DEMO-0354] **A placed text's fit check ignores the ink's offset, descenders and leading spaces.**
   review-code 2026-11-04 lane 3 (MEDIUM, reasoned, not measured):
   check_texts' x,y fit uses text_size's box from its origin, not the
   drawn ink. Measure first: draw a line with descenders and a leading
   space at the edge and read the frame. Private record, lane 3.
+  Measured 2026-11-04 on a 1600x1000 card, size 5. Descenders: refuted.
+  "gap" at x 50 y 97 inks rows 945-981, inside the frame. Leading
+  spaces: confirmed. " Hi" at x 97 inks columns 1568-1595 where "Hi"
+  inks 1531-1572. " Hi" (12 spaces) at x 98 is accepted, and no ink
+  lands in the frame at all. text_size measures the ink box; the
+  placement centres drawtext's text_w, which counts the spaces.
+  Recommended fix: measure the advance width too, for a placed text
+  whose ends are spaces only (the common case stays one ffmpeg call).
+  For example, measure "|"+text+"|" less "||". Stripping the spaces
+  instead would change what a band around the text covers.
+  2026-11-04: 4b6f339 measures a placed text with spaces at its ends
+  between two bars (advance_width); fin_s99 refuses " Hi" at x 95 and
+  draws "Hi" there.
   **Layman:** A text placed near the edge of the frame might be let through when part of it would fall outside.
   Kind: fix.
   Source: review-fix-2026-11-04 DEMO-0095.
