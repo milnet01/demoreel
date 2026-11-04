@@ -2970,17 +2970,17 @@ NOOPY
     # much shorter than its scenes added together." A is 6 s and B is 4 s.
     run join A.mp4 B.mp4 -o "$ft/out/j1.mp4"
     expect_ok "join A B"
-    assert_near "join, plain cut: length (6 + 4)" 10 "$(v_dur "$ft/out/j1.mp4")" 0.15
+    assert_len "join, plain cut (6 + 4)" "$ft/out/j1.mp4" 100 10
     assert_is_frame "join: frame 10 is still A's" "$ft/out/j1.mp4" 10 "$ft/A.mp4" 10
     run join A.mp4 B.mp4 -o "$ft/out/j2.mp4" --crossfade 0.5
     expect_ok "join --crossfade 0.5"
-    assert_near "join with one crossfade: length (6 + 4 - 0.5)" 9.5 "$(v_dur "$ft/out/j2.mp4")" 0.15
+    assert_len "join with one crossfade (6 + 4 - 0.5)" "$ft/out/j2.mp4" 95 10
     run join A.mp4 B.mp4 A.mp4 -o "$ft/out/j3.mp4" --crossfade 0.5
     expect_ok "join of three, --crossfade 0.5"
-    assert_near "join of three with a crossfade at each join: length (16 - 2 x 0.5)" 15 "$(v_dur "$ft/out/j3.mp4")" 0.15
+    assert_len "join of three with a crossfade at each join (16 - 2 x 0.5)" "$ft/out/j3.mp4" 150 10
     run join A.mp4 B.mp4 A.mp4 -o "$ft/out/j4.mp4"
     expect_ok "join of three, plain cuts"
-    assert_near "join of three with plain cuts: length (6 + 4 + 6)" 16 "$(v_dur "$ft/out/j4.mp4")" 0.15
+    assert_len "join of three with plain cuts (6 + 4 + 6)" "$ft/out/j4.mp4" 160 10
     echo "lengths: plain cuts add up; each crossfade takes its overlap off"
 
     }
@@ -3262,7 +3262,7 @@ SCRIPT
     expect_ok "edit film.txt"
     expect_stdout_path "edit" "$ft/out/E1.mp4"
     assert_finished "$ft/out/E1.mp4" "edit" 1
-    assert_near "edit: length (3 + 2 + 3 + 2.9 - 0.5)" 10.4 "$(v_dur "$ft/out/E1.mp4")" 0.15
+    assert_len "edit (3 + 2 + 3 + 2.9 - 0.5)" "$ft/out/E1.mp4" 104 10
     assert_eq "edit: size is the first clip's" 320x240 "$(v_size "$ft/out/E1.mp4")"
     assert_eq "edit: rate is the first clip's" 10.00 "$(v_rate "$ft/out/E1.mp4")"
     # README: "`edit` encodes each frame once however many scenes the film
@@ -3324,7 +3324,7 @@ SCRIPT
     expect_ok "edit: clip B then clip A"
     assert_eq "edit: size (the first clip's)" 320x240 "$(v_size "$ft/out/G1.mp4")"
     assert_eq "edit: rate (the first clip's, 15)" 15.00 "$(v_rate "$ft/out/G1.mp4")"
-    assert_near "edit: length (4 + 6)" 10 "$(v_dur "$ft/out/G1.mp4")" 0.15
+    assert_len "edit (4 + 6, at B's 15)" "$ft/out/G1.mp4" 150 15
     run edit g1.txt -o "$ft/out/G2.mp4" -s 160x120 -r 5
     expect_ok "edit -s 160x120 -r 5"
     assert_eq "edit -s: size" 160x120 "$(v_size "$ft/out/G2.mp4")"
@@ -3438,6 +3438,12 @@ card 1
     run edit s2.txt -o "$ft/out/S4.mp4"
     expect_ok "edit: two clips with a crossfade"
     assert_near "join and its script: length" "$(v_dur "$ft/out/S3.mp4")" "$(v_dur "$ft/out/S4.mp4")" 0.05
+    assert_eq "join and its script: frames" "$(v_frames "$ft/out/S3.mp4")" "$(v_frames "$ft/out/S4.mp4")"
+    # Frame 57 is inside the crossfade (5.5 to 6), and frame 80 is B's.
+    for i in 57 80; do
+        d=$(px diff "$ft/out/S3.mp4" "$i" "$ft/out/S4.mp4" "$i")
+        assert_between "join and its script: the same picture at frame $i (difference)" 0 3 "$d"
+    done
     run card -o "$ft/out/S5.mp4" -d 2 --like B.mp4 --text 'Saving a file'
     expect_ok "card --like B.mp4 --text"
     printf 'card 2\n  text "Saving a file"\n' > "$ft/s3.txt"
@@ -3445,6 +3451,8 @@ card 1
     expect_ok "edit: card 2 with a text"
     assert_eq "card and its script: frames" "$(v_frames "$ft/out/S5.mp4")" "$(v_frames "$ft/out/S6.mp4")"
     assert_eq "card and its script: size" "$(v_size "$ft/out/S5.mp4")" "$(v_size "$ft/out/S6.mp4")"
+    d=$(px diff "$ft/out/S5.mp4" 15 "$ft/out/S6.mp4" 15)
+    assert_between "card and its script: the same picture at frame 15 (difference)" 0 3 "$d"
     echo "trim, join and card matched the scripts that say the same"
 
     # ---- check ------------------------------------------------------------
@@ -4761,31 +4769,50 @@ sys.argv = ["demoreel", *sys.argv[2:]]
 d.main()
 CAPPY
     mkdir -p "$ft/big"
-    {
-        printf '#!/bin/sh\ncase "$*" in *-encoders*|*-demuxers*|*filter=drawtext*) exec "%s" "$@" ;; esac\n' "$real_ffmpeg"
-        printf 'exec python3 -c "import time; b = bytearray(400 * 2**20); time.sleep(20)"\n'
-    } >"$ft/big/ffmpeg"
+    # ffmpeg's and ffprobe -count_frames's reads of a file share one count. Read
+    # number BIG_AT goes over the cap and the others are real, so every read a
+    # command makes is reached, not only its first. ffprobe's other looks at a
+    # file go over the cap when they name BIG_PROBE, and are real otherwise.
+    local big='exec python3 -c "import time; b = bytearray(400 * 2**20); time.sleep(20)"'
+    # shellcheck disable=SC2016  # written into a script, which expands it
+    local turn='n=$(( $(cat "$BIG_COUNT" 2>/dev/null || echo 0) + 1 )); echo "$n" > "$BIG_COUNT"
+[ "$n" = "$BIG_AT" ] && '"$big"
+    # shellcheck disable=SC2016  # written into a script, which expands it
+    printf '#!/bin/sh\ncase "$*" in *-encoders*|*-demuxers*|*filter=drawtext*) exec "%s" "$@" ;; esac\n%s\nexec "%s" "$@"\n' \
+        "$real_ffmpeg" "$turn" "$real_ffmpeg" >"$ft/big/ffmpeg"
     real_probe=$(command -v ffprobe)
     # shellcheck disable=SC2016  # written into a script, which expands it
-    printf '#!/bin/sh\ncase "$*" in *-count_frames*|*"$BIG_PROBE"*) exec python3 -c "import time; b = bytearray(400 * 2**20); time.sleep(20)" ;; esac\nexec "%s" "$@"\n' \
-        "$real_probe" >"$ft/big/ffprobe"
+    printf '#!/bin/sh\ncase "$*" in *"$BIG_PROBE"*) %s ;; *-count_frames*) ;; *) exec "%s" "$@" ;; esac\n%s\nexec "%s" "$@"\n' \
+        "$big" "$real_probe" "$turn" "$real_probe" >"$ft/big/ffprobe"
     chmod +x "$ft/big/ffmpeg" "$ft/big/ffprobe"
     ffmpeg -nostdin -v error -f lavfi -i testsrc=s=32x32:r=5:d=1 -y "$ft/anim.gif"
     printf 'card 1 anim.gif\n' >"$ft/a.txt"
     printf 'card 1\nmusic tone.wav\n' >"$ft/m.txt"
     ffmpeg -nostdin -v error -f lavfi -i sine=440:d=1 -y "$ft/tone.wav"
+    local at
     for cmd in "motion C.mp4" "poster C.mp4 -t 0.1 -o $ft/out/c.png" \
-               "edit a.txt -o $ft/out/c.mp4" "edit m.txt -o $ft/out/c.mp4"; do
-        rc=0
-        # shellcheck disable=SC2086  # each case is several words
-        ( cd "$ft" && BIG_PROBE=no-such-word PATH="$ft/big:$PATH" timeout 15 python3 smallcap.py "$DR" $cmd ) \
-            >"$fo" 2>"$fe" || rc=$?
-        expect_refused "$cmd over the memory cap"
-        grep -q "of memory" "$fe" || { show_err; fail "$cmd over the cap did not say why"; }
+               "edit a.txt -s 160x100 -r 5 -o $ft/out/c.mp4" "edit m.txt -s 160x100 -r 5 -o $ft/out/c.mp4"; do
+        # A small frame, so the real ffmpeg fits under the cap: at 1600x1000 it does not.
+        at=1
+        while :; do
+            rc=0
+            # shellcheck disable=SC2086  # each case is several words
+            ( cd "$ft" && BIG_AT=$at BIG_COUNT="$ft/big/count" BIG_PROBE=no-such-word \
+                  PATH="$ft/big:$PATH" timeout 15 python3 smallcap.py "$DR" $cmd ) \
+                >"$fo" 2>"$fe" || rc=$?
+            rm -f "$ft/big/count"
+            # Once BIG_AT is past its last call, the command runs as normal.
+            [ "$rc" = 0 ] && [ "$at" -gt 1 ] && break
+            expect_refused "$cmd over the memory cap at its call $at"
+            grep -q "of memory" "$fe" || { show_err; fail "$cmd over the cap at its call $at did not say why"; }
+            at=$((at + 1))
+            [ "$at" -le 20 ] || fail "$cmd: still refused at its call 20, so no run went through"
+        done
     done
     # And ffprobe's first look at a file.
     rc=0
-    ( cd "$ft" && BIG_PROBE=C.mp4 PATH="$ft/big:$PATH" timeout 15 python3 smallcap.py "$DR" motion C.mp4 ) \
+    ( cd "$ft" && BIG_PROBE=C.mp4 BIG_COUNT="$ft/big/count" PATH="$ft/big:$PATH" \
+          timeout 15 python3 smallcap.py "$DR" motion C.mp4 ) \
         >"$fo" 2>"$fe" || rc=$?
     expect_refused "ffprobe over the memory cap"
     grep -q "of memory" "$fe" || { show_err; fail "ffprobe over the cap did not say why"; }
@@ -4796,15 +4823,19 @@ CAPPY
     # `12:30:05.mp4` is "Protocol not found", and `./-report` reaches ffprobe as
     # an option that writes a log here. Every one is an ordinary name.
     local name n1 want
+    # Each odd name holds odd.mp4, longer than short.mp4, so a protocol reading
+    # of the name, which opens short.mp4, counts different frames.
     ffmpeg -nostdin -v error -i "$ft/A.mp4" -t 1 -c copy -y "$ft/short.mp4"
-    want=$(v_frames "$ft/short.mp4")
+    ffmpeg -nostdin -v error -i "$ft/A.mp4" -t 1.5 -c copy -y "$ft/odd.mp4"
+    want=$(v_frames "$ft/odd.mp4")
+    [ "$want" != "$(v_frames "$ft/short.mp4")" ] || fail "control: odd.mp4 and short.mp4 have as many frames"
     for name in '12:30:05.mp4' '-report.mp4' 'concat:short.mp4|short.mp4' 'pipe:0.mp4' \
                 'pipe:0' 'subfile,,start,0,end,99,,:short.mp4' 'a%d.mp4' 'file:short.mp4'; do
-        cp "$ft/short.mp4" "$ft/$name"
-        printf 'clip %q to 0.5\n' "$name" > "$ft/s.txt"
+        cp "$ft/odd.mp4" "$ft/$name"
+        printf 'clip %q\n' "$name" > "$ft/s.txt"
         n1="$ft/out/n1.mp4"
         run edit s.txt -o "$n1"; expect_ok "a clip named $name"
-        assert_eq "the clip named $name is that file's frames" 6 "$(v_frames "$n1")"
+        assert_eq "the clip named $name is that file's frames" "$want" "$(v_frames "$n1")"
         run motion -- "$name"; expect_ok "motion of $name"
         assert_eq "motion of $name counts that file's frames" "frames: $want" "$(sed -n 2p "$fo")"
     done
@@ -5495,7 +5526,7 @@ CASES
     ( ulimit -v 3000000; cd "$ft" && four_cores "$DR" edit wn5.txt -o "$ft/out/wn5.mp4" ) \
         >"$fo" 2>"$fe" || rc=$?
     expect_ok "a windowed clip then a crossfade, inside 3 GB"
-    assert_near "a windowed clip then a crossfade: length" 9.5 "$(v_dur "$ft/out/wn5.mp4")" 0.15
+    assert_len "a windowed clip then a crossfade (6 + 4 - 0.5)" "$ft/out/wn5.mp4" 95 10
     echo "a windowed scene ended where the plan says, before a crossfade"
     }
     fin_s59() {
@@ -5676,6 +5707,8 @@ CASES
     : > "$ft/many.txt"
     for i in 1 2 3 4 5 6 7 8 9 10; do printf 'clip T.mp4 from 0 to 0.2\n' >> "$ft/many.txt"; done
     ffmpeg -nostdin -v error -i "$ft/T.mp4" -map 0:v -c copy -y "$ft/V.mp4"
+    probe_all "$ft/V.mp4" | grep -q PRIVATE-TAG || fail "control: the test clip with no sound holds no tags"
+    probe_all "$ft/M.m4a" | grep -q PRIVATE-TAG || fail "control: the test music holds no tags"
     run trim T.mp4 --to 1 -o "$ft/out/trim.mp4"; expect_ok "trim of a tagged clip"
     run trim V.mp4 --to 1 -o "$ft/out/silent.mp4"; expect_ok "trim of a tagged clip with no sound"
     run caption T.mp4 --text Hi --to 1 -o "$ft/out/caption.mp4"; expect_ok "caption of a tagged clip"
@@ -6070,10 +6103,13 @@ SPLIT
     printf 'split\n  slice C1.mp4\n  slice C2.mp4\n  slice C3.mp4\n' > "$ft/s.txt"
     run edit s.txt -o "$ft/C3.mp4"
     expect_refused "-o naming the third slice" "also a file this command reads"
+    # As in fin_s76: odd.mp4 is longer than the short.mp4 a protocol would open.
     ff -i "$ft/A.mp4" -t 1 -c copy "$ft/short.mp4"
-    want=$(v_frames "$ft/short.mp4")
+    ff -i "$ft/A.mp4" -t 1.5 -c copy "$ft/odd.mp4"
+    want=$(v_frames "$ft/odd.mp4")
+    [ "$want" != "$(v_frames "$ft/short.mp4")" ] || fail "control: odd.mp4 and short.mp4 have as many frames"
     for name in '12:30:05.mp4' '-report.mp4' 'concat:short.mp4|short.mp4'; do
-        cp "$ft/short.mp4" "$ft/$name"
+        cp "$ft/odd.mp4" "$ft/$name"
         printf 'split\n  slice %q\n  slice %q\n' "$name" "$name" > "$ft/s.txt"
         run edit s.txt -o "$ft/out/nm.mp4"; expect_ok "a split of slices named $name"
         assert_eq "the split named $name is that file's frames" "$want" "$(v_frames "$ft/out/nm.mp4")"
@@ -9000,7 +9036,9 @@ try:
         raise SystemExit("the xterm never showed a window")
     time.sleep(1)
     threading.Timer(1.5, lambda: os.kill(os.getpid(), signal.SIGUSR1)).start()
+    began = time.monotonic()
     demoreel.run_action("hold a 30", env)
+    held = time.monotonic() - began
     time.sleep(0.5)
     during = os.path.getsize(keys)
     time.sleep(1.5)
@@ -9010,6 +9048,8 @@ finally:
     demoreel.end_server(proc)
     auth.unlink(missing_ok=True)
     displaylog.unlink(missing_ok=True)
+if held > 10:
+    raise SystemExit(f"the stop did not cut the 30 s hold short: it took {held:.1f} s")
 if during < 2:
     raise SystemExit(f"only {during} letters while held: auto-repeat is off, "
                      "so this step cannot tell a held key from a released one")
@@ -9072,7 +9112,9 @@ try:
     time.sleep(0.5)
     right = reports(mouse)[len(whole):]
     threading.Timer(0.3, lambda: os.kill(os.getpid(), signal.SIGUSR1)).start()
+    began = time.monotonic()
     demoreel.run_action("drag 20 80 400 80 30", env)
+    dragged = time.monotonic() - began
     time.sleep(0.5)
     cut = reports(mouse)[len(whole) + len(right):]
 finally:
@@ -9086,6 +9128,8 @@ if kinds[:1] != ["press"] or kinds[-1:] != ["release"] or len(columns) < 5:
     raise SystemExit(f"a drag should be a press, several moves and a release: {kinds}")
 if columns != sorted(columns) or columns[-1] - columns[0] < 30:
     raise SystemExit(f"the moves did not slide right across the xterm: {columns}")
+if dragged > 10:
+    raise SystemExit(f"the stop did not cut the 30 s drag short: it took {dragged:.1f} s")
 if [k for k, _, _ in cut][-1:] != ["release"]:
     raise SystemExit(f"a stop left the button down: {[k for k, _, _ in cut]}")
 presses = [b for k, _, b in right if k == "press"]
