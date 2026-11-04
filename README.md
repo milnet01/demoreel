@@ -689,7 +689,7 @@ the script's words as options and do exactly what the script would.
 
 ```sh
 # cut the ends off: one clip, with from and to
-demoreel trim demo.mp4 -o short.mp4 --from 2 --to 29.8
+demoreel trim demo.mp4 -o short.mp4 --from 2 --to 18
 
 # text over part of a video: one clip, with its texts
 demoreel caption demo.mp4 -o out.mp4 --text 'Opening a file' --from 2 --to 6 \
