@@ -9757,22 +9757,31 @@ def wait_for(path):
     raise SystemExit(f"{path} never appeared")
 
 
-def try_case(name, args, marker, env_path):
+def try_case(name, args, marker, env_path, sig=signal.SIGTERM):
     begun.unlink(missing_ok=True)
     err = tmp / f"sig-{name}.err"
-    with open(err, "w") as errfile:
-        run = subprocess.Popen(["./demoreel", *args], stdout=subprocess.DEVNULL,
-                               stderr=errfile, start_new_session=True,
-                               env=dict(os.environ, PATH=env_path))
-        wait_for(marker)
-        time.sleep(0.3)
-        run.send_signal(signal.SIGTERM)
-        run.wait(timeout=60)
-    time.sleep(1.5)  # long enough for a stand-in Xvfb to become the real one
-    left = servers()
-    end_servers()
+    # Every way out ends what the case started: a failure here once left its
+    # Xvfb where no sweep reaches (DEMO-0357).
+    try:
+        with open(err, "w") as errfile:
+            run = subprocess.Popen(["./demoreel", *args], stdout=subprocess.DEVNULL,
+                                   stderr=errfile, start_new_session=True,
+                                   env=dict(os.environ, PATH=env_path))
+            try:
+                wait_for(marker)
+                time.sleep(0.3)
+                run.send_signal(sig)
+                run.wait(timeout=60)
+            finally:
+                if run.poll() is None:
+                    run.kill()
+                    run.wait()
+        time.sleep(1.5)  # long enough for a stand-in Xvfb to become the real one
+        left = servers()
+    finally:
+        end_servers()
     if left:
-        raise SystemExit(f"{name}: SIGTERM left a display running:\n{err.read_text()}")
+        raise SystemExit(f"{name}: {sig.name} left a display running:\n{err.read_text()}")
     return run.returncode, err.read_text()
 
 
@@ -9785,10 +9794,19 @@ status, said = try_case("check", ["check"], begun, shim_path)
 if status == 0 or "ended by SIGTERM" not in said or "did not start" in said:
     raise SystemExit(f"check: SIGTERM at start was not reported (exit {status}):\n{said}")
 
+# Ctrl+C, the same (DEMO-0352): it raised KeyboardInterrupt before the display
+# had an owner to end it.
+for name, args in (("shot-start-int", ["shot", "-o", str(tmp / "sigint.png"), "-s",
+                                       "320x240", "--", "xclock"]),
+                   ("check-int", ["check"])):
+    status, said = try_case(name, args, begun, shim_path, signal.SIGINT)
+    if status == 0 or "ended by SIGINT" not in said:
+        raise SystemExit(f"{name}: Ctrl+C at start was not reported (exit {status}):\n{said}")
+
 picture = tmp / "sigend.png"
 try_case("shot-end", ["shot", "-o", str(picture), "-s", "320x240", "--settle", "20",
                       "--", str(tmp / "stubborn.sh")], picture, plain_path)
-print("SIGTERM while a display starts or ends leaves none behind")
+print("SIGTERM or Ctrl+C while a display starts, or SIGTERM as it ends, leaves none behind")
 SIGPY
 
 step "the sampling ffmpeg survives a Ctrl+C"

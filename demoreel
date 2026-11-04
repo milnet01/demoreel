@@ -127,7 +127,7 @@ _signal_held = None
 
 
 def _exit_on_signal(signum, frame):
-    """SIGTERM or SIGHUP anywhere but a recording: exit through die(), so the
+    """SIGTERM, SIGHUP or SIGINT anywhere but a recording: exit through die(), so the
     finally blocks that end the display and the app still run. Left at their
     default, either signal ended Python on the spot and leaked Xvfb, which
     holds its display number for good (DEMO-0115)."""
@@ -6919,7 +6919,9 @@ def main():
         argparse._ = _argparse_gettext
         argparse.ngettext = _argparse_ngettext
     args = build_parser().parse_args()
-    for sig in (signal.SIGTERM, signal.SIGHUP):
+    # Ctrl+C as well: left to Python it raised KeyboardInterrupt while a display
+    # started, before anything held it to end (DEMO-0352). record takes it over.
+    for sig in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
         signal.signal(sig, _exit_on_signal)
     args.func(args)
 
