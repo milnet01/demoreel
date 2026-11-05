@@ -1204,8 +1204,9 @@ sudo ./packaging/install.sh --uninstall
 ```
 
 It removes the `demoreel` command, the folder `/usr/local/share/demoreel/`,
-the manual page and the three completion files. Folders other programs share
-stay.
+the manual page and the three completion files, and a file an earlier
+version installed that this one dropped. A folder the install made goes once
+it is empty. Folders other programs share stay.
 
 ## Any Claude Code session must be able to drive it
 

@@ -877,6 +877,12 @@ if [ "$build" = source ]; then
         && for p in **; do [ -d "$p" ] && [ ! -L "$p" ] || echo "/$p"; done | sort)
     grep -q '^/usr/local/bin/demoreel$' <<<"$expected" \
         || fail "install.sh's default prefix is not /usr/local"
+    # The folders this install will make, which --uninstall takes away again
+    # once empty (DEMO-0294). A clean container has none of them.
+    absent=''
+    for d in /usr/local/share/zsh /usr/local/share/fish /usr/local/share/bash-completion; do
+        [ -e "$d" ] || absent+="$d"$'\n'
+    done
     "$src"/packaging/install.sh
     while read -r p; do
         [ -e "$p" ] || fail "$p was not installed"
@@ -903,6 +909,9 @@ if [ "$build" = source ]; then
         [ ! -e "$p" ] && [ ! -L "$p" ] || fail "$p is left after --uninstall"
     done <<<"$expected"
     [ ! -e /usr/local/share/demoreel ] || fail "/usr/local/share/demoreel is left after --uninstall"
+    while read -r d; do
+        [ -z "$d" ] || [ ! -e "$d" ] || fail "$d, which the install made, is left after --uninstall"
+    done <<<"$absent"
     echo "PASS ($distro, from source)"
     exit 0
 fi
