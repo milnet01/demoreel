@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=360 -->
+<!-- ants-roadmap-id-high-water: DEMO=361 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -1072,6 +1072,20 @@ simplest case, and a gate proves it still records.
   **Layman:** The translation files are missing a few standard lines at the top that the translation tools expect; harmless, but noisy.
   Kind: chore.
   Source: found-2026-11-05 DEMO-0296.
+
+- 📋 [DEMO-0361] **GitHub CI fails when the Ubuntu mirror crawls: the install step times out before the gate starts.**
+  Run 42073616861 (5e4c27b, 2026-11-05): "Install the programs demoreel
+  needs" hit its 15-minute limit while azure.archive.ubuntu.com served
+  packages at tens of KB/s, with several "Ign:" retries. The local push
+  gate had passed the same commit. The same stall hit bc9031e on
+  2026-10-22. The stall is in the package downloads, after apt-get
+  update, so caching the .deb files (actions/cache on a key built from
+  ./ci.sh --ci-packages) would skip it on a warm cache. Measure first
+  (local-gate.md § 9: one lever per change, before and after). Also
+  consider a second mirror. The failed job was re-run.
+  **Layman:** Sometimes GitHub's download server is so slow that the checks never get to run, and the run shows as failed though nothing is wrong.
+  Kind: fix.
+  Source: found-2026-11-05 DEMO-0358.
 
 ## Standing chores
 
@@ -5909,10 +5923,10 @@ covers both display backends and the Flatpak invocation.
   itself took 9m18s in run 41979111121. That growth is this item's. The
   two near-budget findings were single stalls: the apt install hit 15m
   once (bc9031e, a slow mirror) and the packages step 25m once
-  (ddc3c3c); normally they take 16 s and about 2 min. Cache lever
-  measured and not taken: the apt install is 16 s on a normal run, so a
-  package cache saves almost nothing, and a stalled mirror stalls
-  apt-get update with or without it. The local push gate's slowest steps
+  (ddc3c3c); normally they take 16 s and about 2 min. The apt install is
+  16 s on a normal run. The cache lever is not settled here: see
+  DEMO-0361, filed when the next run failed on the same stall. The local
+  push gate's slowest steps
   on 5e4c27b: the Ubuntu leg 519 s, the finishing checks 272 s, the
   packages 239 s.
   **Layman:** Make the automatic checks faster.
