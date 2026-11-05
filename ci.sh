@@ -8172,7 +8172,18 @@ for out in "$PULSE_SINK" "$PIPEWIRE_NODE"; do
     esac
 done
 echo $$ >"$1"
-sleep 2
+# With a run's state file, the first tone waits until the run records, so it
+# cannot fall before the recording or within silencedetect's 0.1 s of its
+# start. Without one (a shot), the old guess of 2 s.
+if [ -n "${3:-}" ]; then
+    i=0
+    until grep -q '"recording": true' "$3" 2>/dev/null || [ $i -ge 400 ]; do
+        sleep 0.05; i=$((i + 1))
+    done
+    sleep 0.5
+else
+    sleep 2
+fi
 paplay "$2"
 sleep 0.5
 aplay -q "$2"
@@ -8257,7 +8268,8 @@ if sound_step "--audio records the app's sound, whichever way it plays"; then
     # server, so a missing variable silences one tone: without PIPEWIRE_NODE,
     # aplay's goes to the speakers.
     ./demoreel record --audio -n "${GATE_RUN}sound" -o "$tmp/sound.mp4" -d 8 -s 640x480 \
-        -- xterm -e "$tmp/tones.sh" "$tmp/tones.pid" "$tmp/tone.wav" >/dev/null &
+        -- xterm -e "$tmp/tones.sh" "$tmp/tones.pid" "$tmp/tone.wav" \
+        "$statedir/${GATE_RUN}sound.json" >/dev/null &
     sound_run=$!
     python3 "$tmp/watch-sinks.py" "$sound_run" "$tmp/tones.pid"
     wait "$sound_run" || { echo "the --audio run failed" >&2; exit 1; }
@@ -8912,8 +8924,17 @@ step "--settle waits for the app's first picture"
 # shellcheck disable=SC2016  # $i belongs to the inner sh, not to us
 late_app=(xterm -bg black -fg black -cr black -b 0 -e sh -c
     'printf "\033[?25l"; sleep 4; i=0; while [ $i -lt 30 ]; do printf "\033[47m%80s\033[0m\n" " "; i=$((i+1)); done; sleep 60')
+# Without --settle the rows come 2 s after the run's state file says it records,
+# past the halfway look at 1.5 s, however long the window search took. (With
+# --settle the run records only once they are drawn, so that run keeps the
+# fixed wait above.) The run writes "recording": false before the app starts.
+# shellcheck disable=SC2016  # $1 and $i belong to the inner sh, not to us
+unsettled_app=(xterm -bg black -fg black -cr black -b 0 -e sh -c
+    'printf "\033[?25l"; until grep -q "\"recording\": true" "$1" 2>/dev/null; do sleep 0.05; done
+     sleep 2; i=0; while [ $i -lt 30 ]; do printf "\033[47m%80s\033[0m\n" " "; i=$((i+1)); done; sleep 60'
+    sh "$statedir/${GATE_RUN}main.json")
 if ./demoreel record -n "${GATE_RUN}main" -o "$tmp/unsettled.mp4" -d 3 -s 640x480 \
-        -- "${late_app[@]}" >/dev/null 2>"$tmp/unsettled.err"; then
+        -- "${unsettled_app[@]}" >/dev/null 2>"$tmp/unsettled.err"; then
     echo "the fixture was drawn before the halfway sample, so it cannot test --settle" >&2
     exit 1
 fi
