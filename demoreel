@@ -4332,8 +4332,9 @@ def text_size(textfile, fontsize, font=None, border=0, room=0):
         wide, tall = _drawn_size(textfile, fontsize, font, border, strip)
         # A box that reaches the strip's edge was cut off there: measured so,
         # a line twice as wide as the strip suggested a size twice too large
-        # (DEMO-0297). ffmpeg draws no wider than 16384.
-        if wide < strip - border or strip >= TEXT_STRIP_MOST:
+        # (DEMO-0297). ffmpeg draws no wider than 16384. A box cut off reads as
+        # the strip's width on ffmpeg 9.0.2 and one less on 6.1.1 (measured).
+        if wide < strip - border - 1 or strip >= TEXT_STRIP_MOST:
             return wide, tall
         strip = min(strip * 2, TEXT_STRIP_MOST)
 
