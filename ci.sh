@@ -3190,7 +3190,20 @@ NOOPY
     run card -o "$ft/out/w2.mp4" -d 1 -s 320x240 --text 'This title is far too wide to ever fit across so small a picture'
     expect_refused "card with a title far wider than 320 pixels"
     assert_absent "card with too wide a title" "$ft/out/w2.mp4"
-    echo "a too-wide title was refused, not shrunk"
+    # DEMO-0297. A line wider than the measuring strip was cut off there, so
+    # 100 and 200 letters measured alike and the smaller size it suggested was
+    # too large. Twice the letters must suggest half the size.
+    local fit100 fit200
+    run card -o "$ft/out/w3.mp4" -d 1 -s 320x240 --text-size 20 --text "$(printf 'W%.0s' $(seq 1 100))"
+    expect_refused "a line of 100 letters"
+    fit100=$(grep -oE 'about [0-9.]+ would fit' "$fe" | grep -oE '[0-9.]+')
+    run card -o "$ft/out/w3.mp4" -d 1 -s 320x240 --text-size 20 --text "$(printf 'W%.0s' $(seq 1 200))"
+    expect_refused "a line of 200 letters"
+    fit200=$(grep -oE 'about [0-9.]+ would fit' "$fe" | grep -oE '[0-9.]+')
+    assert_numbers "the sizes suggested" "$fit100" "$fit200"
+    assert_cmp "200 letters suggest about half the size 100 do ($fit200 against $fit100)" \
+        "$fit200 * 2 - $fit100 <= 0.2 && $fit100 - $fit200 * 2" "<=" 0.2
+    echo "a too-wide title was refused, not shrunk, and the size it suggests is in proportion"
 
     # ---- caption ----------------------------------------------------------
     }

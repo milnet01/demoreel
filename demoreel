@@ -4309,11 +4309,28 @@ def text_size(textfile, fontsize, font=None, border=0, room=0):
                                  "cannot carry a character in that path.\n  Point "
                                  "XDG_RUNTIME_DIR at a plainer one.",
                                  path=textfile.parent.parent), checked=True)
+    strip = max(fontsize * 80, room * 2)
+    while True:
+        wide, tall = _drawn_size(textfile, fontsize, font, border, strip)
+        # A box that reaches the strip's edge was cut off there: measured so,
+        # a line twice as wide as the strip suggested a size twice too large
+        # (DEMO-0297). ffmpeg draws no wider than 16384.
+        if wide < strip - border or strip >= TEXT_STRIP_MOST:
+            return wide, tall
+        strip = min(strip * 2, TEXT_STRIP_MOST)
+
+
+# The widest strip text_size draws on: ffmpeg's frames go no wider.
+TEXT_STRIP_MOST = 16384
+
+
+def _drawn_size(textfile, fontsize, font, border, strip):
+    """text_size's one measurement, on a strip `strip` pixels wide."""
     try:
         drawn = subprocess.run(
             ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "info",
              "-f", "lavfi", "-i",
-             f"color=black:s={max(fontsize * 80, room * 2)}x{fontsize * 3}:d=1",
+             f"color=black:s={strip}x{fontsize * 3}:d=1",
              "-vf", f"drawtext=textfile='{textfile}':expansion=none:"
                     f"{font or text_font()}:fontsize={fontsize}:"
                     f"fontcolor=white:borderw={border}:bordercolor=white:"
