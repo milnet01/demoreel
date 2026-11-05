@@ -2389,6 +2389,17 @@ def open_app_log(applog):
     stdout, which carries the finished path and nothing else."""
     if not applog:
         return sys.stderr
+    # `--app-log >(cmd)`: the shell hands this run the pipe as one of its own
+    # file descriptors, and walk_links stops at its entry. Only the kernel
+    # makes entries there, so nothing can have been planted (DEMO-0290).
+    own = re.fullmatch(rf"/proc/{os.getpid()}/fd/(\d+)", str(applog))
+    if own:
+        try:
+            mode = os.fstat(int(own[1])).st_mode
+            if stat.S_ISFIFO(mode) or stat.S_ISSOCK(mode):
+                return os.fdopen(os.dup(int(own[1])), "wb")  # closed by the run's finally
+        except OSError as exc:
+            die(tr("could not write to {path}: {reason}.", path=applog, reason=exc.strerror))
     try:
         # O_NOFOLLOW: own_path resolved this path, so a link here now was
         # planted after that. 0o666 is what open() asks for: the umask applies.
@@ -2511,6 +2522,10 @@ MOST_LINKS = 40
 CONTROL_CHARACTER = re.compile(r"[\x00-\x1f\x7f]")
 
 
+# What a /proc/<pid>/fd entry reads as when it is a pipe or a socket.
+PROC_FD_TARGET = re.compile(r"(pipe|socket):\[\d+\]")
+
+
 def walk_links(path, what):
     """Follow path's links one at a time, as the kernel would, and return where
     they lead. A name that is not there yet, or cannot be read, is kept as it
@@ -2537,6 +2552,10 @@ def walk_links(path, what):
             if target is None:
                 now = here
                 continue
+            # A pipe or socket's own entry in /proc names no path; it is where
+            # the walk ends, as `--app-log >(cmd)` hands one (DEMO-0290).
+            if not rest and PROC_FD_TARGET.fullmatch(target):
+                return here
             hops += 1
             if hops > MOST_LINKS:
                 die(tr("could not write to {path}: {reason}.", path=path,

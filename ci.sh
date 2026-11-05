@@ -10839,6 +10839,29 @@ with d.open_app_log(log) as out:
     pass
 assert log.stat().st_size == 0, "an app log is written afresh"
 d.open_app_log(Path("/dev/null")).close()
+# DEMO-0290. `--app-log >(cmd)` names a pipe through /dev/fd: its /proc entry
+# reads pipe:[N], no path, and the walk took that as a name to write.
+owners.clear()
+r, w = os.pipe()
+try:
+    log = d.own_path(f"/dev/fd/{w}", "app log")
+    with d.open_app_log(log) as out:
+        out.write(b"through the pipe")
+    os.close(w)
+    w = None
+    assert os.read(r, 100) == b"through the pipe", "the app log did not reach the pipe"
+    w2 = os.pipe()
+    try:
+        d.own_path(f"/dev/fd/{w2[1]}", "output")
+        raise AssertionError("-o took a pipe")
+    except SystemExit as exc:
+        assert "not an ordinary file" in str(exc.code), exc.code
+    finally:
+        os.close(w2[0]); os.close(w2[1])
+finally:
+    os.close(r)
+    if w is not None:
+        os.close(w)
 print("links on the way up and along a chain, and other users' files, are checked")
 WALKPY
 
