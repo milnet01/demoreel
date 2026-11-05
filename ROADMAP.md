@@ -5849,6 +5849,15 @@ covers both display backends and the Flatpak invocation.
   videos and the catalogs already avoid the plural. Also fixed, found on
   the way: escaped isolates in RTL line numbers. Still open: the private
   lane 1 and 2 items and the rest of review-tests' LOW list.
+  2026-11-05, later: lanes 2 and 4 to 7 of review-code are done
+  (82489c2, 2bc0221), and most of review-tests' LOW list (b399ae0,
+  8112195). One lane 1 item is left by judgement: the review found no
+  cheap fix, and its reason is in the private record. Still open from
+  review-tests: the sheet's five-tile check (a 2x4 grid holds 5 to 8),
+  the stderr-closed refusal (a crash passes too), trim --music alone
+  checked by exit status only, nothing showing the Ctrl+C lands during the
+  500 clicks, three fixtures that time themselves from a guessed start
+  (blank halfway, the tones, --settle), and the dimension-12 speed items.
   **Layman:** Tidy up the many small issues the two reviews found.
   Kind: review-fix.
   Source: review-fix-2026-11-04 DEMO-0095.
