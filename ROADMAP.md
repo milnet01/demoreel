@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=359 -->
+<!-- ants-roadmap-id-high-water: DEMO=360 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -927,8 +927,10 @@ simplest case, and a gate proves it still records.
   Kind: investigate.
   Source: review-fix DEMO-0094 2026-10-31.
 
-- 📋 [DEMO-0293] **.githooks/pre-push makes its gate's worktree with mktemp -d on /tmp, which is RAM here.**
+- ✅ [DEMO-0293] **.githooks/pre-push makes its gate's worktree with mktemp -d on /tmp, which is RAM here.**
   Older than DEMO-0094, which found it while editing the hook.
+  2026-11-05: 7f0529c. The hook's worktree goes under
+  ~/.cache/demoreel-pre-push.
   **Layman:** The check before a push keeps a copy of the project in memory rather than on disk.
   Kind: fix.
   Source: review-fix DEMO-0094 2026-10-31.
@@ -945,8 +947,10 @@ simplest case, and a gate proves it still records.
   Kind: fix.
   Source: review-code-2026-10-30.
 
-- 📋 [DEMO-0296] **`demoreel check` builds a message from the translated fragment "record and shot".**
+- ✅ [DEMO-0296] **`demoreel check` builds a message from the translated fragment "record and shot".**
   A message is one or more whole sentences. The gate's fragment check does not reach it, because the translation step does not run `check`.
+  2026-11-05: e2d9ae4. Each check line is one whole message; the
+  fragments are gone from every catalog.
   **Layman:** One message in `demoreel check` is put together from pieces, which reads wrongly in some languages.
   Kind: fix.
   Source: review-code-2026-10-30.
@@ -1003,6 +1007,18 @@ simplest case, and a gate proves it still records.
   **Layman:** A note for translators describes a message wrongly since zoom stopped needing a window.
   Kind: doc-fix.
   Source: review-fix-2026-11-03.
+
+- 📋 [DEMO-0360] **msgfmt -c warns that every catalog lacks four standard header fields.**
+  Each po/*.po gives four warnings under msgfmt -c: PO-Revision-Date,
+  Last-Translator, Language-Team and MIME-Version are missing (measured
+  2026-11-05, the same on HEAD before DEMO-0296). The gate passes, as
+  they are warnings. MIME-Version 1.0 can simply be added. The other three
+  name people or dates: decide what a draft catalog says there before
+  anything is written, and keep personal details out of this public
+  repository. ./ci.sh --pot and --add-message may need to keep them.
+  **Layman:** The translation files are missing a few standard lines at the top that the translation tools expect; harmless, but noisy.
+  Kind: chore.
+  Source: found-2026-11-05 DEMO-0296.
 
 ## Standing chores
 
