@@ -1575,3 +1575,7 @@ msgstr "{where}: الخلفية لون يُكتب بالشكل #RRGGBB، مثل 
 #. argparse formats this text with %
 msgid "the background colour, or a drawn background: {names} (default: {colour})"
 msgstr "لون الخلفية، أو خلفية مرسومة: {names} (الافتراضي: {colour})"
+
+#. translators: {word} is x, y or size, an edit-script word that stays in English; {value} is what was written after it, in quotes.
+msgid "{where}: {word} takes a number, not {value}."
+msgstr "{where}: يأخذ {word} عددًا، لا {value}."

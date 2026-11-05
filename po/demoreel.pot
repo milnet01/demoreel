@@ -538,6 +538,10 @@ msgstr ""
 msgid "{where}: {word} takes a number of seconds, not {value}."
 msgstr ""
 
+#. translators: {word} is x, y or size, an edit-script word that stays in English; {value} is what was written after it, in quotes.
+msgid "{where}: {word} takes a number, not {value}."
+msgstr ""
+
 #. translators: {word} is level or volume, an edit-script word, and stays in English; {value} is what was written after it, in quotes.
 msgid "{where}: {word} takes a number of decibels, like -6, not {value}."
 msgstr ""

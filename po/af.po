@@ -1551,3 +1551,7 @@ msgstr "{where}: 'n agtergrond is 'n kleur geskryf as #RRGGBB, soos {example}, t
 #. argparse formats this text with %
 msgid "the background colour, or a drawn background: {names} (default: {colour})"
 msgstr "die agtergrondkleur, of 'n getekende agtergrond: {names} (verstek: {colour})"
+
+#. translators: {word} is x, y or size, an edit-script word that stays in English; {value} is what was written after it, in quotes.
+msgid "{where}: {word} takes a number, not {value}."
+msgstr "{where}: {word} neem 'n getal, nie {value} nie."

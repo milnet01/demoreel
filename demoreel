@@ -220,9 +220,22 @@ class Said(str):
     """Text that has been made safe and may hold line breaks; _fill leaves it."""
 
 
+class Filled(str):
+    """A message _fill made. Its values are escaped already, and its isolates
+    are its own, so a message holding it, as {where} holds "line 2", keeps
+    them: escaped, an Arabic line number printed as \\u20682\\u2069."""
+
+
+# UNSAFE_IN_VALUE but the isolates, for a Filled value.
+UNSAFE_IN_FILLED = re.compile("[\x00-\x1f\x7f-\x9f\u2028\u2029\u202a-\u202e\ud800-\udfff]")
+
+
 def as_value(value):
     """A value as a message prints it: one line of harmless text."""
-    return value if isinstance(value, Said) else UNSAFE_IN_VALUE.sub(_escaped, str(value))
+    if isinstance(value, Said):
+        return value
+    return (UNSAFE_IN_FILLED if isinstance(value, Filled)
+            else UNSAFE_IN_VALUE).sub(_escaped, str(value))
 
 
 def to_terminal(msg):
@@ -594,14 +607,14 @@ def _fill(text, values, marks):
         return f"{FIRST_STRONG_ISOLATE}{values[match[1]]}{POP_DIRECTIONAL_ISOLATE}"
 
     if not marks:
-        return PLACEHOLDER_RE.sub(plain, text)
+        return Filled(PLACEHOLDER_RE.sub(plain, text))
     out, at = [], 0
     for token in CODE_TOKEN_RE.finditer(text):
         out += [PLACEHOLDER_RE.sub(isolated, text[at:token.start()]), FIRST_STRONG_ISOLATE,
                 PLACEHOLDER_RE.sub(plain, token[0]), POP_DIRECTIONAL_ISOLATE]
         at = token.end()
     out.append(PLACEHOLDER_RE.sub(isolated, text[at:]))
-    return "".join(out)
+    return Filled("".join(out))
 
 
 def tr(msgid, **values):
@@ -3692,6 +3705,21 @@ def script_number(word, where, what):
     return value
 
 
+def script_amount(word, where, what):
+    """A percentage, of either sign: the check that knows its range refuses it
+    there, naming it as a percentage rather than as seconds."""
+    try:
+        value = float(word)
+    except ValueError:
+        value = math.nan
+    if not math.isfinite(value):
+        # translators: {word} is x, y or size, an edit-script word that stays in
+        # English; {value} is what was written after it, in quotes.
+        die(tr("{where}: {word} takes a number, not {value}.",
+               where=where, word=what, value=repr(word)))
+    return value
+
+
 def script_decibels(word, where, what):
     """A level or a volume: a number of dB, which may be below zero."""
     try:
@@ -3762,6 +3790,13 @@ def script_words(target, words, kind, where):
             setattr(target, word, script_on_off(value, where, word))
         elif word in ("volume", "level"):
             setattr(target, word, script_decibels(value, where, word))
+        elif kind in ("text", "zoom", "slice") and word in ("x", "y", "size"):
+            # A percentage: its range check names it as one, whatever its sign.
+            amount = script_amount(value, where, word)
+            if kind == "slice":
+                setattr(target, names.get(word, word), amount)
+            else:
+                target[names.get(word, word)] = amount
         elif kind in ("level", "zoom", "slide", "ring"):
             target[names.get(word, word)] = script_number(value, where, word)
         elif word == "fade-at":

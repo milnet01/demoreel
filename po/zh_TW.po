@@ -1545,3 +1545,7 @@ msgstr "{where}：背景應是以 #RRGGBB 表示的顏色，例如 {example}，�
 #. argparse formats this text with %
 msgid "the background colour, or a drawn background: {names} (default: {colour})"
 msgstr "背景顏色，或繪製的背景：{names}（預設：{colour}）"
+
+#. translators: {word} is x, y or size, an edit-script word that stays in English; {value} is what was written after it, in quotes.
+msgid "{where}: {word} takes a number, not {value}."
+msgstr "{where}：{word} 需要數字，而不是 {value}。"

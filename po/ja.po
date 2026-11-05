@@ -1545,3 +1545,7 @@ msgstr "{where}: 背景は {example} のように #RRGGBB 形式の色、動く�
 #. argparse formats this text with %
 msgid "the background colour, or a drawn background: {names} (default: {colour})"
 msgstr "背景の色、または描画された背景: {names} (既定値: {colour})"
+
+#. translators: {word} is x, y or size, an edit-script word that stays in English; {value} is what was written after it, in quotes.
+msgid "{where}: {word} takes a number, not {value}."
+msgstr "{where}: {word} には数値を指定します。{value} は使えません。"

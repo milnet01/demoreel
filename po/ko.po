@@ -1545,3 +1545,7 @@ msgstr "{where}: 배경은 {example}처럼 #RRGGBB로 쓴 색, 움직이는 그�
 #. argparse formats this text with %
 msgid "the background colour, or a drawn background: {names} (default: {colour})"
 msgstr "배경색 또는 그려진 배경: {names} (기본값: {colour})"
+
+#. translators: {word} is x, y or size, an edit-script word that stays in English; {value} is what was written after it, in quotes.
+msgid "{where}: {word} takes a number, not {value}."
+msgstr "{where}: {word}에는 {value}이(가) 아니라 숫자를 주어야 합니다."

@@ -1557,3 +1557,7 @@ msgstr "{where}: тло — це колір у вигляді #RRGGBB, напр�
 #. argparse formats this text with %
 msgid "the background colour, or a drawn background: {names} (default: {colour})"
 msgstr "колір тла або намальоване тло: {names} (типово: {colour})"
+
+#. translators: {word} is x, y or size, an edit-script word that stays in English; {value} is what was written after it, in quotes.
+msgid "{where}: {word} takes a number, not {value}."
+msgstr "{where}: {word} приймає число, а не {value}."

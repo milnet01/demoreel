@@ -4568,6 +4568,12 @@ checks = [
     ("an ordinary value", d._fill("{x}", {"x": "été 映画 a\\b\u200f"}, False), "été 映画 a\\b\u200f"),
     ("a template's own line break and marks", d._fill("a\n\u200f{x}", {"x": "b"}, False), "a\n\u200fb"),
     ("Said is left alone", d._fill("{x}", {"x": d.Said("a\n  b")}, False), "a\n  b"),
+    # A message inside a message, as {where} holds "line 2", keeps its marks,
+    # and the values in it stay escaped.
+    ("a filled message's own marks", d._fill("{w}: b", {"w": d._fill("l {n}", {"n": 2}, True)}, True),
+     f"{fsi}l {fsi}2{pdi}{pdi}: b"),
+    ("a value inside a filled message", d._fill("{w}", {"w": d._fill("{x}", {"x": bad}, True)}, False),
+     f"{fsi}{shown}{pdi}"),
     ("the last pass", d.to_terminal("a\x1b\x9b\u202e\udcff\nb\tc\ndemoreel: d\u2068e\u2069"),
      r"a\x1b\x9b" + "\\" + r"u202e\xff" + "\nb\tc\n  demoreel: d\u2068e\u2069"),
     ("a program's words", d.last_said(b"one\ndemoreel: two\n\x1bthree\xff", lines=None),
@@ -6246,6 +6252,20 @@ CASES
     printf 'card 2\n  text "A" x 101 y 50\n' > "$ft/s.txt"
     run edit s.txt -o "$ft/out/x.mp4"
     expect_refused "a text at x 101" "a percentage of the frame"
+    # DEMO-0359. A negative percentage is named as one, not as seconds, and a
+    # word that is no number at all is named as wanting a number.
+    local script words
+    while IFS='|' read -r script words; do
+        printf '%b\n' "$script" > "$ft/s.txt"
+        run edit s.txt -o "$ft/out/x.mp4"
+        expect_refused "edit: $script" "$words"
+    done <<'CASES'
+card 2\n  text "A" x -5 y 50|a text's x is a percentage of the frame
+card 2\n  text "A" size -3|a text's size is a percentage
+clip A.mp4\n  zoom 2 x -5|a zoom's x is a percentage
+split\n  slice A.mp4 size -1 label "a"\n  slice A.mp4|a text's size is a percentage
+card 2\n  text "A" x 50 y abc|y takes a number, not 'abc'
+CASES
     }
     fin_s100() {
     # DEMO-0286 INV-5. At frame 12, p is 0.4 and 0.64 eased: the diameter is
