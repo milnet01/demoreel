@@ -5504,7 +5504,7 @@ covers both display backends and the Flatpak invocation.
   Kind: audit-fix.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0095] **Audit the whole project once before 1.0 and fix what it finds.**
+- ✅ [DEMO-0095] **Audit the whole project once before 1.0 and fix what it finds.**
   One pass per question, each by the skill that owns it: `review-code`
   for defects, `review-tests` for whether the gate tests what it claims,
   `verify-instructions` running README and every quick-start page,
@@ -5524,6 +5524,10 @@ covers both display backends and the Flatpak invocation.
   after); the rest filed as DEMO-0352 to DEMO-0359. Records kept
   privately in ~/.local/share/demoreel-private-reviews/, as the
   repository is public.
+  2026-11-05: every verified finding is fixed. DEMO-0352 to DEMO-0357 and
+  DEMO-0359 are done; DEMO-0358 (gate speed) carries on alone, as a cost
+  and not a defect. One reasoned, unverified lane 1 item is left by
+  judgement, its reason in the private record.
   **Layman:** Before calling it finished, check that the code, tests, docs and records all hold up, and fix anything that doesn't.
   Kind: audit-fix.
   Source: user-request-2026-09-25.
