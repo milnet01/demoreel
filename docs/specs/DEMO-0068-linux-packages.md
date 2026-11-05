@@ -6,6 +6,8 @@
 **Source:** ROADMAP DEMO-0068 (user-request-2026-09-25; design decisions 2026-10-08).
 **Pairs with:** DEMO-0069 and DEMO-0070 (built under this contract; no spec of their own), DEMO-0072 (the from-source install reuses § 4.1's script), DEMO-0174 (`record --gpu` on openSUSE, § 4.6).
 
+Layman: you can install demoreel the way you install any other program on your Linux, and it arrives with everything it needs.
+
 A stranger who finds demoreel on the website or GitHub downloads one file
 for their distro, installs it with their own package manager, and gets the
 command, its manual page, tab completion and translations, with every

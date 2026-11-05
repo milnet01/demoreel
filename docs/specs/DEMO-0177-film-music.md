@@ -6,6 +6,8 @@
 **Source:** ROADMAP DEMO-0177 (user-request-2026-10-10; decisions 2026-10-10 and 2026-10-11).
 **Pairs with:** DEMO-0106 (records the app's sound this keeps; its § 9 leaves this work here).
 
+Layman: a film keeps the sound of the clips it is made from, and can have music playing underneath.
+
 A film made with `edit` or a shortcut keeps the sound of the clips it is cut
 from, and can carry one music track that repeats to fill it, at a level and
 with changes of level the script sets.

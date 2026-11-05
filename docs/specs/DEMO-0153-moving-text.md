@@ -6,6 +6,8 @@
 **Source:** ROADMAP DEMO-0153 (user-request-2026-10-02; the Slipcase trailer, 2026-10-10).
 **Pairs with:** DEMO-0185 (a logo that grows as it fades in; an end card is that plus this). DEMO-0183 (its window sits in the room these texts leave).
 
+Layman: a scene can show several lines of text at once, each in its own style, and a line can slide up as it fades in.
+
 A scene can show several lines of text at once, stacked, each in its own
 font, size and colour, and a line can slide up into place as it fades in.
 

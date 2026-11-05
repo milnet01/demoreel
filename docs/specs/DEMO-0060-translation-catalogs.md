@@ -6,6 +6,8 @@
 **Blocker for:** DEMO-0061, DEMO-0062, DEMO-0063, DEMO-0064, DEMO-0065, DEMO-0067.
 **Pairs with:** DEMO-0083 (its defences are § 4.7 and INV-8 to INV-10), DEMO-0086 (the window reads these catalogs).
 
+Layman: demoreel's messages and help appear in the language your computer is set to, and stay in English for scripts and anyone on English.
+
 A person whose system is set to German, Hebrew or Japanese sees demoreel's
 messages and `--help` in that language; scripts, Claude sessions and anyone
 on an English or unset locale see exactly what they see today.

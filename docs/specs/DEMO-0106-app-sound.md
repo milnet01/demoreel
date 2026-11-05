@@ -7,6 +7,8 @@
 **Blocked by:** DEMO-0104 (the scope ceiling still says audio is out).
 **Pairs with:** DEMO-0105 (built under this contract; no spec of its own), DEMO-0177 (music, and keeping a clip's sound through the finishing commands; its own spec).
 
+Layman: a recording can include the app's own sound, and an app being recorded never plays sound through your speakers.
+
 Add `--audio` to `demoreel record` and the app's sound is in the video, in
 step with the picture; without it nothing changes, and in neither case does
 the app's sound play on the speakers.

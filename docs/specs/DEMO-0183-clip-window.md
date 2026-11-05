@@ -6,6 +6,8 @@
 **Source:** ROADMAP DEMO-0183 (peer-website-session-2026-10-10; the Slipcase trailer).
 **Pairs with:** DEMO-0178 (a moving background behind the window), DEMO-0184 (push-in and zoom); both build on the layout this spec sets.
 
+Layman: a clip can play in a smaller window with rounded corners and a soft shadow, over a coloured background.
+
 A clip in a film can play in a smaller window with rounded corners and a soft
 shadow, centred on a coloured background, instead of filling the frame.
 

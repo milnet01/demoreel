@@ -6,6 +6,8 @@
 **Source:** ROADMAP DEMO-0084 (user-request-2026-09-25; decisions 2026-10-13).
 **Pairs with:** DEMO-0068 (its release job, `docs/specs/DEMO-0068-linux-packages.md` § 4.5 and INV-10, gains the steps below; that spec is amended in the same batch).
 
+Layman: you can check that a demoreel download is the one its maker released, and that nobody changed it on the way.
+
 A user who downloads a demoreel release can check that the files are the
 ones GitHub built from a tag the maintainer signed, and that nobody changed
 them on the way.
