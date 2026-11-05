@@ -9134,6 +9134,19 @@ demoreel = importlib.util.module_from_spec(
 loader.exec_module(demoreel)
 signal.signal(signal.SIGUSR1, demoreel._request_stop)
 
+def settled(path, quiet=0.3, most=5):
+    """The file's size once nothing has been added for `quiet` seconds: a fixed
+    wait read xterm's late writes into the next slice."""
+    size, since, end = -1, time.monotonic(), time.monotonic() + most
+    while time.monotonic() < end:
+        now = os.path.getsize(path)
+        if now != size:
+            size, since = now, time.monotonic()
+        elif time.monotonic() - since >= quiet:
+            break
+        time.sleep(0.05)
+    return size
+
 # The gate's prefix on the name puts it in the teardown's Xvfb sweep.
 displaylog = demoreel.state_dir() / f"{os.environ['GATE_RUN']}hold.display.log"
 proc, display, auth = demoreel.start_xvfb(320, 240, os.environ['GATE_RUN'] + "hold", displaylog)
@@ -9150,8 +9163,7 @@ try:
     began = time.monotonic()
     demoreel.run_action("hold a 30", env)
     held = time.monotonic() - began
-    time.sleep(0.5)
-    during = os.path.getsize(keys)
+    during = settled(keys)
     time.sleep(1.5)
     after = os.path.getsize(keys)
 finally:
@@ -9186,6 +9198,19 @@ demoreel = importlib.util.module_from_spec(
 loader.exec_module(demoreel)
 signal.signal(signal.SIGUSR1, demoreel._request_stop)
 
+def settled(path, quiet=0.3, most=5):
+    """The file's size once nothing has been added for `quiet` seconds: a fixed
+    wait read xterm's late writes into the next slice."""
+    size, since, end = -1, time.monotonic(), time.monotonic() + most
+    while time.monotonic() < end:
+        now = os.path.getsize(path)
+        if now != size:
+            size, since = now, time.monotonic()
+        elif time.monotonic() - since >= quiet:
+            break
+        time.sleep(0.05)
+    return size
+
 
 def reports(path):
     """(kind, column, button) for each X10 mouse report: ESC [ M, then
@@ -9215,18 +9240,18 @@ try:
         raise SystemExit("the xterm never showed a window")
     time.sleep(1)
     demoreel.run_action("drag 20 40 400 40", env)
-    time.sleep(0.5)
+    settled(mouse)
     whole = reports(mouse)
     # Before the stop below, which stays set and would cut this drag short.
     demoreel.run_action("click 30 40 right", env)
     demoreel.run_action("drag 20 40 400 40 right", env)
-    time.sleep(0.5)
+    settled(mouse)
     right = reports(mouse)[len(whole):]
     threading.Timer(0.3, lambda: os.kill(os.getpid(), signal.SIGUSR1)).start()
     began = time.monotonic()
     demoreel.run_action("drag 20 80 400 80 30", env)
     dragged = time.monotonic() - began
-    time.sleep(0.5)
+    settled(mouse)
     cut = reports(mouse)[len(whole) + len(right):]
 finally:
     demoreel.end_process(app)
@@ -11188,7 +11213,12 @@ done
 touch "$tmp/fin-hold/now"
 sleep 2
 kill "$nested"
-wait "$nested" || true
+nested_status=0
+wait "$nested" || nested_status=$?
+# 143 is 128 + TERM: the gate ended on the signal, not by failing on its own
+# just before it, which would leave the same empty folder behind.
+[ "$nested_status" = 143 ] || { echo "the nested gate ended with $nested_status, not by TERM:" >&2
+                                cat "$tmp/fin-kill.log" >&2; exit 1; }
 # The gate's teardown has waited for its groups, so one look after a moment's
 # grace. demoreel's own time limits end a stray in seconds, so a later look, or a
 # loop of them, would find nothing and pass.
