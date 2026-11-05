@@ -151,8 +151,12 @@ def hold_signals():
 def signals_held():
     """Hold signals while a display starts, and act on one afterwards. In the
     gap between starting a process and holding its handle, no code could end
-    it. The longest wait is the display's own start-up timeouts."""
+    it. The longest wait is the display's own start-up timeouts. Inside a
+    hold already, it leaves that hold as it found it."""
     global _signals_held  # noqa: PLW0603 - a signal handler reads it
+    if _signals_held:
+        yield
+        return
     hold_signals()
     try:
         yield
@@ -2442,6 +2446,13 @@ def move_into_place(part, output):
     choose who can read the take. A name this run made up is never written
     over, and the empty file claiming it goes if the move fails.
     """
+    # Held, so a stop between the claim and the move cannot leave the empty
+    # file claiming the name: a failed run writes nothing at -o.
+    with signals_held():
+        return _move_into_place(part, output)
+
+
+def _move_into_place(part, output):
     claimed = None
     try:
         if output in made_up_outputs:
@@ -2455,7 +2466,20 @@ def move_into_place(part, output):
                 old = os.lstat(output)
                 if stat.S_ISREG(old.st_mode) and old.st_uid == os.getuid():
                     os.chmod(part, stat.S_IMODE(old.st_mode))
+        # On disk before it replaces the last good take, and the rename on disk
+        # after: a power cut otherwise can leave that take empty.
+        fd = os.open(part, os.O_RDONLY | os.O_CLOEXEC)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
         os.replace(part, output)
+        with contextlib.suppress(OSError):  # not every filesystem syncs a folder
+            fd = os.open(output.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
+            try:
+                os.fsync(fd)
+            finally:
+                os.close(fd)
     except OSError as exc:
         if claimed is not None:
             claimed.unlink(missing_ok=True)
@@ -2548,6 +2572,13 @@ def refuse_link(path, link, what, is_name_given):
            "a file of yours.\n  Choose another path.", path=path, link=link))
 
 
+def refuse_control_characters(path, what):
+    if what == "output" and CONTROL_CHARACTER.search(str(path)):
+        die(tr("the output path {path} holds a control character, such as a line "
+               "break, which demoreel cannot pass on safely.\n  Choose another path.",
+               path=repr(str(path))))
+
+
 def own_path(raw, what):
     """Resolve a path demoreel will write, refusing what someone else planted.
 
@@ -2561,11 +2592,10 @@ def own_path(raw, what):
     leaves. `what` is "output" or "app log".
     """
     path = Path(os.path.abspath(Path(raw).expanduser()))
-    if what == "output" and CONTROL_CHARACTER.search(str(path)):
-        die(tr("the output path {path} holds a control character, such as a line "
-               "break, which demoreel cannot pass on safely.\n  Choose another path.",
-               path=repr(str(path))))
+    refuse_control_characters(path, what)
     resolved = walk_links(path, what)
+    # And the path the links reach, which is what stdout prints.
+    refuse_control_characters(resolved, what)
     try:
         st = os.lstat(resolved)
     except OSError:

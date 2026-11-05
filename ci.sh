@@ -10568,6 +10568,9 @@ for bad in (t / "pipe", t / "dir", "/dev/null"):
 # A line break breaks the one-line stdout and the list of pieces given to ffmpeg.
 refused("control character", t / "a\nb.mp4")
 refused("control character", t / "dir\tx/b.mp4")
+# And a name of the caller's own whose link reaches one: stdout prints the target.
+(t / "to-break.mp4").symlink_to("a\nc.mp4")
+refused("control character", t / "to-break.mp4")
 goes_to(t / "a b'c%d.mp4", t / "a b'c%d.mp4")
 
 # A link planted after the walk: demoreel opens the app log itself, and does
