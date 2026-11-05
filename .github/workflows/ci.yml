@@ -99,7 +99,7 @@ jobs:
         # MODE arrives through env rather than as ${{ }}. GitHub substitutes a
         # ${{ }} expression into the script before the shell sees it, so the
         # value would be code rather than an argument. Nothing can inject
-        # through it today, because the value comes from `ci.sh --docs-mode`
+        # through it today, because the value comes from `ci.sh --docs-mode-between`
         # and that prints `--docs` or nothing -- but that guarantee is a fact
         # about a script which will keep changing, checked by nobody. This
         # removes the question instead of answering it.

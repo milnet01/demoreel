@@ -764,7 +764,14 @@ pkg_image() {  # pinned distro
 release_images_note() {
     local refreshed age
     refreshed=$(sed -n 's/^# refreshed \([0-9-]*\)$/\1/p' "$RELEASE_IMAGES")
-    age=$(( ($(date +%s) - $(date -d "$refreshed" +%s)) / 86400 ))
+    # No date, or one date cannot read, is as stale as an old one: `date -d ""`
+    # is today, and a bad one would end the mode that asked.
+    if [ -z "$refreshed" ] || ! refreshed=$(date -d "$refreshed" +%s 2>/dev/null); then
+        echo "note: $RELEASE_IMAGES says no date it was refreshed on, so its images may be old."
+        echo "      refresh it before cutting a release: ./ci.sh --release-images"
+        return 0
+    fi
+    age=$(( ($(date +%s) - refreshed) / 86400 ))
     if [ "$age" -ge "$RELEASE_IMAGES_DAYS" ]; then
         echo "note: $RELEASE_IMAGES is $age days old, so a release builds on old images."
         echo "      refresh it before cutting one: ./ci.sh --release-images"
@@ -1178,6 +1185,13 @@ packages_check() (
     tree=$(GIT_INDEX_FILE="$work/index" bash -c 'git read-tree HEAD && git add -A && git write-tree')
     rev=$tree
     [ "$tree" = "$(git rev-parse 'HEAD^{tree}')" ] && rev=HEAD
+    # Release files come from the tagged commit alone (DEMO-0084 § 4.2), even if
+    # a later step comes to write into the workspace before this one.
+    if [ -n "$out" ] && [ "$rev" != HEAD ]; then
+        echo "--out builds release files, and the tree differs from HEAD:" >&2
+        git status --short >&2
+        return 1
+    fi
     git archive --prefix="demoreel-$v/" "$rev" | gzip -n > "$work/demoreel-$v.tar.gz"
     sed -e "s/@VERSION@/$v/" \
         -e "s/@SHA256@/$(sha256sum "$work/demoreel-$v.tar.gz" | cut -d' ' -f1)/" \
@@ -1218,7 +1232,9 @@ DEPSPY
             distro=$1 build=$2; shift 2
             name=$distro-$build
             access=,ro; [ "$build" = build ] && access=''
-            image=$(pkg_image "$out" "$distro") || { failed=1; return; }
+            # break, not return: the containers started already are waited for
+            # below, before the folders they use are removed.
+            image=$(pkg_image "$out" "$distro") || { failed=1; break; }
             case $distro in
             debian|ubuntu) at=/var/cache/apt/archives ;;
             fedora)        at=/var/cache/libdnf5 ;;
@@ -1793,7 +1809,11 @@ finishing_checks() {
     show_err() { sed 's/^/    stderr: /' "$fe" >&2; }
     # Runs demoreel from the folder holding the inputs. rc, stdout and stderr
     # are kept for the assertions. FIN_PATH lets one check put a shim first.
-    run() {
+    # stdin is /dev/null: in a `while read ... <<CASES` loop it is the cases left,
+    # and a program under demoreel that read it would eat them without a sound.
+    run() { run_reading "$@" </dev/null; }
+    # For `edit -`, which reads its script from the stdin it is given.
+    run_reading() {
         rc=0
         ( cd "$ft" && export SHIM_LOG="$ft/log/ffmpeg.calls" \
               REAL_FFMPEG="$REAL_FFMPEG" && PATH="${FIN_PATH:-$PATH}" \
@@ -2015,6 +2035,16 @@ finishing_checks() {
     assert_cmp() {  # what a op b, where a and b may be sums or joined tests
         [[ "$2 $4" =~ ^[-+*/().0-9eE\ \&\|\<\>=!]+$ ]] \
             || fail "$1: '$2' or '$4' is not a number, so nothing was compared"
+        # A measurement that came back empty leaves an operator at an end, as
+        # "$middle - 20" does, or a lone e that awk reads as 0.
+        local side
+        for side in "$2" "$4"; do
+            side=$(sed -E 's/^ +//; s/ +$//' <<<"$side")
+            [[ -n $side && ! $side =~ ^([*/\&\|\<\>=]|[-+!]\ ) && ! $side =~ [-+*/\&\|\<\>=!]$ ]] \
+                || fail "$1: '$side' has an operator with nothing on one side, so a measurement is missing"
+            [[ $(sed -E 's/([0-9]+\.?[0-9]*|\.[0-9]+)([eE][-+]?[0-9]+)?//g' <<<"$side") != *[eE.]* ]] \
+                || fail "$1: '$side' holds an e or a dot that is no number"
+        done
         awk "BEGIN { exit !($2 $3 $4) }" || fail "$1
     expected: $2 $3 $4
     actual:   $2 = $(awk "BEGIN { print $2 }" 2>/dev/null), wanted $3 $4"
@@ -2071,6 +2101,13 @@ finishing_checks() {
         case $jobs in
             '' | *[!0-9]* | 0)
                 echo "FIN_JOBS is how many checks run at once, a whole number above 0, not '$jobs'" >&2
+                exit 1 ;;
+        esac
+        # Checked here, once: in the watchdog a bad one failed every check at
+        # once, as having run past its limit.
+        case ${FIN_CHECK_LIMIT:-600} in
+            *[!0-9]* | 0 | 0*)
+                echo "FIN_CHECK_LIMIT is a check's limit in seconds, a whole number above 0, not '$FIN_CHECK_LIMIT'" >&2
                 exit 1 ;;
         esac
         mkdir -p "$tmp/fin-steps"
@@ -2897,7 +2934,7 @@ lines" "A title far too long to fit across a thumbnail at its size"; do
         [ -s "$got" ] || fail "$words: printed $got, and it is not there"
         rm -f "$got"
     done
-    run edit - <"$ft/no-o.txt"
+    run_reading edit - <"$ft/no-o.txt"
     expect_ok "edit - without -o"
     got=$(cat "$fo")
     case $got in "$ft/film-"[0-9]*.mp4) rm -f "$got" ;;
@@ -3299,7 +3336,7 @@ SCRIPT
     bb=$(px bbox "$ft/out/E1.mp4" 90 '#101418')
     [ "$bb" != none ] || fail "edit scene 4: expected spin.png and a title on the card, found only background"
     # From a file and from standard input are the same film.
-    run edit - -o "$ft/out/E2.mp4" < "$ft/film.txt"
+    run_reading edit - -o "$ft/out/E2.mp4" < "$ft/film.txt"
     expect_ok "edit - (script on standard input)"
     expect_stdout_path "edit -" "$ft/out/E2.mp4"
     assert_eq "edit from stdin: frames, as from the file" "$(v_frames "$ft/out/E1.mp4")" "$(v_frames "$ft/out/E2.mp4")"
@@ -4520,7 +4557,7 @@ CLEANPY
     stderr_clean "the raw line that cannot be split" '\x1b[31m'
     # A real file: a newline in its name would forge a line, on the path that works.
     name="n${nl}demoreel: forged line.mp4"
-    cp A.mp4 "$ft/$name" 2>/dev/null || cp "$ft/A.mp4" "$ft/$name"
+    cp "$ft/A.mp4" "$ft/$name"
     run trim "$name" --to 0.5 -o "$ft/out/forged.mp4"
     expect_ok "a name holding a newline makes a film"
     stderr_clean "the plan's note" 'n\x0ademoreel: forged line.mp4'
@@ -4708,7 +4745,23 @@ LOUDPY
     got=$(ffmpeg -nostdin -v error -i "$ft/many.mp4" -vf mpdecimate=hi=640:lo=640:frac=0 -an \
               -f null - -progress pipe:1 -nostats | sed -n 's/^frame=//p' | tail -n 1)
     assert_eq "motion counted every new frame of a long report" "new frames: $got" "$(sed -n 3p "$fo")"
-    echo "tags and names changed no measurement"
+    # DEMO-0359. ffmpeg prints a frame's time with %.6g: near 0 in exponent
+    # form, before the seek with a minus sign. Read as no time, the frame was
+    # not counted, and a still video's only new frame was lost.
+    python3 - "$DR" <<'FRAMETIMEPY' || exit 1
+import importlib.machinery, importlib.util, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", sys.argv[1])
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+for line, want in (("frame:0    pts:0       pts_time:0", 0.0),
+                   ("frame:1    pts:1       pts_time:1.11111e-05", 1.11111e-05),
+                   ("frame:2    pts:-3000   pts_time:-0.0333333", -0.0333333),
+                   ("frame:3    pts:NOPTS   pts_time:NOPTS", None),
+                   ("frame:4    pts:1       pts_time:nan", None)):
+    if d.frame_time(line) != want:
+        sys.exit(f"FAIL: {line!r} read as {d.frame_time(line)!r}, not {want!r}")
+FRAMETIMEPY
+    echo "tags and names changed no measurement, and every time ffmpeg prints was read"
     }
     fin_s75() {
     # DEMO-0094. ffmpeg says about 600 bytes a frame at info level, and a file of
@@ -4804,7 +4857,7 @@ CAPPY
             rc=0
             # shellcheck disable=SC2086  # each case is several words
             ( cd "$ft" && BIG_AT=$at BIG_COUNT="$ft/big/count" BIG_PROBE=no-such-word \
-                  PATH="$ft/big:$PATH" timeout 15 python3 smallcap.py "$DR" $cmd ) \
+                  PATH="$ft/big:$PATH" timeout --foreground 15 python3 smallcap.py "$DR" $cmd ) \
                 >"$fo" 2>"$fe" || rc=$?
             rm -f "$ft/big/count"
             # Once BIG_AT is past its last call, the command runs as normal.
@@ -4818,7 +4871,7 @@ CAPPY
     # And ffprobe's first look at a file.
     rc=0
     ( cd "$ft" && BIG_PROBE=C.mp4 BIG_COUNT="$ft/big/count" PATH="$ft/big:$PATH" \
-          timeout 15 python3 smallcap.py "$DR" motion C.mp4 ) \
+          timeout --foreground 15 python3 smallcap.py "$DR" motion C.mp4 ) \
         >"$fo" 2>"$fe" || rc=$?
     expect_refused "ffprobe over the memory cap"
     grep -q "of memory" "$fe" || { show_err; fail "ffprobe over the cap did not say why"; }
@@ -5128,6 +5181,7 @@ NOSIZE
         expect_ok "control: ${cmd%%:*}"
         assert_eq "${cmd%%:*} left the planted link's target alone" "$sum" "$(sha256sum <"$victim")"
         written=$(sed -n '1p' "$fo")
+        [ -s "$written" ] || fail "${cmd%%:*}: stdout names no finished file: '$written'"
         [ ! -L "$written" ] || fail "${cmd%%:*}: the finished file is a link"
         [ -L "$planted" ] || fail "${cmd%%:*}: the planted link was moved"
         rm "$planted"
@@ -5706,15 +5760,23 @@ CASES
         -c copy -y "$ft/T.mp4"
     ffmpeg -nostdin -v error -f lavfi -i sine=d=2 -i "$ft/tags.txt" -map 0 -map_metadata 1 \
         -c:a aac -y "$ft/M.m4a"
-    probe_all() { ffprobe -v error -show_entries format_tags:stream_tags:chapters -of default=nw=1 "$1"; }
-    probe_all "$ft/T.mp4" | grep -q PRIVATE-TAG || fail "control: the test clip holds no tags"
+    # Whether a file holds the tag. Read whole first: piped into grep -q, a
+    # broken pipe under pipefail could turn "tagged" into "not tagged". A file
+    # ffprobe cannot read fails, rather than counting as untagged.
+    tagged() {
+        local said
+        said=$(ffprobe -v error -show_entries format_tags:stream_tags:chapters \
+                   -of default=nw=1 "$1") || fail "ffprobe could not read $1"
+        grep -q PRIVATE-TAG <<<"$said"
+    }
+    tagged "$ft/T.mp4" || fail "control: the test clip holds no tags"
     local i film
     printf 'clip T.mp4 from 0 to 1\n' > "$ft/one.txt"
     : > "$ft/many.txt"
     for i in 1 2 3 4 5 6 7 8 9 10; do printf 'clip T.mp4 from 0 to 0.2\n' >> "$ft/many.txt"; done
     ffmpeg -nostdin -v error -i "$ft/T.mp4" -map 0:v -c copy -y "$ft/V.mp4"
-    probe_all "$ft/V.mp4" | grep -q PRIVATE-TAG || fail "control: the test clip with no sound holds no tags"
-    probe_all "$ft/M.m4a" | grep -q PRIVATE-TAG || fail "control: the test music holds no tags"
+    tagged "$ft/V.mp4" || fail "control: the test clip with no sound holds no tags"
+    tagged "$ft/M.m4a" || fail "control: the test music holds no tags"
     run trim T.mp4 --to 1 -o "$ft/out/trim.mp4"; expect_ok "trim of a tagged clip"
     run trim V.mp4 --to 1 -o "$ft/out/silent.mp4"; expect_ok "trim of a tagged clip with no sound"
     run caption T.mp4 --text Hi --to 1 -o "$ft/out/caption.mp4"; expect_ok "caption of a tagged clip"
@@ -5722,8 +5784,7 @@ CASES
     run edit many.txt -o "$ft/out/many.mp4"; expect_ok "a film of tagged scenes, in pieces"
     run trim T.mp4 --to 1 --music M.m4a -o "$ft/out/music.mp4"; expect_ok "a tagged clip under tagged music"
     for film in trim silent caption one many music; do
-        ! probe_all "$ft/out/$film.mp4" | grep -q PRIVATE-TAG \
-            || fail "$film: a source's tags or chapters reached the film"
+        ! tagged "$ft/out/$film.mp4" || fail "$film: a source's tags or chapters reached the film"
     done
     echo "no source's tags or chapters reach a film"
     }
@@ -5752,6 +5813,8 @@ d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", 
 loader.exec_module(d)
 real = d.shutil.rmtree
 def rmtree(*args, **kwargs):
+    with open("removed", "a", encoding="utf-8") as said:  # what was made, for the check
+        said.write(f"{args[0]}\n")
     os.kill(os.getpid(), signal.SIGTERM)
     real(*args, **kwargs)
 d.shutil.rmtree = rmtree
@@ -5762,9 +5825,13 @@ HELDPY
     for cmd in "card -d 1 -s 320x240 -o out/h1.mp4" "thumbnail A.mp4 -t 0.1 -o out/h2.jpg" \
                "sheet A.mp4 --at 0.1 -o out/h3.png"; do
         rc=0
+        : > "$ft/removed"
         # shellcheck disable=SC2086  # each case is several words
         ( cd "$ft" && python3 held.py "$DR" $cmd ) >"$fo" 2>"$fe" || rc=$?
         assert_eq "$cmd, with a signal as it tidies up: its exit status" 0 "$rc"
+        # Its folder was made where the check below looks, or the check proves nothing.
+        grep -q "^$XDG_RUNTIME_DIR/" "$ft/removed" \
+            || fail "$cmd: removed no folder under $XDG_RUNTIME_DIR: $(cat "$ft/removed")"
         [ -z "$(find "$XDG_RUNTIME_DIR" -mindepth 2 -maxdepth 2)" ] || {
             find "$XDG_RUNTIME_DIR" -mindepth 2 -maxdepth 2 >&2
             fail "$cmd: a signal as it tidied up left its folder"; }
@@ -7107,6 +7174,12 @@ chain_attach_checks() {
         printf '# refreshed %s\n' "$(date +%F)" > "$scratch/packaging/release-images"
         [ -z "$("$scratch/ci.sh" --release-images-note)" ] || {
             echo "FAIL: pins made today drew a note" >&2; exit 1; }
+        local dated
+        for dated in '' '# refreshed 2026-13-45'; do
+            printf '%s\nubuntu:24.04@sha256:0\n' "$dated" > "$scratch/packaging/release-images"
+            grep -q 'no date' <<<"$("$scratch/ci.sh" --release-images-note)" || {
+                echo "FAIL: pins with ${dated:-no date line} drew no note" >&2; exit 1; }
+        done
     )
     echo "pins past their age draw a note, and new ones none"
     # What decides that the tested files are the attached ones: it must refuse.
@@ -7303,6 +7376,9 @@ cleanup() {
     done
     # Every run leaves its files, and with the pid in their names they would pile up.
     [ -z "${statedir:-}" ] || rm -rf "${statedir:?}/$GATE_RUN"*
+    # The step that runs under logind's folder leaves its files there, which is
+    # not $statedir where the gate's own XDG_RUNTIME_DIR is another folder.
+    [ -z "${GATE_RUN:-}" ] || rm -rf "/run/user/$(id -u)/demoreel-$(id -u)/$GATE_RUN"*
     for said in "$tmp"/real-shot-*.err; do
         if [ -e "$said" ] && grep -q 'display log is kept in' "$said"; then
             remove_kept_shot_folder "$said" "$statedir" || true
@@ -8902,7 +8978,8 @@ def ctrl_c(name, app, extra=()):
             if "recording :" in open(err).read():
                 break
         else:
-            run.kill()
+            run.terminate()  # its teardown unloads its sound sink; a SIGKILL would not
+            run.wait(60)
             raise SystemExit(f"{name}: the run never started recording:\n"
                              + open(err).read())
         time.sleep(1)
@@ -9408,7 +9485,8 @@ with open(err, "w") as errfile:
         if "recording :" in open(err).read():
             break
     else:
-        run.kill()
+        run.terminate()  # its teardown unloads its sound sink; a SIGKILL would not
+        run.wait(60)
         raise SystemExit("the run never started recording:\n" + open(err).read())
     time.sleep(0.5)
     os.killpg(run.pid, signal.SIGINT)
@@ -9719,7 +9797,11 @@ wrapper_left() {
     done
 }
 ./demoreel record -n "${GATE_RUN}wrapper" -o "$tmp/wrapper.mp4" -d 8 -s 320x240 -- "$tmp/wrapper.sh" \
-    >/dev/null 2>"$tmp/wrapper.err" || { cat "$tmp/wrapper.err" >&2; exit 1; }
+    >/dev/null 2>"$tmp/wrapper.err" || {
+    cat "$tmp/wrapper.err" >&2
+    # shellcheck disable=SC2046  # each pid is its own word
+    kill -KILL $(wrapper_left) 2>/dev/null || true  # one ignores TERM, for two hours
+    exit 1; }
 left=$(wrapper_left)
 if [ -n "$left" ]; then
     echo "processes the app started outlived the run: $(echo "$left" | tr '\n' ' ')" >&2
@@ -9946,7 +10028,8 @@ with open(err, "w") as errfile:
             break
         time.sleep(0.05)
     else:
-        run.kill()
+        run.terminate()  # its teardown unloads its sound sink; a SIGKILL would not
+        run.wait(60)
         raise SystemExit("no sample ever began:\n" + err.read_text())
     time.sleep(0.2)
     os.killpg(run.pid, signal.SIGINT)
@@ -10271,7 +10354,8 @@ lock_check() {
         echo "$name: the auth file is mode $mode, not 600" >&2; exit 1; }
     [ "$listening" -ne 0 ] || {
         echo "$name: the X server for $disp is listening on TCP" >&2; exit 1; }
-    [ -s "$tmp/xauth.argv" ] || {
+    # The display spies write "server starts" here too, so a line of xauth's own.
+    grep -qvx 'server starts' "$tmp/xauth.argv" || {
         echo "$name: xauth was never called, so nothing checked its command line" >&2
         exit 1
     }
@@ -10722,6 +10806,11 @@ for _ in $(seq 1 100); do
 done
 planned=$(sed -n 's/.*recording :[0-9]* to \(.*\) (until stopped).*/\1/p' "$retake/default.err")
 [ -n "$planned" ] || { cat "$retake/default.err" >&2; exit 1; }
+# A path from the code under test is written only once it is where it should be.
+case $planned in
+    "$(cd "$retake/default" && pwd -P)"/*) ;;
+    *) echo "the default name is outside the folder the run started in: $planned" >&2; exit 1 ;;
+esac
 : >"$planned"
 sleep 1
 stopped=$(./demoreel stop "${GATE_RUN}part")
@@ -11094,6 +11183,8 @@ left=$(for p in $(pgrep -u "$(id -u)"); do
        done || true)
 [ -z "$left" ] || { echo "still running after the gate was stopped:" >&2
                     for p in $left; do tr '\0' ' ' <"/proc/$p/cmdline" >&2; echo >&2; done
+                    # shellcheck disable=SC2086  # each pid is its own word
+                    kill -KILL $left 2>/dev/null || true
                     exit 1; }
 [ -z "$(ls -A "$fin_kill")" ] || { echo "the stopped gate left its files:" >&2
                                    ls -A "$fin_kill" >&2; exit 1; }

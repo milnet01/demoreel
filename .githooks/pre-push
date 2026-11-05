@@ -45,10 +45,15 @@ while read -r _lref lsha _rref rsha; do
         ranges+=("$lsha --not --remotes")
         files=$(git log --name-only --no-renames --diff-merges=first-parent --pretty=format: \
             "$lsha" --not --remotes 2>/dev/null) || { unresolved=true; continue; }
-    else
+    elif files=$(git diff --name-only --no-renames "$rsha" "$lsha" 2>/dev/null); then
         ranges+=("$rsha..$lsha")
-        files=$(git diff --name-only --no-renames "$rsha" "$lsha" 2>/dev/null) \
-            || { unresolved=true; continue; }
+    else
+        # The remote's commit is not here (a forced push with no fetch), so
+        # neither the scan nor the diff can start from it: scan what the
+        # remotes lack instead, and run the full gate.
+        ranges+=("$lsha --not --remotes")
+        unresolved=true
+        continue
     fi
     changed+=$files$'\n'
 done

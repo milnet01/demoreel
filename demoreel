@@ -6272,6 +6272,18 @@ def cmd_card(a):
               music=shortcut_music(a))
 
 
+def frame_time(line):
+    """A metadata=print frame line's time, or None. ffmpeg prints it with %.6g,
+    so a time near 0 comes as 1.11111e-05 and one before the seek with a minus
+    sign; NOPTS is no number at all."""
+    found = re.fullmatch(r"frame:\d+ +pts:\S+ +pts_time:(\S+)", line)
+    try:
+        value = float(found[1]) if found else math.nan
+    except ValueError:
+        value = math.nan
+    return value if math.isfinite(value) else None
+
+
 def cmd_motion(a):
     """Report how often a video's picture changes, and where it stands still.
 
@@ -6308,9 +6320,9 @@ def cmd_motion(a):
 
     def frame_line(line):
         nonlocal frames, new_frames, last_new, moment
-        found = re.fullmatch(r"frame:\d+ +pts:\S+ +pts_time:([0-9.]+)", line)
         if line.startswith("frame:"):
-            moment = found and start + float(found[1])
+            at = frame_time(line)
+            moment = None if at is None else start + at
         elif moment is not None and line == "e=1":
             frames += 1
         elif moment is not None and line == "n=1":
