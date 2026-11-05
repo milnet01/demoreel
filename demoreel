@@ -2405,8 +2405,8 @@ def open_app_log(applog):
     own = re.fullmatch(rf"/proc/{os.getpid()}/fd/(\d+)", str(applog))
     if own:
         try:
-            mode = os.fstat(int(own[1])).st_mode
-            if stat.S_ISFIFO(mode) or stat.S_ISSOCK(mode):
+            # Whatever the shell opened there, a pipe or a file, but a folder.
+            if not stat.S_ISDIR(os.fstat(int(own[1])).st_mode):
                 return os.fdopen(os.dup(int(own[1])), "wb")  # closed by the run's finally
         except OSError as exc:
             die(tr("could not write to {path}: {reason}.", path=applog, reason=exc.strerror))
@@ -2622,6 +2622,24 @@ def own_path(raw, what):
     """
     path = Path(os.path.abspath(Path(raw).expanduser()))
     refuse_control_characters(path, what)
+    # `--app-log >(cmd)` names one of this run's own descriptors. /dev/fd and
+    # /proc/self are the system's, but inside a container /proc/self belongs to
+    # another uid, and the walk refused it as a stranger's link (DEMO-0290).
+    own = re.fullmatch(r"/(?:dev|proc/self)/fd/(\d+)", str(path))
+    if own:
+        entry = Path(f"/proc/{os.getpid()}/fd/{own[1]}")
+        if what == "app log":
+            return entry
+        # -o: an mp4 cannot go to a pipe, and a file goes where it really is.
+        try:
+            target = os.readlink(entry)
+        except OSError:
+            target = ""
+        if not target.startswith("/"):
+            die(tr("-o {path} is not an ordinary file, so demoreel cannot put its file "
+                   "there.\n  Choose another path.", path=path))
+        path = Path(target)
+        refuse_control_characters(path, what)
     resolved = walk_links(path, what)
     # And the path the links reach, which is what stdout prints.
     refuse_control_characters(resolved, what)

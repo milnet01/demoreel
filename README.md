@@ -608,6 +608,11 @@ size and brought to its frame rate. A clip whose shape differs from the
 film's, wider or taller, is refused rather than stretched, unless it plays in
 a `window`, where it is fitted with room round it.
 
+**To check a film quickly**, make a draft small and slow: for clips of
+1600x1000, `demoreel edit film.txt -o draft.mp4 -s 400x250 -r 10`. Keep the
+clips' shape in `-s`, or they are refused. Measured 2026-11-05, a three-scene
+film took 7.1 seconds at full size and 2.2 as a draft.
+
 As it starts, `edit` prints the plan on stderr: each scene, and when it starts
 and ends in the finished film. A scene lasts its picture's whole frames, so
 these times are where its picture and its sound land. Under each scene it
