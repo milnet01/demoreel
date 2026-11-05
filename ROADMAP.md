@@ -830,6 +830,9 @@ simplest case, and a gate proves it still records.
   busy peers must last until git push returns: the Ubuntu leg reruns the
   recording steps, and one failed there after a window was released
   early.
+  2026-11-05: 5e4c27b's full push gate (cc-job push-1105a, load about
+  3-4) passed, Ubuntu leg included, the sync step with it. One step
+  skipped: the real-Flatpak step, because GIMP was open.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
@@ -5894,6 +5897,18 @@ covers both display backends and the Flatpak invocation.
   piece-name link check joins a 30 s film to plant one link; the tag check
   makes ten scenes where four make two pieces; the translation step's
   stdout and status runs go one at a time. Time on a quiet machine first.
+  2026-11-05, CI tuning (local-gate.md § 9, asked by claude-config):
+  ci_report over 30 days found the ci job's median rising from 5m12s to
+  9m35s over its newest five passing runs (40m budget); the gate step
+  itself took 9m18s in run 41979111121. That growth is this item's. The
+  two near-budget findings were single stalls: the apt install hit 15m
+  once (bc9031e, a slow mirror) and the packages step 25m once
+  (ddc3c3c); normally they take 16 s and about 2 min. Cache lever
+  measured and not taken: the apt install is 16 s on a normal run, so a
+  package cache saves almost nothing, and a stalled mirror stalls
+  apt-get update with or without it. The local push gate's slowest steps
+  on 5e4c27b: the Ubuntu leg 519 s, the finishing checks 272 s, the
+  packages 239 s.
   **Layman:** Make the automatic checks faster.
   Kind: perf.
   Source: review-fix-2026-11-04 DEMO-0095.
