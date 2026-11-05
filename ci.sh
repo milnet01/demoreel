@@ -5835,10 +5835,33 @@ CASES
     assert_eq "a run with stderr closed: its exit status" 0 "$rc"
     assert_eq "a run with stderr closed: stdout" "$ft/out/closed.mp4" "$out"
     [ -s "$ft/out/closed.mp4" ] || fail "a run with stderr closed wrote no file"
+    # The refusal, read through a launcher that keeps stderr closed: a crash also
+    # exits non-zero and prints nothing, and it is the regression this guards.
+    cat > "$ft/closed.py" <<'CLOSEDPY'
+import importlib.machinery, importlib.util, sys
+said = open(sys.argv[1], "w", encoding="utf-8")
+loader = importlib.machinery.SourceFileLoader("demoreel", sys.argv[2])
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+sys.argv = ["demoreel", *sys.argv[3:]]
+try:
+    d.main()
+except SystemExit as exc:
+    said.write(f"exit {exc.code}")
+    said.close()
+    raise
+except BaseException as exc:  # noqa: BLE001 - this is what the check looks for
+    said.write(f"crash {type(exc).__name__}: {exc}")
+    said.close()
+    raise
+CLOSEDPY
     rc=0
-    out=$(cd "$ft" && "$DR" trim nothing.mp4 --to 0.5 -o "$ft/out/none.mp4" 2>&-) || rc=$?
+    out=$(cd "$ft" && python3 closed.py "$ft/closed.said" "$DR" trim nothing.mp4 --to 0.5 \
+              -o "$ft/out/none.mp4" 2>&-) || rc=$?
     [ "$rc" -ne 0 ] || fail "a refused run with stderr closed exited 0"
     [ -z "$out" ] || fail "a refused run with stderr closed printed '$out'"
+    grep -q '^exit demoreel: .*there is no file' "$ft/closed.said" \
+        || fail "a refused run with stderr closed did not end as a refusal: $(cat "$ft/closed.said")"
     echo "stderr closed changes nothing but who can read the notes"
     }
     fin_s85() {
@@ -8035,12 +8058,17 @@ step "smoke: a blank recording is refused"
 # branch that fails; a run whose app exits first skips the check by design.
 #
 # The kill comes AFTER the halfway sample and before the end, so this is the
-# end-of-run check alone. With -d 6 the halfway look lands about 3.5s in and
-# the end about 6.5s in, a second and a half either side of the kill at 5s.
+# end-of-run check alone. With -d 6 the halfway look is 3 s after recording
+# begins and the end 6 s after, so the kill is timed from the run's own state
+# file saying it records, at 4.5 s: timed from the shell's start, a slow window
+# search moved the halfway look past it. The run writes "recording": false
+# before it starts the app, so an earlier run's file is never read.
 set +e
 # shellcheck disable=SC2016  # $! and $p belong to the inner sh, not to us
 blank_out=$(./demoreel record -n "${GATE_RUN}main" -o "$tmp/blank.mp4" -d 6 -s 640x480 \
-    -- sh -c 'xclock & p=$!; sleep 5; kill $p; sleep 10' 2>"$tmp/blank.err")
+    -- sh -c 'xclock & p=$!
+              until grep -q "\"recording\": true" "$1" 2>/dev/null; do sleep 0.05; done
+              sleep 4.5; kill $p; sleep 10' sh "$statedir/${GATE_RUN}main.json" 2>"$tmp/blank.err")
 blank_status=$?
 set -e
 [ "$blank_status" -ne 0 ] || { echo "a blank recording exited 0" >&2; exit 1; }
