@@ -2080,6 +2080,9 @@ finishing_checks() {
         mkdir -p "$w/out" "$w/log"
         ft=$w; fo="$w/log/stdout"; fe="$w/log/stderr"
         set +e; ( set -e; "${fin_funcs[$1]}" ); echo $? > "$w.rc"
+        # A passed check's inputs and films go now, not when the gate ends: /tmp
+        # is RAM here. A failed one's stay, to look at.
+        [ "$(cat "$w.rc")" != 0 ] || rm -rf "$w"
         since "$t0" > "$w.time"
     }
     # A check that hangs fails, group and all, rather than hanging the gate. The
@@ -2478,7 +2481,7 @@ SHIM
     before=$(snap)
     for target in "$ft/in.mp4" ./in.mp4 alias.mp4; do
         run trim in.mp4 -o "$target" --to 2
-        expect_refused "trim with -o $target (the input itself)"
+        expect_refused "trim with -o $target (the input itself)" "also a file this command reads"
     done
     run caption in.mp4 -o in.mp4 --text hi
     expect_refused "caption with -o the input"
@@ -3313,9 +3316,12 @@ SCRIPT
               | grep -cE -- '-i [^ ]*(demoreel-piece|pieces\.txt)' || true)
     assert_eq "edit: runs that encode a piece again" 0 "$again"
     # README: "the plan goes to stderr" - each scene, and where it ends.
-    [ "$(grep -c . "$fe")" -ge 4 ] || fail "edit: the plan on stderr should list each of the 4 scenes
-    expected: at least 4 lines on stderr
-    actual:   $(grep -c . "$fe") lines: $(cat "$fe")"
+    local scene
+    for scene in 1 2 3 4; do
+        grep -q "^demoreel: scene $scene: " "$fe" || fail "edit: the plan on stderr should list scene $scene
+    expected: a line starting 'demoreel: scene $scene: '
+    actual:   $(cat "$fe")"
+    done
     grep -q '10\.4' "$fe" || fail "edit: the plan should say the film ends at 10.4
     expected: '10.4' on stderr
     actual:   $(cat "$fe")"
@@ -3688,6 +3694,7 @@ E
         refused_naming_line "a fading text on a band, with an ffmpeg that has no boxw" fd3.mp4 2
         echo "this ffmpeg has no boxw: the fading text on a band was refused, as README says"
         skipped "this ffmpeg has no boxw, so a fading text on a band was not drawn"
+        skipped "this ffmpeg has no boxw, so a sliding band rising with its text did not run"
     fi
     # The same on a card, whose text counts from the card's start.
     ed_ok fd4.mp4 <<'E'
@@ -5103,7 +5110,8 @@ sys.argv = ["demoreel", *sys.argv[2:]]
 d.main()
 FULLPY
     rc=0
-    ( cd "$ft" && FREE=$((16 * 1024 * 1024 - 1)) python3 nearly.py "$DR" card -d 30 -o "$ft/out/full.mp4" ) \
+    # The same film as the control below, so the free space alone decides.
+    ( cd "$ft" && FREE=$((16 * 1024 * 1024 - 1)) python3 nearly.py "$DR" card -d 1 -o "$ft/out/full.mp4" ) \
         >"$fo" 2>"$fe" || rc=$?
     expect_refused "a film on a disk with under 16 MiB free"
     grep -q 'is nearly full' "$fe" || { show_err; fail "a nearly full disk: did not say why"; }
@@ -7190,7 +7198,11 @@ chain_attach_checks() {
     printf 'changed\n' > "$1/file"
     ! same_as_built "$1" "$hashed" >/dev/null 2>&1 || { echo "FAIL: a changed file passed" >&2; exit 1; }
     echo "a file changed after its build is refused"
-    ! grep -q '^ *install_pkg() { zypper.*--no-gpg-checks' <<<"$(pkg_container_script)" || {
+    # Anywhere in its code, comments aside: a definition split over lines carried
+    # the flag on its second, and a comment names the flag to say why it is not used.
+    local container_code
+    container_code=$(sed -E 's/(^|[[:space:]])#.*//' <<<"$(pkg_container_script)")
+    ! grep -Eq -- '--no-gpg-checks|gpgcheck *= *(0|off|false|no)' <<<"$container_code" || {
         echo "FAIL: openSUSE's install turns off signature checks for its repositories" >&2; exit 1; }
     echo "openSUSE's install keeps signature checks on for its repositories"
 
@@ -7319,7 +7331,8 @@ CHAINPY
 
 if [ "${1:-}" = "--release-chain" ]; then
     tmp=$(mktemp -d)
-    trap 'rm -rf "$tmp"' EXIT
+    # Ends the stand-in run a failed check leaves, as the full gate's cleanup does.
+    trap 'stop_children; rm -rf "$tmp"' EXIT
     chain_checks
     gate_finish 'release chain checks passed'
     exit 0
@@ -7443,7 +7456,8 @@ echo "--perf passed at the limit and failed just over it, on each of the two fig
 
 step "--perf's baseline has a figure for every command that does work"
 # stop only signals a run that is already going.
-perf_cmds=$(./demoreel --help | sed -n 's/.*{\(record,.*\)}.*/\1/p;T;q')
+# From a here-string: piped, sed's q left --help writing to a closed pipe.
+perf_cmds=$(sed -n 's/.*{\(record,.*\)}.*/\1/p;T;q' <<<"$(./demoreel --help)")
 [ -n "$perf_cmds" ] || { echo "could not read the commands from --help" >&2; exit 1; }
 for perf_cmd in ${perf_cmds//,/ }; do
     [ "$perf_cmd" = stop ] || grep -q "^$perf_cmd"$'\t' "$PERF_BASELINE" || {
@@ -10090,7 +10104,8 @@ tmp = Path(sys.argv[1])
 path = tmp / "wf.log"
 proc, log = d.start_wf_recorder(dict(os.environ), "w", 1, tmp / "wf.mp4", path)
 proc.wait()
-time.sleep(0.2)
+# The copying thread may not have run yet on a loaded machine: wait for it.
+d.poll(lambda: "midway" in path.read_text(), 5)
 if "midway" not in path.read_text():
     raise SystemExit(f"the log was not written as it went: {path.read_text()!r}")
 log.close()
@@ -11877,8 +11892,7 @@ if r.returncode != r_c.returncode or b"usage: demoreel" not in r.stderr or b"%(x
 r = run(swap("end a running recording early", '"50 % ⟦end a running recording early⟧"'),
         ["--help"])
 out = r.stdout.decode("utf-8", "replace")
-if r.returncode != 0 or "  end a running recording early" not in out.replace(
-        "  stop", "") and "end a running recording early" not in out \
+if r.returncode != 0 or "end a running recording early" not in out \
         or "50 %" in out or "⟦record an app" not in out:
     bad.append(f"a bare % in help: {r.returncode} {out!r:.400}")
 # INV-9: a catalog in the working directory, or named by TEXTDOMAINDIR, is
@@ -11940,8 +11954,9 @@ echo "no other write grant"
 step "no private key is in the repository"
 # DEMO-0084 INV-7. The header is built from two parts, so this file does not
 # hold the line it looks for. The Ubuntu leg gets the files without .git.
-key_header="-----BEGIN OPENSSH"
-key_header="^$key_header PRIVATE KEY-----\$"
+key_header="-----BEGIN"
+# OpenSSH, PEM (RSA, EC, DSA, ENCRYPTED or none) and a CRLF copy of each.
+key_header="^$key_header ([A-Z]+ )?PRIVATE KEY-----[[:space:]]*\$"
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     grep_status=0
     found=$(git grep -nE -- "$key_header") || grep_status=$?
