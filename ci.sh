@@ -9655,6 +9655,15 @@ if not 0 < clicks < 500:
 print(f"Ctrl+C during a run of steps finishes the video, after {clicks} of 500 clicks")
 STEPSTOPPY
 
+step "two clicks at one spot do not hang the run"
+# DEMO-0287. On Ubuntu 24.04's xdotool a mousemove --sync to where the pointer
+# already is never returns, and the run ended as a display that stopped
+# answering. The Ubuntu leg runs this on that xdotool.
+./demoreel record -n "${GATE_RUN}twoclicks" -o "$tmp/twoclicks.mp4" -d 1 -s 320x240 \
+    -a "click 40 40" -a "click 40 40" -a "move 40 40" -- xclock >/dev/null 2>"$tmp/twoclicks.err" || {
+    echo "two clicks at one spot failed the run:" >&2; cat "$tmp/twoclicks.err" >&2; exit 1; }
+echo "two clicks and a move at one spot ran"
+
 step "a time in a step is one the clock can hold"
 # DEMO-0094. `drag` refused an endless time and `wait` and `hold` did not, so
 # `wait inf` passed "every step is readable" and raised OverflowError in the

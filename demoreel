@@ -1423,13 +1423,23 @@ def run_action(spec, env):
             die(tr("a {verb} step failed.\n  xdotool said: {text}", verb=verb,
                    text=last_said(done.stderr) or f"exit {done.returncode}"))
 
+    def move_to(x, y):
+        # --sync waits for the pointer to move. On Ubuntu 24.04's xdotool
+        # (3.20160805.1), a move to where it already is never returns, so two
+        # clicks at one spot ended the run as a display that stopped answering
+        # (DEMO-0287). There is nothing to wait for then.
+        said = xdotool(env, "getmouselocation", "--shell").stdout
+        at = dict(line.split("=", 1) for line in said.split() if "=" in line)
+        if (at.get("X"), at.get("Y")) != (str(x), str(y)):
+            act("mousemove", "--sync", str(x), str(y))
+
     if verb == "wait":
         _stop.wait(v["seconds"])  # a stop ends the wait, as it ends the run
     elif verb == "move":
-        act("mousemove", "--sync", *v["at"])
+        move_to(*v["at"])
     elif verb == "click":
         if v["at"]:
-            act("mousemove", "--sync", *v["at"])
+            move_to(*v["at"])
         act("click", v["button"])
     elif verb == "type":
         # --file - takes the text on stdin. As an argument it sits in the
@@ -1449,7 +1459,7 @@ def run_action(spec, env):
             xdotool(env, "keyup", v["key"])
     elif verb == "drag":
         (x1, y1), (x2, y2) = v["from"], v["to"]
-        act("mousemove", "--sync", str(x1), str(y1))
+        move_to(x1, y1)
         steps = max(1, round(v["seconds"] * DRAG_STEPS_PER_SECOND))
         started = time.monotonic()
         # The button comes up however the drag ends, as a held key does.
