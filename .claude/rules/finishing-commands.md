@@ -79,7 +79,10 @@ stop agreeing.
   allocate memory". Other sessions share this machine's memory.
 - **`concat` hands on a microsecond timebase, and `xfade` refuses inputs whose
   timebases differ.** The `fps` after each `concat` puts the film's back. A
-  film with a cut followed by a crossfade fails to start without it.
+  film with a cut followed by a crossfade fails to start without it. Before
+  it, `setpts=N/(rate*TB)` gives each frame the time its number says:
+  `concat` counts a one-frame scene as lasting nothing, and stamped the next
+  scene's first frame on top of it (DEMO-0291).
 - **A cut is snapped to the clip's own frames.** The frame on screen at `to`
   is kept, which is what lets `motion`'s `last change` be used as a `to`. The
   seek starts half a frame early and the read ends half a frame late, so

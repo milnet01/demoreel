@@ -908,10 +908,12 @@ simplest case, and a gate proves it still records.
   Kind: fix.
   Source: review-fix DEMO-0094 2026-10-31.
 
-- 📋 [DEMO-0291] **A film whose first scene is one frame long, followed by a clip, fails with no reason given.**
+- ✅ [DEMO-0291] **A film whose first scene is one frame long, followed by a clip, fails with no reason given.**
   `card 0.2` at 5 frames a second, then a clip: "ffmpeg could not make the
   film" and nothing more. Older than DEMO-0094, which found it while
   closing the untrusted-input subject.
+  2026-11-05: 9495e99. concat gave a one-frame scene no length; frames
+  are numbered after it now.
   **Layman:** A very short title card before a clip stops the film from being made, and the message does not say why.
   Kind: fix.
   Source: review-fix DEMO-0094 2026-10-31.
@@ -967,12 +969,13 @@ simplest case, and a gate proves it still records.
   Kind: doc-fix.
   Source: review-code-2026-10-30.
 
-- 📋 [DEMO-0299] **When a film comes out short of its planned frames, say so instead of printing a blank reason.**
+- ✅ [DEMO-0299] **When a film comes out short of its planned frames, say so instead of printing a blank reason.**
   run_film_ffmpeg dies with 'ffmpeg could not make the film.' and an empty
   second line when the only fault is the frame count: ffmpeg said nothing and
   the file is valid. Seen on ffmpeg 6.1.1 on 2026-11-02, before DEMO-0285's
   spare frame. It should name the frames made and planned. A new message needs
   ./ci.sh --pot and --add-message.
+  2026-11-05: 9495e99. A short film says frames made and planned.
   **Layman:** A failed film can stop with no reason shown; it should say how many frames it made and how many it should have made.
   Kind: fix.
   Source: found-building-DEMO-0285-2026-11-02.
