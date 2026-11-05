@@ -878,11 +878,13 @@ simplest case, and a gate proves it still records.
   Kind: feature.
   Source: peer-request-2026-10-30 APHW-0030.
 
-- 📋 [DEMO-0287] **On Ubuntu 24.04's xdotool, two clicks at one spot end the run as a display that stopped answering.**
+- ✅ [DEMO-0287] **On Ubuntu 24.04's xdotool, two clicks at one spot end the run as a display that stopped answering.**
   Found while fixing DEMO-0094. On xdotool 3.20160805.1, a second
   `mousemove --sync` to the same spot with a window under it never returns
   (measured). Likely fix: skip --sync when the pointer is already there.
   This predates DEMO-0094.
+  2026-11-05: 210f12d. Reproduced in the ubuntu:24.04 image and fixed; a
+  gate step covers it.
   **Layman:** A script that clicks the same place twice can fail on Ubuntu.
   Kind: fix.
   Source: review-code-2026-10-30 DEMO-0094.
@@ -948,8 +950,10 @@ simplest case, and a gate proves it still records.
   Kind: fix.
   Source: review-fix DEMO-0094 2026-10-31.
 
-- 📋 [DEMO-0294] **install.sh --uninstall leaves files a newer version dropped, and folders it made.**
+- ✅ [DEMO-0294] **install.sh --uninstall leaves files a newer version dropped, and folders it made.**
   It removes the list in the checkout it runs from. Left open by DEMO-0094's release-chain subject.
+  2026-11-05: da9c54e. An install from source keeps its own list;
+  --uninstall reads it and removes the folders it made once empty.
   **Layman:** Removing a from-source install can leave a few old files behind.
   Kind: fix.
   Source: review-fix DEMO-0094 2026-10-31.
@@ -974,8 +978,10 @@ simplest case, and a gate proves it still records.
   Kind: fix.
   Source: review-code-2026-10-30.
 
-- 📋 [DEMO-0297] **The refusal of a very wide line can overstate how many characters would fit.**
+- ✅ [DEMO-0297] **The refusal of a very wide line can overstate how many characters would fit.**
   The refusal itself is correct. The measuring strip clips the line, so its "about N would fit" comes out too high.
+  2026-11-05: cc0f907. A cut-off line is measured again on a wider
+  strip; the suggested size is in proportion.
   **Layman:** When a line of text is too wide, the suggested length can be too long.
   Kind: fix.
   Source: review-code-2026-10-30.
