@@ -90,7 +90,10 @@ for tip in "${tips[@]}"; do
         say "no ci.sh at ${tip:0:12} — nothing to run"
         continue
     fi
-    worktree=$(mktemp -d)
+    # On disk, not in /tmp: /tmp is RAM on the machine this was written on, and
+    # the gate's worktree holds the whole tree while its checks run.
+    mkdir -p "${XDG_CACHE_HOME:-$HOME/.cache}/demoreel-pre-push"
+    worktree=$(mktemp -d "${XDG_CACHE_HOME:-$HOME/.cache}/demoreel-pre-push/gate.XXXXXX")
     git worktree add --detach --quiet "$worktree" "$tip"
     # The tip's own ci.sh owns the glob AND the matching, so this hook only hands
     # it the paths -- the same division the GitHub workflow uses. Anything we
