@@ -42,6 +42,22 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **A one-frame scene, such as a very short card, no longer stops the film** (DEMO-0291)
+  A scene one frame long followed by a clip failed with no reason given. The film now keeps every frame.
+- **A film that comes out short says how many frames it made and planned** (DEMO-0299)
+  It used to stop with "ffmpeg could not make the film" and an empty line.
+- **`--app-log >(command)` sends the app's output to that command** (DEMO-0290)
+  It failed, looking for a file named after the pipe. It works inside a container too.
+- **Two clicks at one spot no longer end a run on Ubuntu 24.04** (DEMO-0287)
+  Ubuntu's xdotool never finished moving the pointer to where it already was, and the run stopped as a display that stopped answering.
+- **A refused, very long line of text suggests the right smaller size** (DEMO-0297)
+  A line wider than demoreel's measuring strip was measured as the strip's width, so the size it suggested was too large.
+- **`install.sh --uninstall` removes what was really installed** (DEMO-0294)
+  It also removes a file an older version installed, and the folders the install made, once they are empty.
+- **Clearer refusals in `edit`, and right-to-left line numbers that print** (DEMO-0359)
+  A negative `x`, `y` or `size` is named as a percentage, not as seconds. A too-flat windowed clip with placed texts is told the clip is too flat. In Arabic and Hebrew, line numbers no longer print as escape codes. A `type` step whose text is not UTF-8 now fails, saying why, instead of typing "?".
+- **`demoreel check`'s lines are translated whole** (DEMO-0296)
+  Each line was built from a translated fragment, which reads wrongly in some languages.
 - **Names such as `12:30:05.mp4`, `-report.mp4` and `q%d.png` are read as those files** (DEMO-0094)
   The first failed with "Protocol not found", the second reached ffprobe as an option, and the third showed the `q1.png` beside it.
 - **A name that is not UTF-8 no longer gives a Python error** (DEMO-0094)

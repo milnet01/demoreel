@@ -825,6 +825,11 @@ simplest case, and a gate proves it still records.
   alike. It passed inside the gate once two sessions held their builds.
   So it is load, not code. Asking busy sessions for a 15-minute window
   works; each said yes.
+  2026-11-05, later: the sync step failed once more at load 8 (55 ms),
+  then passed (14 ms) on the retry minutes after. A quiet window from
+  busy peers must last until git push returns: the Ubuntu leg reruns the
+  recording steps, and one failed there after a window was released
+  early.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
@@ -1014,9 +1019,14 @@ simplest case, and a gate proves it still records.
   Kind: test.
   Source: found-building-DEMO-0285-2026-11-02.
 
-- 📋 [DEMO-0346] **A fast draft render of an `edit` script at a low size and frame rate.**
+- ✅ [DEMO-0346] **A fast draft render of an `edit` script at a low size and frame rate.**
   Offered by editly (fast mode) and auto-editor. Useful before the
   editor exists.
+  2026-11-05: met with the options edit already has, not a new flag.
+  README § edit (f924709) gives the recipe, -s 400x250 -r 10 for 1600x1000
+  clips: a three-scene film took 7.1 s at full size and 2.2 as a draft.
+  A --draft flag that works out the shape itself is the step after, if
+  wanted; the catch it would remove is that -s must keep the clips' shape.
   **Layman:** Check a film in seconds before the real render.
   Kind: feature.
   Source: research-2026-11-03.
