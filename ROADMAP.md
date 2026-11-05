@@ -1013,11 +1013,17 @@ simplest case, and a gate proves it still records.
   Kind: fix.
   Source: found-building-DEMO-0285-2026-11-02.
 
-- 📋 [DEMO-0300] **Give the edit-split row in ./ci.sh --perf its baseline figure.**
+- ✅ [DEMO-0300] **Give the edit-split row in ./ci.sh --perf its baseline figure.**
   DEMO-0285 INV-13 is unproven: perf_measure has the row, but
   docs/perf-baseline.tsv has no figure, so --perf prints 'no baseline' for it.
   The machine's load was too high on 2026-11-02. --perf refuses a load of 10 or
   more. Run ./ci.sh --perf-baseline on a quiet machine, before a release.
+  2026-11-05, GPU idle, load 5-7: ./ci.sh --perf against the 2026-10-30
+  baseline said nothing is over 1.5 times it (cc-job perf-1105). Then
+  ./ci.sh --perf-baseline wrote the file at 73243ab with an edit-split
+  row: 25.58 s CPU, 886 MB peak (the --perf run minutes before measured
+  26.1 s and 877 MB). The other rows moved by under 10% in CPU, edit-24
+  down from 121 to 114 s. DEMO-0285 INV-13 now has its figure.
   **Layman:** The speed and memory check has no starting figure for split-screen yet, because the machine was too busy to measure it fairly.
   Kind: test.
   Source: found-building-DEMO-0285-2026-11-02.

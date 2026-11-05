@@ -1,21 +1,22 @@
 # demoreel's figures for ./ci.sh --perf, the median of 3 runs. Made by ./ci.sh --perf-baseline.
-# date: 2026-10-30
-# commit: a50aabc
+# date: 2026-11-05
+# commit: 73243ab
 # machine: AMD Ryzen 5 5600 6-Core Processor, 12 threads
 # ffmpeg: ffmpeg version 9.0.2 Copyright (c) 2000-2026 the FFmpeg developers
 # wall_s and cpu_s are seconds, cpu_s user + system with children. peak_mb is the largest single process.
 case	wall_s	cpu_s	peak_mb
-check	0.96	0.93	60
-record	11.09	5.53	259
-record-gpu	12.01	11.76	155
-shot	0.89	0.74	78
-trim	4.82	13.84	352
-caption	5.43	15.97	353
-join	9.82	38.56	526
-card	1.05	2.35	261
-edit	13.51	42.92	852
-edit-24	38.54	120.95	808
-poster	0.50	1.15	159
-motion	0.79	3.03	149
-thumbnail	0.61	1.26	158
-sheet	2.92	8.02	152
+check	0.84	0.82	60
+record	11.00	5.31	248
+record-gpu	11.91	11.61	143
+shot	1.03	0.86	78
+trim	4.50	13.06	334
+caption	5.31	15.70	333
+join	9.97	38.18	498
+card	1.15	2.39	230
+edit	10.24	40.84	796
+edit-24	29.49	113.68	826
+edit-split	5.93	25.58	886
+motion	0.97	3.09	149
+poster	0.64	1.25	157
+thumbnail	0.78	1.35	157
+sheet	3.05	7.95	152
