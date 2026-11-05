@@ -456,9 +456,6 @@ msgstr "kon de afbeelding niet maken: het scherm reageerde niet binnen {seconds}
 msgid "Its display log is kept in {folder}"
 msgstr "Het logboek van zijn scherm staat in {folder}"
 
-msgid "record and shot"
-msgstr "record en shot"
-
 msgid "missing {programs}"
 msgstr "ontbreekt: {programs}"
 
@@ -479,12 +476,6 @@ msgstr "{name}: NIET GEREED"
 
 msgid "{name}: ready"
 msgstr "{name}: gereed"
-
-msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet"
-msgstr "edit, trim, caption, join, card, motion, poster, thumbnail en sheet"
-
-msgid "text on a card or a caption"
-msgstr "tekst op een kaart of als ondertitel"
 
 msgid "could not tell whether this ffmpeg can read from a sound server: asking it took over {seconds}s."
 msgstr "kon niet vaststellen of deze ffmpeg van een geluidsserver kan lezen: het navragen duurde langer dan {seconds}s."
@@ -1555,3 +1546,21 @@ msgstr "de achtergrondkleur, of een getekende achtergrond: {names} (standaard: {
 #. translators: {word} is x, y or size, an edit-script word that stays in English; {value} is what was written after it, in quotes.
 msgid "{where}: {word} takes a number, not {value}."
 msgstr "{where}: {word} verwacht een getal, niet {value}."
+
+msgid "record and shot: ready"
+msgstr "record en shot: gereed"
+
+msgid "record and shot: NOT READY"
+msgstr "record en shot: NIET GEREED"
+
+msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet: ready"
+msgstr "edit, trim, caption, join, card, motion, poster, thumbnail en sheet: gereed"
+
+msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet: NOT READY"
+msgstr "edit, trim, caption, join, card, motion, poster, thumbnail en sheet: NIET GEREED"
+
+msgid "text on a card or a caption: ready"
+msgstr "tekst op een kaart of als ondertitel: gereed"
+
+msgid "text on a card or a caption: NOT READY"
+msgstr "tekst op een kaart of als ondertitel: NIET GEREED"

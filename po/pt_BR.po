@@ -456,9 +456,6 @@ msgstr "não foi possível tirar a foto: a tela não respondeu em {seconds}s."
 msgid "Its display log is kept in {folder}"
 msgstr "O registro da tela está guardado em {folder}"
 
-msgid "record and shot"
-msgstr "record e shot"
-
 msgid "missing {programs}"
 msgstr "faltam {programs}"
 
@@ -479,12 +476,6 @@ msgstr "{name}: NÃO ESTÁ PRONTO"
 
 msgid "{name}: ready"
 msgstr "{name}: pronto"
-
-msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet"
-msgstr "edit, trim, caption, join, card, motion, poster, thumbnail e sheet"
-
-msgid "text on a card or a caption"
-msgstr "texto num cartão ou numa legenda"
 
 msgid "could not tell whether this ffmpeg can read from a sound server: asking it took over {seconds}s."
 msgstr "não foi possível saber se este ffmpeg consegue ler de um servidor de som: consultá-lo levou mais de {seconds}s."
@@ -1555,3 +1546,21 @@ msgstr "a cor de fundo, ou um fundo desenhado: {names} (padrão: {colour})"
 #. translators: {word} is x, y or size, an edit-script word that stays in English; {value} is what was written after it, in quotes.
 msgid "{where}: {word} takes a number, not {value}."
 msgstr "{where}: {word} recebe um número, não {value}."
+
+msgid "record and shot: ready"
+msgstr "record e shot: pronto"
+
+msgid "record and shot: NOT READY"
+msgstr "record e shot: NÃO ESTÁ PRONTO"
+
+msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet: ready"
+msgstr "edit, trim, caption, join, card, motion, poster, thumbnail e sheet: pronto"
+
+msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet: NOT READY"
+msgstr "edit, trim, caption, join, card, motion, poster, thumbnail e sheet: NÃO ESTÁ PRONTO"
+
+msgid "text on a card or a caption: ready"
+msgstr "texto num cartão ou numa legenda: pronto"
+
+msgid "text on a card or a caption: NOT READY"
+msgstr "texto num cartão ou numa legenda: NÃO ESTÁ PRONTO"

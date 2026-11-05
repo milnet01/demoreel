@@ -3244,7 +3244,6 @@ def cmd_check(a):
     """
     ready = True
     for gpu in (False, True):
-        name = "--gpu" if gpu else tr("record and shot")
         missing = [t for t in dict.fromkeys(required_programs(gpu, True))
                    if shutil.which(t) is None]
         problems = [tr("missing {programs}", programs=", ".join(missing))
@@ -3269,13 +3268,17 @@ def cmd_check(a):
                                "no GPU for it to use."))
         if not gpu and not missing:
             problems += display_problem()
+        # Each line is one whole message: "record and shot" slotted into
+        # "{name}: ready" was a translated fragment (DEMO-0296). A flag name is
+        # never translated, so --gpu keeps the template.
         if problems:
-            note(tr("{name}: NOT READY", name=name) + "\n  - " + "\n  - ".join(
+            note((tr("{name}: NOT READY", name="--gpu") if gpu
+                  else tr("record and shot: NOT READY")) + "\n  - " + "\n  - ".join(
                 problem.replace("\n", "\n    ") for problem in problems))
             if not gpu:  # only the default backend decides the exit status
                 ready = False
         else:
-            note(tr("{name}: ready", name=name))
+            note(tr("{name}: ready", name="--gpu") if gpu else tr("record and shot: ready"))
     # Like --gpu's, this line never changes the exit status (DEMO-0106 INV-8).
     problems = audio_problems()
     note(tr("{name}: NOT READY", name="--audio") + "\n  - " + "\n  - ".join(
@@ -3284,12 +3287,13 @@ def cmd_check(a):
     # The finishing commands need no display, and nothing here changes the
     # exit status: that still says only whether the default backend records.
     videos, words = finishing_problems()
-    for name, problem in ((tr("edit, trim, caption, join, card, motion, "
-                              "poster, thumbnail and sheet"), videos),
-                          (tr("text on a card or a caption"), words)):
-        note(tr("{name}: NOT READY", name=name) + "\n  - "
-             + problem.replace("\n", "\n    ") if problem
-             else tr("{name}: ready", name=name))
+    note(tr("edit, trim, caption, join, card, motion, poster, thumbnail and sheet: "
+            "NOT READY") + "\n  - " + videos.replace("\n", "\n    ") if videos
+         else tr("edit, trim, caption, join, card, motion, poster, thumbnail and sheet: "
+                 "ready"))
+    note(tr("text on a card or a caption: NOT READY") + "\n  - "
+         + words.replace("\n", "\n    ") if words
+         else tr("text on a card or a caption: ready"))
     if not ready:
         sys.exit(1)
 

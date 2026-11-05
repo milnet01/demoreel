@@ -456,9 +456,6 @@ msgstr "impossible de prendre l'image : l'écran n'a pas répondu en {seconds} s
 msgid "Its display log is kept in {folder}"
 msgstr "Son journal d'écran est conservé dans {folder}"
 
-msgid "record and shot"
-msgstr "record et shot"
-
 msgid "missing {programs}"
 msgstr "manquant : {programs}"
 
@@ -479,12 +476,6 @@ msgstr "{name} : PAS PRÊT"
 
 msgid "{name}: ready"
 msgstr "{name} : prêt"
-
-msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet"
-msgstr "edit, trim, caption, join, card, motion, poster, thumbnail et sheet"
-
-msgid "text on a card or a caption"
-msgstr "du texte sur un carton ou une légende"
 
 msgid "could not tell whether this ffmpeg can read from a sound server: asking it took over {seconds}s."
 msgstr "impossible de savoir si ce ffmpeg peut lire depuis un serveur de son : l'interroger a pris plus de {seconds} s."
@@ -1555,3 +1546,21 @@ msgstr "la couleur de fond, ou un fond dessiné : {names} (par défaut : {colour
 #. translators: {word} is x, y or size, an edit-script word that stays in English; {value} is what was written after it, in quotes.
 msgid "{where}: {word} takes a number, not {value}."
 msgstr "{where} : {word} prend un nombre, et non {value}."
+
+msgid "record and shot: ready"
+msgstr "record et shot : prêt"
+
+msgid "record and shot: NOT READY"
+msgstr "record et shot : PAS PRÊT"
+
+msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet: ready"
+msgstr "edit, trim, caption, join, card, motion, poster, thumbnail et sheet : prêt"
+
+msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet: NOT READY"
+msgstr "edit, trim, caption, join, card, motion, poster, thumbnail et sheet : PAS PRÊT"
+
+msgid "text on a card or a caption: ready"
+msgstr "du texte sur un carton ou une légende : prêt"
+
+msgid "text on a card or a caption: NOT READY"
+msgstr "du texte sur un carton ou une légende : PAS PRÊT"

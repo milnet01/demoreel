@@ -456,9 +456,6 @@ msgstr "이미지를 캡처할 수 없었습니다: 디스플레이가 {seconds}
 msgid "Its display log is kept in {folder}"
 msgstr "디스플레이 로그는 {folder}에 보관되어 있습니다"
 
-msgid "record and shot"
-msgstr "record 및 shot"
-
 msgid "missing {programs}"
 msgstr "없음: {programs}"
 
@@ -479,12 +476,6 @@ msgstr "{name}: 준비 안 됨"
 
 msgid "{name}: ready"
 msgstr "{name}: 준비됨"
-
-msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet"
-msgstr "edit, trim, caption, join, card, motion, poster, thumbnail 및 sheet"
-
-msgid "text on a card or a caption"
-msgstr "카드나 자막의 텍스트"
 
 msgid "could not tell whether this ffmpeg can read from a sound server: asking it took over {seconds}s."
 msgstr "이 ffmpeg이 사운드 서버에서 읽을 수 있는지 알 수 없었습니다. 확인하는 데 {seconds}초 넘게 걸렸습니다."
@@ -1549,3 +1540,21 @@ msgstr "배경색 또는 그려진 배경: {names} (기본값: {colour})"
 #. translators: {word} is x, y or size, an edit-script word that stays in English; {value} is what was written after it, in quotes.
 msgid "{where}: {word} takes a number, not {value}."
 msgstr "{where}: {word}에는 {value}이(가) 아니라 숫자를 주어야 합니다."
+
+msgid "record and shot: ready"
+msgstr "record 및 shot: 준비됨"
+
+msgid "record and shot: NOT READY"
+msgstr "record 및 shot: 준비 안 됨"
+
+msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet: ready"
+msgstr "edit, trim, caption, join, card, motion, poster, thumbnail 및 sheet: 준비됨"
+
+msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet: NOT READY"
+msgstr "edit, trim, caption, join, card, motion, poster, thumbnail 및 sheet: 준비 안 됨"
+
+msgid "text on a card or a caption: ready"
+msgstr "카드나 자막의 텍스트: 준비됨"
+
+msgid "text on a card or a caption: NOT READY"
+msgstr "카드나 자막의 텍스트: 준비 안 됨"
