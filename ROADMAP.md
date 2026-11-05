@@ -5843,6 +5843,12 @@ covers both display backends and the Flatpak invocation.
   Still open: script_number's message for a negative x, y or size, and the
   split note's trn, both needing new messages in every catalog (do them
   as one batch); the rest of lane 3 and the private lane 1 and 2 items.
+  2026-11-05: script_number's negative x, y and size are fixed, with one
+  new message drafted in every catalog (drafts, not yet checked with
+  Gemini/DeepSeek). The split note's trn is dropped: a split holds 2 to 8
+  videos and the catalogs already avoid the plural. Also fixed, found on
+  the way: escaped isolates in RTL line numbers. Still open: the private
+  lane 1 and 2 items and the rest of review-tests' LOW list.
   **Layman:** Tidy up the many small issues the two reviews found.
   Kind: review-fix.
   Source: review-fix-2026-11-04 DEMO-0095.
