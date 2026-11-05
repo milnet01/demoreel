@@ -819,6 +819,12 @@ simplest case, and a gate proves it still records.
   the tree minutes earlier. And the push gate's "--audio keeps sound and
   picture in step" failed at load 14-21 with the GPU quiet: 75 ms apart
   against the 40 ms bound.
+  2026-11-05: "--audio keeps sound and picture in step" failed the push
+  gate twice more (75 ms, then 164 ms apart, at load 14-20), and passed
+  6 of 6 runs alone minutes later (15-30 ms), on the tree and on origin
+  alike. It passed inside the gate once two sessions held their builds.
+  So it is load, not code. Asking busy sessions for a 15-minute window
+  works; each said yes.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
@@ -5788,11 +5794,14 @@ covers both display backends and the Flatpak invocation.
   Kind: test.
   Source: review-fix-2026-11-04 DEMO-0095.
 
-- 📋 [DEMO-0356] **The gate's package cache is shared by every gate run with no lock, and the tarball is hashed after root build containers could write it.**
+- ✅ [DEMO-0356] **The gate's package cache is shared by every gate run with no lock, and the tarball is hashed after root build containers could write it.**
   review-tests 2026-11-04 (dimension 6, MEDIUM) and review-code
   2026-11-04 lane 5 (MEDIUM). Hash the tarball and PKGBUILD before any
   container mounts them, and give each gate run its own cache folder
   or a lock. Private records name the lines.
+  2026-11-05: 9dddea2. DEMO-0068 § 4.4 amended first. A build container
+  rewriting PKGBUILD fails the new gate and passed the old one; the cache
+  lock was seen held while a run's containers ran.
   **Layman:** Two checks running at once could trip over each other's package files.
   Kind: test.
   Source: review-fix-2026-11-04 DEMO-0095.
