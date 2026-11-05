@@ -8589,7 +8589,8 @@ loader.exec_module(d)
 calls = []
 def spy(argv, **kwargs):
     calls.append((argv, kwargs["timeout"]))
-    return types.SimpleNamespace(returncode=0, stderr="", stdout="")
+    # Bytes, as the real call returns: xdotool's output is decoded by the caller.
+    return types.SimpleNamespace(returncode=0, stderr=b"", stdout=b"")
 d.subprocess = types.SimpleNamespace(run=spy, TimeoutExpired=subprocess.TimeoutExpired)
 d.run_action("type " + "x" * 5000, {})
 (argv, timeout), = calls
