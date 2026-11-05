@@ -5824,11 +5824,17 @@ covers both display backends and the Flatpak invocation.
   fin_s76 takes 50.7 s; px.py's one() decodes every frame; two
   recordings run in series in one 18 s step; eight smaller ones.
   Time them again on a quiet machine before changing anything.
+  2026-11-05: the speed items DEMO-0359 carried join this one: the
+  no-output check makes a 1600x1000 card and a 12 s join to check a name;
+  the music step rebuilds its control film on each of four tag runs; the
+  piece-name link check joins a 30 s film to plant one link; the tag check
+  makes ten scenes where four make two pieces; the translation step's
+  stdout and status runs go one at a time. Time on a quiet machine first.
   **Layman:** Make the automatic checks faster.
   Kind: perf.
   Source: review-fix-2026-11-04 DEMO-0095.
 
-- 📋 [DEMO-0359] **Close the remaining LOW findings of the 2026-11-04 code and test reviews.**
+- ✅ [DEMO-0359] **Close the remaining LOW findings of the 2026-11-04 code and test reviews.**
   About 35 LOW and INFO items from review-code 2026-11-04 (all seven
   lanes) and about 30 LOW from review-tests 2026-11-04. Do not
   re-review; fold in directly from
@@ -5867,6 +5873,9 @@ covers both display backends and the Flatpak invocation.
   checked by exit status only, nothing showing the Ctrl+C lands during the
   500 clicks, three fixtures that time themselves from a guessed start
   (blank halfway, the tones, --settle), and the dimension-12 speed items.
+  2026-11-05: done. The last of review-tests' items landed in fe8db57,
+  43e572d, 34e4022 and 3d66973. The speed items moved to DEMO-0358. One
+  lane 1 item is left by judgement, its reason in the private record.
   **Layman:** Tidy up the many small issues the two reviews found.
   Kind: review-fix.
   Source: review-fix-2026-11-04 DEMO-0095.
