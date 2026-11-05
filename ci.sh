@@ -3013,6 +3013,13 @@ NOOPY
     expect_ok "sheet of a clip with fewer frames than 12"
     assert_eq "sheet with neither, five frames: all five" "png,1280,566" \
         "$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height -of csv=p=0 "$ft/out/s5.png")"
+    # A 2x4 grid holds five to eight, so the slots past the fifth must be empty:
+    # a repeated or padded frame would fill them. Measured 2026-11-05 with px
+    # mean: a filled slot 18.26, an empty one 0.
+    sheet_cut "$ft/out/s5.png" "320:240:0:283" "$ft/out/s5-5.png"
+    sheet_cut "$ft/out/s5.png" "320:240:320:283" "$ft/out/s5-6.png"
+    assert_cmp "sheet of five: the fifth slot holds a frame" "$(px mean "$ft/out/s5-5.png" 0)" ">" 8
+    assert_cmp "sheet of five: the sixth slot is empty" "$(px mean "$ft/out/s5-6.png" 0)" "<" 2
     echo "sheet with neither spread 12 frames evenly, or took all of a shorter video"
 
     # ---- join -------------------------------------------------------------
@@ -5421,6 +5428,16 @@ CLAIMPY
         "$(md5 "$ft/out/sm2.mp4")" "$(md5 "$ft/out/sm1.mp4")"
     run trim A.mp4 -o "$ft/out/sm3.mp4" --music quiet.wav
     expect_ok "trim A.mp4 --music alone has something to do"
+    # The exit status alone passed a trim that ignored --music and kept A's sound.
+    printf 'music quiet.wav\nclip A.mp4\n' > "$ft/sm4.txt"
+    run edit sm4.txt -o "$ft/out/sm4.mp4"
+    expect_ok "edit: the script trim --music stands for"
+    assert_eq "trim --music and its script: the same decoded sound" \
+        "$(md5 "$ft/out/sm4.mp4")" "$(md5 "$ft/out/sm3.mp4")"
+    run trim A.mp4 --to 6 -o "$ft/out/sm5.mp4"
+    expect_ok "control: trim A.mp4, all 6 s of it, with no music"
+    [ "$(md5 "$ft/out/sm5.mp4")" != "$(md5 "$ft/out/sm3.mp4")" ] \
+        || fail "trim --music sounds the same as trim with no music"
     echo "join's music options and --no-sound made the script's sound, and trim took --music alone"
     }
     fin_s51() {
