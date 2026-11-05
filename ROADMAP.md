@@ -986,8 +986,10 @@ simplest case, and a gate proves it still records.
   Kind: fix.
   Source: review-code-2026-10-30.
 
-- 📋 [DEMO-0298] **spec_lint reports a missing plain-language header on the older specs.**
+- ✅ [DEMO-0298] **spec_lint reports a missing plain-language header on the older specs.**
   The layout is newer than those specs. Either add the header or record that older specs are exempt.
+  2026-11-05: the header was added to all seven, not an exemption: the
+  summaries are what a non-programmer reader needs. spec_lint is clean.
   **Layman:** Older design documents lack a plain-language summary that newer ones have.
   Kind: doc-fix.
   Source: review-code-2026-10-30.
