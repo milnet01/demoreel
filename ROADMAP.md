@@ -887,23 +887,34 @@ simplest case, and a gate proves it still records.
   Kind: fix.
   Source: review-code-2026-10-30 DEMO-0094.
 
-- 📋 [DEMO-0288] **Find out whether Ctrl+C during a shot prints a traceback.**
+- ✅ [DEMO-0288] **Find out whether Ctrl+C during a shot prints a traceback.**
   Seen while fixing DEMO-0094, unmeasured: `shot` has no SIGINT handler.
+  2026-11-05: measured, no. A SIGINT to a shot's group at 0.2, 0.6, 1.2,
+  2 and 3 s (display starting, app starting, settling) gave exit 1, a
+  message and no traceback, and no display left. Each kept its folder,
+  which is DEMO-0295.
   **Layman:** Pressing Ctrl+C while taking a picture may show an ugly error.
   Kind: investigate.
   Source: review-code-2026-10-30 DEMO-0094.
 
-- 📋 [DEMO-0289] **A wrapper script whose first process exits ends the recording at once, though its child still draws.**
+- ✅ [DEMO-0289] **A wrapper script whose first process exits ends the recording at once, though its child still draws.**
   Seen while fixing DEMO-0094, not changed. The run reads the leader's
   exit as the app closing. Decide whether the group's life should count.
+  2026-11-05: settled by DEMO-0351, measured. `sh -c 'xclock & exit 0'`,
+  and the same with the child starting 1 s late, each recorded the whole
+  -d 2 (21 frames): an exit 0 that leaves a process in the app's group is
+  waited for. A wrapper that exits 3 still fails, as an app's failure
+  should.
   **Layman:** Recording an app through a launcher script can stop straight away.
   Kind: investigate.
   Source: review-code-2026-10-30 DEMO-0094.
 
-- 📋 [DEMO-0290] **--app-log with process substitution fails: /dev/fd resolves to a pipe name that does not exist.**
+- ✅ [DEMO-0290] **--app-log with process substitution fails: /dev/fd resolves to a pipe name that does not exist.**
   `--app-log >(cmd)` fails, because the path resolves to `pipe:[..]`.
   Older than DEMO-0094's path walk, and the walk keeps it. Found while
   closing the output-paths subject.
+  2026-11-05: 0e77df3. The walk ends at a pipe's /proc entry, and the
+  app log writes through the run's own descriptor.
   **Layman:** Sending an app's output straight into another command, rather than a file, does not work.
   Kind: fix.
   Source: review-fix DEMO-0094 2026-10-31.
@@ -945,6 +956,12 @@ simplest case, and a gate proves it still records.
 
 - 📋 [DEMO-0295] **Failed shots keep their folders in the state directory for good, in RAM.**
   A failed shot keeps its folder, now with its whole screen, so the caller can look. Nothing ever removes one. Removal needs a rule: a shot folder has no lock, so its age cannot prove no session is using it.
+  Waiting-on: user (should demoreel delete old failed-shot folders, and after how long? 2026-11-05)
+  Recommendation: yes. At each shot's start, remove failed-shot folders
+  older than 7 days, and have a running shot hold a lock in its own
+  folder so a live one is never taken. A week leaves time to look at a
+  failure; each folder holds one screen, and they live in RAM. README
+  then says how long a failed shot's folder is kept.
   **Layman:** A screenshot that fails leaves a small folder in memory, and nothing ever clears it.
   Kind: fix.
   Source: review-code-2026-10-30.
