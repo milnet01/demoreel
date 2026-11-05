@@ -9541,6 +9541,12 @@ step "a stop during the steps is not a failed step"
 # A terminal's Ctrl+C goes to the whole foreground group. xdotool in that group
 # dies with it, and a step's result now counts, so it must have a session of its
 # own, as the recorder and the display do.
+# A stand-in counts the clicks, so the step shows the stop landed among them.
+mkdir -p "$tmp/clickcount"
+# shellcheck disable=SC2016  # written into a script, which expands it
+printf '#!/bin/sh\ncase "$1" in click) echo >> "%s" ;; esac\nexec %s "$@"\n' \
+    "$tmp/clicks" "$(command -v xdotool)" > "$tmp/clickcount/xdotool"
+chmod +x "$tmp/clickcount/xdotool"
 python3 - "$tmp" <<'STEPSTOPPY'
 import os, signal, subprocess, sys, time
 tmp = sys.argv[1]
@@ -9549,7 +9555,8 @@ with open(err, "w") as errfile:
     run = subprocess.Popen(
         ["./demoreel", "record", "-n", os.environ['GATE_RUN'] + "stepstop", "-o", f"{tmp}/stepstop.mp4",
          "-d", "0", "-s", "320x240", *["-a", "click"] * 500, "--", "xclock"],
-        stdout=subprocess.PIPE, stderr=errfile, start_new_session=True)
+        stdout=subprocess.PIPE, stderr=errfile, start_new_session=True,
+        env=dict(os.environ, PATH=f"{tmp}/clickcount:{os.environ['PATH']}"))
     for _ in range(300):
         time.sleep(0.1)
         if "recording :" in open(err).read():
@@ -9564,7 +9571,13 @@ with open(err, "w") as errfile:
 if run.returncode != 0 or out.decode().strip() != f"{tmp}/stepstop.mp4":
     raise SystemExit(f"Ctrl+C in the steps failed the run (exit {run.returncode}):\n"
                      + open(err).read())
-print("Ctrl+C during a run of steps finishes the video")
+try:
+    clicks = len(open(f"{tmp}/clicks").read().splitlines())
+except FileNotFoundError:
+    clicks = 0
+if not 0 < clicks < 500:
+    raise SystemExit(f"the stop did not land during the steps: {clicks} of 500 clicks ran")
+print(f"Ctrl+C during a run of steps finishes the video, after {clicks} of 500 clicks")
 STEPSTOPPY
 
 step "a time in a step is one the clock can hold"
