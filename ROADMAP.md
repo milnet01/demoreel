@@ -1046,7 +1046,7 @@ simplest case, and a gate proves it still records.
   Kind: doc-fix.
   Source: review-fix-2026-11-03.
 
-- 📋 [DEMO-0360] **msgfmt -c warns that every catalog lacks four standard header fields.**
+- ✅ [DEMO-0360] **msgfmt -c warns that every catalog lacks four standard header fields.**
   Each po/*.po gives four warnings under msgfmt -c: PO-Revision-Date,
   Last-Translator, Language-Team and MIME-Version are missing (measured
   2026-11-05, the same on HEAD before DEMO-0296). The gate passes, as
@@ -1054,6 +1054,12 @@ simplest case, and a gate proves it still records.
   name people or dates: decide what a draft catalog says there before
   anything is written, and keep personal details out of this public
   repository. ./ci.sh --pot and --add-message may need to keep them.
+  2026-11-05: MIME-Version 1.0 added to the template (./ci.sh --pot
+  writes it) and to every catalog. msgfmt -c now gives three warnings
+  per catalog, not four. PO-Revision-Date, Last-Translator and
+  Language-Team stay absent by decision: they would name people or dates
+  in this public repository, and demoreel reads none of them.
+  --add-message already filters those warnings.
   **Layman:** The translation files are missing a few standard lines at the top that the translation tools expect; harmless, but noisy.
   Kind: chore.
   Source: found-2026-11-05 DEMO-0296.

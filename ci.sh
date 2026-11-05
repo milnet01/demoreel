@@ -119,7 +119,7 @@ def q(text):
     return f'"{text}"' if len(parts) < 2 else '""\n' + "\n".join(f'"{p}"' for p in parts)
 out = ["# demoreel's messages: the template every catalog starts from.",
        "# Made by ./ci.sh --pot from the source. Do not edit it by hand.",
-       'msgid ""', 'msgstr ""', '"Project-Id-Version: demoreel\\n"',
+       'msgid ""', 'msgstr ""', '"Project-Id-Version: demoreel\\n"', '"MIME-Version: 1.0\\n"',
        '"Content-Type: text/plain; charset=UTF-8\\n"',
        '"Content-Transfer-Encoding: 8bit\\n"', '"Language: \\n"',
        '"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\\n"',
@@ -377,7 +377,7 @@ ADDPY
     failing=()
     for catalog in "$scratch"/*.po; do
         code=$(basename "$catalog" .po)
-        # msgfmt warns that four header fields demoreel never reads are absent.
+        # msgfmt warns that three header fields demoreel never reads are absent.
         if ! out=$(msgfmt -c -o /dev/null "$catalog" 2>&1 \
                    && python3 -c "$CATALOG_PY" reads po/demoreel.pot "$catalog" 2>&1 \
                    && python3 -c "$CATALOG_PY" placeholders po/demoreel.pot "$catalog" 2>&1); then
