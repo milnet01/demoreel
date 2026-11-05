@@ -183,8 +183,10 @@ package is removed and § 5's removal check runs.
 files.** A build wave's containers build a format and stop. Every later
 container mounts the work folder read-only, since it installs other people's
 packages as root and the files it tests are the ones attached. Each fails if it
-can write there. The host hashes the files after the build wave, and fails
-unless they still match before attaching them.
+can write there. The host hashes the tarball and `PKGBUILD` as it makes them,
+before any container mounts the folder, since a build container runs as root
+and could rewrite them. It hashes the packages after the build wave. It fails
+unless every file still matches before attaching it.
 
 `ci.yml` gains a `packages` job that runs `./ci.sh --packages`, beside
 the existing `ci` job, so the gate's twenty-minute limit is not shared. Per

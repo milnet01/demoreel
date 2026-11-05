@@ -1256,11 +1256,24 @@ DEPSPY
             fi
         done
     }
+    # One gate's containers at a time use the cache: a second gate run, from
+    # another session, waits here rather than share the folders (DEMO-0356).
+    # The lock goes when this subshell ends.
+    mkdir -p "$cache"
+    local cache_lock
+    exec {cache_lock}>"$cache/.lock"
+    if ! flock -n "$cache_lock"; then
+        echo "note: another gate run is using $cache; waiting for it" >&2
+        flock -w 3600 "$cache_lock" || { echo "the package cache stayed in use for an hour" >&2; return 1; }
+    fi
+    # The hashes are kept where no container can reach them. The host made the
+    # tarball and the PKGBUILD, so they are hashed before any container, which
+    # runs as root and could rewrite them, mounts the folder (DEMO-0068 § 4.4).
+    built=$(cd "$work" && sha256sum "demoreel-$v.tar.gz" PKGBUILD)
     run_wave debian build fedora build arch build
-    # The hashes are taken here, and kept where no container can reach them.
+    # The packages, once the containers that build them have stopped.
     if [ "$failed" = 0 ]; then
-        built=$(cd "$work" && sha256sum "demoreel_$v-1_all.deb" "demoreel-$v-1.noarch.rpm" \
-            "demoreel-$v.tar.gz" PKGBUILD)
+        built+=$'\n'$(cd "$work" && sha256sum "demoreel_$v-1_all.deb" "demoreel-$v-1.noarch.rpm")
         run_wave debian test fedora test arch test
     fi
     [ "$failed" = 0 ] && run_wave ubuntu test opensuse test
