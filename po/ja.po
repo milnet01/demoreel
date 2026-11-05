@@ -1558,3 +1558,6 @@ msgstr "カードや字幕のテキスト: 準備完了"
 
 msgid "text on a card or a caption: NOT READY"
 msgstr "カードや字幕のテキスト: 準備できていません"
+
+msgid "frames made: {made}; frames planned: {planned}."
+msgstr "作成したフレーム数: {made}、予定のフレーム数: {planned}。"

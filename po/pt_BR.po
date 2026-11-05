@@ -1564,3 +1564,6 @@ msgstr "texto num cartão ou numa legenda: pronto"
 
 msgid "text on a card or a caption: NOT READY"
 msgstr "texto num cartão ou numa legenda: NÃO ESTÁ PRONTO"
+
+msgid "frames made: {made}; frames planned: {planned}."
+msgstr "quadros feitos: {made}; quadros previstos: {planned}."

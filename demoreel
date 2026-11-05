@@ -5939,8 +5939,12 @@ def piece_graph(piece, scenes, frames, firsts, width, height, rate):
             film = f"[f{number}]"
         else:
             # concat hands on a microsecond timebase, and xfade refuses two
-            # inputs whose timebases differ; fps puts the film's back.
+            # inputs whose timebases differ; fps puts the film's back. Every
+            # frame here is a whole frame at the film's rate, so its time is its
+            # number: concat counts a scene of one frame as lasting nothing, and
+            # put the next scene's first frame on top of it (DEMO-0291).
             chains.append(f"{film}{label}concat=n=2:v=1:a=0,"
+                          f"setpts=N/(({rate_text(rate)})*TB),"
                           f"fps={rate_text(rate)}[f{number}]")
             film = f"[f{number}]"
     return inputs, chains, film
@@ -5984,13 +5988,17 @@ def run_film_ffmpeg(cmd, seconds, cap, made_file, frames=None):
                "half this machine's, so it was stopped.",
                size=f"{cap / 1024 ** 3:.1f}"))
     unreadable = None if made.returncode else video_error(made_file)
-    short = (not made.returncode and not unreadable and frames is not None
-             and stored_frames(made_file) != frames)
-    if made.returncode or unreadable or short:
-        # A killed ffmpeg says nothing, and then the file is the witness.
+    stored = (stored_frames(made_file)
+              if not made.returncode and not unreadable and frames is not None else frames)
+    if made.returncode or unreadable or stored != frames:
+        # A killed ffmpeg says nothing, and then the file is the witness. A file
+        # that is whole but short has only its count to say (DEMO-0299).
+        miscounted = (tr("frames made: {made}; frames planned: {planned}.",
+                         made=stored if stored is not None else 0, planned=frames)
+                      if stored != frames else "")
         die(tr("ffmpeg could not make the film.") + "\n  "
             + (last_said(made.stderr, lines=4) or unreadable
-               or video_error(made_file) or ""))
+               or video_error(made_file) or miscounted))
 
 
 # A film carries no source's tags or chapters: ffmpeg copies the first input's by

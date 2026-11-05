@@ -1588,3 +1588,6 @@ msgstr "نص على بطاقة أو في تعليق: جاهز"
 
 msgid "text on a card or a caption: NOT READY"
 msgstr "نص على بطاقة أو في تعليق: غير جاهز"
+
+msgid "frames made: {made}; frames planned: {planned}."
+msgstr "الإطارات المصنوعة: {made}؛ الإطارات المخطط لها: {planned}."

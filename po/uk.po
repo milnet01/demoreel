@@ -1570,3 +1570,6 @@ msgstr "текст на картці або підпис: готово"
 
 msgid "text on a card or a caption: NOT READY"
 msgstr "текст на картці або підпис: НЕ ГОТОВО"
+
+msgid "frames made: {made}; frames planned: {planned}."
+msgstr "створено кадрів: {made}; заплановано кадрів: {planned}."

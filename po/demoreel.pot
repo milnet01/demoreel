@@ -953,6 +953,9 @@ msgstr ""
 msgid "ffmpeg used more than {size} GB of memory making the film, half this machine's, so it was stopped."
 msgstr ""
 
+msgid "frames made: {made}; frames planned: {planned}."
+msgstr ""
+
 msgid "ffmpeg could not make the film."
 msgstr ""
 

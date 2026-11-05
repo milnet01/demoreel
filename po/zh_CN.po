@@ -1558,3 +1558,6 @@ msgstr "卡片或字幕上的文字：就绪"
 
 msgid "text on a card or a caption: NOT READY"
 msgstr "卡片或字幕上的文字：未就绪"
+
+msgid "frames made: {made}; frames planned: {planned}."
+msgstr "已生成帧数：{made}；计划帧数：{planned}。"

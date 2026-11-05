@@ -1558,3 +1558,6 @@ msgstr "카드나 자막의 텍스트: 준비됨"
 
 msgid "text on a card or a caption: NOT READY"
 msgstr "카드나 자막의 텍스트: 준비 안 됨"
+
+msgid "frames made: {made}; frames planned: {planned}."
+msgstr "만든 프레임 수: {made}, 계획한 프레임 수: {planned}."

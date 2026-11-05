@@ -1570,3 +1570,6 @@ msgstr "tekst na karcie lub w napisie: gotowe"
 
 msgid "text on a card or a caption: NOT READY"
 msgstr "tekst na karcie lub w napisie: NIEGOTOWE"
+
+msgid "frames made: {made}; frames planned: {planned}."
+msgstr "utworzone klatki: {made}; planowane klatki: {planned}."

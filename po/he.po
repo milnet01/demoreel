@@ -1564,3 +1564,6 @@ msgstr "טקסט על כרטיס או בכיתוב: מוכן"
 
 msgid "text on a card or a caption: NOT READY"
 msgstr "טקסט על כרטיס או בכיתוב: לא מוכן"
+
+msgid "frames made: {made}; frames planned: {planned}."
+msgstr "פריימים שנוצרו: {made}; פריימים מתוכננים: {planned}."

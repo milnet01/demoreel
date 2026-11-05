@@ -1564,3 +1564,6 @@ msgstr "testo su un cartello o una didascalia: pronto"
 
 msgid "text on a card or a caption: NOT READY"
 msgstr "testo su un cartello o una didascalia: NON PRONTO"
+
+msgid "frames made: {made}; frames planned: {planned}."
+msgstr "fotogrammi creati: {made}; fotogrammi previsti: {planned}."

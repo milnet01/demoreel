@@ -6534,6 +6534,31 @@ CASES
     run edit s.txt -o "$ft/out/st.mp4"
     expect_refused "a background with no name" "record, log, grid, paper, felt"
     }
+    fin_s107() {
+    # DEMO-0291. concat counted a scene of one frame as lasting nothing, so the
+    # clip's first frame landed on it and the film came out a frame short.
+    # A card of 0.1 s at A's 10 a second is one frame.
+    printf 'card 0.1\nclip A.mp4\n' | ed_ok one-frame.mp4
+    assert_eq "a one-frame card, then a clip: every frame" 61 "$(v_frames "$ft/out/one-frame.mp4")"
+    # DEMO-0299. A film whole but short said "could not make the film" and an
+    # empty line; it names the counts. A stand-in reports one frame fewer.
+    cat > "$ft/short.py" <<'SHORTPY'
+import importlib.machinery, importlib.util, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", sys.argv[1])
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+real = d.stored_frames
+d.stored_frames = lambda path: real(path) - 1
+sys.argv = ["demoreel", *sys.argv[2:]]
+d.main()
+SHORTPY
+    rc=0
+    ( cd "$ft" && python3 short.py "$DR" card -d 1 -s 320x240 -r 10 -o "$ft/out/short.mp4" ) \
+        >"$fo" 2>"$fe" || rc=$?
+    expect_refused "a film one frame short" "frames made: 9; frames planned: 10."
+    assert_absent "a film one frame short leaves nothing at -o" "$ft/out/short.mp4"
+    echo "a one-frame scene keeps its frame, and a short film names its counts"
+    }
     fin_step "the checks' own comparisons refuse a measurement that came back empty or as words" fin_s0
     fin_step "trim keeps the frames from --from to --to, the last one included" fin_s1
     fin_step "every video a command writes is H.264, yuv420p, index first, with its clips' sound" fin_s2
@@ -6647,6 +6672,7 @@ CASES
     fin_step "a drawn background makes the same film twice" fin_s104
     fin_step "a drawn background ends where the plan says" fin_s105
     fin_step "edit refuses a background it has no name for" fin_s106
+    fin_step "a one-frame scene keeps its frame, and a short film says so" fin_s107
     fin_run
     [ "$fin_failed" -eq 0 ] || { echo "$fin_failed finishing check(s) failed" >&2; exit 1; }
 }

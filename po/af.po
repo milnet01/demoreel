@@ -1564,3 +1564,6 @@ msgstr "teks op 'n kaart of 'n onderskrif: gereed"
 
 msgid "text on a card or a caption: NOT READY"
 msgstr "teks op 'n kaart of 'n onderskrif: NIE GEREED NIE"
+
+msgid "frames made: {made}; frames planned: {planned}."
+msgstr "rame gemaak: {made}; rame beplan: {planned}."
