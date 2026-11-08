@@ -1073,7 +1073,7 @@ simplest case, and a gate proves it still records.
   Kind: chore.
   Source: found-2026-11-05 DEMO-0296.
 
-- 📋 [DEMO-0361] **GitHub CI fails when the Ubuntu mirror crawls: the install step times out before the gate starts.**
+- ✅ [DEMO-0361] **GitHub CI fails when the Ubuntu mirror crawls: the install step times out before the gate starts.**
   Run 42073616861 (5e4c27b, 2026-11-05): "Install the programs demoreel
   needs" hit its 15-minute limit while azure.archive.ubuntu.com served
   packages at tens of KB/s, with several "Ign:" retries. The local push
@@ -1083,6 +1083,17 @@ simplest case, and a gate proves it still records.
   ./ci.sh --ci-packages) would skip it on a warm cache. Measure first
   (local-gate.md § 9: one lever per change, before and after). Also
   consider a second mirror. The failed job was re-run.
+  2026-11-08, 59a7da6: the .deb files go to ~/apt-archives, cached by
+  actions/cache v6.1.0 on a key of the package list's hash and the ISO
+  week. Measured on GitHub: cold run 42508158811 found no cache,
+  fetched 73.3 MB in 4 s, saved 69.8 MiB; warm run 42509229010
+  (workflow_dispatch) restored it in 2 s and fetched "0 B/73.3 MB".
+  The install step took 22 s cold and 19 s warm: unpacking dominates
+  when the mirror is fast, so the gain is the stall, not the time.
+  Still on the mirror: apt-get update's 13 MB of indexes, and the
+  first run of each week fetches what Ubuntu changed. The stalls seen
+  were in the package downloads. A second mirror was not tried: one
+  lever per change.
   **Layman:** Sometimes GitHub's download server is so slow that the checks never get to run, and the run shows as failed though nothing is wrong.
   Kind: fix.
   Source: found-2026-11-05 DEMO-0358.
