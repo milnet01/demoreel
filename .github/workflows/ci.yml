@@ -21,8 +21,8 @@ jobs:
     # Pinned, not ubuntu-latest: ci.sh's parity leg runs the same gate locally
     # in this release, and ubuntu-latest moves to a new one without a commit.
     runs-on: ubuntu-24.04
-    # A hung job otherwise burns up to six hours. There is no cache, so every
-    # run is cold. The install and the gate each have their own limit below:
+    # A hung job otherwise burns up to six hours. The install and the gate
+    # each have their own limit below:
     # on 2026-10-01 a slow Ubuntu mirror took ten minutes of a shared fifteen,
     # and the gate was cancelled half-way with nothing wrong in it.
     timeout-minutes: 40
@@ -41,17 +41,50 @@ jobs:
           # to authenticate.
           persist-credentials: false
 
+      - name: Name the package cache
+        # The key holds the package list and the ISO week. A changed list
+        # starts a new cache; a new week saves a fresh copy, so packages
+        # Ubuntu updated are fetched once a week, not on every run.
+        id: debs
+        run: |
+          list=$(./ci.sh --ci-packages | sha256sum | cut -c1-16)
+          echo "list=$list" >> "$GITHUB_OUTPUT"
+          echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the downloaded packages
+        # A slow Ubuntu mirror stalled the downloads past the install's limit
+        # (DEMO-0361). With the .deb files restored, apt fetches only what
+        # changed since. apt checks each file against the signed package
+        # index, so a cached file that does not match is fetched again.
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/apt-archives
+          key: apt-debs-ubuntu-24.04-${{ steps.debs.outputs.list }}-${{ steps.debs.outputs.week }}
+          restore-keys: |
+            apt-debs-ubuntu-24.04-${{ steps.debs.outputs.list }}-
+            apt-debs-ubuntu-24.04-
+
       - name: Install the programs demoreel needs
         # The list is ci.sh's, like the ruff version below: its parity image is
         # built from the same list, so the two cannot drift apart. A mirror can
         # be slow or drop a connection, so downloads retry, and this step's
         # time is its own rather than the gate's.
+        #
+        # The .deb files go to ~/apt-archives, which the step above restores
+        # and the job saves at its end. autoclean drops the files Ubuntu no
+        # longer serves, so the cache does not grow week on week. The lock
+        # file is root's alone, and the cache's save could not read it.
         timeout-minutes: 15
         run: |
+          archives="$HOME/apt-archives"
+          sudo mkdir -p "$archives/partial"
           sudo apt-get -o Acquire::Retries=3 update
           # shellcheck disable=SC2046  # one word per package, deliberately
-          sudo apt-get -o Acquire::Retries=3 install --no-install-recommends -y \
-            $(./ci.sh --ci-packages)
+          sudo apt-get -o Acquire::Retries=3 -o Dir::Cache::Archives="$archives" \
+            install --no-install-recommends -y $(./ci.sh --ci-packages)
+          sudo apt-get -o Dir::Cache::Archives="$archives" autoclean
+          sudo rm -f "$archives/lock"
+          sudo chown -R "$(id -u):$(id -g)" "$archives"
 
       - name: Install ruff
         # The version is ci.sh's, read from ci.sh. A number written here as well
