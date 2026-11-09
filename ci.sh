@@ -11714,6 +11714,7 @@ ffmpeg -nostdin -loglevel error -f lavfi -i testsrc=s=320x200:r=30:d=2 \
 printf 'card 1\ntext "Hello"\nclip clip.mp4 to 1\n' > "$tr_out/film.txt"
 python3 - "$tr_out" "$statedir" "$aside_xdg" <<'MOVEPY'
 import json, os, pathlib, re, subprocess, sys
+from concurrent.futures import ThreadPoolExecutor
 here = pathlib.Path(sys.argv[1])
 script = str(here / "demoreel")
 plain = {k: v for k, v in os.environ.items() if k not in ("LC_ALL", "LC_MESSAGES")}
@@ -11783,7 +11784,7 @@ RUNS = [
     ["sheet", "clip.mp4", "--at", "9", "-o", "sheet2.png"],
     ["trim", "clip.mp4"],
 ]
-for argv in RUNS:
+def both_locales(argv):
     seen = []
     for env in (english, pseudo):
         r = run(argv, env)
@@ -11791,9 +11792,23 @@ for argv in RUNS:
         if argv[0] == "record" and r.returncode == 0:
             entry = json.loads(state.read_text())
             fields = (entry.get("output"), entry.get("result"))
-        seen.append((r.returncode, r.stdout, fields))
-        if env is pseudo:
-            whole(r.stderr, argv)
+        seen.append((r.returncode, r.stdout, fields, r.stderr))
+    return seen
+
+# Four at a time, as the languages below (DEMO-0358). The commands that start a
+# display share one -n and its state file, so they run one after another, as
+# one task; each command on files is a task of its own. The checks then read
+# the results in RUNS' order, so the report is the same as one at a time.
+on_display = [i for i, argv in enumerate(RUNS) if argv[0] in ("record", "shot", "stop")]
+with ThreadPoolExecutor(max_workers=4) as pool:
+    display = pool.submit(lambda: {i: both_locales(RUNS[i]) for i in on_display})
+    files = {i: pool.submit(both_locales, argv)
+             for i, argv in enumerate(RUNS) if i not in on_display}
+    results = {**display.result(), **{i: task.result() for i, task in files.items()}}
+for i, argv in enumerate(RUNS):
+    in_c, in_pseudo = results[i]
+    whole(in_pseudo[3], argv)
+    seen = [in_c[:3], in_pseudo[:3]]
     if seen[0] != seen[1]:
         bad.append(f"{argv}: C gave {seen[0]!r:.300}, the pseudo-locale {seen[1]!r:.300}")
 # stop prints a path too: a -d 0 run, stopped by name, in each language.
@@ -11828,8 +11843,9 @@ def help_entries(text):
 
 pages = [[], ["record"], ["shot"], ["check"], ["stop"], ["edit"], ["trim"], ["caption"],
          ["join"], ["card"], ["motion"], ["poster"], ["thumbnail"], ["sheet"]]
-for page in pages:
-    r = run([*page, "--help"], pseudo)
+with ThreadPoolExecutor(max_workers=4) as pool:
+    helps = list(pool.map(lambda page: run([*page, "--help"], pseudo), pages))
+for page, r in zip(pages, helps, strict=True):
     found = help_entries(r.stdout)
     if r.returncode or not found or "⟦usage: ⟧" not in r.stdout:
         bad.append(f"{page} --help under the pseudo-locale: status {r.returncode}, "
