@@ -11246,6 +11246,10 @@ step "shot takes one picture, prints its path, and leaves nothing behind"
 # directory of their own, so another session's shot cannot change the count.
 own_shot_state="$tmp/shotstate"
 mkdir -m 700 "$own_shot_state"
+# A failed shot's folder from 8 days ago, which this shot must remove (DEMO-0295).
+mkdir -m 700 "$own_shot_state/demoreel-$(id -u)"
+mkdir "$own_shot_state/demoreel-$(id -u)/shot-aged"
+touch -d '8 days ago' "$own_shot_state/demoreel-$(id -u)/shot-aged"
 shot=$(XDG_RUNTIME_DIR="$own_shot_state" ./demoreel shot -o "$tmp/clock.png" -s 321x241 -- xclock)
 [ "$shot" = "$tmp/clock.png" ] || { echo "shot printed '$shot', not its path" >&2; exit 1; }
 python3 - "$tmp/clock.png" <<'PY'
@@ -11261,8 +11265,39 @@ assert len(raw) == 321 * 241, len(raw)
 assert not dr.frame_is_flat(raw), "the picture is flat"
 PY
 [ -z "$(find "$own_shot_state" -mindepth 2 -maxdepth 2 -name "shot-*")" ] || {
-    echo "a successful shot left its folder behind" >&2; exit 1; }
+    echo "a successful shot left its folder behind, or a week-old one" >&2; exit 1; }
 echo "one 321x241 picture of the app, its path on stdout, nothing left over"
+
+step "a shot removes failed shots' folders over a week old, and nothing else"
+# DEMO-0295. Each folder below is one the sweep must leave, beside one it must
+# take. A running shot's lock is held here as a shot holds it.
+python3 - "$tmp/sweep-state" <<'PY'
+import fcntl, importlib.machinery, importlib.util, os, sys, time
+from pathlib import Path
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+dr = importlib.util.module_from_spec(
+    importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(dr)
+state = Path(sys.argv[1])
+state.mkdir(mode=0o700)
+aged = time.time() - 8 * 86400
+outside = state.parent / "sweep-outside"
+outside.mkdir()
+for name in ("shot-old", "shot-live", "shot-fresh", "other-old"):
+    (state / name).mkdir()
+(state / "shot-file").write_text("")
+(state / "shot-link").symlink_to(outside)
+dr.hold_shot_folder(state / "shot-live")
+for name in ("shot-old", "shot-live", "other-old", "shot-file", "outside"):
+    path = outside if name == "outside" else state / name
+    os.utime(path, (aged, aged))
+os.utime(state / "shot-link", (aged, aged), follow_symlinks=False)
+dr.remove_old_shots(state)
+left = sorted(p.name for p in state.iterdir())
+assert left == ["other-old", "shot-file", "shot-fresh", "shot-link", "shot-live"], left
+assert outside.is_dir(), "the sweep followed a link"
+PY
+echo "only an unlocked shot-* folder over a week old went"
 
 step "a flat picture is refused"
 if out=$(shot_aside -o "$tmp/flat.png" -s 320x240 --settle 1 \

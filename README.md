@@ -271,7 +271,7 @@ The whole screen is saved in the shot's own folder and checked there, since a
 plain rectangle may be what you asked for. Only a picture that passes is cut to
 any `--region` and written to `-o`. A failed run prints no path and writes
 nothing to `-o`, so a picture already there stays. Its folder keeps the whole
-screen.
+screen for a week. The first shot after that removes it.
 
 ## Finishing a recording
 

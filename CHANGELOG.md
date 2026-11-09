@@ -42,6 +42,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **A failed shot's folder is removed after a week** (DEMO-0295)
+  Each one used to stay in memory for good. The first shot after a week removes it, and never one a running shot holds.
 - **A one-frame scene, such as a very short card, no longer stops the film** (DEMO-0291)
   A scene one frame long followed by a clip failed with no reason given. The film now keeps every frame.
 - **A film that comes out short says how many frames it made and planned** (DEMO-0299)

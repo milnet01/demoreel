@@ -966,7 +966,7 @@ simplest case, and a gate proves it still records.
   Kind: fix.
   Source: review-fix DEMO-0094 2026-10-31.
 
-- 📋 [DEMO-0295] **Failed shots keep their folders in the state directory for good, in RAM.**
+- ✅ [DEMO-0295] **Failed shots keep their folders in the state directory for good, in RAM.**
   A failed shot keeps its folder, now with its whole screen, so the caller can look. Nothing ever removes one. Removal needs a rule: a shot folder has no lock, so its age cannot prove no session is using it.
   Decided by the user 2026-11-09: yes, after 7 days, as recommended below.
   Recommendation: yes. At each shot's start, remove failed-shot folders
@@ -974,6 +974,11 @@ simplest case, and a gate proves it still records.
   folder so a live one is never taken. A week leaves time to look at a
   failure; each folder holds one screen, and they live in RAM. README
   then says how long a failed shot's folder is kept.
+  Shipped 2026-11-09: each shot removes shot-* folders untouched for 7
+  days whose lock is free; a running shot locks its own folder
+  (hold_shot_folder, remove_old_shots). README § shot says a failed
+  shot's folder is kept a week. ci.sh checks both a real shot and the
+  sweep's refusals.
   **Layman:** A screenshot that fails leaves a small folder in memory, and nothing ever clears it.
   Kind: fix.
   Source: review-code-2026-10-30.
