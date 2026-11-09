@@ -25,6 +25,12 @@ cd "$(dirname "$0")"
 # 2026-10-31). Left set, every git call below would read that worktree's HEAD
 # and index, whichever commit this script was checked out at to be gated.
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
+# The push hook's timer names a file in ANTS_GATE_STEPS; step_end writes each
+# step's seconds and name there, so the hook's history knows our steps by name
+# (~/.claude/tools/ci-gate-time.py's header holds the format). Taken out of the
+# environment so a ci.sh this one starts writes nothing to it.
+gate_steps_file=${ANTS_GATE_STEPS:-}
+unset ANTS_GATE_STEPS
 
 # Several steps stand a root-owned file or link in for another user's. Run as
 # root those are the caller's own, so the guards let them through and a step
@@ -1750,7 +1756,10 @@ since() {  # start, in microseconds -> seconds since then, one decimal
     printf '%d.%d' $(( us / 1000000 )) $(( us / 100000 % 10 ))
 }
 step_end() {
-    [ -z "${step_t0:-}" ] || printf 'took %ss: %s\n' "$(since "$step_t0")" "$step_name"
+    [ -n "${step_t0:-}" ] || return 0
+    local took; took=$(since "$step_t0")
+    printf 'took %ss: %s\n' "$took" "$step_name"
+    [ -z "$gate_steps_file" ] || printf '%s\t%s\n' "$took" "$step_name" >>"$gate_steps_file"
     step_t0=
 }
 step() {
