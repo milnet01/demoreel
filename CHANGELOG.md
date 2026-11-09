@@ -118,8 +118,14 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   A `-d 30` run whose recorder stopped early could hand back a 2-second video and report success.
 - **An app that cannot start no longer leaves a private screen running** (DEMO-0094)
   A script with no `#!` line, for one, ended the run in a Python error with the screen left behind. It now gets the usual "could not run" message.
-- **An app closing just as a recording ends no longer fails the run** (DEMO-0282)
+- **An app closing just as a recording ends no longer fails the run** (part of DEMO-0282)
   Its window goes a moment before its process, so a check landing between the two reported a blank recording. demoreel now gives a blank display's app 2 seconds to finish closing.
+- **Ctrl+C while `shot` or `check` starts its display no longer leaves the display running** (DEMO-0352)
+  Ctrl+C was not held off while the display started, so it could stop demoreel before the display was in its care.
+- **A recording that cannot be finished at `-o` says where it is kept** (DEMO-0353)
+  When the file beside `-o` could not be made, the message did not name the file still holding the take. It now does.
+- **A placed text with spaces at its ends must fit in the frame** (DEMO-0354)
+  The fit check measured the letters and not the spaces, so a text pushed off the edge by its spaces was accepted and drew nothing.
 - **A long film no longer needs more memory for every scene** (DEMO-0252)
   `edit` now draws a film a few scenes at a time, so a 24-scene film of windowed clips at 1600x1000 peaks at about 1.1 GB rather than 4.6 GB, and fits on a smaller machine. The film comes out the same, each frame is still encoded once, and it takes about 15% more CPU time.
 - **An app that puts itself in the background, such as Kate on Ubuntu 24.04, is recorded** (DEMO-0351)
@@ -214,9 +220,6 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   A mistyped line such as `Type pass'word` printed the password in the error. It now prints the first word.
 - **The private display's password no longer appears on a command line, and the display is locked before it starts.** (DEMO-0094)
   Another local user could read the password from the process list while it was being set. Both backends now write it first and send it over stdin.
-
-### Security
-
 - **`SECURITY.md` now says what demoreel trusts** (DEMO-0094)
   Edit scripts, media files, fonts and file names are untrusted, a `--steps` file is as trusted as the command, and other processes of your own user are no boundary. It also lists every helper found through `PATH`, says what the gate really checks for each claim, and says only the latest release gets fixes.
 - **Checking a download now ties each file to the signed commit** (DEMO-0094)

@@ -1125,6 +1125,72 @@ simplest case, and a gate proves it still records.
   Kind: investigate.
   Source: user-request-2026-11-09.
 
+- 📋 [DEMO-0358] **Speed up the slowest gate checks the 2026-11-04 test review measured.**
+  review-tests 2026-11-04 dimension 12, from the 2026-10-31 log:
+  fin_s76 takes 50.7 s; px.py's one() decodes every frame; two
+  recordings run in series in one 18 s step; eight smaller ones.
+  Time them again on a quiet machine before changing anything.
+  2026-11-05: the speed items DEMO-0359 carried join this one: the
+  no-output check makes a 1600x1000 card and a 12 s join to check a name;
+  the music step rebuilds its control film on each of four tag runs; the
+  piece-name link check joins a 30 s film to plant one link; the tag check
+  makes ten scenes where four make two pieces; the translation step's
+  stdout and status runs go one at a time. Time on a quiet machine first.
+  2026-11-05, CI tuning (local-gate.md § 9, asked by claude-config):
+  ci_report over 30 days found the ci job's median rising from 5m12s to
+  9m35s over its newest five passing runs (40m budget); the gate step
+  itself took 9m18s in run 41979111121. That growth is this item's. The
+  two near-budget findings were single stalls: the apt install hit 15m
+  once (bc9031e, a slow mirror) and the packages step 25m once
+  (ddc3c3c); normally they take 16 s and about 2 min. The apt install is
+  16 s on a normal run. The cache lever is not settled here: see
+  DEMO-0361, filed when the next run failed on the same stall. The local
+  push gate's slowest steps
+  on 5e4c27b: the Ubuntu leg 519 s, the finishing checks 272 s, the
+  packages 239 s.
+  2026-11-09, quiet machine (load under 1, GPU 12%), full gate green
+  on 4065a15 in about 24 min: the Ubuntu leg 465 s, the finishing
+  checks side by side 172 s, the packages 163 s, translation stdout and
+  status 56 s, the -o move and retake 40 s. Slowest finishing checks:
+  a file name is a name 48 s, a tag is never a measurement 21 s, the
+  5.25 GB film 18 s, drawn backgrounds 17 s. The Ubuntu image is 18
+  days old: rebuild it (./ci.sh --parity-build) before timing anything.
+  User's conditions, 2026-11-09: every speed-up lands in both the local
+  gate and GitHub CI, which must stay in step; nothing flaky, so each
+  changed check passes several runs in a row before it lands; local
+  speed-ups respect the machine's resources (12 cores, 31 GB, shared
+  with other sessions), so cap how much runs at once.
+  2026-11-09, after rebuilding the Ubuntu image: the leg alone took 459 s.
+  Inside it the finishing batch keeps its four cores full (420 s of checks
+  in 113 s), so its wall time falls only with less work. 1097c73: the
+  translation stdout step runs its commands four at a time, 55.4 s to
+  36 s alone, eight passes in a row, same 157 messages. c7391dd (the
+  user chose it, 2026-11-09): with eight cores or more the leg starts
+  with the gate on the last four and the gate takes the rest; it is read
+  before the packages step, never beside it. Four full gates in a row
+  passed in 12.5, 13.0, 15.3 and 12.9 min, against about 24; the gate
+  waited 0.1 s at most for the leg. Not done: the -o retake step (40 s,
+  nine recordings sharing one -n and one folder count, left serial for
+  its flake risk) and the finishing checks' work cuts listed above.
+  2026-11-09: paused by the user's choice, to prepare 1.0.0. The full gate
+  now takes about 13 min, against about 24. Left: the -o retake step and
+  the finishing checks' work cuts above. Moved to the backlog.
+  **Layman:** Make the automatic checks faster.
+  Kind: perf.
+  Source: review-fix-2026-11-04 DEMO-0095.
+
+- 📋 [DEMO-0168] **Translate the manual page, once its English has settled near 1.0.**
+  Split from DEMO-0064, which translated the messages and --help. The
+  user chose on 2026-10-02 to translate the manual page later: until it
+  settles, every change would need ten more edits. Decide the layout
+  (man/<code>/demoreel.1, where a package installs it) and how the gate
+  checks each copy against the English.
+  Decided by the user 2026-11-09: after 1.0.0. The page still changes,
+  and each change would need edits in every language.
+  **Layman:** `man demoreel` will be translated too, but only near 1.0, so each change to the manual doesn't need ten more edits.
+  Kind: doc.
+  Source: user-decision-2026-10-02.
+
 ## Standing chores
 
 Recurring work with no finished state. It is checked on a schedule and never
@@ -5700,18 +5766,6 @@ covers both display backends and the Flatpak invocation.
   Kind: perf.
   Source: claude-config-request-2026-09-28.
 
-- 📋 [DEMO-0168] **Translate the manual page, once its English has settled near 1.0.**
-  Split from DEMO-0064, which translated the messages and --help. The
-  user chose on 2026-10-02 to translate the manual page later: until it
-  settles, every change would need ten more edits. Decide the layout
-  (man/<code>/demoreel.1, where a package installs it) and how the gate
-  checks each copy against the English.
-  Decided by the user 2026-11-09: after 1.0.0. The page still changes,
-  and each change would need edits in every language.
-  **Layman:** `man demoreel` will be translated too, but only near 1.0, so each change to the manual doesn't need ten more edits.
-  Kind: doc.
-  Source: user-decision-2026-10-02.
-
 - ✅ [DEMO-0194] **On Mageia, demoreel check gives Fedora's ffmpeg advice.**
   Measured 2026-10-13 in a clean mageia:10 container with the 0.9.0
   package installed: check exits 1 and says "sudo dnf swap ffmpeg-free
@@ -5972,57 +6026,6 @@ covers both display backends and the Flatpak invocation.
   stand-in shell before its exec, and the 1.5 s wait is gone.
   **Layman:** When one GPU check fails, it can leave a hidden screen running.
   Kind: test.
-  Source: review-fix-2026-11-04 DEMO-0095.
-
-- 🚧 [DEMO-0358] **Speed up the slowest gate checks the 2026-11-04 test review measured.**
-  review-tests 2026-11-04 dimension 12, from the 2026-10-31 log:
-  fin_s76 takes 50.7 s; px.py's one() decodes every frame; two
-  recordings run in series in one 18 s step; eight smaller ones.
-  Time them again on a quiet machine before changing anything.
-  2026-11-05: the speed items DEMO-0359 carried join this one: the
-  no-output check makes a 1600x1000 card and a 12 s join to check a name;
-  the music step rebuilds its control film on each of four tag runs; the
-  piece-name link check joins a 30 s film to plant one link; the tag check
-  makes ten scenes where four make two pieces; the translation step's
-  stdout and status runs go one at a time. Time on a quiet machine first.
-  2026-11-05, CI tuning (local-gate.md § 9, asked by claude-config):
-  ci_report over 30 days found the ci job's median rising from 5m12s to
-  9m35s over its newest five passing runs (40m budget); the gate step
-  itself took 9m18s in run 41979111121. That growth is this item's. The
-  two near-budget findings were single stalls: the apt install hit 15m
-  once (bc9031e, a slow mirror) and the packages step 25m once
-  (ddc3c3c); normally they take 16 s and about 2 min. The apt install is
-  16 s on a normal run. The cache lever is not settled here: see
-  DEMO-0361, filed when the next run failed on the same stall. The local
-  push gate's slowest steps
-  on 5e4c27b: the Ubuntu leg 519 s, the finishing checks 272 s, the
-  packages 239 s.
-  2026-11-09, quiet machine (load under 1, GPU 12%), full gate green
-  on 4065a15 in about 24 min: the Ubuntu leg 465 s, the finishing
-  checks side by side 172 s, the packages 163 s, translation stdout and
-  status 56 s, the -o move and retake 40 s. Slowest finishing checks:
-  a file name is a name 48 s, a tag is never a measurement 21 s, the
-  5.25 GB film 18 s, drawn backgrounds 17 s. The Ubuntu image is 18
-  days old: rebuild it (./ci.sh --parity-build) before timing anything.
-  User's conditions, 2026-11-09: every speed-up lands in both the local
-  gate and GitHub CI, which must stay in step; nothing flaky, so each
-  changed check passes several runs in a row before it lands; local
-  speed-ups respect the machine's resources (12 cores, 31 GB, shared
-  with other sessions), so cap how much runs at once.
-  2026-11-09, after rebuilding the Ubuntu image: the leg alone took 459 s.
-  Inside it the finishing batch keeps its four cores full (420 s of checks
-  in 113 s), so its wall time falls only with less work. 1097c73: the
-  translation stdout step runs its commands four at a time, 55.4 s to
-  36 s alone, eight passes in a row, same 157 messages. c7391dd (the
-  user chose it, 2026-11-09): with eight cores or more the leg starts
-  with the gate on the last four and the gate takes the rest; it is read
-  before the packages step, never beside it. Four full gates in a row
-  passed in 12.5, 13.0, 15.3 and 12.9 min, against about 24; the gate
-  waited 0.1 s at most for the leg. Not done: the -o retake step (40 s,
-  nine recordings sharing one -n and one folder count, left serial for
-  its flake risk) and the finishing checks' work cuts listed above.
-  **Layman:** Make the automatic checks faster.
-  Kind: perf.
   Source: review-fix-2026-11-04 DEMO-0095.
 
 - ✅ [DEMO-0359] **Close the remaining LOW findings of the 2026-11-04 code and test reviews.**
