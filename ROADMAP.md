@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=363 -->
+<!-- ants-roadmap-id-high-water: DEMO=364 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -1098,11 +1098,15 @@ simplest case, and a gate proves it still records.
   Kind: fix.
   Source: found-2026-11-05 DEMO-0358.
 
-- 📋 [DEMO-0363] **Find out what a Windows version of demoreel would take.**
-  The user asked for a Windows version (2026-11-09). Recording
-  rests on Linux-only parts: Xvfb, xdotool, flock, and cage with
-  Xwayland for --gpu. The finishing commands need only ffmpeg and
-  ffprobe, and fc-match for a font.
+- 💭 [DEMO-0363] **After 2.0.0, find out what today's features would take on Windows.**
+  The user, 2026-11-09, made precise: the Windows version they asked for
+  is the 2.0.0 editor (DEMO-0364). Today's features, recording and the
+  finishing commands, are investigated for Windows only after 2.0.0
+  ships. Recording rests on Linux-only parts: Xvfb, xdotool, flock, and
+  cage with Xwayland for --gpu. The finishing commands need only ffmpeg
+  and ffprobe, and fc-match for a font; if the editor draws with the
+  same engine, they may reach Windows with it.
+  Then:
   1. Check whether the finishing commands run on Windows as they are,
      and what stops them if not.
   2. Find whether Windows offers a private display an app can be
@@ -1112,7 +1116,7 @@ simplest case, and a gate proves it still records.
   3. A Windows recorder would be a third display backend, which
      CLAUDE.md rules out. Changing that rule is the user's decision,
      once step 2 has an answer.
-  **Layman:** See whether demoreel can run on Windows, and which parts of it could.
+  **Layman:** After the full editor ships, see whether demoreel's recording and editing commands can run on Windows.
   Kind: investigate.
   Source: user-request-2026-11-09.
 
@@ -6090,7 +6094,10 @@ is a front-end to the same recording engine, not a second one.
   - The toolkit. Tkinter is in the standard library and keeps the tool
     dependency-free, but looks dated and scales poorly. Qt is native on
     this machine's KDE desktop and is a large dependency. GTK 4 is native
-    on GNOME. Weigh looks, dependency weight and accessibility.
+    on GNOME. Weigh looks, dependency weight and accessibility. The
+      window must run on Windows as well as Linux: it grows into the 2.0.0
+      editor, which the user requires on both (2026-11-09). GTK 4's
+      Windows support is weak; Qt and Tkinter run on both.
   - Whether the window runs the `demoreel` command as a child process or
     imports the engine. A child process keeps one engine and needs a
     machine-readable progress feed; importing needs the engine to raise
@@ -6411,8 +6418,11 @@ Claude Code can use them before the editor's window exists.
   the editor to be as user friendly as possible. The spec also settles
   whether demoreel stays one standard-library file, what a saved project
   looks like, the timeline model (tracks, clips, positions), and whether
-  editing lives in the 1.1.0 window, the command line, or both. It orders
-  the items below.
+  editing lives in the 1.1.0 window, the command line, or both. It
+  orders
+    the items below. The editor runs on Windows as well as Linux (user,
+    2026-11-09), so the spec settles what that asks of the toolkit, the
+    engine and the packaging.
   **Layman:** Write down exactly how the editor will work, and have it checked, before writing any of it.
   Kind: doc.
   Source: user-request-2026-10-02.
@@ -7346,3 +7356,13 @@ first-time user's run, and a last performance pass.
   **Layman:** Before 2.0, check the whole editor is still easy and quick to use, now that everything is in it.
   Kind: ux.
   Source: user-request-2026-10-16.
+
+- 📋 [DEMO-0364] **Ship the editor on Windows as well as Linux.**
+  The user, 2026-11-09: the 2.0.0 editor, with its graphical
+  interface, must be on Windows as well. A Windows installer, the
+  editor's tests run on Windows, and a first-time user's run there.
+  The toolkit choice (DEMO-0086) and the editor spec (DEMO-0142) must
+  allow it. Recording stays Linux-only until after 2.0.0 (DEMO-0363).
+  **Layman:** The full video editor installs and works on Windows too, not only on Linux.
+  Kind: package.
+  Source: user-decision-2026-11-09.
