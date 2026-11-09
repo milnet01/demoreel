@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=361 -->
+<!-- ants-roadmap-id-high-water: DEMO=362 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -4396,15 +4396,34 @@ path, and scripts read it.
   Kind: enhancement.
   Source: DEMO-0108-finding-2026-09-28.
 
-- 📋 [DEMO-0096] **Get each draft translation confirmed by a native speaker.**
-  Decided 2026-09-25: Claude drafts each translation and it stays marked as
-  a draft until a native speaker confirms it. How a confirmation works is
-  0.4.0's to write down. This item is the chasing, which has no end date,
-  so it does not hold any release. Record each language as it is
-  confirmed.
-  **Layman:** Keep asking fluent speakers to check the machine-drafted translations until every one is confirmed.
+- 📋 [DEMO-0096] **Thoroughly review each draft translation, since no native speakers are available.**
+  Changed by the user 2026-11-09: no native speakers are available, so
+  each draft is thoroughly reviewed instead. It replaces the 2026-09-25
+  decision (a draft until a native speaker confirms it). A native speaker
+  can still confirm a language later; confirmed stays theirs alone.
+
+  Thorough, per language, in this order:
+  1. `~/.claude/tools/translate-review --lang <Language> po/<code>.po`
+     (under cc-job). It checks placeholders, back-translates each line,
+     judges it against the English, and proposes fixes on free models.
+     Give it `--rules` with the CLAUDE.md translation traps (a command
+     line, flag, path or stdout is never translated) and
+     `docs/translation-review-notes.md`'s open questions.
+  2. Paste its chrome.txt into Gemini, or DeepSeek for zh_CN, zh_TW, ja
+     and ko, and merge the reply with `--second-opinion`.
+  3. Read report.md. Apply each accepted fix to po/<code>.po by hand, then run
+     `./ci.sh`, whose catalog checks include `msgfmt -c`. The tool never
+     writes po/ itself.
+  4. Answer the language's open questions in
+     docs/translation-review-notes.md, then delete its section.
+  5. Mark the language reviewed (DEMO-0362).
+
+  Done when every catalog in po/ is reviewed. Record each language as it
+  finishes. It does not hold any release.
+  **Layman:** Check every machine-drafted translation thoroughly with AI tools, since no fluent speakers are available.
   Kind: chore.
-  Source: user-request-2026-09-25.
+  Source: user-request-2026-09-25, changed user-request-2026-11-09.
+  Blocked-by: DEMO-0362.
 
 - ✅ [DEMO-0025] **Action text still sits in demoreel's own command line for the whole run.**
   Found while closing DEMO-0018, by measuring the fix rather than assuming
@@ -4611,6 +4630,20 @@ path, and scripts read it.
   **Layman:** Translators get a short note saying what goes into each blank, so the grammar around it comes out right.
   Kind: doc.
   Source: DEMO-0064-finding-2026-10-02.
+
+- 📋 [DEMO-0362] **A third translation state, reviewed, between draft and confirmed.**
+  Decided by the user 2026-11-09: a language that has been through
+  DEMO-0096's thorough review is labelled reviewed, not draft and not
+  confirmed. An AI pass never confirms a translation (user ruling
+  2026-11-05), so confirmed stays for a native speaker.
+
+  Touches the X-Demoreel-Review header values, the closing --help line
+  (a reviewed language says it was checked by machine, not yet by a
+  native speaker), README § Languages, CONTRIBUTING.md's confirmation
+  steps, the gate's catalog checks, and docs/specs/DEMO-0060 § 4.9.
+  **Layman:** A language that has been checked thoroughly by machine gets its own label, so users can tell it apart from a raw draft.
+  Kind: feature.
+  Source: user-request-2026-11-09.
 
 ## 0.7.0 — Sound, when you ask for it
 
