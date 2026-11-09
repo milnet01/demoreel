@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=362 -->
+<!-- ants-roadmap-id-high-water: DEMO=363 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -968,7 +968,7 @@ simplest case, and a gate proves it still records.
 
 - 📋 [DEMO-0295] **Failed shots keep their folders in the state directory for good, in RAM.**
   A failed shot keeps its folder, now with its whole screen, so the caller can look. Nothing ever removes one. Removal needs a rule: a shot folder has no lock, so its age cannot prove no session is using it.
-  Waiting-on: user (should demoreel delete old failed-shot folders, and after how long? 2026-11-05)
+  Decided by the user 2026-11-09: yes, after 7 days, as recommended below.
   Recommendation: yes. At each shot's start, remove failed-shot folders
   older than 7 days, and have a running shot hold a lock in its own
   folder so a live one is never taken. A week leaves time to look at a
@@ -1097,6 +1097,24 @@ simplest case, and a gate proves it still records.
   **Layman:** Sometimes GitHub's download server is so slow that the checks never get to run, and the run shows as failed though nothing is wrong.
   Kind: fix.
   Source: found-2026-11-05 DEMO-0358.
+
+- 📋 [DEMO-0363] **Find out what a Windows version of demoreel would take.**
+  The user asked for a Windows version (2026-11-09). Recording
+  rests on Linux-only parts: Xvfb, xdotool, flock, and cage with
+  Xwayland for --gpu. The finishing commands need only ffmpeg and
+  ffprobe, and fc-match for a font.
+  1. Check whether the finishing commands run on Windows as they are,
+     and what stops them if not.
+  2. Find whether Windows offers a private display an app can be
+     recorded and driven on, with no prompt, keeping the real desktop
+     out of frame. Without one, Windows recording cannot meet
+     CLAUDE.md's non-negotiable requirements.
+  3. A Windows recorder would be a third display backend, which
+     CLAUDE.md rules out. Changing that rule is the user's decision,
+     once step 2 has an answer.
+  **Layman:** See whether demoreel can run on Windows, and which parts of it could.
+  Kind: investigate.
+  Source: user-request-2026-11-09.
 
 ## Standing chores
 
@@ -5679,11 +5697,8 @@ covers both display backends and the Flatpak invocation.
   settles, every change would need ten more edits. Decide the layout
   (man/<code>/demoreel.1, where a package installs it) and how the gate
   checks each copy against the English.
-  Waiting-on: user (Translate the manual page before 1.0.0, as this
-  item's 2026-10-02 decision says, or after it, as the 2026-10-10
-  decision "other translations after 1.0.0" reads? Recommended: after
-  1.0.0. The page still changes, 2026-11-04 included, and each change
-  would need edits in every language, 2026-11-04).
+  Decided by the user 2026-11-09: after 1.0.0. The page still changes,
+  and each change would need edits in every language.
   **Layman:** `man demoreel` will be translated too, but only near 1.0, so each change to the manual doesn't need ten more edits.
   Kind: doc.
   Source: user-decision-2026-10-02.
@@ -5973,6 +5988,18 @@ covers both display backends and the Flatpak invocation.
   push gate's slowest steps
   on 5e4c27b: the Ubuntu leg 519 s, the finishing checks 272 s, the
   packages 239 s.
+  2026-11-09, quiet machine (load under 1, GPU 12%), full gate green
+  on 4065a15 in about 24 min: the Ubuntu leg 465 s, the finishing
+  checks side by side 172 s, the packages 163 s, translation stdout and
+  status 56 s, the -o move and retake 40 s. Slowest finishing checks:
+  a file name is a name 48 s, a tag is never a measurement 21 s, the
+  5.25 GB film 18 s, drawn backgrounds 17 s. The Ubuntu image is 18
+  days old: rebuild it (./ci.sh --parity-build) before timing anything.
+  User's conditions, 2026-11-09: every speed-up lands in both the local
+  gate and GitHub CI, which must stay in step; nothing flaky, so each
+  changed check passes several runs in a row before it lands; local
+  speed-ups respect the machine's resources (12 cores, 31 GB, shared
+  with other sessions), so cap how much runs at once.
   **Layman:** Make the automatic checks faster.
   Kind: perf.
   Source: review-fix-2026-11-04 DEMO-0095.
