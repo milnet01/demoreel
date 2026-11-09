@@ -5965,7 +5965,7 @@ covers both display backends and the Flatpak invocation.
   Kind: test.
   Source: review-fix-2026-11-04 DEMO-0095.
 
-- 📋 [DEMO-0358] **Speed up the slowest gate checks the 2026-11-04 test review measured.**
+- 🚧 [DEMO-0358] **Speed up the slowest gate checks the 2026-11-04 test review measured.**
   review-tests 2026-11-04 dimension 12, from the 2026-10-31 log:
   fin_s76 takes 50.7 s; px.py's one() decodes every frame; two
   recordings run in series in one 18 s step; eight smaller ones.
@@ -6000,6 +6000,18 @@ covers both display backends and the Flatpak invocation.
   changed check passes several runs in a row before it lands; local
   speed-ups respect the machine's resources (12 cores, 31 GB, shared
   with other sessions), so cap how much runs at once.
+  2026-11-09, after rebuilding the Ubuntu image: the leg alone took 459 s.
+  Inside it the finishing batch keeps its four cores full (420 s of checks
+  in 113 s), so its wall time falls only with less work. 1097c73: the
+  translation stdout step runs its commands four at a time, 55.4 s to
+  36 s alone, eight passes in a row, same 157 messages. c7391dd (the
+  user chose it, 2026-11-09): with eight cores or more the leg starts
+  with the gate on the last four and the gate takes the rest; it is read
+  before the packages step, never beside it. Four full gates in a row
+  passed in 12.5, 13.0, 15.3 and 12.9 min, against about 24; the gate
+  waited 0.1 s at most for the leg. Not done: the -o retake step (40 s,
+  nine recordings sharing one -n and one folder count, left serial for
+  its flake risk) and the finishing checks' work cuts listed above.
   **Layman:** Make the automatic checks faster.
   Kind: perf.
   Source: review-fix-2026-11-04 DEMO-0095.
