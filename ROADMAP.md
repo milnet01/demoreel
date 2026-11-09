@@ -6280,6 +6280,26 @@ is a front-end to the same recording engine, not a second one.
   Progress (2026-10-15): the user chose to post the measurements on
   wf-recorder pull request 353 rather than open a separate one. Posted:
   https://github.com/ammen99/wf-recorder/pull/353#issuecomment-6186368958
+  2026-11-09, measured with the gate's flash-and-beep step on --gpu, six
+  interleaved rounds per case (raw:
+  /mnt/Emulators/claude-scratch/demo-0201/results-2026-11-09.txt).
+  clock-before-connect.diff is the whole fix; the 15-20 ms figure came
+  from light load. Light load (2-4): patched mean +1 ms, Xvfb -25 ms.
+  Load 3-11 on four cores: patched +7 ms (-3 to 18), the clock read
+  after connecting +49 ms (23 to 89), Xvfb +3 ms. pa_simple_new took
+  17-21 ms light and 22-50 ms loaded, and the old read adds it to the
+  offset. Ruled out: dating sample zero at the first read (+21, +33 ms),
+  wf-recorder's PipeWire backend (+18, +27 ms, up to 49). The video path
+  is not the cause. Not yet tested: the PipeWire server itself under
+  load. Left: send the patch and the table upstream (the user's call),
+  and correct start_wf_recorder's docstring and DEMO-0106 section 13,
+  which still say the patch saves only 15-20 ms.
+  2026-11-09: the user chose our own pull request. Opened
+  https://github.com/ammen99/wf-recorder/pull/358 from the fork
+  milnet01/wf-recorder, branch fix-audio-clock-before-connect (3ca42e6,
+  the patch alone on master c5de474; it compiles there). Close this item
+  once a wf-recorder release carries the fix, and give the gate's sync
+  step a --gpu run then.
   **Layman:** On a 3D app recorded with its sound, the sound comes a little after the picture, enough to notice on a click or a footstep.
   Kind: fix.
   Source: in-session-2026-10-14 DEMO-0196.
