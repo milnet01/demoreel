@@ -1582,9 +1582,10 @@ still cover the ordinary backend alone. And a green step is not the same as a
 good recording: the check can tell a flat colour from a picture, nothing more,
 so a change to either path is still worth *looking* at.
 
-**Its last step runs the whole gate again on GitHub's Ubuntu**, in a local
+**It also runs the whole gate again on GitHub's Ubuntu**, in a local
 `ubuntu:24.04` container with that release's packages, as a normal user on four
-cores. A pass on this machine's newer ffmpeg once failed on GitHub's older one,
+cores. On a machine with eight cores or more, that copy runs beside the other
+checks on four cores of its own; with fewer, it is the last step. A pass on this machine's newer ffmpeg once failed on GitHub's older one,
 and this step is what catches that before a push. Build its image once with
 `./ci.sh --parity-build` (it needs `podman`). Without the image the gate still
 runs, and its last line says the Ubuntu step was skipped rather than that all

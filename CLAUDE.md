@@ -53,9 +53,11 @@ with `msgfmt -c` and the gate's catalog checks, and names the ones that fail.
 It writes `po/` only when all pass. The file's shape is in the comment above
 it in `ci.sh`.
 
-The full gate ends by running itself again in a local `ubuntu:24.04` image
+The full gate also runs itself again in a local `ubuntu:24.04` image
 built from the same package list the workflow installs (`./ci.sh
 --ci-packages`), so a difference in GitHub's older packages fails here first.
+With eight cores or more that copy starts with the gate, on the last four,
+and is read before the packages step, never beside it (DEMO-0282).
 `./ci.sh --parity-build` builds the image; a changed package list or ruff
 version changes its tag and asks for a rebuild. Without it the Ubuntu step is
 skipped. That is not a pass. A part of a check that could not run on this

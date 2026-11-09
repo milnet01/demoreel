@@ -7510,9 +7510,53 @@ cleanup() {
     # An interrupted Ubuntu leg leaves its container running. Stopped by name:
     # the container outlives the podman client.
     [ -z "${parity_name:-}" ] || podman rm -f -t 0 "$parity_name" >/dev/null 2>&1 || true
+    [ -z "${parity_pid:-}" ] || kill -- "-$parity_pid" 2>/dev/null || true
     rm -rf "$tmp"
 }
 trap cleanup EXIT
+
+# The Ubuntu leg: this whole gate again, in $PARITY_IMAGE, on four cores, as on
+# GitHub's runner: x264 sizes its threads from the cores it may use, and that is
+# what differed last time. It runs the files as they are here -- tracked and new,
+# not ignored -- which is what the checks here run. PID 1 in it is bash, which
+# ignores TERM, so podman would wait on it for as long as it runs (measured): -k
+# stops the client, and cleanup removes the container, which outlives it. A
+# tracked file deleted from this tree has nothing to send.
+parity_run() {  # the cores it runs on; writes parity.log and parity.rc
+    local rc=0
+    # shellcheck disable=SC2016  # the container's bash expands it
+    git ls-files -coz --exclude-standard \
+        | while IFS= read -r -d '' name; do
+              if [ -e "$name" ] || [ -L "$name" ]; then printf '%s\0' "$name"; fi
+          done \
+        | tar --null -T - -cf - \
+        | timeout -k 30 900 podman run --rm -i --name "$parity_name" \
+            -e DEMOREEL_PARITY_INSIDE=1 -e "DEMOREEL_PARITY_CPUS=$1" "$PARITY_IMAGE" \
+            bash -c 'mkdir w && tar -xf - -C w && cd w && taskset -c "$DEMOREEL_PARITY_CPUS" ./ci.sh' \
+        > "$tmp/parity.log" 2>&1 || rc=$?
+    echo "$rc" > "$tmp/parity.rc"
+}
+# With eight cores or more, it starts now, on the last four, and this gate moves
+# to the others, so neither slows the other's timed checks (DEMO-0358). It is a
+# disowned job of its own group: fin_run's bare wait and its count of jobs never
+# see it, and cleanup stops it by group and by container. Its step reads it
+# before the packages step, never beside it: their containers' load failed its
+# timed checks on three runs, and the same tree then passed it alone (DEMO-0282).
+# With fewer cores it runs in its step, after the packages, on cores 0-3.
+parity_name=''; parity_pid=''; parity_early=''
+cores=$(nproc)
+if [ -z "${GITHUB_ACTIONS:-}" ] && [ -z "${DEMOREEL_PARITY_INSIDE:-}" ] \
+        && command -v podman >/dev/null && podman image exists "$PARITY_IMAGE" \
+        && [ "$cores" -ge 8 ] && [ "$cores" = "$(nproc --all)" ]; then
+    parity_name=demoreel-parity-$$
+    parity_early=$SECONDS
+    set -m
+    parity_run "$((cores - 4))-$((cores - 1))" </dev/null &
+    parity_pid=$!
+    set +m
+    disown "$parity_pid"
+    taskset -cp "0-$((cores - 5))" $$ >/dev/null
+fi
 
 step "the last line counts what skipped, in words that read"
 for count in "1:1 part" "2:2 parts"; do
@@ -12206,23 +12250,11 @@ echo "no workflow names OBS"
 
 chain_checks
 
-step "the packages, on every distro they target"
-# Slow, so near the end. GitHub runs it in its own job, and the Ubuntu leg below
-# is a copy of this run, so neither runs it again.
-if [ -n "${GITHUB_ACTIONS:-}" ] || [ -n "${DEMOREEL_PARITY_INSIDE:-}" ]; then
-    echo "not applicable: the packages job runs it on GitHub"
-elif ! command -v podman >/dev/null; then
-    skipped "podman is not installed, so the packages and the Ubuntu leg did not run"
-    no_podman=1
-else
-    packages_check ''
-fi
-
+parity_step() {
 step "the same gate on GitHub's Ubuntu"
-# Last, because it is the slow one and everything above is cheaper to fail on.
-# After the packages step, not beside it: their containers' load failed this
-# leg's timed checks on three runs, and the same tree then passed it alone
-# (DEMO-0282).
+# Its run is parity_run, started with the gate where the cores allow. Read last
+# where they do not, because it is the slow one and everything above is cheaper
+# to fail on.
 if [ -n "${GITHUB_ACTIONS:-}" ] || [ -n "${DEMOREEL_PARITY_INSIDE:-}" ]; then
     echo "not applicable: this run already is on that Ubuntu"
 elif [ -n "${no_podman:-}" ]; then
@@ -12240,24 +12272,16 @@ else
         echo "note: the image is $age_days days old, and GitHub's packages may have moved on."
         echo "      rebuild it: ./ci.sh --parity-build"
     fi
-    # It runs the files as they are here -- tracked and new, not ignored --
-    # which is what the checks above just ran. Four cores, as on GitHub's
-    # runner: x264 sizes its threads from the cores it may use, and that is
-    # what differed last time.
-    # PID 1 here is bash, which ignores TERM, so podman would wait on it for as long
-    # as it runs (measured): -k stops the client, and cleanup removes the container,
-    # which outlives it. A tracked file deleted from this tree has nothing to send.
-    parity_name=demoreel-parity-$$
-    rc=0
-    git ls-files -coz --exclude-standard \
-        | while IFS= read -r -d '' name; do
-              if [ -e "$name" ] || [ -L "$name" ]; then printf '%s\0' "$name"; fi
-          done \
-        | tar --null -T - -cf - \
-        | timeout -k 30 900 podman run --rm -i --name "$parity_name" \
-            -e DEMOREEL_PARITY_INSIDE=1 "$PARITY_IMAGE" \
-            bash -c 'mkdir w && tar -xf - -C w && cd w && taskset -c 0-3 ./ci.sh' \
-        > "$tmp/parity.log" 2>&1 || rc=$?
+    if [ -n "$parity_early" ]; then
+        # Disowned, so `wait` cannot have it; its file says it has ended.
+        while [ ! -s "$tmp/parity.rc" ] && kill -0 "$parity_pid" 2>/dev/null; do sleep 1; done
+        echo "it ran beside the checks above, and ended $((SECONDS - parity_early)) s after the gate began"
+    else
+        parity_name=demoreel-parity-$$
+        parity_run 0-3
+    fi
+    parity_pid=''
+    rc=$(cat "$tmp/parity.rc" 2>/dev/null || echo "none: it ended without saying")
     [ "$rc" = 0 ] || {
         echo "the gate failed on $PARITY_BASE (exit $rc); its output:" >&2
         cat "$tmp/parity.log" >&2
@@ -12267,10 +12291,28 @@ else
         echo "the Ubuntu run exited 0 without finishing; its output:" >&2
         cat "$tmp/parity.log" >&2
         exit 1; }
-    echo "every check above also passed on $PARITY_BASE"
+    echo "every check in this gate also passed on $PARITY_BASE"
     # Its own skips are not counted here: they are the --gpu, Flatpak and sound
-    # parts the container lacks, which this machine ran above. The leg is for
+    # parts the container lacks, which this machine ran. The leg is for
     # Ubuntu's package versions.
 fi
+}
+
+# Before the packages, never beside them (see parity_run).
+[ -z "$parity_early" ] || parity_step
+
+step "the packages, on every distro they target"
+# Slow, so near the end. GitHub runs it in its own job, and the Ubuntu leg
+# is a copy of this run, so neither runs it again.
+if [ -n "${GITHUB_ACTIONS:-}" ] || [ -n "${DEMOREEL_PARITY_INSIDE:-}" ]; then
+    echo "not applicable: the packages job runs it on GitHub"
+elif ! command -v podman >/dev/null; then
+    skipped "podman is not installed, so the packages and the Ubuntu leg did not run"
+    no_podman=1
+else
+    packages_check ''
+fi
+
+[ -n "$parity_early" ] || parity_step
 
 gate_finish 'all checks passed'
