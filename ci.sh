@@ -10015,15 +10015,20 @@ for early in recorder display; do
 done
 echo "a run cut short by its recorder or its display fails, and prints no path"
 
-step "an app's children go with it, after it has exited too"
+step "an app's children go with it, after it has exited too, and out of its group"
 # DEMO-0094. The app's process group was skipped once its leader had exited, so
 # a wrapper script's children outlived the run, and those ignoring SIGTERM got
 # no SIGKILL. A survivor's sound moves to the real output once the sink goes,
 # against DEMO-0106 INV-9. Measured: both sleeps here were still running.
+# DEMO-0365. A child in a session of its own is in no group of the app's: GIMP's
+# Flatpak starts its image loaders so, and they outlived every run. The two
+# setsid sleeps stand in for them; both were still running.
 cat >"$tmp/wrapper.sh" <<'WRAP'
 #!/bin/sh
 sleep 7771 &
 (trap '' TERM; exec sleep 7772) &
+setsid sleep 7773 &
+setsid sh -c "trap '' TERM; exec sleep 7774" &
 xclock &
 sleep 2
 exit 0
@@ -10032,7 +10037,7 @@ chmod +x "$tmp/wrapper.sh"
 # The stray sleeps of a run that failed this step, found by this step's group.
 wrapper_left() {
     local p
-    for p in $(pgrep -u "$(id -u)" -f '^sleep 777[12]$' || true); do
+    for p in $(pgrep -u "$(id -u)" -f '^sleep 777[1-4]$' || true); do
         if grep -qz "^XAUTHORITY=.*/${GATE_RUN}wrapper\\." "/proc/$p/environ" 2>/dev/null; then
             echo "$p"
         fi

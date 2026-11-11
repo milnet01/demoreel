@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=364 -->
+<!-- ants-roadmap-id-high-water: DEMO=365 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -6074,6 +6074,24 @@ covers both display backends and the Flatpak invocation.
   Kind: review-fix.
   Source: review-fix-2026-11-04 DEMO-0095.
 
+- ✅ [DEMO-0365] **A run leaves behind any process the app started in a session of its own.**
+  Measured 2026-11-11: one `record -- flatpak run org.gimp.GIMP` left
+  two glycin loaders (`bwrap ... glycin-image-rs`, `glycin-svg`) running
+  over a minute after demoreel exited, each in its own session and
+  Flatpak scope, so ending the app's process group missed them.
+  `flatpak ps` listed both as org.gimp.GIMP, which made the gate skip
+  its Flatpak step as "already running" and sessions report GIMP open.
+  They kept the run's XAUTHORITY and PULSE_SINK, which no other process
+  has. Fix: at teardown, end the caller's processes carrying either.
+  2026-11-11: end_strays ends the caller's processes still carrying the
+  run's XAUTHORITY or sink name, after the display ends, in record and
+  shot. ci.sh's children step gained two setsid sleeps, one ignoring
+  SIGTERM; both outlived the run before the fix. A real GIMP Flatpak
+  recording left no loaders after it.
+  **Layman:** Recording GIMP's Flatpak left two of its image-loading helpers running after demoreel finished, so GIMP looked open when it was not.
+  Kind: fix.
+  Source: user-report-2026-11-11.
+
 ## 1.1.0 — A window for people who want one
 
 demoreel can be used from the command line or from a graphical window. Requested
@@ -6270,7 +6288,7 @@ is a front-end to the same recording engine, not a second one.
   gate's sync step a --gpu run.
   Open (2026-10-14), waiting on the user: post the drafted comment on
   wf-recorder pull request 353
-  (/mnt/Emulators/claude-scratch/demo-0201/pr353-comment.md), or open a
+  (/mnt/Emulators/.claude/Scratchpad/demoreel/demo-0201/pr353-comment.md), or open a
   one-line pull request of our own instead. Recommended: the comment.
   Nothing is posted without the user's word. The user asked whether to
   build our own wf-recorder; recommended against (a compiled fork per
@@ -6282,7 +6300,7 @@ is a front-end to the same recording engine, not a second one.
   https://github.com/ammen99/wf-recorder/pull/353#issuecomment-6186368958
   2026-11-09, measured with the gate's flash-and-beep step on --gpu, six
   interleaved rounds per case (raw:
-  /mnt/Emulators/claude-scratch/demo-0201/results-2026-11-09.txt).
+  /mnt/Emulators/.claude/Scratchpad/demoreel/demo-0201/results-2026-11-09.txt).
   clock-before-connect.diff is the whole fix; the 15-20 ms figure came
   from light load. Light load (2-4): patched mean +1 ms, Xvfb -25 ms.
   Load 3-11 on four cores: patched +7 ms (-3 to 18), the clock read
@@ -6300,6 +6318,9 @@ is a front-end to the same recording engine, not a second one.
   the patch alone on master c5de474; it compiles there). Close this item
   once a wf-recorder release carries the fix, and give the gate's sync
   step a --gpu run then.
+  2026-11-11: start_wf_recorder's docstring and DEMO-0106 section 13 now
+  carry the 2026-11-09 measurement (the patch is the whole fix). Scratch
+  moved to /mnt/Emulators/.claude/Scratchpad/demoreel/.
   **Layman:** On a 3D app recorded with its sound, the sound comes a little after the picture, enough to notice on a click or a footstep.
   Kind: fix.
   Source: in-session-2026-10-14 DEMO-0196.

@@ -1639,8 +1639,9 @@ def start_wf_recorder(env, wayland, framerate, part, logfile, monitor=None):
     start_ffmpeg's, so the two backends hand back the same kind of file. With
     `monitor` it records the sound as well, which lands 50-130 ms after the
     picture (measured 2026-10-14, DEMO-0201). wf-recorder dates the sound
-    from after it has connected to the sound server, so the fix is its own;
-    DEMO-0106 section 13 has the measurements.
+    from after it has connected to the sound server, so the fix is its own.
+    Reading the clock before connecting is the whole of it, measured
+    2026-11-09; DEMO-0106 section 13 has the measurements.
 
     It prints no progress reports, so the start signal is the line announcing
     its output, printed once the encoder has its first frame. The countdown is
@@ -1990,6 +1991,56 @@ def end_process(proc):
         if poll(lambda: not signal_group(proc, 0), 5, interval=0.01, grow=1.5,
                 ceiling=0.2):
             return
+
+
+def end_strays(auth, sound):
+    """End the caller's processes that still carry this run's marks: its
+    XAUTHORITY path, and its sink's name when it has one (DEMO-0365).
+
+    A child the app starts in a session of its own is in no group of the
+    app's, so end_process misses it. GIMP's Flatpak starts its image loaders
+    so, and they outlived the run. Nothing but this run's processes carries
+    the marks, or a stray an earlier run of this name left: the name's lock
+    is held, and the sink's name is random. Each process is held by a
+    pidfd while its environment is read and it is signalled, so a pid freed
+    and given to a stranger in between is never signalled. Call it once the
+    run's own processes have ended, the display included.
+    """
+    marks = {f"XAUTHORITY={auth}".encode()}
+    if sound is not None:
+        marks.add(f"PULSE_SINK={sound.sink}".encode())
+    held = []
+    for entry in os.scandir("/proc"):
+        if not entry.name.isdigit() or int(entry.name) == os.getpid():
+            continue
+        try:
+            if entry.stat().st_uid != os.getuid():
+                continue
+            fd = os.pidfd_open(int(entry.name))
+        except OSError:
+            continue  # gone already
+        try:
+            environ = Path(entry.path, "environ").read_bytes().split(b"\0")
+        except OSError:
+            environ = []  # gone, or bwrap's, which ends with its child
+        if marks.intersection(environ):
+            held.append(fd)
+        else:
+            os.close(fd)
+
+    def ended():
+        # A pidfd reads as ready once its process has exited.
+        return len(select.select(held, [], [], 0)[0]) == len(held)
+
+    for sig in (signal.SIGTERM, signal.SIGKILL):
+        if not held or poll(ended, 0):
+            break
+        for fd in held:
+            with contextlib.suppress(ProcessLookupError):
+                signal.pidfd_send_signal(fd, sig)
+        poll(ended, 5, interval=0.01, grow=1.5, ceiling=0.2)
+    for fd in held:
+        os.close(fd)
 
 
 # Every record and shot gives its app a sound output of its own, a null sink
@@ -3110,6 +3161,7 @@ def cmd_record(a):
             sound.unload()
         end_server(server)
         if auth is not None:
+            end_strays(auth, sound)
             auth.unlink(missing_ok=True)
         if recorder is None:
             if part is not None:
@@ -3318,6 +3370,7 @@ def cmd_shot(a):
             sound.unload()
         end_server(server)
         if auth is not None:
+            end_strays(auth, sound)
             auth.unlink(missing_ok=True)
     if failed:
         die(f"{failed}\n  " + tr("Its display log is kept in {folder}", folder=rundir))

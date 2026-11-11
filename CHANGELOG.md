@@ -42,6 +42,8 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Fixed
 
+- **A Flatpak app's helper programs now end with the run** (DEMO-0365)
+  GIMP's Flatpak starts its image loaders apart from itself, and they kept running after every recording, so GIMP looked open when it was not. demoreel now also ends any process still carrying the run's private display or sound settings.
 - **A failed shot's folder is removed after a week** (DEMO-0295)
   Each one used to stay in memory for good. The first shot after a week removes it, and never one a running shot holds.
 - **A one-frame scene, such as a very short card, no longer stops the film** (DEMO-0291)

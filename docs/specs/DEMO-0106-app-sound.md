@@ -406,8 +406,14 @@ Rows live in `../reviews/DEMO-0106-app-sound-loop-log.md`.
   `wf-recorder` names no time for its first frame, and the moment it prints
   `Output #0` wanders more than the error. Upstream's open fix,
   `wf-recorder` pull request 353, measured no better: 57 ms on average over
-  five runs, against 50 ms without. So demoreel builds nothing for this,
-  and DEMO-0201 waits on `wf-recorder`.
+  five runs, against 50 ms without. Measured again 2026-11-09, six
+  interleaved rounds per case at load 3-11 on four cores: with the clock
+  read before the call the beep landed 7 ms after the flash on average
+  (-3 to 18), against 49 ms (23 to 89) without, and 3 ms on Xvfb.
+  `pa_simple_new` took 19-50 ms there, and the old read adds all of it.
+  So reading the clock first is the whole fix. demoreel builds nothing for
+  this, and DEMO-0201 waits on a `wf-recorder` release carrying it,
+  offered upstream as pull request 358.
 - **`pactl`'s package on each distro — settled 2026-10-10.** openSUSE,
   Debian, Ubuntu and Fedora ship it in `pulseaudio-utils`, Arch in
   `libpulse`. Looked up in each distro's own index: `rpm -qf` here,
