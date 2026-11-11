@@ -278,9 +278,8 @@ and nothing here defeats them.
 
 ## Supported versions
 
-Only the latest release, while the version is below 1.0.0. A fix goes on `main`
-and ships in the next release. An older release gets no fix, and there are no
-maintenance branches. What 1.0.0 will support is not yet decided.
+Only the latest release. A fix goes on `main` and ships in the next release.
+An older release gets no fix, and there are no maintenance branches.
 
 ## Reporting a vulnerability
 
