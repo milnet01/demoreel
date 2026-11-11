@@ -28,6 +28,10 @@ The `[Unreleased]` block stays at the top, always, even when empty.
   It saves one frame at 1280x720, cut to 16:9 rather than padded, and `--text` draws a title near the bottom. A picture over YouTube's 2 MB limit is refused.
 - **`click` and `drag` steps can use the right or middle button** (DEMO-0207)
   End the step with `right` or `middle`, as in `click 400 300 right`, to open a right-click menu in a recording. A `click` given three numbers is now refused with an example; it used to ignore the third.
+- **README shows how to check a film quickly with a small, slow draft** (DEMO-0346)
+  For clips of 1600x1000, `edit film.txt -o draft.mp4 -s 400x250 -r 10`. A three-scene film took 2.2 seconds as a draft and 7.1 at full size. Keep the clips' shape in `-s`, or they are refused.
+- **`record --gpu --audio` is verified** (DEMO-0196)
+  The app's sound reaches the video and not the speakers. It is not yet in step: the sound lands 50 to 132 ms after the picture, a delay in `wf-recorder` (DEMO-0201).
 
 ### Changed
 
