@@ -939,13 +939,19 @@ simplest case, and a gate proves it still records.
   Kind: fix.
   Source: review-fix DEMO-0094 2026-10-31.
 
-- 📋 [DEMO-0292] **The next real release must prove the new release workflow works.**
+- ✅ [DEMO-0292] **The next real release must prove the new release workflow works.**
   DEMO-0094 split release.yml in two. Only a real release can prove: the
   two jobs and the artifact handed between them; attest from the second job
   with the same sourceRepositoryDigest; github.sha on a release event; the
   refs/tags/ checkout; gh with the job tokens; concurrency; pulls of pinned
   images on GitHub's runner. Before a release, run ./ci.sh --release-images.
   Close after the first release's run and download checks pass.
+  Closed 2026-11-11 by the 1.0.0 release. release.yml run 43103121157
+  passed, build and release jobs, after ./ci.sh --release-images. The
+  five downloaded files passed SECURITY.md's three checks: the tag
+  verifies against GitHub's published signing key, every file matches
+  SHA256SUMS, and every file, SHA256SUMS included, has a build record
+  tied to v1.0.0's commit and release.yml.
   **Layman:** The safer release steps can only be fully tested by doing a real release.
   Kind: investigate.
   Source: review-fix DEMO-0094 2026-10-31.
