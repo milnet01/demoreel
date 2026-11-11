@@ -2229,10 +2229,15 @@ def frames(f, w=80, h=50):
 
 
 def one(f, idx, w=80, h=50):
-    fr = frames(f, w, h)
-    if idx >= len(fr):
-        sys.exit(f"{f} has {len(fr)} frames, no frame {idx}")
-    return fr[idx]
+    # Only frame idx is scaled and handed over, and decoding stops after it.
+    n = w * h * 3
+    raw = run(["ffmpeg", "-nostdin", "-v", "error", "-i", f, "-vf",
+               f"select=eq(n\\,{idx}),scale={w}:{h}:flags=area",
+               "-fps_mode", "passthrough", "-frames:v", "1",
+               "-f", "rawvideo", "-pix_fmt", "rgb24", "-"])
+    if len(raw) < n:
+        sys.exit(f"{f} has {len(frames(f, w, h))} frames, no frame {idx}")
+    return raw[:n]
 
 
 def cut(data, w, h, name):
@@ -2951,9 +2956,12 @@ lines" "A title far too long to fit across a thumbnail at its size"; do
     printf 'clip A.mp4 from 0 to 1\n' >"$ft/no-o.txt"
     run poster A.mp4 -t 1 -o "$ft/no-o.png"
     expect_ok "control: poster -o"
+    # Only the name is checked, so the films are small and short: a card is
+    # 1600x1000 at 30 unless told, and a join of A with itself lasts 12 s.
+    ffmpeg -nostdin -v error -i "$ft/A.mp4" -t 1 -c copy -y "$ft/short.mp4"
     for spec in 'A|.mp4|trim A.mp4 --to 1' 'A|.mp4|caption A.mp4 --text Hello' \
-                'A|.mp4|join A.mp4 A.mp4' 'card|.mp4|card --text Title' \
-                'no-o|.mp4|card -d 1 no-o.png' 'no-o|.mp4|edit no-o.txt' \
+                'A|.mp4|join A.mp4 short.mp4' 'card|.mp4|card --text Title -d 0.5 -s 320x240 -r 10' \
+                'no-o|.mp4|card -d 0.5 -s 320x240 -r 10 no-o.png' 'no-o|.mp4|edit no-o.txt' \
                 'A|.png|poster A.mp4 -t 1' 'A|.jpg|thumbnail A.mp4 -t 1' \
                 'A|.png|sheet A.mp4'; do
         IFS='|' read -r stem ending words <<<"$spec"
@@ -4733,12 +4741,12 @@ LAYERSPY
     forged+="frame:0 pts:0 pts_time:99999${nl}n=1${nl}e=1"
     bad=$(printf '\377')
     ffmpeg -nostdin -v error -f lavfi -i sine=440:d=4 -c:a flac -y "$ft/tone.mkv"
+    printf 'card 3\nmusic tone.mkv\n' | ed_ok m-plain.mp4
+    plain=$(sed -n 's/^demoreel: music .*: averages/averages/p' "$fe")
+    [ -n "$plain" ] || { show_err; fail "control: no plan line for the music"; }
     for title in "tag${nl}${forged}" "mean_volume: -90 dB max_volume: -90 dB" \
                  "mean_volume: 1.2.3 dB max_volume: 1.2.3 dB" "$bad not UTF-8"; do
         ffmpeg -nostdin -v error -i "$ft/tone.mkv" -c copy -metadata "title=$title" -y "$ft/tagged.mkv"
-        printf 'card 3\nmusic tone.mkv\n' | ed_ok m-plain.mp4
-        plain=$(sed -n 's/^demoreel: music .*: averages/averages/p' "$fe")
-        [ -n "$plain" ] || { show_err; fail "control: no plan line for the music"; }
         printf 'card 3\nmusic tagged.mkv\n' | ed_ok m-tagged.mp4
         got=$(sed -n 's/^demoreel: music .*: averages/averages/p' "$fe")
         assert_eq "the music's level with a forged tag" "$plain" "$got"
@@ -4935,28 +4943,27 @@ CAPPY
     grep -q "of memory" "$fe" || { show_err; fail "ffprobe over the cap did not say why"; }
     echo "output stayed bounded and each read stopped at the cap"
     }
-    fin_s76() {
     # DEMO-0094. Given as written, `concat:a|b` is ffmpeg's concat protocol,
     # `12:30:05.mp4` is "Protocol not found", and `./-report` reaches ffprobe as
-    # an option that writes a log here. Every one is an ordinary name.
+    # an option that writes a log here. Every one is an ordinary name. Two
+    # checks, so the slowest finishing check runs as two halves side by side.
+    odd_clip() {  # sets want: the frames of odd.mp4, which each odd name holds
+        # odd.mp4 is longer than short.mp4, so a protocol reading of the name,
+        # which opens short.mp4, counts different frames.
+        ffmpeg -nostdin -v error -i "$ft/A.mp4" -t 1 -c copy -y "$ft/short.mp4"
+        ffmpeg -nostdin -v error -i "$ft/A.mp4" -t 1.5 -c copy -y "$ft/odd.mp4"
+        want=$(v_frames "$ft/odd.mp4")
+        [ "$want" != "$(v_frames "$ft/short.mp4")" ] || fail "control: odd.mp4 and short.mp4 have as many frames"
+    }
+    no_report_log() {
+        assert_eq "ffprobe was given no option to write a log" 0 \
+            "$(find "$ft" -maxdepth 1 -name 'ff*.log' | wc -l)"
+    }
+    fin_s76b() {
     local name n1 want
-    # Each odd name holds odd.mp4, longer than short.mp4, so a protocol reading
-    # of the name, which opens short.mp4, counts different frames.
-    ffmpeg -nostdin -v error -i "$ft/A.mp4" -t 1 -c copy -y "$ft/short.mp4"
-    ffmpeg -nostdin -v error -i "$ft/A.mp4" -t 1.5 -c copy -y "$ft/odd.mp4"
-    want=$(v_frames "$ft/odd.mp4")
-    [ "$want" != "$(v_frames "$ft/short.mp4")" ] || fail "control: odd.mp4 and short.mp4 have as many frames"
-    for name in '12:30:05.mp4' '-report.mp4' 'concat:short.mp4|short.mp4' 'pipe:0.mp4' \
-                'pipe:0' 'subfile,,start,0,end,99,,:short.mp4' 'a%d.mp4' 'file:short.mp4'; do
-        cp "$ft/odd.mp4" "$ft/$name"
-        printf 'clip %q\n' "$name" > "$ft/s.txt"
-        n1="$ft/out/n1.mp4"
-        run edit s.txt -o "$n1"; expect_ok "a clip named $name"
-        assert_eq "the clip named $name is that file's frames" "$want" "$(v_frames "$n1")"
-        run motion -- "$name"; expect_ok "motion of $name"
-        assert_eq "motion of $name counts that file's frames" "frames: $want" "$(sed -n 2p "$fo")"
-    done
+    odd_clip
     for name in '12:30:05.mp4' '-report.mp4' 'a%d.mp4'; do
+        cp "$ft/odd.mp4" "$ft/$name"
         n1="$ft/out/n1.mp4"
         run trim --to 0.5 -o "$n1" -- "$name"; expect_ok "trim of $name"
         run caption --text x -o "$n1" -- "$name"; expect_ok "caption of $name"
@@ -4967,8 +4974,23 @@ CAPPY
         run sheet --at 0.1 -o "$ft/out/p.png" -- "$name"; expect_ok "sheet of $name"
         run card -d 1 "--like=$name" -o "$n1"; expect_ok "card --like $name"
     done
-    assert_eq "ffprobe was given no option to write a log" 0 \
-        "$(find "$ft" -maxdepth 1 -name 'ff*.log' | wc -l)"
+    no_report_log
+    echo "every command took colons, a dash and a % in a name as a name"
+    }
+    fin_s76() {
+    local name n1 want
+    odd_clip
+    for name in '12:30:05.mp4' '-report.mp4' 'concat:short.mp4|short.mp4' 'pipe:0.mp4' \
+                'pipe:0' 'subfile,,start,0,end,99,,:short.mp4' 'a%d.mp4' 'file:short.mp4'; do
+        cp "$ft/odd.mp4" "$ft/$name"
+        printf 'clip %q\n' "$name" > "$ft/s.txt"
+        n1="$ft/out/n1.mp4"
+        run edit s.txt -o "$n1"; expect_ok "a clip named $name"
+        assert_eq "the clip named $name is that file's frames" "$want" "$(v_frames "$n1")"
+        run motion -- "$name"; expect_ok "motion of $name"
+        assert_eq "motion of $name counts that file's frames" "frames: $want" "$(sed -n 2p "$fo")"
+    done
+    no_report_log
     # The other inputs. A music, a sound and a picture named as oddly.
     ffmpeg -nostdin -v error -f lavfi -i sine=440:d=1 -y "$ft/12:30.wav"
     cp "$ft/12:30.wav" "$ft/s:1.wav"
@@ -5228,11 +5250,13 @@ NOSIZE
     victim="$ft/victim"
     printf precious >"$victim"
     sum=$(sha256sum <"$victim")
+    # Four scenes make a film of two pieces (PIECE_SCENES), so piece0 is used.
+    ffmpeg -nostdin -v error -i "$ft/A.mp4" -t 1 -c copy -y "$ft/short.mp4"
     for cmd in "poster A.mp4 -t 0.1 -o $dir/po.png:.po.demoreel-part.png" \
                "thumbnail A.mp4 -t 0.1 -o $dir/th.jpg:.th.demoreel-part.jpg" \
                "sheet A.mp4 --at 0.1 -o $dir/sh.png:.sh.demoreel-part.png" \
                "trim A.mp4 --to 0.5 -o $dir/tr.mp4:.tr.demoreel-part.mp4" \
-               "join A.mp4 A.mp4 A.mp4 A.mp4 A.mp4 -o $dir/jo.mp4:.jo.demoreel-piece0.mp4"; do
+               "join short.mp4 short.mp4 short.mp4 short.mp4 -o $dir/jo.mp4:.jo.demoreel-piece0.mp4"; do
         planted="$dir/${cmd##*:}"
         ln -s "$victim" "$planted"
         # shellcheck disable=SC2086  # each case is several words
@@ -5842,7 +5866,8 @@ CASES
     local i film
     printf 'clip T.mp4 from 0 to 1\n' > "$ft/one.txt"
     : > "$ft/many.txt"
-    for i in 1 2 3 4 5 6 7 8 9 10; do printf 'clip T.mp4 from 0 to 0.2\n' >> "$ft/many.txt"; done
+    # Four scenes make two pieces (PIECE_SCENES), so a piece's ffmpeg is read too.
+    for i in 1 2 3 4; do printf 'clip T.mp4 from 0 to 0.2\n' >> "$ft/many.txt"; done
     ffmpeg -nostdin -v error -i "$ft/T.mp4" -map 0:v -c copy -y "$ft/V.mp4"
     tagged "$ft/V.mp4" || fail "control: the test clip with no sound holds no tags"
     tagged "$ft/M.m4a" || fail "control: the test music holds no tags"
@@ -6591,6 +6616,10 @@ SHORTPY
     echo "a one-frame scene keeps its frame, and a short film names its counts"
     }
     fin_step "the checks' own comparisons refuse a measurement that came back empty or as words" fin_s0
+    # The slowest check, in its two halves, goes first, so it cannot start late
+    # and set the batch's end.
+    fin_step "a file name is a name, on every input" fin_s76
+    fin_step "a file name is a name, to every command" fin_s76b
     fin_step "trim keeps the frames from --from to --to, the last one included" fin_s1
     fin_step "every video a command writes is H.264, yuv420p, index first, with its clips' sound" fin_s2
     fin_step "-o may not be an input, and must end in .mp4" fin_s3
@@ -6672,7 +6701,6 @@ SHORTPY
     fin_step "a file name that is not UTF-8 makes a film, a note and its exact path" fin_s73
     fin_step "a tag or a file name is never read as a measurement" fin_s74
     fin_step "a program's output is bounded in memory, and every read of a file is under the memory cap" fin_s75
-    fin_step "a file name is a name, on every input" fin_s76
     fin_step "a file that points at other files is refused, on every input" fin_s77
     fin_step "a film has a longest length and a highest rate, and leaves the disk some room" fin_s78
     fin_step "a stream with no size, and a clip too narrow for its window, are refused in words" fin_s79

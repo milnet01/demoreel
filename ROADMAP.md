@@ -1131,7 +1131,7 @@ simplest case, and a gate proves it still records.
   Kind: investigate.
   Source: user-request-2026-11-09.
 
-- 📋 [DEMO-0358] **Speed up the slowest gate checks the 2026-11-04 test review measured.**
+- ✅ [DEMO-0358] **Speed up the slowest gate checks the 2026-11-04 test review measured.**
   review-tests 2026-11-04 dimension 12, from the 2026-10-31 log:
   fin_s76 takes 50.7 s; px.py's one() decodes every frame; two
   recordings run in series in one 18 s step; eight smaller ones.
@@ -1181,6 +1181,16 @@ simplest case, and a gate proves it still records.
   2026-11-09: paused by the user's choice, to prepare 1.0.0. The full gate
   now takes about 13 min, against about 24. Left: the -o retake step and
   the finishing checks' work cuts above. Moved to the backlog.
+  2026-11-12: the finishing checks' work cuts landed. The music
+  control film is made once, not four times; the no-output check's cards
+  are 320x240 at 10 and half a second, and its join is 7 s, not 12; the
+  planted-piece and tag checks join four scenes, which still make two
+  pieces (film_pieces measured [[0, 1, 2], [3]]); fin_s76 is two checks,
+  registered first; px.py's one() selects its frame and stops, 54 cases
+  byte-equal with the old read. ./ci.sh --finishing at load 5-8: 237 s
+  before, then 189, 183 and 193 s, three passes in a row. Left serial by
+  judgement, for their flake risk under load (DEMO-0282): the -o retake
+  step's nine recordings, and the sound step's record and shot.
   **Layman:** Make the automatic checks faster.
   Kind: perf.
   Source: review-fix-2026-11-04 DEMO-0095.
