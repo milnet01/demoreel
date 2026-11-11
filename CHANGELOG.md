@@ -12,6 +12,10 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-11
+
+**Theme:** Every documented path tested.
+
 ### Added
 
 - **`edit` can zoom a whole frame, place text anywhere, show a click and draw five backgrounds** (DEMO-0286)
