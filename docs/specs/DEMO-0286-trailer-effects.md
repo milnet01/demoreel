@@ -1,7 +1,7 @@
 <!-- ants-spec-format: 1 -->
 # DEMO-0286 — Full-frame zoom, text at any position, click rings and drawn backgrounds
 
-**Status:** accepted (2026-11-02).
+**Status:** shipped 1.0.0 (2026-11-11).
 **Kind:** feature.
 **Source:** ROADMAP DEMO-0286 (peer-request-2026-10-30, APHW-0030; the website's `tools/trailer.py`).
 **Pairs with:** DEMO-0285 (the same scope lift).

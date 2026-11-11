@@ -1,7 +1,7 @@
 <!-- ants-spec-format: 1 -->
 # DEMO-0285 — A film scene that plays several videos as side-by-side slices, frame for frame
 
-**Status:** accepted (2026-11-02).
+**Status:** shipped 1.0.0 (2026-11-11).
 **Kind:** feature.
 **Source:** ROADMAP DEMO-0285 (peer-request-2026-10-30, APHW-0030; the DOOM Ants trailer).
 **Pairs with:** DEMO-0286 (the same scope lift).

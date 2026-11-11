@@ -1,6 +1,6 @@
 # DEMO-0060 — Translate demoreel's messages from `.po` catalogs it reads itself
 
-**Status:** accepted (2026-10-01).
+**Status:** shipped 0.4.0 (2026-10-08).
 **Kind:** implement.
 **Source:** ROADMAP DEMO-0060 (user-request-2026-09-25).
 **Blocker for:** DEMO-0061, DEMO-0062, DEMO-0063, DEMO-0064, DEMO-0065, DEMO-0067.

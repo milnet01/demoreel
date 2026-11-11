@@ -4,7 +4,7 @@
 # demoreel — Roadmap
 
 > **Format:** v1 — see
-> [roadmap-format.md](docs/standards/roadmap-format.md).
+> the maintainer's `roadmap-format.md` standard, which is not in this repository.
 > Every actionable bullet carries a stable ID; ID is identity,
 > position is priority.
 
@@ -1196,6 +1196,20 @@ simplest case, and a gate proves it still records.
   **Layman:** `man demoreel` will be translated too, but only near 1.0, so each change to the manual doesn't need ten more edits.
   Kind: doc.
   Source: user-decision-2026-10-02.
+
+- 💭 [DEMO-0120] **Consider running ci.sh's recording checks in parallel.**
+  local-gate.md section 9's test-parallelism lever, the one not taken on
+  2026-09-28. Measured then on GitHub: install 24 s, ruff 4 s, the gate
+  124 s, nearly all of it recordings run one after another. Safe only
+  where checks share no state: each needs its own --name, and several
+  checks time things (DEMO-0078's frozen display, the countdown) and
+  would flake on a loaded machine. Measure before and after, one lever
+  per change, and run the changed gate repeatedly before trusting it.
+  Not taken now because 2.5 min per push is already cheap on a public
+  repository and the flake risk is real.
+  **Layman:** The automatic checks spend about two minutes making test recordings one after another; running some side by side could cut that.
+  Kind: perf.
+  Source: claude-config-request-2026-09-28.
 
 ## Standing chores
 
@@ -5757,20 +5771,6 @@ covers both display backends and the Flatpak invocation.
   **Layman:** Before calling it finished, check that the code, tests, docs and records all hold up, and fix anything that doesn't.
   Kind: audit-fix.
   Source: user-request-2026-09-25.
-
-- 💭 [DEMO-0120] **Consider running ci.sh's recording checks in parallel.**
-  local-gate.md section 9's test-parallelism lever, the one not taken on
-  2026-09-28. Measured then on GitHub: install 24 s, ruff 4 s, the gate
-  124 s, nearly all of it recordings run one after another. Safe only
-  where checks share no state: each needs its own --name, and several
-  checks time things (DEMO-0078's frozen display, the countdown) and
-  would flake on a loaded machine. Measure before and after, one lever
-  per change, and run the changed gate repeatedly before trusting it.
-  Not taken now because 2.5 min per push is already cheap on a public
-  repository and the flake risk is real.
-  **Layman:** The automatic checks spend about two minutes making test recordings one after another; running some side by side could cut that.
-  Kind: perf.
-  Source: claude-config-request-2026-09-28.
 
 - ✅ [DEMO-0194] **On Mageia, demoreel check gives Fedora's ffmpeg advice.**
   Measured 2026-10-13 in a clean mageia:10 container with the 0.9.0

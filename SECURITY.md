@@ -214,7 +214,7 @@ pixels.
 
 From 0.9.0 on, a release can be checked three ways, and they hold together: the
 signed tag names a commit, the build record names that commit and a file's hash,
-and that file is the one you hold. The commands below use 0.9.0; put the version
+and that file is the one you hold. The commands below use 1.0.0; put the version
 you downloaded in its place.
 
 **The tag is signed, with the key GitHub publishes.** Release tags are signed
@@ -227,10 +227,10 @@ that no file in the repository takes part:
 git fetch --tags
 gh api users/milnet01/ssh_signing_keys \
     --jq '.[] | "milnet01@users.noreply.github.com namespaces=\"git\" " + .key' > github-signers
-git -c gpg.ssh.allowedSignersFile=github-signers tag -v v0.9.0
+git -c gpg.ssh.allowedSignersFile=github-signers tag -v v1.0.0
 ```
 
-It prints `Good "git" signature` and a line `tag v0.9.0`, and exits 0. Read that
+It prints `Good "git" signature` and a line `tag v1.0.0`, and exits 0. Read that
 line: git does not compare it with the name you asked for, so an old signed tag
 put under a new name passes without it. If `git fetch` says a tag would be
 clobbered, that tag has moved since you last fetched it. Stop there.
@@ -244,9 +244,9 @@ has a build record made by the release workflow. With the GitHub CLI, in the
 clone:
 
 ```sh
-gh attestation verify demoreel_0.9.0-1_all.deb --repo milnet01/demoreel \
-    --source-ref refs/tags/v0.9.0 \
-    --source-digest "$(git rev-parse 'v0.9.0^{commit}')" \
+gh attestation verify demoreel_1.0.0-1_all.deb --repo milnet01/demoreel \
+    --source-ref refs/tags/v1.0.0 \
+    --source-digest "$(git rev-parse 'v1.0.0^{commit}')" \
     --signer-workflow milnet01/demoreel/.github/workflows/release.yml
 ```
 
