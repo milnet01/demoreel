@@ -1266,6 +1266,13 @@ closes, so it sits outside every version heading.
   its latest. A third pin now falls under this item: actions/attest in
   release.yml (DEMO-0084), at v4.2.2, its latest; both SHAs resolve to
   their commented tags. The item stays open as the standing chore.
+  Checked (2026-11-12): ruff moved 0.17.1 -> 0.17.4, its latest
+  release, in ci.sh and in the machine's pipx install together; tried
+  first in a throwaway venv, `ruff check . demoreel` clean, parity
+  image rebuilt. The five actions (checkout v7.0.1, cache v6.1.0,
+  upload-artifact v7.0.2, download-artifact v8.0.2, attest v4.2.2)
+  are each at their latest release, and each SHA resolves to its
+  commented tag. The item stays open as the standing chore.
   **Layman:** Two version numbers are written down in CI and will go stale unless someone bumps them.
   Kind: chore.
   Source: user-request-2026-09-07.
