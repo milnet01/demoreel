@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=365 -->
+<!-- ants-roadmap-id-high-water: DEMO=366 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -680,7 +680,7 @@ simplest case, and a gate proves it still records.
   Kind: fix.
   Source: user-request-2026-10-21 (fix or file pre-existing warnings).
 
-- 📋 [DEMO-0282] **The pre-push gate fails under host load: the package containers' demoreel check hits its 10s limits.**
+- ✅ [DEMO-0282] **The pre-push gate fails under host load: the package containers' demoreel check hits its 10s limits.**
   2026-10-22: ./ci.sh passed on the tree, the push's gate failed, and
   a second push's gate passed with no change. Only the last five lines
   were kept: a blank-display message, which several steps print on
@@ -833,6 +833,15 @@ simplest case, and a gate proves it still records.
   2026-11-05: 5e4c27b's full push gate (cc-job push-1105a, load about
   3-4) passed, Ubuntu leg included, the sync step with it. One step
   skipped: the real-Flatpak step, because GIMP was open.
+  2026-11-14, closed. Four more full push gates passed since
+  5e4c27b, each with its Ubuntu leg and packages step: 792c8a3,
+  1db04e6, ed7517d and 8e0a483 (cc-job push-1109a, demo0365-push,
+  push358, pushruff). 1db04e6's ran under heavy load: its finishing
+  step took 1103 s against 178 s on ed7517d's, and its packages step
+  562 s against 218 s. No cc-job log on this machine holds run_check's
+  retry note, so the retry has never been needed. No push gate has
+  failed under load since the 2026-11-05 sync-step failures. The load-sensitive fixtures review-tests named, and the busy-GPU
+  stutter case, move to DEMO-0366.
   **Layman:** One automatic check failed once and passed on the next try, and nobody saw which check it was.
   Kind: investigate.
   Source: in-session-2026-10-22 DEMO-0206.
@@ -1220,6 +1229,21 @@ simplest case, and a gate proves it still records.
   **Layman:** The automatic checks spend about two minutes making test recordings one after another; running some side by side could cut that.
   Kind: perf.
   Source: claude-config-request-2026-09-28.
+
+- 📋 [DEMO-0366] **Gate fixtures that time themselves from their own start can fail falsely on a busy machine.**
+  Split from DEMO-0282 when it closed. review-tests 2026-11-04
+  (dimension 5) found fixtures timed from their own start, not from
+  demoreel's recording state: the step-timing, hold, drag, --settle,
+  stop-during-steps and sync checks among them. Their line numbers in
+  that review are stale; the review is at
+  ~/.local/share/demoreel-private-reviews/review-tests-2026-11-04/message-2.md
+  § 2. None has been seen failing yet. Also here: the --gpu stutter
+  check cannot tell a busy card (gpu_busy_percent near 100) from a
+  stuttering recorder (2026-11-04, blender at full load); it could
+  skip, saying why, when the card is busy.
+  **Layman:** Some automatic checks measure time from the wrong starting point, so a busy computer can make them fail when nothing is wrong.
+  Kind: test.
+  Source: DEMO-0282-2026-11-14.
 
 ## Standing chores
 
