@@ -303,10 +303,11 @@ ARGPARSE_MESSAGES = (
     "%(prog)s: error: %(message)s\n",
 )
 
-# The chosen catalogs, best first: (code, translations, messages, draft).
+# The chosen catalogs, best first: (code, translations, messages, state), the
+# state being "draft", "reviewed" or "confirmed" (§ 4.9).
 _catalogs = []
-# The codes of the draft catalogs that have supplied a message in this run.
-_drafts_used = set()
+# The states of the catalogs that have supplied a message in this run.
+_states_used = set()
 
 
 class CatalogError(Exception):
@@ -442,7 +443,7 @@ def catalog_bytes(path):
 
 
 def load_catalog(path, code):
-    """(code, translations, messages, draft) for one catalog, or CatalogError.
+    """(code, translations, messages, state) for one catalog, or CatalogError.
 
     `messages` holds only what may be used: no header, nothing fuzzy, and no
     entry with an empty form, so a lookup there falls through to the next
@@ -495,8 +496,9 @@ def load_catalog(path, code):
         raise CatalogError("its plural expression cannot be used", header["line"]) from None
     messages = {(e["msgid"], e["plural"]): e["forms"] for e in entries
                 if e is not header and not e["fuzzy"] and all(e["forms"])}
-    review = fields.get("x-demoreel-review", "")
-    return code, book, messages, not re.fullmatch(r"confirmed [0-9a-f]{16}", review)
+    review = re.fullmatch(r"(reviewed|confirmed) [0-9a-f]{16}",
+                          fields.get("x-demoreel-review", ""))
+    return code, book, messages, review[1] if review else "draft"
 
 
 def chosen_languages(env):
@@ -539,7 +541,7 @@ def use_languages(codes):
     costs its language and one English note, never the run.
     """
     _catalogs.clear()
-    _drafts_used.clear()
+    _states_used.clear()
     here = globals().get("__file__")
     if not codes or not here or not (_is_utf8(sys.stdout) and _is_utf8(sys.stderr)):
         return
@@ -577,7 +579,7 @@ def _usable(text, english, plural_form, argparse_formats):
 def _lookup(singular, plural, count, argparse_formats):
     """(text, right-to-left) from the first catalog holding the message, or
     None for English."""
-    for code, book, messages, draft in _catalogs:
+    for code, book, messages, state in _catalogs:
         forms = messages.get((singular, plural))
         if not forms:
             continue
@@ -591,8 +593,7 @@ def _lookup(singular, plural, count, argparse_formats):
         if text not in forms or not _usable(text, english, plural is not None,
                                             argparse_formats):
             return None
-        if draft:
-            _drafts_used.add(code)
+        _states_used.add(state)
         return text, re.split(r"[_@]", code)[0] in RTL_LANGUAGES
     return None
 
@@ -654,13 +655,17 @@ def _argparse_ngettext(singular, plural, count):
 
 
 class Parser(argparse.ArgumentParser):
-    """argparse's parser, with the draft line at the end of --help (§ 4.9)."""
+    """argparse's parser, with the review line at the end of --help (§ 4.9)."""
 
     def format_help(self):
         text = super().format_help()
-        if _drafts_used:
+        # The weakest state that supplied a message decides the line.
+        if "draft" in _states_used:
             text += "\n" + tr_help("This translation is a draft and has not yet been "
                                    "checked by a native speaker.") + "\n"
+        elif "reviewed" in _states_used:
+            text += "\n" + tr_help("This translation has been checked by machine, but "
+                                   "not yet by a native speaker.") + "\n"
         return text
 
     def error(self, message):

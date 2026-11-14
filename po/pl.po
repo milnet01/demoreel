@@ -1574,3 +1574,7 @@ msgstr "tekst na karcie lub w napisie: NIEGOTOWE"
 
 msgid "frames made: {made}; frames planned: {planned}."
 msgstr "utworzone klatki: {made}; planowane klatki: {planned}."
+
+#. argparse formats this text with %
+msgid "This translation has been checked by machine, but not yet by a native speaker."
+msgstr "To tłumaczenie zostało sprawdzone maszynowo, ale jeszcze nie przez rodzimego użytkownika języka."

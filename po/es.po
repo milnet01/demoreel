@@ -1568,3 +1568,7 @@ msgstr "texto en un rótulo o un subtítulo: NO ESTÁ LISTO"
 
 msgid "frames made: {made}; frames planned: {planned}."
 msgstr "fotogramas hechos: {made}; fotogramas previstos: {planned}."
+
+#. argparse formats this text with %
+msgid "This translation has been checked by machine, but not yet by a native speaker."
+msgstr "Esta traducción la ha revisado una máquina, pero aún no un hablante nativo."

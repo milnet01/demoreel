@@ -1562,3 +1562,7 @@ msgstr "카드나 자막의 텍스트: 준비 안 됨"
 
 msgid "frames made: {made}; frames planned: {planned}."
 msgstr "만든 프레임 수: {made}, 계획한 프레임 수: {planned}."
+
+#. argparse formats this text with %
+msgid "This translation has been checked by machine, but not yet by a native speaker."
+msgstr "이 번역은 기계로 검토되었지만 아직 원어민이 검토하지 않았습니다."

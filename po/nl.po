@@ -1568,3 +1568,7 @@ msgstr "tekst op een kaart of als ondertitel: NIET GEREED"
 
 msgid "frames made: {made}; frames planned: {planned}."
 msgstr "gemaakte beelden: {made}; geplande beelden: {planned}."
+
+#. argparse formats this text with %
+msgid "This translation has been checked by machine, but not yet by a native speaker."
+msgstr "Deze vertaling is automatisch nagekeken, maar nog niet door een moedertaalspreker."

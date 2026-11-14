@@ -12,6 +12,11 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ## [Unreleased]
 
+### Added
+
+- **A translation can be marked reviewed, between draft and confirmed** (DEMO-0362)
+  A language that has had a thorough machine review says so on the last line of `--help`. Editing any of its translations afterwards fails the checks until it is reviewed again or goes back to draft. No language is reviewed yet.
+
 ## [1.0.0] - 2026-11-11
 
 **Theme:** Every documented path tested.

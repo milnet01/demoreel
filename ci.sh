@@ -257,12 +257,12 @@ for path in map(pathlib.Path, paths):
     if check == "print-digest":
         print(digest(entries))
     elif check == "digest":
-        # INV-16: confirmed means unchanged since the confirmation.
-        confirmed = re.fullmatch(r"confirmed ([0-9a-f]{16})",
-                                 fields.get("x-demoreel-review", ""))
-        if confirmed and confirmed[1] != digest(entries):
-            say(f"it is marked confirmed {confirmed[1]}, but its translations now "
-                f"give {digest(entries)}: it was edited after it was confirmed")
+        # INV-16: reviewed or confirmed means unchanged since then.
+        marked = re.fullmatch(r"(reviewed|confirmed) ([0-9a-f]{16})",
+                              fields.get("x-demoreel-review", ""))
+        if marked and marked[2] != digest(entries):
+            say(f"it is marked {marked[1]} {marked[2]}, but its translations now "
+                f"give {digest(entries)}: it was edited after it was {marked[1]}")
     elif check == "complete":
         # INV-5: every message, every form, not fuzzy, not empty.
         nplurals = re.search(r"nplurals\s*=\s*([0-9]+)", fields.get("plural-forms", ""))
@@ -7901,14 +7901,15 @@ python3 - <<'LANGLISTPY'
 import pathlib, re, sys
 text = pathlib.Path("README.md").read_text(encoding="utf-8")
 section = re.search(r"^## Languages\n(.*?)(?=^## )", text, re.M | re.S)
-rows = re.findall(r"^\|[^|\n]+\| `([A-Za-z_@]+)` \| (draft|confirmed) \|$",
+rows = re.findall(r"^\|[^|\n]+\| `([A-Za-z_@]+)` \| (draft|reviewed|confirmed) \|$",
                   section[1] if section else "", re.M)
 listed = dict(rows)
 actual = {}
 for path in sorted(pathlib.Path("po").glob("*.po")):
     header = path.read_text(encoding="utf-8").split("\n\n", 1)[0]
-    confirmed = re.search(r'"X-Demoreel-Review: confirmed [0-9a-f]{16}\\n"', header)
-    actual[path.stem] = "confirmed" if confirmed else "draft"
+    marked = re.search(r'"X-Demoreel-Review: (reviewed|confirmed) [0-9a-f]{16}\\n"',
+                       header)
+    actual[path.stem] = marked[1] if marked else "draft"
 bad = [f"po/{code}.po is {state}, but README lists it as {listed.get(code, 'missing')}"
        for code, state in actual.items() if listed.get(code) != state]
 bad += [f"README lists {code}, but po/{code}.po does not exist"
@@ -12036,25 +12037,35 @@ else
 fi
 
 step "translation: confirmed means unchanged"
-# INV-16's runtime half: --help says a draft is a draft, and says nothing for a
-# confirmed catalog or in English. The digest follows.
+# INV-16's runtime half: --help says a draft is a draft and a reviewed catalog
+# is reviewed, and says nothing for a confirmed catalog or in English. The
+# digest follows.
 pseudo_copy "$tmp/tr/draft" zz
+pseudo_copy "$tmp/tr/reviewed" zz "reviewed 0123456789abcdef"
 pseudo_copy "$tmp/tr/confirmed" zz "confirmed 0123456789abcdef"
 draft_line="This translation is a draft and has not yet been checked by a native speaker."
+reviewed_line="This translation has been checked by machine, but not yet by a native speaker."
 help_draft=$("${PSEUDO_ENV[@]}" "$tmp/tr/draft/demoreel" --help)
+help_reviewed=$("${PSEUDO_ENV[@]}" "$tmp/tr/reviewed/demoreel" --help)
 help_confirmed=$("${PSEUDO_ENV[@]}" "$tmp/tr/confirmed/demoreel" --help)
 help_english=$("$tmp/tr/draft/demoreel" --help)
-[[ $help_draft == *$'\n'"⟦$draft_line⟧" ]] || {
-    echo "--help from a draft catalog does not end with the draft line" >&2; exit 1; }
-[[ $help_confirmed == *"⟦"* && $help_confirmed != *"$draft_line"* ]] || {
-    echo "--help from a confirmed catalog says it is a draft, or was not translated" >&2
+[[ $help_draft == *$'\n'"⟦$draft_line⟧" && $help_draft != *"$reviewed_line"* ]] || {
+    echo "--help from a draft catalog does not end with the draft line alone" >&2
     exit 1; }
-[[ $help_english != *"$draft_line"* ]] || {
-    echo "--help in English says a translation is a draft" >&2; exit 1; }
-echo "a draft says so at the end of --help; a confirmed catalog and English do not"
-# INV-16's digest: a catalog marked confirmed holds the translations that
-# were confirmed. One edited afterwards fails until it says draft again or is
-# confirmed anew. --catalog-digest is what a confirmation records.
+[[ $help_reviewed == *$'\n'"⟦$reviewed_line⟧" && $help_reviewed != *"$draft_line"* ]] || {
+    echo "--help from a reviewed catalog does not end with the reviewed line alone" >&2
+    exit 1; }
+[[ $help_confirmed == *"⟦"* && $help_confirmed != *"$draft_line"* &&
+   $help_confirmed != *"$reviewed_line"* ]] || {
+    echo "--help from a confirmed catalog has a review line, or was not translated" >&2
+    exit 1; }
+[[ $help_english != *"$draft_line"* && $help_english != *"$reviewed_line"* ]] || {
+    echo "--help in English has a review line" >&2; exit 1; }
+echo "a draft and a reviewed catalog say so at the end of --help; a confirmed one and English do not"
+# INV-16's digest: a catalog marked reviewed or confirmed holds the
+# translations that were reviewed or confirmed. One edited afterwards fails
+# until it says draft again or is marked anew. --catalog-digest is what a
+# review or a confirmation records.
 cat_digest=$(./ci.sh --catalog-digest "$cat_base")
 [[ $cat_digest =~ ^[0-9a-f]{16}$ ]] || {
     echo "--catalog-digest printed $cat_digest, not 16 hex digits" >&2; exit 1; }
@@ -12063,6 +12074,11 @@ cat_confirmed=$(mutant "$cat_base" confirmed '"X-Demoreel-Review: draft\n"' \
 catalog_check digest "$cat_base" "$cat_confirmed"
 refused digest "$cat_confirmed" "a translation edited after confirming" \
     'msgstr "⟦options⟧"' 'msgstr "⟦choices⟧"' "it was edited after it was confirmed"
+cat_reviewed=$(mutant "$cat_base" reviewed '"X-Demoreel-Review: draft\n"' \
+    "\"X-Demoreel-Review: reviewed $cat_digest\\n\"")
+catalog_check digest "$cat_reviewed"
+refused digest "$cat_reviewed" "a translation edited after reviewing" \
+    'msgstr "⟦options⟧"' 'msgstr "⟦choices⟧"' "it was edited after it was reviewed"
 shipped digest
 
 step "translation: a bad catalog costs only the language"

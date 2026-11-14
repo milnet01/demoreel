@@ -1568,3 +1568,7 @@ msgstr "du texte sur un carton ou une légende : PAS PRÊT"
 
 msgid "frames made: {made}; frames planned: {planned}."
 msgstr "images produites : {made} ; images prévues : {planned}."
+
+#. argparse formats this text with %
+msgid "This translation has been checked by machine, but not yet by a native speaker."
+msgstr "Cette traduction a été vérifiée automatiquement, mais pas encore relue par une personne dont le français est la langue maternelle."

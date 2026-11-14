@@ -1568,3 +1568,7 @@ msgstr "Text auf einer Karte oder als Untertitel: NICHT BEREIT"
 
 msgid "frames made: {made}; frames planned: {planned}."
 msgstr "erzeugte Bilder: {made}; geplante Bilder: {planned}."
+
+#. argparse formats this text with %
+msgid "This translation has been checked by machine, but not yet by a native speaker."
+msgstr "Diese Übersetzung wurde maschinell geprüft, aber noch nicht von Muttersprachlern."

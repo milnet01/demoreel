@@ -68,21 +68,28 @@ the checks fail and demoreel prints the English instead:
 Words a user types into an edit script stay in English too: `clip`,
 `card`, `text`, `font`, `band`, `on`, `off`, and the command names.
 
-### Confirming a language
+### Reviewing and confirming a language
 
-When a native speaker has read a language and says it is right:
+A language has one of three states: draft, reviewed or confirmed. A
+language is reviewed once the maintainer has put it through a thorough
+machine review, and confirmed once a native speaker has read it and says it
+is right. A machine review never confirms a language.
+
+To record either:
 
 1. The maintainer runs `./ci.sh --catalog-digest po/<code>.po`. It prints a
    fingerprint of every translation in the file.
-2. The header line `X-Demoreel-Review: draft` becomes
+2. The header line `X-Demoreel-Review:` becomes
+   `X-Demoreel-Review: reviewed <fingerprint>` or
    `X-Demoreel-Review: confirmed <fingerprint>`.
-3. README.md § Languages marks the language confirmed, and the language's
-   section leaves `docs/translation-review-notes.md`.
+3. README.md § Languages gives the language its new state. On a review,
+   the language's section leaves `docs/translation-review-notes.md`.
 
-From then on `--help` no longer calls it a draft. If any translation in the
+The last line of `--help` then says a reviewed language was checked by
+machine, and says nothing for a confirmed one. If any translation in the
 file changes afterwards, the fingerprint no longer matches and the checks
-fail. The header then goes back to `draft`, or a native speaker confirms
-the new wording and a new fingerprint is recorded.
+fail. The header then goes back to `draft`, or a new review or confirmation
+records a new fingerprint.
 
 ## Packages
 

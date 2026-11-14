@@ -1592,3 +1592,7 @@ msgstr "نص على بطاقة أو في تعليق: غير جاهز"
 
 msgid "frames made: {made}; frames planned: {planned}."
 msgstr "الإطارات المصنوعة: {made}؛ الإطارات المخطط لها: {planned}."
+
+#. argparse formats this text with %
+msgid "This translation has been checked by machine, but not yet by a native speaker."
+msgstr "روجعت هذه الترجمة آليًا، لكن لم يراجعها بعد متحدث أصلي باللغة العربية."

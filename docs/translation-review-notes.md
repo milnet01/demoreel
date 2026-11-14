@@ -1,8 +1,8 @@
 # Translation review notes
 
 What each draft translator was unsure of when the catalogs in `po/` were
-drafted (DEMO-0064, 2026-10-02). For the native speaker who confirms a
-language (DEMO-0096); delete a language's section once it is confirmed.
+drafted (DEMO-0064, 2026-10-02). For whoever reviews a language
+(DEMO-0096); delete a language's section once it is reviewed.
 
 ## Every language
 

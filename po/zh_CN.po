@@ -1562,3 +1562,7 @@ msgstr "卡片或字幕上的文字：未就绪"
 
 msgid "frames made: {made}; frames planned: {planned}."
 msgstr "已生成帧数：{made}；计划帧数：{planned}。"
+
+#. argparse formats this text with %
+msgid "This translation has been checked by machine, but not yet by a native speaker."
+msgstr "此翻译已经过机器审校，但尚未经过母语人士审校。"

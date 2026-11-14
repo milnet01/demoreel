@@ -1568,3 +1568,7 @@ msgstr "testo su un cartello o una didascalia: NON PRONTO"
 
 msgid "frames made: {made}; frames planned: {planned}."
 msgstr "fotogrammi creati: {made}; fotogrammi previsti: {planned}."
+
+#. argparse formats this text with %
+msgid "This translation has been checked by machine, but not yet by a native speaker."
+msgstr "Questa traduzione è stata controllata automaticamente, ma non ancora da un madrelingua."

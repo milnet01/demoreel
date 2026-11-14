@@ -53,6 +53,10 @@ msgstr ""
 msgid "This translation is a draft and has not yet been checked by a native speaker."
 msgstr ""
 
+#. argparse formats this text with %
+msgid "This translation has been checked by machine, but not yet by a native speaker."
+msgstr ""
+
 msgid ""
 "could not use {path}: {reason}.\n"
 "  demoreel keeps its run files there. Point XDG_RUNTIME_DIR at a directory you can write to."

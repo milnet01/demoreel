@@ -4785,7 +4785,7 @@ path, and scripts read it.
   Kind: doc.
   Source: DEMO-0064-finding-2026-10-02.
 
-- 📋 [DEMO-0362] **A third translation state, reviewed, between draft and confirmed.**
+- ✅ [DEMO-0362] **A third translation state, reviewed, between draft and confirmed.**
   Decided by the user 2026-11-09: a language that has been through
   DEMO-0096's thorough review is labelled reviewed, not draft and not
   confirmed. An AI pass never confirms a translation (user ruling
@@ -4795,6 +4795,14 @@ path, and scripts read it.
   (a reviewed language says it was checked by machine, not yet by a
   native speaker), README § Languages, CONTRIBUTING.md's confirmation
   steps, the gate's catalog checks, and docs/specs/DEMO-0060 § 4.9.
+  2026-11-14: shipped. A header of `reviewed <digest>` marks a catalog
+  reviewed; the digest is the confirmed one's, so an edit afterwards
+  fails the gate. --help ends with "This translation has been checked
+  by machine, but not yet by a native speaker." when reviewed catalogs
+  and no draft supplied its text; a draft's line wins. The line has
+  drafts in all 16 catalogs. Spec DEMO-0060 § 4.3, § 4.9 and INV-16,
+  README § Languages, CONTRIBUTING, the manual page and the review
+  notes' header follow. No language is reviewed yet: that is DEMO-0096.
   **Layman:** A language that has been checked thoroughly by machine gets its own label, so users can tell it apart from a raw draft.
   Kind: feature.
   Source: user-request-2026-11-09.

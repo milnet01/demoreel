@@ -1574,3 +1574,7 @@ msgstr "текст на картці або підпис: НЕ ГОТОВО"
 
 msgid "frames made: {made}; frames planned: {planned}."
 msgstr "створено кадрів: {made}; заплановано кадрів: {planned}."
+
+#. argparse formats this text with %
+msgid "This translation has been checked by machine, but not yet by a native speaker."
+msgstr "Цей переклад перевірено машиною, але його ще не перевірив носій мови."

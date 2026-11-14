@@ -1622,9 +1622,10 @@ name and its new one, so moving code to a `.md` runs the full gate.
 Messages on standard error and the text of `--help` follow your language
 settings — the `LANGUAGE`, `LC_ALL`, `LC_MESSAGES` and `LANG` variables. The
 manual page's ENVIRONMENT section says how they are read. The translations
-are in [`po/`](po/), and a language without one is shown in English. Each is a
-draft until a native speaker has checked it, and `--help` says so on its last
-line. The manual page itself is in English.
+are in [`po/`](po/), and a language without one is shown in English. Each is in
+one of three states: a draft, reviewed (checked thoroughly by machine), or
+confirmed (checked by a native speaker). A draft or reviewed language says
+which on the last line of `--help`. The manual page itself is in English.
 
 Each language also has a short page, linked at the top of this file: § Install
 and § Quick start, translated. Its commands are the ones here, and the gate
@@ -1634,8 +1635,8 @@ What a script reads never changes with the language: the paths on standard
 output, `motion`'s report and `--version`. `LC_ALL=C` gives English whatever
 the other settings say.
 
-A draft was written without a native speaker. If you speak one of these
-languages, please help:
+A draft or reviewed language was written without a native speaker. If you
+speak one of these languages, please help:
 [CONTRIBUTING.md](CONTRIBUTING.md) says how to suggest a better wording and
 how a language becomes confirmed. The gate fails if this list and `po/`
 disagree.

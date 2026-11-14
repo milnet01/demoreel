@@ -146,7 +146,7 @@ fields:
 | `Content-Type: text/plain; charset=UTF-8` | required; any other charset refuses the catalog |
 | `Language:` | must equal the filename's `<code>` |
 | `Plural-Forms:` | required; `nplurals=N; plural=<expr>;`. The catalog is refused if `<expr>` raises or falls outside `0` to `N-1` for any `n` from 0 to 1000; a later failure at call time gives English for that message |
-| `X-Demoreel-Review:` | `draft`, or `confirmed <digest>` (§ 4.9); anything else reads as `draft` |
+| `X-Demoreel-Review:` | `draft`, `reviewed <digest>` or `confirmed <digest>` (§ 4.9); anything else reads as `draft` |
 
 `msgctxt` is not supported, and a catalog using it is refused whole — a
 feature demoreel does not implement must not be half-read.
@@ -349,38 +349,46 @@ New steps:
 | `translation: every catalog is complete` | every extracted msgid, in every catalog, has a non-empty, non-fuzzy `msgstr` — every form, `nplurals` of them, for a plural |
 | `translation: placeholders and code tokens match` | each translation's placeholders obey § 4.5's rule and, for a msgid argparse formats, § 4.6's `%` rule, and its multiset of code tokens (§ 4.5) equals the English one's |
 | `translation: every catalog reads` | each catalog parses under § 4.3, its `Language:` matches its filename, and it is not refused |
-| `translation: confirmed means unchanged` | a catalog marked `confirmed <digest>` has that digest (§ 4.9) |
+| `translation: confirmed means unchanged` | a catalog marked `reviewed <digest>` or `confirmed <digest>` has that digest (§ 4.9) |
 | `translation: argparse still has our strings` | each `ARGPARSE_MESSAGES` msgid occurs in the running Python's `argparse` source |
 | `translation: nothing translated at import time` | no `tr` or `trn` call sits outside a function body |
 | `translation: stdout and exit status do not move` | § 7's pseudo-locale runs |
 | `translation: a bad catalog costs only the language` | § 7's hostile catalogs |
 
-### 4.9 Draft and confirmed
+### 4.9 Draft, reviewed and confirmed
 
 The header field `X-Demoreel-Review:` says which a catalog is:
 
 ```
 "X-Demoreel-Review: draft\n"
+"X-Demoreel-Review: reviewed 3f9a0c21d4e87b65\n"
 "X-Demoreel-Review: confirmed 3f9a0c21d4e87b65\n"
 ```
+
+A reviewed catalog has been through DEMO-0096's thorough machine review. A
+confirmed one has been checked by a native speaker; a machine review never
+confirms (user, 2026-11-05). The user added the reviewed state on 2026-11-09
+(DEMO-0362).
 
 The digest is the first 16 hex digits of the SHA-256 of the catalog's
 translations: for each non-header, non-fuzzy entry sorted by msgid (then
 msgid_plural), the UTF-8 bytes of msgid, NUL, msgid_plural, NUL, each msgstr
 form joined by NUL, then a newline. `./ci.sh --catalog-digest po/de.po` prints
-it. Recording a confirmation writes the digest; editing any translation
-afterwards makes it wrong, and the gate fails until the field says `draft`
-again or a new confirmation writes a new digest. How a native speaker
-confirms is DEMO-0067's.
+it. Recording a review or a confirmation writes the digest; editing any
+translation afterwards makes it wrong, and the gate fails until the field
+says `draft` again or a new review or confirmation writes a new digest. How a
+native speaker confirms is DEMO-0067's.
 
-**Where it shows:** when a draft catalog supplied any message in a run that
-prints `--help`, the help ends with one line, itself a translated msgid.
+**Where it shows:** when a draft or reviewed catalog supplied any message in a
+run that prints `--help`, the help ends with one line, itself a translated
+msgid. A draft's line wins over a reviewed one's, since it claims less.
 Catalogs are complete (INV-5), so in a shipped tree that is the help itself;
 only a hand-edited install, falling back from one catalog to the next, can
 tell the two apart. The user chose the simpler rule on 2026-10-01.
 
 ```
 This translation is a draft and has not yet been checked by a native speaker.
+This translation has been checked by machine, but not yet by a native speaker.
 ```
 
 Nothing is added to other messages. A confirmed catalog adds nothing. The list
@@ -546,14 +554,17 @@ the same template.
   `ast` walk finds no module-level call.
   *Breaks when:* a message constant is written as `X = tr("...")`.
 
-- **INV-16** — A catalog marked `confirmed <digest>` has that digest, and a
-  run whose `--help` used a draft catalog ends with the draft line.
+- **INV-16** — A catalog marked `reviewed <digest>` or `confirmed <digest>`
+  has that digest. A run whose `--help` used a draft catalog ends with the
+  draft line; one that used reviewed catalogs and no draft ends with the
+  reviewed line.
   *Test:* `ci.sh` step `translation: confirmed means unchanged` — passes on
-  the tree; fails on a copy of a confirmed catalog with one `msgstr` edited;
-  and `--help` under a draft pseudo catalog ends with its draft line, under a
-  confirmed one does not.
-  *Breaks when:* the digest leaves out a form or the fuzzy rule, or the draft
-  line is printed for a confirmed catalog.
+  the tree; fails on a copy of a reviewed and of a confirmed catalog with one
+  `msgstr` edited; and `--help` under a draft pseudo catalog ends with the
+  draft line alone, under a reviewed one with the reviewed line alone, and
+  under a confirmed one with neither.
+  *Breaks when:* the digest leaves out a form or the fuzzy rule, or a review
+  line is printed for a confirmed catalog or the wrong one for the others.
 
 - **INV-17** — Every `--help` example command, printed under the
   pseudo-locale, is byte-identical to its `LC_ALL=C` form and parses.
