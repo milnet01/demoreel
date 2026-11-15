@@ -4583,7 +4583,7 @@ path, and scripts read it.
   Done when every catalog in po/ is reviewed. Record each language as it
   finishes. It does not hold any release.
   2026-11-15: steps 1 and 3 done for every language as it comes; de, fr, es, nl committed (9c8f659). This session had no Chrome tools, so step 2 used a Claude (Opus) reviewer reading each whole catalogue and judging every free-model proposal instead of Gemini/DeepSeek. It found what the free models missed in every language: register slips (du/tú/je), a capital Sie/Ihre reading as "you", "recording for {time}" worded as a planned length, the keyword ring translated. Per-language answers to the review notes are in the po commits. Nothing is marked reviewed yet, and the notes sections stay until it is.
-  Waiting-on: user (Does the Claude whole-catalogue read count as step 2, so each language can be marked "reviewed <digest>" now? Recommendation: yes — it caught more than the free models and reads every line, not only doubtful ones; Gemini/DeepSeek can still be run later on a reviewed language and its fixes applied, which only moves the digest. Otherwise the marks wait for a session with Chrome connected. 2026-11-15)
+  Decided by the user 2026-11-15: yes, the Claude read counts as step 2; mark each language reviewed. Edit-script words stay English only where the user types them (a script line or a backticked name); in ordinary prose they are translated. The question was: (Does the Claude whole-catalogue read count as step 2, so each language can be marked "reviewed <digest>" now? Recommendation: yes — it caught more than the free models and reads every line, not only doubtful ones; Gemini/DeepSeek can still be run later on a reviewed language and its fixes applied, which only moves the digest. Otherwise the marks wait for a session with Chrome connected. 2026-11-15)
   2026-11-15, later: all 16 catalogues have both passes (9c8f659,
   42aaa6a, 1dc9038), each with its notes answered in its commit body.
   What is left is steps 4-5 for each language: delete its notes section,
@@ -6216,7 +6216,7 @@ is a front-end to the same recording engine, not a second one.
     registry the ceiling still rules out.
   - Keyboard use, screen readers, large text and the magnifier.
   - Translations, from the 0.4.0 catalogs.
-  Waiting-on: user (Which toolkit should the window use? It sets the
+  Decided by the user 2026-11-15: Qt through PySide6. The question was: (Which toolkit should the window use? It sets the
   project's first dependency beyond the standard library, and the spec
   cannot be written or gated without it. Recommendation: Qt through
   PySide6. It has the strongest screen-reader and magnifier support on
