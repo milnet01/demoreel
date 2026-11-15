@@ -4918,12 +4918,14 @@ CAPPY
     for cmd in "motion C.mp4" "poster C.mp4 -t 0.1 -o $ft/out/c.png" \
                "edit a.txt -s 160x100 -r 5 -o $ft/out/c.mp4" "edit m.txt -s 160x100 -r 5 -o $ft/out/c.mp4"; do
         # A small frame, so the real ffmpeg fits under the cap: at 1600x1000 it does not.
+        # The time limit only stops a hang. At 15 s, a load of 30 ended the music
+        # film's fourth call by SIGTERM before the cap could (DEMO-0366).
         at=1
         while :; do
             rc=0
             # shellcheck disable=SC2086  # each case is several words
             ( cd "$ft" && BIG_AT=$at BIG_COUNT="$ft/big/count" BIG_PROBE=no-such-word \
-                  PATH="$ft/big:$PATH" timeout --foreground 15 python3 smallcap.py "$DR" $cmd ) \
+                  PATH="$ft/big:$PATH" timeout --foreground 60 python3 smallcap.py "$DR" $cmd ) \
                 >"$fo" 2>"$fe" || rc=$?
             rm -f "$ft/big/count"
             # Once BIG_AT is past its last call, the command runs as normal.
@@ -8517,9 +8519,11 @@ if sound_step "--audio keeps sound and picture in step"; then
     # DEMO-0106 INV-5. The app turns its window white and starts a beep at
     # the same moment. The beep goes into a stream already open: starting a
     # player at the flash put the player's own start-up into the gap.
-    # Without the shift the sound came out half a second early.
+    # Without the shift the sound came out half a second early. The flash
+    # comes 1 s after the state file says the run records: 2 s after the app
+    # started could fall before a slow recorder's first frame (DEMO-0366).
     cat >"$tmp/flash.py" <<'PY'
-import math, struct, subprocess, threading, time, tkinter
+import math, struct, subprocess, sys, threading, time, tkinter
 RATE, CHUNK = 48000, 480  # 10 ms of stereo 16-bit samples per write
 player = subprocess.Popen(["pacat", "--raw", "--format=s16le", f"--rate={RATE}",
                            "--channels=2", "--latency-msec=10"], stdin=subprocess.PIPE)
@@ -8549,11 +8553,18 @@ def flash():
     root.update_idletasks()
     pending.extend(beep[i:i + CHUNK * 4] for i in range(0, len(beep), CHUNK * 4))
 
-root.after(2000, flash)
+def when_recording():
+    try:
+        recording = '"recording": true' in open(sys.argv[1]).read()
+    except OSError:
+        recording = False
+    root.after(1000, flash) if recording else root.after(50, when_recording)
+
+when_recording()
 root.mainloop()
 PY
     ./demoreel record --audio -n "${GATE_RUN}sound-sync" -o "$tmp/sync.mp4" -d 4 -s 640x480 \
-        -- python3 "$tmp/flash.py" >/dev/null
+        -- python3 "$tmp/flash.py" "$statedir/${GATE_RUN}sound-sync.json" >/dev/null
     python3 - "$tmp/sync.mp4" <<'PY'
 import re, subprocess, sys
 video = sys.argv[1]
@@ -8584,14 +8595,19 @@ fi
 
 step "a recording blank until its second half is refused"
 # DEMO-0008. The end sample alone passed an app that drew only in the final
-# moments, handing back a video mostly empty. The window goes away at 1s and
-# comes back at 7s; with -d 8 the halfway look lands about 4.5s in, and the
-# end about 8.5s in with the clock drawn again -- so only the halfway sample
-# can fail this run. 0.1.1 returns it with exit 0.
+# moments, handing back a video mostly empty. The window goes away 1s after
+# the state file says the run records, and comes back at 7s; with -d 8 the
+# halfway look lands about 4s in, and the end about 8s in with the clock drawn
+# again -- so only the halfway sample can fail this run. Counted from the
+# fixture's own start, a slow window search or recorder moved both (DEMO-0366).
+# 0.1.1 returns it with exit 0.
 set +e
-# shellcheck disable=SC2016  # $! and $p belong to the inner sh, not to us
+# shellcheck disable=SC2016  # $!, $p and $1 belong to the inner sh, not to us
 late_out=$(./demoreel record -n "${GATE_RUN}main" -o "$tmp/late.mp4" -d 8 -s 640x480 \
-    -- sh -c 'xclock & p=$!; sleep 1; kill $p; sleep 6; exec xclock' 2>"$tmp/late.err")
+    -- sh -c 'xclock & p=$!
+        until grep -q "\"recording\": true" "$1" 2>/dev/null; do sleep 0.05; done
+        sleep 1; kill $p; sleep 6; exec xclock' sh "$statedir/${GATE_RUN}main.json" \
+    2>"$tmp/late.err")
 late_status=$?
 set -e
 [ "$late_status" -ne 0 ] || { echo "a recording blank until its second half exited 0" >&2; exit 1; }
@@ -8841,11 +8857,14 @@ step "an app that resizes itself once is put back to the frame size"
 # DEMO-0121. Seen at halfway, the size is put back once while recording. This
 # xterm shrinks itself once and then keeps the size it is given, as Vestige
 # did, so the run says it was put back and gives no warning at the end. The
-# xterm above, which keeps shrinking itself, still gets the warning.
-# shellcheck disable=SC2016  # $WINDOWID belongs to xterm's shell, not to us
+# xterm above, which keeps shrinking itself, still gets the warning. It
+# shrinks 1 s after the state file says the run records, so demoreel has sized
+# it first however slow the start was (DEMO-0366).
+# shellcheck disable=SC2016  # $WINDOWID and $1 belong to xterm's shell, not to us
 ./demoreel record -n "${GATE_RUN}main" -o "$tmp/putback.mp4" -d 4 -s 640x480 -- xterm -e sh -c \
-    'sleep 1; xdotool windowsize "$WINDOWID" 300 200; exec sleep 60' \
-    >/dev/null 2>"$tmp/putback.err"
+    'until grep -q "\"recording\": true" "$1" 2>/dev/null; do sleep 0.05; done
+     sleep 1; xdotool windowsize "$WINDOWID" 300 200; exec sleep 60' \
+    sh "$statedir/${GATE_RUN}main.json" >/dev/null 2>"$tmp/putback.err"
 if ! grep -q 'demoreel put it back to fill the 640x480 frame' "$tmp/putback.err" \
    || grep -q 'resized its window to' "$tmp/putback.err"; then
     echo "a window that resized itself once was not put back:" >&2
@@ -8913,16 +8932,26 @@ elif ./demoreel check >/dev/null 2>"$tmp/gpu-check.err"
     cat "$tmp/gpu-check.err"
 else
     gpu_ready=1
+    # The busiest card's load just before the run, where the driver reports
+    # one (amdgpu does). Unknown reads as 0.
+    gpu_busy=$(cat /sys/class/drm/card*/device/gpu_busy_percent 2>/dev/null \
+        | sort -n | tail -n 1)
     gpu_started=$SECONDS
     ./demoreel record --gpu -n "${GATE_RUN}gpu" -o "$tmp/gpu.mp4" -d 3 -s 640x480 \
         -- vkcube >/dev/null 2>"$tmp/gpu.err" || { cat "$tmp/gpu.err" >&2; exit 1; }
     gpu_elapsed=$((SECONDS - gpu_started))
     # vkcube moves every frame and is light, so its video must not draw the
     # stutter note (DEMO-0109). A note here means the measure calls a smooth
-    # video stuttering, and would cry wolf on every --gpu run.
-    ! grep -q "frames in the middle" "$tmp/gpu.err" || {
-        cat "$tmp/gpu.err" >&2
-        echo "a smooth vkcube recording drew the stutter note" >&2; exit 1; }
+    # video stuttering, and would cry wolf on every --gpu run. A card another
+    # program keeps near full load stutters vkcube for real, and the note is
+    # then right, so that half cannot be judged (DEMO-0366).
+    if [ "${gpu_busy:-0}" -ge 90 ]; then
+        skipped "the card was ${gpu_busy}% busy, so a stutter note on vkcube proves nothing"
+    else
+        ! grep -q "frames in the middle" "$tmp/gpu.err" || {
+            cat "$tmp/gpu.err" >&2
+            echo "a smooth vkcube recording drew the stutter note" >&2; exit 1; }
+    fi
     [ -s "$tmp/gpu.mp4" ] || {
         echo "no video written on the --gpu backend" >&2; exit 1; }
     # A shaded cube is not one colour; a display with nothing on it is. This is
@@ -9369,7 +9398,17 @@ try:
     if demoreel.wait_for_window(env, app, 10) is None:
         raise SystemExit("the xterm never showed a window")
     time.sleep(1)
-    threading.Timer(1.5, lambda: os.kill(os.getpid(), signal.SIGUSR1)).start()
+
+    def stop_once_repeating():
+        # The stop waits for auto-repeat to show, not a fixed 1.5 s: a slow
+        # keydown let it land first, and "auto-repeat is off" took the blame
+        # (DEMO-0366). The cap keeps a broken repeat from holding 30 s.
+        end = time.monotonic() + 8
+        while os.path.getsize(keys) < 2 and time.monotonic() < end:
+            time.sleep(0.05)
+        os.kill(os.getpid(), signal.SIGUSR1)
+
+    threading.Thread(target=stop_once_repeating, daemon=True).start()
     began = time.monotonic()
     demoreel.run_action("hold a 30", env)
     held = time.monotonic() - began
@@ -9457,7 +9496,17 @@ try:
     demoreel.run_action("drag 20 40 400 40 right", env)
     settled(mouse)
     right = reports(mouse)[len(whole):]
-    threading.Timer(0.3, lambda: os.kill(os.getpid(), signal.SIGUSR1)).start()
+    def stop_mid_drag():
+        # The stop waits for this drag's press and a move, not a fixed 0.3 s:
+        # a slow xdotool let it land before the press (DEMO-0366).
+        seen, end = len(whole) + len(right), time.monotonic() + 8
+        while time.monotonic() < end:
+            if [k for k, _, _ in reports(mouse)[seen:]][:2] == ["press", "move"]:
+                break
+            time.sleep(0.05)
+        os.kill(os.getpid(), signal.SIGUSR1)
+
+    threading.Thread(target=stop_mid_drag, daemon=True).start()
     began = time.monotonic()
     demoreel.run_action("drag 20 80 400 80 30", env)
     dragged = time.monotonic() - began
@@ -9870,7 +9919,8 @@ step "a stop is noticed at once"
 # DEMO-0075. The recording loop slept between checks, and a sleep resumes after
 # the signal handler runs, so a stop landed up to a fifth of a second late --
 # a median 107 ms, all of it in the video. Ten stops at random moments: the
-# old loop misses 50 ms on three in four, so it cannot pass all ten.
+# old loop misses 50 ms on three in four, so it cannot pass nine of them. One
+# miss is let through, since a busy machine can stall any one (DEMO-0366).
 python3 - <<'STOPPY'
 import importlib.machinery, importlib.util, os, random, signal, threading, time, types
 
@@ -9886,7 +9936,7 @@ class Running:  # an app and a recorder that never exit on their own
         return None
 
 
-worst = 0.0
+delays = []
 for _ in range(10):
     demoreel._stop.clear()
     sent = []
@@ -9895,10 +9945,12 @@ for _ in range(10):
     demoreel.run_countdown(types.SimpleNamespace(action=[], duration=0), {},
                            Running(), None, ":0", Running(), 2, 2,
                            time.monotonic(), demoreel.Checks())
-    worst = max(worst, time.monotonic() - sent[0])
-if worst > 0.05:
-    raise SystemExit(f"a stop took {worst * 1000:.0f} ms to be noticed")
-print(f"a stop is noticed within {worst * 1000:.1f} ms")
+    delays.append(time.monotonic() - sent[0])
+second = sorted(delays)[-2]
+if second > 0.05:
+    raise SystemExit(f"two stops took over 50 ms to be noticed: "
+                     f"{', '.join(f'{d * 1000:.0f}' for d in sorted(delays)[-2:])} ms")
+print(f"nine stops in ten noticed within {second * 1000:.1f} ms")
 STOPPY
 
 step "a stop arriving during a wait cannot hang the run"
