@@ -96,7 +96,7 @@ Each recording is one child process:
   window's thread waits on a child (INV-13).
 - **If the window dies, the run finishes its video** rather than recording
   until someone runs `demoreel stop`. `record --events` sees to that itself
-  (§ 4.3), because PySide6 6.11's `QProcess` has no `setChildProcessModifier`
+  (§ 4.3), because PySide6 6.12's `QProcess` has no `setChildProcessModifier`
   to set it from the window (measured: `hasattr` is false).
 - **One run at a time per window.** Record is disabled while one runs.
 - **Stop** runs `demoreel stop <run name>` as a second child. That keeps
@@ -509,7 +509,7 @@ DEMO-0253 sets its time and memory budgets.
 ## 14. Open questions
 
 - Does Ubuntu 24.04 package a PySide6 of Qt 6.8 or later? This machine has
-  PySide6 6.11 (`python3 -c "import PySide6; print(PySide6.__version__)"`).
+  PySide6 6.12 (`python3 -c "import PySide6; print(PySide6.__version__)"`).
   Unverified for Ubuntu, Debian, Fedora and Arch. If one lacks it, the gate's
   parity image and that distro's package take PySide6 from elsewhere, or the
   window steps skip there. Settled by DEMO-0091 before the window ships.
