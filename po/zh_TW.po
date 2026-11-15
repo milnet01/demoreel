@@ -9,7 +9,7 @@ msgstr ""
 "X-Demoreel-Review: draft\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
-msgstr "{where}：文字 {words} 與 {first} 同時顯示在同一位置，但一個有底條，另一個沒有。疊在一起的文字要嘛都有底條，要嘛都沒有。"
+msgstr "{where}：文字 {words} 與 {first} 同時顯示在同一位置，但一個有底色帶，另一個沒有。疊在一起的文字要嘛都有底色帶，要嘛都沒有。"
 
 msgid "{where}: the text {words} does not fit: with the texts stacked above it, on screen at the same time, it is taller than the frame. Give them a smaller size, or show them at different times."
 msgstr "{where}：文字 {words} 放不下：加上同時疊在它上方的文字，它比畫面還高。請把它們調小，或在不同時間顯示。"
@@ -51,7 +51,7 @@ msgstr "無效的選擇：%(value)r（請從 %(choices)s 中選擇）"
 
 #. argparse formats this text with %
 msgid "%(prog)s: error: %(message)s\n"
-msgstr "%(prog)s: 錯誤: %(message)s\n"
+msgstr "%(prog)s: 錯誤：%(message)s\n"
 
 #. argparse formats this text with %
 msgid "This translation is a draft and has not yet been checked by a native speaker."
@@ -127,7 +127,7 @@ msgid ""
 "the app resized its window to {size} at {place}, so it no longer fills the {frame} frame and part of the video is cropped or empty.\n"
 "  Record at the app's own size with -s {size}."
 msgstr ""
-"應用程式在 {place} 將視窗大小改為 {size}，所以它不再填滿 {frame} 的畫面，影片有一部分被裁掉或是空白。\n"
+"應用程式將視窗大小改為 {size}，位置在 {place}，所以它不再填滿 {frame} 的畫面，影片有一部分被裁掉或是空白。\n"
 "  請用 -s {size} 以應用程式自己的大小錄影。"
 
 msgid ""
@@ -216,7 +216,7 @@ msgid "pactl failed: {text}"
 msgstr "pactl 失敗：{text}"
 
 msgid "the sound server does not list exactly one output named {sink}."
-msgstr "聲音伺服器列出的名為 {sink} 的輸出不是恰好一個。"
+msgstr "聲音伺服器並未恰好列出一個名為 {sink} 的輸出。"
 
 msgid ""
 "--audio needs a private sound output, and none could be made.\n"
@@ -329,7 +329,7 @@ msgid ""
 "    screen while it starts: --settle waits for the first picture."
 msgstr ""
 "它還沒開始繪製。使用 GPU 的應用程式在啟動時可能會\n"
-"    黑屏好幾秒：--settle 會等到第一個畫面出現。"
+"    停在黑畫面好幾秒：--settle 會等到第一個畫面出現。"
 
 msgid ""
 "It needs the GPU, and Xvfb has none. An OpenGL or Vulkan app\n"
@@ -514,7 +514,7 @@ msgid "the recording ended before it started recording, so there is no video to 
 msgstr "錄影在真正開始錄之前就結束了，所以沒有可以停止的影片。"
 
 msgid "{option} belongs to a --text, and none comes before it. caption never cuts the video; use trim."
-msgstr "{option} 屬於某個 --text，但它前面一個也沒有。caption 從不剪輯影片；請改用 trim。"
+msgstr "{option} 屬於某個 --text，但它前面一個也沒有。caption 從不修剪影片；請改用 trim。"
 
 msgid "{where}: there is no font file {path}"
 msgstr "{where}：沒有字型檔 {path}"
@@ -945,7 +945,7 @@ msgstr "預先寫好的步驟，可重複使用，依序執行：{steps}"
 
 #. argparse formats this text with %
 msgid "read the scripted steps from FILE, one per line, or from standard input for -; keeps typed text out of the process list. Not with -a"
-msgstr "從 FILE 讀取預先寫好的步驟，每行一個；若為 - 則從標準輸入讀取。這樣輸入的文字就不會出現在程序清單中。不能與 -a 一起使用"
+msgstr "從 FILE 讀取預先寫好的步驟，每行一個；若為 - 則從標準輸入讀取。這樣輸入的文字就不會出現在處理程序清單中。不能與 -a 一起使用"
 
 #. argparse formats this text with %
 msgid "keep the app's own output in PATH; otherwise it goes to this terminal's stderr. Useful when the app prints whether it drew the real thing, which no recording check here can tell"
@@ -1089,7 +1089,7 @@ msgstr "剪掉影片的開頭和結尾。"
 
 #. argparse formats this text with %
 msgid "the video to cut"
-msgstr "要剪輯的影片"
+msgstr "要修剪的影片"
 
 #. argparse formats this text with %
 msgid "where the kept part starts (default: the start)"
@@ -1137,11 +1137,11 @@ msgstr "用於它前面的 --text：它的高度，以畫面高度的百分比�
 
 #. argparse formats this text with %
 msgid "put videos end to end"
-msgstr "把影片頭尾相接"
+msgstr "把多部影片頭尾相接"
 
 #. argparse formats this text with %
 msgid "put videos end to end."
-msgstr "把影片頭尾相接。"
+msgstr "把多部影片頭尾相接。"
 
 #. argparse formats this text with %
 msgid "two or more videos, in order"
@@ -1205,7 +1205,7 @@ msgstr "檢查到這裡為止（預設：結尾）"
 
 #. argparse formats this text with %
 msgid "report a stretch with no change longer than this (default: 1)"
-msgstr "回報沒有變化且比這個長度更久的片段（預設：1）"
+msgstr "回報沒有變化、且長於此值的時段（預設：1）"
 
 #. argparse formats this text with %
 msgid "look only at this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
@@ -1255,7 +1255,7 @@ msgid "{option} takes a whole number of at least {least}, not {value}."
 msgstr "{option} 需要一個不小於 {least} 的整數，而不是 {value}。"
 
 msgid "a sheet holds at most {most} frames, and these times ask for more. Take a longer --every, or fewer --at times."
-msgstr "一張拼圖最多容納 {most} 個影格，而這些時間點要求的更多。請使用更長的 --every，或減少 --at 的時間點。"
+msgstr "一張拼貼圖最多容納 {most} 個影格，而這些時間點要求的更多。請使用更長的 --every，或減少 --at 的時間點。"
 
 msgid "could not put the frames together into one picture."
 msgstr "無法把這些影格拼成一張圖片。"
@@ -1390,40 +1390,40 @@ msgid "--name takes up to {most} plain letters, digits, dots, underscores and hy
 msgstr "--name 最多接受 {most} 個一般字母、數字、點、底線和連字號，並以字母、數字或底線開頭，不接受 {name}。"
 
 msgid "{taken} was taken by the time the file was ready, so the file is {output}."
-msgstr "檔案就緒時 {taken} 已被占用，所以檔案是 {output}。"
+msgstr "檔案就緒時 {taken} 已被佔用，所以檔案是 {output}。"
 
 msgid "{output} was left as it was, and this run's video is in {part}."
 msgstr "{output} 維持原樣，本次執行的影片在 {part}。"
 
 msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
-msgstr "讀取 {path} 使用了超過 {size} GB 記憶體,即本機記憶體的一半,因此已停止。"
+msgstr "讀取 {path} 使用了超過 {size} GB 記憶體，即本機記憶體的一半，因此已停止。"
 
 msgid "{where}: {path} is a list that points at other files, such as a playlist, and demoreel does not follow one."
-msgstr "{where}:{path} 是指向其他檔案的清單,例如播放清單,demoreel 不會跟隨這種清單。"
+msgstr "{where}：{path} 是指向其他檔案的清單，例如播放清單，demoreel 不會跟隨這種清單。"
 
 msgid "ffmpeg did not say which formats it reads, so nothing was read."
-msgstr "ffmpeg 沒有說明它能讀取哪些格式,因此沒有讀取任何內容。"
+msgstr "ffmpeg 沒有說明它能讀取哪些格式，因此沒有讀取任何內容。"
 
 msgid "{where}: this makes the film {seconds} seconds long, and a film may last at most {most} seconds, which is {hours} hours."
-msgstr "{where}:這會使影片長達 {seconds} 秒,而影片最長為 {most} 秒,即 {hours} 小時。"
+msgstr "{where}：這會使影片長達 {seconds} 秒，而影片最長為 {most} 秒，即 {hours} 小時。"
 
 msgid "a film's frame rate is at most {most} a second, and this one would be {rate}."
-msgstr "影片的影格率最高為每秒 {most} 格,而這裡會是 {rate}。"
+msgstr "影片的影格率最高為每秒 {most} 格，而這裡會是 {rate}。"
 
 msgid "the disk holding {path} is nearly full, so the film was stopped before it filled it."
-msgstr "存放 {path} 的磁碟快滿了,因此在寫滿之前停止了影片。"
+msgstr "存放 {path} 的磁碟快滿了，因此在寫滿之前停止了影片。"
 
 msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
-msgstr "{where}:{path} 為 {size},太窄或太扁,無法在這種大小的視窗中顯示。請給它更大的視窗。"
+msgstr "{where}：{path} 為 {size}，太窄或太扁，無法在這種大小的視窗中顯示。請給它更大的視窗。"
 
 msgid "scene {number}: a card with no picture, {start} to {end}"
-msgstr "場景 {number}:沒有圖片的卡片,{start} 到 {end}"
+msgstr "場景 {number}：沒有圖片的卡片，{start} 到 {end}"
 
 msgid ""
 "demoreel keeps its files in {path}, and ffmpeg's filters cannot carry a character in that path.\n"
 "  Point XDG_RUNTIME_DIR at a plainer one."
 msgstr ""
-"demoreel 把檔案放在 {path},而該路徑中有 ffmpeg 濾鏡無法處理的字元。\n"
+"demoreel 把檔案放在 {path}，而該路徑中有 ffmpeg 濾鏡無法處理的字元。\n"
 "  請把 XDG_RUNTIME_DIR 指向更簡單的路徑。"
 
 #. translators: slice, slide and split are edit-script words and stay in English.
@@ -1506,14 +1506,14 @@ msgstr "{where}：每一行要以 clip、card、split、slice、slide、text、z
 
 #. translators: ring is an edit-script word and stays in English.
 msgid "{where}: the ring's point {x} {y} is outside {path}, which is {size}."
-msgstr "{where}：圓環的位置 {x} {y} 在 {path} 之外，該檔案為 {size}。"
+msgstr "{where}：ring 的位置 {x} {y} 在 {path} 之外，該檔案為 {size}。"
 
 msgid "{where}: the ring at {at} is not inside its clip ({start} to {end})."
-msgstr "{where}：{at} 處的圓環不在其片段內（{start} 到 {end}）。"
+msgstr "{where}：{at} 處的 ring 不在其片段內（{start} 到 {end}）。"
 
 #. translators: hold is an edit-script word and stays in English.
 msgid "{where}: the ring at {at} lasts {seconds} seconds, past the clip's own frames, which end at {end}; the hold would freeze it. Move it earlier."
-msgstr "{where}：{at} 處的圓環持續 {seconds} 秒，超出了片段本身的影格（在 {end} 結束）；hold 會把它定住。請把它提前。"
+msgstr "{where}：{at} 處的 ring 持續 {seconds} 秒，超出了片段本身的影格（在 {end} 結束）；hold 會把它定住。請把它提前。"
 
 #. translators: x and y are edit-script words and stay in English.
 msgid "{where}: a text's x and y are given together, and this one has only {word}."
@@ -1525,10 +1525,10 @@ msgstr "{where}：文字的 {word} 是畫面的百分比，應介於 0 到 100 �
 
 #. translators: {word} is at or band; x, y, at and band are edit-script words and stay in English.
 msgid "{where}: a text placed with x and y takes no {word}: it sits at its point, and has no band."
-msgstr "{where}：用 x 和 y 放置的文字不接受 {word}：它位於自己的點上，沒有底條。"
+msgstr "{where}：用 x 和 y 放置的文字不接受 {word}：它位於自己的點上，沒有底色帶。"
 
 msgid "{where}: the text {words} at x {x} y {y} reaches past the frame's edge. Move it in, or give it a smaller size."
-msgstr "{where}：位於 x {x} y {y} 的文字 {words} 超出了畫面邊緣。請把它往內移，或給它更小的 size。"
+msgstr "{where}：位於 x {x} y {y} 的文字 {words} 超出了畫面邊緣。請把它往內移，或給它更小的大小。"
 
 #. translators: {names} are the drawn backgrounds' names, which stay in English.
 msgid "{where}: a background is a colour written #RRGGBB, like {example}, two to {most} of them joined by commas for a moving gradient, or one of {names}, not {value}."

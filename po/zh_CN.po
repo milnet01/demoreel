@@ -51,7 +51,7 @@ msgstr "无效的选择：%(value)r（可选值：%(choices)s）"
 
 #. argparse formats this text with %
 msgid "%(prog)s: error: %(message)s\n"
-msgstr "%(prog)s: 错误: %(message)s\n"
+msgstr "%(prog)s: 错误：%(message)s\n"
 
 #. argparse formats this text with %
 msgid "This translation is a draft and has not yet been checked by a native speaker."
@@ -127,7 +127,7 @@ msgid ""
 "the app resized its window to {size} at {place}, so it no longer fills the {frame} frame and part of the video is cropped or empty.\n"
 "  Record at the app's own size with -s {size}."
 msgstr ""
-"应用在 {place} 将窗口大小改为 {size}，因此窗口不再填满 {frame} 的画面，视频的一部分被裁掉或是空白。\n"
+"应用把窗口大小改为 {size}，位置在 {place}，因此窗口不再填满 {frame} 的画面，视频的一部分被裁掉或是空白。\n"
 "  请用 -s {size} 按应用自身的大小录制。"
 
 msgid ""
@@ -1396,34 +1396,34 @@ msgid "{output} was left as it was, and this run's video is in {part}."
 msgstr "{output} 保持原样，本次运行的视频在 {part}。"
 
 msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
-msgstr "读取 {path} 使用了超过 {size} GB 内存,即本机内存的一半,因此已停止。"
+msgstr "读取 {path} 使用了超过 {size} GB 内存，即本机内存的一半，因此已停止。"
 
 msgid "{where}: {path} is a list that points at other files, such as a playlist, and demoreel does not follow one."
-msgstr "{where}:{path} 是指向其他文件的列表,例如播放列表,demoreel 不会跟随这种列表。"
+msgstr "{where}：{path} 是指向其他文件的列表（例如播放列表），demoreel 不会去读取这类列表所指的文件。"
 
 msgid "ffmpeg did not say which formats it reads, so nothing was read."
-msgstr "ffmpeg 没有说明它能读取哪些格式,因此没有读取任何内容。"
+msgstr "ffmpeg 没有说明它能读取哪些格式，因此没有读取任何内容。"
 
 msgid "{where}: this makes the film {seconds} seconds long, and a film may last at most {most} seconds, which is {hours} hours."
-msgstr "{where}:这会使影片长达 {seconds} 秒,而影片最长为 {most} 秒,即 {hours} 小时。"
+msgstr "{where}：这会使影片长达 {seconds} 秒，而影片最长为 {most} 秒，即 {hours} 小时。"
 
 msgid "a film's frame rate is at most {most} a second, and this one would be {rate}."
-msgstr "影片的帧率最高为每秒 {most} 帧,而这里会是 {rate}。"
+msgstr "影片的帧率最高为每秒 {most} 帧，而这里会是 {rate}。"
 
 msgid "the disk holding {path} is nearly full, so the film was stopped before it filled it."
-msgstr "存放 {path} 的磁盘快满了,因此在写满之前停止了影片。"
+msgstr "存放 {path} 的磁盘快满了，因此在磁盘被写满之前停止了影片的制作。"
 
 msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
-msgstr "{where}:{path} 为 {size},太窄或太扁,无法在这种大小的窗口中显示。请给它更大的窗口。"
+msgstr "{where}：{path} 为 {size}，太窄或太扁，无法在这种大小的窗口中显示。请给它更大的窗口。"
 
 msgid "scene {number}: a card with no picture, {start} to {end}"
-msgstr "场景 {number}:没有图片的卡片,{start} 到 {end}"
+msgstr "场景 {number}：没有图片的卡片，{start} 到 {end}"
 
 msgid ""
 "demoreel keeps its files in {path}, and ffmpeg's filters cannot carry a character in that path.\n"
 "  Point XDG_RUNTIME_DIR at a plainer one."
 msgstr ""
-"demoreel 把文件放在 {path},而该路径中有 ffmpeg 滤镜无法处理的字符。\n"
+"demoreel 把文件放在 {path}，而该路径中有 ffmpeg 滤镜无法处理的字符。\n"
 "  请把 XDG_RUNTIME_DIR 指向更简单的路径。"
 
 #. translators: slice, slide and split are edit-script words and stay in English.
@@ -1506,14 +1506,14 @@ msgstr "{where}：每一行应以 clip、card、split、slice、slide、text、z
 
 #. translators: ring is an edit-script word and stays in English.
 msgid "{where}: the ring's point {x} {y} is outside {path}, which is {size}."
-msgstr "{where}：圆环的位置 {x} {y} 在 {path} 之外，该文件为 {size}。"
+msgstr "{where}：ring 的位置 {x} {y} 在 {path} 之外，该文件为 {size}。"
 
 msgid "{where}: the ring at {at} is not inside its clip ({start} to {end})."
-msgstr "{where}：{at} 处的圆环不在其片段内（{start} 到 {end}）。"
+msgstr "{where}：{at} 处的 ring 不在其片段内（{start} 到 {end}）。"
 
 #. translators: hold is an edit-script word and stays in English.
 msgid "{where}: the ring at {at} lasts {seconds} seconds, past the clip's own frames, which end at {end}; the hold would freeze it. Move it earlier."
-msgstr "{where}：{at} 处的圆环持续 {seconds} 秒，超出了片段自身的帧（在 {end} 结束）；hold 会把它定住。请把它提前。"
+msgstr "{where}：{at} 处的 ring 持续 {seconds} 秒，超出了片段自身的帧（在 {end} 结束）；hold 会把它定住。请把它提前。"
 
 #. translators: x and y are edit-script words and stay in English.
 msgid "{where}: a text's x and y are given together, and this one has only {word}."
@@ -1528,7 +1528,7 @@ msgid "{where}: a text placed with x and y takes no {word}: it sits at its point
 msgstr "{where}：用 x 和 y 放置的文字不接受 {word}：它位于自己的点上，没有底条。"
 
 msgid "{where}: the text {words} at x {x} y {y} reaches past the frame's edge. Move it in, or give it a smaller size."
-msgstr "{where}：位于 x {x} y {y} 的文字 {words} 超出了画面边缘。请把它往里移，或给它更小的 size。"
+msgstr "{where}：位于 x {x} y {y} 的文字 {words} 超出了画面边缘。请把它往里移，或给它更小的大小。"
 
 #. translators: {names} are the drawn backgrounds' names, which stay in English.
 msgid "{where}: a background is a colour written #RRGGBB, like {example}, two to {most} of them joined by commas for a moving gradient, or one of {names}, not {value}."

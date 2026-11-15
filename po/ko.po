@@ -12,7 +12,7 @@ msgid "{where}: the text {words} is on screen with {first} at the same place, an
 msgstr "{where}: 텍스트 {words}이(가) {first}와(과) 같은 자리에 함께 표시되는데, 하나는 띠가 있고 다른 하나는 없습니다. 함께 쌓이는 텍스트는 모두 띠가 있거나 모두 없어야 합니다."
 
 msgid "{where}: the text {words} does not fit: with the texts stacked above it, on screen at the same time, it is taller than the frame. Give them a smaller size, or show them at different times."
-msgstr "{where}: 텍스트 {words}이(가) 들어가지 않습니다. 같은 시간에 위에 쌓인 텍스트와 합치면 화면보다 높습니다. 크기를 줄이거나 다른 시간에 보여 주세요."
+msgstr "{where}: 텍스트 {words}이(가) 들어가지 않습니다. 같은 시간에 위에 쌓인 텍스트와 합치면 프레임보다 높습니다. 크기를 줄이거나 다른 시간에 보여 주십시오."
 
 msgid "ended by {signal} before it finished, so there is nothing to hand back."
 msgstr "끝나기 전에 {signal} 신호로 종료되어 돌려줄 결과가 없습니다."
@@ -127,7 +127,7 @@ msgid ""
 "the app resized its window to {size} at {place}, so it no longer fills the {frame} frame and part of the video is cropped or empty.\n"
 "  Record at the app's own size with -s {size}."
 msgstr ""
-"앱이 {place}에서 창 크기를 {size}(으)로 바꾸어 더 이상 {frame} 프레임을 채우지 않으므로, 동영상 일부가 잘리거나 비어 있습니다.\n"
+"앱이 {place} 위치에서 창 크기를 {size}(으)로 바꾸어 더 이상 {frame} 프레임을 채우지 않으므로, 동영상 일부가 잘리거나 비어 있습니다.\n"
 "  -s {size}(으)로 앱 자체 크기에 맞춰 녹화하십시오."
 
 msgid ""
@@ -184,7 +184,7 @@ msgid ""
 "could not put the sound in step with the picture: the recorder's log does not say when each started.\n"
 "  What was recorded is kept in {part}, and the log is {log}."
 msgstr ""
-"소리를 화면과 맞추지 못했습니다: 녹화 프로그램의 로그에 각각 언제 시작했는지가 나와 있지 않습니다.\n"
+"소리를 화면과 맞추지 못했습니다: 녹화기의 로그에 각각 언제 시작했는지가 나와 있지 않습니다.\n"
 "  녹화된 내용은 {part}에 보관되어 있으며, 로그는 {log}입니다."
 
 msgid ""
@@ -358,7 +358,7 @@ msgid "recording, {seconds}s left"
 msgstr "녹화 중, {seconds}초 남음"
 
 msgid "recording for {time} (Ctrl+C to finish)"
-msgstr "{time} 동안 녹화 중 (Ctrl+C로 끝내기)"
+msgstr "녹화 중, {time} 지남 (Ctrl+C로 끝내기)"
 
 msgid "the app closed; ending the recording."
 msgstr "앱이 닫혔습니다. 녹화를 끝냅니다."
@@ -377,10 +377,10 @@ msgid "The recorder most likely stopped before it finished the file. See {log}"
 msgstr "녹화기가 파일을 마무리하기 전에 멈췄을 가능성이 큽니다. {log}을(를) 보십시오"
 
 msgid "the virtual display was blank halfway, so at least half of it is a flat colour: {output}"
-msgstr "가상 디스플레이가 중간에 비어 있었으므로 적어도 절반은 단색입니다: {output}"
+msgstr "가상 디스플레이가 중간에 비어 있었으므로 동영상의 적어도 절반이 단색입니다: {output}"
 
 msgid "the virtual display was blank at the end, so it ends on a flat colour: {output}"
-msgstr "가상 디스플레이가 끝에 비어 있었으므로 단색으로 끝납니다: {output}"
+msgstr "가상 디스플레이가 끝에 비어 있었으므로 동영상이 단색으로 끝납니다: {output}"
 
 msgid ""
 "could not sample the virtual display to check {output} is not blank,\n"
@@ -400,14 +400,14 @@ msgid ""
 "the video is a flat colour halfway, though the private screen was not: {output}\n"
 "  The recorder captured something other than the screen. See {log}"
 msgstr ""
-"비공개 화면은 그렇지 않았는데 동영상이 중간에 단색입니다: {output}\n"
+"비공개 화면은 단색이 아니었는데 동영상이 중간에 단색입니다: {output}\n"
 "  녹화기가 화면이 아닌 다른 것을 캡처했습니다. {log}을(를) 보십시오"
 
 msgid ""
 "the video is a flat colour at the end, though the private screen was not: {output}\n"
 "  The recorder captured something other than the screen. See {log}"
 msgstr ""
-"비공개 화면은 그렇지 않았는데 동영상이 끝에 단색입니다: {output}\n"
+"비공개 화면은 단색이 아니었는데 동영상이 끝에 단색입니다: {output}\n"
 "  녹화기가 화면이 아닌 다른 것을 캡처했습니다. {log}을(를) 보십시오"
 
 msgid ""
@@ -458,7 +458,7 @@ msgid "Its display log is kept in {folder}"
 msgstr "디스플레이 로그는 {folder}에 보관되어 있습니다"
 
 msgid "missing {programs}"
-msgstr "없음: {programs}"
+msgstr "없는 프로그램: {programs}"
 
 msgid "this ffmpeg has no libx264, which every recording uses."
 msgstr "이 ffmpeg에는 모든 녹화에 쓰이는 libx264가 없습니다."
@@ -467,7 +467,7 @@ msgid "wf-recorder loads {library}, which has no libx264, so it cannot write the
 msgstr "wf-recorder가 불러오는 {library}에는 libx264가 없어서 동영상을 쓸 수 없습니다."
 
 msgid "Packman's build of that library has libx264. Install it with:"
-msgstr "Packman에서 빌드한 이 라이브러리에는 libx264가 있습니다. 다음으로 설치하세요:"
+msgstr "Packman에서 빌드한 이 라이브러리에는 libx264가 있습니다. 다음 명령으로 설치하십시오:"
 
 msgid "no graphics render node in /dev/dri, so there is no GPU for it to use."
 msgstr "/dev/dri에 그래픽 렌더 노드가 없어 쓸 수 있는 GPU가 없습니다."
@@ -629,7 +629,7 @@ msgid "this machine cannot draw text on a video: ffmpeg needs its drawtext filte
 msgstr "이 컴퓨터는 동영상에 텍스트를 그릴 수 없습니다: ffmpeg에 drawtext 필터와 글꼴이 필요합니다."
 
 msgid "{where}: a zoom's {word} is a percentage of the picture, from 0 to 100, not {value}."
-msgstr "{where}: zoom의 {word}는 그림에서 차지하는 비율(퍼센트)로, 0에서 100 사이입니다. {value}은(는) 안 됩니다."
+msgstr "{where}: zoom의 {word}은(는) 그림에서 차지하는 비율(퍼센트)로, 0에서 100 사이입니다. {value}은(는) 안 됩니다."
 
 msgid "{where}: the zoom is asked to run from {start} to {end}, which is not inside its clip ({scene_start} to {scene_end})."
 msgstr "{where}: zoom을 {start}부터 {end}까지 하라고 했지만, 이는 클립 범위({scene_start}부터 {scene_end}까지) 밖입니다."
@@ -685,13 +685,13 @@ msgid "{where}: background on a clip colours the room round its window, and this
 msgstr "{where}: 클립의 background는 창 주위 공간의 색을 정하는데, 이 클립에는 창이 없습니다."
 
 msgid "{where}: {word} acts on a clip's window, and this clip has no window."
-msgstr "{where}: {word}는 클립의 창에 작용하는데, 이 클립에는 창이 없습니다."
+msgstr "{where}: {word}은(는) 클립의 창에 작용하는데, 이 클립에는 창이 없습니다."
 
 msgid "{where}: push is how much the window grows, in percent, from 0 to {high}, not {value}."
 msgstr "{where}: push는 창이 커지는 비율(퍼센트)로, 0에서 {high} 사이입니다. {value}은(는) 안 됩니다."
 
 msgid "{where}: window {window} grown by push {push} is larger than the room it sits in. Make one of them smaller."
-msgstr "{where}: window {window}을(를) push {push}만큼 키우면 놓인 공간보다 커집니다. 둘 중 하나를 줄이세요."
+msgstr "{where}: window {window}을(를) push {push}만큼 키우면 놓인 공간보다 커집니다. 둘 중 하나를 줄이십시오."
 
 msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
 msgstr "{where}: window는 공간에서 차지하는 비율(퍼센트)로, {low}에서 {high} 사이입니다. {value}은(는) 안 됩니다."
@@ -759,7 +759,7 @@ msgid "{where}: {path} is silent all through."
 msgstr "{where}: {path}은(는) 처음부터 끝까지 무음입니다."
 
 msgid "{where}: the music at level {level} would peak above {peak} dB, so it plays at level {reached} instead."
-msgstr "{where}: level {level}에서는 음악의 최고점이 {peak} dB를 넘으므로, 대신 level {reached}로 재생합니다."
+msgstr "{where}: level {level}에서는 음악의 최고점이 {peak} dB를 넘으므로, 대신 level {reached}(으)로 재생합니다."
 
 #. translators: {name} is a file name; the times are seconds.
 msgid "{where}: the sound {name} is asked to play at {at}, which is not inside its scene ({scene_start} to {scene_end})."
@@ -814,7 +814,7 @@ msgid "making {output}, {seconds} seconds at {size}"
 msgstr "{output} 만드는 중, {seconds}초, {size}"
 
 msgid "ffmpeg used more than {size} GB of memory making the film, half this machine's, so it was stopped."
-msgstr "ffmpeg가 영상을 만드는 데 이 컴퓨터 메모리의 절반인 {size} GB를 넘게 사용해서 중지했습니다."
+msgstr "ffmpeg이 영상을 만드는 데 이 컴퓨터 메모리의 절반인 {size} GB를 넘게 사용해서 중지했습니다."
 
 msgid "ffmpeg could not make the film."
 msgstr "ffmpeg이 영상을 만들지 못했습니다."
@@ -1165,7 +1165,7 @@ msgstr "보여 줄 그림. .gif나 애니메이션 .png는 재생됨"
 
 #. argparse formats this text with %
 msgid "how many seconds the card lasts (default: {seconds})"
-msgstr "카드가 지속되는 초 (기본값: {seconds})"
+msgstr "card가 지속되는 초 (기본값: {seconds})"
 
 #. argparse formats this text with %
 msgid "one line of text"
@@ -1255,7 +1255,7 @@ msgid "{option} takes a whole number of at least {least}, not {value}."
 msgstr "{option}에는 {value}이(가) 아니라 {least} 이상의 정수를 주어야 합니다."
 
 msgid "a sheet holds at most {most} frames, and these times ask for more. Take a longer --every, or fewer --at times."
-msgstr "시트 하나에는 프레임을 최대 {most}개까지 넣을 수 있는데, 이 시점들은 그보다 많습니다. --every를 더 길게 하거나 --at 시점을 줄이세요."
+msgstr "시트 하나에는 프레임을 최대 {most}개까지 넣을 수 있는데, 이 시점들은 그보다 많습니다. --every를 더 길게 하거나 --at 시점을 줄이십시오."
 
 msgid "could not put the frames together into one picture."
 msgstr "프레임들을 그림 하나로 합칠 수 없었습니다."
@@ -1274,7 +1274,7 @@ msgstr "프레임들을 가져올 동영상"
 
 #. argparse formats this text with %
 msgid "take a frame every SECONDS, from the start (default: {frames} frames, spread evenly over the video)"
-msgstr "처음부터 SECONDS초마다 프레임 하나를 가져옴 (기본값: 영상 전체에 고르게 {frames}프레임)"
+msgstr "처음부터 SECONDS초마다 프레임 하나를 가져옴 (기본값: 동영상 전체에 고르게 {frames}프레임)"
 
 #. argparse formats this text with %
 msgid "take the frames on screen at these moments, like 1,4.5,9"
@@ -1319,7 +1319,7 @@ msgid "the thumbnail would be {size} MB, and YouTube takes one of at most 2 MB. 
 msgstr "썸네일이 {size}MB가 되는데, YouTube는 2MB까지만 받습니다. 같은 프레임을 .jpg로 하면 더 작습니다."
 
 msgid "the title {words} is {wide} pixels wide, and the thumbnail has room for {room}. Shorten it."
-msgstr "제목 {words}은(는) 너비가 {wide}픽셀인데, 썸네일에는 {room}픽셀만큼의 공간이 있습니다. 줄이세요."
+msgstr "제목 {words}은(는) 너비가 {wide}픽셀인데, 썸네일에는 {room}픽셀만큼의 공간이 있습니다. 줄이십시오."
 
 #. argparse formats this text with %
 msgid "The words a script can use are in README.md and in man demoreel, under EDIT SCRIPT."
@@ -1393,10 +1393,10 @@ msgid "{taken} was taken by the time the file was ready, so the file is {output}
 msgstr "파일이 준비되었을 때 {taken}은(는) 이미 사용 중이어서 파일은 {output}입니다."
 
 msgid "{output} was left as it was, and this run's video is in {part}."
-msgstr "{output}은(는) 그대로 두었고, 이번 실행의 영상은 {part}에 있습니다."
+msgstr "{output}은(는) 그대로 두었고, 이번 실행의 동영상은 {part}에 있습니다."
 
 msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
-msgstr "{path}을(를) 읽는 데 메모리를 {size} GB 넘게 사용했습니다. 이 컴퓨터의 절반에 해당하므로 중지했습니다."
+msgstr "{path}을(를) 읽는 데 이 컴퓨터 메모리의 절반인 {size} GB를 넘게 사용해서 중지했습니다."
 
 msgid "{where}: {path} is a list that points at other files, such as a playlist, and demoreel does not follow one."
 msgstr "{where}: {path}은(는) 재생 목록처럼 다른 파일을 가리키는 목록이며, demoreel은 이런 목록을 따라가지 않습니다."
@@ -1408,23 +1408,23 @@ msgid "{where}: this makes the film {seconds} seconds long, and a film may last 
 msgstr "{where}: 이렇게 하면 영상 길이가 {seconds}초가 되는데, 영상은 최대 {most}초({hours}시간)까지만 가능합니다."
 
 msgid "a film's frame rate is at most {most} a second, and this one would be {rate}."
-msgstr "영상의 프레임 속도는 초당 최대 {most}인데, 이 영상은 {rate}이 됩니다."
+msgstr "영상의 프레임 레이트는 초당 최대 {most}인데, 이 영상은 {rate}이(가) 됩니다."
 
 msgid "the disk holding {path} is nearly full, so the film was stopped before it filled it."
 msgstr "{path}이(가) 있는 디스크가 거의 가득 차서, 가득 차기 전에 영상 제작을 중지했습니다."
 
 msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
-msgstr "{where}: {path}은(는) {size}로, 이 크기의 창에 표시하기에는 너무 좁거나 납작합니다. 창을 더 크게 하세요."
+msgstr "{where}: {path}은(는) {size}(으)로, 이 크기의 창에 표시하기에는 너무 좁거나 납작합니다. 창을 더 크게 하십시오."
 
 msgid "scene {number}: a card with no picture, {start} to {end}"
-msgstr "장면 {number}: 그림 없는 카드, {start}부터 {end}까지"
+msgstr "장면 {number}: 그림 없는 card, {start}부터 {end}까지"
 
 msgid ""
 "demoreel keeps its files in {path}, and ffmpeg's filters cannot carry a character in that path.\n"
 "  Point XDG_RUNTIME_DIR at a plainer one."
 msgstr ""
 "demoreel은 파일을 {path}에 두는데, 그 경로에 ffmpeg 필터가 다룰 수 없는 문자가 있습니다.\n"
-"  XDG_RUNTIME_DIR을 더 단순한 경로로 지정하세요."
+"  XDG_RUNTIME_DIR을 더 단순한 경로로 지정하십시오."
 
 #. translators: slice, slide and split are edit-script words and stay in English.
 msgid "{where}: a slice or a slide line belongs to the split above it, and the line above is not part of a split."
@@ -1436,11 +1436,11 @@ msgstr "{where}: slice 뒤에는 동영상 파일이 있어야 합니다."
 
 #. translators: slice is an edit-script word and stays in English.
 msgid "{where}: a split shows {low} to {most} videos, each on a slice line, and this one has {count}."
-msgstr "{where}: split는 slice 줄마다 동영상을 하나씩 {low}개에서 {most}개까지 보여 주는데, 여기에는 {count}개가 있습니다."
+msgstr "{where}: split은 slice 줄마다 동영상을 하나씩 {low}개에서 {most}개까지 보여 주는데, 여기에는 {count}개가 있습니다."
 
 #. translators: show is an edit-script word and stays in English.
 msgid "{where}: show is how many slices fill the frame, a whole number from 1 to {most}, not {value}."
-msgstr "{where}: show는 화면을 채우는 slice의 수로, {value}이(가) 아니라 1에서 {most} 사이의 정수입니다."
+msgstr "{where}: show는 프레임을 채우는 slice의 수로, {value}이(가) 아니라 1에서 {most} 사이의 정수입니다."
 
 #. translators: centre is an edit-script word and stays in English.
 msgid "{where}: a slice's centre is a percentage of the picture across, from 0 to 100, not {value}."
@@ -1450,7 +1450,7 @@ msgid "{where}: {path} is {size}, and {first} above it is {other}. The slices of
 msgstr "{where}: {path}의 크기는 {size}이고 위의 {first}의 크기는 {other}입니다. split의 slice는 모두 크기가 같아야 합니다."
 
 msgid "{where}: {path} plays at {rate} frames a second, and {first} above it at {other}. The slices of a split all play at one rate."
-msgstr "{where}: {path}은(는) 초당 {rate}프레임이고 위의 {first}은(는) {other}입니다. split의 slice는 모두 프레임률이 같아야 합니다."
+msgstr "{where}: {path}은(는) 초당 {rate}프레임이고 위의 {first}은(는) {other}입니다. split의 slice는 모두 프레임 레이트가 같아야 합니다."
 
 msgid "{where}: {path} and {first} hold different numbers of frames ({count} and {other}). The slices of a split all hold the same."
 msgstr "{where}: {path}과(와) {first}의 프레임 수가 다릅니다({count}, {other}). split의 slice는 모두 프레임 수가 같아야 합니다."
@@ -1480,7 +1480,7 @@ msgid ""
 "  Shorten it, or give it a smaller size: about {fits} would fit."
 msgstr ""
 "{where}: 레이블 {words}은(는) 크기 {size}에서 너비가 {wide}픽셀인데, slice에는 {room}만큼의 공간이 있습니다.\n"
-"  줄이거나 크기를 작게 하세요. 약 {fits}이면 들어갑니다."
+"  줄이거나 크기를 작게 하십시오. 약 {fits}(이)면 들어갑니다."
 
 msgid "scene {number}: a split of {count} videos, {start} to {end}"
 msgstr "장면 {number}: 동영상 {count}개의 split, {start}부터 {end}까지"
@@ -1506,14 +1506,14 @@ msgstr "{where}: 줄은 {word}이(가) 아니라 clip, card, split, slice, slide
 
 #. translators: ring is an edit-script word and stays in English.
 msgid "{where}: the ring's point {x} {y} is outside {path}, which is {size}."
-msgstr "{where}: 링의 지점 {x} {y}이(가) {path} 밖에 있습니다. 이 파일은 {size}입니다."
+msgstr "{where}: ring의 지점 {x} {y}이(가) {path} 밖에 있습니다. 이 파일은 {size}입니다."
 
 msgid "{where}: the ring at {at} is not inside its clip ({start} to {end})."
-msgstr "{where}: {at}의 링이 클립 안({start}~{end})에 있지 않습니다."
+msgstr "{where}: {at}의 ring이 클립 안({start}~{end})에 있지 않습니다."
 
 #. translators: hold is an edit-script word and stays in English.
 msgid "{where}: the ring at {at} lasts {seconds} seconds, past the clip's own frames, which end at {end}; the hold would freeze it. Move it earlier."
-msgstr "{where}: {at}의 링은 {seconds}초 동안 이어져 {end}에 끝나는 클립 자체 프레임을 넘습니다. hold가 링을 멈춰 버리니 더 앞으로 옮기세요."
+msgstr "{where}: {at}의 ring은 {seconds}초 동안 이어져 {end}에 끝나는 클립 자체 프레임을 넘습니다. hold가 ring을 멈춰 버리니 더 이른 시각으로 옮기십시오."
 
 #. translators: x and y are edit-script words and stay in English.
 msgid "{where}: a text's x and y are given together, and this one has only {word}."
@@ -1521,14 +1521,14 @@ msgstr "{where}: 텍스트의 x와 y는 함께 써야 하는데, 이 텍스트�
 
 #. translators: {word} is x or y, an edit-script word that stays in English.
 msgid "{where}: a text's {word} is a percentage of the frame, from 0 to 100, not {value}."
-msgstr "{where}: 텍스트의 {word}는 화면에서 차지하는 비율(퍼센트)로, 0에서 100 사이입니다. {value}은(는) 안 됩니다."
+msgstr "{where}: 텍스트의 {word}은(는) 프레임에서 차지하는 비율(퍼센트)로, 0에서 100 사이입니다. {value}은(는) 안 됩니다."
 
 #. translators: {word} is at or band; x, y, at and band are edit-script words and stay in English.
 msgid "{where}: a text placed with x and y takes no {word}: it sits at its point, and has no band."
-msgstr "{where}: x와 y로 놓은 텍스트에는 {word}을(를) 쓸 수 없습니다. 그 지점에 놓이고 띠도 없습니다."
+msgstr "{where}: x와 y로 놓은 텍스트에는 {word}을(를) 쓸 수 없습니다. 그 지점에 놓이고 band도 없습니다."
 
 msgid "{where}: the text {words} at x {x} y {y} reaches past the frame's edge. Move it in, or give it a smaller size."
-msgstr "{where}: x {x} y {y}의 텍스트 {words}이(가) 화면 가장자리를 넘어갑니다. 안쪽으로 옮기거나 size를 줄이세요."
+msgstr "{where}: x {x} y {y}의 텍스트 {words}이(가) 프레임 가장자리를 넘어갑니다. 안쪽으로 옮기거나 크기를 줄이십시오."
 
 #. translators: {names} are the drawn backgrounds' names, which stay in English.
 msgid "{where}: a background is a colour written #RRGGBB, like {example}, two to {most} of them joined by commas for a moving gradient, or one of {names}, not {value}."
@@ -1555,10 +1555,10 @@ msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet: NOT
 msgstr "edit, trim, caption, join, card, motion, poster, thumbnail 및 sheet: 준비 안 됨"
 
 msgid "text on a card or a caption: ready"
-msgstr "카드나 자막의 텍스트: 준비됨"
+msgstr "card나 caption의 텍스트: 준비됨"
 
 msgid "text on a card or a caption: NOT READY"
-msgstr "카드나 자막의 텍스트: 준비 안 됨"
+msgstr "card나 caption의 텍스트: 준비 안 됨"
 
 msgid "frames made: {made}; frames planned: {planned}."
 msgstr "만든 프레임 수: {made}, 계획한 프레임 수: {planned}."
