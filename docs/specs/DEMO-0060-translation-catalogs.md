@@ -419,7 +419,8 @@ the same template.
   both forms; `--version` prints `demoreel <version>`. The state file's
   `output` and `result` are the same under both.
   *Scope:* `record` without `--events`. With it, stdout's `text` fields are
-  translated and every other byte holds this (DEMO-0086 INV-4).
+  translated, `time` events follow timing, and every other byte holds this
+  (DEMO-0086 INV-4).
   *Test:* `ci.sh` step `translation: stdout and exit status do not move` —
   each of those commands run under `LC_ALL=C` and under the pseudo-locale
   (§ 7), stdout and exit status compared byte for byte, the state file's two

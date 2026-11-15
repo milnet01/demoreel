@@ -30,8 +30,7 @@ installed.
    a terminal only, and `note` and `die` write prefixed text to stderr. A
    window reading that text would be reading meaning out of translated
    strings, which `CLAUDE.md` § Traps forbids.
-3. The engine ends on errors. `die` calls `sys.exit`, and `main` installs
-   process-wide signal handlers (`_exit_on_signal`, `_request_stop`) and
+3. The engine ends on errors. `die` calls `sys.exit`, and `main` and `cmd_record` install process-wide signal handlers (`_exit_on_signal`, `_request_stop`) and
    module-wide state (`_stop`, `_catalogs`). Calling `cmd_record` from inside
    a window would end or freeze the window on the first error.
 4. A desktop entry's `Exec` line is quoted by its own rules, not a shell's.
@@ -70,9 +69,9 @@ extracted by `./ci.sh --pot` like every other, catalogs load from the same
 Without PySide6, `demoreel window` exits 1 with a message naming the distro's
 package for it, by the same route `install_hint` names a missing program.
 
-`cmd_window` puts SIGINT and SIGTERM back to their defaults before Qt starts.
+`cmd_window` puts SIGINT, SIGTERM and SIGHUP back to their defaults before Qt starts.
 `main`'s `_exit_on_signal` runs only when Python code runs, which a Qt event
-loop rarely does, so it would leave the window deaf to both.
+loop rarely does, so it would leave the window deaf to all three.
 
 ### 4.2 Running a recording
 
@@ -134,8 +133,10 @@ nothing but demoreel's own words: the app's output goes to stderr or
 - `recording` is sent where `cmd_record` writes `recording: True` to the state
   file. `time` events come from the two `progress` call sites in
   `run_countdown`, whether or not stderr is a terminal; the terminal line is
-  unchanged.
-- Each event is flushed as written.
+  unchanged. Those run five times a second, so a `time` event is sent only
+  when its number changes.
+- Each event is flushed as written. A write that fails, as when the reader
+  has gone, stops the events and not the run, as `note` does for stderr.
 - **On Linux, `--events` also asks the kernel for `SIGHUP` when the parent
   process exits** (`prctl(PR_SET_PDEATHSIG, SIGHUP)` through `ctypes`, which
   the script imports already). It reads `os.getppid()` before and after
@@ -167,7 +168,9 @@ Every default is read from the `record` parser `build_parser` builds, never
 written as a literal in the window (INV-14).
 
 A command text `shlex.split` refuses, such as an open quote, is reported
-beside the field, and Record stays disabled until it parses. Each step is
+beside the field, and Record stays disabled until it parses. So is one
+holding a byte that is not UTF-8: `QProcess` carries text, and on PySide6
+6.12 a lone surrogate argument arrived empty. Each step is
 checked with `parse_step` before Record is enabled. Its refusal reaches the
 window as the `SystemExit` `die` raises, and its text is shown, not read.
 
@@ -279,14 +282,15 @@ fallback, which the person can type into the field.
   moves a message off stderr.
 
 - **INV-4** — Under the pseudo-locale, every event field but `text` is the
-  same bytes as under `LC_ALL=C`. This narrows DEMO-0060 INV-2, which held
+  same bytes as under `LC_ALL=C`, `time` events apart, whose count is timing's. This narrows DEMO-0060 INV-2, which held
   stdout fixed under every locale, to runs without `--events`.
-  *Test:* the step of INV-2, run again under DEMO-0060 § 7's pseudo-locale;
-  the events, with `text` removed, compare equal.
+  *Test:* the step of INV-2, with a fixed `-o`, run again under DEMO-0060
+  § 7's pseudo-locale; the events, with `text` removed and `time` events
+  left out, compare equal.
   *Breaks when:* an event name or `path` passes through `tr`.
 
 - **INV-5** — On a `-d N` run, `time` events carry `left`, a whole number from
-  N down to 0 that never rises. On a `-d 0` run they carry `elapsed`, which
+  N down to 1 that never rises. On a `-d 0` run they carry `elapsed`, which
   never falls.
   *Test:* the step of INV-2 reads the 2-second run's `time` events; a
   `-d 0` run stopped after 2 seconds by `demoreel stop` is read the same way.
@@ -306,14 +310,14 @@ fallback, which the person can type into the field.
 - **INV-7** — For every argv, `shlex.split(shlex.join(argv)) == argv`, so an
   installed app or a chosen file reaches the child unchanged.
   *Test:* `ci.sh` step `the window: commands survive the text field` — argvs
-  holding a space, both quotes, `$`, a backslash, a newline, `;` and a
-  non-UTF-8 byte (as `surrogateescape` decodes it) round-trip.
+  holding a space, both quotes, `$`, a backslash, a newline, and `;`
+  round-trip.
   *Breaks when:* the field is filled with `" ".join`, or split with
   `posix=False`.
 
 - **INV-8** — `exec_to_argv` gives this table's results:
 
-  | `Exec` value, after the file's own reading | Result |
+  | `Exec` value as written in the file, escapes and all | Result |
   |---|---|
   | `flatpak run --branch=stable org.x.App %U` | `flatpak`, `run`, `--branch=stable`, `org.x.App` |
   | `"/opt/My App/app" --new` | `/opt/My App/app`, `--new` |
@@ -343,11 +347,12 @@ fallback, which the person can type into the field.
   during a `-d 0` run, the run finishes its video: its state file's `result`
   becomes `ok` and the file plays.
   *Test:* `ci.sh` step `record --events: a run outlives its parent` — a `sh`
-  starts `record --events -d 0` of `xclock` and is killed with SIGKILL once the
-  run sends `recording`; within 10 seconds the run's pid has gone, `result` is
+  that reads the run's stdout through a pipe starts `record --events -d 0` of
+  `xclock`, and is killed with SIGKILL once it reads `recording`; within 10 seconds the run's pid has gone, `result` is
   `ok`, and `ffprobe` reads a duration from the video.
   *Breaks when:* the death signal is dropped (the run records until stopped),
-  or set to SIGKILL (the display leaks and no video is finished).
+  or set to SIGKILL (the display leaks and no video is finished), or a
+  failed event write ends the run.
 
 - **INV-11** — Every focusable control has an accessible name, its own or a
   buddy label's, and the Tab chain from the first control visits every enabled
@@ -361,7 +366,8 @@ fallback, which the person can type into the field.
   writes is translated, and under an `RTL_LANGUAGES` catalog the layout runs
   right to left.
   *Test:* the step of INV-11, run under DEMO-0060 § 7's pseudo-locale: every
-  window-written text begins `⟦` and ends `⟧`; under a pseudo `he` catalog,
+  label, button and announcement text begins `⟦` and ends `⟧`, the
+  equivalent command and the person's own values aside; under a pseudo `he` catalog,
   `layoutDirection()` is `RightToLeft`.
   *Breaks when:* a label is set from a literal, or translated at import.
 
@@ -413,9 +419,10 @@ fallback, which the person can type into the field.
 ## 7. Tests
 
 The steps INV-1 to INV-14 name are new `ci.sh` steps. INV-15 is DEMO-0090's
-manual check. Each window step needs PySide6. Where it is missing, the step
-skips and is counted on the gate's last line, as a step that could not run is
-now. A skip is not a pass. INV-2 to INV-5 and INV-10 need no PySide6 and always run.
+manual check. The steps of INV-9, INV-11, INV-12 and INV-14 build the window
+and need PySide6. Where it is missing, they skip and are counted on the gate's
+last line, as a step that could not run is now. A skip is not a pass. The
+other steps need no PySide6 and always run.
 
 Each test is seen failing first: INV-1 against a copy that imports PySide6 at
 the top; INV-2 against one that prints the path outside `done`; INV-8 with
