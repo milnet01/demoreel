@@ -1,0 +1,9 @@
+# Words a draft in this language must not use: register slips and translated edit-script keywords. Read by ~/.claude/tools/translate-review --forbid (DEMO-0096).
+tu
+ton
+ta
+tes
+toi
+donne-lui
+rentre
+anneau

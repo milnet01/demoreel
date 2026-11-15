@@ -1,0 +1,8 @@
+# Words a draft in this language must not use: register slips and translated edit-script keywords. Read by ~/.claude/tools/translate-review --forbid (DEMO-0096).
+세요
+해요
+하세요
+주세요
+보세요
+줄이세요
+re:(?<!\S)링(?![크가-힣])|(?<!\S)링(?=[이가을를은는에의도과와로])
