@@ -6213,7 +6213,7 @@ is a front-end to the same recording engine, not a second one.
   Kind: doc.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0086] **Write the GUI spec, and gate it before anything is built.**
+- ✅ [DEMO-0086] **Write the GUI spec, and gate it before anything is built.**
   A spec, through `write-spec` and `review-contract`. It must settle:
   - The toolkit. Tkinter is in the standard library and keeps the tool
     dependency-free, but looks dated and scales poorly. Qt is native on
@@ -6245,6 +6245,8 @@ is a front-end to the same recording engine, not a second one.
   review-contract at its cap of two loops (17 findings fixed, none open)
   and is accepted. Ready to build. Loop log:
   docs/reviews/DEMO-0086-recording-window-loop-log.md.
+  Shipped 2026-11-15: the spec is written and gated (a27dea3). DEMO-0087
+  builds from it next.
   **Layman:** Decide on paper how the window will look and work before building it.
   Kind: doc.
   Source: user-request-2026-09-25.
