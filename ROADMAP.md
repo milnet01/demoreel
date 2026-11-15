@@ -4591,6 +4591,11 @@ path, and scripts read it.
   § Languages. That waits on the question above. Things a fluent speaker
   should weigh are listed per language in the reviewers' reports in
   those commits.
+  2026-11-15: step 1 now also takes `--forbid po/forbid/<code>.txt`
+  (ba18df7: register slips and translated keywords this review found,
+  narrowed of words that are also correct text). `--pot po/demoreel.pot`
+  adds the template's translator comments, which each .po carries only half of.
+  Every catalogue passes --check-only --forbid.
   **Layman:** Check every machine-drafted translation thoroughly with AI tools, since no fluent speakers are available.
   Kind: chore.
   Source: user-request-2026-09-25, changed user-request-2026-11-09.
