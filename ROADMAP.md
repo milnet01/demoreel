@@ -1,6 +1,6 @@
 <!-- ants-roadmap-format: 1 -->
 <!-- Generated from the Ants Terminal roadmap store. Edit it with roadmap_log; hand edits are discarded by the next write. -->
-<!-- ants-roadmap-id-high-water: DEMO=366 -->
+<!-- ants-roadmap-id-high-water: DEMO=367 -->
 # demoreel — Roadmap
 
 > **Format:** v1 — see
@@ -1252,6 +1252,18 @@ simplest case, and a gate proves it still records.
   **Layman:** Some automatic checks measure time from the wrong starting point, so a busy computer can make them fail when nothing is wrong.
   Kind: test.
   Source: DEMO-0282-2026-11-14.
+
+- 📋 [DEMO-0367] **The gate's sound-and-picture sync step still fails when the machine is busy.**
+  "--audio keeps sound and picture in step" failed the push of 78c07b4
+  on 2026-11-15 at load 21 (85 ms apart against the 40 ms bound). The
+  same tree passed the full gate minutes earlier. DEMO-0282 (shipped)
+  logged the same failure at load 8-21 and settled on quiet windows,
+  not a fix. Find whether the offset is in the recording (then it is a
+  real defect under load) or in the fixture's own timing, which
+  review-tests 2026-11-04 flagged; fix the one it is.
+  **Layman:** A test that checks sound lines up with the picture fails when other programs are busy, so a correct change can be blocked from going out.
+  Kind: test.
+  Source: gate-failure-2026-11-15.
 
 ## Standing chores
 
