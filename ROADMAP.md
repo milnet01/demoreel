@@ -4558,7 +4558,7 @@ path, and scripts read it.
   Kind: enhancement.
   Source: DEMO-0108-finding-2026-09-28.
 
-- 📋 [DEMO-0096] **Thoroughly review each draft translation, since no native speakers are available.**
+- ✅ [DEMO-0096] **Thoroughly review each draft translation, since no native speakers are available.**
   Changed by the user 2026-11-09: no native speakers are available, so
   each draft is thoroughly reviewed instead. It replaces the 2026-09-25
   decision (a draft until a native speaker confirms it). A native speaker
@@ -4596,6 +4596,9 @@ path, and scripts read it.
   narrowed of words that are also correct text). `--pot po/demoreel.pot`
   adds the template's translator comments, which each .po carries only half of.
   Every catalogue passes --check-only --forbid.
+  Shipped 2026-11-15 in 3d620fc: all 16 catalogues marked reviewed with
+  their digests; README § Languages and the review notes follow. A later
+  Gemini or DeepSeek pass on a language only moves its digest.
   **Layman:** Check every machine-drafted translation thoroughly with AI tools, since no fluent speakers are available.
   Kind: chore.
   Source: user-request-2026-09-25, changed user-request-2026-11-09.
