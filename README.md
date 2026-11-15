@@ -1291,7 +1291,7 @@ Permanently out of scope:
   pan or rotate, beyond the zoom above, and nothing on screen moves
   or changes over time except in the ways listed above. Nothing is ever removed from a video automatically.
   What is built so far is in [Finishing a recording](#finishing-a-recording).
-- No graphical interface, no background service, no config file — options go on
+- No background service, no config file — options go on
   the command line. An `edit` script describes one film, and a `--steps` file lists
   scripted steps; neither holds settings for demoreel, and neither is read
   unless you name it.

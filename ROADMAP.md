@@ -4584,6 +4584,13 @@ path, and scripts read it.
   finishes. It does not hold any release.
   2026-11-15: steps 1 and 3 done for every language as it comes; de, fr, es, nl committed (9c8f659). This session had no Chrome tools, so step 2 used a Claude (Opus) reviewer reading each whole catalogue and judging every free-model proposal instead of Gemini/DeepSeek. It found what the free models missed in every language: register slips (du/tú/je), a capital Sie/Ihre reading as "you", "recording for {time}" worded as a planned length, the keyword ring translated. Per-language answers to the review notes are in the po commits. Nothing is marked reviewed yet, and the notes sections stay until it is.
   Waiting-on: user (Does the Claude whole-catalogue read count as step 2, so each language can be marked "reviewed <digest>" now? Recommendation: yes — it caught more than the free models and reads every line, not only doubtful ones; Gemini/DeepSeek can still be run later on a reviewed language and its fixes applied, which only moves the digest. Otherwise the marks wait for a session with Chrome connected. 2026-11-15)
+  2026-11-15, later: all 16 catalogues have both passes (9c8f659,
+  42aaa6a, 1dc9038), each with its notes answered in its commit body.
+  What is left is steps 4-5 for each language: delete its notes section,
+  mark it "reviewed <digest>" (./ci.sh --catalog-digest), update README
+  § Languages. That waits on the question above. Things a fluent speaker
+  should weigh are listed per language in the reviewers' reports in
+  those commits.
   **Layman:** Check every machine-drafted translation thoroughly with AI tools, since no fluent speakers are available.
   Kind: chore.
   Source: user-request-2026-09-25, changed user-request-2026-11-09.
@@ -6165,7 +6172,7 @@ first, through the review gate. The command line keeps every other rule: no
 prompts, stdout carries only the path, and the same guarantees hold. The window
 is a front-end to the same recording engine, not a second one.
 
-- 📋 [DEMO-0085] **Lift "no GUI" from the scope ceiling in CLAUDE.md and README, through the review gate.**
+- ✅ [DEMO-0085] **Lift "no GUI" from the scope ceiling in CLAUDE.md and README, through the review gate.**
   CLAUDE.md's Scope ceiling and README's What it will never do both name a
   GUI as permanently out of scope. The user asked for one on 2026-09-25.
 
@@ -6176,6 +6183,12 @@ is a front-end to the same recording engine, not a second one.
   per-app profiles, no recording the real screen.
 
   Nothing else in this version starts before this lands.
+  Shipped 2026-11-15: "a GUI" left CLAUDE.md's Scope ceiling and README
+  § What it will never do; the rest of both lists stands. No
+  review-contract pass: the body asked for one under the old rule 14,
+  and the current rule (user, 2026-10-31) gives a README or CLAUDE.md
+  edit no automatic review. Nothing about the window is written there
+  until its spec (DEMO-0086) exists.
   **Layman:** Update the project's rules so a graphical window is allowed, and have that change independently reviewed.
   Kind: doc.
   Source: user-request-2026-09-25.
@@ -6198,6 +6211,16 @@ is a front-end to the same recording engine, not a second one.
     registry the ceiling still rules out.
   - Keyboard use, screen readers, large text and the magnifier.
   - Translations, from the 0.4.0 catalogs.
+  Waiting-on: user (Which toolkit should the window use? It sets the
+  project's first dependency beyond the standard library, and the spec
+  cannot be written or gated without it. Recommendation: Qt through
+  PySide6. It has the strongest screen-reader and magnifier support on
+  Linux and on Windows, which matters most here; it is native on this
+  KDE desktop; and it runs on Windows for the 2.0.0 editor. The cost is
+  a large dependency (about 100 MB as a wheel, smaller as distro
+  packages). Tkinter keeps demoreel dependency-free but exposes almost
+  nothing to screen readers. GTK 4's Windows support is weak.
+  2026-11-15)
   **Layman:** Decide on paper how the window will look and work before building it.
   Kind: doc.
   Source: user-request-2026-09-25.

@@ -144,7 +144,7 @@ Any change that breaks one of these is wrong, even if it makes the tool simpler:
 
 The ceiling is what the tool *does*, not how long it is. Permanently out of
 scope: webcam, highlighting the cursor (a ring a script places is on the
-list), a GUI, a daemon, a config file format, plugins, per-app profiles, and recording the real screen. Anything
+list), a daemon, a config file format, plugins, per-app profiles, and recording the real screen. Anything
 needing more than "record this app doing these few things, and make that
 recording fit to publish" wants OBS and a video editor instead.
 
