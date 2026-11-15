@@ -377,7 +377,7 @@ msgid "The recorder most likely stopped before it finished the file. See {log}"
 msgstr "Nagrywanie najprawdopodobniej zatrzymało się przed dokończeniem pliku. Zobacz {log}"
 
 msgid "the virtual display was blank halfway, so at least half of it is a flat colour: {output}"
-msgstr "wirtualny ekran był pusty w połowie, więc co najmniej połowa nagrania to jednolity kolor: {output}"
+msgstr "wirtualny ekran był pusty w połowie nagrania, więc co najmniej połowa nagrania to jednolity kolor: {output}"
 
 msgid "the virtual display was blank at the end, so it ends on a flat colour: {output}"
 msgstr "wirtualny ekran był pusty na końcu, więc nagranie kończy się jednolitym kolorem: {output}"
@@ -400,14 +400,14 @@ msgid ""
 "the video is a flat colour halfway, though the private screen was not: {output}\n"
 "  The recorder captured something other than the screen. See {log}"
 msgstr ""
-"film jest w połowie jednolitym kolorem, choć prywatny ekran nie był: {output}\n"
+"w połowie filmu obraz ma jednolity kolor, choć na prywatnym ekranie tak nie było: {output}\n"
 "  Nagrywanie przechwyciło coś innego niż ekran. Zobacz {log}"
 
 msgid ""
 "the video is a flat colour at the end, though the private screen was not: {output}\n"
 "  The recorder captured something other than the screen. See {log}"
 msgstr ""
-"film jest na końcu jednolitym kolorem, choć prywatny ekran nie był: {output}\n"
+"na końcu filmu obraz ma jednolity kolor, choć na prywatnym ekranie tak nie było: {output}\n"
 "  Nagrywanie przechwyciło coś innego niż ekran. Zobacz {log}"
 
 msgid ""
@@ -500,13 +500,13 @@ msgid_plural ""
 "{count} recordings are running: {names}.\n"
 "  Name the one to stop, e.g. {example}"
 msgstr[0] ""
-"Trwa {count} nagranie: {names}.\n"
+"trwa {count} nagranie: {names}.\n"
 "  Wskaż, które zatrzymać, np. {example}"
 msgstr[1] ""
-"Trwają {count} nagrania: {names}.\n"
+"trwają {count} nagrania: {names}.\n"
 "  Wskaż, które zatrzymać, np. {example}"
 msgstr[2] ""
-"Trwa {count} nagrań: {names}.\n"
+"trwa {count} nagrań: {names}.\n"
 "  Wskaż, które zatrzymać, np. {example}"
 
 msgid ""
@@ -700,7 +700,7 @@ msgid "{where}: {word} acts on a clip's window, and this clip has no window."
 msgstr "{where}: {word} działa na okno klipu, a ten klip nie ma okna."
 
 msgid "{where}: push is how much the window grows, in percent, from 0 to {high}, not {value}."
-msgstr "{where}: push to o ile procent rośnie okno, od 0 do {high}, a nie {value}."
+msgstr "{where}: push określa, o ile procent rośnie okno: od 0 do {high}, a nie {value}."
 
 msgid "{where}: window {window} grown by push {push} is larger than the room it sits in. Make one of them smaller."
 msgstr "{where}: window {window} powiększone o push {push} jest większe niż przestrzeń, w której się znajduje. Zmniejsz jedną z tych wartości."
@@ -765,13 +765,13 @@ msgid "{where}: a level line's from must come before its to, and both inside the
 msgstr "{where}: from wiersza level musi wypadać przed jego to, a oba w obrębie filmu, który trwa {seconds} s."
 
 msgid "{where}: this level line and {other} overlap, counting their ramps."
-msgstr "{where}: ten wiersz level i {other} nachodzą na siebie, licząc ich ramp."
+msgstr "{where}: ten wiersz level i {other} nachodzą na siebie, licząc ich wartości ramp."
 
 msgid "{where}: {path} is silent all through."
 msgstr "{where}: {path} jest cichy od początku do końca."
 
 msgid "{where}: the music at level {level} would peak above {peak} dB, so it plays at level {reached} instead."
-msgstr "{where}: muzyka na level {level} przekroczyłaby szczyt {peak} dB, więc gra na level {reached}."
+msgstr "{where}: przy level {level} szczyty muzyki przekroczyłyby {peak} dB, więc gra ona przy level {reached}."
 
 #. translators: {name} is a file name; the times are seconds.
 msgid "{where}: the sound {name} is asked to play at {at}, which is not inside its scene ({scene_start} to {scene_end})."
@@ -787,7 +787,7 @@ msgid "  level {level} dB from {start} to {end}"
 msgstr "  level {level} dB od {start} do {end}"
 
 msgid "{where}: zoom is how many times larger the picture grows, above {low} and at most {high}, not {value}."
-msgstr "{where}: zoom to ile razy powiększa się obraz, więcej niż {low} i najwyżej {high}, a nie {value}."
+msgstr "{where}: zoom określa, ile razy powiększa się obraz: więcej niż {low} i najwyżej {high}, a nie {value}."
 
 msgid "-o must end in {ending}, and {name} does not."
 msgstr "-o musi kończyć się na {ending}, a {name} się tak nie kończy."
@@ -826,7 +826,7 @@ msgid "making {output}, {seconds} seconds at {size}"
 msgstr "tworzenie {output}, {seconds} s w rozmiarze {size}"
 
 msgid "ffmpeg used more than {size} GB of memory making the film, half this machine's, so it was stopped."
-msgstr "ffmpeg użył ponad {size} GB pamięci przy tworzeniu filmu, połowę pamięci tego komputera, więc został zatrzymany."
+msgstr "ffmpeg użył ponad {size} GB pamięci przy tworzeniu filmu, czyli połowę pamięci tego komputera, więc został zatrzymany."
 
 msgid "ffmpeg could not make the film."
 msgstr "ffmpeg nie mógł utworzyć filmu."
@@ -847,7 +847,7 @@ msgid "{option} takes a number of seconds, not {value}."
 msgstr "{option} przyjmuje liczbę sekund, a nie {value}."
 
 msgid "trim needs something to do: --from, --to, a fade, --music or --no-sound."
-msgstr "trim potrzebuje zadania: --from, --to, przejścia, --music albo --no-sound."
+msgstr "trim potrzebuje zadania: --from, --to, przejście, --music albo --no-sound."
 
 msgid "join takes two or more videos; one on its own is already whole."
 msgstr "join przyjmuje dwa filmy lub więcej; jeden sam w sobie jest już całością."
@@ -1209,11 +1209,11 @@ msgstr "film do obejrzenia"
 
 #. argparse formats this text with %
 msgid "look from here (default: the start)"
-msgstr "patrz od tego miejsca (domyślnie: od początku)"
+msgstr "analizuje od tego miejsca (domyślnie: od początku)"
 
 #. argparse formats this text with %
 msgid "look up to here (default: the end)"
-msgstr "patrz do tego miejsca (domyślnie: do końca)"
+msgstr "analizuje do tego miejsca (domyślnie: do końca)"
 
 #. argparse formats this text with %
 msgid "report a stretch with no change longer than this (default: 1)"
@@ -1221,7 +1221,7 @@ msgstr "zgłasza odcinek bez zmian dłuższy niż ten (domyślnie: 1)"
 
 #. argparse formats this text with %
 msgid "look only at this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
-msgstr "patrz tylko na ten prostokąt obrazu: jego lewy górny róg w X,Y, szerokość W pikseli i wysokość H"
+msgstr "analizuje tylko ten prostokąt obrazu: jego lewy górny róg w X,Y, szerokość W pikseli i wysokość H"
 
 #. argparse formats this text with %
 msgid "print the report as one JSON object"
@@ -1278,7 +1278,7 @@ msgstr "zapisuje kilka klatek filmu, z ich czasami, jako jeden obraz"
 
 #. argparse formats this text with %
 msgid "save several frames of a video, with their times, as one picture."
-msgstr "zapisuje kilka klatek filmu, z ich czasami, jako jeden obraz."
+msgstr "Zapisuje kilka klatek filmu, z ich czasami, jako jeden obraz."
 
 #. argparse formats this text with %
 msgid "the video to take the frames from"
@@ -1294,7 +1294,7 @@ msgstr "pobiera klatki widoczne w tych chwilach, np. 1,4.5,9"
 
 #. argparse formats this text with %
 msgid "show only this rectangle of each frame: its top-left corner at X,Y, W pixels wide and H high"
-msgstr "pokaż tylko ten prostokąt każdej klatki: jego lewy górny róg w X,Y, szerokość W pikseli i wysokość H"
+msgstr "pokazuje tylko ten prostokąt każdej klatki: jego lewy górny róg w X,Y, szerokość W pikseli i wysokość H"
 
 #. argparse formats this text with %
 msgid "each frame's width (default: {width}, or less if the frame is narrower)"
@@ -1321,7 +1321,7 @@ msgstr "zapisuje jedną klatkę filmu jako miniaturę YouTube"
 
 #. argparse formats this text with %
 msgid "save one frame of a video as a YouTube thumbnail: 1280x720, cut to 16:9, with a title if you give one."
-msgstr "zapisuje jedną klatkę filmu jako miniaturę YouTube: 1280x720, przyciętą do 16:9, z tytułem, jeśli go podasz."
+msgstr "Zapisuje jedną klatkę filmu jako miniaturę YouTube: 1280x720, przyciętą do 16:9, z tytułem, jeśli go podasz."
 
 #. argparse formats this text with %
 msgid "a title of one line, drawn large near the bottom"
@@ -1408,7 +1408,7 @@ msgid "{output} was left as it was, and this run's video is in {part}."
 msgstr "{output} pozostawiono bez zmian, a wideo z tego uruchomienia jest w {part}."
 
 msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
-msgstr "odczyt {path} zużył ponad {size} GB pamięci, połowę pamięci tego komputera, więc został zatrzymany."
+msgstr "odczyt {path} zużył ponad {size} GB pamięci, czyli połowę pamięci tego komputera, więc został zatrzymany."
 
 msgid "{where}: {path} is a list that points at other files, such as a playlist, and demoreel does not follow one."
 msgstr "{where}: {path} to lista wskazująca inne pliki, na przykład lista odtwarzania, a demoreel nie podąża za taką listą."
@@ -1429,7 +1429,7 @@ msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of 
 msgstr "{where}: {path} ma rozmiar {size}, jest zbyt wąski lub zbyt płaski na okno tej wielkości. Daj mu większe okno."
 
 msgid "scene {number}: a card with no picture, {start} to {end}"
-msgstr "scena {number}: plansza bez obrazu, od {start} do {end}"
+msgstr "scena {number}: karta bez obrazu, od {start} do {end}"
 
 msgid ""
 "demoreel keeps its files in {path}, and ffmpeg's filters cannot carry a character in that path.\n"
@@ -1518,14 +1518,14 @@ msgstr "{where}: wiersz zaczyna się od clip, card, split, slice, slide, text, z
 
 #. translators: ring is an edit-script word and stays in English.
 msgid "{where}: the ring's point {x} {y} is outside {path}, which is {size}."
-msgstr "{where}: punkt {x} {y} pierścienia leży poza {path}, który ma {size}."
+msgstr "{where}: punkt {x} {y} wiersza ring leży poza {path}, który ma {size}."
 
 msgid "{where}: the ring at {at} is not inside its clip ({start} to {end})."
-msgstr "{where}: pierścień w {at} nie mieści się w swoim klipie (od {start} do {end})."
+msgstr "{where}: ring w {at} nie mieści się w swoim klipie (od {start} do {end})."
 
 #. translators: hold is an edit-script word and stays in English.
 msgid "{where}: the ring at {at} lasts {seconds} seconds, past the clip's own frames, which end at {end}; the hold would freeze it. Move it earlier."
-msgstr "{where}: pierścień w {at} trwa {seconds} s, dłużej niż własne klatki klipu, które kończą się w {end}; hold by go zamroził. Przesuń go wcześniej."
+msgstr "{where}: ring w {at} trwa {seconds} s, dłużej niż własne klatki klipu, które kończą się w {end}; hold by go zamroził. Przesuń go wcześniej."
 
 #. translators: x and y are edit-script words and stay in English.
 msgid "{where}: a text's x and y are given together, and this one has only {word}."
@@ -1540,7 +1540,7 @@ msgid "{where}: a text placed with x and y takes no {word}: it sits at its point
 msgstr "{where}: tekst umieszczony przez x i y nie przyjmuje {word}: stoi w swoim punkcie i nie ma paska."
 
 msgid "{where}: the text {words} at x {x} y {y} reaches past the frame's edge. Move it in, or give it a smaller size."
-msgstr "{where}: tekst {words} w x {x} y {y} wychodzi poza krawędź kadru. Przesuń go do środka albo daj mu mniejszy size."
+msgstr "{where}: tekst {words} w x {x} y {y} wychodzi poza krawędź kadru. Przesuń go w głąb kadru albo nadaj mu mniejszy rozmiar."
 
 #. translators: {names} are the drawn backgrounds' names, which stay in English.
 msgid "{where}: a background is a colour written #RRGGBB, like {example}, two to {most} of them joined by commas for a moving gradient, or one of {names}, not {value}."

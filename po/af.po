@@ -106,19 +106,19 @@ msgid "`demoreel check` tests this on its own."
 msgstr "`demoreel check` toets dit op sy eie."
 
 msgid "the display did not lock: a client without its auth cookie could still connect, or none could."
-msgstr "die skerm het nie gesluit nie: 'n kliënt sonder sy magtigingskoekie kon steeds koppel, of geen kliënt kon nie."
+msgstr "die skerm is nie toegesluit nie: 'n kliënt sonder sy magtigingskoekie kon steeds koppel, of geen kliënt kon nie."
 
 msgid "the GPU display did not start, so there is nothing to record on."
-msgstr "die GPU-skerm het nie begin nie, so daar is niks om op op te neem nie."
+msgstr "die GPU-skerm het nie begin nie, so daar is niks waarop opgeneem kan word nie."
 
 msgid "The end of its log:"
 msgstr "Die einde van sy log:"
 
 msgid "`demoreel check` says whether --gpu has what it needs."
-msgstr "`demoreel check` sê of --gpu het wat dit nodig het."
+msgstr "`demoreel check` sê of alles wat --gpu nodig het, beskikbaar is."
 
 msgid "the GPU display did not lock: a client without its auth cookie could still connect, or none could."
-msgstr "die GPU-skerm het nie gesluit nie: 'n kliënt sonder sy magtigingskoekie kon steeds koppel, of geen kliënt kon nie."
+msgstr "die GPU-skerm is nie toegesluit nie: 'n kliënt sonder sy magtigingskoekie kon steeds koppel, of geen kliënt kon nie."
 
 msgid "the private display {display} stopped answering: `xdotool {command}` did not return within {seconds}s."
 msgstr "die privaat skerm {display} het opgehou antwoord: `xdotool {command}` het nie binne {seconds}s teruggekeer nie."
@@ -127,14 +127,14 @@ msgid ""
 "the app resized its window to {size} at {place}, so it no longer fills the {frame} frame and part of the video is cropped or empty.\n"
 "  Record at the app's own size with -s {size}."
 msgstr ""
-"die toep het sy venster by {place} na {size} verstel, so dit vul nie meer die {frame}-raam nie en 'n deel van die video is afgesny of leeg.\n"
-"  Neem op teen die toep se eie grootte met -s {size}."
+"die toep het die grootte van sy venster na {size} by posisie {place} verander, so dit vul nie meer die {frame}-raam nie en 'n deel van die video is afgesny of leeg.\n"
+"  Neem op in die toep se eie grootte met -s {size}."
 
 msgid ""
 "the app resized its window {seconds}s into the video, and demoreel put it back to fill the {frame} frame.\n"
 "  The video before then may be cropped or have an empty band."
 msgstr ""
-"die toep het sy venster {seconds}s in die video verstel, en demoreel het dit teruggesit om die {frame}-raam te vul.\n"
+"die toep het {seconds}s in die video die grootte van sy venster verander, en demoreel het dit teruggesit om die {frame}-raam te vul.\n"
 "  Die video voor dit kan afgesny wees of 'n leë strook hê."
 
 msgid ""
@@ -146,7 +146,7 @@ msgid ""
 "  window — in which case there is nothing to record."
 msgstr ""
 "die toep het dadelik afgesluit (status 0) sonder om 'n venster oop te maak.\n"
-"  Die waarskynlike oorsaak is 'n toep wat net een keer kan loop: dit vind\n"
+"  Die waarskynlike oorsaak is 'n toep waarvan net een kopie kan loop: dit vind\n"
 "  'n kopie wat reeds op u regte werkskerm loop, gee die versoek daaraan\n"
 "  oor en sluit suksesvol af. As 'n kopie loop, maak dit toe en probeer weer.\n"
 "  Indien nie, het die opdrag dalk bloot klaargemaak sonder om 'n venster\n"
@@ -267,7 +267,7 @@ msgid "--audio needs an ffmpeg that can read from a sound server, and this one h
 msgstr "--audio het 'n ffmpeg nodig wat van 'n klankbediener kan lees, en hierdie een het geen pulse-invoer nie."
 
 msgid "--cursor is not available with record --gpu: that backend records the compositor's picture, which never has the pointer in it."
-msgstr "--cursor is nie beskikbaar met record --gpu nie: daardie agterkant neem die saamsteller se beeld op, waarin die wyser nooit verskyn nie."
+msgstr "--cursor is nie beskikbaar met record --gpu nie: daardie agterkant neem die komposisiebestuurder se beeld op, waarin die wyser nooit verskyn nie."
 
 msgid "give the steps with -a or with --steps, not both."
 msgstr "gee die stappe met -a of met --steps, nie albei nie."
@@ -321,7 +321,7 @@ msgid ""
 "no window appeared within {seconds}s; recording anyway.\n"
 "  If the app is slow to start, give it longer with --startup-timeout."
 msgstr ""
-"geen venster het binne {seconds}s verskyn nie; neem in elk geval op.\n"
+"geen venster het binne {seconds}s verskyn nie; daar word in elk geval opgeneem.\n"
 "  As die toep stadig begin, gee dit langer met --startup-timeout."
 
 msgid ""
@@ -348,17 +348,17 @@ msgid ""
 "nothing was drawn within {seconds}s; recording anyway.\n"
 "  If the app takes longer to show its first picture, raise --settle."
 msgstr ""
-"niks is binne {seconds}s geteken nie; neem in elk geval op.\n"
+"niks is binne {seconds}s geteken nie; daar word in elk geval opgeneem.\n"
 "  As die toep langer neem om sy eerste beeld te wys, verhoog --settle."
 
 msgid "the recorder stopped early; see {log}"
 msgstr "die opnemer het vroeg gestop; sien {log}"
 
 msgid "recording, {seconds}s left"
-msgstr "neem op, {seconds}s oor"
+msgstr "besig om op te neem, {seconds}s oor"
 
 msgid "recording for {time} (Ctrl+C to finish)"
-msgstr "neem op vir {time} (Ctrl+C om klaar te maak)"
+msgstr "besig om op te neem, al {time} lank (Ctrl+C om klaar te maak)"
 
 msgid "the app closed; ending the recording."
 msgstr "die toep het toegemaak; die opname word beëindig."
@@ -427,10 +427,10 @@ msgid "{seconds}s of video, {size}"
 msgstr "{seconds}s video, {size}"
 
 msgid "recording {display} to {output} (until stopped)"
-msgstr "neem {display} op na {output} (totdat dit gestop word)"
+msgstr "{display} word na {output} opgeneem (totdat dit gestop word)"
 
 msgid "recording {display} to {output} ({seconds}s)"
-msgstr "neem {display} op na {output} ({seconds}s)"
+msgstr "{display} word na {output} opgeneem ({seconds}s)"
 
 msgid "the sound track is silent: the app made no sound that reached demoreel."
 msgstr "die klankspoor is stil: die toep het geen klank gemaak wat demoreel bereik het nie."
@@ -517,7 +517,7 @@ msgid "the recording ended before it started recording, so there is no video to 
 msgstr "die opname het geëindig voordat dit begin opneem het, so daar is geen video om te stop nie."
 
 msgid "{option} belongs to a --text, and none comes before it. caption never cuts the video; use trim."
-msgstr "{option} behoort aan 'n --text, en geen kom daarvoor nie. caption sny nooit die video nie; gebruik trim."
+msgstr "{option} behoort aan 'n --text, en daar is geen een voor dit nie. caption sny nooit die video nie; gebruik trim."
 
 msgid "{where}: there is no font file {path}"
 msgstr "{where}: daar is geen lettertipelêer {path} nie"
@@ -547,7 +547,7 @@ msgid "{where}: {word} is on or off, not {value}."
 msgstr "{where}: {word} is on of off, nie {value} nie."
 
 msgid "{where}: {name} is not a transition a crossfade takes. It takes: {names}."
-msgstr "{where}: {name} is nie 'n oorgang wat 'n oorvloeiing neem nie. Dit neem: {names}."
+msgstr "{where}: {name} is nie 'n oorgang wat 'n kruisvervaging neem nie. Dit neem: {names}."
 
 msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
 msgstr "{where}: {word} is nie iets wat 'n {kind}-reël neem nie. Dit neem: {words}."
@@ -580,10 +580,10 @@ msgid "{where}: a text belongs to the scene above it, and no scene comes before 
 msgstr "{where}: 'n teks behoort aan die toneel daarbo, en geen toneel kom voor hierdie een nie."
 
 msgid "{where}: a zoom line belongs to the clip above it, and the line above is not part of a clip."
-msgstr "{where}: 'n zoom-reël behoort aan die snit daarbo, en die reël daarbo is nie deel van 'n snit nie."
+msgstr "{where}: 'n zoom-reël behoort aan die greep daarbo, en die reël daarbo is nie deel van 'n greep nie."
 
 msgid "{where}: a clip takes one zoom line, and {first} is already one."
-msgstr "{where}: 'n snit neem een zoom-reël, en {first} is reeds een."
+msgstr "{where}: 'n greep neem een zoom-reël, en {first} is reeds een."
 
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr "{where}: text het sy woorde nodig, tussen aanhalingstekens: text \"Stoor 'n lêer\""
@@ -623,10 +623,10 @@ msgid_plural ""
 "  Turn it into a video and use it as a clip instead."
 msgstr[0] ""
 "{where}: {path} is 'n te groot animasie om in die geheue te hou en oor en oor te speel ({count} raam van {size}).\n"
-"  Maak eerder 'n video daarvan en gebruik dit as 'n snit."
+"  Maak eerder 'n video daarvan en gebruik dit as 'n greep."
 msgstr[1] ""
 "{where}: {path} is 'n te groot animasie om in die geheue te hou en oor en oor te speel ({count} rame van {size}).\n"
-"  Maak eerder 'n video daarvan en gebruik dit as 'n snit."
+"  Maak eerder 'n video daarvan en gebruik dit as 'n greep."
 
 msgid "drawing a line of text took over {seconds}s."
 msgstr "om 'n reël teks te teken, het langer as {seconds}s geduur."
@@ -638,7 +638,7 @@ msgid "{where}: a zoom's {word} is a percentage of the picture, from 0 to 100, n
 msgstr "{where}: 'n zoom se {word} is 'n persentasie van die beeld, van 0 tot 100, nie {value} nie."
 
 msgid "{where}: the zoom is asked to run from {start} to {end}, which is not inside its clip ({scene_start} to {scene_end})."
-msgstr "{where}: die zoom moet van {start} tot {end} loop, wat nie binne sy snit ({scene_start} tot {scene_end}) is nie."
+msgstr "{where}: die zoom moet van {start} tot {end} loop, wat nie binne sy greep ({scene_start} tot {scene_end}) is nie."
 
 msgid "{where}: a text is one line of words, and this one is empty."
 msgstr "{where}: 'n teks is een reël woorde, en hierdie een is leeg."
@@ -647,7 +647,7 @@ msgid "{where}: a text is one line of words, and this one is more than one line.
 msgstr "{where}: 'n teks is een reël woorde, en hierdie een is meer as een reël."
 
 msgid "{where}: speed is between {low} and {high}, not {value}: 2 plays the clip twice as fast, 0.5 at half speed."
-msgstr "{where}: speed is tussen {low} en {high}, nie {value} nie: 2 speel die snit twee keer so vinnig, 0.5 teen halwe spoed."
+msgstr "{where}: speed is tussen {low} en {high}, nie {value} nie: 2 speel die greep twee keer so vinnig, 0.5 teen halwe spoed."
 
 msgid "{where}: the text {words} is asked to show from {start} to {end}, which is not inside its scene ({scene_start} to {scene_end})."
 msgstr "{where}: die teks {words} moet van {start} tot {end} wys, wat nie binne sy toneel ({scene_start} tot {scene_end}) val nie."
@@ -688,10 +688,10 @@ msgid "{where}: reveal brings in a card's picture, and this card has none."
 msgstr "{where}: reveal bring 'n kaart se prent in, en hierdie kaart het geen nie."
 
 msgid "{where}: background on a clip colours the room round its window, and this clip has no window."
-msgstr "{where}: background kleur op 'n snit die ruimte om sy venster, en hierdie snit het geen venster nie."
+msgstr "{where}: background op 'n greep kleur die ruimte rondom sy venster, en hierdie greep het geen venster nie."
 
 msgid "{where}: {word} acts on a clip's window, and this clip has no window."
-msgstr "{where}: {word} werk op 'n snit se venster, en hierdie snit het geen venster nie."
+msgstr "{where}: {word} werk op 'n greep se venster, en hierdie greep het geen venster nie."
 
 msgid "{where}: push is how much the window grows, in percent, from 0 to {high}, not {value}."
 msgstr "{where}: push is hoeveel die venster groei, in persent, van 0 tot {high}, nie {value} nie."
@@ -746,7 +746,7 @@ msgid "{where}: ffmpeg could not measure the sound of {path}."
 msgstr "{where}: ffmpeg kon nie die klank van {path} meet nie."
 
 msgid "{where}: {path} has no sound in it."
-msgstr "{where}: {path} het geen klank in nie."
+msgstr "{where}: {path} bevat geen klank nie."
 
 #. translators: {state} is on or off, and stays in English.
 msgid "{where}: a level with normalise {state} is between {low} and {high} dB, not {value}."
@@ -759,7 +759,7 @@ msgid "{where}: a level line's from must come before its to, and both inside the
 msgstr "{where}: 'n level-reël se from moet voor sy to kom, en albei binne die film, wat {seconds} sekondes lank is."
 
 msgid "{where}: this level line and {other} overlap, counting their ramps."
-msgstr "{where}: hierdie level-reël en {other} oorvleuel as hulle ramp meegetel word."
+msgstr "{where}: hierdie level-reël en {other} oorvleuel as hulle geleidelike oorgange meegetel word."
 
 msgid "{where}: {path} is silent all through."
 msgstr "{where}: {path} is van begin tot einde stil."
@@ -796,19 +796,19 @@ msgid "this ffmpeg cannot encode H.264 with libx264, which every video uses."
 msgstr "hierdie ffmpeg kan nie H.264 met libx264 enkodeer nie, wat elke video gebruik."
 
 msgid "{where}: volume changes a clip's own sound, and {path} has none."
-msgstr "{where}: volume verander 'n snit se eie klank, en {path} het geen nie."
+msgstr "{where}: volume verander 'n greep se eie klank, en {path} het geen nie."
 
 msgid "{where}: volume is between {low} and {high} dB, not {value}."
 msgstr "{where}: volume is tussen {low} en {high} dB, nie {value} nie."
 
 msgid "{where}: a crossfade fades from the scene before, and this is the first scene."
-msgstr "{where}: 'n oorvloeiing vervaag uit die vorige toneel, en dit is die eerste toneel."
+msgstr "{where}: 'n kruisvervaging vervaag uit die vorige toneel, en dit is die eerste toneel."
 
 msgid "{where}: a scene takes a crossfade or a fade-in, not both."
-msgstr "{where}: 'n toneel neem 'n oorvloeiing of 'n invervaging, nie albei nie."
+msgstr "{where}: 'n toneel neem 'n kruisvervaging of 'n invervaging, nie albei nie."
 
 msgid "{where}: a crossfade of {seconds} seconds does not fit: the two scenes overlap for that long, and one of them is shorter."
-msgstr "{where}: 'n oorvloeiing van {seconds} sekondes pas nie: die twee tonele oorvleuel so lank, en een van hulle is korter."
+msgstr "{where}: 'n kruisvervaging van {seconds} sekondes pas nie: die twee tonele oorvleuel so lank, en een van hulle is korter."
 
 msgid "scene {number}: {kind} {name}, {start} to {end}"
 msgstr "toneel {number}: {kind} {name}, {start} tot {end}"
@@ -817,7 +817,7 @@ msgid "  sound {name} at {start}"
 msgstr "  sound {name} op {start}"
 
 msgid "making {output}, {seconds} seconds at {size}"
-msgstr "maak {output}, {seconds} sekondes teen {size}"
+msgstr "{output} word gemaak, {seconds} sekondes teen {size}"
 
 msgid "ffmpeg used more than {size} GB of memory making the film, half this machine's, so it was stopped."
 msgstr "ffmpeg het meer as {size} GB geheue gebruik om die film te maak, die helfte van hierdie masjien s'n, en is dus gestop."
@@ -826,7 +826,7 @@ msgid "ffmpeg could not make the film."
 msgstr "ffmpeg kon nie die film maak nie."
 
 msgid "the film's sound reaches full scale, so it may be distorted. Turn the music, a clip or a sound down to keep it clean."
-msgstr "die film se klank bereik volle skaal, so dit kan dalk vervorm wees. Draai die musiek, 'n snit of 'n klank sagter om dit skoon te hou."
+msgstr "die film se klank bereik volle skaal, so dit kan dalk vervorm wees. Draai die musiek, 'n greep of 'n klank sagter om dit skoon te hou."
 
 msgid "ffmpeg did not finish making the film in the time allowed for its length, so it was stopped."
 msgstr "ffmpeg het nie die film klaargemaak binne die tyd wat vir sy lengte toegelaat word nie, so dit is gestop."
@@ -891,7 +891,7 @@ msgstr "sny die einde van 'n opname af, waar `demoreel motion demo.mp4` sê"
 
 #. argparse formats this text with %
 msgid "make a film from a script of scenes: clips, cards, text and fades"
-msgstr "maak 'n film uit 'n skrip van tonele: snitte, kaarte, teks en vervagings"
+msgstr "maak 'n film uit 'n skrip van tonele: grepe, kaarte, teks en vervagings"
 
 #. argparse formats this text with %
 msgid "record until you say stop, then stop it from any terminal"
@@ -963,7 +963,7 @@ msgstr "wag tot SECONDS vir die toep om sy eerste raam te teken voordat die opna
 
 #. argparse formats this text with %
 msgid "for an app that needs the graphics card (OpenGL, Vulkan): record it on a headless compositor instead of Xvfb, which has no GPU. Needs cage, Xwayland, wlr-randr and wf-recorder; not with --cursor"
-msgstr "vir 'n toep wat die grafiese kaart nodig het (OpenGL, Vulkan): neem dit op 'n skermlose saamsteller op in plaas van Xvfb, wat geen GPU het nie. Het cage, Xwayland, wlr-randr en wf-recorder nodig; nie saam met --cursor nie"
+msgstr "vir 'n toep wat die grafiese kaart nodig het (OpenGL, Vulkan): neem dit op 'n skermlose komposisiebestuurder op in plaas van Xvfb, wat geen GPU het nie. Het cage, Xwayland, wlr-randr en wf-recorder nodig; nie saam met --cursor nie"
 
 #. argparse formats this text with %
 msgid "show the mouse pointer; off by default, since with no actions it just sits in the corner"
@@ -1011,7 +1011,7 @@ msgstr "wag tot SECONDS vir die toep om te teken voor die stappe en die prent (v
 
 #. argparse formats this text with %
 msgid "for an app that needs the graphics card: use a headless compositor instead of Xvfb. Needs cage, Xwayland and wlr-randr"
-msgstr "vir 'n toep wat die grafiese kaart nodig het: gebruik 'n skermlose saamsteller in plaas van Xvfb. Het cage, Xwayland en wlr-randr nodig"
+msgstr "vir 'n toep wat die grafiese kaart nodig het: gebruik 'n skermlose komposisiebestuurder in plaas van Xvfb. Het cage, Xwayland en wlr-randr nodig"
 
 #. argparse formats this text with %
 msgid "show the mouse pointer in the picture"
@@ -1039,11 +1039,11 @@ msgstr "videolêer om te skryf, wat op .mp4 eindig (verstek: ./<input>-<timestam
 
 #. argparse formats this text with %
 msgid "start black; the picture arrives over SECONDS"
-msgstr "begin swart; die beeld verskyn oor SECONDS"
+msgstr "begin swart; die beeld verskyn geleidelik oor SECONDS"
 
 #. argparse formats this text with %
 msgid "go to black over the last SECONDS"
-msgstr "gaan oor na swart oor die laaste SECONDS"
+msgstr "vervaag na swart oor die laaste SECONDS"
 
 #. argparse formats this text with %
 msgid "lay this sound file under the film, repeated to fill it"
@@ -1055,7 +1055,7 @@ msgstr "die gemiddelde vlak van die musiek, in dB (verstek: {level})"
 
 #. argparse formats this text with %
 msgid "the music arrives over SECONDS (default: {seconds})"
-msgstr "die musiek kom in oor SECONDS (verstek: {seconds})"
+msgstr "die musiek swel oor SECONDS aan (verstek: {seconds})"
 
 #. argparse formats this text with %
 msgid "the music goes over the last SECONDS (default: {seconds})"
@@ -1079,11 +1079,11 @@ msgstr "die skriplêer, of - vir standaardinvoer"
 
 #. argparse formats this text with %
 msgid "the film's picture size, like 1280x800 (default: the first clip's)"
-msgstr "die film se beeldgrootte, soos 1280x800 (verstek: dié van die eerste snit)"
+msgstr "die film se beeldgrootte, soos 1280x800 (verstek: dié van die eerste greep)"
 
 #. argparse formats this text with %
 msgid "the film's frames per second (default: the first clip's)"
-msgstr "die film se rame per sekonde (verstek: dié van die eerste snit)"
+msgstr "die film se rame per sekonde (verstek: dié van die eerste greep)"
 
 #. argparse formats this text with %
 msgid "cut the start and the end off a video"
@@ -1131,15 +1131,15 @@ msgstr "een reël teks; herhaalbaar"
 
 #. argparse formats this text with %
 msgid "for the --text before it: when it appears"
-msgstr "vir die --text daarvoor: wanneer dit verskyn"
+msgstr "vir die voorafgaande --text: wanneer dit verskyn"
 
 #. argparse formats this text with %
 msgid "for the --text before it: when it goes"
-msgstr "vir die --text daarvoor: wanneer dit verdwyn"
+msgstr "vir die voorafgaande --text: wanneer dit verdwyn"
 
 #. argparse formats this text with %
 msgid "for the --text before it: its height, as a percentage of the frame's"
-msgstr "vir die --text daarvoor: sy hoogte, as 'n persentasie van die raam s'n"
+msgstr "vir die voorafgaande --text: sy hoogte, as 'n persentasie van die raam s'n"
 
 #. argparse formats this text with %
 msgid "put videos end to end"
@@ -1155,15 +1155,15 @@ msgstr "twee of meer video's, in volgorde"
 
 #. argparse formats this text with %
 msgid "fade from each video into the next over SECONDS (default: a plain cut)"
-msgstr "vloei oor SECONDS van elke video in die volgende oor (verstek: 'n gewone sny)"
+msgstr "vervaag oor SECONDS van elke video na die volgende (verstek: 'n gewone sny)"
 
 #. argparse formats this text with %
 msgid "make a clip from a picture, or from text"
-msgstr "maak 'n snit uit 'n prent, of uit teks"
+msgstr "maak 'n greep uit 'n prent, of uit teks"
 
 #. argparse formats this text with %
 msgid "make a clip from a picture, or from text."
-msgstr "maak 'n snit uit 'n prent, of uit teks."
+msgstr "maak 'n greep uit 'n prent, of uit teks."
 
 #. argparse formats this text with %
 msgid "a picture to show; a .gif or an animated .png plays"
@@ -1292,7 +1292,7 @@ msgstr "wys net hierdie reghoek van elke raam: sy boonste linkerhoek by X,Y, W p
 
 #. argparse formats this text with %
 msgid "each frame's width (default: {width}, or less if the frame is narrower)"
-msgstr "elke raam se breedte (verstek: {width}, of minder as die raam smaller is)"
+msgstr "elke raam se breedte (verstek: {width}, of minder indien die raam smaller is)"
 
 #. argparse formats this text with %
 msgid "how many frames side by side (default: {columns})"
@@ -1315,7 +1315,7 @@ msgstr "stoor een raam van 'n video as 'n YouTube-duimnael"
 
 #. argparse formats this text with %
 msgid "save one frame of a video as a YouTube thumbnail: 1280x720, cut to 16:9, with a title if you give one."
-msgstr "stoor een raam van 'n video as 'n YouTube-duimnael: 1280x720, tot 16:9 gesny, met 'n titel as jy een gee."
+msgstr "stoor een raam van 'n video as 'n YouTube-duimnael: 1280x720, tot 16:9 gesny, met 'n titel as u een gee."
 
 #. argparse formats this text with %
 msgid "a title of one line, drawn large near the bottom"
@@ -1396,7 +1396,7 @@ msgid "--name takes up to {most} plain letters, digits, dots, underscores and hy
 msgstr "--name neem tot {most} gewone letters, syfers, punte, onderstrepe en koppeltekens, wat met 'n letter, 'n syfer of 'n onderstreep begin, nie {name} nie."
 
 msgid "{taken} was taken by the time the file was ready, so the file is {output}."
-msgstr "{taken} was reeds geneem toe die lêer gereed was, so die lêer is {output}."
+msgstr "{taken} was reeds in gebruik toe die lêer gereed was, so die lêer is {output}."
 
 msgid "{output} was left as it was, and this run's video is in {part}."
 msgstr "{output} is gelaat soos dit was, en hierdie lopie se video is in {part}."
@@ -1485,7 +1485,7 @@ msgid ""
 "{where}: the label {words} is {wide} pixels wide at size {size}, and its slice has room for {room}.\n"
 "  Shorten it, or give it a smaller size: about {fits} would fit."
 msgstr ""
-"{where}: die label {words} is {wide} pixels breed by grootte {size}, en sy slice het plek vir {room}.\n"
+"{where}: die label {words} is {wide} pieksels breed teen grootte {size}, en sy slice het plek vir {room}.\n"
 "  Maak dit korter, of gee dit 'n kleiner grootte: omtrent {fits} sal pas."
 
 msgid "scene {number}: a split of {count} videos, {start} to {end}"
@@ -1496,15 +1496,15 @@ msgstr "die skrip het geen tonele nie. 'n Toneel is 'n reël wat met clip, card 
 
 #. translators: ring is an edit-script word and stays in English.
 msgid "{where}: a ring line belongs to the clip above it, and the line above is not part of a clip."
-msgstr "{where}: 'n ring-reël behoort aan die snit daarbo, en die reël daarbo is nie deel van 'n snit nie."
+msgstr "{where}: 'n ring-reël behoort aan die greep daarbo, en die reël daarbo is nie deel van 'n greep nie."
 
 #. translators: ring and at are edit-script words and stay in English.
 msgid "{where}: ring takes the point clicked, in the pixels of the clip's own file, then its moment: ring 640 400 at 5.4"
-msgstr "{where}: ring neem die punt waar geklik is, in die pixels van die snit se eie lêer, en dan die oomblik: ring 640 400 at 5.4"
+msgstr "{where}: ring neem die punt waar geklik is, in pieksels van die greep se eie lêer, en dan die oomblik: ring 640 400 at 5.4"
 
 #. translators: ring and at are edit-script words and stay in English.
 msgid "{where}: ring needs `at`, the moment of the click in the clip's own time: ring 640 400 at 5.4"
-msgstr "{where}: ring het `at` nodig, die oomblik van die klik in die snit se eie tyd: ring 640 400 at 5.4"
+msgstr "{where}: ring het `at` nodig, die oomblik van die klik in die greep se eie tyd: ring 640 400 at 5.4"
 
 #. translators: {word} is the first word of the line, in quotes.
 msgid "{where}: a line starts with clip, card, split, slice, slide, text, zoom, ring, sound, music or level, not {word}."
@@ -1515,11 +1515,11 @@ msgid "{where}: the ring's point {x} {y} is outside {path}, which is {size}."
 msgstr "{where}: die ring se punt {x} {y} lê buite {path}, wat {size} is."
 
 msgid "{where}: the ring at {at} is not inside its clip ({start} to {end})."
-msgstr "{where}: die ring by {at} is nie binne sy snit nie ({start} tot {end})."
+msgstr "{where}: die ring by {at} is nie binne sy greep nie ({start} tot {end})."
 
 #. translators: hold is an edit-script word and stays in English.
 msgid "{where}: the ring at {at} lasts {seconds} seconds, past the clip's own frames, which end at {end}; the hold would freeze it. Move it earlier."
-msgstr "{where}: die ring by {at} duur {seconds} sekondes, verby die snit se eie rame, wat by {end} eindig; die hold sou dit laat vries. Skuif dit vroeër."
+msgstr "{where}: die ring by {at} duur {seconds} sekondes, verby die greep se eie rame, wat by {end} eindig; die hold sou dit laat vries. Skuif dit vroeër."
 
 #. translators: x and y are edit-script words and stay in English.
 msgid "{where}: a text's x and y are given together, and this one has only {word}."
@@ -1534,7 +1534,7 @@ msgid "{where}: a text placed with x and y takes no {word}: it sits at its point
 msgstr "{where}: 'n teks wat met x en y geplaas word, neem geen {word} nie: dit staan by sy punt en het geen band nie."
 
 msgid "{where}: the text {words} at x {x} y {y} reaches past the frame's edge. Move it in, or give it a smaller size."
-msgstr "{where}: die teks {words} by x {x} y {y} strek verby die raam se rand. Skuif dit in, of gee dit 'n kleiner size."
+msgstr "{where}: die teks {words} by x {x} y {y} strek verby die raam se rand. Skuif dit in, of gee dit 'n kleiner grootte."
 
 #. translators: {names} are the drawn backgrounds' names, which stay in English.
 msgid "{where}: a background is a colour written #RRGGBB, like {example}, two to {most} of them joined by commas for a moving gradient, or one of {names}, not {value}."

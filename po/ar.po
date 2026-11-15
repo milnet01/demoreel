@@ -94,7 +94,7 @@ msgid "It said: {text}"
 msgstr "قال: {text}"
 
 msgid "`demoreel check` tests this start on its own."
-msgstr "يختبر `demoreel check` هذا البدء وحده."
+msgstr "يختبر `demoreel check` بدء التشغيل هذا على حدة."
 
 msgid "could not write the display's auth cookie, so the display cannot be made private."
 msgstr "تعذّرت كتابة ملف تعريف المصادقة الخاص بالشاشة، لذا لا يمكن جعل الشاشة خاصة."
@@ -103,7 +103,7 @@ msgid "xauth said: {text}"
 msgstr "قال xauth: {text}"
 
 msgid "`demoreel check` tests this on its own."
-msgstr "يختبر `demoreel check` هذا وحده."
+msgstr "يختبر `demoreel check` هذا على حدة."
 
 msgid "the display did not lock: a client without its auth cookie could still connect, or none could."
 msgstr "لم تُقفل الشاشة: إما أن عميلًا بلا ملف تعريف المصادقة ما زال يستطيع الاتصال، وإما أن أحدًا لا يستطيع."
@@ -127,7 +127,7 @@ msgid ""
 "the app resized its window to {size} at {place}, so it no longer fills the {frame} frame and part of the video is cropped or empty.\n"
 "  Record at the app's own size with -s {size}."
 msgstr ""
-"غيّر التطبيق حجم نافذته إلى {size} عند {place}، فلم تعد تملأ إطار الصورة {frame}، وجزء من الفيديو مقصوص أو فارغ.\n"
+"غيّر التطبيق حجم نافذته إلى {size} في الموضع {place}، فلم تعد تملأ إطار الصورة {frame}، وجزء من الفيديو مقصوص أو فارغ.\n"
 "  سجّل بحجم التطبيق نفسه باستخدام -s {size}."
 
 msgid ""
@@ -149,7 +149,7 @@ msgstr ""
 "  السبب المرجّح أنه تطبيق لا يعمل إلا بنسخة واحدة: يجد نسخة\n"
 "  تعمل مسبقًا على سطح مكتبك الحقيقي، فيسلّمها الطلب ثم يخرج\n"
 "  بنجاح. إن كانت هناك نسخة تعمل، فأغلقها وحاول مجددًا.\n"
-"  وإن لم تكن، فربما انتهى الأمر ببساطة دون أن يحتاج إلى\n"
+"  وإن لم تكن، فربما انتهى تنفيذ الأمر ببساطة دون أن يحتاج إلى\n"
 "  نافذة — وفي هذه الحالة لا يوجد ما يُسجَّل."
 
 msgid ""
@@ -328,7 +328,7 @@ msgid ""
 "It had not drawn yet. A GPU app can spend seconds on a black\n"
 "    screen while it starts: --settle waits for the first picture."
 msgstr ""
-"لم يكن قد رسم شيئًا بعد. قد يقضي تطبيق يعتمد على معالج الرسوميات ثواني على شاشة\n"
+"لم يكن قد رسم شيئًا بعد. قد يقضي تطبيق يعتمد على معالج الرسوميات ثوانيَ على شاشة\n"
 "    سوداء أثناء بدئه: ينتظر --settle ظهور أول صورة."
 
 msgid ""
@@ -377,10 +377,10 @@ msgid "The recorder most likely stopped before it finished the file. See {log}"
 msgstr "الأرجح أن المسجّل توقف قبل أن يُكمل الملف. راجع {log}"
 
 msgid "the virtual display was blank halfway, so at least half of it is a flat colour: {output}"
-msgstr "كانت الشاشة الافتراضية فارغة في المنتصف، لذا فنصفه على الأقل لون واحد مُسطَّح: {output}"
+msgstr "كانت الشاشة الافتراضية فارغة في المنتصف، لذا فنصف الفيديو على الأقل لون واحد مُسطَّح: {output}"
 
 msgid "the virtual display was blank at the end, so it ends on a flat colour: {output}"
-msgstr "كانت الشاشة الافتراضية فارغة في النهاية، لذا ينتهي بلون واحد مُسطَّح: {output}"
+msgstr "كانت الشاشة الافتراضية فارغة في النهاية، لذا ينتهي الفيديو بلون واحد مُسطَّح: {output}"
 
 msgid ""
 "could not sample the virtual display to check {output} is not blank,\n"
@@ -721,7 +721,7 @@ msgid "{where}: push is how much the window grows, in percent, from 0 to {high},
 msgstr "{where}: قيمة push مقدار نموّ النافذة بالنسبة المئوية، من 0 إلى {high}، لا {value}."
 
 msgid "{where}: window {window} grown by push {push} is larger than the room it sits in. Make one of them smaller."
-msgstr "{where}: النافذة window {window} بعد نموّها بـ push {push} أكبر من المساحة التي تقع فيها. صغّر إحداهما."
+msgstr "{where}: النافذة بقيمة window {window} بعد نموّها بـ push {push} أكبر من المساحة التي تقع فيها. صغّر إحداهما."
 
 msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
 msgstr "{where}: قيمة window نسبة مئوية من المساحة، من {low} إلى {high}، لا {value}."
@@ -1326,7 +1326,7 @@ msgid ""
 "It rendered somewhere else. For a Flatpak, try the three flags in README.md,\n"
 "    § Recording a Flatpak app."
 msgstr ""
-"رسم في مكان آخر. مع تطبيق Flatpak، جرّب الخيارات الثلاثة في README.md،\n"
+"لقد رسم في مكان آخر. مع تطبيق Flatpak، جرّب الخيارات الثلاثة في README.md،\n"
 "    § Recording a Flatpak app."
 
 #. argparse formats this text with %
@@ -1539,11 +1539,11 @@ msgid "{where}: the ring's point {x} {y} is outside {path}, which is {size}."
 msgstr "{where}: نقطة ring {x} {y} خارج {path}، وأبعاده {size}."
 
 msgid "{where}: the ring at {at} is not inside its clip ({start} to {end})."
-msgstr "{where}: الحلقة عند {at} ليست داخل مقطعها (من {start} إلى {end})."
+msgstr "{where}: ring عند {at} ليس داخل مقطعه (من {start} إلى {end})."
 
 #. translators: hold is an edit-script word and stays in English.
 msgid "{where}: the ring at {at} lasts {seconds} seconds, past the clip's own frames, which end at {end}; the hold would freeze it. Move it earlier."
-msgstr "{where}: تدوم الحلقة عند {at} مدة {seconds} ثانية، بعد إطارات المقطع نفسه التي تنتهي عند {end}؛ وسيجمّدها hold. اجعلها أبكر."
+msgstr "{where}: يدوم ring عند {at} مدة {seconds} ثانية، بعد إطارات المقطع نفسه التي تنتهي عند {end}؛ وسيجمّده hold. اجعله أبكر."
 
 #. translators: x and y are edit-script words and stay in English.
 msgid "{where}: a text's x and y are given together, and this one has only {word}."
@@ -1585,10 +1585,10 @@ msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet: NOT
 msgstr "edit وtrim وcaption وjoin وcard وmotion وposter وthumbnail وsheet: غير جاهز"
 
 msgid "text on a card or a caption: ready"
-msgstr "نص على بطاقة أو في تعليق: جاهز"
+msgstr "نص على بطاقة أو في تعليق توضيحي: جاهز"
 
 msgid "text on a card or a caption: NOT READY"
-msgstr "نص على بطاقة أو في تعليق: غير جاهز"
+msgstr "نص على بطاقة أو في تعليق توضيحي: غير جاهز"
 
 msgid "frames made: {made}; frames planned: {planned}."
 msgstr "الإطارات المصنوعة: {made}؛ الإطارات المخطط لها: {planned}."

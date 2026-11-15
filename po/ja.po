@@ -9,10 +9,10 @@ msgstr ""
 "X-Demoreel-Review: draft\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
-msgstr "{where}: テキスト {words} は {first} と同時に同じ位置に表示されますが、一方には帯があり、もう一方にはありません。重ねて並べるテキストは、すべて帯ありか、すべて帯なしにしてください。"
+msgstr "{where}: テキスト {words} は {first} と同時に同じ位置に表示されますが、一方には帯があり、もう一方にはありません。重ねて並べるテキストは、すべて帯ありか、すべて帯なしのどちらかでなければなりません。"
 
 msgid "{where}: the text {words} does not fit: with the texts stacked above it, on screen at the same time, it is taller than the frame. Give them a smaller size, or show them at different times."
-msgstr "{where}: テキスト {words} が収まりません。同時に上に積み重なるテキストと合わせると、画面より高くなります。サイズを小さくするか、表示する時間をずらしてください。"
+msgstr "{where}: テキスト {words} が収まりません。同時に上に積み重なるテキストと合わせると、フレームより高くなります。サイズを小さくするか、表示する時間をずらしてください。"
 
 msgid "ended by {signal} before it finished, so there is nothing to hand back."
 msgstr "完了する前に {signal} で終了したため、渡せるものはありません。"
@@ -127,7 +127,7 @@ msgid ""
 "the app resized its window to {size} at {place}, so it no longer fills the {frame} frame and part of the video is cropped or empty.\n"
 "  Record at the app's own size with -s {size}."
 msgstr ""
-"アプリが {place} の時点でウィンドウを {size} に変更したため、{frame} のフレームを埋めなくなり、動画の一部が切れているか空になっています。\n"
+"アプリがウィンドウを {place} の位置で {size} に変更したため、{frame} のフレームを埋めなくなり、動画の一部が切れているか空になっています。\n"
 "  -s {size} でアプリ自身のサイズで録画してください。"
 
 msgid ""
@@ -146,7 +146,7 @@ msgid ""
 "  window — in which case there is nothing to record."
 msgstr ""
 "アプリはウィンドウを開かずにすぐ終了しました (ステータス 0)。\n"
-"  よくある原因は、多重起動しないアプリです。実際のデスクトップで\n"
+"  考えられる原因は、多重起動しないアプリです。実際のデスクトップで\n"
 "  すでに動いているアプリを見つけると、そちらに処理を渡して\n"
 "  正常に終了します。動いているなら、それを閉じてやり直してください。\n"
 "  そうでなければ、コマンドはウィンドウを必要とせずに単に\n"
@@ -261,7 +261,7 @@ msgid "missing required program(s): {programs}"
 msgstr "必要なプログラムがありません: {programs}"
 
 msgid "this ffmpeg cannot encode H.264 with libx264, which every recording uses."
-msgstr "この ffmpeg は libx264 で H.264 をエンコードできません。すべての録画でこれを使います。"
+msgstr "この ffmpeg は、すべての録画で使う libx264 による H.264 エンコードができません。"
 
 msgid "--audio needs an ffmpeg that can read from a sound server, and this one has no pulse input."
 msgstr "--audio にはサウンドサーバーから読み取れる ffmpeg が必要ですが、この ffmpeg には pulse 入力がありません。"
@@ -328,14 +328,14 @@ msgid ""
 "It had not drawn yet. A GPU app can spend seconds on a black\n"
 "    screen while it starts: --settle waits for the first picture."
 msgstr ""
-"まだ描画していなかった。GPU を使うアプリは起動中、数秒間\n"
+"まだ描画していませんでした。GPU を使うアプリは起動中、数秒間\n"
 "    黒い画面のままのことがあります。--settle で最初の画面を待てます。"
 
 msgid ""
 "It needs the GPU, and Xvfb has none. An OpenGL or Vulkan app\n"
 "    cannot render on it at all: record it with --gpu instead."
 msgstr ""
-"GPU が必要なのに、Xvfb には GPU がない。OpenGL や Vulkan のアプリは\n"
+"GPU が必要ですが、Xvfb には GPU がありません。OpenGL や Vulkan のアプリは\n"
 "    そこではまったく描画できません。代わりに --gpu で録画してください。"
 
 msgid "The app ran but drew nothing here. Two causes account for most of it:"
@@ -358,7 +358,7 @@ msgid "recording, {seconds}s left"
 msgstr "録画中、残り {seconds}秒"
 
 msgid "recording for {time} (Ctrl+C to finish)"
-msgstr "録画中 {time} (Ctrl+C で終了)"
+msgstr "録画中: {time} 経過 (Ctrl+C で終了)"
 
 msgid "the app closed; ending the recording."
 msgstr "アプリが閉じたので、録画を終了します。"
@@ -421,7 +421,7 @@ msgid "reading it back took over {seconds}s."
 msgstr "読み戻しに {seconds}秒以上かかりました。"
 
 msgid "ffprobe could not read it."
-msgstr "ffprobe が読み取れませんでした。"
+msgstr "ffprobe はそれを読み取れませんでした。"
 
 msgid "{seconds}s of video, {size}"
 msgstr "{seconds}秒の動画、{size}"
@@ -461,7 +461,7 @@ msgid "missing {programs}"
 msgstr "{programs} がありません"
 
 msgid "this ffmpeg has no libx264, which every recording uses."
-msgstr "この ffmpeg には libx264 がありません。すべての録画でこれを使います。"
+msgstr "この ffmpeg には、すべての録画で使う libx264 がありません。"
 
 msgid "wf-recorder loads {library}, which has no libx264, so it cannot write the video."
 msgstr "wf-recorder が読み込む {library} には libx264 がないため、動画を書き出せません。"
@@ -668,7 +668,7 @@ msgid ""
 "{where}: a band that fades with its text needs a newer ffmpeg than this one: its text filter has no `boxw`.\n"
 "  Give the text `band off`, or take its fade away."
 msgstr ""
-"{where}: テキストと一緒にフェードする帯には、これより新しい ffmpeg が必要です。このテキストフィルターには `boxw` がありません。\n"
+"{where}: テキストと一緒にフェードする帯には、これより新しい ffmpeg が必要です。この ffmpeg のテキストフィルターには `boxw` がありません。\n"
 "  テキストに `band off` を指定するか、フェードを外してください。"
 
 msgid ""
@@ -718,13 +718,13 @@ msgid "{where}: its fades come to {fades} seconds, and the scene is only {second
 msgstr "{where}: フェードの合計が {fades} 秒ですが、シーンは {seconds} 秒しかありません。"
 
 msgid "{where}: its texts leave no room for the picture between them. Give them a smaller size."
-msgstr "{where}: テキストの間に映像の入る余地がありません。テキストのサイズを小さくしてください。"
+msgstr "{where}: テキストの間に画像の入る余地がありません。テキストのサイズを小さくしてください。"
 
 msgid ""
 "a video's width and height must be even, since H.264 cannot encode an odd one, and this film would be {size}.\n"
 "  Set the size with -s {even}."
 msgstr ""
-"H.264 は奇数をエンコードできないため、動画の幅と高さは偶数でなければなりませんが、この映像は {size} になります。\n"
+"H.264 は奇数の幅や高さをエンコードできないため、動画の幅と高さは偶数でなければなりませんが、この映像は {size} になります。\n"
 "  -s {even} でサイズを指定してください。"
 
 msgid "--framerate takes a number above zero, not {rate}."
@@ -787,7 +787,7 @@ msgid "-o is {output}, which is also a file this command reads. demoreel never w
 msgstr "-o の {output} は、このコマンドが読み込むファイルでもあります。demoreel は自分の入力を上書きしません。"
 
 msgid "this ffmpeg cannot encode H.264 with libx264, which every video uses."
-msgstr "この ffmpeg は libx264 で H.264 をエンコードできません。すべての動画でこれを使います。"
+msgstr "この ffmpeg は、すべての動画で使う libx264 による H.264 エンコードができません。"
 
 msgid "{where}: volume changes a clip's own sound, and {path} has none."
 msgstr "{where}: volume はクリップ自身の音を変えるものですが、{path} には音がありません。"
@@ -814,7 +814,7 @@ msgid "making {output}, {seconds} seconds at {size}"
 msgstr "{output} を作成中、{seconds} 秒、{size}"
 
 msgid "ffmpeg used more than {size} GB of memory making the film, half this machine's, so it was stopped."
-msgstr "ffmpeg が動画の作成で {size} GB を超えるメモリー（このマシンの半分）を使ったため、停止しました。"
+msgstr "ffmpeg が映像の作成で {size} GB を超えるメモリー（このマシンのメモリーの半分）を使ったため、停止しました。"
 
 msgid "ffmpeg could not make the film."
 msgstr "ffmpeg が映像を作成できませんでした。"
@@ -862,7 +862,7 @@ msgid "needs ffmpeg first"
 msgstr "先に ffmpeg が必要です"
 
 msgid "this ffmpeg has no libx264, which every video uses."
-msgstr "この ffmpeg には libx264 がありません。すべての動画でこれを使います。"
+msgstr "この ffmpeg には、すべての動画で使う libx264 がありません。"
 
 msgid "ffmpeg drew nothing for a line of text: no font was found."
 msgstr "ffmpeg がテキストの行を何も描画しませんでした。フォントが見つかりませんでした。"
@@ -925,7 +925,7 @@ msgstr "書き出す動画ファイル (既定値: ./<app>-<timestamp>.mp4)"
 
 #. argparse formats this text with %
 msgid "seconds to record, counted from when the -a steps finish; 0 means until `demoreel stop` (default: 30)"
-msgstr "録画する秒数。-a の手順が終わった時点から数える。0 なら `demoreel stop` まで (既定値: 30)"
+msgstr "録画する秒数。-a のステップが終わった時点から数えます。0 なら `demoreel stop` まで (既定値: 30)"
 
 #. argparse formats this text with %
 msgid "virtual display size, even numbers (default: 1600x1000)"
@@ -1296,7 +1296,7 @@ msgid ""
 "It rendered somewhere else. For a Flatpak, try the three flags in README.md,\n"
 "    § Recording a Flatpak app."
 msgstr ""
-"別の場所に描画した。Flatpak の場合は、README.md の\n"
+"別の場所に描画しました。Flatpak の場合は、README.md の\n"
 "    § Recording a Flatpak app にある 3 つのフラグを試してください。"
 
 #. argparse formats this text with %
@@ -1396,7 +1396,7 @@ msgid "{output} was left as it was, and this run's video is in {part}."
 msgstr "{output} はそのままにしました。この実行の動画は {part} にあります。"
 
 msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
-msgstr "{path} の読み込みがメモリを {size} GB 以上使いました。このマシンの半分にあたるため、停止しました。"
+msgstr "{path} の読み込みがメモリーを {size} GB 以上使いました。このマシンのメモリーの半分にあたるため、停止しました。"
 
 msgid "{where}: {path} is a list that points at other files, such as a playlist, and demoreel does not follow one."
 msgstr "{where}: {path} はプレイリストなど、他のファイルを指すリストです。demoreel はそのようなリストをたどりません。"
@@ -1405,13 +1405,13 @@ msgid "ffmpeg did not say which formats it reads, so nothing was read."
 msgstr "ffmpeg が読める形式を返さなかったため、何も読み込みませんでした。"
 
 msgid "{where}: this makes the film {seconds} seconds long, and a film may last at most {most} seconds, which is {hours} hours."
-msgstr "{where}: これで動画の長さが {seconds} 秒になります。動画の長さは最大 {most} 秒 ({hours} 時間) です。"
+msgstr "{where}: これで映像の長さが {seconds} 秒になります。映像の長さは最大 {most} 秒 ({hours} 時間) です。"
 
 msgid "a film's frame rate is at most {most} a second, and this one would be {rate}."
-msgstr "動画のフレームレートは毎秒 {most} までですが、この動画では {rate} になります。"
+msgstr "映像のフレームレートは毎秒 {most} までですが、この映像では {rate} になります。"
 
 msgid "the disk holding {path} is nearly full, so the film was stopped before it filled it."
-msgstr "{path} のあるディスクがほぼ満杯のため、いっぱいになる前に動画の作成を停止しました。"
+msgstr "{path} のあるディスクがほぼ満杯のため、いっぱいになる前に映像の作成を停止しました。"
 
 msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
 msgstr "{where}: {path} は {size} で、このサイズのウィンドウに表示するには細すぎるか平たすぎます。もっと大きなウィンドウにしてください。"
@@ -1440,11 +1440,11 @@ msgstr "{where}: split には slice 行ごとに動画を {low} から {most} �
 
 #. translators: show is an edit-script word and stays in English.
 msgid "{where}: show is how many slices fill the frame, a whole number from 1 to {most}, not {value}."
-msgstr "{where}: show は画面を埋める slice の数で、1 から {most} までの整数です。{value} は指定できません。"
+msgstr "{where}: show はフレームを埋める slice の数で、1 から {most} までの整数です。{value} は指定できません。"
 
 #. translators: centre is an edit-script word and stays in English.
 msgid "{where}: a slice's centre is a percentage of the picture across, from 0 to 100, not {value}."
-msgstr "{where}: slice の centre は映像の幅に対する割合で、0 から 100 までです。{value} は指定できません。"
+msgstr "{where}: slice の centre は画像の幅に対する割合で、0 から 100 までです。{value} は指定できません。"
 
 msgid "{where}: {path} is {size}, and {first} above it is {other}. The slices of a split are all one size."
 msgstr "{where}: {path} は {size} で、上の {first} は {other} です。split の slice はすべて同じサイズにします。"
@@ -1506,14 +1506,14 @@ msgstr "{where}: 行は clip、card、split、slice、slide、text、zoom、ring
 
 #. translators: ring is an edit-script word and stays in English.
 msgid "{where}: the ring's point {x} {y} is outside {path}, which is {size}."
-msgstr "{where}: リングの位置 {x} {y} は {path} ({size}) の外にあります。"
+msgstr "{where}: ring の位置 {x} {y} は {path} ({size}) の外にあります。"
 
 msgid "{where}: the ring at {at} is not inside its clip ({start} to {end})."
-msgstr "{where}: {at} のリングはそのクリップ ({start} 〜 {end}) の中にありません。"
+msgstr "{where}: {at} の ring はそのクリップ ({start} から {end}) の中にありません。"
 
 #. translators: hold is an edit-script word and stays in English.
 msgid "{where}: the ring at {at} lasts {seconds} seconds, past the clip's own frames, which end at {end}; the hold would freeze it. Move it earlier."
-msgstr "{where}: {at} のリングは {seconds} 秒続き、{end} で終わるクリップ自身のフレームを越えます。hold で止まってしまうので、もっと前にしてください。"
+msgstr "{where}: {at} の ring は {seconds} 秒続き、{end} で終わるクリップ自身のフレームを越えます。hold で止まってしまうので、もっと前にしてください。"
 
 #. translators: x and y are edit-script words and stay in English.
 msgid "{where}: a text's x and y are given together, and this one has only {word}."
@@ -1521,14 +1521,14 @@ msgstr "{where}: テキストの x と y は一緒に指定します。このテ
 
 #. translators: {word} is x or y, an edit-script word that stays in English.
 msgid "{where}: a text's {word} is a percentage of the frame, from 0 to 100, not {value}."
-msgstr "{where}: テキストの {word} は画面に対する割合 (パーセント) で、0 から 100 の間です。{value} は使えません。"
+msgstr "{where}: テキストの {word} はフレームに対する割合 (パーセント) で、0 から 100 の間です。{value} は使えません。"
 
 #. translators: {word} is at or band; x, y, at and band are edit-script words and stay in English.
 msgid "{where}: a text placed with x and y takes no {word}: it sits at its point, and has no band."
 msgstr "{where}: x と y で置いたテキストには {word} を付けられません。その位置に置かれ、帯もありません。"
 
 msgid "{where}: the text {words} at x {x} y {y} reaches past the frame's edge. Move it in, or give it a smaller size."
-msgstr "{where}: x {x} y {y} のテキスト {words} が画面の端からはみ出します。内側に寄せるか、size を小さくしてください。"
+msgstr "{where}: x {x} y {y} のテキスト {words} がフレームの端からはみ出します。内側に寄せるか、size を小さくしてください。"
 
 #. translators: {names} are the drawn backgrounds' names, which stay in English.
 msgid "{where}: a background is a colour written #RRGGBB, like {example}, two to {most} of them joined by commas for a moving gradient, or one of {names}, not {value}."

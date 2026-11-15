@@ -134,7 +134,7 @@ msgid ""
 "the app resized its window {seconds}s into the video, and demoreel put it back to fill the {frame} frame.\n"
 "  The video before then may be cropped or have an empty band."
 msgstr ""
-"програма змінила розмір свого вікна на {seconds} с відео, і demoreel повернув його, щоб воно заповнювало кадр {frame}.\n"
+"програма змінила розмір свого вікна на {seconds}-й секунді відео, і demoreel повернув його, щоб воно заповнювало кадр {frame}.\n"
 "  До цієї миті відео може бути обрізане або мати порожню смугу."
 
 msgid ""
@@ -185,7 +185,7 @@ msgid ""
 "  What was recorded is kept in {part}, and the log is {log}."
 msgstr ""
 "не вдалося поєднати звук із зображенням: журнал програми запису не каже, коли почалося кожне з них.\n"
-"  Записане збережено в {part}, а журнал знаходиться в {log}."
+"  Записане збережено в {part}, а журнал міститься в {log}."
 
 msgid ""
 "could not finish the video: turning the recording into {name} failed.\n"
@@ -358,7 +358,7 @@ msgid "recording, {seconds}s left"
 msgstr "запис, залишилося {seconds} с"
 
 msgid "recording for {time} (Ctrl+C to finish)"
-msgstr "запис протягом {time} (Ctrl+C, щоб завершити)"
+msgstr "запис триває {time} (Ctrl+C, щоб завершити)"
 
 msgid "the app closed; ending the recording."
 msgstr "програму закрито; запис завершується."
@@ -759,7 +759,7 @@ msgid "{where}: a level with normalise {state} is between {low} and {high} dB, n
 msgstr "{where}: level за normalise {state} — від {low} до {high} dB, а не {value}."
 
 msgid "{where}: the music's fades come to {fades} seconds, and the film is only {seconds} long."
-msgstr "{where}: переходи музики разом тривають {fades} с, а фільм триває лише {seconds} с."
+msgstr "{where}: наростання й стихання музики разом тривають {fades} с, а фільм триває лише {seconds} с."
 
 msgid "{where}: a level line's from must come before its to, and both inside the film, which is {seconds} seconds long."
 msgstr "{where}: from рядка level має бути раніше за його to, і обидва — в межах фільму, тривалість якого {seconds} с."
@@ -856,7 +856,7 @@ msgid "--from and --to must be inside {path}, which is {seconds} seconds long, w
 msgstr "--from і --to мають бути в межах {path}, який триває {seconds} с, причому --from — раніше за --to."
 
 msgid "reading {path} took too long for its length, so it was stopped."
-msgstr "читання {path} тривало задовго для його тривалості, тому його зупинено."
+msgstr "читання {path} тривало занадто довго як на його тривалість, тому його зупинено."
 
 msgid "could not read the frames of {path}."
 msgstr "не вдалося прочитати кадри з {path}."
@@ -1408,7 +1408,7 @@ msgid "{output} was left as it was, and this run's video is in {part}."
 msgstr "{output} залишено як було, а відео цього запуску міститься в {part}."
 
 msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
-msgstr "читання {path} зайняло понад {size} ГБ пам'яті, половину пам'яті цієї машини, тому його зупинено."
+msgstr "читання {path} зайняло понад {size} ГБ пам'яті, половину пам'яті цього комп'ютера, тому його зупинено."
 
 msgid "{where}: {path} is a list that points at other files, such as a playlist, and demoreel does not follow one."
 msgstr "{where}: {path} — це список, що вказує на інші файли, наприклад плейлист, а demoreel за такими списками не переходить."
@@ -1423,7 +1423,7 @@ msgid "a film's frame rate is at most {most} a second, and this one would be {ra
 msgstr "частота кадрів фільму — щонайбільше {most} на секунду, а тут було б {rate}."
 
 msgid "the disk holding {path} is nearly full, so the film was stopped before it filled it."
-msgstr "диск із {path} майже заповнений, тому фільм зупинено, поки диск не заповнився."
+msgstr "диск із {path} майже заповнений, тому фільм зупинено ще до того, як диск заповнився."
 
 msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
 msgstr "{where}: {path} має розмір {size}, надто вузький або плаский для вікна такого розміру. Дайте йому більше вікно."
@@ -1518,14 +1518,14 @@ msgstr "{where}: рядок починається з clip, card, split, slice, 
 
 #. translators: ring is an edit-script word and stays in English.
 msgid "{where}: the ring's point {x} {y} is outside {path}, which is {size}."
-msgstr "{where}: точка {x} {y} кільця лежить поза межами {path}, розмір якого {size}."
+msgstr "{where}: точка {x} {y} для ring лежить поза межами {path}, розмір якого {size}."
 
 msgid "{where}: the ring at {at} is not inside its clip ({start} to {end})."
-msgstr "{where}: кільце в {at} не потрапляє у свій кліп (від {start} до {end})."
+msgstr "{where}: ring у момент {at} не потрапляє у свій кліп (від {start} до {end})."
 
 #. translators: hold is an edit-script word and stays in English.
 msgid "{where}: the ring at {at} lasts {seconds} seconds, past the clip's own frames, which end at {end}; the hold would freeze it. Move it earlier."
-msgstr "{where}: кільце в {at} триває {seconds} с, довше за власні кадри кліпу, що закінчуються в {end}; hold заморозив би його. Поставте його раніше."
+msgstr "{where}: ring у момент {at} триває {seconds} с, довше за власні кадри кліпу, що закінчуються в {end}; hold заморозив би його. Поставте його раніше."
 
 #. translators: x and y are edit-script words and stay in English.
 msgid "{where}: a text's x and y are given together, and this one has only {word}."
@@ -1540,7 +1540,7 @@ msgid "{where}: a text placed with x and y takes no {word}: it sits at its point
 msgstr "{where}: текст, розміщений через x та y, не приймає {word}: він стоїть у своїй точці й не має смуги."
 
 msgid "{where}: the text {words} at x {x} y {y} reaches past the frame's edge. Move it in, or give it a smaller size."
-msgstr "{where}: текст {words} у x {x} y {y} виходить за край кадру. Посуньте його всередину або задайте менший size."
+msgstr "{where}: текст {words} у x {x} y {y} виходить за край кадру. Посуньте його всередину або задайте менший розмір."
 
 #. translators: {names} are the drawn backgrounds' names, which stay in English.
 msgid "{where}: a background is a colour written #RRGGBB, like {example}, two to {most} of them joined by commas for a moving gradient, or one of {names}, not {value}."

@@ -106,7 +106,7 @@ msgid "`demoreel check` tests this on its own."
 msgstr "`demoreel check` testa isso separadamente."
 
 msgid "the display did not lock: a client without its auth cookie could still connect, or none could."
-msgstr "a tela não foi trancada: um cliente sem o cookie de autenticação ainda conseguia se conectar, ou nenhum conseguia."
+msgstr "o acesso à tela não foi restringido: um cliente sem o cookie de autenticação ainda conseguia se conectar, ou nenhum conseguia."
 
 msgid "the GPU display did not start, so there is nothing to record on."
 msgstr "a tela com GPU não iniciou, então não há onde gravar."
@@ -118,7 +118,7 @@ msgid "`demoreel check` says whether --gpu has what it needs."
 msgstr "`demoreel check` diz se --gpu tem o que precisa."
 
 msgid "the GPU display did not lock: a client without its auth cookie could still connect, or none could."
-msgstr "a tela com GPU não foi trancada: um cliente sem o cookie de autenticação ainda conseguia se conectar, ou nenhum conseguia."
+msgstr "o acesso à tela com GPU não foi restringido: um cliente sem o cookie de autenticação ainda conseguia se conectar, ou nenhum conseguia."
 
 msgid "the private display {display} stopped answering: `xdotool {command}` did not return within {seconds}s."
 msgstr "a tela privada {display} parou de responder: `xdotool {command}` não retornou em {seconds}s."
@@ -127,7 +127,7 @@ msgid ""
 "the app resized its window to {size} at {place}, so it no longer fills the {frame} frame and part of the video is cropped or empty.\n"
 "  Record at the app's own size with -s {size}."
 msgstr ""
-"o aplicativo redimensionou a janela para {size} em {place}, então ela não preenche mais o quadro de {frame} e parte do vídeo fica cortada ou vazia.\n"
+"o aplicativo redimensionou a janela para {size} na posição {place}, então ela não preenche mais o quadro de {frame} e parte do vídeo fica cortada ou vazia.\n"
 "  Grave no tamanho do próprio aplicativo com -s {size}."
 
 msgid ""
@@ -157,7 +157,7 @@ msgid ""
 "  Its own output, above or in --app-log, says why. To see it on its own, run: {command}"
 msgstr ""
 "o aplicativo saiu com status {status} antes de abrir uma janela.\n"
-"  A saída dele, acima ou em --app-log, diz o motivo. Para vê-lo sozinho, execute: {command}"
+"  A saída dele, acima ou em --app-log, diz o motivo. Para ver só essa saída, execute: {command}"
 
 msgid "cannot read the step {step}: {reason}."
 msgstr "não foi possível ler o passo {step}: {reason}."
@@ -358,7 +358,7 @@ msgid "recording, {seconds}s left"
 msgstr "gravando, faltam {seconds}s"
 
 msgid "recording for {time} (Ctrl+C to finish)"
-msgstr "gravando por {time} (Ctrl+C para terminar)"
+msgstr "gravando há {time} (Ctrl+C para terminar)"
 
 msgid "the app closed; ending the recording."
 msgstr "o aplicativo fechou; encerrando a gravação."
@@ -759,7 +759,7 @@ msgid "{where}: a level line's from must come before its to, and both inside the
 msgstr "{where}: o from de uma linha level precisa vir antes do to dela, e os dois dentro do filme, que tem {seconds} segundos."
 
 msgid "{where}: this level line and {other} overlap, counting their ramps."
-msgstr "{where}: esta linha level e {other} se sobrepõem, contando os ramp delas."
+msgstr "{where}: esta linha level e {other} se sobrepõem, contando as transições ramp delas."
 
 msgid "{where}: {path} is silent all through."
 msgstr "{where}: {path} é silencioso do início ao fim."
@@ -820,7 +820,7 @@ msgid "making {output}, {seconds} seconds at {size}"
 msgstr "criando {output}, {seconds} segundos em {size}"
 
 msgid "ffmpeg used more than {size} GB of memory making the film, half this machine's, so it was stopped."
-msgstr "O ffmpeg usou mais de {size} GB de memória para fazer o filme, metade da memória desta máquina, então foi interrompido."
+msgstr "o ffmpeg usou mais de {size} GB de memória para fazer o filme, metade da memória desta máquina, então foi interrompido."
 
 msgid "ffmpeg could not make the film."
 msgstr "o ffmpeg não conseguiu criar o filme."
@@ -895,7 +895,7 @@ msgstr "cria um filme a partir de um roteiro de cenas: clipes, cartões, texto e
 
 #. argparse formats this text with %
 msgid "record until you say stop, then stop it from any terminal"
-msgstr "grava até você mandar parar, e para a partir de qualquer terminal"
+msgstr "grava até você mandar parar, o que pode ser feito de qualquer terminal"
 
 #. argparse formats this text with %
 msgid "show the app being used: these steps run while it records"
@@ -1402,7 +1402,7 @@ msgid "{output} was left as it was, and this run's video is in {part}."
 msgstr "{output} ficou como estava, e o vídeo desta execução está em {part}."
 
 msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
-msgstr "a leitura de {path} usou mais de {size} GB de memória, metade da desta máquina, por isso foi interrompida."
+msgstr "a leitura de {path} usou mais de {size} GB de memória, metade da memória desta máquina, por isso foi interrompida."
 
 msgid "{where}: {path} is a list that points at other files, such as a playlist, and demoreel does not follow one."
 msgstr "{where}: {path} é uma lista que aponta para outros arquivos, como uma playlist, e o demoreel não segue listas assim."
@@ -1476,7 +1476,7 @@ msgid "{where}: slide needs `at`, the moment it starts: slide 2 at 7"
 msgstr "{where}: slide precisa de `at`, o momento em que começa: slide 2 at 7"
 
 msgid "{where}: slides are written in time order and may not overlap, and this one starts at {start}, before the one above ends at {end}."
-msgstr "{where}: os slide são escritos em ordem de tempo e não podem se sobrepor, e este começa em {start}, antes de o de cima terminar em {end}."
+msgstr "{where}: as linhas slide são escritas em ordem de tempo e não podem se sobrepor, e esta começa em {start}, antes de a de cima terminar em {end}."
 
 msgid "{where}: the slide runs from {start} to {end}, which is not inside its scene ({scene_start} to {scene_end})."
 msgstr "{where}: o slide vai de {start} a {end}, o que não está dentro da cena ({scene_start} a {scene_end})."
@@ -1512,14 +1512,14 @@ msgstr "{where}: uma linha começa com clip, card, split, slice, slide, text, zo
 
 #. translators: ring is an edit-script word and stays in English.
 msgid "{where}: the ring's point {x} {y} is outside {path}, which is {size}."
-msgstr "{where}: o ponto {x} {y} do anel está fora de {path}, que tem {size}."
+msgstr "{where}: o ponto {x} {y} do ring está fora de {path}, que tem {size}."
 
 msgid "{where}: the ring at {at} is not inside its clip ({start} to {end})."
-msgstr "{where}: o anel em {at} não está dentro do seu clipe ({start} a {end})."
+msgstr "{where}: o ring em {at} não está dentro do seu clipe ({start} a {end})."
 
 #. translators: hold is an edit-script word and stays in English.
 msgid "{where}: the ring at {at} lasts {seconds} seconds, past the clip's own frames, which end at {end}; the hold would freeze it. Move it earlier."
-msgstr "{where}: o anel em {at} dura {seconds} segundos, além dos quadros do próprio clipe, que terminam em {end}; o hold o congelaria. Coloque-o antes."
+msgstr "{where}: o ring em {at} dura {seconds} segundos, além dos quadros do próprio clipe, que terminam em {end}; o hold o congelaria. Coloque-o antes."
 
 #. translators: x and y are edit-script words and stay in English.
 msgid "{where}: a text's x and y are given together, and this one has only {word}."
@@ -1534,7 +1534,7 @@ msgid "{where}: a text placed with x and y takes no {word}: it sits at its point
 msgstr "{where}: um texto posicionado com x e y não aceita {word}: fica no seu ponto e não tem faixa."
 
 msgid "{where}: the text {words} at x {x} y {y} reaches past the frame's edge. Move it in, or give it a smaller size."
-msgstr "{where}: o texto {words} em x {x} y {y} passa da borda do quadro. Mova-o para dentro ou dê a ele um size menor."
+msgstr "{where}: o texto {words} em x {x} y {y} passa da borda do quadro. Mova-o para dentro ou dê a ele um tamanho menor."
 
 #. translators: {names} are the drawn backgrounds' names, which stay in English.
 msgid "{where}: a background is a colour written #RRGGBB, like {example}, two to {most} of them joined by commas for a moving gradient, or one of {names}, not {value}."
@@ -1549,16 +1549,16 @@ msgid "{where}: {word} takes a number, not {value}."
 msgstr "{where}: {word} recebe um número, não {value}."
 
 msgid "record and shot: ready"
-msgstr "record e shot: pronto"
+msgstr "record e shot: prontos"
 
 msgid "record and shot: NOT READY"
-msgstr "record e shot: NÃO ESTÁ PRONTO"
+msgstr "record e shot: NÃO ESTÃO PRONTOS"
 
 msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet: ready"
-msgstr "edit, trim, caption, join, card, motion, poster, thumbnail e sheet: pronto"
+msgstr "edit, trim, caption, join, card, motion, poster, thumbnail e sheet: prontos"
 
 msgid "edit, trim, caption, join, card, motion, poster, thumbnail and sheet: NOT READY"
-msgstr "edit, trim, caption, join, card, motion, poster, thumbnail e sheet: NÃO ESTÁ PRONTO"
+msgstr "edit, trim, caption, join, card, motion, poster, thumbnail e sheet: NÃO ESTÃO PRONTOS"
 
 msgid "text on a card or a caption: ready"
 msgstr "texto num cartão ou numa legenda: pronto"

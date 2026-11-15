@@ -9,10 +9,10 @@ msgstr ""
 "X-Demoreel-Review: draft\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
-msgstr "{where}: текст {words} показан вместе с {first} в одном месте, и у одного есть полоса, а у другого нет. У текстов в одной стопке полоса есть у всех или ни у кого."
+msgstr "{where}: текст {words} показан вместе с {first} в одном месте, и у одного есть плашка, а у другого нет. У текстов в одной стопке плашка есть у всех или ни у кого."
 
 msgid "{where}: the text {words} does not fit: with the texts stacked above it, on screen at the same time, it is taller than the frame. Give them a smaller size, or show them at different times."
-msgstr "{where}: текст {words} не помещается: вместе с текстами, сложенными над ним в то же время, он выше кадра. Уменьшите их размер или показывайте их в разное время."
+msgstr "{where}: текст {words} не помещается: вместе с текстами, которые одновременно показаны над ним, он выше кадра. Уменьшите их размер или показывайте их в разное время."
 
 msgid "ended by {signal} before it finished, so there is nothing to hand back."
 msgstr "прервано сигналом {signal} до завершения, поэтому возвращать нечего."
@@ -88,7 +88,7 @@ msgstr ""
 "  Используйте --name, чтобы отличить этот запуск от неё."
 
 msgid "Xvfb did not start, so there is no private display to record."
-msgstr "Xvfb не запустился, поэтому нет закрытого экрана для записи."
+msgstr "Xvfb не запустился, поэтому нет приватного экрана для записи."
 
 msgid "It said: {text}"
 msgstr "Его сообщение: {text}"
@@ -97,7 +97,7 @@ msgid "`demoreel check` tests this start on its own."
 msgstr "`demoreel check` проверяет этот запуск отдельно."
 
 msgid "could not write the display's auth cookie, so the display cannot be made private."
-msgstr "не удалось записать cookie авторизации экрана, поэтому экран нельзя сделать закрытым."
+msgstr "не удалось записать cookie авторизации экрана, поэтому экран нельзя сделать приватным."
 
 msgid "xauth said: {text}"
 msgstr "Сообщение xauth: {text}"
@@ -106,7 +106,7 @@ msgid "`demoreel check` tests this on its own."
 msgstr "`demoreel check` проверяет это отдельно."
 
 msgid "the display did not lock: a client without its auth cookie could still connect, or none could."
-msgstr "экран не заблокировался: клиент без cookie авторизации всё ещё мог подключиться, или не мог подключиться никто."
+msgstr "экран не удалось защитить: клиент без cookie авторизации всё ещё мог подключиться, или не мог подключиться никто."
 
 msgid "the GPU display did not start, so there is nothing to record on."
 msgstr "GPU-экран не запустился, поэтому записывать не на чем."
@@ -118,23 +118,23 @@ msgid "`demoreel check` says whether --gpu has what it needs."
 msgstr "`demoreel check` сообщает, есть ли у --gpu всё необходимое."
 
 msgid "the GPU display did not lock: a client without its auth cookie could still connect, or none could."
-msgstr "GPU-экран не заблокировался: клиент без cookie авторизации всё ещё мог подключиться, или не мог подключиться никто."
+msgstr "GPU-экран не удалось защитить: клиент без cookie авторизации всё ещё мог подключиться, или не мог подключиться никто."
 
 msgid "the private display {display} stopped answering: `xdotool {command}` did not return within {seconds}s."
-msgstr "закрытый экран {display} перестал отвечать: `xdotool {command}` не завершилась за {seconds} с."
+msgstr "приватный экран {display} перестал отвечать: `xdotool {command}` не завершилась за {seconds} с."
 
 msgid ""
 "the app resized its window to {size} at {place}, so it no longer fills the {frame} frame and part of the video is cropped or empty.\n"
 "  Record at the app's own size with -s {size}."
 msgstr ""
-"приложение изменило размер своего окна на {size} в {place}, поэтому оно больше не заполняет кадр {frame}, и часть видео обрезана или пуста.\n"
+"приложение изменило размер своего окна на {size} в позиции {place}, поэтому оно больше не заполняет кадр {frame}, и часть видео обрезана или пуста.\n"
 "  Записывайте в собственном размере приложения: -s {size}."
 
 msgid ""
 "the app resized its window {seconds}s into the video, and demoreel put it back to fill the {frame} frame.\n"
 "  The video before then may be cropped or have an empty band."
 msgstr ""
-"приложение изменило размер своего окна на {seconds} с видео, и demoreel вернул его, чтобы оно заполняло кадр {frame}.\n"
+"приложение изменило размер своего окна через {seconds} с после начала видео, и demoreel вернул его, чтобы оно заполняло кадр {frame}.\n"
 "  До этого момента видео может быть обрезано или иметь пустую полосу."
 
 msgid ""
@@ -184,7 +184,7 @@ msgid ""
 "could not put the sound in step with the picture: the recorder's log does not say when each started.\n"
 "  What was recorded is kept in {part}, and the log is {log}."
 msgstr ""
-"не удалось совместить звук с изображением: журнал записывающей программы не говорит, когда началось каждое из них.\n"
+"не удалось совместить звук с изображением: журнал программы записи не говорит, когда началось каждое из них.\n"
 "  Записанное сохранено в {part}, а журнал находится в {log}."
 
 msgid ""
@@ -222,14 +222,14 @@ msgid ""
 "--audio needs a private sound output, and none could be made.\n"
 "  {reason}"
 msgstr ""
-"для --audio нужен закрытый звуковой выход, а создать его не удалось.\n"
+"для --audio нужен приватный звуковой выход, а создать его не удалось.\n"
 "  {reason}"
 
 msgid ""
 "no private sound output could be made, so the app's sound may play on your speakers.\n"
 "  {reason}"
 msgstr ""
-"не удалось создать закрытый звуковой выход, поэтому звук приложения может играть через ваши динамики.\n"
+"не удалось создать приватный звуковой выход, поэтому звук приложения может играть через ваши динамики.\n"
 "  {reason}"
 
 msgid ""
@@ -352,13 +352,13 @@ msgstr ""
 "  Если приложению нужно больше времени на первое изображение, увеличьте --settle."
 
 msgid "the recorder stopped early; see {log}"
-msgstr "запись остановилась раньше времени; см. {log}"
+msgstr "программа записи остановилась раньше времени; см. {log}"
 
 msgid "recording, {seconds}s left"
 msgstr "идёт запись, осталось {seconds} с"
 
 msgid "recording for {time} (Ctrl+C to finish)"
-msgstr "запись в течение {time} (Ctrl+C — завершить)"
+msgstr "запись идёт уже {time} (Ctrl+C — завершить)"
 
 msgid "the app closed; ending the recording."
 msgstr "приложение закрылось; запись завершается."
@@ -400,14 +400,14 @@ msgid ""
 "the video is a flat colour halfway, though the private screen was not: {output}\n"
 "  The recorder captured something other than the screen. See {log}"
 msgstr ""
-"на середине видео — сплошной цвет, хотя закрытый экран не был пуст: {output}\n"
+"на середине видео — сплошной цвет, хотя приватный экран не был пуст: {output}\n"
 "  Программа записи захватила что-то другое, а не экран. См. {log}"
 
 msgid ""
 "the video is a flat colour at the end, though the private screen was not: {output}\n"
 "  The recorder captured something other than the screen. See {log}"
 msgstr ""
-"в конце видео — сплошной цвет, хотя закрытый экран не был пуст: {output}\n"
+"в конце видео — сплошной цвет, хотя приватный экран не был пуст: {output}\n"
 "  Программа записи захватила что-то другое, а не экран. См. {log}"
 
 msgid ""
@@ -482,7 +482,7 @@ msgid "could not tell whether this ffmpeg can read from a sound server: asking i
 msgstr "не удалось определить, умеет ли этот ffmpeg читать со звукового сервера: запрос занял больше {seconds} с."
 
 msgid "a private display did not start: {reason}"
-msgstr "закрытый экран не запустился: {reason}"
+msgstr "приватный экран не запустился: {reason}"
 
 msgid "no recording named {name} is running."
 msgstr "запись с именем {name} не идёт."
@@ -526,7 +526,7 @@ msgid "{where}: there is no font file {path}"
 msgstr "{where}: файла шрифта {path} нет"
 
 msgid "{where}: a font is found by its name with fc-match, which gave no answer here. Give the font's file instead: font /path/to/font.ttf"
-msgstr "{where}: шрифт ищется по имени через fc-match, но здесь он ничего не ответил. Укажите вместо этого файл шрифта: font /path/to/font.ttf"
+msgstr "{where}: шрифт ищется по имени через fc-match, но здесь fc-match ничего не ответил. Укажите вместо этого файл шрифта: font /path/to/font.ttf"
 
 msgid ""
 "{where}: this machine has no font named {font}; the nearest it offers is {nearest}.\n"
@@ -644,7 +644,7 @@ msgid "{where}: a zoom's {word} is a percentage of the picture, from 0 to 100, n
 msgstr "{where}: {word} у zoom — доля изображения в процентах, от 0 до 100, а не {value}."
 
 msgid "{where}: the zoom is asked to run from {start} to {end}, which is not inside its clip ({scene_start} to {scene_end})."
-msgstr "{where}: zoom должен идти с {start} до {end}, а это за пределами его клипа ({scene_start} до {scene_end})."
+msgstr "{where}: zoom должен идти с {start} до {end}, а это за пределами его клипа (с {scene_start} до {scene_end})."
 
 msgid "{where}: a text is one line of words, and this one is empty."
 msgstr "{where}: текст — это одна строка слов, а эта пуста."
@@ -920,7 +920,7 @@ msgid ""
 "Record a GUI app on a private virtual display, so nothing of your real desktop\n"
 "is in frame."
 msgstr ""
-"Запись графического приложения на закрытом виртуальном экране, чтобы в кадр\n"
+"Запись графического приложения на приватном виртуальном экране, чтобы в кадр\n"
 "не попало ничего с вашего настоящего рабочего стола."
 
 #. argparse formats this text with %
@@ -1029,7 +1029,7 @@ msgstr "проверить, может ли этот компьютер запи
 
 #. argparse formats this text with %
 msgid "Report what each backend needs and whether it is installed, start a private display to prove it works, and name the install command for anything missing. Exits non-zero if the default backend cannot record."
-msgstr "Сообщает, что нужно каждому способу записи и установлено ли это, запускает закрытый экран, чтобы доказать, что всё работает, и называет команду установки для всего недостающего. Завершается с ненулевым кодом, если способ записи по умолчанию не может записывать."
+msgstr "Сообщает, что нужно каждому способу записи и установлено ли это, запускает приватный экран, чтобы доказать, что всё работает, и называет команду установки для всего недостающего. Завершается с ненулевым кодом, если способ записи по умолчанию не может записывать."
 
 #. argparse formats this text with %
 msgid "end a running recording early"
@@ -1408,7 +1408,7 @@ msgid "{output} was left as it was, and this run's video is in {part}."
 msgstr "{output} оставлен как был, а видео этого запуска находится в {part}."
 
 msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
-msgstr "чтение {path} заняло более {size} ГБ памяти, половину памяти этой машины, поэтому оно остановлено."
+msgstr "чтение {path} заняло более {size} ГБ памяти, половину памяти этого компьютера, поэтому оно остановлено."
 
 msgid "{where}: {path} is a list that points at other files, such as a playlist, and demoreel does not follow one."
 msgstr "{where}: {path} — это список, указывающий на другие файлы, например плейлист, а demoreel по таким спискам не переходит."
@@ -1423,7 +1423,7 @@ msgid "a film's frame rate is at most {most} a second, and this one would be {ra
 msgstr "частота кадров фильма — не более {most} в секунду, а здесь было бы {rate}."
 
 msgid "the disk holding {path} is nearly full, so the film was stopped before it filled it."
-msgstr "диск с {path} почти заполнен, поэтому фильм остановлен, пока диск не заполнился."
+msgstr "диск с {path} почти заполнен, поэтому создание фильма остановлено до того, как он заполнил диск."
 
 msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
 msgstr "{where}: {path} имеет размер {size}, слишком узкий или плоский для окна такого размера. Дайте ему окно побольше."
@@ -1518,14 +1518,14 @@ msgstr "{where}: строка начинается с clip, card, split, slice, 
 
 #. translators: ring is an edit-script word and stays in English.
 msgid "{where}: the ring's point {x} {y} is outside {path}, which is {size}."
-msgstr "{where}: точка {x} {y} кольца лежит за пределами {path}, размер которого {size}."
+msgstr "{where}: точка {x} {y} у ring лежит за пределами {path}, размер которого {size}."
 
 msgid "{where}: the ring at {at} is not inside its clip ({start} to {end})."
-msgstr "{where}: кольцо в {at} не попадает в свой клип (от {start} до {end})."
+msgstr "{where}: ring в {at} не попадает в свой клип (от {start} до {end})."
 
 #. translators: hold is an edit-script word and stays in English.
 msgid "{where}: the ring at {at} lasts {seconds} seconds, past the clip's own frames, which end at {end}; the hold would freeze it. Move it earlier."
-msgstr "{where}: кольцо в {at} длится {seconds} с, дольше собственных кадров клипа, которые кончаются в {end}; hold заморозил бы его. Поставьте его раньше."
+msgstr "{where}: ring в {at} длится {seconds} с, дольше собственных кадров клипа, которые кончаются в {end}; hold заморозил бы его. Поставьте его раньше."
 
 #. translators: x and y are edit-script words and stay in English.
 msgid "{where}: a text's x and y are given together, and this one has only {word}."
@@ -1537,10 +1537,10 @@ msgstr "{where}: {word} у текста — доля кадра в процен�
 
 #. translators: {word} is at or band; x, y, at and band are edit-script words and stay in English.
 msgid "{where}: a text placed with x and y takes no {word}: it sits at its point, and has no band."
-msgstr "{where}: текст, размещённый через x и y, не принимает {word}: он стоит в своей точке и не имеет полосы."
+msgstr "{where}: текст, размещённый через x и y, не принимает {word}: он стоит в своей точке и не имеет плашки."
 
 msgid "{where}: the text {words} at x {x} y {y} reaches past the frame's edge. Move it in, or give it a smaller size."
-msgstr "{where}: текст {words} в x {x} y {y} выходит за край кадра. Сдвиньте его внутрь или задайте меньший size."
+msgstr "{where}: текст {words} в x {x} y {y} выходит за край кадра. Сдвиньте его внутрь или задайте меньший размер."
 
 #. translators: {names} are the drawn backgrounds' names, which stay in English.
 msgid "{where}: a background is a colour written #RRGGBB, like {example}, two to {most} of them joined by commas for a moving gradient, or one of {names}, not {value}."

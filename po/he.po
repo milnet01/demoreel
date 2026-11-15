@@ -12,7 +12,7 @@ msgid "{where}: the text {words} is on screen with {first} at the same place, an
 msgstr "{where}: הטקסט {words} מוצג יחד עם {first} באותו מקום, ולאחד יש פס ולשני אין. לטקסטים שנערמים יחד יש פס לכולם או לאף אחד."
 
 msgid "{where}: the text {words} does not fit: with the texts stacked above it, on screen at the same time, it is taller than the frame. Give them a smaller size, or show them at different times."
-msgstr "{where}: הטקסט {words} לא נכנס: יחד עם הטקסטים שנערמים מעליו באותו זמן, הוא גבוה מהמסגרת. הקטינו את הגודל שלהם, או הציגו אותם בזמנים שונים."
+msgstr "{where}: הטקסט {words} לא נכנס: יחד עם הטקסטים שנערמים מעליו באותו זמן, הוא גבוה מהפריים. יש לתת להם גודל קטן יותר, או להציג אותם בזמנים שונים."
 
 msgid "ended by {signal} before it finished, so there is nothing to hand back."
 msgstr "הופסק על ידי {signal} לפני שהסתיים, ולכן אין מה להחזיר."
@@ -78,14 +78,14 @@ msgid ""
 "  Use --name to tell this run apart from it."
 msgstr ""
 "הקלטה בשם {name} כבר פועלת.\n"
-"  אפשר להשתמש ב־ --name כדי להבדיל בין ההרצה הזאת לבינה."
+"  אפשר להשתמש ב־--name כדי להבדיל בין ההרצה הזאת לבינה."
 
 msgid ""
 "a recording named {name} is already running (pid {pid}).\n"
 "  Use --name to tell this run apart from it."
 msgstr ""
 "הקלטה בשם {name} כבר פועלת (pid {pid}).\n"
-"  אפשר להשתמש ב־ --name כדי להבדיל בין ההרצה הזאת לבינה."
+"  אפשר להשתמש ב־--name כדי להבדיל בין ההרצה הזאת לבינה."
 
 msgid "Xvfb did not start, so there is no private display to record."
 msgstr "Xvfb לא הופעל, ולכן אין תצוגה פרטית להקליט."
@@ -115,7 +115,7 @@ msgid "The end of its log:"
 msgstr "סוף היומן שלה:"
 
 msgid "`demoreel check` says whether --gpu has what it needs."
-msgstr "הפקודה `demoreel check` מראה אם יש ל־ --gpu את כל מה שהוא צריך."
+msgstr "הפקודה `demoreel check` מראה אם יש ל־--gpu את כל מה שהוא צריך."
 
 msgid "the GPU display did not lock: a client without its auth cookie could still connect, or none could."
 msgstr "תצוגת ה־GPU לא ננעלה: לקוח בלי עוגיית האימות עדיין יכול היה להתחבר, או שאף לקוח לא יכול היה."
@@ -127,7 +127,7 @@ msgid ""
 "the app resized its window to {size} at {place}, so it no longer fills the {frame} frame and part of the video is cropped or empty.\n"
 "  Record at the app's own size with -s {size}."
 msgstr ""
-"היישום שינה את גודל החלון שלו ל־{size} ב־{place}, ולכן הוא כבר לא ממלא את הפריים בגודל {frame} וחלק מהסרטון חתוך או ריק.\n"
+"היישום שינה את גודל החלון שלו ל־{size} במיקום {place}, ולכן הוא כבר לא ממלא את הפריים בגודל {frame} וחלק מהסרטון חתוך או ריק.\n"
 "  יש להקליט בגודל של היישום עצמו עם -s {size}."
 
 msgid ""
@@ -145,7 +145,7 @@ msgid ""
 "  If not, the command may simply have finished without needing a\n"
 "  window — in which case there is nothing to record."
 msgstr ""
-"היישום יצא מיד (מצב 0) בלי לפתוח חלון.\n"
+"היישום יצא מיד (קוד יציאה 0) בלי לפתוח חלון.\n"
 "  הסיבה הסבירה היא יישום שרץ במופע יחיד: הוא מוצא עותק שכבר\n"
 "  פועל על שולחן העבודה האמיתי שלך, מעביר אליו את הבקשה ויוצא\n"
 "  בהצלחה. אם עותק כזה פועל, יש לסגור אותו ולנסות שוב.\n"
@@ -156,8 +156,8 @@ msgid ""
 "the app exited with status {status} before opening a window.\n"
 "  Its own output, above or in --app-log, says why. To see it on its own, run: {command}"
 msgstr ""
-"היישום יצא עם מצב {status} לפני שפתח חלון.\n"
-"  הפלט שלו, למעלה או ב־ --app-log, מסביר למה. כדי לראות אותו בנפרד, יש להריץ: {command}"
+"היישום יצא עם קוד יציאה {status} לפני שפתח חלון.\n"
+"  הפלט שלו, למעלה או ב־--app-log, מסביר למה. כדי לראות אותו בנפרד, יש להריץ: {command}"
 
 msgid "cannot read the step {step}: {reason}."
 msgstr "לא ניתן לקרוא את הצעד {step}: {reason}."
@@ -198,7 +198,7 @@ msgid "the display did not give up a frame within {seconds}s; it has stopped ans
 msgstr "התצוגה לא מסרה פריים בתוך {seconds} שניות; היא הפסיקה להגיב"
 
 msgid "ffmpeg exited {status} with no frame"
-msgstr "ffmpeg יצא עם {status} בלי פריים"
+msgstr "ffmpeg יצא עם קוד {status} בלי פריים"
 
 msgid "reading a frame of {path} took over {seconds}s"
 msgstr "קריאת פריים מתוך {path} ארכה יותר מ־{seconds} שניות"
@@ -308,7 +308,7 @@ msgid ""
 "  Check that the command after `--` is installed and spelled as you would type it."
 msgstr ""
 "לא ניתן להריץ את {command}: {reason}.\n"
-"  יש לוודא שהפקודה שאחרי `--` מותקנת ושאויתה כפי שהיית מקליד אותה."
+"  יש לוודא שהפקודה שאחרי `--` מותקנת ושהיא כתובה כפי שמקלידים אותה."
 
 msgid ""
 "no window appeared within {seconds}s; taking the picture anyway.\n"
@@ -517,7 +517,7 @@ msgid "the recording ended before it started recording, so there is no video to 
 msgstr "ההקלטה הסתיימה לפני שהתחילה להקליט, ולכן אין סרטון לעצור."
 
 msgid "{option} belongs to a --text, and none comes before it. caption never cuts the video; use trim."
-msgstr "{option} שייך ל־ --text, ואין אחד כזה לפניו. caption אף פעם לא חותך את הסרטון; יש להשתמש ב־trim."
+msgstr "{option} שייך ל־--text, ואין אחד כזה לפניו. caption אף פעם לא חותך את הסרטון; יש להשתמש ב־trim."
 
 msgid "{where}: there is no font file {path}"
 msgstr "{where}: אין קובץ גופן {path}"
@@ -547,7 +547,7 @@ msgid "{where}: {word} is on or off, not {value}."
 msgstr "{where}: {word} הוא on או off, ולא {value}."
 
 msgid "{where}: {name} is not a transition a crossfade takes. It takes: {names}."
-msgstr "{where}: {name} אינו מעבר ש-crossfade מקבל. הוא מקבל: {names}."
+msgstr "{where}: {name} אינו מעבר ש־crossfade מקבל. הוא מקבל: {names}."
 
 msgid "{where}: {word} is not something a {kind} line takes. It takes: {words}."
 msgstr "{where}: שורת {kind} לא מקבלת את {word}. היא מקבלת: {words}."
@@ -659,7 +659,7 @@ msgid "{where}: a text's {word} is a colour written #RRGGBB, like #FFD040, not {
 msgstr "{where}: ה־{word} של טקסט הוא צבע שנכתב #RRGGBB, כמו #FFD040, ולא {value}."
 
 msgid "{where}: a text's band is on or off, not {value}."
-msgstr "{where}: הרצועה של טקסט היא on או off, ולא {value}."
+msgstr "{where}: הפס של טקסט הוא on או off, ולא {value}."
 
 msgid "{where}: a text sits at {places} or {last}, not at {value}."
 msgstr "{where}: טקסט ממוקם ב־{places} או ב־{last}, ולא ב־{value}."
@@ -674,7 +674,7 @@ msgid ""
 "{where}: a band that fades with its text needs a newer ffmpeg than this one: its text filter has no `boxw`.\n"
 "  Give the text `band off`, or take its fade away."
 msgstr ""
-"{where}: רצועה שמתעמעמת יחד עם הטקסט שלה צריכה ffmpeg חדש יותר מזה: למסנן הטקסט שלו אין `boxw`.\n"
+"{where}: פס שמתעמעם יחד עם הטקסט שלו צריך ffmpeg חדש יותר מזה: למסנן הטקסט של ffmpeg הזה אין `boxw`.\n"
 "  יש לתת לטקסט `band off`, או להסיר את העמעום שלו."
 
 msgid ""
@@ -697,7 +697,7 @@ msgid "{where}: push is how much the window grows, in percent, from 0 to {high},
 msgstr "{where}: push הוא בכמה אחוזים החלון גדל, מ־0 עד {high}, ולא {value}."
 
 msgid "{where}: window {window} grown by push {push} is larger than the room it sits in. Make one of them smaller."
-msgstr "{where}: window {window} שגדל ב־push {push} גדול מהשטח שבו הוא נמצא. הקטינו אחד מהם."
+msgstr "{where}: window {window} שגדל ב־push {push} גדול מהשטח שבו הוא נמצא. יש להקטין אחד מהם."
 
 msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
 msgstr "{where}: window הוא חלק מהשטח באחוזים, מ־{low} עד {high}, ולא {value}."
@@ -847,7 +847,7 @@ msgid "join takes two or more videos; one on its own is already whole."
 msgstr "join מקבל שני סרטונים או יותר; סרטון אחד לבדו כבר שלם."
 
 msgid "--from and --to must be inside {path}, which is {seconds} seconds long, with --from before --to."
-msgstr "--from ו־ --to חייבים להיות בתוך {path}, שאורכו {seconds} שניות, ו־ --from לפני --to."
+msgstr "--from ו־--to חייבים להיות בתוך {path}, שאורכו {seconds} שניות, ו־--from לפני --to."
 
 msgid "reading {path} took too long for its length, so it was stopped."
 msgstr "קריאת {path} ארכה יותר מדי ביחס לאורכו, ולכן היא נעצרה."
@@ -931,7 +931,7 @@ msgstr "קובץ הווידאו לכתיבה (ברירת מחדל: ./<app>-<time
 
 #. argparse formats this text with %
 msgid "seconds to record, counted from when the -a steps finish; 0 means until `demoreel stop` (default: 30)"
-msgstr "כמה שניות להקליט, נספרות מסיום שלבי -a; 0 פירושו עד `demoreel stop` (ברירת מחדל: 30)"
+msgstr "כמה שניות להקליט, נספרות מסיום צעדי -a; 0 פירושו עד `demoreel stop` (ברירת מחדל: 30)"
 
 #. argparse formats this text with %
 msgid "virtual display size, even numbers (default: 1600x1000)"
@@ -1131,15 +1131,15 @@ msgstr "שורת טקסט אחת; אפשר לחזור עליה"
 
 #. argparse formats this text with %
 msgid "for the --text before it: when it appears"
-msgstr "עבור ה־ --text שלפניו: מתי הוא מופיע"
+msgstr "עבור ה־--text שלפניו: מתי הוא מופיע"
 
 #. argparse formats this text with %
 msgid "for the --text before it: when it goes"
-msgstr "עבור ה־ --text שלפניו: מתי הוא נעלם"
+msgstr "עבור ה־--text שלפניו: מתי הוא נעלם"
 
 #. argparse formats this text with %
 msgid "for the --text before it: its height, as a percentage of the frame's"
-msgstr "עבור ה־ --text שלפניו: הגובה שלו, כאחוז מגובה הפריים"
+msgstr "עבור ה־--text שלפניו: הגובה שלו, כאחוז מגובה הפריים"
 
 #. argparse formats this text with %
 msgid "put videos end to end"
@@ -1211,7 +1211,7 @@ msgstr "בדיקה עד כאן (ברירת מחדל: הסוף)"
 
 #. argparse formats this text with %
 msgid "report a stretch with no change longer than this (default: 1)"
-msgstr "דיווח על קטע ללא שינוי שארוך מזה (ברירת מחדל: 1)"
+msgstr "דיווח על פרק זמן ללא שינוי שארוך מזה (ברירת מחדל: 1)"
 
 #. argparse formats this text with %
 msgid "look only at this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
@@ -1261,7 +1261,7 @@ msgid "{option} takes a whole number of at least {least}, not {value}."
 msgstr "{option} מקבל מספר שלם של {least} לפחות, ולא {value}."
 
 msgid "a sheet holds at most {most} frames, and these times ask for more. Take a longer --every, or fewer --at times."
-msgstr "גיליון מגע מכיל לכל היותר {most} פריימים, והזמנים האלה דורשים יותר. בחרו --every ארוך יותר, או פחות זמנים ב־--at."
+msgstr "גיליון מגע מכיל לכל היותר {most} פריימים, והזמנים האלה דורשים יותר. יש לבחור --every ארוך יותר, או פחות זמנים ב־--at."
 
 msgid "could not put the frames together into one picture."
 msgstr "לא ניתן לחבר את הפריימים לתמונה אחת."
@@ -1329,7 +1329,7 @@ msgstr "רוחב הכותרת {words} הוא {wide} פיקסלים, ובתמונ
 
 #. argparse formats this text with %
 msgid "The words a script can use are in README.md and in man demoreel, under EDIT SCRIPT."
-msgstr "המילים שתסריט יכול להשתמש בהן נמצאות ב-README.md וב-man demoreel, תחת EDIT SCRIPT."
+msgstr "המילים שתסריט יכול להשתמש בהן נמצאות ב־README.md וב־man demoreel, תחת EDIT SCRIPT."
 
 #. translators: {verb} is the step's first word, such as click or key.
 msgid ""
@@ -1389,23 +1389,23 @@ msgid ""
 "the output path {path} holds a control character, such as a line break, which demoreel cannot pass on safely.\n"
 "  Choose another path."
 msgstr ""
-"נתיב הפלט {path} מכיל תו בקרה, כגון מעבר שורה, ש-demoreel לא יכול להעביר בבטחה.\n"
+"נתיב הפלט {path} מכיל תו בקרה, כגון מעבר שורה, ש־demoreel לא יכול להעביר בבטחה.\n"
 "  יש לבחור נתיב אחר."
 
 msgid "--name takes up to {most} plain letters, digits, dots, underscores and hyphens, starting with a letter, a digit or an underscore, not {name}."
-msgstr "--name מקבל עד {most} אותיות לטיניות רגילות, ספרות, נקודות, קווים תחתונים ומקפים, בתחילה אות, ספרה או קו תחתון, ולא {name}."
+msgstr "--name מקבל עד {most} אותיות לטיניות רגילות, ספרות, נקודות, קווים תחתונים ומקפים, כשהתו הראשון הוא אות, ספרה או קו תחתון, ולא {name}."
 
 msgid "{taken} was taken by the time the file was ready, so the file is {output}."
 msgstr "השם {taken} כבר היה תפוס כשהקובץ היה מוכן, ולכן הקובץ הוא {output}."
 
 msgid "{output} was left as it was, and this run's video is in {part}."
-msgstr "{output} נשאר כפי שהיה, והסרטון של הריצה הזו נמצא ב-{part}."
+msgstr "{output} נשאר כפי שהיה, והסרטון של ההרצה הזאת נמצא ב־{part}."
 
 msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
-msgstr "הקריאה של {path} השתמשה ביותר מ-{size} GB זיכרון, מחצית מזיכרון המחשב הזה, ולכן הופסקה."
+msgstr "הקריאה של {path} השתמשה ביותר מ־{size} GB זיכרון, מחצית מזיכרון המחשב הזה, ולכן הופסקה."
 
 msgid "{where}: {path} is a list that points at other files, such as a playlist, and demoreel does not follow one."
-msgstr "{where}: {path} היא רשימה שמצביעה על קבצים אחרים, כמו רשימת השמעה, ו-demoreel לא עוקב אחרי רשימה כזו."
+msgstr "{where}: {path} היא רשימה שמצביעה על קבצים אחרים, כמו רשימת השמעה, ו־demoreel לא עוקב אחרי רשימה כזו."
 
 msgid "ffmpeg did not say which formats it reads, so nothing was read."
 msgstr "ffmpeg לא ציין אילו תבניות הוא קורא, ולכן שום דבר לא נקרא."
@@ -1420,17 +1420,17 @@ msgid "the disk holding {path} is nearly full, so the film was stopped before it
 msgstr "הדיסק שמכיל את {path} כמעט מלא, ולכן הסרט הופסק לפני שמילא אותו."
 
 msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
-msgstr "{where}: {path} בגודל {size}, צר או שטוח מדי להצגה בחלון בגודל הזה. תן לו חלון גדול יותר."
+msgstr "{where}: {path} בגודל {size}, צר או שטוח מדי להצגה בחלון בגודל הזה. יש לתת לו חלון גדול יותר."
 
 msgid "scene {number}: a card with no picture, {start} to {end}"
-msgstr "סצנה {number}: כרטיס בלי תמונה, מ-{start} עד {end}"
+msgstr "סצנה {number}: כרטיס בלי תמונה, מ־{start} עד {end}"
 
 msgid ""
 "demoreel keeps its files in {path}, and ffmpeg's filters cannot carry a character in that path.\n"
 "  Point XDG_RUNTIME_DIR at a plainer one."
 msgstr ""
-"demoreel שומר את הקבצים שלו ב-{path}, והמסננים של ffmpeg אינם יכולים לשאת תו בנתיב הזה.\n"
-"  כוון את XDG_RUNTIME_DIR לנתיב פשוט יותר."
+"demoreel שומר את הקבצים שלו ב־{path}, והמסננים של ffmpeg אינם יכולים להעביר תו בנתיב הזה.\n"
+"  יש להפנות את XDG_RUNTIME_DIR לנתיב פשוט יותר."
 
 #. translators: slice, slide and split are edit-script words and stay in English.
 msgid "{where}: a slice or a slide line belongs to the split above it, and the line above is not part of a split."
@@ -1486,7 +1486,7 @@ msgid ""
 "  Shorten it, or give it a smaller size: about {fits} would fit."
 msgstr ""
 "{where}: התווית {words} ברוחב {wide} פיקסלים בגודל {size}, וב־slice שלה יש מקום ל־{room}.\n"
-"  קצרו אותה או תנו לה גודל קטן יותר: בערך {fits} ייכנס."
+"  יש לקצר אותה, או לתת לה גודל קטן יותר: בערך {fits} ייכנס."
 
 msgid "scene {number}: a split of {count} videos, {start} to {end}"
 msgstr "סצנה {number}: split של {count} סרטונים, מ־{start} עד {end}"
@@ -1512,14 +1512,14 @@ msgstr "{where}: שורה מתחילה ב־clip, card, split, slice, slide, text
 
 #. translators: ring is an edit-script word and stays in English.
 msgid "{where}: the ring's point {x} {y} is outside {path}, which is {size}."
-msgstr "{where}: הנקודה {x} {y} של הטבעת נמצאת מחוץ ל־{path}, שגודלו {size}."
+msgstr "{where}: הנקודה {x} {y} של ה־ring נמצאת מחוץ ל־{path}, שגודלו {size}."
 
 msgid "{where}: the ring at {at} is not inside its clip ({start} to {end})."
-msgstr "{where}: הטבעת ב־{at} אינה בתוך הקטע שלה ({start} עד {end})."
+msgstr "{where}: ה־ring ב־{at} אינו בתוך הקטע שלו ({start} עד {end})."
 
 #. translators: hold is an edit-script word and stays in English.
 msgid "{where}: the ring at {at} lasts {seconds} seconds, past the clip's own frames, which end at {end}; the hold would freeze it. Move it earlier."
-msgstr "{where}: הטבעת ב־{at} נמשכת {seconds} שניות, מעבר לפריימים של הקטע עצמו, שמסתיימים ב־{end}; ה־hold היה מקפיא אותה. הקדימו אותה."
+msgstr "{where}: ה־ring ב־{at} נמשך {seconds} שניות, מעבר לפריימים של הקטע עצמו, שמסתיימים ב־{end}; ה־hold היה מקפיא אותו. יש להקדים אותו."
 
 #. translators: x and y are edit-script words and stay in English.
 msgid "{where}: a text's x and y are given together, and this one has only {word}."
@@ -1527,14 +1527,14 @@ msgstr "{where}: את x ואת y של טקסט נותנים יחד, ולטקסט
 
 #. translators: {word} is x or y, an edit-script word that stays in English.
 msgid "{where}: a text's {word} is a percentage of the frame, from 0 to 100, not {value}."
-msgstr "{where}: ה־{word} של טקסט הוא אחוז מהמסגרת, מ־0 עד 100, ולא {value}."
+msgstr "{where}: ה־{word} של טקסט הוא אחוז מהפריים, מ־0 עד 100, ולא {value}."
 
 #. translators: {word} is at or band; x, y, at and band are edit-script words and stay in English.
 msgid "{where}: a text placed with x and y takes no {word}: it sits at its point, and has no band."
 msgstr "{where}: טקסט שממוקם עם x ו־y אינו מקבל {word}: הוא נמצא בנקודה שלו, ואין לו פס."
 
 msgid "{where}: the text {words} at x {x} y {y} reaches past the frame's edge. Move it in, or give it a smaller size."
-msgstr "{where}: הטקסט {words} ב־x {x} y {y} חורג מקצה המסגרת. הזיזו אותו פנימה, או תנו לו size קטן יותר."
+msgstr "{where}: הטקסט {words} ב־x {x} y {y} חורג מקצה הפריים. יש להזיז אותו פנימה, או לתת לו גודל קטן יותר."
 
 #. translators: {names} are the drawn backgrounds' names, which stay in English.
 msgid "{where}: a background is a colour written #RRGGBB, like {example}, two to {most} of them joined by commas for a moving gradient, or one of {names}, not {value}."

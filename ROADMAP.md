@@ -4582,6 +4582,8 @@ path, and scripts read it.
 
   Done when every catalog in po/ is reviewed. Record each language as it
   finishes. It does not hold any release.
+  2026-11-15: steps 1 and 3 done for every language as it comes; de, fr, es, nl committed (9c8f659). This session had no Chrome tools, so step 2 used a Claude (Opus) reviewer reading each whole catalogue and judging every free-model proposal instead of Gemini/DeepSeek. It found what the free models missed in every language: register slips (du/tú/je), a capital Sie/Ihre reading as "you", "recording for {time}" worded as a planned length, the keyword ring translated. Per-language answers to the review notes are in the po commits. Nothing is marked reviewed yet, and the notes sections stay until it is.
+  Waiting-on: user (Does the Claude whole-catalogue read count as step 2, so each language can be marked "reviewed <digest>" now? Recommendation: yes — it caught more than the free models and reads every line, not only doubtful ones; Gemini/DeepSeek can still be run later on a reviewed language and its fixes applied, which only moves the digest. Otherwise the marks wait for a session with Chrome connected. 2026-11-15)
   **Layman:** Check every machine-drafted translation thoroughly with AI tools, since no fluent speakers are available.
   Kind: chore.
   Source: user-request-2026-09-25, changed user-request-2026-11-09.
