@@ -1230,7 +1230,7 @@ simplest case, and a gate proves it still records.
   Kind: perf.
   Source: claude-config-request-2026-09-28.
 
-- 📋 [DEMO-0366] **Gate fixtures that time themselves from their own start can fail falsely on a busy machine.**
+- ✅ [DEMO-0366] **Gate fixtures that time themselves from their own start can fail falsely on a busy machine.**
   Split from DEMO-0282 when it closed. review-tests 2026-11-04
   (dimension 5) found fixtures timed from their own start, not from
   demoreel's recording state: the step-timing, hold, drag, --settle,
@@ -1241,6 +1241,14 @@ simplest case, and a gate proves it still records.
   check cannot tell a busy card (gpu_busy_percent near 100) from a
   stuttering recorder (2026-11-04, blender at full load); it could
   skip, saying why, when the card is busy.
+  Shipped 2026-11-15 (4cb6611). Six fixtures now wait for the run's
+  recording state or for what they watch: blank-until-second-half,
+  resize-once, the sync flash, the held-key and drag stops, and the
+  stop-latency check (second-slowest of ten). The memory-cap check's
+  hang guard went 15 s to 60 s after failing at load 30. The --gpu
+  stutter half skips, counted, at 90% card busy or more. The
+  signal-during-start check needs no recording state and was left. Full
+  gate green at load 13-20.
   **Layman:** Some automatic checks measure time from the wrong starting point, so a busy computer can make them fail when nothing is wrong.
   Kind: test.
   Source: DEMO-0282-2026-11-14.

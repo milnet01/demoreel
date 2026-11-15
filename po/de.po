@@ -12,7 +12,7 @@ msgid "{where}: the text {words} is on screen with {first} at the same place, an
 msgstr "{where}: der Text {words} steht zur selben Zeit an derselben Stelle wie {first}, und einer hat ein Band, der andere nicht. Gestapelte Texte haben alle ein Band oder keiner."
 
 msgid "{where}: the text {words} does not fit: with the texts stacked above it, on screen at the same time, it is taller than the frame. Give them a smaller size, or show them at different times."
-msgstr "{where}: der Text {words} passt nicht: mit den gleichzeitig darüber gestapelten Texten ist er höher als das Bild. Gib ihnen eine kleinere Größe oder zeige sie zu verschiedenen Zeiten."
+msgstr "{where}: der Text {words} passt nicht: mit den gleichzeitig darüber gestapelten Texten ist er höher als das Bild. Geben Sie ihnen eine kleinere Größe, oder zeigen Sie sie zu verschiedenen Zeiten."
 
 msgid "ended by {signal} before it finished, so there is nothing to hand back."
 msgstr "durch {signal} beendet, bevor es fertig war, daher gibt es nichts zurückzugeben."
@@ -106,7 +106,7 @@ msgid "`demoreel check` tests this on its own."
 msgstr "`demoreel check` testet das für sich allein."
 
 msgid "the display did not lock: a client without its auth cookie could still connect, or none could."
-msgstr "der Bildschirm wurde nicht gesperrt: Ein Client ohne sein Auth-Cookie konnte sich noch verbinden, oder gar keiner konnte es."
+msgstr "der Bildschirm wurde nicht gesperrt: Ein Client ohne das Auth-Cookie des Bildschirms konnte sich noch verbinden, oder gar keiner konnte es."
 
 msgid "the GPU display did not start, so there is nothing to record on."
 msgstr "der GPU-Bildschirm ist nicht gestartet, daher gibt es nichts, worauf aufgenommen werden kann."
@@ -118,7 +118,7 @@ msgid "`demoreel check` says whether --gpu has what it needs."
 msgstr "`demoreel check` sagt, ob --gpu alles hat, was es braucht."
 
 msgid "the GPU display did not lock: a client without its auth cookie could still connect, or none could."
-msgstr "der GPU-Bildschirm wurde nicht gesperrt: Ein Client ohne sein Auth-Cookie konnte sich noch verbinden, oder gar keiner konnte es."
+msgstr "der GPU-Bildschirm wurde nicht gesperrt: Ein Client ohne das Auth-Cookie des Bildschirms konnte sich noch verbinden, oder gar keiner konnte es."
 
 msgid "the private display {display} stopped answering: `xdotool {command}` did not return within {seconds}s."
 msgstr "der private Bildschirm {display} antwortet nicht mehr: `xdotool {command}` kam nicht innerhalb von {seconds}s zurück."
@@ -127,14 +127,14 @@ msgid ""
 "the app resized its window to {size} at {place}, so it no longer fills the {frame} frame and part of the video is cropped or empty.\n"
 "  Record at the app's own size with -s {size}."
 msgstr ""
-"die App hat ihr Fenster bei {place} auf {size} geändert, daher füllt es das Bild ({frame}) nicht mehr aus, und ein Teil des Videos ist abgeschnitten oder leer.\n"
+"die App hat die Größe ihres Fensters bei {place} auf {size} geändert, daher füllt es das Bild ({frame}) nicht mehr aus, und ein Teil des Videos ist abgeschnitten oder leer.\n"
 "  Nehmen Sie in der eigenen Größe der App auf, mit -s {size}."
 
 msgid ""
 "the app resized its window {seconds}s into the video, and demoreel put it back to fill the {frame} frame.\n"
 "  The video before then may be cropped or have an empty band."
 msgstr ""
-"die App hat ihr Fenster nach {seconds}s des Videos geändert, und demoreel hat es zurückgesetzt, damit es das Bild ({frame}) ausfüllt.\n"
+"die App hat nach {seconds}s des Videos die Größe ihres Fensters geändert, und demoreel hat es zurückgesetzt, damit es das Bild ({frame}) ausfüllt.\n"
 "  Das Video davor kann abgeschnitten sein oder einen leeren Streifen haben."
 
 msgid ""
@@ -146,7 +146,7 @@ msgid ""
 "  window — in which case there is nothing to record."
 msgstr ""
 "die App wurde sofort beendet (Status 0), ohne ein Fenster zu öffnen.\n"
-"  Wahrscheinlich ist es eine App, die nur einmal laufen kann: Sie findet eine\n"
+"  Wahrscheinlich ist es eine App, die nur einmal laufen kann: Die App findet eine\n"
 "  Kopie, die schon auf Ihrem echten Desktop läuft, übergibt ihr die Anfrage\n"
 "  und beendet sich erfolgreich. Wenn eine Kopie läuft, schließen Sie sie und versuchen Sie es erneut.\n"
 "  Wenn nicht, ist der Befehl vielleicht einfach fertig geworden, ohne ein\n"
@@ -157,7 +157,7 @@ msgid ""
 "  Its own output, above or in --app-log, says why. To see it on its own, run: {command}"
 msgstr ""
 "die App wurde mit Status {status} beendet, bevor sie ein Fenster öffnete.\n"
-"  Ihre eigene Ausgabe, oben oder in --app-log, sagt warum. Um sie für sich allein zu sehen, führen Sie aus: {command}"
+"  Die eigene Ausgabe der App, oben oder in --app-log, sagt, warum. Um sie für sich allein zu sehen, führen Sie aus: {command}"
 
 msgid "cannot read the step {step}: {reason}."
 msgstr "der Schritt {step} kann nicht gelesen werden: {reason}."
@@ -192,13 +192,13 @@ msgid ""
 "  What was recorded is kept in {part}, and {log} says why."
 msgstr ""
 "das Video konnte nicht fertiggestellt werden: Die Aufnahme ließ sich nicht in {name} umwandeln.\n"
-"  Das Aufgenommene bleibt in {part} erhalten, und {log} sagt warum."
+"  Das Aufgenommene bleibt in {part} erhalten, und {log} sagt, warum."
 
 msgid "the display did not give up a frame within {seconds}s; it has stopped answering"
 msgstr "der Bildschirm hat innerhalb von {seconds}s kein Bild geliefert; er antwortet nicht mehr"
 
 msgid "ffmpeg exited {status} with no frame"
-msgstr "ffmpeg wurde mit {status} beendet, ohne ein Bild"
+msgstr "ffmpeg wurde mit {status} beendet, ohne ein Bild zu liefern"
 
 msgid "reading a frame of {path} took over {seconds}s"
 msgstr "das Lesen eines Bildes aus {path} dauerte länger als {seconds}s"
@@ -216,7 +216,7 @@ msgid "pactl failed: {text}"
 msgstr "pactl ist fehlgeschlagen: {text}"
 
 msgid "the sound server does not list exactly one output named {sink}."
-msgstr "der Soundserver führt nicht genau eine Ausgabe namens {sink}."
+msgstr "der Soundserver listet nicht genau eine Ausgabe namens {sink} auf."
 
 msgid ""
 "--audio needs a private sound output, and none could be made.\n"
@@ -255,7 +255,7 @@ msgid "This distro has no package for {programs}."
 msgstr "Diese Distribution hat kein Paket für {programs}."
 
 msgid "could not tell whether this ffmpeg has libx264: asking it took over {seconds}s."
-msgstr "konnte nicht feststellen, ob dieses ffmpeg libx264 hat: die Abfrage dauerte länger als {seconds}s."
+msgstr "es ließ sich nicht feststellen, ob dieses ffmpeg libx264 hat: Die Abfrage dauerte länger als {seconds}s."
 
 msgid "missing required program(s): {programs}"
 msgstr "fehlende Programme: {programs}"
@@ -291,7 +291,7 @@ msgid ""
 "  Choose another path, or remove the link if it is not meant to be there."
 msgstr ""
 "das App-Protokoll {path} ist ein symbolischer Link, den ein anderer Benutzer angelegt hat, daher\n"
-"  schreibt demoreel nicht darüber: Er könnte auf eine Ihrer Dateien zeigen.\n"
+"  schreibt demoreel nicht über diesen Link: Er könnte auf eine Ihrer Dateien zeigen.\n"
 "  Wählen Sie einen anderen Pfad, oder entfernen Sie den Link, wenn er nicht dorthin gehört."
 
 msgid ""
@@ -300,7 +300,7 @@ msgid ""
 "  Choose another path, or remove the link if it is not meant to be there."
 msgstr ""
 "die Ausgabe {path} ist ein symbolischer Link, den ein anderer Benutzer angelegt hat, daher\n"
-"  schreibt demoreel nicht darüber: Er könnte auf eine Ihrer Dateien zeigen.\n"
+"  schreibt demoreel nicht über diesen Link: Er könnte auf eine Ihrer Dateien zeigen.\n"
 "  Wählen Sie einen anderen Pfad, oder entfernen Sie den Link, wenn er nicht dorthin gehört."
 
 msgid ""
@@ -328,14 +328,14 @@ msgid ""
 "It had not drawn yet. A GPU app can spend seconds on a black\n"
 "    screen while it starts: --settle waits for the first picture."
 msgstr ""
-"Sie hatte noch nichts gezeichnet. Eine GPU-App kann beim Start sekundenlang einen schwarzen\n"
+"Die App hatte noch nichts gezeichnet. Eine GPU-App kann beim Start sekundenlang einen schwarzen\n"
 "    Bildschirm zeigen: --settle wartet auf das erste Bild."
 
 msgid ""
 "It needs the GPU, and Xvfb has none. An OpenGL or Vulkan app\n"
 "    cannot render on it at all: record it with --gpu instead."
 msgstr ""
-"Sie braucht die GPU, und Xvfb hat keine. Eine OpenGL- oder Vulkan-App\n"
+"Die App braucht die GPU, und Xvfb hat keine. Eine OpenGL- oder Vulkan-App\n"
 "    kann darauf überhaupt nicht zeichnen: Nehmen Sie sie stattdessen mit --gpu auf."
 
 msgid "The app ran but drew nothing here. Two causes account for most of it:"
@@ -358,7 +358,7 @@ msgid "recording, {seconds}s left"
 msgstr "Aufnahme läuft, noch {seconds}s"
 
 msgid "recording for {time} (Ctrl+C to finish)"
-msgstr "Aufnahme für {time} (Strg+C zum Beenden)"
+msgstr "Aufnahme läuft seit {time} (Strg+C zum Beenden)"
 
 msgid "the app closed; ending the recording."
 msgstr "die App wurde geschlossen; die Aufnahme wird beendet."
@@ -368,7 +368,7 @@ msgid ""
 "  Its log, {log}, says why."
 msgstr ""
 "es wurde kein Video nach {output} geschrieben: Der Rekorder hat nichts erzeugt.\n"
-"  Sein Protokoll, {log}, sagt warum."
+"  Sein Protokoll, {log}, sagt, warum."
 
 msgid "the video cannot be played: {output}"
 msgstr "das Video lässt sich nicht abspielen: {output}"
@@ -414,7 +414,7 @@ msgid ""
 "only {share} of the frames in the middle of {output} changed from the one before.\n"
 "  If the app was moving the whole time, it drew that few new frames itself: the video has every frame it drew."
 msgstr ""
-"nur {share} der Bilder in der Mitte von {output} unterschieden sich vom vorherigen.\n"
+"nur {share} der Bilder in der Mitte von {output} unterschieden sich vom jeweils vorherigen.\n"
 "  Wenn sich die App die ganze Zeit bewegt hat, hat sie selbst so wenige neue Bilder gezeichnet: Das Video enthält jedes Bild, das sie gezeichnet hat."
 
 msgid "reading it back took over {seconds}s."
@@ -479,7 +479,7 @@ msgid "{name}: ready"
 msgstr "{name}: bereit"
 
 msgid "could not tell whether this ffmpeg can read from a sound server: asking it took over {seconds}s."
-msgstr "konnte nicht feststellen, ob dieses ffmpeg von einem Soundserver lesen kann: die Abfrage dauerte länger als {seconds}s."
+msgstr "es ließ sich nicht feststellen, ob dieses ffmpeg von einem Soundserver lesen kann: Die Abfrage dauerte länger als {seconds}s."
 
 msgid "a private display did not start: {reason}"
 msgstr "ein privater Bildschirm ist nicht gestartet: {reason}"
@@ -511,7 +511,7 @@ msgid ""
 "  Its own error message says why."
 msgstr ""
 "die Aufnahme ist nach dem Stoppen fehlgeschlagen, daher gibt es kein Video zurückzugeben.\n"
-"  Ihre eigene Fehlermeldung sagt warum."
+"  Die Fehlermeldung der Aufnahme selbst sagt, warum."
 
 msgid "the recording ended before it started recording, so there is no video to stop."
 msgstr "die Aufnahme endete, bevor sie mit dem Aufnehmen begann, daher gibt es kein Video zu stoppen."
@@ -583,7 +583,7 @@ msgid "{where}: a zoom line belongs to the clip above it, and the line above is 
 msgstr "{where}: eine zoom-Zeile gehört zum Clip darüber, und die Zeile darüber gehört zu keinem Clip."
 
 msgid "{where}: a clip takes one zoom line, and {first} is already one."
-msgstr "{where}: ein Clip nimmt eine zoom-Zeile, und {first} ist schon eine."
+msgstr "{where}: ein Clip hat nur eine zoom-Zeile, und {first} ist schon eine."
 
 msgid "{where}: text needs its words, in quotes: text \"Saving a file\""
 msgstr "{where}: text braucht seine Wörter, in Anführungszeichen: text \"Datei speichern\""
@@ -665,10 +665,10 @@ msgid "{where}: a text sits at {places} or {last}, not at {value}."
 msgstr "{where}: ein Text steht bei {places} oder {last}, nicht bei {value}."
 
 msgid "{where}: the text {words} takes slide-in or fade-in, not both: a sliding text fades in as it rises."
-msgstr "{where}: der Text {words} nimmt slide-in oder fade-in, nicht beides: ein gleitender Text blendet ein, während er aufsteigt."
+msgstr "{where}: der Text {words} nimmt slide-in oder fade-in, nicht beides: Ein gleitender Text blendet ein, während er aufsteigt."
 
 msgid "{where}: the text {words} fades for {fades} seconds, and shows for only {seconds}."
-msgstr "{where}: der Text {words} blendet {fades} Sekunden lang, wird aber nur {seconds} Sekunden gezeigt."
+msgstr "{where}: die Blenden des Textes {words} dauern {fades} Sekunden, er wird aber nur {seconds} Sekunden gezeigt."
 
 msgid ""
 "{where}: a band that fades with its text needs a newer ffmpeg than this one: its text filter has no `boxw`.\n"
@@ -694,10 +694,10 @@ msgid "{where}: {word} acts on a clip's window, and this clip has no window."
 msgstr "{where}: {word} wirkt auf das Fenster eines Clips, und dieser Clip hat kein Fenster."
 
 msgid "{where}: push is how much the window grows, in percent, from 0 to {high}, not {value}."
-msgstr "{where}: push ist, um wie viel Prozent das Fenster wächst, von 0 bis {high}, nicht {value}."
+msgstr "{where}: push gibt an, um wie viel Prozent das Fenster wächst, von 0 bis {high}, nicht {value}."
 
 msgid "{where}: window {window} grown by push {push} is larger than the room it sits in. Make one of them smaller."
-msgstr "{where}: window {window}, gewachsen um push {push}, ist größer als der Raum, in dem es sitzt. Mach einen der beiden Werte kleiner."
+msgstr "{where}: window {window}, gewachsen um push {push}, ist größer als der Raum, in dem es sitzt. Machen Sie einen der beiden Werte kleiner."
 
 msgid "{where}: window is a share of the room in percent, from {low} to {high}, not {value}."
 msgstr "{where}: window ist ein Anteil des Raums in Prozent, von {low} bis {high}, nicht {value}."
@@ -781,7 +781,7 @@ msgid "  level {level} dB from {start} to {end}"
 msgstr "  level {level} dB von {start} bis {end}"
 
 msgid "{where}: zoom is how many times larger the picture grows, above {low} and at most {high}, not {value}."
-msgstr "{where}: zoom ist, wie viel Mal größer das Bild wird, über {low} und höchstens {high}, nicht {value}."
+msgstr "{where}: zoom gibt an, wie viel Mal größer das Bild wird, über {low} und höchstens {high}, nicht {value}."
 
 msgid "-o must end in {ending}, and {name} does not."
 msgstr "-o muss auf {ending} enden, und {name} tut das nicht."
@@ -875,7 +875,7 @@ msgstr "ffmpeg hat für eine Textzeile nichts gezeichnet: Es wurde keine Schrift
 
 #. argparse formats this text with %
 msgid "can this machine record? If not, it says what to install"
-msgstr "kann dieser Rechner aufnehmen? Wenn nicht, sagt es, was zu installieren ist"
+msgstr "kann dieser Rechner aufnehmen? Wenn nicht, wird angezeigt, was zu installieren ist"
 
 #. argparse formats this text with %
 msgid "record Kate for 20 seconds"
@@ -955,7 +955,7 @@ msgstr "die geskripteten Schritte aus FILE lesen, einer pro Zeile, oder bei - vo
 
 #. argparse formats this text with %
 msgid "keep the app's own output in PATH; otherwise it goes to this terminal's stderr. Useful when the app prints whether it drew the real thing, which no recording check here can tell"
-msgstr "die eigene Ausgabe der App in PATH aufbewahren; sonst geht sie an stderr dieses Terminals. Nützlich, wenn die App ausgibt, ob sie das Richtige gezeichnet hat, was keine Prüfung der Aufnahme hier erkennen kann"
+msgstr "die eigene Ausgabe der App in PATH aufbewahren; sonst geht sie an stderr dieses Terminals. Nützlich, wenn die App ausgibt, ob sie das echte Bild gezeichnet hat, was keine Prüfung der Aufnahme hier erkennen kann"
 
 #. argparse formats this text with %
 msgid "wait up to SECONDS for the app to draw its first frame before recording starts, instead of filming its startup black screen (default: 0, don't wait)"
@@ -1039,7 +1039,7 @@ msgstr "zu schreibende Videodatei, endet auf .mp4 (Standard: ./<input>-<timestam
 
 #. argparse formats this text with %
 msgid "start black; the picture arrives over SECONDS"
-msgstr "schwarz beginnen; das Bild erscheint über SECONDS"
+msgstr "schwarz beginnen; das Bild wird über SECONDS eingeblendet"
 
 #. argparse formats this text with %
 msgid "go to black over the last SECONDS"
@@ -1151,7 +1151,7 @@ msgstr "Videos aneinanderhängen."
 
 #. argparse formats this text with %
 msgid "two or more videos, in order"
-msgstr "zwei oder mehr Videos, in Reihenfolge"
+msgstr "zwei oder mehr Videos, der Reihe nach"
 
 #. argparse formats this text with %
 msgid "fade from each video into the next over SECONDS (default: a plain cut)"
@@ -1211,7 +1211,7 @@ msgstr "bis hier ansehen (Standard: das Ende)"
 
 #. argparse formats this text with %
 msgid "report a stretch with no change longer than this (default: 1)"
-msgstr "einen Abschnitt ohne Änderung melden, der länger ist als dies (Standard: 1)"
+msgstr "einen Abschnitt ohne Änderung melden, der länger ist als dieser Wert (Standard: 1)"
 
 #. argparse formats this text with %
 msgid "look only at this rectangle of the picture: its top-left corner at X,Y, W pixels wide and H high"
@@ -1302,7 +1302,7 @@ msgid ""
 "It rendered somewhere else. For a Flatpak, try the three flags in README.md,\n"
 "    § Recording a Flatpak app."
 msgstr ""
-"Sie hat woanders gezeichnet. Versuchen Sie bei einem Flatpak die drei Optionen aus README.md,\n"
+"Die App hat woanders gezeichnet. Versuchen Sie bei einem Flatpak die drei Optionen aus README.md,\n"
 "    § Recording a Flatpak app."
 
 #. argparse formats this text with %
@@ -1348,7 +1348,7 @@ msgid ""
 "  Choose another path."
 msgstr ""
 "die Ausgabe {path} führt über den symbolischen Link {link}, den ein anderer Benutzer angelegt hat,\n"
-"  daher schreibt demoreel nicht darüber: Er könnte auf eine Ihrer Dateien zeigen.\n"
+"  daher schreibt demoreel nicht über diesen Link: Er könnte auf eine Ihrer Dateien zeigen.\n"
 "  Wählen Sie einen anderen Pfad."
 
 msgid ""
@@ -1357,7 +1357,7 @@ msgid ""
 "  Choose another path."
 msgstr ""
 "das App-Protokoll {path} führt über den symbolischen Link {link}, den ein anderer Benutzer angelegt hat,\n"
-"  daher schreibt demoreel nicht darüber: Er könnte auf eine Ihrer Dateien zeigen.\n"
+"  daher schreibt demoreel nicht über diesen Link: Er könnte auf eine Ihrer Dateien zeigen.\n"
 "  Wählen Sie einen anderen Pfad."
 
 msgid ""
@@ -1402,7 +1402,7 @@ msgid "{output} was left as it was, and this run's video is in {part}."
 msgstr "{output} blieb unverändert, und das Video dieses Laufs liegt in {part}."
 
 msgid "reading {path} used more than {size} GB of memory, half this machine's, so it was stopped."
-msgstr "Das Lesen von {path} hat mehr als {size} GB Speicher belegt, die Hälfte dieses Rechners, und wurde deshalb gestoppt."
+msgstr "das Lesen von {path} hat mehr als {size} GB Speicher belegt, die Hälfte dieses Rechners, und wurde deshalb gestoppt."
 
 msgid "{where}: {path} is a list that points at other files, such as a playlist, and demoreel does not follow one."
 msgstr "{where}: {path} ist eine Liste, die auf andere Dateien verweist, etwa eine Wiedergabeliste, und demoreel folgt so einer Liste nicht."
@@ -1411,16 +1411,16 @@ msgid "ffmpeg did not say which formats it reads, so nothing was read."
 msgstr "ffmpeg hat nicht gesagt, welche Formate es liest, deshalb wurde nichts gelesen."
 
 msgid "{where}: this makes the film {seconds} seconds long, and a film may last at most {most} seconds, which is {hours} hours."
-msgstr "{where}: Dadurch wird der Film {seconds} Sekunden lang, und ein Film darf höchstens {most} Sekunden dauern, also {hours} Stunden."
+msgstr "{where}: dadurch wird der Film {seconds} Sekunden lang, und ein Film darf höchstens {most} Sekunden dauern, also {hours} Stunden."
 
 msgid "a film's frame rate is at most {most} a second, and this one would be {rate}."
-msgstr "Die Bildrate eines Films beträgt höchstens {most} pro Sekunde, und diese wäre {rate}."
+msgstr "die Bildrate eines Films beträgt höchstens {most} pro Sekunde, und diese wäre {rate}."
 
 msgid "the disk holding {path} is nearly full, so the film was stopped before it filled it."
-msgstr "Der Datenträger mit {path} ist fast voll, deshalb wurde der Film gestoppt, bevor er ihn füllte."
+msgstr "der Datenträger mit {path} ist fast voll, deshalb wurde der Film gestoppt, bevor er ihn füllte."
 
 msgid "{where}: {path} is {size}, too narrow or too flat to show in a window of this size. Give it a larger window."
-msgstr "{where}: {path} ist {size}, zu schmal oder zu flach für ein Fenster dieser Größe. Gib ihm ein größeres Fenster."
+msgstr "{where}: {path} ist {size}, zu schmal oder zu flach für ein Fenster dieser Größe. Geben Sie ihm ein größeres Fenster."
 
 msgid "scene {number}: a card with no picture, {start} to {end}"
 msgstr "Szene {number}: eine Karte ohne Bild, {start} bis {end}"
@@ -1430,7 +1430,7 @@ msgid ""
 "  Point XDG_RUNTIME_DIR at a plainer one."
 msgstr ""
 "demoreel legt seine Dateien in {path} ab, und die Filter von ffmpeg können ein Zeichen in diesem Pfad nicht verarbeiten.\n"
-"  Lass XDG_RUNTIME_DIR auf einen einfacheren Pfad zeigen."
+"  Lassen Sie XDG_RUNTIME_DIR auf einen einfacheren Pfad zeigen."
 
 #. translators: slice, slide and split are edit-script words and stay in English.
 msgid "{where}: a slice or a slide line belongs to the split above it, and the line above is not part of a split."
@@ -1473,7 +1473,7 @@ msgstr "{where}: slide {number} führt zu dem slice, der schon der erste ist."
 
 #. translators: slide and at are edit-script words and stay in English.
 msgid "{where}: slide needs `at`, the moment it starts: slide 2 at 7"
-msgstr "{where}: slide braucht `at`, den Moment, in dem es beginnt: slide 2 at 7"
+msgstr "{where}: slide braucht `at`, den Moment, in dem er beginnt: slide 2 at 7"
 
 msgid "{where}: slides are written in time order and may not overlap, and this one starts at {start}, before the one above ends at {end}."
 msgstr "{where}: slides stehen in zeitlicher Reihenfolge und dürfen sich nicht überlappen, und dieser beginnt bei {start}, bevor der darüber bei {end} endet."
@@ -1519,7 +1519,7 @@ msgstr "{where}: der Ring bei {at} liegt nicht in seinem Clip ({start} bis {end}
 
 #. translators: hold is an edit-script word and stays in English.
 msgid "{where}: the ring at {at} lasts {seconds} seconds, past the clip's own frames, which end at {end}; the hold would freeze it. Move it earlier."
-msgstr "{where}: der Ring bei {at} dauert {seconds} Sekunden, über die eigenen Bilder des Clips hinaus, die bei {end} enden; das hold würde ihn einfrieren. Setze ihn früher."
+msgstr "{where}: der Ring bei {at} dauert {seconds} Sekunden, über die eigenen Bilder des Clips hinaus, die bei {end} enden; das hold würde ihn einfrieren. Setzen Sie ihn früher."
 
 #. translators: x and y are edit-script words and stay in English.
 msgid "{where}: a text's x and y are given together, and this one has only {word}."
@@ -1531,10 +1531,10 @@ msgstr "{where}: {word} eines Textes ist ein Anteil des Bildes in Prozent, von 0
 
 #. translators: {word} is at or band; x, y, at and band are edit-script words and stay in English.
 msgid "{where}: a text placed with x and y takes no {word}: it sits at its point, and has no band."
-msgstr "{where}: ein mit x und y gesetzter Text nimmt kein {word}: er steht an seinem Punkt und hat kein Band."
+msgstr "{where}: ein mit x und y gesetzter Text nimmt kein {word}: Er steht an seinem Punkt und hat kein Band."
 
 msgid "{where}: the text {words} at x {x} y {y} reaches past the frame's edge. Move it in, or give it a smaller size."
-msgstr "{where}: der Text {words} bei x {x} y {y} reicht über den Rand des Bildes hinaus. Rücke ihn herein, oder gib ihm eine kleinere size."
+msgstr "{where}: der Text {words} bei x {x} y {y} reicht über den Rand des Bildes hinaus. Rücken Sie ihn herein, oder geben Sie ihm eine kleinere Größe."
 
 #. translators: {names} are the drawn backgrounds' names, which stay in English.
 msgid "{where}: a background is a colour written #RRGGBB, like {example}, two to {most} of them joined by commas for a moving gradient, or one of {names}, not {value}."
