@@ -1,7 +1,7 @@
 <!-- ants-spec-format: 1 -->
 # DEMO-0086 — A window that records an app by running `demoreel record`
 
-**Status:** spec draft (2026-11-15).
+**Status:** accepted (2026-11-15).
 **Kind:** implement.
 **Source:** ROADMAP DEMO-0086 (user-request-2026-09-25; toolkit decided by the user 2026-11-15; § 3's four calls decided by the user 2026-11-15).
 **Blocker for:** DEMO-0087, DEMO-0088, DEMO-0089, DEMO-0090, DEMO-0091, DEMO-0092, DEMO-0253, DEMO-0264.
@@ -67,7 +67,8 @@ extracted by `./ci.sh --pot` like every other, catalogs load from the same
 `po/` (DEMO-0060 INV-9), and the packages install no new script.
 
 Without PySide6, `demoreel window` exits 1 with a message naming the distro's
-package for it, by the same route `install_hint` names a missing program.
+package for it, by the same route `install_hint` names a missing program,
+with the package names DEMO-0091 settles.
 
 `cmd_window` puts SIGINT, SIGTERM and SIGHUP back to their defaults before Qt starts.
 `main`'s `_exit_on_signal` runs only when Python code runs, which a Qt event
@@ -100,7 +101,9 @@ Each recording is one child process:
 - **One run at a time per window.** Record is disabled while one runs.
 - **Stop** runs `demoreel stop <run name>` as a second child. That keeps
   `wait_until_recording`'s rule: a stop sent while the run starts gives a short
-  video, never none.
+  video, never none. If that child fails while the record child still runs,
+  as when Stop comes before the run can be addressed, the window runs it
+  again.
 - **Closing the window during a run** does what Stop does, then closes once the
   record child has exited. The window says it is finishing the video.
 
@@ -135,13 +138,15 @@ nothing but demoreel's own words: the app's output goes to stderr or
   `run_countdown`, whether or not stderr is a terminal; the terminal line is
   unchanged. Those run five times a second, so a `time` event is sent only
   when its number changes.
-- Each event is flushed as written. A write that fails, as when the reader
-  has gone, stops the events and not the run, as `note` does for stderr.
+- Each event is flushed as written. A write that fails means the reader has
+  gone: the events stop, and the run finishes its video as on SIGHUP. Once
+  the steps have run, a `time` event goes out each second, so this also
+  catches a parent that died before the `prctl` call below.
 - **On Linux, `--events` also asks the kernel for `SIGHUP` when the parent
   process exits** (`prctl(PR_SET_PDEATHSIG, SIGHUP)` through `ctypes`, which
-  the script imports already). It reads `os.getppid()` before and after
-  the call; if the two differ, the parent went first, and the run acts on
-  SIGHUP at once. `cmd_record` treats SIGHUP as "finish the video" (DEMO-0115). A
+  the script imports already). The kernel sends it when the thread that
+  started the child ends, so the window starts every child from its main
+  thread. `cmd_record` treats SIGHUP as "finish the video" (DEMO-0115). A
   program reading events is driving the run, so when it goes the run ends as
   it would on a closed terminal.
 - An argparse error comes before `--events` is read, so it has no event. The
@@ -171,12 +176,15 @@ A command text `shlex.split` refuses, such as an open quote, is reported
 beside the field, and Record stays disabled until it parses. So is one
 holding a byte that is not UTF-8: `QProcess` carries text, and on PySide6
 6.12 a lone surrogate argument arrived empty. Each step is
-checked with `parse_step` before Record is enabled. Its refusal reaches the
+checked with `parse_step` before Record is enabled, and a step holding a
+character `str.splitlines` breaks on is refused: `--steps` reads one step
+per line. Its refusal reaches the
 window as the `SystemExit` `die` raises, and its text is shown, not read.
 
 **The equivalent command** sits under the form, as `shlex.join` of the
 command a person would type: `demoreel record`, the options, each step as
-`-a`, `--`, the app. A button copies it.
+`-a`, `--`, the app. A button copies it. It holds no folder: a person runs
+it from the folder the form names.
 
 **Stays on the command line:** `-o` as a file name, `-r`, `-n`, `--app-log`,
 `--settle`, `--startup-timeout`, `shot`, `check`, `stop` of another run, and
@@ -297,9 +305,9 @@ fallback, which the person can type into the field.
   *Breaks when:* the two `progress` call sites are swapped, or `left` is
   counted from the run's start rather than the countdown's.
 
-- **INV-6** — Trust boundary: the window starts every child as an argument
-  list whose first two entries are `sys.executable` and the resolved script.
-  No shell runs on any path, and the app's argv is the one the text field
+- **INV-6** — Trust boundary: the window starts every child that runs demoreel as
+  an argument list whose first two entries are `sys.executable` and the
+  resolved script. No shell runs a command the window builds, and the app's argv is the one the text field
   parses to.
   *Test:* `ci.sh` step `the window: no shell` — an `ast` walk over the
   window's functions finds no `shell=True`, no `os.system`, no
@@ -339,9 +347,12 @@ fallback, which the person can type into the field.
   `XDG_DATA_HOME`.
   *Test:* `ci.sh` step `the window: remembers nothing` — the window built
   offscreen (`QT_QPA_PLATFORM=offscreen`) with both pointed at empty folders,
-  a field changed, then closed; both folders are still empty, and `QSettings`
+  a field changed and the program-file dialog opened and cancelled, then
+  closed; both folders are still empty, and `QSettings`
   does not occur in `demoreel`.
-  *Breaks when:* `QSettings`, a recent-files list or a saved geometry is added.
+  *Breaks when:* `QSettings`, a recent-files list or a saved geometry is
+  added, or a `QFileDialog` saves its state (measured: a stock one wrote
+  `QtProject.conf` under `XDG_CONFIG_HOME`).
 
 - **INV-10** — When the process that started `record --events` is killed
   during a `-d 0` run, the run finishes its video: its state file's `result`
@@ -352,7 +363,7 @@ fallback, which the person can type into the field.
   `ok`, and `ffprobe` reads a duration from the video.
   *Breaks when:* the death signal is dropped (the run records until stopped),
   or set to SIGKILL (the display leaks and no video is finished), or a
-  failed event write ends the run.
+  failed event write fails the run.
 
 - **INV-11** — Every focusable control has an accessible name, its own or a
   buddy label's, and the Tab chain from the first control visits every enabled
