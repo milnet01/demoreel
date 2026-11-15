@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: ja\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Demoreel-Review: draft\n"
+"X-Demoreel-Review: reviewed a4f8b82078ebd942\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: テキスト {words} は {first} と同時に同じ位置に表示されますが、一方には帯があり、もう一方にはありません。重ねて並べるテキストは、すべて帯ありか、すべて帯なしのどちらかでなければなりません。"

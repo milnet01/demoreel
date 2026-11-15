@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: ko\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Demoreel-Review: draft\n"
+"X-Demoreel-Review: reviewed 8368b2583cf35c3c\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: 텍스트 {words}이(가) {first}와(과) 같은 자리에 함께 표시되는데, 하나는 띠가 있고 다른 하나는 없습니다. 함께 쌓이는 텍스트는 모두 띠가 있거나 모두 없어야 합니다."

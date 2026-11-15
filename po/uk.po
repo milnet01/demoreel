@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: uk\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Demoreel-Review: draft\n"
+"X-Demoreel-Review: reviewed 2484095ed1bdc4ac\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: текст {words} показано разом із {first} в одному місці, і один має смугу, а інший ні. Тексти в одній стопці мають смугу всі або жоден."

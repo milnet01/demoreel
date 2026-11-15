@@ -1643,22 +1643,22 @@ disagree.
 
 | Language | Code | State |
 |---|---|---|
-| Afrikaans | `af` | draft |
-| Arabic — العربية | `ar` | draft |
-| Chinese, Simplified — 简体中文 | `zh_CN` | draft |
-| Chinese, Traditional — 繁體中文 | `zh_TW` | draft |
-| Dutch — Nederlands | `nl` | draft |
-| French — Français | `fr` | draft |
-| German — Deutsch | `de` | draft |
-| Hebrew — עברית | `he` | draft |
-| Italian — Italiano | `it` | draft |
-| Japanese — 日本語 | `ja` | draft |
-| Korean — 한국어 | `ko` | draft |
-| Polish — Polski | `pl` | draft |
-| Portuguese, Brazil — Português do Brasil | `pt_BR` | draft |
-| Russian — Русский | `ru` | draft |
-| Spanish — Español | `es` | draft |
-| Ukrainian — Українська | `uk` | draft |
+| Afrikaans | `af` | reviewed |
+| Arabic — العربية | `ar` | reviewed |
+| Chinese, Simplified — 简体中文 | `zh_CN` | reviewed |
+| Chinese, Traditional — 繁體中文 | `zh_TW` | reviewed |
+| Dutch — Nederlands | `nl` | reviewed |
+| French — Français | `fr` | reviewed |
+| German — Deutsch | `de` | reviewed |
+| Hebrew — עברית | `he` | reviewed |
+| Italian — Italiano | `it` | reviewed |
+| Japanese — 日本語 | `ja` | reviewed |
+| Korean — 한국어 | `ko` | reviewed |
+| Polish — Polski | `pl` | reviewed |
+| Portuguese, Brazil — Português do Brasil | `pt_BR` | reviewed |
+| Russian — Русский | `ru` | reviewed |
+| Spanish — Español | `es` | reviewed |
+| Ukrainian — Українська | `uk` | reviewed |
 
 ## Versioning
 

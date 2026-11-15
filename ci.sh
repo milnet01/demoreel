@@ -7944,7 +7944,7 @@ if not want:
 top = readme.split("\n## ", 1)[0]
 languages = re.search(r"^## Languages\n(.*?)(?=^## )", readme, re.M | re.S)
 names = {code: name.split(" — ")[-1] for name, code in re.findall(
-    r"^\| ([^|\n]+?) \| `([A-Za-z_@]+)` \| (?:draft|confirmed) \|$",
+    r"^\| ([^|\n]+?) \| `([A-Za-z_@]+)` \| (?:draft|reviewed|confirmed) \|$",
     languages[1] if languages else "", re.M)}
 catalogs = {p.stem for p in pathlib.Path("po").glob("*.po")}
 pages = {p.stem: p for p in pathlib.Path("docs/quickstart").glob("*.md")}

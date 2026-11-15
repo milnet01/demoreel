@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: zh_CN\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Demoreel-Review: draft\n"
+"X-Demoreel-Review: reviewed 9f8e2de3776c1d09\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}：文字 {words} 与 {first} 同时显示在同一位置，但一个有底条，另一个没有。叠在一起的文字要么都有底条，要么都没有。"

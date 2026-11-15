@@ -28,7 +28,7 @@ starting with `#` are translated; the commands must stay exactly as README
 has them, or the checks fail.
 
 [`docs/translation-review-notes.md`](docs/translation-review-notes.md) lists
-what the drafter of each language was unsure of. Start there. Where a
+what to check in every language. Start there. Where a
 placeholder's content is not obvious, the template
 [`po/demoreel.pot`](po/demoreel.pot) says what it holds, in a
 `#. translators:` line above the message.

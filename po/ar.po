@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: ar\n"
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
-"X-Demoreel-Review: draft\n"
+"X-Demoreel-Review: reviewed 04561db1f3bd351b\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: النص {words} يظهر مع {first} في المكان نفسه، وأحدهما له شريط والآخر بلا شريط. النصوص المكدّسة معًا لها كلها شريط أو لا شريط لأيٍّ منها."

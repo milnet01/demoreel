@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: it\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Demoreel-Review: draft\n"
+"X-Demoreel-Review: reviewed d5e24a06fc3e1a2e\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: il testo {words} è sullo schermo con {first} nello stesso punto, e uno ha la fascia e l'altro no. I testi impilati insieme hanno tutti la fascia o nessuno."
