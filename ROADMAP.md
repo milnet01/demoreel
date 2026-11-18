@@ -1261,6 +1261,9 @@ simplest case, and a gate proves it still records.
   not a fix. Find whether the offset is in the recording (then it is a
   real defect under load) or in the fixture's own timing, which
   review-tests 2026-11-04 flagged; fix the one it is.
+  2026-11-18: failed the push of a0b9261 at load 15-16 (44 ms
+  apart); the full gate on the same tree passed it minutes earlier
+  (1 ms apart).
   **Layman:** A test that checks sound lines up with the picture fails when other programs are busy, so a correct change can be blocked from going out.
   Kind: test.
   Source: gate-failure-2026-11-15.
@@ -6268,12 +6271,18 @@ is a front-end to the same recording engine, not a second one.
   Kind: feature.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0088] **Edit scripted actions in the window.**
+- ✅ [DEMO-0088] **Edit scripted actions in the window.**
   A list of steps -- wait, move, click, type, key -- to add, remove,
   reorder and edit, producing the same `-a` actions the command line
   takes. Show the equivalent command so a person can copy it into a
   script. Picking click coordinates on a live preview is a possible later
   step, not part of this item.
+  Shipped 2026-11-18 in bd7787c: a steps list with a field for the
+  selected step, Add from the examples, Remove, Move up and down. Each
+  step is checked by window_step_problem (parse_step, and no line
+  break); the copied command shows each as -a, and the run gets them
+  through --steps - on standard input (ci.sh step "the window:
+  scripted steps").
   **Layman:** Build the list of clicks and key presses for a demo in the window instead of typing them out.
   Kind: feature.
   Source: user-request-2026-09-25.
