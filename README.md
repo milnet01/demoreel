@@ -285,17 +285,20 @@ opens a window that records an app the way `demoreel record` does, because it
 runs `demoreel record` for you. Type the app's command, or pick it from the
 installed applications or as a program file. Set the size, the length or
 "Record until stopped", the graphics-card mode, the pointer and the app's
-sound, and the folder to save in. Press Record, and Stop when you have
-enough. Then open the video or its folder.
+sound, and the folder to save in. Add [scripted steps](#scripted-steps) from
+a list of examples, then edit, remove and reorder them. A step that would not
+run is explained under the list, and Record waits until it is fixed. Press
+Record, and Stop when you have enough. Then open the video or its folder.
 
 Under the form, the window shows the same recording as a command, with a
-button to copy it. The window remembers nothing between launches, so keep that
+button to copy it, each step as an `-a`. The window itself hands the steps
+over as `--steps -` does, so text a step types never appears in the list of
+running programs. The window remembers nothing between launches, so keep that
 command to record the same way again. Errors read as the command line prints
 them.
 
 It needs PySide6, the Qt toolkit for Python. Every other command runs without
-it. Scripted steps are not in the window yet: use `-a` or `--steps` on the
-command line.
+it.
 
 ## Finishing a recording
 

@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: af\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Demoreel-Review: reviewed 1e59a541bd64811c\n"
+"X-Demoreel-Review: reviewed 721d941cb7cc22ed\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: die teks {words} is saam met {first} op dieselfde plek op die skerm, en een het 'n band en die ander nie. Tekste wat saam gestapel is, het almal 'n band of geeneen nie."
@@ -1696,3 +1696,27 @@ msgstr "die venster het PySide6 6.8 of nuwer nodig, vir sy aankondigings aan ske
 #. argparse formats this text with %
 msgid "open a window to pick an app and record it; needs PySide6"
 msgstr "maak 'n venster oop om 'n toep te kies en op te neem; het PySide6 nodig"
+
+msgid "Scripted steps:"
+msgstr "Geskrewe stappe:"
+
+msgid "The selected step:"
+msgstr "Die gekose stap:"
+
+msgid "Remove the step"
+msgstr "Verwyder die stap"
+
+msgid "Move the step up"
+msgstr "Skuif die stap op"
+
+msgid "Move the step down"
+msgstr "Skuif die stap af"
+
+msgid "New step:"
+msgstr "Nuwe stap:"
+
+msgid "Add the step"
+msgstr "Voeg die stap by"
+
+msgid "The step {step} holds a line break, and each step must be one line."
+msgstr "Die stap {step} bevat 'n reëlbreuk, en elke stap moet een reël wees."

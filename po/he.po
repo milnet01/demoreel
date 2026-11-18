@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: he\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Demoreel-Review: reviewed bc7f8de8c6f83884\n"
+"X-Demoreel-Review: reviewed 1b26571511777660\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: הטקסט {words} מוצג יחד עם {first} באותו מקום, ולאחד יש פס ולשני אין. לטקסטים שנערמים יחד יש פס לכולם או לאף אחד."
@@ -1696,3 +1696,27 @@ msgstr "החלון צריך PySide6 בגרסה 6.8 ומעלה, להכרזות ש
 #. argparse formats this text with %
 msgid "open a window to pick an app and record it; needs PySide6"
 msgstr "פתיחת חלון לבחירת יישום ולהקלטתו; דורש PySide6"
+
+msgid "Scripted steps:"
+msgstr "צעדים מתוסרטים:"
+
+msgid "The selected step:"
+msgstr "הצעד הנבחר:"
+
+msgid "Remove the step"
+msgstr "הסרת הצעד"
+
+msgid "Move the step up"
+msgstr "הזזת הצעד למעלה"
+
+msgid "Move the step down"
+msgstr "הזזת הצעד למטה"
+
+msgid "New step:"
+msgstr "צעד חדש:"
+
+msgid "Add the step"
+msgstr "הוספת הצעד"
+
+msgid "The step {step} holds a line break, and each step must be one line."
+msgstr "הצעד {step} מכיל מעבר שורה, וכל צעד חייב להיות שורה אחת."

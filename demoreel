@@ -3825,6 +3825,24 @@ def window_text_problem(text):
     return None
 
 
+def window_step_problem(step):
+    """Why one step of the window's list cannot be recorded, or None. The
+    steps reach record through --steps, which reads one step per line, so a
+    step must not hold anything str.splitlines breaks on (§ 4.4). The rest is
+    parse_step's own refusal, read from the SystemExit die raises."""
+    problem = window_text_problem(step)
+    if problem:
+        return problem
+    if step.splitlines() != [step]:
+        return tr("The step {step} holds a line break, and each step must be one line.",
+                  step=repr(step))
+    try:
+        parse_step(step)
+    except SystemExit as refusal:
+        return str(refusal.code).removeprefix("demoreel: ")
+    return None
+
+
 def window_class(QtCore, QtGui, QtWidgets):
     """The recording window's class. Made here, from the modules cmd_window
     imported, so that nothing at module level needs PySide6 (INV-1)."""
@@ -3894,6 +3912,7 @@ def window_class(QtCore, QtGui, QtWidgets):
             self.audio.setChecked(default("audio"))
             for box in (self.gpu, self.cursor, self.audio):
                 form.addRow(box)
+            self.build_steps(form)
 
             self.folder = QtWidgets.QLineEdit(window_folder(QtCore))
             form.addRow(tr("Save in folder:"), self.folder)
@@ -3957,6 +3976,85 @@ def window_class(QtCore, QtGui, QtWidgets):
             self.open_folder.clicked.connect(
                 lambda: self.open_path(os.path.dirname(self.video.text())))
 
+        def build_steps(self, form):
+            """The scripted steps (DEMO-0088): a list, a field that edits the
+            selected step, and a new step made from one of the examples."""
+            self.steps = QtWidgets.QListWidget()
+            form.addRow(tr("Scripted steps:"), self.steps)
+            self.step = QtWidgets.QLineEdit()
+            form.addRow(tr("The selected step:"), self.step)
+            self.step_problem = QtWidgets.QLabel()
+            self.step_problem.setWordWrap(True)
+            form.addRow(self.step_problem)
+            moves = QtWidgets.QHBoxLayout()
+            self.remove_step = QtWidgets.QPushButton(tr("Remove the step"))
+            self.step_up = QtWidgets.QPushButton(tr("Move the step up"))
+            self.step_down = QtWidgets.QPushButton(tr("Move the step down"))
+            for button in (self.remove_step, self.step_up, self.step_down):
+                moves.addWidget(button)
+            form.addRow(moves)
+            self.new_step = QtWidgets.QComboBox()
+            self.new_step.addItems(list(ACTION_EXAMPLES.values()))
+            form.addRow(tr("New step:"), self.new_step)
+            self.add_step = QtWidgets.QPushButton(tr("Add the step"))
+            form.addRow(self.add_step)
+
+            self.steps.currentRowChanged.connect(self.step_chosen)
+            self.step.textChanged.connect(self.step_edited)
+            self.add_step.clicked.connect(self.insert_step)
+            self.remove_step.clicked.connect(self.delete_step)
+            self.step_up.clicked.connect(lambda: self.shift_step(-1))
+            self.step_down.clicked.connect(lambda: self.shift_step(1))
+            self.step_chosen(-1)
+
+        # --- the steps ---
+
+        def step_list(self):
+            """The steps to record, in order; an emptied one does nothing."""
+            return [text for text in (self.steps.item(row).text()
+                                      for row in range(self.steps.count())) if text.strip()]
+
+        def step_chosen(self, row):
+            """Show the selected step in the field, and enable what applies."""
+            item = self.steps.item(row)
+            self.step.blockSignals(True)
+            self.step.setText(item.text() if item is not None else "")
+            self.step.blockSignals(False)
+            self.step.setEnabled(row >= 0)
+            self.remove_step.setEnabled(row >= 0)
+            self.step_up.setEnabled(row > 0)
+            self.step_down.setEnabled(0 <= row < self.steps.count() - 1)
+
+        def step_edited(self, text):
+            item = self.steps.currentItem()
+            if item is not None:
+                item.setText(text)
+            self.form_changed()
+
+        def insert_step(self):
+            current = self.steps.currentRow()
+            row = current + 1 if current >= 0 else self.steps.count()
+            self.steps.insertItem(row, self.new_step.currentText())
+            self.steps.setCurrentRow(row)
+            self.step.setFocus()
+            self.step.selectAll()
+            self.form_changed()
+
+        def delete_step(self):
+            row = self.steps.currentRow()
+            self.steps.takeItem(row)
+            self.steps.setCurrentRow(min(row, self.steps.count() - 1))
+            # takeItem names the new current row as numbered before the removal
+            # (measured, PySide6 6.12), so the buttons are judged again here.
+            self.step_chosen(self.steps.currentRow())
+            self.form_changed()
+
+        def shift_step(self, by):
+            row = self.steps.currentRow()
+            self.steps.insertItem(row + by, self.steps.takeItem(row))
+            self.steps.setCurrentRow(row + by)
+            self.form_changed()
+
         # --- the form ---
 
         def app_argv(self):
@@ -3990,10 +4088,16 @@ def window_class(QtCore, QtGui, QtWidgets):
                 None if os.path.isdir(folder) else tr("This is not a folder."))
             self.folder_problem.setText(folder_problem or "")
             self.folder_problem.setVisible(bool(folder_problem))
-            self.equivalent.setText(
-                shlex.join(["demoreel", "record", *self.options(), "--", *argv]) if argv else "")
+            steps = self.step_list()
+            step_problem = next(filter(None, map(window_step_problem, steps)), None)
+            self.step_problem.setText(step_problem or "")
+            self.step_problem.setVisible(bool(step_problem))
+            self.equivalent.setText(shlex.join(
+                ["demoreel", "record", *self.options(),
+                 *(word for step in steps for word in ("-a", step)), "--", *argv])
+                if argv else "")
             self.copy.setEnabled(bool(argv))
-            self.record.setEnabled(bool(argv) and not folder_problem
+            self.record.setEnabled(bool(argv) and not folder_problem and not step_problem
                                    and self.record_child is None)
 
         def read_apps(self):
@@ -4059,8 +4163,10 @@ def window_class(QtCore, QtGui, QtWidgets):
             self.runs += 1
             self.run_name = f"window-{os.getpid()}-{self.runs}"
             self.events_kept, self.stderr_kept, self.final = b"", b"", None
-            child = self.child(["record", "--events", "-n", self.run_name,
-                                *self.options(), "--", *argv])
+            # On standard input, so typed text stays out of the process list.
+            steps = self.step_list()
+            child = self.child(["record", "--events", "-n", self.run_name, *self.options(),
+                                *(["--steps", "-"] if steps else []), "--", *argv])
             child.setWorkingDirectory(self.folder.text())
             child.readyReadStandardOutput.connect(self.read_events)
             child.readyReadStandardError.connect(self.read_stderr)
@@ -4076,6 +4182,8 @@ def window_class(QtCore, QtGui, QtWidgets):
             # From this, the main thread: the kernel's death signal follows the
             # thread that started the child (§ 4.3).
             child.start()
+            if steps:
+                child.write("".join(f"{step}\n" for step in steps).encode("utf-8"))
             child.closeWriteChannel()
 
         def stop_run(self):

@@ -534,6 +534,9 @@ msgstr ""
 msgid "This holds a character that is not UTF-8, so the window cannot pass it on."
 msgstr ""
 
+msgid "The step {step} holds a line break, and each step must be one line."
+msgstr ""
+
 msgid "Recording started."
 msgstr ""
 
@@ -604,6 +607,27 @@ msgid "Open the video"
 msgstr ""
 
 msgid "Open its folder"
+msgstr ""
+
+msgid "Scripted steps:"
+msgstr ""
+
+msgid "The selected step:"
+msgstr ""
+
+msgid "Remove the step"
+msgstr ""
+
+msgid "Move the step up"
+msgstr ""
+
+msgid "Move the step down"
+msgstr ""
+
+msgid "New step:"
+msgstr ""
+
+msgid "Add the step"
 msgstr ""
 
 msgid "The app command cannot be split into words: check its quotes and backslashes."

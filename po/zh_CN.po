@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: zh_CN\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Demoreel-Review: reviewed fda6bfad25d0c373\n"
+"X-Demoreel-Review: reviewed 813abdd646c8268a\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}：文字 {words} 与 {first} 同时显示在同一位置，但一个有底条，另一个没有。叠在一起的文字要么都有底条，要么都没有。"
@@ -1690,3 +1690,27 @@ msgstr "窗口需要 PySide6 6.8 或更高版本，用于向屏幕阅读器发�
 #. argparse formats this text with %
 msgid "open a window to pick an app and record it; needs PySide6"
 msgstr "打开一个窗口来选择应用并录制它；需要 PySide6"
+
+msgid "Scripted steps:"
+msgstr "脚本步骤："
+
+msgid "The selected step:"
+msgstr "选中的步骤："
+
+msgid "Remove the step"
+msgstr "删除步骤"
+
+msgid "Move the step up"
+msgstr "上移步骤"
+
+msgid "Move the step down"
+msgstr "下移步骤"
+
+msgid "New step:"
+msgstr "新步骤："
+
+msgid "Add the step"
+msgstr "添加步骤"
+
+msgid "The step {step} holds a line break, and each step must be one line."
+msgstr "步骤 {step} 含有换行符，每个步骤只能占一行。"

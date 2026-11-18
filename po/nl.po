@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: nl\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Demoreel-Review: reviewed f1ae5b437c8d44d2\n"
+"X-Demoreel-Review: reviewed 23229d8de4ea9b9a\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: de tekst {words} staat tegelijk met {first} op dezelfde plek, en de ene heeft een band en de andere niet. Gestapelde teksten hebben allemaal een band of geen van alle."
@@ -1696,3 +1696,27 @@ msgstr "het venster heeft PySide6 6.8 of nieuwer nodig, voor zijn meldingen aan 
 #. argparse formats this text with %
 msgid "open a window to pick an app and record it; needs PySide6"
 msgstr "een venster openen om een app te kiezen en op te nemen; heeft PySide6 nodig"
+
+msgid "Scripted steps:"
+msgstr "Gescripte stappen:"
+
+msgid "The selected step:"
+msgstr "Gekozen stap:"
+
+msgid "Remove the step"
+msgstr "De stap verwijderen"
+
+msgid "Move the step up"
+msgstr "De stap omhoog verplaatsen"
+
+msgid "Move the step down"
+msgstr "De stap omlaag verplaatsen"
+
+msgid "New step:"
+msgstr "Nieuwe stap:"
+
+msgid "Add the step"
+msgstr "De stap toevoegen"
+
+msgid "The step {step} holds a line break, and each step must be one line."
+msgstr "De stap {step} bevat een regeleinde, en elke stap moet één regel zijn."

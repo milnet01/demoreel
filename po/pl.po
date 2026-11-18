@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: pl\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Demoreel-Review: reviewed 514cf47a17100c91\n"
+"X-Demoreel-Review: reviewed d3c9ebdc6a3a0ac0\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: tekst {words} jest na ekranie razem z {first} w tym samym miejscu, a jeden ma pasek, a drugi nie. Teksty ułożone w stos mają wszystkie pasek albo żaden."
@@ -1702,3 +1702,27 @@ msgstr "okno potrzebuje PySide6 6.8 lub nowszego, do komunikatów dla czytników
 #. argparse formats this text with %
 msgid "open a window to pick an app and record it; needs PySide6"
 msgstr "otwiera okno, w którym wybierzesz program i go nagrasz; wymaga PySide6"
+
+msgid "Scripted steps:"
+msgstr "Zaplanowane kroki:"
+
+msgid "The selected step:"
+msgstr "Wybrany krok:"
+
+msgid "Remove the step"
+msgstr "Usuń krok"
+
+msgid "Move the step up"
+msgstr "Przesuń krok w górę"
+
+msgid "Move the step down"
+msgstr "Przesuń krok w dół"
+
+msgid "New step:"
+msgstr "Nowy krok:"
+
+msgid "Add the step"
+msgstr "Dodaj krok"
+
+msgid "The step {step} holds a line break, and each step must be one line."
+msgstr "Krok {step} zawiera podział wiersza, a każdy krok musi mieścić się w jednym wierszu."

@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: ko\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Demoreel-Review: reviewed 35f5e100dd442228\n"
+"X-Demoreel-Review: reviewed e2cd474e10cea9b2\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: 텍스트 {words}이(가) {first}와(과) 같은 자리에 함께 표시되는데, 하나는 띠가 있고 다른 하나는 없습니다. 함께 쌓이는 텍스트는 모두 띠가 있거나 모두 없어야 합니다."
@@ -1690,3 +1690,27 @@ msgstr "창에는 화면 낭독기 알림을 위해 PySide6 6.8 이상이 필요
 #. argparse formats this text with %
 msgid "open a window to pick an app and record it; needs PySide6"
 msgstr "앱을 골라 녹화하는 창을 엽니다. PySide6 필요"
+
+msgid "Scripted steps:"
+msgstr "스크립트 단계:"
+
+msgid "The selected step:"
+msgstr "선택한 단계:"
+
+msgid "Remove the step"
+msgstr "단계 삭제"
+
+msgid "Move the step up"
+msgstr "단계를 위로 이동"
+
+msgid "Move the step down"
+msgstr "단계를 아래로 이동"
+
+msgid "New step:"
+msgstr "새 단계:"
+
+msgid "Add the step"
+msgstr "단계 추가"
+
+msgid "The step {step} holds a line break, and each step must be one line."
+msgstr "단계 {step}에 줄 바꿈이 있습니다. 각 단계는 한 줄이어야 합니다."

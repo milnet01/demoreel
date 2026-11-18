@@ -9468,7 +9468,7 @@ echo "each Exec value gives the argv the specification says"
 # The window built offscreen, its event loop replaced by checks: one of names,
 # pseudo, rtl or remembers (DEMO-0086 INV-9, INV-11, INV-12, INV-14).
 cat >"$tmp/window_check.py" <<'EOF'
-import importlib.machinery, importlib.util, os, sys, time
+import importlib.machinery, importlib.util, json, os, shlex, sys, time
 
 demoreel, mode = sys.argv[1:]
 loader = importlib.machinery.SourceFileLoader("demoreel", demoreel)
@@ -9567,6 +9567,67 @@ def check_remembers(window):
     settle(lambda: window.findChild(QtWidgets.QFileDialog) is None, 5)
 
 
+def run_with(window, standin):
+    """Record with a stand-in for demoreel, and give back what it was handed."""
+    window.script = standin
+    got = standin + ".got"
+    if os.path.exists(got):
+        os.remove(got)
+    window.start_run()
+    settle(lambda: window.record_child is None)
+    if not os.path.exists(got):
+        bad.append(f"the stand-in never ran; the window said {window.error.toPlainText()!r}")
+        return None
+    with open(got, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def check_steps(window):
+    """DEMO-0088: the steps list makes the -a steps the command line takes,
+    and Record hands them over on standard input."""
+    window.command.setText("xclock")
+    window.new_step.setCurrentText("type some text")
+    window.insert_step()
+    window.step.setText("type it's  \"$HOME\" `x`")
+    window.new_step.setCurrentText("key Return")
+    window.insert_step()
+    window.step_up.click()
+    window.steps.setCurrentRow(0)
+    window.insert_step()
+    window.step.setText("wait 1")
+    want = ["key Return", "wait 1", "type it's  \"$HOME\" `x`"]
+    if window.step_list() != want:
+        bad.append(f"the list holds {window.step_list()}, not {want}")
+    said = shlex.split(window.equivalent.text())
+    if said[said.index("--") - 6:said.index("--")] != [
+            "-a", want[0], "-a", want[1], "-a", want[2]]:
+        bad.append(f"the equivalent command does not end its options with the steps: {said}")
+    for wrong in ("wait soon", "type one two"):
+        window.step.setText(wrong)
+        QtWidgets.QApplication.processEvents()
+        if window.record.isEnabled() or not window.step_problem.isVisibleTo(window):
+            bad.append(f"Record stays enabled, with nothing said, on the step {wrong!r}")
+    window.step.setText("wait 1")
+    if not window.record.isEnabled():
+        bad.append(f"Record stays disabled once the step is mended: {window.step_problem.text()!r}")
+    standin = os.environ["STANDIN"]
+    got = run_with(window, standin)
+    if got and (got["argv"][-4:] != ["--steps", "-", "--", "xclock"]
+                or got["stdin"] != "".join(f"{step}\n" for step in want)):
+        bad.append(f"the run was handed {got}, not --steps - and the steps {want}")
+    window.steps.setCurrentRow(0)
+    window.remove_step.click()
+    if (window.step.text(), window.step_up.isEnabled(), window.step_down.isEnabled()) != (
+            want[1], False, True):
+        bad.append(f"with the first step removed, the new first is not the one shown, "
+                   f"movable down and not up: {window.step.text()!r}")
+    while window.steps.count():
+        window.remove_step.click()
+    got = run_with(window, standin)
+    if got and ("--steps" in got["argv"] or got["stdin"]):
+        bad.append(f"with no steps, the run was still handed {got}")
+
+
 def check(*_):
     window = next(w for w in QtWidgets.QApplication.topLevelWidgets() if hasattr(w, "said"))
     settle(window.apps.isEnabled)
@@ -9578,6 +9639,8 @@ def check(*_):
         bad.append(f"the layout runs {window.layoutDirection()} under a right-to-left catalog")
     elif mode == "remembers":
         check_remembers(window)
+    elif mode == "steps":
+        check_steps(window)
     window.close()
     return 0
 
@@ -9640,6 +9703,46 @@ if [ -n "$have_pyside" ]; then
     echo "and the form starts at record's defaults"
 else
     skipped "PySide6 cannot be imported, so the window's controls were not checked"
+fi
+
+step "the window: scripted steps"
+# DEMO-0088. A step is checked as record would read it: parse_step's own
+# refusal, without its prefix, and a step --steps would read as two lines is
+# refused, whatever character breaks it.
+python3 - <<'EOF'
+import importlib.machinery, importlib.util, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+rows = [("wait 2", None), ("click 400 300 right", None), ("type it's \"$HOME\"  x", None),
+        ("click here", "cannot read the step"), ("jump 2", "unknown action"),
+        ("type \udcff", "not UTF-8")]
+rows += [(f"type one{c}two", "line break") for c in "\n\r\x0b\x0c\x1c\x1d\x1e\x85  "]
+rows += [("type one\n", "line break")]
+bad = []
+for step, want in rows:
+    got = d.window_step_problem(step)
+    if (got is None) != (want is None) or (want and want not in got) or (
+            got and got.startswith("demoreel:")):
+        bad.append(f"{step!r} gave {got!r}, not one saying {want!r}")
+for line in bad:
+    print(line, file=sys.stderr)
+sys.exit(1 if bad else 0)
+EOF
+# The window, with a stand-in for demoreel that writes down what it was handed.
+if [ -n "$have_pyside" ]; then
+    cat >"$tmp/standin.py" <<'EOF'
+import json, sys
+with open(sys.argv[0] + ".got", "w", encoding="utf-8") as f:
+    json.dump({"argv": sys.argv[1:], "stdin": sys.stdin.buffer.read().decode("utf-8")}, f)
+print(json.dumps({"event": "done", "path": "/nowhere.mp4"}), flush=True)
+EOF
+    window_check steps ./demoreel LC_ALL=C.UTF-8 STANDIN="$tmp/standin.py"
+    echo "each step is checked as record reads it, the command shows it as -a,"
+    echo "and Record hands the steps over on standard input"
+else
+    echo "each step is checked as record reads it"
+    skipped "PySide6 cannot be imported, so the window's steps list was not built"
 fi
 
 step "stop finds a run whose ffmpeg is slow to answer"

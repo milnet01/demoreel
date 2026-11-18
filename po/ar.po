@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: ar\n"
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
-"X-Demoreel-Review: reviewed 6d8bef8708ff8b15\n"
+"X-Demoreel-Review: reviewed 54bd4e792d4912c2\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: النص {words} يظهر مع {first} في المكان نفسه، وأحدهما له شريط والآخر بلا شريط. النصوص المكدّسة معًا لها كلها شريط أو لا شريط لأيٍّ منها."
@@ -1720,3 +1720,27 @@ msgstr "تحتاج النافذة إلى PySide6 6.8 أو أحدث، لإعلا�
 #. argparse formats this text with %
 msgid "open a window to pick an app and record it; needs PySide6"
 msgstr "افتح نافذة لاختيار تطبيق وتسجيله؛ تحتاج إلى PySide6"
+
+msgid "Scripted steps:"
+msgstr "الخطوات المُبرمَجة:"
+
+msgid "The selected step:"
+msgstr "الخطوة المحددة:"
+
+msgid "Remove the step"
+msgstr "أزل الخطوة"
+
+msgid "Move the step up"
+msgstr "انقل الخطوة لأعلى"
+
+msgid "Move the step down"
+msgstr "انقل الخطوة لأسفل"
+
+msgid "New step:"
+msgstr "خطوة جديدة:"
+
+msgid "Add the step"
+msgstr "أضف الخطوة"
+
+msgid "The step {step} holds a line break, and each step must be one line."
+msgstr "الخطوة {step} تحتوي على فاصل أسطر، ويجب أن تكون كل خطوة سطرًا واحدًا."

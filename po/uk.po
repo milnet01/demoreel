@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: uk\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Demoreel-Review: reviewed e63f28115c4d8d07\n"
+"X-Demoreel-Review: reviewed b4a60f04e0efcae7\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: текст {words} показано разом із {first} в одному місці, і один має смугу, а інший ні. Тексти в одній стопці мають смугу всі або жоден."
@@ -1702,3 +1702,27 @@ msgstr "вікну потрібен PySide6 версії 6.8 або новішо
 #. argparse formats this text with %
 msgid "open a window to pick an app and record it; needs PySide6"
 msgstr "відкрити вікно, щоб вибрати програму й записати її; потрібен PySide6"
+
+msgid "Scripted steps:"
+msgstr "Кроки сценарію:"
+
+msgid "The selected step:"
+msgstr "Вибраний крок:"
+
+msgid "Remove the step"
+msgstr "Вилучити крок"
+
+msgid "Move the step up"
+msgstr "Перемістити крок угору"
+
+msgid "Move the step down"
+msgstr "Перемістити крок униз"
+
+msgid "New step:"
+msgstr "Новий крок:"
+
+msgid "Add the step"
+msgstr "Додати крок"
+
+msgid "The step {step} holds a line break, and each step must be one line."
+msgstr "Крок {step} містить розрив рядка, а кожен крок має займати один рядок."

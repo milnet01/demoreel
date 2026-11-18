@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: es\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Demoreel-Review: reviewed af22c29947fbc7a3\n"
+"X-Demoreel-Review: reviewed ae36491ce4442c0c\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: el texto {words} está en pantalla con {first} en el mismo lugar, y uno tiene banda y el otro no. Los textos apilados juntos tienen todos banda o ninguno."
@@ -1696,3 +1696,27 @@ msgstr "la ventana necesita PySide6 6.8 o posterior, para sus avisos a los lecto
 #. argparse formats this text with %
 msgid "open a window to pick an app and record it; needs PySide6"
 msgstr "abrir una ventana para elegir una aplicación y grabarla; necesita PySide6"
+
+msgid "Scripted steps:"
+msgstr "Pasos programados:"
+
+msgid "The selected step:"
+msgstr "Paso seleccionado:"
+
+msgid "Remove the step"
+msgstr "Quitar el paso"
+
+msgid "Move the step up"
+msgstr "Subir el paso"
+
+msgid "Move the step down"
+msgstr "Bajar el paso"
+
+msgid "New step:"
+msgstr "Paso nuevo:"
+
+msgid "Add the step"
+msgstr "Añadir el paso"
+
+msgid "The step {step} holds a line break, and each step must be one line."
+msgstr "El paso {step} contiene un salto de línea, y cada paso debe ser una sola línea."
