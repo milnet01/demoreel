@@ -6251,7 +6251,7 @@ is a front-end to the same recording engine, not a second one.
   Kind: doc.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0087] **Build the window: pick an app, set the options, record, stop, open the result.**
+- ✅ [DEMO-0087] **Build the window: pick an app, set the options, record, stop, open the result.**
   Choose the app by command or from the installed applications. Set size,
   length or record-until-stopped, the graphics-card mode and the pointer.
   Press Record and see the countdown. Press Stop. Then open the video or
@@ -6259,6 +6259,11 @@ is a front-end to the same recording engine, not a second one.
 
   Errors show the same text the command line prints, translated the same
   way.
+  Shipped 2026-11-18 in b9d21d2: `demoreel window` and `record
+  --events`, with ci.sh steps for DEMO-0086 INV-1 to INV-14 (INV-15 is
+  DEMO-0090's manual check). Scripted steps stay on the command line
+  until DEMO-0088. The window steps skip where PySide6 is missing, as on
+  GitHub, until DEMO-0091.
   **Layman:** A window where you choose an app, press Record, and get your video.
   Kind: feature.
   Source: user-request-2026-09-25.
@@ -6273,12 +6278,17 @@ is a front-end to the same recording engine, not a second one.
   Kind: feature.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0089] **Run the app command from the window without a shell.**
+- ✅ [DEMO-0089] **Run the app command from the window without a shell.**
   The window takes a command as text, so it has to become an argument
   list. Split it with shlex and run it as a list, never with shell=True,
   which is how the command line already runs it. The desktop entry's
   Exec line must quote correctly, and a file-picker path must reach the
   command as one argument, whatever characters it contains.
+  Shipped 2026-11-18 in b9d21d2, built with DEMO-0087: every child is an
+  argument list from sys.executable, the text field round-trips through
+  shlex, and exec_to_argv follows the Desktop Entry Specification (ci.sh
+  steps "the window: no shell", "commands survive the text field",
+  "desktop entries").
   **Layman:** Whatever you type as the app to record is run as-is, never interpreted in a way that could run something else.
   Kind: security.
   Source: user-request-2026-09-25.
