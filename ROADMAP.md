@@ -6341,11 +6341,14 @@ is a front-end to the same recording engine, not a second one.
   Kind: package.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0092] **Test the window by recording it with demoreel.**
+- ✅ [DEMO-0092] **Test the window by recording it with demoreel.**
   The gate runs the window on a private display, which demoreel already
   provides. xdotool presses Record and Stop. The step checks that a
   finished video exists and that a frame of the window itself is not
   flat.
+  2026-11-18: shipped in 42aac6c as ci.sh step "the window: recorded by
+  demoreel, Record and Stop pressed". Record and Stop are pressed by
+  key. Seen failing on a copy whose Stop was not connected.
   **Layman:** The automatic checks open the window on a private screen, press Record, and check a video comes out.
   Kind: test.
   Source: user-request-2026-09-25.
