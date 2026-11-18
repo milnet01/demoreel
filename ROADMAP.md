@@ -6322,7 +6322,7 @@ is a front-end to the same recording engine, not a second one.
   Kind: accessibility.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0091] **Ship a desktop entry and icon, so the window appears in the app menu.**
+- ✅ [DEMO-0091] **Ship a desktop entry and icon, so the window appears in the app menu.**
   A .desktop file and an icon, installed by the 0.9.0 packages and by the
   install from source. The command-line tool installs as before; the menu
   entry opens the window.
@@ -6333,6 +6333,10 @@ is a front-end to the same recording engine, not a second one.
   install_hint (DEMO-0086 § 4.1). This machine has two copies: the
   system's python313-pyside6 6.12.0, shadowed by a pip --user 6.11.0 in
   ~/.local.
+  Shipped 2026-11-18 in d325dd9. Menu entry and icon in data/, placed by
+  install.sh; PySide6 recommended (user, 2026-11-18); install_hint names
+  each distro's PySide6 package. Debian 12 and Ubuntu 22.04 and 24.04
+  have no PySide6, so the window cannot run there.
   **Layman:** demoreel shows up in your applications menu with its own icon.
   Kind: package.
   Source: user-request-2026-09-25.
