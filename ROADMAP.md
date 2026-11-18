@@ -1264,6 +1264,8 @@ simplest case, and a gate proves it still records.
   2026-11-18: failed the push of a0b9261 at load 15-16 (44 ms
   apart); the full gate on the same tree passed it minutes earlier
   (1 ms apart).
+  2026-11-18: failed the full gate on DEMO-0090's tree at load 16-22
+  (50 ms apart); the same tree passed it at load under 3 an hour later.
   **Layman:** A test that checks sound lines up with the picture fails when other programs are busy, so a correct change can be blocked from going out.
   Kind: test.
   Source: gate-failure-2026-11-15.
@@ -6302,11 +6304,20 @@ is a front-end to the same recording engine, not a second one.
   Kind: security.
   Source: user-request-2026-09-25.
 
-- 📋 [DEMO-0090] **Make the window fully usable by keyboard, screen reader and magnifier.**
+- ✅ [DEMO-0090] **Make the window fully usable by keyboard, screen reader and magnifier.**
   Every control reachable by Tab and working with the keyboard. Every
   control named for a screen reader. Text follows the system font size.
   The layout holds under KWin's magnifier, which the user relies on. Check
   with the keyboard alone, and with Orca.
+  Shipped 2026-11-18 in f5a6001. An AT-SPI listener on a private
+  display found focus passing through the App command field on its way
+  to Stop, and on to Open the video or the error: each control was
+  disabled while it held focus. Focus now moves first; ci.sh step "the
+  window: focus follows the run" holds it. The same listener heard all
+  three announcements, and named every control. The keyboard check by
+  hand passed. No Orca check: the user needs no screen reader, and
+  asked for normal vision first, with accessibility as an option
+  (user, 2026-11-18).
   **Layman:** People who can't use a mouse, use a screen reader, or magnify the screen can all use the window.
   Kind: accessibility.
   Source: user-request-2026-09-25.
