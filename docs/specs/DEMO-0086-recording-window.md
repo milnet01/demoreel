@@ -400,9 +400,14 @@ fallback, which the person can type into the field.
 - **INV-15** — Focus goes to Stop when a run starts, to Open video when it
   ends, and to the error text when it fails, and each of the three is
   announced.
-  *Test:* by hand, with Orca and with KWin's magnifier following focus: one run
-  that succeeds and one of a command that does not exist (DEMO-0090).
-  *Breaks when:* a control is disabled while it holds focus and nothing takes
+  *Test:* where focus goes, `ci.sh` step `the window: focus follows the run`:
+  from Record, with stand-ins that succeed and fail, focus visits Stop and then
+  Open video or the error text, and no other control. The announcements: an
+  AT-SPI listener on a private display and accessibility bus heard all three,
+  on one run that succeeded and one of a command that does not exist
+  (DEMO-0090, 2026-11-18). No gate step repeats it.
+  *Breaks when:* a control is disabled while it holds focus. Qt hands focus to
+  the first field, which a screen reader names, before the next control takes
   it.
 
 ## 6. Failure modes
@@ -431,8 +436,9 @@ fallback, which the person can type into the field.
 
 ## 7. Tests
 
-The steps INV-1 to INV-14 name are new `ci.sh` steps. INV-15 is DEMO-0090's
-manual check. The steps of INV-9, INV-11, INV-12 and INV-14 build the window
+The steps INV-1 to INV-14 name are new `ci.sh` steps. INV-15's focus half is a
+`ci.sh` step DEMO-0090 added; its announcements were checked once, by hand.
+The steps of INV-9, INV-11, INV-12, INV-14 and INV-15 build the window
 and need PySide6. Where it is missing, they skip and are counted on the gate's
 last line, as a step that could not run is now. A skip is not a pass. The
 other steps need no PySide6 and always run.
@@ -440,7 +446,9 @@ other steps need no PySide6 and always run.
 Each test is seen failing first: INV-1 against a copy that imports PySide6 at
 the top; INV-2 against one that prints the path outside `done`; INV-8 with
 the string escapes undone last; INV-9 with a `QSettings` write; INV-10 with
-the death signal removed; INV-11 with one button's name blanked.
+the death signal removed; INV-11 with one button's name blanked; INV-15's
+focus half against the window as DEMO-0088 left it, which disabled Record and
+Stop before moving focus.
 
 DEMO-0092 records the window with demoreel and presses Record and Stop with
 `xdotool`. That end-to-end step is its own item.
@@ -498,8 +506,8 @@ DEMO-0092 records the window with demoreel and presses Record and Stop with
 | INV-12 | `ci.sh` step `the window: every control is named and reachable`, under the pseudo-locale |
 | INV-13 | Partial: `ci.sh` step `the window: no shell` names the known blocking calls only |
 | INV-14 | `ci.sh` step `the window: every control is named and reachable` |
-| INV-15 | **nothing** automatic — a person with Orca and the magnifier (DEMO-0090) |
-| § 4.6, no fixed sizes | **nothing** — DEMO-0090's manual check under the magnifier |
+| INV-15 | Partial: `ci.sh` step `the window: focus follows the run` checks where focus goes; the announcements, an AT-SPI listener run once by DEMO-0090 |
+| § 4.6, no fixed sizes | **nothing** automatic — DEMO-0090's check by hand under the magnifier, 2026-11-18 |
 | § 4.5, no per-app knowledge | **nothing** — review; the window holds no app names to grep for |
 
 ## 11. Cross-doc impact

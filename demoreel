@@ -4176,9 +4176,12 @@ def window_class(QtCore, QtGui, QtWidgets):
             self.error.hide()
             self.result.hide()
             self.status.setText(tr("Starting…"))
-            self.record.setEnabled(False)
+            # Focus moves before Record is disabled: a disabled control that
+            # holds focus hands it to the first field, which a screen reader
+            # then names (INV-15).
             self.stop.setEnabled(True)
             self.stop.setFocus()
+            self.record.setEnabled(False)
             # From this, the main thread: the kernel's death signal follows the
             # thread that started the child (§ 4.3).
             child.start()
@@ -4250,7 +4253,6 @@ def window_class(QtCore, QtGui, QtWidgets):
             self.read_stderr()
             self.record_child.deleteLater()
             self.record_child = None
-            self.stop.setEnabled(False)
             final = self.final or {}
             if final.get("event") == "done":
                 self.status.setText(self.said["done"])
@@ -4270,6 +4272,7 @@ def window_class(QtCore, QtGui, QtWidgets):
                 self.error.show()
                 self.error.setFocus()
                 self.announce(self.said["failed"])
+            self.stop.setEnabled(False)  # after focus has moved, as in start_run
             self.form_changed()
             if self.closing:
                 self.close()  # once the stop child has gone too

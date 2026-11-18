@@ -9466,7 +9466,8 @@ EOF
 echo "each Exec value gives the argv the specification says"
 
 # The window built offscreen, its event loop replaced by checks: one of names,
-# pseudo, rtl or remembers (DEMO-0086 INV-9, INV-11, INV-12, INV-14).
+# pseudo, rtl, remembers, steps or focus (DEMO-0086 INV-9, INV-11, INV-12,
+# INV-14 and INV-15, DEMO-0088).
 cat >"$tmp/window_check.py" <<'EOF'
 import importlib.machinery, importlib.util, json, os, shlex, sys, time
 
@@ -9628,6 +9629,29 @@ def check_steps(window):
         bad.append(f"with no steps, the run was still handed {got}")
 
 
+def check_focus(window):
+    """DEMO-0090: from Record, focus goes to Stop, then to Open the video or
+    to the error, and to no other control on the way (INV-15)."""
+    window.activateWindow()
+    settle(window.isActiveWindow, 5)
+    if not window.isActiveWindow():
+        bad.append("the window never became active, so focus could not be followed")
+        return
+    window.command.setText("xclock")
+    went = []
+    QtWidgets.QApplication.instance().focusChanged.connect(
+        lambda _old, new: new is not None and went.append(new))
+    for standin, last in ((os.environ["STANDIN"], window.open_video),
+                          (os.environ["STANDIN_FAILS"], window.error)):
+        window.record.setFocus()
+        settle(window.record.hasFocus, 5)
+        went.clear()
+        run_with(window, standin)
+        if went != [window.stop, last]:
+            bad.append(f"from Record, focus went to {[name_of(w) for w in went]}, "
+                       f"not to Stop and then {name_of(last)!r}")
+
+
 def check(*_):
     window = next(w for w in QtWidgets.QApplication.topLevelWidgets() if hasattr(w, "said"))
     settle(window.apps.isEnabled)
@@ -9641,6 +9665,8 @@ def check(*_):
         check_remembers(window)
     elif mode == "steps":
         check_steps(window)
+    elif mode == "focus":
+        check_focus(window)
     window.close()
     return 0
 
@@ -9743,6 +9769,25 @@ EOF
 else
     echo "each step is checked as record reads it"
     skipped "PySide6 cannot be imported, so the window's steps list was not built"
+fi
+
+step "the window: focus follows the run"
+# DEMO-0090, DEMO-0086 INV-15: a control disabled while it holds focus hands
+# focus to the first field, which a screen reader names and the magnifier
+# jumps to. The announcements and a real screen reader stay a check by hand.
+if [ -n "$have_pyside" ]; then
+    cat >"$tmp/standin-fails.py" <<'EOF'
+import json, sys
+with open(sys.argv[0] + ".got", "w", encoding="utf-8") as f:
+    json.dump({"argv": sys.argv[1:], "stdin": sys.stdin.buffer.read().decode("utf-8")}, f)
+print(json.dumps({"event": "error", "text": "it failed"}), flush=True)
+sys.exit(1)
+EOF
+    window_check focus ./demoreel LC_ALL=C.UTF-8 STANDIN="$tmp/standin.py" \
+        STANDIN_FAILS="$tmp/standin-fails.py"
+    echo "from Record, focus goes to Stop, then to Open the video or to the error"
+else
+    skipped "PySide6 cannot be imported, so the window was not built to follow its focus"
 fi
 
 step "stop finds a run whose ffmpeg is slow to answer"
