@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: uk\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Demoreel-Review: reviewed 2484095ed1bdc4ac\n"
+"X-Demoreel-Review: reviewed e63f28115c4d8d07\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: текст {words} показано разом із {first} в одному місці, і один має смугу, а інший ні. Тексти в одній стопці мають смугу всі або жоден."
@@ -1578,3 +1578,127 @@ msgstr "створено кадрів: {made}; заплановано кадрі
 #. argparse formats this text with %
 msgid "This translation has been checked by machine, but not yet by a native speaker."
 msgstr "Цей переклад перевірено машиною, але його ще не перевірив носій мови."
+
+#. argparse formats this text with %
+msgid "for a program driving the run: write its progress on stdout, one JSON object per line, the last holding the video's path or the error"
+msgstr "для програми, що керує запуском: виводити перебіг запису в стандартний вивід, по одному об'єкту JSON на рядок; останній містить шлях до відео або помилку"
+
+msgid "This holds a character that is not UTF-8, so the window cannot pass it on."
+msgstr "Тут є символ не в UTF-8, тому вікно не може його передати."
+
+msgid "Recording started."
+msgstr "Запис почався."
+
+msgid "The video is ready."
+msgstr "Відео готове."
+
+msgid "The recording failed."
+msgstr "Запис не вдався."
+
+msgid "App command:"
+msgstr "Команда програми:"
+
+msgid "Search the installed applications:"
+msgstr "Пошук серед встановлених програм:"
+
+msgid "Reading the installed applications…"
+msgstr "Читання встановлених програм…"
+
+msgid "Installed applications:"
+msgstr "Встановлені програми:"
+
+msgid "Choose a program file…"
+msgstr "Вибрати файл програми…"
+
+msgid "Size:"
+msgstr "Розмір:"
+
+msgid "Record until stopped"
+msgstr "Записувати до зупинки"
+
+msgid "Length in seconds:"
+msgstr "Тривалість у секундах:"
+
+msgid "The app needs the graphics card"
+msgstr "Програмі потрібна відеокарта"
+
+msgid "Show the pointer"
+msgstr "Показувати вказівник"
+
+msgid "Record the app's sound"
+msgstr "Записувати звук програми"
+
+msgid "Save in folder:"
+msgstr "Зберегти в теку:"
+
+msgid "Choose a folder…"
+msgstr "Вибрати теку…"
+
+msgid "The same from the command line:"
+msgstr "Те саме з командного рядка:"
+
+msgid "Copy the command"
+msgstr "Копіювати команду"
+
+msgid "Record"
+msgstr "Записати"
+
+msgid "Stop"
+msgstr "Зупинити"
+
+msgid "What went wrong"
+msgstr "Що пішло не так"
+
+msgid "The video:"
+msgstr "Відео:"
+
+msgid "Open the video"
+msgstr "Відкрити відео"
+
+msgid "Open its folder"
+msgstr "Відкрити його теку"
+
+msgid "The app command cannot be split into words: check its quotes and backslashes."
+msgstr "Команду програми не вдається розбити на слова: перевірте лапки та зворотні скісні риски."
+
+msgid "This is not a folder."
+msgstr "Це не тека."
+
+msgid "Choose a program file"
+msgstr "Вибрати файл програми"
+
+msgid "Choose a folder"
+msgstr "Вибрати теку"
+
+msgid "Starting…"
+msgstr "Запуск…"
+
+msgid "Stopping…"
+msgstr "Зупинка…"
+
+#. translators: {time} is the time recorded so far, minutes:seconds, such as 1:05.
+msgid "recording for {time}"
+msgstr "запис триває {time}"
+
+msgid "Finishing the video…"
+msgstr "Завершення відео…"
+
+msgid "The recording ended without saying how, with exit status {status}. What it printed:"
+msgstr "Запис закінчився, не сказавши як, з кодом виходу {status}. Що він вивів:"
+
+msgid "Finishing the video before the window closes…"
+msgstr "Завершення відео перед закриттям вікна…"
+
+msgid ""
+"the window needs PySide6, the Qt toolkit for Python, which this Python cannot import.\n"
+"  Install your distribution's PySide6 package for Python 3."
+msgstr ""
+"вікну потрібен PySide6, набір інструментів Qt для Python, який цей Python не може імпортувати.\n"
+"  Встановіть пакунок PySide6 вашого дистрибутива для Python 3."
+
+msgid "the window needs PySide6 6.8 or later, for its screen-reader announcements; this one is {version}."
+msgstr "вікну потрібен PySide6 версії 6.8 або новішої, для оголошень програмам зчитування з екрана; у цього версія {version}."
+
+#. argparse formats this text with %
+msgid "open a window to pick an app and record it; needs PySide6"
+msgstr "відкрити вікно, щоб вибрати програму й записати її; потрібен PySide6"

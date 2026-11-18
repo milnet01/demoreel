@@ -10,7 +10,7 @@
 
 # Every command, and the finishing ones, which take files.
 _demoreel_finishing="edit trim caption join card motion poster thumbnail sheet"
-_demoreel_commands="record shot check stop $_demoreel_finishing"
+_demoreel_commands="record shot check stop window $_demoreel_finishing"
 
 # The names of recordings still running, for `demoreel stop`. Asked of
 # demoreel's own live_runs(), the test `stop` itself uses: every run leaves its
@@ -101,10 +101,10 @@ _demoreel() {
             fi ;;
         record) words="-o --output -d --duration -s --size -r --framerate
                 -n --name -a --action --steps --app-log --settle --gpu --cursor
-                --audio --startup-timeout -h --help --" ;;
+                --audio --startup-timeout --events -h --help --" ;;
         shot) words="-o --output -s --size -a --action --steps --app-log --settle
                 --gpu --cursor --region --startup-timeout -h --help --" ;;
-        check) words="-h --help" ;;
+        check | window) words="-h --help" ;;
         edit) words="-o --output -s --size -r --framerate -h --help" ;;
         trim) words="-o --output --from --to --fade-in --fade-out --fade-at
                 --fade-length $music --no-sound -h --help" ;;

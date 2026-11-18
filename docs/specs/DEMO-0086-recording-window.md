@@ -349,7 +349,9 @@ fallback, which the person can type into the field.
   offscreen (`QT_QPA_PLATFORM=offscreen`) with both pointed at empty folders,
   a field changed and the program-file dialog opened and cancelled, then
   closed; both folders are still empty, and `QSettings`
-  does not occur in `demoreel`.
+  occurs in `demoreel` only to point Qt's user settings at a folder removed
+  when the window closes. A Qt file dialog writes its state there whatever
+  its options (measured 2026-11-18, PySide6 6.11 and 6.12).
   *Breaks when:* `QSettings`, a recent-files list or a saved geometry is
   added, or a `QFileDialog` saves its state (measured: a stock one wrote
   `QtProject.conf` under `XDG_CONFIG_HOME`).

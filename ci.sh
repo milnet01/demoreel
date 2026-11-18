@@ -7639,16 +7639,17 @@ done
 echo "--perf passed at the limit and failed just over it, on each of the two figures"
 
 step "--perf's baseline has a figure for every command that does work"
-# stop only signals a run that is already going.
+# stop only signals a run that is already going. window's figures, start-up,
+# idle CPU and memory, are DEMO-0253's, which adds its case.
 # From a here-string: piped, sed's q left --help writing to a closed pipe.
 perf_cmds=$(sed -n 's/.*{\(record,.*\)}.*/\1/p;T;q' <<<"$(./demoreel --help)")
 [ -n "$perf_cmds" ] || { echo "could not read the commands from --help" >&2; exit 1; }
 for perf_cmd in ${perf_cmds//,/ }; do
-    [ "$perf_cmd" = stop ] || grep -q "^$perf_cmd"$'\t' "$PERF_BASELINE" || {
+    [ "$perf_cmd" = stop ] || [ "$perf_cmd" = window ] || grep -q "^$perf_cmd"$'\t' "$PERF_BASELINE" || {
         echo "$PERF_BASELINE has no row for $perf_cmd: add a case to perf_measure," >&2
         echo "then run ./ci.sh --perf-baseline" >&2; exit 1; }
 done
-echo "every command but stop has a row: $perf_cmds"
+echo "every command but stop and window has a row: $perf_cmds"
 
 step "--summary names the step that failed, not the last one"
 # The finishing checks print every step, so a failed one sits mid-log with a
@@ -9185,6 +9186,461 @@ wait "$recorder" || { echo "the stopped run exited non-zero" >&2; exit 1; }
 # --app-log rode along: same run, and it is documented too.
 [ -f "$tmp/app.log" ] || { echo "--app-log wrote no file" >&2; exit 1; }
 echo "stop ended the run, and --app-log wrote its file"
+
+step "record --events: one JSON event per line"
+# DEMO-0086 INV-2 to INV-5. A program driving a run, such as `demoreel window`,
+# reads these lines and nothing else: one that is not an event, a missing last
+# event, or a text that differs from stderr misleads it.
+pseudo_copy "$tmp/events-zz" zz
+python3 - "$tmp" "$tmp/events-zz/demoreel" <<'EVENTSPY'
+import json, os, subprocess, sys, time
+
+tmp, pseudo_demoreel = sys.argv[1:]
+run = os.environ["GATE_RUN"] + "events"
+names = {"note", "recording", "time", "finishing", "done", "error"}
+pseudo_env = {k: v for k, v in os.environ.items() if k not in ("LC_ALL", "LC_MESSAGES")}
+pseudo_env.update(LANGUAGE="zz", LANG="de_DE.UTF-8")
+
+
+def events(stdout, what):
+    """Every stdout line as an event, or the step fails naming the line."""
+    out = []
+    for line in stdout.splitlines():
+        try:
+            event = json.loads(line)
+        except ValueError:
+            raise SystemExit(f"{what}: a stdout line is not JSON: {line!r}")
+        if not isinstance(event, dict) or event.get("event") not in names:
+            raise SystemExit(f"{what}: a stdout line is not one of the events: {line!r}")
+        out.append(event)
+    if not out:
+        raise SystemExit(f"{what}: no events on stdout")
+    return out
+
+
+def record(args, demoreel="./demoreel", env=None):
+    done = subprocess.run([demoreel, "record", "-n", os.environ["GATE_RUN"] + "events",
+                           *args], capture_output=True, text=True,
+                          errors="surrogateescape", env=env, timeout=120)
+    return done.returncode, done.stdout, done.stderr
+
+
+def same_as_stderr(evs, stderr, what):
+    """INV-3: each note or error text is a stderr line's, after `demoreel: `."""
+    for event in evs:
+        if event["event"] in ("note", "error") and f"demoreel: {event['text']}\n" not in stderr:
+            raise SystemExit(f"{what}: the {event['event']} {event['text']!r} is not on "
+                             f"stderr:\n{stderr}")
+
+
+def counted_down(evs, seconds, what):
+    """INV-5: `left` whole numbers from N down to 1, never rising."""
+    left = [e["left"] for e in evs if e["event"] == "time"]
+    if not left or any(not isinstance(n, int) or not 1 <= n <= seconds for n in left) \
+            or left != sorted(left, reverse=True):
+        raise SystemExit(f"{what}: time events {left}, not whole numbers from {seconds} "
+                         "down to 1")
+
+
+# A run that succeeds, in English: its last event is done, with the path.
+video = f"{tmp}/events.mp4"
+args = ["-d", "2", "-s", "320x240", "-o", video, "--app-log", f"{tmp}/events-app.log",
+        "--events", "--", "xclock"]
+status, out, err = record(args)
+english = events(out, "a 2-second run")
+if status != 0 or english[-1] != {"event": "done", "path": video} or not os.path.isfile(video):
+    raise SystemExit(f"a 2-second run: exit {status}, last event {english[-1]}")
+if [e["event"] for e in english].count("recording") != 1:
+    raise SystemExit(f"a 2-second run: not one recording event: {english}")
+same_as_stderr(english, err, "a 2-second run")
+counted_down(english, 2, "a 2-second run")
+
+# INV-4: under the pseudo-locale only `text` changes, and the texts did change.
+os.unlink(video)
+status, out, err = record(args, pseudo_demoreel, pseudo_env)
+translated = events(out, "the pseudo-locale run")
+notes = [e["text"] for e in translated if "text" in e]
+if status != 0 or not notes or not all(t.startswith("⟦") for t in notes):
+    raise SystemExit(f"the pseudo-locale run: exit {status}, texts {notes}, so it "
+                     "compared nothing translated")
+def fixed(evs):
+    return [{k: v for k, v in e.items() if k != "text"} for e in evs if e["event"] != "time"]
+if fixed(translated) != fixed(english):
+    raise SystemExit(f"an event changed with the language:\n  C {fixed(english)}\n  "
+                     f"zz {fixed(translated)}")
+
+# A run that fails: its last event is error, its text is stderr's, and stderr is
+# the same with and without --events.
+missing = ["-d", "2", "-s", "320x240", "-o", f"{tmp}/events-missing.mp4", "--",
+           "demoreel-gate-no-such-command"]
+status, out, err = record(["--events", *missing])
+failed = events(out, "a missing command")
+plain_status, plain_out, plain_err = record(missing)
+if status == 0 or failed[-1]["event"] != "error":
+    raise SystemExit(f"a missing command: exit {status}, last event {failed[-1]}")
+if not err.endswith(f"demoreel: {failed[-1]['text']}\n"):
+    raise SystemExit(f"the error event's text is not stderr's last message:\n"
+                     f"  {failed[-1]['text']!r}\n  {err!r}")
+same_as_stderr(failed, err, "a missing command")
+if (plain_status, plain_out, plain_err) != (status, "", err):
+    raise SystemExit(f"--events changed stderr or the exit:\n  without: {plain_status} "
+                     f"{plain_err!r}\n  with: {status} {err!r}")
+
+# INV-5 for a -d 0 run, which counts up and is ended by `stop`.
+video0 = f"{tmp}/events0.mp4"
+run0 = subprocess.Popen(["./demoreel", "record", "-n", os.environ["GATE_RUN"] + "events",
+                         "-d", "0", "-s", "320x240",
+                         "-o", video0, "--app-log", f"{tmp}/events-app.log", "--events",
+                         "--", "xclock"], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                        text=True)
+first = run0.stdout.readline()
+while first and '"recording"' not in first:
+    first = run0.stdout.readline()
+time.sleep(2)
+stopped = subprocess.run(["./demoreel", "stop", run], capture_output=True, text=True)
+out, _ = run0.communicate(timeout=60)
+up = events(first + out, "a -d 0 run")
+elapsed = [e["elapsed"] for e in up if e["event"] == "time"]
+if stopped.returncode != 0 or run0.returncode != 0 or up[-1] != {"event": "done", "path": video0}:
+    raise SystemExit(f"a -d 0 run: stop {stopped.returncode}, run {run0.returncode}, "
+                     f"last event {up[-1]}")
+if len(elapsed) < 2 or any(not isinstance(n, int) for n in elapsed) \
+        or elapsed != sorted(elapsed):
+    raise SystemExit(f"a -d 0 run: time events {elapsed}, not whole numbers counting up")
+print("each stdout line is an event, the last is done or error, texts are stderr's,\n"
+      "only text changes with the language, and time counts the right way")
+EVENTSPY
+
+step "record --events: a run outlives its parent"
+# DEMO-0086 INV-10. When the program reading the events dies, the run must
+# finish its video, as on a closed terminal: the kernel sends it SIGHUP. Without
+# that a -d 0 run records until someone runs `demoreel stop`.
+orphan_events="$tmp/orphan.events"
+: >"$orphan_events"
+sh -c '"$1" record --events -d 0 -n "$2" -s 320x240 -o "$3" --app-log "$4" -- xclock \
+        2>/dev/null | while IFS= read -r line; do printf "%s\n" "$line" >>"$5"; done' \
+    sh ./demoreel "${GATE_RUN}orphan" "$tmp/orphan.mp4" "$tmp/orphan-app.log" \
+    "$orphan_events" &
+driver=$!
+for _ in $(seq 300); do
+    grep -q '"recording"' "$orphan_events" && break
+    sleep 0.1
+done
+grep -q '"recording"' "$orphan_events" || {
+    ./demoreel stop "${GATE_RUN}orphan" >/dev/null 2>&1
+    echo "the run never sent its recording event" >&2; exit 1; }
+orphan_state="$statedir/${GATE_RUN}orphan.json"
+orphan_pid=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["pid"])' \
+    "$orphan_state")
+kill -KILL "$driver"
+wait "$driver" 2>/dev/null || true
+for _ in $(seq 100); do
+    kill -0 "$orphan_pid" 2>/dev/null || break
+    sleep 0.1
+done
+if kill -0 "$orphan_pid" 2>/dev/null; then
+    ./demoreel stop "${GATE_RUN}orphan" >/dev/null 2>&1
+    echo "the run was still recording 10 seconds after its parent died" >&2; exit 1
+fi
+python3 -c 'import json, sys; sys.exit(json.load(open(sys.argv[1])).get("result") != "ok")' \
+    "$orphan_state" || {
+    echo "the run whose parent died did not end ok: $(cat "$orphan_state")" >&2; exit 1; }
+[ -n "$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$tmp/orphan.mp4")" ] || {
+    echo "the run whose parent died left no playable video" >&2; exit 1; }
+echo "a run whose parent was killed finished its video"
+
+step "the window: the command line runs without PySide6"
+# DEMO-0086 INV-1. PySide6 is the window's alone: every other command runs
+# where it cannot be imported. A folder on PYTHONPATH stands in for a PySide6
+# that is missing or broken.
+mkdir -p "$tmp/no-pyside/PySide6"
+echo 'raise ImportError("hidden by the gate")' >"$tmp/no-pyside/PySide6/__init__.py"
+PYTHONPATH="$tmp/no-pyside" ./demoreel --help >/dev/null || {
+    echo "demoreel --help failed where PySide6 cannot be imported" >&2; exit 1; }
+PYTHONPATH="$tmp/no-pyside" ./demoreel record -n "${GATE_RUN}nopyside" -d 2 -s 320x240 \
+    -o "$tmp/nopyside.mp4" --app-log "$tmp/nopyside-app.log" -- xclock >/dev/null 2>&1 || {
+    echo "record failed where PySide6 cannot be imported" >&2; exit 1; }
+window_status=0
+PYTHONPATH="$tmp/no-pyside" ./demoreel window 2>"$tmp/nopyside.err" || window_status=$?
+if [ "$window_status" != 1 ] || ! grep -q PySide6 "$tmp/nopyside.err"; then
+    echo "window without PySide6: exit $window_status, stderr: $(cat "$tmp/nopyside.err")" >&2
+    exit 1
+fi
+echo "every command but window runs without PySide6, and window names what it needs"
+
+# The window's functions, for the walks below: those named window_* and
+# desktop_*, exec_to_argv and cmd_window (DEMO-0086 INV-6, INV-13). A walk that
+# finds none of them would pass everything, so it fails instead.
+WINDOW_FUNCTIONS_PY='
+import ast, sys
+tree = ast.parse(open("demoreel").read())
+window_functions = [n for n in tree.body if isinstance(n, ast.FunctionDef)
+                    and (n.name.startswith(("window_", "desktop_"))
+                         or n.name in ("cmd_window", "exec_to_argv"))]
+if not {"cmd_window", "window_class", "window_apps", "exec_to_argv"} <= {
+        f.name for f in window_functions}:
+    raise SystemExit("the walk did not find the window'"'"'s functions")
+'
+
+step "the window: no shell"
+# DEMO-0086 INV-6 and INV-13. The window runs every child as an argument list,
+# never through a shell, and nothing on its thread waits on a child or a file.
+# Partial: a string run by another route, or a slow call by another name,
+# escapes the walk.
+python3 - <<EOF
+$WINDOW_FUNCTIONS_PY
+WAITS = {"wait", "communicate", "waitForFinished", "waitForReadyRead",
+         "waitForStarted", "waitForBytesWritten"}
+SHELLS = {"sh", "/bin/sh", "bash", "/bin/bash", "-c"}
+bad = []
+for function in window_functions:
+    for node in ast.walk(function):
+        where = f"{function.name}, line {getattr(node, 'lineno', '?')}"
+        if isinstance(node, ast.keyword) and node.arg == "shell":
+            bad.append(f"{where}: shell=")
+        elif isinstance(node, ast.Name) and node.id == "subprocess":
+            bad.append(f"{where}: subprocess, which waits or can take a shell")
+        elif isinstance(node, ast.Attribute) and (
+                node.attr in WAITS | {"system", "popen", "startCommand"}
+                or (node.attr.startswith(("spawn", "exec")) and isinstance(node.value, ast.Name)
+                    and node.value.id == "os")):
+            bad.append(f"{where}: .{node.attr}")
+        elif isinstance(node, ast.Constant) and node.value in SHELLS:
+            bad.append(f"{where}: {node.value!r}")
+for line in bad:
+    print(line, file=sys.stderr)
+raise SystemExit(1 if bad else 0)
+EOF
+echo "the window starts no shell and waits on nothing"
+
+step "the window: commands survive the text field"
+# DEMO-0086 INV-7. An installed app or a chosen file goes into the text field
+# as shlex.join of its argv, and comes out as shlex.split of the text: each
+# must give back the argv it was given, whatever it holds.
+python3 - <<EOF
+import shlex, sys
+$WINDOW_FUNCTIONS_PY
+argvs = [["/opt/My App/app", "two words"], ['say "hi"', "it's"], ["\$HOME", "a\\\\b"],
+         ["line\nbreak", "tab\there"], ["a;b", "&&", "|", "\`x\`"], ["", "-x", "--"]]
+bad = [argv for argv in argvs if shlex.split(shlex.join(argv)) != argv]
+for function in window_functions:
+    for node in ast.walk(function):
+        if isinstance(node, ast.keyword) and node.arg == "posix":
+            bad.append(f"{function.name}: shlex with posix=")
+        elif (isinstance(node, ast.Attribute) and node.attr == "join"
+              and isinstance(node.value, ast.Constant) and node.value.value == " "):
+            bad.append(f'{function.name}: " ".join')
+for line in bad:
+    print(f"does not survive the text field: {line}", file=sys.stderr)
+raise SystemExit(1 if bad else 0)
+EOF
+echo "every argv comes back from the text field as it went in"
+
+step "the window: desktop entries"
+# DEMO-0086 INV-8. An Exec value is quoted by the Desktop Entry
+# Specification's rules, not a shell's: string escapes first, then quotes, then
+# field codes. An invalid one is not listed.
+python3 - <<'EOF'
+import importlib.machinery, importlib.util, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+rows = [
+    ("flatpak run --branch=stable org.x.App %U", ["flatpak", "run", "--branch=stable", "org.x.App"]),
+    ('"/opt/My App/app" --new', ["/opt/My App/app", "--new"]),
+    ('app "a\\\\\\\\b"', ["app", "a\\b"]),
+    ('app "cost \\\\$5"', ["app", "cost $5"]),
+    ("app 100%%", ["app", "100%"]),
+    ('app "%f"', None),
+    ("app %z", None),
+    ('app "open', None),
+    ("app a;b", None),
+    ("%U", None),
+]
+bad = [f"{value!r} gave {d.exec_to_argv(value)!r}, not {want!r}"
+       for value, want in rows if d.exec_to_argv(value) != want]
+for line in bad:
+    print(line, file=sys.stderr)
+sys.exit(1 if bad else 0)
+EOF
+echo "each Exec value gives the argv the specification says"
+
+# The window built offscreen, its event loop replaced by checks: one of names,
+# pseudo, rtl or remembers (DEMO-0086 INV-9, INV-11, INV-12, INV-14).
+cat >"$tmp/window_check.py" <<'EOF'
+import importlib.machinery, importlib.util, os, sys, time
+
+demoreel, mode = sys.argv[1:]
+loader = importlib.machinery.SourceFileLoader("demoreel", demoreel)
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+d.use_languages(d.chosen_languages(os.environ))
+from PySide6 import QtCore, QtGui, QtWidgets
+
+bad = []
+
+
+def settle(until, seconds=20):
+    end = time.monotonic() + seconds
+    while not until() and time.monotonic() < end:
+        QtWidgets.QApplication.processEvents()
+        time.sleep(0.02)
+    QtWidgets.QApplication.processEvents()
+
+
+def owner(widget):
+    """A spin box's or an editable list's own line edit is that control."""
+    parent = widget.parentWidget()
+    return parent if parent is not None and parent.focusProxy() is widget else widget
+
+
+def controls(window, enabled=True):
+    """Each control Tab can stop on: visible, taking Tab focus, and enabled
+    unless asked for every one."""
+    return [owner(w) for w in window.findChildren(QtWidgets.QWidget)
+            if w.isVisibleTo(window) and (w.isEnabled() or not enabled)
+            and w.focusProxy() is None and w.focusPolicy() & QtCore.Qt.FocusPolicy.TabFocus]
+
+
+def name_of(widget):
+    """The name a screen reader is given: the widget's own, or its buddy label's."""
+    face = QtGui.QAccessible.queryAccessibleInterface(widget)
+    return face.text(QtGui.QAccessible.Text.Name) if face else ""
+
+
+def check_names(window):
+    # A disabled control is named too: a screen reader reads it.
+    bad.extend(f"no accessible name: {type(w).__name__}" for w in controls(window, False)
+               if not name_of(w).strip())
+    window.command.setText("xclock")  # so Record and Copy join the chain
+    QtWidgets.QApplication.processEvents()
+    found = controls(window)
+    if len(found) < 12:
+        bad.append(f"only {len(found)} controls found, so this checked too little")
+    seen, widget = [], found[0]
+    for _ in range(1000):
+        control = owner(widget.focusProxy() or widget)
+        if control in found and control not in seen:
+            seen.append(control)
+        widget = widget.nextInFocusChain()
+        if widget is found[0]:
+            break
+    else:
+        bad.append("the Tab chain never comes back to the first control")
+    missing = [f"{type(w).__name__} {name_of(w)!r}" for w in found if w not in seen]
+    if missing:
+        bad.append(f"Tab never reaches: {missing}")
+    parser = d.window_record_parser()
+    want = {name: parser.get_default(name) for name in ("size", "duration", "gpu", "cursor", "audio")}
+    have = {"size": window.size.currentText(),
+            "duration": 0 if window.until_stopped.isChecked() else window.length.value(),
+            "gpu": window.gpu.isChecked(), "cursor": window.cursor.isChecked(),
+            "audio": window.audio.isChecked()}
+    if have != want:
+        bad.append(f"the form starts at {have}, and record's defaults are {want}")
+
+
+def check_pseudo(window):
+    texts = [w.text() for w in window.findChildren(QtWidgets.QLabel)]
+    texts += [w.text() for w in window.findChildren(QtWidgets.QAbstractButton)]
+    texts += [window.apps.item(i).text() for i in range(window.apps.count())
+              if window.apps.item(i).data(QtCore.Qt.ItemDataRole.UserRole) is None]
+    texts += [window.error.accessibleName(), *window.said.values()]
+    texts = [t for t in texts if t]
+    if len(texts) < 15:
+        bad.append(f"only {len(texts)} texts found, so this checked too little")
+    # A form label ends in a colon Qt adds where the style asks for one.
+    bad.extend(f"not translated: {t!r}" for t in texts
+               if not (t.startswith("⟦") and t.removesuffix(":").endswith("⟧")))
+
+
+def check_remembers(window):
+    window.command.setText("xclock -digital")
+    window.pick_program()
+    settle(lambda: window.findChild(QtWidgets.QFileDialog) is not None, 5)
+    dialog = window.findChild(QtWidgets.QFileDialog)
+    if dialog is None:
+        bad.append("the program-file dialog did not open")
+        return
+    dialog.reject()
+    QtCore.QCoreApplication.sendPostedEvents(None, QtCore.QEvent.Type.DeferredDelete)
+    settle(lambda: window.findChild(QtWidgets.QFileDialog) is None, 5)
+
+
+def check(*_):
+    window = next(w for w in QtWidgets.QApplication.topLevelWidgets() if hasattr(w, "said"))
+    settle(window.apps.isEnabled)
+    if mode == "names":
+        check_names(window)
+    elif mode == "pseudo":
+        check_pseudo(window)
+    elif mode == "rtl" and window.layoutDirection() != QtCore.Qt.LayoutDirection.RightToLeft:
+        bad.append(f"the layout runs {window.layoutDirection()} under a right-to-left catalog")
+    elif mode == "remembers":
+        check_remembers(window)
+    window.close()
+    return 0
+
+
+QtWidgets.QApplication.exec = check
+d.cmd_window(None)
+for line in bad:
+    print(line, file=sys.stderr)
+sys.exit(1 if bad else 0)
+EOF
+# Qt warns on stderr under the gate's LC_ALL=C; C.UTF-8 is English too.
+window_check() {  # MODE DEMOREEL [ENV...]
+    local mode=$1 script=$2
+    shift 2
+    env QT_QPA_PLATFORM=offscreen "$@" python3 "$tmp/window_check.py" "$script" "$mode"
+}
+if python3 -c 'import PySide6.QtWidgets' 2>/dev/null; then
+    have_pyside=1
+else
+    have_pyside=
+fi
+
+step "the window: remembers nothing"
+# DEMO-0086 INV-9. A settings file is the config file README rules out. A Qt
+# file dialog writes one as it closes, so the window points Qt's settings at a
+# folder it removes; that is the one place QSettings may be named.
+python3 - <<EOF
+$WINDOW_FUNCTIONS_PY
+parents = {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
+bad = [node.lineno for node in ast.walk(tree)
+       if isinstance(node, ast.Attribute) and node.attr == "QSettings"
+       and not (isinstance(parents.get(node), ast.Attribute)
+                and parents[node].attr in ("setPath", "Format", "Scope"))]
+bad += [n.lineno for n in ast.walk(tree) if isinstance(n, ast.Name) and n.id == "QSettings"]
+if bad:
+    raise SystemExit(f"QSettings is used other than to move its path, on lines {bad}")
+EOF
+if [ -n "$have_pyside" ]; then
+    mkdir -p "$tmp/window-config" "$tmp/window-data"
+    window_check remembers ./demoreel LC_ALL=C.UTF-8 XDG_CONFIG_HOME="$tmp/window-config" \
+        XDG_DATA_HOME="$tmp/window-data"
+    left=$(find "$tmp/window-config" "$tmp/window-data" -mindepth 1)
+    [ -z "$left" ] || { echo "the window left files behind: $left" >&2; exit 1; }
+    echo "the window, a changed field and a cancelled file dialog wrote nothing"
+else
+    skipped "PySide6 cannot be imported, so the window was not built to see what it writes"
+fi
+
+step "the window: every control is named and reachable"
+# DEMO-0086 INV-11, INV-12 and INV-14: a name for a screen reader on every
+# control, a Tab chain through all of them, every text translated, right to
+# left under such a catalog, and the form starting at record's defaults.
+if [ -n "$have_pyside" ]; then
+    window_check names ./demoreel LC_ALL=C.UTF-8
+    pseudo_copy "$tmp/window-zz" zz
+    pseudo_copy "$tmp/window-he" he
+    window_check pseudo "$tmp/window-zz/demoreel" "${PSEUDO_ENV[@]}"
+    window_check rtl "$tmp/window-he/demoreel" "${PSEUDO_ENV[@]/LANGUAGE=zz/LANGUAGE=he}"
+    echo "every control is named and reachable, translated, right to left in Hebrew,"
+    echo "and the form starts at record's defaults"
+else
+    skipped "PySide6 cannot be imported, so the window's controls were not checked"
+fi
 
 step "stop finds a run whose ffmpeg is slow to answer"
 # DEMO-0165. A run asked ffmpeg for its encoders before it could be stopped,

@@ -5,14 +5,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## State
 
 Working. The whole tool is one executable file, `demoreel` — Python 3, standard
-library only, no build step, no dependency manifest. Runtime dependencies are
+library only but for the window's PySide6, no build step, no dependency manifest. Runtime dependencies are
 `xauth`, `ffmpeg` and `xdotool` on both backends; `Xvfb` for the default one;
 `cage`, `Xwayland` and `wlr-randr` for `--gpu`, and `wf-recorder` for
 `record --gpu`. `pactl` is optional: without it a run's app may be heard on
 the speakers, and `record --audio` is refused. All are checked at startup
 against what the run will use. The
 finishing commands need `ffmpeg` and `ffprobe` alone, and `fc-match` to find a
-bold font for text.
+bold font for text. `demoreel window` needs PySide6, and nothing else does:
+`cmd_window` imports it, and only it (`docs/specs/DEMO-0086-recording-window.md`).
 
 `ROADMAP.md` is generated from the roadmap store. Do not hand-edit it — use the
 roadmap verbs, or the next write reverts your edit.
@@ -176,7 +177,8 @@ exists for, and `Xvfb` remains the default.
 Checked by running them on this machine — do not re-derive, but do re-verify if
 something behaves unexpectedly:
 
-- `Xvfb`, `xdotool`, `wmctrl`, `ffmpeg` are installed. `xvfb-run` is **not**.
+- `Xvfb`, `xdotool`, `wmctrl`, `ffmpeg` and `xvfb-run` are installed. demoreel
+  does not use `xvfb-run`: it starts `Xvfb` itself, with `-displayfd`.
 - `Xvfb :99 -screen 0 1600x1000x24` starts; `xdotool getdisplaygeometry` against
   it returns `1600 1000`.
 - `xdotool` is reliable *inside* Xvfb. The common warning that it fails under
@@ -242,7 +244,9 @@ something behaves unexpectedly:
   `out=$(demoreel record ...)` collects whatever the app printed otherwise.
   `subprocess.Popen` inherits the parent's stdout unless told not to, so the
   way to reintroduce the bug is to drop the `stdout=` argument, not to add
-  anything. The finishing commands keep the rule: the path alone, and their
+  anything. `record --events` replaces the path with JSON lines, each one
+  `emit` writes, and the last of them holds the path: still nothing an app
+  can write to. The finishing commands keep the rule: the path alone, and their
   plan on stderr. `motion` writes no file, so its report is what it prints on
   stdout.
 - **`--settle` and the blank check are the same test**, `display_is_blank`, in

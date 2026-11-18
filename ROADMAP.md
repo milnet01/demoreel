@@ -6296,6 +6296,13 @@ is a front-end to the same recording engine, not a second one.
   A .desktop file and an icon, installed by the 0.9.0 packages and by the
   install from source. The command-line tool installs as before; the menu
   entry opens the window.
+  2026-11-18, from DEMO-0087's build: `demoreel window` without PySide6
+  names no package yet; it says to install the distribution's PySide6
+  package for Python 3. Once this item settles each distro's package
+  name, add PySide6 to PACKAGES and route cmd_window's message through
+  install_hint (DEMO-0086 § 4.1). This machine has two copies: the
+  system's python313-pyside6 6.12.0, shadowed by a pip --user 6.11.0 in
+  ~/.local.
   **Layman:** demoreel shows up in your applications menu with its own icon.
   Kind: package.
   Source: user-request-2026-09-25.
@@ -6473,6 +6480,10 @@ is a front-end to the same recording engine, not a second one.
 - 📋 [DEMO-0253] **The recording window opens fast, never freezes while ffmpeg works, and uses almost no CPU when idle.**
   Long work runs outside the window's own thread. Measure start-up
   time, idle CPU and memory against 1.0.0's baselines.
+  2026-11-18, from DEMO-0087's build: ci.sh's step "--perf's baseline
+  has a figure for every command that does work" exempts `window` until
+  this item adds its case to perf_measure and a row to
+  docs/perf-baseline.tsv. Remove the exemption then.
   **Layman:** The window always answers a click straight away, even while a recording or a film is being made.
   Kind: perf.
   Source: user-request-2026-10-16.

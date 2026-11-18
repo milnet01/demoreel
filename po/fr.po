@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: fr\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Demoreel-Review: reviewed 10a444b42d8e454b\n"
+"X-Demoreel-Review: reviewed 9ee86b49a8991135\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where} : le texte {words} est à l'écran avec {first} au même endroit, et l'un a un bandeau et l'autre non. Des textes empilés ont tous un bandeau, ou aucun."
@@ -1572,3 +1572,127 @@ msgstr "images produites : {made} ; images prévues : {planned}."
 #. argparse formats this text with %
 msgid "This translation has been checked by machine, but not yet by a native speaker."
 msgstr "Cette traduction a été vérifiée automatiquement, mais pas encore relue par une personne dont le français est la langue maternelle."
+
+#. argparse formats this text with %
+msgid "for a program driving the run: write its progress on stdout, one JSON object per line, the last holding the video's path or the error"
+msgstr "pour un programme qui pilote la session : écrire sa progression sur la sortie standard, un objet JSON par ligne, le dernier portant le chemin de la vidéo ou l'erreur"
+
+msgid "This holds a character that is not UTF-8, so the window cannot pass it on."
+msgstr "Ceci contient un caractère qui n'est pas en UTF-8, donc la fenêtre ne peut pas le transmettre."
+
+msgid "Recording started."
+msgstr "L'enregistrement a commencé."
+
+msgid "The video is ready."
+msgstr "La vidéo est prête."
+
+msgid "The recording failed."
+msgstr "L'enregistrement a échoué."
+
+msgid "App command:"
+msgstr "Commande de l'application :"
+
+msgid "Search the installed applications:"
+msgstr "Chercher dans les applications installées :"
+
+msgid "Reading the installed applications…"
+msgstr "Lecture des applications installées…"
+
+msgid "Installed applications:"
+msgstr "Applications installées :"
+
+msgid "Choose a program file…"
+msgstr "Choisir un fichier de programme…"
+
+msgid "Size:"
+msgstr "Taille :"
+
+msgid "Record until stopped"
+msgstr "Enregistrer jusqu'à l'arrêt"
+
+msgid "Length in seconds:"
+msgstr "Durée en secondes :"
+
+msgid "The app needs the graphics card"
+msgstr "L'application a besoin de la carte graphique"
+
+msgid "Show the pointer"
+msgstr "Afficher le pointeur"
+
+msgid "Record the app's sound"
+msgstr "Enregistrer le son de l'application"
+
+msgid "Save in folder:"
+msgstr "Enregistrer dans le dossier :"
+
+msgid "Choose a folder…"
+msgstr "Choisir un dossier…"
+
+msgid "The same from the command line:"
+msgstr "La même chose en ligne de commande :"
+
+msgid "Copy the command"
+msgstr "Copier la commande"
+
+msgid "Record"
+msgstr "Enregistrer"
+
+msgid "Stop"
+msgstr "Arrêter"
+
+msgid "What went wrong"
+msgstr "Ce qui s'est mal passé"
+
+msgid "The video:"
+msgstr "La vidéo :"
+
+msgid "Open the video"
+msgstr "Ouvrir la vidéo"
+
+msgid "Open its folder"
+msgstr "Ouvrir son dossier"
+
+msgid "The app command cannot be split into words: check its quotes and backslashes."
+msgstr "La commande de l'application ne peut pas être découpée en mots : vérifiez ses guillemets et ses barres obliques inverses."
+
+msgid "This is not a folder."
+msgstr "Ceci n'est pas un dossier."
+
+msgid "Choose a program file"
+msgstr "Choisir un fichier de programme"
+
+msgid "Choose a folder"
+msgstr "Choisir un dossier"
+
+msgid "Starting…"
+msgstr "Démarrage…"
+
+msgid "Stopping…"
+msgstr "Arrêt…"
+
+#. translators: {time} is the time recorded so far, minutes:seconds, such as 1:05.
+msgid "recording for {time}"
+msgstr "enregistrement en cours : {time}"
+
+msgid "Finishing the video…"
+msgstr "Finalisation de la vidéo…"
+
+msgid "The recording ended without saying how, with exit status {status}. What it printed:"
+msgstr "L'enregistrement s'est terminé sans dire comment, avec le code de sortie {status}. Ce qu'il a affiché :"
+
+msgid "Finishing the video before the window closes…"
+msgstr "Finalisation de la vidéo avant la fermeture de la fenêtre…"
+
+msgid ""
+"the window needs PySide6, the Qt toolkit for Python, which this Python cannot import.\n"
+"  Install your distribution's PySide6 package for Python 3."
+msgstr ""
+"la fenêtre a besoin de PySide6, la boîte à outils Qt pour Python, que ce Python ne peut pas importer.\n"
+"  Installez le paquet PySide6 de votre distribution pour Python 3."
+
+msgid "the window needs PySide6 6.8 or later, for its screen-reader announcements; this one is {version}."
+msgstr "la fenêtre a besoin de PySide6 6.8 ou plus récent, pour ses annonces aux lecteurs d'écran ; celui-ci est la version {version}."
+
+#. argparse formats this text with %
+msgid "open a window to pick an app and record it; needs PySide6"
+msgstr "ouvrir une fenêtre pour choisir une application et l'enregistrer ; nécessite PySide6"

@@ -14,8 +14,12 @@ The `[Unreleased]` block stays at the top, always, even when empty.
 
 ### Added
 
+- **`demoreel window` records an app from a window** (DEMO-0087)
+  Type the app's command, or pick it from the installed applications or as a program file. Set the size, the length or until stopped, the graphics card, the pointer, the sound and the folder. Press Record and Stop, then open the video or its folder. The window runs `demoreel record` and shows that command to copy. It remembers nothing between launches, is named for screen readers and reachable by Tab, and speaks every language demoreel does. It needs PySide6; every other command runs without it.
+- **`record --events` writes a run's progress as JSON lines** (DEMO-0087)
+  For a program driving the run: stdout carries one event per line, the last holding the video's path or the error, in place of the bare path. If that program dies, the run finishes its video. Stderr is unchanged.
 - **A translation can be marked reviewed, between draft and confirmed** (DEMO-0362)
-  A language that has had a thorough machine review says so on the last line of `--help`. Editing any of its translations afterwards fails the checks until it is reviewed again or goes back to draft. No language is reviewed yet.
+  A language that has had a thorough machine review says so on the last line of `--help`. Editing any of its translations afterwards fails the checks until it is reviewed again or goes back to draft. All 16 languages are reviewed (DEMO-0096).
 
 ## [1.0.0] - 2026-11-11
 

@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: zh_TW\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Demoreel-Review: reviewed 2b4777432fa334df\n"
+"X-Demoreel-Review: reviewed f4683c32c58cee8d\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}：文字 {words} 與 {first} 同時顯示在同一位置，但一個有底色帶，另一個沒有。疊在一起的文字要嘛都有底色帶，要嘛都沒有。"
@@ -1566,3 +1566,127 @@ msgstr "已產生影格數：{made}；計畫影格數：{planned}。"
 #. argparse formats this text with %
 msgid "This translation has been checked by machine, but not yet by a native speaker."
 msgstr "這份翻譯已經過機器校對，但尚未經過以中文為母語的人士校對。"
+
+#. argparse formats this text with %
+msgid "for a program driving the run: write its progress on stdout, one JSON object per line, the last holding the video's path or the error"
+msgstr "供控制這次執行的程式使用：在標準輸出上寫出進度，每行一個 JSON 物件，最後一行是影片路徑或錯誤"
+
+msgid "This holds a character that is not UTF-8, so the window cannot pass it on."
+msgstr "其中有一個不是 UTF-8 的字元，因此視窗無法傳遞它。"
+
+msgid "Recording started."
+msgstr "錄影已開始。"
+
+msgid "The video is ready."
+msgstr "影片已就緒。"
+
+msgid "The recording failed."
+msgstr "錄影失敗。"
+
+msgid "App command:"
+msgstr "應用程式指令："
+
+msgid "Search the installed applications:"
+msgstr "搜尋已安裝的應用程式："
+
+msgid "Reading the installed applications…"
+msgstr "正在讀取已安裝的應用程式…"
+
+msgid "Installed applications:"
+msgstr "已安裝的應用程式："
+
+msgid "Choose a program file…"
+msgstr "選擇程式檔案…"
+
+msgid "Size:"
+msgstr "大小："
+
+msgid "Record until stopped"
+msgstr "一直錄影到停止"
+
+msgid "Length in seconds:"
+msgstr "長度（秒）："
+
+msgid "The app needs the graphics card"
+msgstr "應用程式需要顯示卡"
+
+msgid "Show the pointer"
+msgstr "顯示指標"
+
+msgid "Record the app's sound"
+msgstr "錄製應用程式的聲音"
+
+msgid "Save in folder:"
+msgstr "儲存到資料夾："
+
+msgid "Choose a folder…"
+msgstr "選擇資料夾…"
+
+msgid "The same from the command line:"
+msgstr "在命令列中執行相同操作："
+
+msgid "Copy the command"
+msgstr "複製指令"
+
+msgid "Record"
+msgstr "錄影"
+
+msgid "Stop"
+msgstr "停止"
+
+msgid "What went wrong"
+msgstr "出了什麼問題"
+
+msgid "The video:"
+msgstr "影片："
+
+msgid "Open the video"
+msgstr "開啟影片"
+
+msgid "Open its folder"
+msgstr "開啟其所在資料夾"
+
+msgid "The app command cannot be split into words: check its quotes and backslashes."
+msgstr "無法將應用程式指令拆分為單字：請檢查其中的引號和反斜線。"
+
+msgid "This is not a folder."
+msgstr "這不是資料夾。"
+
+msgid "Choose a program file"
+msgstr "選擇程式檔案"
+
+msgid "Choose a folder"
+msgstr "選擇資料夾"
+
+msgid "Starting…"
+msgstr "正在啟動…"
+
+msgid "Stopping…"
+msgstr "正在停止…"
+
+#. translators: {time} is the time recorded so far, minutes:seconds, such as 1:05.
+msgid "recording for {time}"
+msgstr "已錄影 {time}"
+
+msgid "Finishing the video…"
+msgstr "正在完成影片…"
+
+msgid "The recording ended without saying how, with exit status {status}. What it printed:"
+msgstr "錄影結束時沒有說明原因，結束狀態為 {status}。它輸出的內容："
+
+msgid "Finishing the video before the window closes…"
+msgstr "正在視窗關閉前完成影片…"
+
+msgid ""
+"the window needs PySide6, the Qt toolkit for Python, which this Python cannot import.\n"
+"  Install your distribution's PySide6 package for Python 3."
+msgstr ""
+"視窗需要 PySide6（Python 的 Qt 工具組），但此 Python 無法匯入它。\n"
+"  請為 Python 3 安裝您的發行版提供的 PySide6 套件。"
+
+msgid "the window needs PySide6 6.8 or later, for its screen-reader announcements; this one is {version}."
+msgstr "視窗需要 PySide6 6.8 或更新版本，用於向螢幕閱讀器發出通知；目前版本為 {version}。"
+
+#. argparse formats this text with %
+msgid "open a window to pick an app and record it; needs PySide6"
+msgstr "開啟一個視窗來選擇應用程式並錄影；需要 PySide6"

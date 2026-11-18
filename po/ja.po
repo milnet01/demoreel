@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: ja\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Demoreel-Review: reviewed a4f8b82078ebd942\n"
+"X-Demoreel-Review: reviewed 676327a9f834c91b\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: テキスト {words} は {first} と同時に同じ位置に表示されますが、一方には帯があり、もう一方にはありません。重ねて並べるテキストは、すべて帯ありか、すべて帯なしのどちらかでなければなりません。"
@@ -1566,3 +1566,127 @@ msgstr "作成したフレーム数: {made}、予定のフレーム数: {planned
 #. argparse formats this text with %
 msgid "This translation has been checked by machine, but not yet by a native speaker."
 msgstr "この翻訳は機械による確認を受けていますが、まだネイティブスピーカーによる確認は受けていません。"
+
+#. argparse formats this text with %
+msgid "for a program driving the run: write its progress on stdout, one JSON object per line, the last holding the video's path or the error"
+msgstr "実行を制御するプログラム向け。進行状況を標準出力に 1 行に 1 つの JSON オブジェクトとして書き出します。最後の行は動画のパスかエラーです"
+
+msgid "This holds a character that is not UTF-8, so the window cannot pass it on."
+msgstr "UTF-8 ではない文字が含まれているため、ウィンドウからは渡せません。"
+
+msgid "Recording started."
+msgstr "録画を開始しました。"
+
+msgid "The video is ready."
+msgstr "動画の準備ができました。"
+
+msgid "The recording failed."
+msgstr "録画に失敗しました。"
+
+msgid "App command:"
+msgstr "アプリのコマンド:"
+
+msgid "Search the installed applications:"
+msgstr "インストール済みアプリを検索:"
+
+msgid "Reading the installed applications…"
+msgstr "インストール済みアプリを読み込んでいます…"
+
+msgid "Installed applications:"
+msgstr "インストール済みアプリ:"
+
+msgid "Choose a program file…"
+msgstr "プログラムファイルを選ぶ…"
+
+msgid "Size:"
+msgstr "サイズ:"
+
+msgid "Record until stopped"
+msgstr "停止するまで録画"
+
+msgid "Length in seconds:"
+msgstr "長さ (秒):"
+
+msgid "The app needs the graphics card"
+msgstr "アプリにグラフィックカードが必要"
+
+msgid "Show the pointer"
+msgstr "ポインターを表示"
+
+msgid "Record the app's sound"
+msgstr "アプリの音を録音"
+
+msgid "Save in folder:"
+msgstr "保存先フォルダー:"
+
+msgid "Choose a folder…"
+msgstr "フォルダーを選ぶ…"
+
+msgid "The same from the command line:"
+msgstr "コマンドラインで同じことをするには:"
+
+msgid "Copy the command"
+msgstr "コマンドをコピー"
+
+msgid "Record"
+msgstr "録画"
+
+msgid "Stop"
+msgstr "停止"
+
+msgid "What went wrong"
+msgstr "問題の内容"
+
+msgid "The video:"
+msgstr "動画:"
+
+msgid "Open the video"
+msgstr "動画を開く"
+
+msgid "Open its folder"
+msgstr "フォルダーを開く"
+
+msgid "The app command cannot be split into words: check its quotes and backslashes."
+msgstr "アプリのコマンドを単語に分けられません。引用符とバックスラッシュを確認してください。"
+
+msgid "This is not a folder."
+msgstr "これはフォルダーではありません。"
+
+msgid "Choose a program file"
+msgstr "プログラムファイルを選ぶ"
+
+msgid "Choose a folder"
+msgstr "フォルダーを選ぶ"
+
+msgid "Starting…"
+msgstr "開始しています…"
+
+msgid "Stopping…"
+msgstr "停止しています…"
+
+#. translators: {time} is the time recorded so far, minutes:seconds, such as 1:05.
+msgid "recording for {time}"
+msgstr "録画中: {time} 経過"
+
+msgid "Finishing the video…"
+msgstr "動画を仕上げています…"
+
+msgid "The recording ended without saying how, with exit status {status}. What it printed:"
+msgstr "録画は理由を告げずに終了しました (終了ステータス {status})。出力された内容:"
+
+msgid "Finishing the video before the window closes…"
+msgstr "ウィンドウを閉じる前に動画を仕上げています…"
+
+msgid ""
+"the window needs PySide6, the Qt toolkit for Python, which this Python cannot import.\n"
+"  Install your distribution's PySide6 package for Python 3."
+msgstr ""
+"ウィンドウには Python 用の Qt ツールキット PySide6 が必要ですが、この Python ではインポートできません。\n"
+"  お使いのディストリビューションの Python 3 用 PySide6 パッケージをインストールしてください。"
+
+msgid "the window needs PySide6 6.8 or later, for its screen-reader announcements; this one is {version}."
+msgstr "ウィンドウにはスクリーンリーダーへの通知のため PySide6 6.8 以降が必要です。このバージョンは {version} です。"
+
+#. argparse formats this text with %
+msgid "open a window to pick an app and record it; needs PySide6"
+msgstr "アプリを選んで録画するウィンドウを開きます。PySide6 が必要です"

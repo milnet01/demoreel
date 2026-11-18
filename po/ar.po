@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: ar\n"
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
-"X-Demoreel-Review: reviewed 04561db1f3bd351b\n"
+"X-Demoreel-Review: reviewed 6d8bef8708ff8b15\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: النص {words} يظهر مع {first} في المكان نفسه، وأحدهما له شريط والآخر بلا شريط. النصوص المكدّسة معًا لها كلها شريط أو لا شريط لأيٍّ منها."
@@ -1596,3 +1596,127 @@ msgstr "الإطارات المصنوعة: {made}؛ الإطارات المخط�
 #. argparse formats this text with %
 msgid "This translation has been checked by machine, but not yet by a native speaker."
 msgstr "روجعت هذه الترجمة آليًا، لكن لم يراجعها بعد متحدث أصلي باللغة العربية."
+
+#. argparse formats this text with %
+msgid "for a program driving the run: write its progress on stdout, one JSON object per line, the last holding the video's path or the error"
+msgstr "لبرنامج يتحكم في التشغيل: اكتب تقدّمه على المخرج القياسي، كائن JSON واحد في كل سطر، ويحمل الأخير مسار الفيديو أو الخطأ"
+
+msgid "This holds a character that is not UTF-8, so the window cannot pass it on."
+msgstr "يحتوي هذا على حرف ليس UTF-8، لذا لا تستطيع النافذة تمريره."
+
+msgid "Recording started."
+msgstr "بدأ التسجيل."
+
+msgid "The video is ready."
+msgstr "الفيديو جاهز."
+
+msgid "The recording failed."
+msgstr "فشل التسجيل."
+
+msgid "App command:"
+msgstr "أمر التطبيق:"
+
+msgid "Search the installed applications:"
+msgstr "ابحث في التطبيقات المثبّتة:"
+
+msgid "Reading the installed applications…"
+msgstr "جارٍ قراءة التطبيقات المثبّتة…"
+
+msgid "Installed applications:"
+msgstr "التطبيقات المثبّتة:"
+
+msgid "Choose a program file…"
+msgstr "اختر ملف برنامج…"
+
+msgid "Size:"
+msgstr "الحجم:"
+
+msgid "Record until stopped"
+msgstr "سجّل حتى الإيقاف"
+
+msgid "Length in seconds:"
+msgstr "المدة بالثواني:"
+
+msgid "The app needs the graphics card"
+msgstr "يحتاج التطبيق إلى بطاقة الرسوميات"
+
+msgid "Show the pointer"
+msgstr "اعرض المؤشر"
+
+msgid "Record the app's sound"
+msgstr "سجّل صوت التطبيق"
+
+msgid "Save in folder:"
+msgstr "احفظ في المجلد:"
+
+msgid "Choose a folder…"
+msgstr "اختر مجلدًا…"
+
+msgid "The same from the command line:"
+msgstr "الأمر نفسه من سطر الأوامر:"
+
+msgid "Copy the command"
+msgstr "انسخ الأمر"
+
+msgid "Record"
+msgstr "سجّل"
+
+msgid "Stop"
+msgstr "أوقف"
+
+msgid "What went wrong"
+msgstr "ما الخطأ الذي حدث"
+
+msgid "The video:"
+msgstr "الفيديو:"
+
+msgid "Open the video"
+msgstr "افتح الفيديو"
+
+msgid "Open its folder"
+msgstr "افتح مجلده"
+
+msgid "The app command cannot be split into words: check its quotes and backslashes."
+msgstr "لا يمكن تقسيم أمر التطبيق إلى كلمات: تحقّق من علامات الاقتباس والشرطات المائلة العكسية فيه."
+
+msgid "This is not a folder."
+msgstr "هذا ليس مجلدًا."
+
+msgid "Choose a program file"
+msgstr "اختر ملف برنامج"
+
+msgid "Choose a folder"
+msgstr "اختر مجلدًا"
+
+msgid "Starting…"
+msgstr "جارٍ البدء…"
+
+msgid "Stopping…"
+msgstr "جارٍ الإيقاف…"
+
+#. translators: {time} is the time recorded so far, minutes:seconds, such as 1:05.
+msgid "recording for {time}"
+msgstr "جارٍ التسجيل منذ {time}"
+
+msgid "Finishing the video…"
+msgstr "جارٍ إنهاء الفيديو…"
+
+msgid "The recording ended without saying how, with exit status {status}. What it printed:"
+msgstr "انتهى التسجيل دون أن يذكر السبب، برمز الخروج {status}. ما طبعه:"
+
+msgid "Finishing the video before the window closes…"
+msgstr "جارٍ إنهاء الفيديو قبل أن تُغلق النافذة…"
+
+msgid ""
+"the window needs PySide6, the Qt toolkit for Python, which this Python cannot import.\n"
+"  Install your distribution's PySide6 package for Python 3."
+msgstr ""
+"تحتاج النافذة إلى PySide6، وهي أدوات Qt للغة Python، ولا يستطيع Python هذا استيرادها.\n"
+"  ثبّت حزمة PySide6 الخاصة بتوزيعتك لـ Python 3."
+
+msgid "the window needs PySide6 6.8 or later, for its screen-reader announcements; this one is {version}."
+msgstr "تحتاج النافذة إلى PySide6 6.8 أو أحدث، لإعلاناتها لقارئات الشاشة؛ وهذه النسخة {version}."
+
+#. argparse formats this text with %
+msgid "open a window to pick an app and record it; needs PySide6"
+msgstr "افتح نافذة لاختيار تطبيق وتسجيله؛ تحتاج إلى PySide6"

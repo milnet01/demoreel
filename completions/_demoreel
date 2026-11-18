@@ -89,6 +89,7 @@ _demoreel() {
         'shot:take one picture of an app and write a PNG'
         'check:test whether this machine can record, without recording'
         'stop:end a running recording early'
+        'window:open a window to pick an app and record it; needs PySide6'
         'edit:make a film from a script of scenes'
         'trim:cut the start and the end off a video'
         'caption:put text over part of a video'
@@ -119,12 +120,13 @@ _demoreel() {
             {-d+,--duration=}'[seconds to record; 0 means until stop]:seconds:' \
             {-r+,--framerate=}'[frames per second]:fps:' \
             {-n+,--name=}'[name for this run]:name:' \
-            '--audio[put the app'\''s own sound in the video]' ;;
+            '--audio[put the app'\''s own sound in the video]' \
+            '--events[progress as JSON lines on stdout]' ;;
         shot)
           _arguments -S $app_opts \
             {-o+,--output=}'[picture file to write]:file:_files' \
             '--region=[keep only this rectangle of the picture]:x,y,w,h:' ;;
-        check)
+        check | window)
           _arguments '(-)'{-h,--help}'[show help]' ;;
         stop)
           _arguments '(-)'{-h,--help}'[show help]' \

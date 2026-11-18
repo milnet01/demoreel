@@ -531,6 +531,120 @@ msgstr ""
 msgid "the recording ended before it started recording, so there is no video to stop."
 msgstr ""
 
+msgid "This holds a character that is not UTF-8, so the window cannot pass it on."
+msgstr ""
+
+msgid "Recording started."
+msgstr ""
+
+msgid "The video is ready."
+msgstr ""
+
+msgid "The recording failed."
+msgstr ""
+
+msgid "App command:"
+msgstr ""
+
+msgid "Search the installed applications:"
+msgstr ""
+
+msgid "Reading the installed applications…"
+msgstr ""
+
+msgid "Installed applications:"
+msgstr ""
+
+msgid "Choose a program file…"
+msgstr ""
+
+msgid "Size:"
+msgstr ""
+
+msgid "Record until stopped"
+msgstr ""
+
+msgid "Length in seconds:"
+msgstr ""
+
+msgid "The app needs the graphics card"
+msgstr ""
+
+msgid "Show the pointer"
+msgstr ""
+
+msgid "Record the app's sound"
+msgstr ""
+
+msgid "Save in folder:"
+msgstr ""
+
+msgid "Choose a folder…"
+msgstr ""
+
+msgid "The same from the command line:"
+msgstr ""
+
+msgid "Copy the command"
+msgstr ""
+
+msgid "Record"
+msgstr ""
+
+msgid "Stop"
+msgstr ""
+
+msgid "What went wrong"
+msgstr ""
+
+msgid "The video:"
+msgstr ""
+
+msgid "Open the video"
+msgstr ""
+
+msgid "Open its folder"
+msgstr ""
+
+msgid "The app command cannot be split into words: check its quotes and backslashes."
+msgstr ""
+
+msgid "This is not a folder."
+msgstr ""
+
+msgid "Choose a program file"
+msgstr ""
+
+msgid "Choose a folder"
+msgstr ""
+
+msgid "Starting…"
+msgstr ""
+
+msgid "Stopping…"
+msgstr ""
+
+#. translators: {time} is the time recorded so far, minutes:seconds, such as 1:05.
+msgid "recording for {time}"
+msgstr ""
+
+msgid "Finishing the video…"
+msgstr ""
+
+msgid "The recording ended without saying how, with exit status {status}. What it printed:"
+msgstr ""
+
+msgid "Finishing the video before the window closes…"
+msgstr ""
+
+msgid ""
+"the window needs PySide6, the Qt toolkit for Python, which this Python cannot import.\n"
+"  Install your distribution's PySide6 package for Python 3."
+msgstr ""
+
+msgid "the window needs PySide6 6.8 or later, for its screen-reader announcements; this one is {version}."
+msgstr ""
+
 msgid "{option} belongs to a --text, and none comes before it. caption never cuts the video; use trim."
 msgstr ""
 
@@ -1168,6 +1282,10 @@ msgid "how long to wait for the app's window (default: 20)"
 msgstr ""
 
 #. argparse formats this text with %
+msgid "for a program driving the run: write its progress on stdout, one JSON object per line, the last holding the video's path or the error"
+msgstr ""
+
+#. argparse formats this text with %
 msgid "-- followed by the command that starts the app"
 msgstr ""
 
@@ -1225,6 +1343,10 @@ msgstr ""
 
 #. argparse formats this text with %
 msgid "which run to stop (default: the only one running)"
+msgstr ""
+
+#. argparse formats this text with %
+msgid "open a window to pick an app and record it; needs PySide6"
 msgstr ""
 
 #. argparse formats this text with %

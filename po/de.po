@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: de\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Demoreel-Review: reviewed 42d7db9cfbc4d659\n"
+"X-Demoreel-Review: reviewed c126215f3e5ca76f\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: der Text {words} steht zur selben Zeit an derselben Stelle wie {first}, und einer hat ein Band, der andere nicht. Gestapelte Texte haben alle ein Band oder keiner."
@@ -1572,3 +1572,127 @@ msgstr "erzeugte Bilder: {made}; geplante Bilder: {planned}."
 #. argparse formats this text with %
 msgid "This translation has been checked by machine, but not yet by a native speaker."
 msgstr "Diese Übersetzung wurde maschinell geprüft, aber noch nicht von Muttersprachlern."
+
+#. argparse formats this text with %
+msgid "for a program driving the run: write its progress on stdout, one JSON object per line, the last holding the video's path or the error"
+msgstr "für ein Programm, das den Lauf steuert: den Fortschritt auf die Standardausgabe schreiben, ein JSON-Objekt pro Zeile, das letzte mit dem Pfad des Videos oder dem Fehler"
+
+msgid "This holds a character that is not UTF-8, so the window cannot pass it on."
+msgstr "Das enthält ein Zeichen, das kein UTF-8 ist, daher kann das Fenster es nicht weitergeben."
+
+msgid "Recording started."
+msgstr "Die Aufnahme hat begonnen."
+
+msgid "The video is ready."
+msgstr "Das Video ist fertig."
+
+msgid "The recording failed."
+msgstr "Die Aufnahme ist fehlgeschlagen."
+
+msgid "App command:"
+msgstr "Befehl der App:"
+
+msgid "Search the installed applications:"
+msgstr "Installierte Anwendungen durchsuchen:"
+
+msgid "Reading the installed applications…"
+msgstr "Die installierten Anwendungen werden gelesen…"
+
+msgid "Installed applications:"
+msgstr "Installierte Anwendungen:"
+
+msgid "Choose a program file…"
+msgstr "Programmdatei wählen…"
+
+msgid "Size:"
+msgstr "Größe:"
+
+msgid "Record until stopped"
+msgstr "Aufnehmen bis zum Stoppen"
+
+msgid "Length in seconds:"
+msgstr "Länge in Sekunden:"
+
+msgid "The app needs the graphics card"
+msgstr "Die App braucht die Grafikkarte"
+
+msgid "Show the pointer"
+msgstr "Den Zeiger zeigen"
+
+msgid "Record the app's sound"
+msgstr "Den Ton der App aufnehmen"
+
+msgid "Save in folder:"
+msgstr "Im Ordner speichern:"
+
+msgid "Choose a folder…"
+msgstr "Ordner wählen…"
+
+msgid "The same from the command line:"
+msgstr "Dasselbe auf der Befehlszeile:"
+
+msgid "Copy the command"
+msgstr "Befehl kopieren"
+
+msgid "Record"
+msgstr "Aufnehmen"
+
+msgid "Stop"
+msgstr "Stoppen"
+
+msgid "What went wrong"
+msgstr "Was schiefgegangen ist"
+
+msgid "The video:"
+msgstr "Das Video:"
+
+msgid "Open the video"
+msgstr "Video öffnen"
+
+msgid "Open its folder"
+msgstr "Seinen Ordner öffnen"
+
+msgid "The app command cannot be split into words: check its quotes and backslashes."
+msgstr "Der Befehl der App lässt sich nicht in Wörter zerlegen: Prüfen Sie seine Anführungszeichen und Backslashes."
+
+msgid "This is not a folder."
+msgstr "Das ist kein Ordner."
+
+msgid "Choose a program file"
+msgstr "Programmdatei wählen"
+
+msgid "Choose a folder"
+msgstr "Ordner wählen"
+
+msgid "Starting…"
+msgstr "Wird gestartet…"
+
+msgid "Stopping…"
+msgstr "Wird gestoppt…"
+
+#. translators: {time} is the time recorded so far, minutes:seconds, such as 1:05.
+msgid "recording for {time}"
+msgstr "Aufnahme läuft seit {time}"
+
+msgid "Finishing the video…"
+msgstr "Das Video wird fertiggestellt…"
+
+msgid "The recording ended without saying how, with exit status {status}. What it printed:"
+msgstr "Die Aufnahme endete, ohne zu sagen wie, mit dem Exit-Status {status}. Was sie ausgegeben hat:"
+
+msgid "Finishing the video before the window closes…"
+msgstr "Das Video wird fertiggestellt, bevor sich das Fenster schließt…"
+
+msgid ""
+"the window needs PySide6, the Qt toolkit for Python, which this Python cannot import.\n"
+"  Install your distribution's PySide6 package for Python 3."
+msgstr ""
+"das Fenster braucht PySide6, das Qt-Toolkit für Python, das dieses Python nicht importieren kann.\n"
+"  Installieren Sie das PySide6-Paket Ihrer Distribution für Python 3."
+
+msgid "the window needs PySide6 6.8 or later, for its screen-reader announcements; this one is {version}."
+msgstr "das Fenster braucht PySide6 6.8 oder neuer, für seine Ansagen an Bildschirmleser; dieses ist {version}."
+
+#. argparse formats this text with %
+msgid "open a window to pick an app and record it; needs PySide6"
+msgstr "ein Fenster öffnen, um eine App zu wählen und aufzunehmen; braucht PySide6"

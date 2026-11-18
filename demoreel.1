@@ -79,7 +79,10 @@ on it, sizes the app's window to fill the frame, and records it.
 Your real desktop is never in the picture, because the app never runs there.
 When the run succeeds,
 .B demoreel
-prints the path of the finished file on standard output, and nothing else.
+prints the path of the finished file on standard output, and nothing else,
+or with
+.B \-\-events
+its progress as JSON lines.
 The app's own output goes to standard error, or to
 .BR \-\-app\-log .
 .PP
@@ -111,6 +114,16 @@ With no
 it stops the only recording running.
 It works straight after launching the run, even before it has started
 recording.
+.TP
+.B window
+Open a window to pick an app, set the size, the length, the graphics-card mode,
+the pointer and the sound, then record it with Record and Stop and open the
+video.
+It runs
+.B demoreel record
+for each recording, and shows the same command to copy.
+It remembers nothing between launches.
+Needs PySide6.
 .TP
 .B check
 Report what each backend needs and whether it is installed, start a private
@@ -321,6 +334,22 @@ Either must fit inside the video.
 .TP
 .BI \-\-startup\-timeout " seconds"
 How long to wait for the app's window (default 20).
+.TP
+.B \-\-events
+.BR record :
+for a program that drives the run.
+Standard output then carries one JSON object per line instead of the path:
+.BR note ,
+.BR recording ,
+.BR time ,
+.BR finishing ,
+and last
+.B done
+with the
+.BR path ,
+or
+.BR error .
+Standard error is unchanged.
 .TP
 .BI \-\-from " seconds" "\fR, \fP" \-\-to " seconds"
 .BR trim :

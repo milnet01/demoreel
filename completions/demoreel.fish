@@ -64,6 +64,7 @@ complete -c demoreel -n __fish_use_subcommand -a record -d 'record an app and wr
 complete -c demoreel -n __fish_use_subcommand -a shot -d 'take one picture of an app and write a PNG'
 complete -c demoreel -n __fish_use_subcommand -a check -d 'test whether this machine can record, without recording'
 complete -c demoreel -n __fish_use_subcommand -a stop -d 'end a running recording early'
+complete -c demoreel -n __fish_use_subcommand -a window -d 'open a window to pick an app and record it; needs PySide6'
 complete -c demoreel -n __fish_use_subcommand -a edit -d 'make a film from a script of scenes'
 complete -c demoreel -n __fish_use_subcommand -a trim -d 'cut the start and the end off a video'
 complete -c demoreel -n __fish_use_subcommand -a caption -d 'put text over part of a video'
@@ -74,7 +75,7 @@ complete -c demoreel -n __fish_use_subcommand -a poster -d 'save one frame of a 
 complete -c demoreel -n __fish_use_subcommand -a thumbnail -d 'save one frame of a video as a YouTube thumbnail'
 complete -c demoreel -n __fish_use_subcommand -a sheet -d 'save several frames of a video, with their times, as one picture'
 
-complete -c demoreel -n '__demoreel_on record shot check stop edit trim caption join card motion poster thumbnail sheet' -s h -l help -d 'show help'
+complete -c demoreel -n '__demoreel_on record shot check stop window edit trim caption join card motion poster thumbnail sheet' -s h -l help -d 'show help'
 
 complete -c demoreel -n '__demoreel_on record' -s o -l output -r -F -d 'video file to write'
 complete -c demoreel -n '__demoreel_on shot' -s o -l output -r -F -d 'picture file to write'
@@ -91,6 +92,7 @@ complete -c demoreel -n '__demoreel_on record shot' -l gpu -d 'for an app that n
 complete -c demoreel -n '__demoreel_on record shot' -l cursor -d 'show the mouse pointer'
 complete -c demoreel -n '__demoreel_on shot' -l region -x -d 'keep only this rectangle of the picture'
 complete -c demoreel -n '__demoreel_on record' -l audio -d "put the app's own sound in the video"
+complete -c demoreel -n '__demoreel_on record' -l events -d 'progress as JSON lines on stdout'
 complete -c demoreel -n '__demoreel_on record shot' -l startup-timeout -x -d "how long to wait for the app's window"
 
 complete -c demoreel -n '__demoreel_on stop' -a '(__demoreel_running)' -d 'running recording'

@@ -255,13 +255,61 @@ def note(msg):
     """Tell the caller something on stderr. A note is advice: if the terminal
     has gone (a hung-up run finishing its video), losing it must not fail
     the recording it was about (DEMO-0115)."""
+    said = to_terminal(msg)
     try:
         progress(None)
-        print(f"demoreel: {to_terminal(msg)}", file=sys.stderr)
+        print(f"demoreel: {said}", file=sys.stderr)
     except OSError:
         # What failed to write is still buffered, and flushing it at exit
         # fails again and turns the exit status to 120. Nobody is reading.
         sys.stderr = open(os.devnull, "w")  # noqa: SIM115 - lives to exit
+    emit("note", text=said)
+
+
+# `record --events`: the run's progress as JSON lines on stdout, for a program
+# driving it, such as `demoreel window`. The contract is
+# docs/specs/DEMO-0086-recording-window.md § 4.3. Names and paths never pass
+# through tr(); only `text` is translated, and it is for showing.
+_events = False
+_last_time = None
+PR_SET_PDEATHSIG = 1  # linux/prctl.h
+
+
+def start_events():
+    """Turn the events on, and on Linux ask for SIGHUP when the parent exits:
+    the program reading them is driving the run, so when it goes the run
+    finishes its video, as on a closed terminal (DEMO-0115)."""
+    global _events  # noqa: PLW0603 - one feed for the run
+    _events = True
+    if sys.platform.startswith("linux"):
+        with contextlib.suppress(OSError, AttributeError):
+            ctypes.CDLL(None, use_errno=True).prctl(PR_SET_PDEATHSIG, signal.SIGHUP)
+
+
+def emit(event, **fields):
+    """One event line on stdout, flushed as written. A write that fails means
+    the reader has gone: the events stop, and the run finishes its video."""
+    global _events  # noqa: PLW0603 - one feed for the run
+    if not _events:
+        return
+    try:
+        # json.dumps escapes everything but ASCII, so a path that is not UTF-8
+        # travels as its surrogate escapes and os.fsencode gives its bytes back.
+        sys.stdout.write(json.dumps({"event": event, **fields}) + "\n")
+        sys.stdout.flush()
+    except OSError:
+        _events = False
+        sys.stdout = open(os.devnull, "w")  # noqa: SIM115 - lives to exit
+        _stop.set()
+
+
+def emit_time(**field):
+    """A `time` event, only when its number has changed: the countdown runs
+    five times a second."""
+    global _last_time  # noqa: PLW0603 - one countdown per run
+    if field != _last_time:
+        _last_time = field
+        emit("time", **field)
 
 
 # Translation: docs/specs/DEMO-0060-translation-catalogs.md is the contract.
@@ -2957,13 +3005,15 @@ def run_countdown(a, env, app, window, display, recorder, width, height,
             if recorder.poll() is not None:
                 break
             if deadline:
-                progress(tr("recording, {seconds}s left",
-                            seconds=math.ceil(deadline - now)))
+                left = math.ceil(deadline - now)
+                progress(tr("recording, {seconds}s left", seconds=left))
+                emit_time(left=left)
             else:
                 seconds = int(now - started)
                 # translators: {time} is the time recorded so far, minutes:seconds, such as 1:05.
                 progress(tr("recording for {time} (Ctrl+C to finish)",
                             time=f"{seconds // 60}:{seconds % 60:02d}"))
+                emit_time(elapsed=seconds)
             if app.poll() is not None:
                 note(tr("the app closed; ending the recording."))
                 break
@@ -3078,6 +3128,8 @@ def summarise(output):
 
 
 def cmd_record(a):
+    if a.events:
+        start_events()
     check_name(a.name)
     command, width, height, output, applog = prepare(a, ".mp4")
 
@@ -3136,6 +3188,7 @@ def cmd_record(a):
                                             height, part, logpath, sound)
         started = time.monotonic() - lag
         write_state(statefile, dict(state, display=display, recording=True))
+        emit("recording")
         note(tr("recording {display} to {output} (until stopped)",
                 display=display, output=output) if a.duration == 0 else
              tr("recording {display} to {output} ({seconds}s)",
@@ -3143,6 +3196,7 @@ def cmd_record(a):
 
         run_countdown(a, env, app, window, display, recorder, width, height,
                       started, checks)
+        emit("finishing")
         # Nothing has asked the recorder to stop yet, so if it has gone it went
         # on its own. A display that died takes the app with it, which looks
         # like an app that closed, so that is asked too, and last: the app can
@@ -3203,7 +3257,10 @@ def cmd_record(a):
         stale.unlink(missing_ok=True)  # only worth keeping when something failed
     # With the path it ended at, which `stop` prints: a made-up name can change.
     write_state(statefile, dict(state, output=str(output), result="ok"))
-    print(output)
+    if a.events:
+        emit("done", path=str(output))
+    else:
+        print(output)
 
 
 def take_picture(env, display, width, height, cursor, output, gpu):
@@ -3612,6 +3669,578 @@ CARD_TEXT_SIZE = 7
 CARD_SECONDS = 3
 CAPTION_TEXT_SIZE = 5
 CARD_BACKGROUND = "#101418"
+
+
+# The window: docs/specs/DEMO-0086-recording-window.md is the contract. It
+# runs `demoreel record --events` as a child and reads its events; it never
+# imports the engine. PySide6 is imported by cmd_window alone, so every other
+# command runs without it (INV-1). The functions named window_* and desktop_*,
+# exec_to_argv and cmd_window are the window's: ci.sh walks them for a shell
+# and for a call that waits (INV-6, INV-13).
+
+# Field codes of the Desktop Entry Specification, the deprecated ones too.
+DESKTOP_FIELD_CODES = "fFuUickdDnNvm"
+# The characters it reserves: an argument holding one must be quoted. A space
+# separates arguments.
+DESKTOP_RESERVED = frozenset("\t\n\"'\\><~|&;$*?#()`")
+DESKTOP_STRING_ESCAPES = {"s": " ", "n": "\n", "t": "\t", "r": "\r", "\\": "\\"}
+DESKTOP_FILE_LIMIT = 1024 * 1024
+# The most of a run's stderr the window keeps to show, from its end (§ 13).
+WINDOW_STDERR_KEPT = 1024 * 1024
+# Sizes the size list offers beside record's default; the person may type any.
+WINDOW_SIZES = ("1280x720", "1280x800", "1920x1080")
+# How long the window waits before running a Stop again that came too early.
+WINDOW_STOP_RETRY_MS = 200
+
+
+def desktop_string(value):
+    """A desktop entry's string value with its escapes undone (\\s \\n \\t
+    \\r \\\\); any other backslash is kept as it is."""
+    return re.sub(r"\\([sntr\\])", lambda m: DESKTOP_STRING_ESCAPES[m[1]], value)
+
+
+def exec_to_argv(value):
+    """An Exec value as the argument list it names, or None where it is not
+    one the Desktop Entry Specification allows. Linux only: elsewhere, None.
+
+    The string escapes come off first, then the quotes, as the specification
+    orders them. A field code is removed, since the window passes no file;
+    `%%` is a `%`.
+    """
+    if not sys.platform.startswith("linux"):
+        return None
+    text, argv, at = desktop_string(value), [], 0
+    while at < len(text):
+        if text[at] == " ":
+            at += 1
+            continue
+        if text[at] == '"':
+            word, at = [], at + 1
+            while at < len(text) and text[at] != '"':
+                if text[at] == "\\":
+                    if at + 1 == len(text) or text[at + 1] not in '"`$\\':
+                        return None
+                    at += 1
+                word.append(text[at])
+                at += 1
+            if at == len(text) or (at + 1 < len(text) and text[at + 1] != " "):
+                return None  # an open quote, or a quote that does not end its word
+            at += 1
+            pieces = "".join(word).split("%%")
+            if any("%" in piece for piece in pieces):
+                return None  # a field code inside quotes
+            argv.append("%".join(pieces))
+            continue
+        end = text.find(" ", at)
+        end = len(text) if end < 0 else end
+        word, at = text[at:end], end
+        if DESKTOP_RESERVED.intersection(word):
+            return None
+        pieces = word.split("%%")
+        codes = [code for piece in pieces for code in re.findall(r"%(.?)", piece)]
+        if any(not code or code not in DESKTOP_FIELD_CODES for code in codes):
+            return None
+        word = "%".join(re.sub(r"%.", "", piece) for piece in pieces)
+        if word or not codes:
+            argv.append(word)
+    return argv or None
+
+
+def desktop_entry(path):
+    """The [Desktop Entry] group of a .desktop file as a dict of its keys, or
+    None where the file cannot be read as one."""
+    try:
+        with open(path, "rb") as file:
+            data = file.read(DESKTOP_FILE_LIMIT + 1)
+        text = data.decode("utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+    if len(data) > DESKTOP_FILE_LIMIT:
+        return None
+    group, entry = None, {}
+    for raw in text.split("\n"):
+        line = raw.rstrip("\r")
+        if line.startswith("["):
+            group = line.strip()
+        elif group == "[Desktop Entry]" and "=" in line and not line.startswith("#"):
+            key, _, value = line.partition("=")
+            entry.setdefault(key.strip(), value.lstrip(" "))
+    return entry
+
+
+def window_apps(env, languages):
+    """(name, argv) for each application the menus list, by name. The XDG
+    rules decide where to look, and the first file found for an id wins, even
+    one that hides it. Linux only: elsewhere, none."""
+    if not sys.platform.startswith("linux"):
+        return []
+    home = env.get("XDG_DATA_HOME") or os.path.join(os.path.expanduser("~"), ".local", "share")
+    dirs = [home, *(d for d in (env.get("XDG_DATA_DIRS") or "/usr/local/share:/usr/share")
+                    .split(":") if d)]
+    seen, apps = set(), []
+    for base in dirs:
+        root = os.path.join(base, "applications")
+        for folder, subfolders, files in os.walk(root):  # a folder it cannot read is skipped
+            subfolders.sort()
+            for file in sorted(f for f in files if f.endswith(".desktop")):
+                path = os.path.join(folder, file)
+                app_id = os.path.relpath(path, root).replace(os.sep, "-")
+                if app_id in seen:
+                    continue
+                seen.add(app_id)
+                entry = desktop_entry(path) or {}
+                if (entry.get("Type") != "Application" or entry.get("NoDisplay") == "true"
+                        or entry.get("Hidden") == "true"):
+                    continue
+                argv = exec_to_argv(entry.get("Exec", ""))
+                if argv is None:
+                    continue
+                name = next((entry[key] for key in [*(f"Name[{c}]" for c in languages), "Name"]
+                             if entry.get(key)), app_id)
+                apps.append((desktop_string(name), argv))
+    return sorted(apps, key=lambda app: app[0].casefold())
+
+
+def window_options(size, duration, gpu, cursor, audio):
+    """`record`'s options for the form's values, as a person would type them."""
+    options = ["-s", size, "-d", f"{duration:g}"]
+    if gpu:
+        options.append("--gpu")
+    elif cursor:
+        options.append("--cursor")  # prepare refuses it beside --gpu
+    if audio:
+        options.append("--audio")
+    return options
+
+
+def window_text_problem(text):
+    """Why a text from the form cannot reach the child, or None. QProcess
+    carries text, and a lone surrogate, a byte that was not UTF-8, arrived as
+    an empty argument (measured, § 4.4)."""
+    try:
+        text.encode("utf-8")
+    except UnicodeEncodeError:
+        return tr("This holds a character that is not UTF-8, so the window cannot "
+                  "pass it on.")
+    return None
+
+
+def window_class(QtCore, QtGui, QtWidgets):
+    """The recording window's class. Made here, from the modules cmd_window
+    imported, so that nothing at module level needs PySide6 (INV-1)."""
+
+    class RecordingWindow(QtWidgets.QWidget):
+        apps_read = QtCore.Signal(list)
+
+        def __init__(self, parser, script):
+            super().__init__()
+            self.script, self.runs = script, 0
+            self.record_child = self.stop_child = None
+            self.closing = False
+            self.events_kept, self.stderr_kept, self.final = b"", b"", None
+            # What is announced to screen readers, made once so it is in the
+            # language chosen (INV-12, INV-15).
+            self.said = {"started": tr("Recording started."),
+                         "done": tr("The video is ready."),
+                         "failed": tr("The recording failed.")}
+            self.setWindowTitle("demoreel")
+            self.build_form(parser)
+            self.apps_read.connect(self.show_apps)
+            threading.Thread(target=self.read_apps, daemon=True).start()
+            self.form_changed()
+
+        def build_form(self, parser):
+            """The controls, made in the order they are read, which is the
+            order Tab visits them (INV-11). Each row's label is its buddy."""
+            def default(name):
+                return parser.get_default(name)
+
+            page, form = QtWidgets.QVBoxLayout(self), QtWidgets.QFormLayout()
+            page.addLayout(form)
+
+            self.command = QtWidgets.QLineEdit()
+            form.addRow(tr("App command:"), self.command)
+            self.command_problem = QtWidgets.QLabel()
+            self.command_problem.setWordWrap(True)
+            form.addRow(self.command_problem)
+
+            self.search = QtWidgets.QLineEdit()
+            form.addRow(tr("Search the installed applications:"), self.search)
+            self.apps = QtWidgets.QListWidget()
+            self.apps.addItem(tr("Reading the installed applications…"))
+            self.apps.setEnabled(False)
+            form.addRow(tr("Installed applications:"), self.apps)
+            self.choose_program = QtWidgets.QPushButton(tr("Choose a program file…"))
+            form.addRow(self.choose_program)
+
+            self.size = QtWidgets.QComboBox()
+            self.size.setEditable(True)
+            self.size.addItems(list(dict.fromkeys([default("size"), *WINDOW_SIZES])))
+            form.addRow(tr("Size:"), self.size)
+            self.length = QtWidgets.QSpinBox()
+            self.length.setRange(1, 24 * 60 * 60)
+            self.until_stopped = QtWidgets.QCheckBox(tr("Record until stopped"))
+            if default("duration"):
+                self.length.setValue(int(default("duration")))
+            else:
+                self.until_stopped.setChecked(True)
+            form.addRow(tr("Length in seconds:"), self.length)
+            form.addRow(self.until_stopped)
+            self.gpu = QtWidgets.QCheckBox(tr("The app needs the graphics card"))
+            self.gpu.setChecked(default("gpu"))
+            self.cursor = QtWidgets.QCheckBox(tr("Show the pointer"))
+            self.cursor.setChecked(default("cursor"))
+            self.audio = QtWidgets.QCheckBox(tr("Record the app's sound"))
+            self.audio.setChecked(default("audio"))
+            for box in (self.gpu, self.cursor, self.audio):
+                form.addRow(box)
+
+            self.folder = QtWidgets.QLineEdit(window_folder(QtCore))
+            form.addRow(tr("Save in folder:"), self.folder)
+            self.folder_problem = QtWidgets.QLabel()
+            self.folder_problem.setWordWrap(True)
+            form.addRow(self.folder_problem)
+            self.choose_folder = QtWidgets.QPushButton(tr("Choose a folder…"))
+            form.addRow(self.choose_folder)
+
+            self.equivalent = QtWidgets.QLineEdit()
+            self.equivalent.setReadOnly(True)
+            form.addRow(tr("The same from the command line:"), self.equivalent)
+            self.copy = QtWidgets.QPushButton(tr("Copy the command"))
+            form.addRow(self.copy)
+
+            buttons = QtWidgets.QHBoxLayout()
+            self.record = QtWidgets.QPushButton(tr("Record"))
+            self.stop = QtWidgets.QPushButton(tr("Stop"))
+            self.stop.setEnabled(False)
+            buttons.addWidget(self.record)
+            buttons.addWidget(self.stop)
+            page.addLayout(buttons)
+            self.status = QtWidgets.QLabel()
+            self.status.setWordWrap(True)
+            page.addWidget(self.status)
+            self.error = QtWidgets.QPlainTextEdit()
+            self.error.setReadOnly(True)
+            self.error.setAccessibleName(tr("What went wrong"))
+            self.error.hide()
+            page.addWidget(self.error)
+            result = QtWidgets.QFormLayout()
+            self.video = QtWidgets.QLineEdit()
+            self.video.setReadOnly(True)
+            result.addRow(tr("The video:"), self.video)
+            opens = QtWidgets.QHBoxLayout()
+            self.open_video = QtWidgets.QPushButton(tr("Open the video"))
+            self.open_folder = QtWidgets.QPushButton(tr("Open its folder"))
+            opens.addWidget(self.open_video)
+            opens.addWidget(self.open_folder)
+            result.addRow(opens)
+            self.result = QtWidgets.QWidget()
+            self.result.setLayout(result)
+            self.result.hide()
+            page.addWidget(self.result)
+
+            for edit in (self.command, self.folder):
+                edit.textChanged.connect(self.form_changed)
+            self.size.currentTextChanged.connect(self.form_changed)
+            self.length.valueChanged.connect(self.form_changed)
+            for box in (self.until_stopped, self.gpu, self.cursor, self.audio):
+                box.toggled.connect(self.form_changed)
+            self.search.textChanged.connect(self.filter_apps)
+            self.apps.itemActivated.connect(self.use_app)
+            self.choose_program.clicked.connect(self.pick_program)
+            self.choose_folder.clicked.connect(self.pick_folder)
+            self.copy.clicked.connect(
+                lambda: QtGui.QGuiApplication.clipboard().setText(self.equivalent.text()))
+            self.record.clicked.connect(self.start_run)
+            self.stop.clicked.connect(self.stop_run)
+            self.open_video.clicked.connect(lambda: self.open_path(self.video.text()))
+            self.open_folder.clicked.connect(
+                lambda: self.open_path(os.path.dirname(self.video.text())))
+
+        # --- the form ---
+
+        def app_argv(self):
+            """(the app's argv, why it cannot be used); one of them is None."""
+            text = self.command.text()
+            if not text.strip():
+                return None, ""
+            try:
+                argv = shlex.split(text)
+            except ValueError:
+                return None, tr("The app command cannot be split into words: check "
+                                "its quotes and backslashes.")
+            problem = window_text_problem(text)
+            return (None, problem) if problem else (argv, None)
+
+        def options(self):
+            return window_options(self.size.currentText(),
+                                  0 if self.until_stopped.isChecked() else self.length.value(),
+                                  self.gpu.isChecked(), self.cursor.isChecked(),
+                                  self.audio.isChecked())
+
+        def form_changed(self):
+            """Keep the controls agreeing with each other and with the command."""
+            self.length.setEnabled(not self.until_stopped.isChecked())
+            self.cursor.setEnabled(not self.gpu.isChecked())
+            argv, problem = self.app_argv()
+            self.command_problem.setText(problem or "")
+            self.command_problem.setVisible(bool(problem))
+            folder = self.folder.text()
+            folder_problem = window_text_problem(folder) or (
+                None if os.path.isdir(folder) else tr("This is not a folder."))
+            self.folder_problem.setText(folder_problem or "")
+            self.folder_problem.setVisible(bool(folder_problem))
+            self.equivalent.setText(
+                shlex.join(["demoreel", "record", *self.options(), "--", *argv]) if argv else "")
+            self.copy.setEnabled(bool(argv))
+            self.record.setEnabled(bool(argv) and not folder_problem
+                                   and self.record_child is None)
+
+        def read_apps(self):
+            """On its own thread: reading every folder of entries can take a
+            while, and the window must not wait for it (INV-13)."""
+            self.apps_read.emit(window_apps(os.environ, chosen_languages(os.environ)))
+
+        def show_apps(self, apps):
+            self.apps.clear()
+            for name, argv in apps:
+                item = QtWidgets.QListWidgetItem(name)
+                item.setData(QtCore.Qt.ItemDataRole.UserRole, argv)
+                self.apps.addItem(item)
+            self.apps.setEnabled(True)
+            self.filter_apps(self.search.text())
+
+        def filter_apps(self, text):
+            wanted = text.casefold()
+            for row in range(self.apps.count()):
+                item = self.apps.item(row)
+                item.setHidden(wanted not in item.text().casefold())
+
+        def use_app(self, item):
+            argv = item.data(QtCore.Qt.ItemDataRole.UserRole)
+            if argv:
+                self.command.setText(shlex.join(argv))
+                self.command.setFocus()
+
+        def file_dialog(self, title, on_chosen):
+            """Qt's own dialog, opened without waiting on it. A desktop's own
+            dialog would keep its state in that desktop's files (INV-9)."""
+            dialog = QtWidgets.QFileDialog(self, title, self.folder.text())
+            dialog.setOption(QtWidgets.QFileDialog.Option.DontUseNativeDialog)
+            dialog.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose)
+            dialog.fileSelected.connect(on_chosen)
+            return dialog
+
+        def pick_program(self):
+            dialog = self.file_dialog(tr("Choose a program file"),
+                                      lambda path: self.command.setText(shlex.quote(path)))
+            dialog.setFileMode(QtWidgets.QFileDialog.FileMode.ExistingFile)
+            dialog.open()
+
+        def pick_folder(self):
+            dialog = self.file_dialog(tr("Choose a folder"), self.folder.setText)
+            dialog.setFileMode(QtWidgets.QFileDialog.FileMode.Directory)
+            dialog.setOption(QtWidgets.QFileDialog.Option.ShowDirsOnly)
+            dialog.open()
+
+        # --- a run ---
+
+        def child(self, args):
+            """A child running this demoreel, never through a shell (INV-6)."""
+            process = QtCore.QProcess(self)
+            process.setProgram(sys.executable)
+            process.setArguments([self.script, *args])
+            return process
+
+        def start_run(self):
+            argv, _ = self.app_argv()
+            if argv is None or self.record_child is not None:
+                return
+            self.runs += 1
+            self.run_name = f"window-{os.getpid()}-{self.runs}"
+            self.events_kept, self.stderr_kept, self.final = b"", b"", None
+            child = self.child(["record", "--events", "-n", self.run_name,
+                                *self.options(), "--", *argv])
+            child.setWorkingDirectory(self.folder.text())
+            child.readyReadStandardOutput.connect(self.read_events)
+            child.readyReadStandardError.connect(self.read_stderr)
+            child.finished.connect(self.run_ended)
+            child.errorOccurred.connect(self.child_failed)
+            self.record_child = child
+            self.error.hide()
+            self.result.hide()
+            self.status.setText(tr("Starting…"))
+            self.record.setEnabled(False)
+            self.stop.setEnabled(True)
+            self.stop.setFocus()
+            # From this, the main thread: the kernel's death signal follows the
+            # thread that started the child (§ 4.3).
+            child.start()
+            child.closeWriteChannel()
+
+        def stop_run(self):
+            """Ask the run to stop, as `demoreel stop` would. Run again if the
+            run could not be addressed yet."""
+            if self.record_child is None or self.stop_child is not None:
+                return
+            self.status.setText(tr("Stopping…"))
+            self.stop_child = self.child(["stop", self.run_name])
+            self.stop_child.finished.connect(self.stop_ended)
+            self.stop_child.start()
+
+        def stop_ended(self, status, _exit_status):
+            self.stop_child.deleteLater()
+            self.stop_child = None
+            if status != 0 and self.record_child is not None:
+                QtCore.QTimer.singleShot(WINDOW_STOP_RETRY_MS, self.stop_run)
+            elif self.closing:
+                self.close()
+
+        def read_stderr(self):
+            data = bytes(self.record_child.readAllStandardError())
+            self.stderr_kept = (self.stderr_kept + data)[-WINDOW_STDERR_KEPT:]
+
+        def read_events(self):
+            self.events_kept += bytes(self.record_child.readAllStandardOutput())
+            *lines, self.events_kept = self.events_kept.split(b"\n")
+            for line in filter(None, lines):
+                try:
+                    event = json.loads(line)
+                    kind = event["event"]
+                except (ValueError, TypeError, KeyError):
+                    # A demoreel bug by INV-2: show it, and go on reading.
+                    self.status.setText(line.decode("utf-8", "replace"))
+                    continue
+                self.on_event(kind, event)
+
+        def on_event(self, kind, event):
+            if kind == "note":
+                self.status.setText(event.get("text", ""))
+            elif kind == "recording":
+                self.announce(self.said["started"])
+            elif kind == "time" and "left" in event:
+                self.status.setText(tr("recording, {seconds}s left", seconds=event["left"]))
+            elif kind == "time" and "elapsed" in event:
+                seconds = event["elapsed"]
+                # translators: {time} is the time recorded so far, minutes:seconds, such as 1:05.
+                self.status.setText(tr("recording for {time}",
+                                       time=f"{seconds // 60}:{seconds % 60:02d}"))
+            elif kind == "finishing":
+                self.status.setText(tr("Finishing the video…"))
+            elif kind in ("done", "error"):
+                self.final = event
+
+        def child_failed(self, error):
+            if error == QtCore.QProcess.ProcessError.FailedToStart:
+                self.run_ended(None, None, why=self.record_child.errorString())
+
+        def run_ended(self, status, _exit_status, why=None):
+            """The record child has gone: show what it ended on."""
+            if self.record_child is None:
+                return
+            self.read_events()
+            self.read_stderr()
+            self.record_child.deleteLater()
+            self.record_child = None
+            self.stop.setEnabled(False)
+            final = self.final or {}
+            if final.get("event") == "done":
+                self.status.setText(self.said["done"])
+                self.video.setText(final.get("path", ""))
+                self.result.show()
+                self.open_video.setFocus()
+                self.announce(self.said["done"])
+            else:
+                text = final.get("text") if final.get("event") == "error" else None
+                if text is None:
+                    text = why or "\n".join(filter(None, [
+                        tr("The recording ended without saying how, with exit status "
+                           "{status}. What it printed:", status=status),
+                        self.stderr_kept.decode("utf-8", "replace")]))
+                self.status.setText(self.said["failed"])
+                self.error.setPlainText(text)
+                self.error.show()
+                self.error.setFocus()
+                self.announce(self.said["failed"])
+            self.form_changed()
+            if self.closing:
+                self.close()  # once the stop child has gone too
+
+        def announce(self, text):
+            QtGui.QAccessible.updateAccessibility(
+                QtGui.QAccessibleAnnouncementEvent(self, text))
+
+        def open_path(self, path):
+            QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(path))
+
+        def closeEvent(self, event):
+            """Closing during a run stops it, and the window goes once the
+            video is finished and the stop has returned."""
+            if self.record_child is None and self.stop_child is None:
+                event.accept()
+                return
+            event.ignore()
+            self.closing = True
+            self.stop_run()
+            self.status.setText(tr("Finishing the video before the window closes…"))
+
+    return RecordingWindow
+
+
+def window_record_parser():
+    """The `record` parser: the form starts from its defaults (INV-14)."""
+    sub = next(action for action in build_parser()._actions
+               if isinstance(action, argparse._SubParsersAction))
+    return sub.choices["record"]
+
+
+def window_folder(QtCore):
+    """Where a run's video goes by default: the Videos folder, or home."""
+    movies = QtCore.QStandardPaths.writableLocation(
+        QtCore.QStandardPaths.StandardLocation.MoviesLocation)
+    return movies if movies and os.path.isdir(movies) else os.path.expanduser("~")
+
+
+def window_qt_translations(QtCore, app):
+    """Qt's own strings, a dialog's buttons, from the first chosen language Qt
+    carries (§ 4.7). The translator is kept by being the app's child."""
+    folder = QtCore.QLibraryInfo.path(QtCore.QLibraryInfo.LibraryPath.TranslationsPath)
+    for code in chosen_languages(os.environ):
+        translator = QtCore.QTranslator(app)
+        if translator.load(f"qtbase_{code}", folder):
+            app.installTranslator(translator)
+            return
+
+
+def cmd_window(a):
+    try:
+        from PySide6 import QtCore, QtGui, QtWidgets
+    except ImportError:
+        die(tr("the window needs PySide6, the Qt toolkit for Python, which this "
+               "Python cannot import.\n  Install your distribution's PySide6 "
+               "package for Python 3."))
+    if not hasattr(QtGui, "QAccessibleAnnouncementEvent"):
+        die(tr("the window needs PySide6 6.8 or later, for its screen-reader "
+               "announcements; this one is {version}.", version=QtCore.qVersion()))
+    # main's handlers run only when Python runs, which Qt's loop rarely lets
+    # happen: left in place, they would make the window deaf to all three.
+    for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+        signal.signal(sig, signal.SIG_DFL)
+    app = QtWidgets.QApplication(sys.argv[:1])
+    window_qt_translations(QtCore, app)
+    if _catalogs and re.split(r"[_@]", _catalogs[0][0])[0] in RTL_LANGUAGES:
+        app.setLayoutDirection(QtCore.Qt.LayoutDirection.RightToLeft)
+    # A Qt file dialog writes its last folder and its history to Qt's own
+    # settings file when it closes, whatever its options (measured). The
+    # window remembers nothing (INV-9), so that file goes to a folder that is
+    # removed when the window closes.
+    with tempfile.TemporaryDirectory(prefix="demoreel-window-") as private:
+        for kind in (QtCore.QSettings.Format.NativeFormat, QtCore.QSettings.Format.IniFormat):
+            QtCore.QSettings.setPath(kind, QtCore.QSettings.Scope.UserScope, private)
+        window = window_class(QtCore, QtGui, QtWidgets)(window_record_parser(),
+                                                         os.path.realpath(__file__))
+        window.show()
+        app.exec()
 
 
 class _CaptionText(argparse.Action):
@@ -6946,6 +7575,10 @@ def build_parser():
                                   "on your speakers. Needs pactl"))
     rec.add_argument("--startup-timeout", type=seconds, default=20, metavar="SECONDS",
                      help=tr_help("how long to wait for the app's window (default: 20)"))
+    rec.add_argument("--events", action="store_true",
+                     help=tr_help("for a program driving the run: write its progress "
+                                  "on stdout, one JSON object per line, the last "
+                                  "holding the video's path or the error"))
     rec.add_argument("command", nargs=argparse.REMAINDER,
                      help=tr_help("-- followed by the command that starts the app"))
     rec.set_defaults(func=cmd_record)
@@ -7004,6 +7637,10 @@ def build_parser():
     stop.add_argument("name", nargs="?", help=tr_help("which run to stop (default: the "
                                                       "only one running)"))
     stop.set_defaults(func=cmd_stop)
+
+    window = sub.add_parser("window", help=tr_help("open a window to pick an app and "
+                                                   "record it; needs PySide6"))
+    window.set_defaults(func=cmd_window)
 
     # The finishing commands (README, Finishing a recording). They read and
     # write files; none starts a display or takes a run name. The summary and
@@ -7227,7 +7864,19 @@ def main():
     # started, before anything held it to end (DEMO-0352). record takes it over.
     for sig in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
         signal.signal(sig, _exit_on_signal)
-    args.func(args)
+    try:
+        args.func(args)
+    except SystemExit as exc:
+        # die() is caught and turned into a note in places, so the error
+        # event is written here, where nothing can catch it: it is the last
+        # line. Its text is the stderr line after `demoreel: `.
+        if exc.code not in (None, 0):
+            emit("error", text=str(exc.code).removeprefix("demoreel: "))
+        raise
+    except Exception as exc:
+        # A demoreel bug, printed as a traceback; the feed still ends.
+        emit("error", text=f"{type(exc).__name__}: {exc}")
+        raise
 
 
 if __name__ == "__main__":

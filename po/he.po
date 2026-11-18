@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: he\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Demoreel-Review: reviewed f3086d7f4415f7eb\n"
+"X-Demoreel-Review: reviewed bc7f8de8c6f83884\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: הטקסט {words} מוצג יחד עם {first} באותו מקום, ולאחד יש פס ולשני אין. לטקסטים שנערמים יחד יש פס לכולם או לאף אחד."
@@ -1572,3 +1572,127 @@ msgstr "פריימים שנוצרו: {made}; פריימים מתוכננים: {p
 #. argparse formats this text with %
 msgid "This translation has been checked by machine, but not yet by a native speaker."
 msgstr "תרגום זה נבדק באופן ממוחשב, אך דובר עברית שפת אם עדיין לא בדק אותו."
+
+#. argparse formats this text with %
+msgid "for a program driving the run: write its progress on stdout, one JSON object per line, the last holding the video's path or the error"
+msgstr "לתוכנית שמנהלת את ההרצה: כתיבת ההתקדמות לפלט התקני, אובייקט JSON אחד בכל שורה, והאחרון מכיל את נתיב הסרטון או את השגיאה"
+
+msgid "This holds a character that is not UTF-8, so the window cannot pass it on."
+msgstr "זה מכיל תו שאינו UTF-8, ולכן החלון לא יכול להעביר אותו."
+
+msgid "Recording started."
+msgstr "ההקלטה התחילה."
+
+msgid "The video is ready."
+msgstr "הסרטון מוכן."
+
+msgid "The recording failed."
+msgstr "ההקלטה נכשלה."
+
+msgid "App command:"
+msgstr "פקודת היישום:"
+
+msgid "Search the installed applications:"
+msgstr "חיפוש ביישומים המותקנים:"
+
+msgid "Reading the installed applications…"
+msgstr "קורא את היישומים המותקנים…"
+
+msgid "Installed applications:"
+msgstr "יישומים מותקנים:"
+
+msgid "Choose a program file…"
+msgstr "בחירת קובץ תוכנית…"
+
+msgid "Size:"
+msgstr "גודל:"
+
+msgid "Record until stopped"
+msgstr "הקלטה עד לעצירה"
+
+msgid "Length in seconds:"
+msgstr "אורך בשניות:"
+
+msgid "The app needs the graphics card"
+msgstr "היישום צריך את כרטיס המסך"
+
+msgid "Show the pointer"
+msgstr "הצגת הסמן"
+
+msgid "Record the app's sound"
+msgstr "הקלטת הקול של היישום"
+
+msgid "Save in folder:"
+msgstr "שמירה בתיקייה:"
+
+msgid "Choose a folder…"
+msgstr "בחירת תיקייה…"
+
+msgid "The same from the command line:"
+msgstr "אותו הדבר משורת הפקודה:"
+
+msgid "Copy the command"
+msgstr "העתקת הפקודה"
+
+msgid "Record"
+msgstr "הקלטה"
+
+msgid "Stop"
+msgstr "עצירה"
+
+msgid "What went wrong"
+msgstr "מה השתבש"
+
+msgid "The video:"
+msgstr "הסרטון:"
+
+msgid "Open the video"
+msgstr "פתיחת הסרטון"
+
+msgid "Open its folder"
+msgstr "פתיחת התיקייה שלו"
+
+msgid "The app command cannot be split into words: check its quotes and backslashes."
+msgstr "אי אפשר לפצל את פקודת היישום למילים: יש לבדוק את המירכאות ואת הלוכסנים ההפוכים שבה."
+
+msgid "This is not a folder."
+msgstr "זו לא תיקייה."
+
+msgid "Choose a program file"
+msgstr "בחירת קובץ תוכנית"
+
+msgid "Choose a folder"
+msgstr "בחירת תיקייה"
+
+msgid "Starting…"
+msgstr "מתחיל…"
+
+msgid "Stopping…"
+msgstr "עוצר…"
+
+#. translators: {time} is the time recorded so far, minutes:seconds, such as 1:05.
+msgid "recording for {time}"
+msgstr "מקליט כבר {time}"
+
+msgid "Finishing the video…"
+msgstr "מסיים את הסרטון…"
+
+msgid "The recording ended without saying how, with exit status {status}. What it printed:"
+msgstr "ההקלטה הסתיימה בלי לומר איך, עם קוד יציאה {status}. מה שהיא הדפיסה:"
+
+msgid "Finishing the video before the window closes…"
+msgstr "מסיים את הסרטון לפני שהחלון נסגר…"
+
+msgid ""
+"the window needs PySide6, the Qt toolkit for Python, which this Python cannot import.\n"
+"  Install your distribution's PySide6 package for Python 3."
+msgstr ""
+"החלון צריך את PySide6, ערכת הכלים של Qt עבור Python, ש־Python הזה לא יכול לייבא.\n"
+"  יש להתקין את חבילת PySide6 של ההפצה שלך עבור Python 3."
+
+msgid "the window needs PySide6 6.8 or later, for its screen-reader announcements; this one is {version}."
+msgstr "החלון צריך PySide6 בגרסה 6.8 ומעלה, להכרזות שלו לקוראי מסך; הגרסה הזאת היא {version}."
+
+#. argparse formats this text with %
+msgid "open a window to pick an app and record it; needs PySide6"
+msgstr "פתיחת חלון לבחירת יישום ולהקלטתו; דורש PySide6"

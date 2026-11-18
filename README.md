@@ -55,7 +55,9 @@ demoreel record -o demo.mp4 -d 10 -- kate
 
 The first says whether your machine can record. The second records Kate, a
 text editor, for ten seconds into `demo.mp4`. Swap `kate` for any app you
-have. [Quick start](#quick-start) goes further.
+have. [Quick start](#quick-start) goes further. If you would rather press
+buttons, `demoreel window` does the same in a window — see
+[The window](#the-window).
 
 ## What you get
 
@@ -272,6 +274,28 @@ plain rectangle may be what you asked for. Only a picture that passes is cut to
 any `--region` and written to `-o`. A failed run prints no path and writes
 nothing to `-o`, so a picture already there stays. Its folder keeps the whole
 screen for a week. The first shot after that removes it.
+
+## The window
+
+```sh
+demoreel window
+```
+
+opens a window that records an app the way `demoreel record` does, because it
+runs `demoreel record` for you. Type the app's command, or pick it from the
+installed applications or as a program file. Set the size, the length or
+"Record until stopped", the graphics-card mode, the pointer and the app's
+sound, and the folder to save in. Press Record, and Stop when you have
+enough. Then open the video or its folder.
+
+Under the form, the window shows the same recording as a command, with a
+button to copy it. The window remembers nothing between launches, so keep that
+command to record the same way again. Errors read as the command line prints
+them.
+
+It needs PySide6, the Qt toolkit for Python. Every other command runs without
+it. Scripted steps are not in the window yet: use `-a` or `--steps` on the
+command line.
 
 ## Finishing a recording
 
@@ -931,6 +955,7 @@ you would only find out by watching it.
 | `--audio` | Put the app's own sound in the video. Off by default. `record` only. |
 | `--region` | Keep only one rectangle of the picture, as `x,y,w,h`. `shot` only; see [Taking a picture](#taking-a-picture). `motion` takes it too, to look at one rectangle of a video. |
 | `--startup-timeout` | How long to wait for the app's window to appear. |
+| `--events` | For a program that drives the run, such as `demoreel window`. stdout then carries one JSON object per line instead of the bare path: `note`, `recording`, `time`, `finishing`, and last `done` with the `path`, or `error`. A `note` or `error` holds its message as `text`, as stderr shows it. `record` only. |
 
 ### `--audio`: the app's own sound
 
@@ -1371,8 +1396,8 @@ and `demoreel shot` only warns.
 
 Checked by running them, not assumed. This section is for maintainers.
 
-- `Xvfb`, `xauth`, `xdotool`, `wmctrl` and `ffmpeg` are installed. `xvfb-run`
-  is not.
+- `Xvfb`, `xauth`, `xdotool`, `wmctrl`, `ffmpeg` and `xvfb-run` are installed.
+  demoreel does not use `xvfb-run`: it starts `Xvfb` itself.
 - `Xvfb :99 -screen 0 1600x1000x24` starts, and `xdotool getdisplaygeometry`
   against it returns `1600 1000`. The virtual display works.
 - X11 automation is reliable *inside* Xvfb. The usual warning that `xdotool`
@@ -1500,7 +1525,8 @@ it and does not restate it.
 
 ## Status
 
-Working. One file, `demoreel`, Python 3 and the standard library only.
+Working. One file, `demoreel`, Python 3 and the standard library only;
+`demoreel window` also needs PySide6.
 
 Verified by recording: a plain app, scripted typing, ending a run early with
 `stop`, two concurrent recordings landing on different displays, and every
