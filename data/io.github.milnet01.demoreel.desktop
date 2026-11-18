@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=demoreel
+GenericName=App Recorder
+Comment=Record an app on a private display, never your desktop
+Exec=demoreel window
+Icon=io.github.milnet01.demoreel
+Terminal=false
+Categories=AudioVideo;Video;Recorder;
+Keywords=screencast;recording;video;demo;

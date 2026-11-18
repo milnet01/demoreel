@@ -886,7 +886,8 @@ if [ "$build" = source ]; then
     # The folders this install will make, which --uninstall takes away again
     # once empty (DEMO-0294). A clean container has none of them.
     absent=''
-    for d in /usr/local/share/zsh /usr/local/share/fish /usr/local/share/bash-completion; do
+    for d in /usr/local/share/zsh /usr/local/share/fish /usr/local/share/bash-completion \
+             /usr/local/share/applications /usr/local/share/icons; do
         [ -e "$d" ] || absent+="$d"$'\n'
     done
     "$src"/packaging/install.sh
@@ -1086,6 +1087,10 @@ if [ "$distro" != arch ] && [ "$build" != obs ]; then
     for t in cage Xwayland wlr-randr wf-recorder; do
         command -v "$t" >/dev/null || fail "$t did not come as a recommended package"
     done
+    # The window's PySide6 came too, where the distro has 6.8 or later.
+    # Ubuntu 24.04 has no PySide6 at all.
+    [ "$distro" = ubuntu ] || python3 -c 'from PySide6 import QtWidgets' \
+        || fail "PySide6 did not come as a recommended package"
 fi
 # INV-6: it can record where the distro's ffmpeg has libx264, and says how to
 # get one where it has not.
@@ -9366,6 +9371,21 @@ if [ "$window_status" != 1 ] || ! grep -q PySide6 "$tmp/nopyside.err"; then
     echo "window without PySide6: exit $window_status, stderr: $(cat "$tmp/nopyside.err")" >&2
     exit 1
 fi
+# DEMO-0091: and the command that installs it on this distro, where
+# install_hint knows one.
+pyside_hint=$(python3 - <<'EOF'
+import importlib.machinery, importlib.util
+loader = importlib.machinery.SourceFileLoader("demoreel", "./demoreel")
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+print(d.install_hint(["PySide6"]).strip())
+EOF
+)
+if [ -n "$pyside_hint" ] && ! grep -qF -- "$pyside_hint" "$tmp/nopyside.err"; then
+    echo "window without PySide6 does not say: $pyside_hint" >&2
+    echo "it said: $(cat "$tmp/nopyside.err")" >&2
+    exit 1
+fi
 echo "every command but window runs without PySide6, and window names what it needs"
 
 # The window's functions, for the walks below: those named window_* and
@@ -9688,6 +9708,26 @@ if python3 -c 'import PySide6.QtWidgets' 2>/dev/null; then
 else
     have_pyside=
 fi
+
+step "the window: its menu entry"
+# DEMO-0091. The entry install.sh places opens the window under the icon
+# placed beside it, and the window names that entry as its own, which is how a
+# Wayland taskbar finds the icon.
+app_id=io.github.milnet01.demoreel
+if command -v desktop-file-validate >/dev/null; then
+    desktop-file-validate "data/$app_id.desktop" || exit 1
+else
+    skipped "the menu entry's validation: no desktop-file-validate"
+fi
+grep -qx 'Exec=demoreel window' "data/$app_id.desktop" \
+    || { echo "the menu entry does not run demoreel window" >&2; exit 1; }
+grep -qx "Icon=$app_id" "data/$app_id.desktop" \
+    || { echo "the menu entry does not name the icon $app_id" >&2; exit 1; }
+python3 -c 'import sys, xml.etree.ElementTree as e; e.parse(sys.argv[1])' "data/$app_id.svg" \
+    || { echo "the icon is not well-formed SVG" >&2; exit 1; }
+grep -qF "setDesktopFileName(\"$app_id\")" demoreel \
+    || { echo "the window does not name $app_id as its desktop entry" >&2; exit 1; }
+echo "the menu entry opens the window, and both name $app_id"
 
 step "the window: remembers nothing"
 # DEMO-0086 INV-9. A settings file is the config file README rules out. A Qt

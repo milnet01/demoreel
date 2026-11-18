@@ -101,6 +101,8 @@ package format calls it. Nothing else decides where a file goes.
 /usr/share/bash-completion/completions/demoreel
 /usr/share/zsh/site-functions/_demoreel
 /usr/share/fish/vendor_completions.d/demoreel.fish
+/usr/share/applications/io.github.milnet01.demoreel.desktop       the menu entry, which opens the window
+/usr/share/icons/hicolor/scalable/apps/io.github.milnet01.demoreel.svg
 ```
 
 The symlink is what keeps DEMO-0060 § 4.2's one rule: `resolve()` follows it
@@ -119,6 +121,7 @@ file (DEMO-0084) also checks the installed one. `#!/usr/bin/env python3` stays.
 |------|--------|--------|------------|
 | required | `python3, xvfb, xauth, xdotool, ffmpeg, fontconfig, fonts-dejavu-core` | `Requires: /usr/bin/python3 /usr/bin/Xvfb /usr/bin/xauth /usr/bin/xdotool /usr/bin/ffmpeg /usr/bin/fc-match font(dejavusans)` | `depends=(python xorg-server-xvfb xorg-xauth xdotool ffmpeg fontconfig ttf-font)` |
 | `--gpu` | `Recommends: cage, xwayland, wlr-randr, wf-recorder` | `Recommends:` the four by `/usr/bin/` path | `optdepends=` the four |
+| the window | `Recommends: python3-pyside6.qtwidgets (>= 6.8)` | `Recommends: python3dist(pyside6) >= 6.8` | `optdepends=` `pyside6` |
 
 **One `.rpm` serves Fedora and openSUSE** because it names files and a
 font capability, not packages. Measured 2026-10-08 with a test package
@@ -127,6 +130,14 @@ and installed all nine programs. `zypper install` in `opensuse/tumbleweed`
 exited 0 and installed the five required programs. The four recommended ones
 came only with `--recommends`, because the container image does not install
 recommended packages by default.
+
+**The window's PySide6 is named by a capability on the `.rpm`**, since
+Fedora and Mageia call the package `python3-pyside6` and openSUSE
+`python313-pyside6`; all three provide `python3dist(pyside6)` (measured
+2026-11-18, DEMO-0091). Debian 12 and Ubuntu 22.04 and 24.04 package no
+PySide6, and apt skips a recommended package it cannot find. Where § 4.4
+installs with recommends, `./ci.sh --packages` checks PySide6 imports,
+except on Ubuntu 24.04.
 
 `ffmpeg` is the distro's. A distro whose `ffmpeg` has no `libx264` installs
 cleanly, and `demoreel check` says what to do (§ 3).

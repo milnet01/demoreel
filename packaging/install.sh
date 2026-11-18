@@ -33,6 +33,8 @@ files=(
     "completions/demoreel.bash share/bash-completion/completions/demoreel  644"
     "completions/_demoreel     share/zsh/site-functions/_demoreel          644"
     "completions/demoreel.fish share/fish/vendor_completions.d/demoreel.fish 644"
+    "data/io.github.milnet01.demoreel.desktop share/applications/io.github.milnet01.demoreel.desktop 644"
+    "data/io.github.milnet01.demoreel.svg share/icons/hicolor/scalable/apps/io.github.milnet01.demoreel.svg 644"
 )
 
 # An install from source keeps a list of what it placed and of the folders it

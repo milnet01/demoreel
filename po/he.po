@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: he\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Demoreel-Review: reviewed 1b26571511777660\n"
+"X-Demoreel-Review: reviewed ff76d58b16ff5c5e\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: הטקסט {words} מוצג יחד עם {first} באותו מקום, ולאחד יש פס ולשני אין. לטקסטים שנערמים יחד יש פס לכולם או לאף אחד."
@@ -1683,13 +1683,6 @@ msgstr "ההקלטה הסתיימה בלי לומר איך, עם קוד יציא
 msgid "Finishing the video before the window closes…"
 msgstr "מסיים את הסרטון לפני שהחלון נסגר…"
 
-msgid ""
-"the window needs PySide6, the Qt toolkit for Python, which this Python cannot import.\n"
-"  Install your distribution's PySide6 package for Python 3."
-msgstr ""
-"החלון צריך את PySide6, ערכת הכלים של Qt עבור Python, ש־Python הזה לא יכול לייבא.\n"
-"  יש להתקין את חבילת PySide6 של ההפצה שלך עבור Python 3."
-
 msgid "the window needs PySide6 6.8 or later, for its screen-reader announcements; this one is {version}."
 msgstr "החלון צריך PySide6 בגרסה 6.8 ומעלה, להכרזות שלו לקוראי מסך; הגרסה הזאת היא {version}."
 
@@ -1720,3 +1713,9 @@ msgstr "הוספת הצעד"
 
 msgid "The step {step} holds a line break, and each step must be one line."
 msgstr "הצעד {step} מכיל מעבר שורה, וכל צעד חייב להיות שורה אחת."
+
+msgid "the window needs PySide6, the Qt toolkit for Python, which this Python cannot import."
+msgstr "החלון צריך את PySide6, ערכת הכלים של Qt עבור Python, ש־Python הזה לא יכול לייבא."
+
+msgid "Install your distribution's PySide6 package for Python 3."
+msgstr "יש להתקין את חבילת PySide6 של ההפצה שלך עבור Python 3."

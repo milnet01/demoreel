@@ -14,7 +14,8 @@ depends=(python xorg-server-xvfb xorg-xauth xdotool ffmpeg fontconfig ttf-font)
 optdepends=('cage: --gpu, for apps that need the graphics card'
             'xorg-xwayland: --gpu'
             'wlr-randr: --gpu'
-            'wf-recorder: record --gpu')
+            'wf-recorder: record --gpu'
+            'pyside6: demoreel window')
 source=("https://github.com/milnet01/demoreel/releases/download/v$pkgver/demoreel-$pkgver.tar.gz")
 sha256sums=('@SHA256@')
 

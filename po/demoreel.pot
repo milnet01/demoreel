@@ -661,9 +661,10 @@ msgstr ""
 msgid "Finishing the video before the window closes…"
 msgstr ""
 
-msgid ""
-"the window needs PySide6, the Qt toolkit for Python, which this Python cannot import.\n"
-"  Install your distribution's PySide6 package for Python 3."
+msgid "Install your distribution's PySide6 package for Python 3."
+msgstr ""
+
+msgid "the window needs PySide6, the Qt toolkit for Python, which this Python cannot import."
 msgstr ""
 
 msgid "the window needs PySide6 6.8 or later, for its screen-reader announcements; this one is {version}."

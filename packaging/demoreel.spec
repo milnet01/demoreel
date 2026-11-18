@@ -22,6 +22,9 @@ Recommends:     /usr/bin/cage
 Recommends:     /usr/bin/Xwayland
 Recommends:     /usr/bin/wlr-randr
 Recommends:     /usr/bin/wf-recorder
+# The window. Fedora, openSUSE and Mageia name PySide6 differently, and
+# all three provide this.
+Recommends:     python3dist(pyside6) >= 6.8
 
 # The installed script is the tagged file, byte for byte (INV-3).
 %undefine __brp_mangle_shebangs
@@ -32,7 +35,7 @@ its own, so nothing of your desktop can end up in frame. It can also trim,
 caption and join recordings, and make a short film from them.
 
 The recommended packages are for --gpu, which records apps that need the
-graphics card.
+graphics card, and for the window, which needs PySide6.
 
 %prep
 %setup -q
@@ -57,3 +60,8 @@ DESTDIR=%{buildroot} PREFIX=%{_prefix} packaging/install.sh
 %dir %{_datadir}/fish
 %dir %{_datadir}/fish/vendor_completions.d
 %{_datadir}/fish/vendor_completions.d/demoreel.fish
+%{_datadir}/applications/io.github.milnet01.demoreel.desktop
+%dir %{_datadir}/icons/hicolor
+%dir %{_datadir}/icons/hicolor/scalable
+%dir %{_datadir}/icons/hicolor/scalable/apps
+%{_datadir}/icons/hicolor/scalable/apps/io.github.milnet01.demoreel.svg

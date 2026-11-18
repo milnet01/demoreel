@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: zh_CN\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Demoreel-Review: reviewed 813abdd646c8268a\n"
+"X-Demoreel-Review: reviewed 6c0ad12928bce140\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}：文字 {words} 与 {first} 同时显示在同一位置，但一个有底条，另一个没有。叠在一起的文字要么都有底条，要么都没有。"
@@ -1677,13 +1677,6 @@ msgstr "录制结束时没有说明原因，退出状态为 {status}。它输出
 msgid "Finishing the video before the window closes…"
 msgstr "正在窗口关闭前完成视频…"
 
-msgid ""
-"the window needs PySide6, the Qt toolkit for Python, which this Python cannot import.\n"
-"  Install your distribution's PySide6 package for Python 3."
-msgstr ""
-"窗口需要 PySide6（Python 的 Qt 工具包），但此 Python 无法导入它。\n"
-"  请为 Python 3 安装您的发行版提供的 PySide6 软件包。"
-
 msgid "the window needs PySide6 6.8 or later, for its screen-reader announcements; this one is {version}."
 msgstr "窗口需要 PySide6 6.8 或更高版本，用于向屏幕阅读器发出通知；当前版本为 {version}。"
 
@@ -1714,3 +1707,9 @@ msgstr "添加步骤"
 
 msgid "The step {step} holds a line break, and each step must be one line."
 msgstr "步骤 {step} 含有换行符，每个步骤只能占一行。"
+
+msgid "the window needs PySide6, the Qt toolkit for Python, which this Python cannot import."
+msgstr "窗口需要 PySide6（Python 的 Qt 工具包），但此 Python 无法导入它。"
+
+msgid "Install your distribution's PySide6 package for Python 3."
+msgstr "请为 Python 3 安装您的发行版提供的 PySide6 软件包。"

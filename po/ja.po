@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: ja\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Demoreel-Review: reviewed 1c7fbd280bf25ebf\n"
+"X-Demoreel-Review: reviewed dbd615494dc26022\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: テキスト {words} は {first} と同時に同じ位置に表示されますが、一方には帯があり、もう一方にはありません。重ねて並べるテキストは、すべて帯ありか、すべて帯なしのどちらかでなければなりません。"
@@ -1677,13 +1677,6 @@ msgstr "録画は理由を告げずに終了しました (終了ステータス 
 msgid "Finishing the video before the window closes…"
 msgstr "ウィンドウを閉じる前に動画を仕上げています…"
 
-msgid ""
-"the window needs PySide6, the Qt toolkit for Python, which this Python cannot import.\n"
-"  Install your distribution's PySide6 package for Python 3."
-msgstr ""
-"ウィンドウには Python 用の Qt ツールキット PySide6 が必要ですが、この Python ではインポートできません。\n"
-"  お使いのディストリビューションの Python 3 用 PySide6 パッケージをインストールしてください。"
-
 msgid "the window needs PySide6 6.8 or later, for its screen-reader announcements; this one is {version}."
 msgstr "ウィンドウにはスクリーンリーダーへの通知のため PySide6 6.8 以降が必要です。このバージョンは {version} です。"
 
@@ -1714,3 +1707,9 @@ msgstr "ステップを追加"
 
 msgid "The step {step} holds a line break, and each step must be one line."
 msgstr "ステップ {step} に改行が含まれています。各ステップは 1 行で書いてください。"
+
+msgid "the window needs PySide6, the Qt toolkit for Python, which this Python cannot import."
+msgstr "ウィンドウには Python 用の Qt ツールキット PySide6 が必要ですが、この Python ではインポートできません。"
+
+msgid "Install your distribution's PySide6 package for Python 3."
+msgstr "お使いのディストリビューションの Python 3 用 PySide6 パッケージをインストールしてください。"

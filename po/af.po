@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: af\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Demoreel-Review: reviewed 721d941cb7cc22ed\n"
+"X-Demoreel-Review: reviewed 22d83795603a2ee7\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: die teks {words} is saam met {first} op dieselfde plek op die skerm, en een het 'n band en die ander nie. Tekste wat saam gestapel is, het almal 'n band of geeneen nie."
@@ -1683,13 +1683,6 @@ msgstr "Die opname het geëindig sonder om te sê hoe, met uittreestatus {status
 msgid "Finishing the video before the window closes…"
 msgstr "Die video word klaargemaak voordat die venster toemaak…"
 
-msgid ""
-"the window needs PySide6, the Qt toolkit for Python, which this Python cannot import.\n"
-"  Install your distribution's PySide6 package for Python 3."
-msgstr ""
-"die venster het PySide6 nodig, die Qt-gereedskapstel vir Python, wat hierdie Python nie kan invoer nie.\n"
-"  Installeer u verspreiding se PySide6-pakket vir Python 3."
-
 msgid "the window needs PySide6 6.8 or later, for its screen-reader announcements; this one is {version}."
 msgstr "die venster het PySide6 6.8 of nuwer nodig, vir sy aankondigings aan skermlesers; hierdie een is {version}."
 
@@ -1720,3 +1713,9 @@ msgstr "Voeg die stap by"
 
 msgid "The step {step} holds a line break, and each step must be one line."
 msgstr "Die stap {step} bevat 'n reëlbreuk, en elke stap moet een reël wees."
+
+msgid "the window needs PySide6, the Qt toolkit for Python, which this Python cannot import."
+msgstr "die venster het PySide6 nodig, die Qt-gereedskapstel vir Python, wat hierdie Python nie kan invoer nie."
+
+msgid "Install your distribution's PySide6 package for Python 3."
+msgstr "Installeer u verspreiding se PySide6-pakket vir Python 3."

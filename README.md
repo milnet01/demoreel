@@ -76,7 +76,8 @@ see [Sound and music](#sound-and-music).
 
 From 0.9.0 on, every release carries a package for Debian, Ubuntu, Fedora,
 openSUSE and Arch. The package brings the programs demoreel drives from your
-distro's own repositories, and installs the manual page and tab completion.
+distro's own repositories, and installs the manual page, tab completion and
+an entry in your applications menu that opens [the window](#the-window).
 For any other distro, see [Install from source](#install-from-source).
 
 **To get each new version with your system's updates**, add demoreel's
@@ -297,8 +298,12 @@ running programs. The window remembers nothing between launches, so keep that
 command to record the same way again. Errors read as the command line prints
 them.
 
-It needs PySide6, the Qt toolkit for Python. Every other command runs without
-it.
+It needs PySide6 6.8 or later, the Qt toolkit for Python. Every other command
+runs without it. The Debian, Ubuntu, Fedora and openSUSE packages bring it,
+and every install, from source too, adds demoreel to your applications menu
+to open the window. Without PySide6, `demoreel window` names the package that
+installs it. Debian 12 and Ubuntu 22.04 and 24.04 have none, so the window
+cannot run there.
 
 ## Finishing a recording
 
@@ -1221,7 +1226,8 @@ sudo ./packaging/install.sh
 ```
 
 It installs under `/usr/local`: the `demoreel` command, its translations, the
-manual page, and tab completion for bash, zsh and fish. Then run
+manual page, tab completion for bash, zsh and fish, and the window's entry in
+the applications menu, with its icon. Then run
 `demoreel check`, as [Install](#install) shows. The packages install under
 `/usr`: every package build, the `.deb` included, passes `PREFIX=/usr` to
 `install.sh`, and so does the reference layout `./ci.sh --packages` checks
@@ -1237,7 +1243,8 @@ sudo ./packaging/install.sh --uninstall
 ```
 
 It removes the `demoreel` command, the folder `/usr/local/share/demoreel/`,
-the manual page and the three completion files, and a file an earlier
+the manual page, the three completion files, the menu entry and its icon, and
+a file an earlier
 version installed that this one dropped. A folder the install made goes once
 it is empty. Folders other programs share stay.
 

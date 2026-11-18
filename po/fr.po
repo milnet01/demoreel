@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: fr\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Demoreel-Review: reviewed 70818372496b156d\n"
+"X-Demoreel-Review: reviewed f9896992136c039a\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where} : le texte {words} est à l'écran avec {first} au même endroit, et l'un a un bandeau et l'autre non. Des textes empilés ont tous un bandeau, ou aucun."
@@ -1683,13 +1683,6 @@ msgstr "L'enregistrement s'est terminé sans dire comment, avec le code de sorti
 msgid "Finishing the video before the window closes…"
 msgstr "Finalisation de la vidéo avant la fermeture de la fenêtre…"
 
-msgid ""
-"the window needs PySide6, the Qt toolkit for Python, which this Python cannot import.\n"
-"  Install your distribution's PySide6 package for Python 3."
-msgstr ""
-"la fenêtre a besoin de PySide6, la boîte à outils Qt pour Python, que ce Python ne peut pas importer.\n"
-"  Installez le paquet PySide6 de votre distribution pour Python 3."
-
 msgid "the window needs PySide6 6.8 or later, for its screen-reader announcements; this one is {version}."
 msgstr "la fenêtre a besoin de PySide6 6.8 ou plus récent, pour ses annonces aux lecteurs d'écran ; celui-ci est la version {version}."
 
@@ -1720,3 +1713,9 @@ msgstr "Ajouter l'étape"
 
 msgid "The step {step} holds a line break, and each step must be one line."
 msgstr "L'étape {step} contient un saut de ligne, et chaque étape doit tenir sur une seule ligne."
+
+msgid "the window needs PySide6, the Qt toolkit for Python, which this Python cannot import."
+msgstr "la fenêtre a besoin de PySide6, la boîte à outils Qt pour Python, que ce Python ne peut pas importer."
+
+msgid "Install your distribution's PySide6 package for Python 3."
+msgstr "Installez le paquet PySide6 de votre distribution pour Python 3."

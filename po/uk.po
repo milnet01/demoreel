@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: uk\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Demoreel-Review: reviewed b4a60f04e0efcae7\n"
+"X-Demoreel-Review: reviewed 309f923544efbd75\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: текст {words} показано разом із {first} в одному місці, і один має смугу, а інший ні. Тексти в одній стопці мають смугу всі або жоден."
@@ -1689,13 +1689,6 @@ msgstr "Запис закінчився, не сказавши як, з кодо
 msgid "Finishing the video before the window closes…"
 msgstr "Завершення відео перед закриттям вікна…"
 
-msgid ""
-"the window needs PySide6, the Qt toolkit for Python, which this Python cannot import.\n"
-"  Install your distribution's PySide6 package for Python 3."
-msgstr ""
-"вікну потрібен PySide6, набір інструментів Qt для Python, який цей Python не може імпортувати.\n"
-"  Встановіть пакунок PySide6 вашого дистрибутива для Python 3."
-
 msgid "the window needs PySide6 6.8 or later, for its screen-reader announcements; this one is {version}."
 msgstr "вікну потрібен PySide6 версії 6.8 або новішої, для оголошень програмам зчитування з екрана; у цього версія {version}."
 
@@ -1726,3 +1719,9 @@ msgstr "Додати крок"
 
 msgid "The step {step} holds a line break, and each step must be one line."
 msgstr "Крок {step} містить розрив рядка, а кожен крок має займати один рядок."
+
+msgid "the window needs PySide6, the Qt toolkit for Python, which this Python cannot import."
+msgstr "вікну потрібен PySide6, набір інструментів Qt для Python, який цей Python не може імпортувати."
+
+msgid "Install your distribution's PySide6 package for Python 3."
+msgstr "Встановіть пакунок PySide6 вашого дистрибутива для Python 3."

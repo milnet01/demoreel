@@ -2247,35 +2247,41 @@ def loudest(output):
 # distro's own package index on 2026-09-27 (DEMO-0051): openSUSE from rpm on
 # this machine, the rest with apt-file, dnf repoquery and pacman -F in their
 # own containers. pactl's, for --audio, the same way on 2026-10-10
-# (DEMO-0106). Knowledge about distros, not about apps.
+# (DEMO-0106). PySide6's, for the window, the same way on 2026-11-18
+# (DEMO-0091); Debian 12 and Ubuntu 22.04 and 24.04 have none, so the apt
+# name is Debian 13's and Ubuntu 26.04's. Knowledge about distros, not about apps.
 PACKAGES = {
     "zypper": ("sudo zypper install", {
         "ffmpeg": "ffmpeg", "ffprobe": "ffmpeg", "xdotool": "xdotool",
         "xauth": "xauth", "Xvfb": "xorg-x11-server-Xvfb", "cage": "cage",
         "Xwayland": "xwayland", "wlr-randr": "wlr-randr",
-        "wf-recorder": "wf-recorder", "pactl": "pulseaudio-utils"}),
+        "wf-recorder": "wf-recorder", "pactl": "pulseaudio-utils",
+        "PySide6": "python313-pyside6"}),
     "apt": ("sudo apt install", {
         "ffmpeg": "ffmpeg", "ffprobe": "ffmpeg", "xdotool": "xdotool",
         "xauth": "xauth", "Xvfb": "xvfb", "cage": "cage",
         "Xwayland": "xwayland", "wlr-randr": "wlr-randr",
-        "wf-recorder": "wf-recorder", "pactl": "pulseaudio-utils"}),
+        "wf-recorder": "wf-recorder", "pactl": "pulseaudio-utils",
+        "PySide6": "python3-pyside6.qtwidgets"}),
     "dnf": ("sudo dnf install", {
         "ffmpeg": "ffmpeg", "ffprobe": "ffmpeg", "xdotool": "xdotool",
         "xauth": "xorg-x11-xauth", "Xvfb": "xorg-x11-server-Xvfb",
         "cage": "cage", "Xwayland": "xorg-x11-server-Xwayland",
-        "wlr-randr": "wlr-randr", "wf-recorder": "wf-recorder", "pactl": "pulseaudio-utils"}),
+        "wlr-randr": "wlr-randr", "wf-recorder": "wf-recorder", "pactl": "pulseaudio-utils",
+        "PySide6": "python3-pyside6"}),
     # Mageia uses dnf under its own names, and packages no cage, wlr-randr or
     # wf-recorder in any of its repositories: measured with dnf repoquery
     # --whatprovides in a clean mageia:10 container on 2026-10-14 (DEMO-0200).
     "mageia": ("sudo dnf install", {
         "ffmpeg": "ffmpeg", "ffprobe": "ffmpeg", "xdotool": "xdotool",
         "xauth": "xauth", "Xvfb": "x11-server-xvfb",
-        "Xwayland": "x11-server-xwayland", "pactl": "pulseaudio-utils"}),
+        "Xwayland": "x11-server-xwayland", "pactl": "pulseaudio-utils",
+        "PySide6": "python3-pyside6"}),
     "pacman": ("sudo pacman -S", {
         "ffmpeg": "ffmpeg", "ffprobe": "ffmpeg", "xdotool": "xdotool",
         "xauth": "xorg-xauth", "Xvfb": "xorg-server-xvfb", "cage": "cage",
         "Xwayland": "xorg-xwayland", "wlr-randr": "wlr-randr",
-        "wf-recorder": "wf-recorder", "pactl": "libpulse"}),
+        "wf-recorder": "wf-recorder", "pactl": "libpulse", "PySide6": "pyside6"}),
 }
 # /etc/os-release ID or ID_LIKE -> its row in PACKAGES: the package manager,
 # or the distro where it names packages its own way. Mageia's ID_LIKE says
@@ -4327,9 +4333,10 @@ def cmd_window(a):
     try:
         from PySide6 import QtCore, QtGui, QtWidgets
     except ImportError:
+        hint = install_hint(["PySide6"]) or "\n  " + tr(
+            "Install your distribution's PySide6 package for Python 3.")
         die(tr("the window needs PySide6, the Qt toolkit for Python, which this "
-               "Python cannot import.\n  Install your distribution's PySide6 "
-               "package for Python 3."))
+               "Python cannot import.") + hint)
     if not hasattr(QtGui, "QAccessibleAnnouncementEvent"):
         die(tr("the window needs PySide6 6.8 or later, for its screen-reader "
                "announcements; this one is {version}.", version=QtCore.qVersion()))
@@ -4338,6 +4345,10 @@ def cmd_window(a):
     for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
         signal.signal(sig, signal.SIG_DFL)
     app = QtWidgets.QApplication(sys.argv[:1])
+    # The installed menu entry's name: a Wayland taskbar finds the window's
+    # icon through it, and an X11 one takes the icon from the window.
+    app.setDesktopFileName("io.github.milnet01.demoreel")
+    app.setWindowIcon(QtGui.QIcon.fromTheme("io.github.milnet01.demoreel"))
     window_qt_translations(QtCore, app)
     if _catalogs and re.split(r"[_@]", _catalogs[0][0])[0] in RTL_LANGUAGES:
         app.setLayoutDirection(QtCore.Qt.LayoutDirection.RightToLeft)

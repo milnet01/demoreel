@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: ar\n"
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
-"X-Demoreel-Review: reviewed 54bd4e792d4912c2\n"
+"X-Demoreel-Review: reviewed 34f6a4902a17e35e\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: النص {words} يظهر مع {first} في المكان نفسه، وأحدهما له شريط والآخر بلا شريط. النصوص المكدّسة معًا لها كلها شريط أو لا شريط لأيٍّ منها."
@@ -1707,13 +1707,6 @@ msgstr "انتهى التسجيل دون أن يذكر السبب، برمز ا�
 msgid "Finishing the video before the window closes…"
 msgstr "جارٍ إنهاء الفيديو قبل أن تُغلق النافذة…"
 
-msgid ""
-"the window needs PySide6, the Qt toolkit for Python, which this Python cannot import.\n"
-"  Install your distribution's PySide6 package for Python 3."
-msgstr ""
-"تحتاج النافذة إلى PySide6، وهي أدوات Qt للغة Python، ولا يستطيع Python هذا استيرادها.\n"
-"  ثبّت حزمة PySide6 الخاصة بتوزيعتك لـ Python 3."
-
 msgid "the window needs PySide6 6.8 or later, for its screen-reader announcements; this one is {version}."
 msgstr "تحتاج النافذة إلى PySide6 6.8 أو أحدث، لإعلاناتها لقارئات الشاشة؛ وهذه النسخة {version}."
 
@@ -1744,3 +1737,9 @@ msgstr "أضف الخطوة"
 
 msgid "The step {step} holds a line break, and each step must be one line."
 msgstr "الخطوة {step} تحتوي على فاصل أسطر، ويجب أن تكون كل خطوة سطرًا واحدًا."
+
+msgid "the window needs PySide6, the Qt toolkit for Python, which this Python cannot import."
+msgstr "تحتاج النافذة إلى PySide6، وهي أدوات Qt للغة Python، ولا يستطيع Python هذا استيرادها."
+
+msgid "Install your distribution's PySide6 package for Python 3."
+msgstr "ثبّت حزمة PySide6 الخاصة بتوزيعتك لـ Python 3."

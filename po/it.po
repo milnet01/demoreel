@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: it\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Demoreel-Review: reviewed 968f4dd797880a36\n"
+"X-Demoreel-Review: reviewed 8410f9d6bfff8199\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: il testo {words} è sullo schermo con {first} nello stesso punto, e uno ha la fascia e l'altro no. I testi impilati insieme hanno tutti la fascia o nessuno."
@@ -1683,13 +1683,6 @@ msgstr "La registrazione è finita senza dire come, con lo stato di uscita {stat
 msgid "Finishing the video before the window closes…"
 msgstr "Completamento del video prima che la finestra si chiuda…"
 
-msgid ""
-"the window needs PySide6, the Qt toolkit for Python, which this Python cannot import.\n"
-"  Install your distribution's PySide6 package for Python 3."
-msgstr ""
-"la finestra ha bisogno di PySide6, il toolkit Qt per Python, che questo Python non riesce a importare.\n"
-"  Installare il pacchetto PySide6 della propria distribuzione per Python 3."
-
 msgid "the window needs PySide6 6.8 or later, for its screen-reader announcements; this one is {version}."
 msgstr "la finestra ha bisogno di PySide6 6.8 o successivo, per i suoi annunci ai lettori di schermo; questo è {version}."
 
@@ -1720,3 +1713,9 @@ msgstr "Aggiungi il passo"
 
 msgid "The step {step} holds a line break, and each step must be one line."
 msgstr "Il passo {step} contiene un a capo, e ogni passo deve stare su una sola riga."
+
+msgid "the window needs PySide6, the Qt toolkit for Python, which this Python cannot import."
+msgstr "la finestra ha bisogno di PySide6, il toolkit Qt per Python, che questo Python non riesce a importare."
+
+msgid "Install your distribution's PySide6 package for Python 3."
+msgstr "Installare il pacchetto PySide6 della propria distribuzione per Python 3."

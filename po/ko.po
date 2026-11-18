@@ -6,7 +6,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: ko\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Demoreel-Review: reviewed e2cd474e10cea9b2\n"
+"X-Demoreel-Review: reviewed 002628e36680e3bc\n"
 
 msgid "{where}: the text {words} is on screen with {first} at the same place, and one has a band and the other not. Texts stacked together all have a band or none do."
 msgstr "{where}: 텍스트 {words}이(가) {first}와(과) 같은 자리에 함께 표시되는데, 하나는 띠가 있고 다른 하나는 없습니다. 함께 쌓이는 텍스트는 모두 띠가 있거나 모두 없어야 합니다."
@@ -1677,13 +1677,6 @@ msgstr "녹화가 이유를 알리지 않고 종료 상태 {status}(으)로 끝�
 msgid "Finishing the video before the window closes…"
 msgstr "창이 닫히기 전에 동영상을 마무리하는 중…"
 
-msgid ""
-"the window needs PySide6, the Qt toolkit for Python, which this Python cannot import.\n"
-"  Install your distribution's PySide6 package for Python 3."
-msgstr ""
-"창에는 Python용 Qt 툴킷인 PySide6이 필요하지만 이 Python에서는 가져올 수 없습니다.\n"
-"  배포판의 Python 3용 PySide6 패키지를 설치하십시오."
-
 msgid "the window needs PySide6 6.8 or later, for its screen-reader announcements; this one is {version}."
 msgstr "창에는 화면 낭독기 알림을 위해 PySide6 6.8 이상이 필요합니다. 이 버전은 {version}입니다."
 
@@ -1714,3 +1707,9 @@ msgstr "단계 추가"
 
 msgid "The step {step} holds a line break, and each step must be one line."
 msgstr "단계 {step}에 줄 바꿈이 있습니다. 각 단계는 한 줄이어야 합니다."
+
+msgid "the window needs PySide6, the Qt toolkit for Python, which this Python cannot import."
+msgstr "창에는 Python용 Qt 툴킷인 PySide6이 필요하지만 이 Python에서는 가져올 수 없습니다."
+
+msgid "Install your distribution's PySide6 package for Python 3."
+msgstr "배포판의 Python 3용 PySide6 패키지를 설치하십시오."
