@@ -9830,6 +9830,67 @@ else
     skipped "PySide6 cannot be imported, so the window was not built to follow its focus"
 fi
 
+step "the window: recorded by demoreel, Record and Stop pressed"
+# DEMO-0092. The window runs on a run's private display, and xdotool presses
+# Record and then Stop by key, as focus moves to each. The window's own run
+# starts a display of its own. Its video must appear while the window is
+# still open: once the outer run ends, a run the window started finishes on
+# its parent's death (INV-10), which would hide a Stop that did nothing.
+# Unstopped, the run lasts record's default 30 seconds.
+window_recorded() {  # DEMOREEL
+    local dir=$tmp/window-rec status=0 inner=
+    rm -rf "$dir"
+    mkdir -p "$dir/config" "$dir/videos"
+    printf 'XDG_VIDEOS_DIR="%s"\n' "$dir/videos" >"$dir/config/user-dirs.dirs"
+    env LC_ALL=C.UTF-8 XDG_CONFIG_HOME="$dir/config" "$1" record -n "${GATE_RUN}window" \
+        -d 0 -s 1000x1000 -o "$dir/window.mp4" --app-log "$dir/app.log" \
+        -a "wait 2" -a "type xclock" -a "key shift+Tab" -a "key space" -a "wait 4" \
+        -a "key space" -- "$(realpath "$1")" window >/dev/null 2>"$dir/record.err" &
+    local recorder=$!
+    for _ in $(seq 300); do
+        inner=$(find "$dir/videos" -name 'xclock-*.mp4')
+        [ -n "$inner" ] && break
+        sleep 0.1
+    done
+    "$1" stop "${GATE_RUN}window" >/dev/null 2>&1 || status=1
+    wait "$recorder" || status=1
+    if [ -z "$inner" ]; then
+        echo "the window made no video within 30 seconds of Record and Stop" >&2
+        tail -n 20 "$dir/record.err" "$dir/app.log" >&2
+        return 1
+    fi
+    if [ "$status" != 0 ]; then
+        echo "the run recording the window failed:" >&2
+        cat "$dir/record.err" >&2
+        return 1
+    fi
+    python3 - "$1" "$inner" "$dir/window.mp4" <<'EOF'
+import importlib.machinery, importlib.util, subprocess, sys
+loader = importlib.machinery.SourceFileLoader("demoreel", sys.argv[1])
+d = importlib.util.module_from_spec(importlib.util.spec_from_loader("demoreel", loader))
+loader.exec_module(d)
+inner, outer = sys.argv[2], sys.argv[3]
+length = float(subprocess.run(
+    ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", inner],
+    capture_output=True, text=True, check=True).stdout)
+if length >= 20:
+    sys.exit(f"the window's video lasts {length:.1f}s: Stop did not end it")
+for name, video in (("the window's video", inner), ("the video of the window", outer)):
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-sseof", "-1", "-i", video,
+                          "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "gray", "-"],
+                         capture_output=True, check=True, stdin=subprocess.DEVNULL).stdout
+    if not raw or d.frame_is_flat(raw):
+        sys.exit(f"the last frame of {name} is flat")
+EOF
+}
+if [ -n "$have_pyside" ]; then
+    window_recorded ./demoreel || exit 1
+    echo "the window, recorded, pressed Record and Stop by key and made a video,"
+    echo "and neither video ends flat"
+else
+    skipped "PySide6 cannot be imported, so the window was not recorded"
+fi
+
 step "stop finds a run whose ffmpeg is slow to answer"
 # DEMO-0165. A run asked ffmpeg for its encoders before it could be stopped,
 # and on a loaded machine a stop sent then gave up after STOP_GRACE. An

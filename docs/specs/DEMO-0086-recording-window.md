@@ -450,8 +450,12 @@ the death signal removed; INV-11 with one button's name blanked; INV-15's
 focus half against the window as DEMO-0088 left it, which disabled Record and
 Stop before moving focus.
 
-DEMO-0092 records the window with demoreel and presses Record and Stop with
-`xdotool`. That end-to-end step is its own item.
+`ci.sh` step `the window: recorded by demoreel, Record and Stop pressed`
+(DEMO-0092) records the window with demoreel and presses Record and Stop
+with `xdotool`. The window's video must appear while the window is still
+open and last less than record's default length, and neither video may end
+flat. It needs PySide6 and skips without it. Seen failing first against a
+window whose Stop was not connected.
 
 ## 8. Alternatives considered (and rejected)
 
